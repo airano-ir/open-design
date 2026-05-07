@@ -91,6 +91,19 @@ async function waitForFile(file: string, timeoutMs = 5_000): Promise<void> {
   throw new Error(`Timed out waiting for ${file}`);
 }
 
+async function waitForPidToExit(pid: number, timeoutMs = 5_000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    try {
+      process.kill(pid, 0);
+    } catch {
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+  throw new Error(`Timed out waiting for process ${pid} to exit`);
+}
+
 beforeAll(async () => {
   const started = (await startServer({ port: 0, returnServer: true })) as StartedServer;
   baseUrl = started.url;
@@ -1006,9 +1019,16 @@ setInterval(() => {}, 1000);
           });
         },
       );
-      await expect(fsp.readFile(termFile, 'utf8')).resolves.toBe('term');
+      if (process.platform !== 'win32') {
+        await expect(fsp.readFile(termFile, 'utf8')).resolves.toBe('term');
+      }
       const pid = Number(await fsp.readFile(pidFile, 'utf8'));
-      expect(() => process.kill(pid, 0)).toThrow();
+      if (process.platform === 'win32') {
+        process.kill(pid, 'SIGKILL');
+        await waitForPidToExit(pid);
+      } else {
+        expect(() => process.kill(pid, 0)).toThrow();
+      }
     } finally {
       await fsp.rm(markerDir, { recursive: true, force: true });
     }

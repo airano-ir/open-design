@@ -1,11 +1,11 @@
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import os, { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { ToolPackConfig } from "../src/config.js";
-import { resolveSeededAppConfigPaths, seedPackagedAppConfig } from "../src/mac.js";
+import { resolveSeededAppConfigPaths, seedPackagedAppConfig } from "../src/mac/index.js";
 
 function makeConfig(root: string, overrides: Partial<ToolPackConfig> = {}): ToolPackConfig {
   return {
@@ -32,6 +32,7 @@ function makeConfig(root: string, overrides: Partial<ToolPackConfig> = {}): Tool
         namespaceBaseRoot: join(root, ".tmp", "tools-pack", "runtime", "mac", "namespaces"),
         namespaceRoot: join(root, ".tmp", "tools-pack", "runtime", "mac", "namespaces", "local-test"),
       },
+      cacheRoot: join(root, ".tmp", "tools-pack", "cache"),
       toolPackRoot: join(root, ".tmp", "tools-pack"),
     },
     silent: true,
@@ -57,8 +58,8 @@ describe("resolveSeededAppConfigPaths", () => {
   it("uses workspace .od by default", () => {
     const config = makeConfig("/work");
     expect(resolveSeededAppConfigPaths(config)).toEqual({
-      sourcePath: "/work/.od/app-config.json",
-      targetPath: "/work/.tmp/tools-pack/runtime/mac/namespaces/local-test/data/app-config.json",
+      sourcePath: join("/work", ".od", "app-config.json"),
+      targetPath: join("/work", ".tmp", "tools-pack", "runtime", "mac", "namespaces", "local-test", "data", "app-config.json"),
     });
   });
 
@@ -66,8 +67,8 @@ describe("resolveSeededAppConfigPaths", () => {
     process.env.OD_DATA_DIR = "/custom/data";
     const config = makeConfig("/work");
     expect(resolveSeededAppConfigPaths(config)).toEqual({
-      sourcePath: "/custom/data/app-config.json",
-      targetPath: "/work/.tmp/tools-pack/runtime/mac/namespaces/local-test/data/app-config.json",
+      sourcePath: join("/custom/data", "app-config.json"),
+      targetPath: join("/work", ".tmp", "tools-pack", "runtime", "mac", "namespaces", "local-test", "data", "app-config.json"),
     });
   });
 
@@ -75,8 +76,8 @@ describe("resolveSeededAppConfigPaths", () => {
     process.env.OD_DATA_DIR = "e2e/ui/.od-data";
     const config = makeConfig("/work");
     expect(resolveSeededAppConfigPaths(config)).toEqual({
-      sourcePath: "/work/e2e/ui/.od-data/app-config.json",
-      targetPath: "/work/.tmp/tools-pack/runtime/mac/namespaces/local-test/data/app-config.json",
+      sourcePath: resolve("/work", "e2e", "ui", ".od-data", "app-config.json"),
+      targetPath: join("/work", ".tmp", "tools-pack", "runtime", "mac", "namespaces", "local-test", "data", "app-config.json"),
     });
   });
 
@@ -85,7 +86,7 @@ describe("resolveSeededAppConfigPaths", () => {
     const config = makeConfig("/work");
     expect(resolveSeededAppConfigPaths(config)).toEqual({
       sourcePath: join(os.homedir(), ".open-design", "app-config.json"),
-      targetPath: "/work/.tmp/tools-pack/runtime/mac/namespaces/local-test/data/app-config.json",
+      targetPath: join("/work", ".tmp", "tools-pack", "runtime", "mac", "namespaces", "local-test", "data", "app-config.json"),
     });
   });
 });

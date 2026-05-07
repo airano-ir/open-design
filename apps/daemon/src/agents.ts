@@ -5,11 +5,26 @@ import { existsSync } from 'node:fs';
 import { delimiter } from 'node:path';
 import path from 'node:path';
 import { homedir } from 'node:os';
-import { wellKnownUserToolchainBins } from '@open-design/platform';
+import {
+  createCommandInvocation,
+  wellKnownUserToolchainBins,
+} from '@open-design/platform';
 import { detectAcpModels } from './acp.js';
 import { parsePiModels } from './pi-rpc.js';
 
 const execFileP = promisify(execFile);
+
+function execAgentFile(command, args, options = {}) {
+  const invocation = createCommandInvocation({
+    command,
+    args,
+    env: options.env,
+  });
+  return execFileP(invocation.command, invocation.args, {
+    ...options,
+    windowsVerbatimArguments: invocation.windowsVerbatimArguments,
+  });
+}
 
 // Capability flags detected at probe time (per agent id). buildArgs consults
 // this map so we only pass flags the installed CLI actually advertises in
@@ -198,6 +213,10 @@ export const AGENT_DEFS = [
     // as a hint. Users can supply other ids via the custom-model input.
     fallbackModels: [
       DEFAULT_MODEL_OPTION,
+      { id: 'gpt-5.5', label: 'gpt-5.5' },
+      { id: 'gpt-5.4', label: 'gpt-5.4' },
+      { id: 'gpt-5.4-mini', label: 'gpt-5.4-mini' },
+      { id: 'gpt-5.3-codex', label: 'gpt-5.3-codex' },
       { id: 'gpt-5-codex', label: 'gpt-5-codex' },
       { id: 'gpt-5', label: 'gpt-5' },
       { id: 'o3', label: 'o3' },
@@ -205,10 +224,12 @@ export const AGENT_DEFS = [
     ],
     reasoningOptions: [
       { id: 'default', label: 'Default' },
+      { id: 'none', label: 'None' },
       { id: 'minimal', label: 'Minimal' },
       { id: 'low', label: 'Low' },
       { id: 'medium', label: 'Medium' },
       { id: 'high', label: 'High' },
+      { id: 'xhigh', label: 'XHigh' },
     ],
     // Prompt is delivered via stdin pipe (gated by `promptViaStdin: true`
     // below) to avoid Windows `spawn ENAMETOOLONG` while keeping Codex on
@@ -629,7 +650,7 @@ export const AGENT_DEFS = [
     // so we use a custom fetchModels that reads stderr.
     fetchModels: async (resolvedBin, env) => {
       try {
-        const { stderr } = await execFileP(resolvedBin, ['--list-models'], {
+        const { stderr } = await execAgentFile(resolvedBin, ['--list-models'], {
           env,
           timeout: 20_000,
           maxBuffer: 8 * 1024 * 1024,
@@ -671,7 +692,7 @@ export const AGENT_DEFS = [
     buildArgs: (
       _prompt,
       _imagePaths,
-      _extra,
+      extraAllowedDirs = [],
       options = {},
       runtimeContext = {},
     ) => {
@@ -687,11 +708,29 @@ export const AGENT_DEFS = [
       // pi supports --append-system-prompt for cwd and extra context.
       // For now we rely on the composed prompt containing the cwd hint
       // (same pattern as other agents) rather than using system-prompt flags.
+      //
+      // extraAllowedDirs carries skill seed and design-system directories
+      // that live outside the project cwd. pi doesn't have an --add-dir
+      // sandbox flag (it uses OS cwd), so we use --append-system-prompt to
+      // hint that these directories exist. The agent can then use its Read
+      // tool to access files inside them. Without this, pi runs inside the
+      // project cwd and has no way to discover or reach skill/design-system
+      // assets that live elsewhere.
+      const dirs = (extraAllowedDirs || []).filter(
+        (d) => typeof d === 'string' && path.isAbsolute(d),
+      );
+      for (const d of dirs) {
+        args.push('--append-system-prompt', d);
+      }
       return args;
     },
     // Prompt is sent via RPC `prompt` command on stdin, not as a CLI arg.
     promptViaStdin: true,
     streamFormat: 'pi-rpc',
+    // pi's RPC `prompt` command supports an `images` field for multimodal
+    // input (base64-encoded). The daemon attaches image paths to the
+    // session so attachPiRpcSession can read and forward them.
+    supportsImagePaths: true,
   },
   {
     id: 'kiro',
@@ -910,7 +949,7 @@ async function fetchModels(def, resolvedBin, env) {
   }
   if (!def.listModels) return def.fallbackModels;
   try {
-    const { stdout } = await execFileP(resolvedBin, def.listModels.args, {
+    const { stdout } = await execAgentFile(resolvedBin, def.listModels.args, {
       env,
       timeout: def.listModels.timeoutMs ?? 5000,
       // Models lists from popular CLIs (e.g. opencode) easily exceed the
@@ -948,7 +987,7 @@ async function probe(def, configuredEnv = {}) {
   );
   let version = null;
   try {
-    const { stdout } = await execFileP(resolved, def.versionArgs, {
+    const { stdout } = await execAgentFile(resolved, def.versionArgs, {
       env: probeEnv,
       timeout: 3000,
     });
@@ -961,7 +1000,7 @@ async function probe(def, configuredEnv = {}) {
   if (def.helpArgs && def.capabilityFlags) {
     const caps = {};
     try {
-      const { stdout } = await execFileP(resolved, def.helpArgs, {
+      const { stdout } = await execAgentFile(resolved, def.helpArgs, {
         env: probeEnv,
         timeout: 5000,
         maxBuffer: 4 * 1024 * 1024,
@@ -1206,8 +1245,8 @@ function looksLikeWindowsPath(p) {
 //     never go through this path);
 //   - the resolved binary is a `.cmd` / `.bat` shim — that's handled by
 //     `checkWindowsCmdShimCommandLineBudget` so we don't double-emit;
-//   - the resolved binary is a POSIX path on a POSIX host (no
-//     CreateProcess in play);
+//   - the resolved binary is not a Windows path (no CreateProcess
+//     command-line shape to budget);
 //   - the assembled command line fits under the safe limit.
 //
 // Pure: takes `resolvedBin` and `args` explicitly so a test on macOS can
@@ -1220,12 +1259,11 @@ export function checkWindowsDirectExeCommandLineBudget(def, resolvedBin, args) {
   // The cmd-shim guard owns `.bat` / `.cmd`; skip those here so a single
   // oversized prompt doesn't trip both guards.
   if (/\.(bat|cmd)$/i.test(resolvedBin)) return null;
-  // Only fire when the spawn would actually go through Windows'
-  // CreateProcess. On POSIX hosts, `execvp` accepts each argv entry as a
-  // separate buffer — there's no command-line concatenation step that
-  // could expand past a kernel cap, so we have nothing to guard.
-  if (process.platform !== 'win32' && !looksLikeWindowsPath(resolvedBin))
-    return null;
+  // Only fire for Windows-shaped resolved binaries. On POSIX-shaped
+  // paths, `execvp` accepts each argv entry as a separate buffer —
+  // there's no command-line concatenation step that could expand past a
+  // kernel cap, so we have nothing to guard.
+  if (!looksLikeWindowsPath(resolvedBin)) return null;
   const argList = Array.isArray(args) ? args : [];
   // `[command, ...args].map(quote).join(' ')` is the exact shape libuv
   // builds before handing it to CreateProcess.

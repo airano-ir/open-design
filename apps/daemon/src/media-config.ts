@@ -37,7 +37,7 @@
 // echo secrets back into the DOM.
 
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { homedir } from 'node:os';
+import os from 'node:os';
 import path from 'node:path';
 import { MEDIA_PROVIDERS } from './media-models.js';
 import { expandHomePrefix } from './home-expansion.js';
@@ -201,7 +201,7 @@ function tokenFromCodexAuth(data) {
 }
 
 async function resolveOpenAIOAuthCredential() {
-  const home = homedir();
+  const home = os.homedir();
   const hermesAuth = await readJsonIfPresent(
     path.join(home, '.hermes', 'auth.json'),
   );
