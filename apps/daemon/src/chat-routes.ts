@@ -118,6 +118,32 @@ export function registerChatRoutes(app: Express, ctx: RegisterChatRoutesDeps) {
             : status.status === 'canceled'
               ? 'cancelled'
               : 'failed';
+        // Pull input/output token totals from the agent's usage event,
+        // which claude-stream.ts emits as `{ type: 'usage', usage: {...} }`
+        // and the run service stores in run.events. Provider only gives
+        // totals (no 7-subfield breakdown), so token_count_source flips
+        // to 'provider_usage' here only when at least one number landed;
+        // otherwise stays 'unknown'.
+        let inputTokens: number | undefined;
+        let outputTokens: number | undefined;
+        for (let i = run.events.length - 1; i >= 0; i -= 1) {
+          const ev = run.events[i];
+          const data = ev?.data as
+            | { type?: string; usage?: Record<string, unknown> | null }
+            | null
+            | undefined;
+          if (ev?.event === 'agent' && data?.type === 'usage' && data.usage) {
+            const u = data.usage;
+            if (typeof u.input_tokens === 'number') inputTokens = u.input_tokens;
+            if (typeof u.output_tokens === 'number') outputTokens = u.output_tokens;
+            if (inputTokens !== undefined || outputTokens !== undefined) break;
+          }
+        }
+        const haveUsage = inputTokens !== undefined || outputTokens !== undefined;
+        const totalTokens =
+          inputTokens !== undefined && outputTokens !== undefined
+            ? inputTokens + outputTokens
+            : undefined;
         design.analytics.capture({
           eventName: 'run_finished',
           context,
@@ -128,6 +154,10 @@ export function registerChatRoutes(app: Express, ctx: RegisterChatRoutesDeps) {
             result,
             artifact_count: 0,
             total_duration_ms: Date.now() - runStartedAt,
+            ...(inputTokens !== undefined ? { input_tokens: inputTokens } : {}),
+            ...(outputTokens !== undefined ? { output_tokens: outputTokens } : {}),
+            ...(totalTokens !== undefined ? { total_tokens: totalTokens } : {}),
+            token_count_source: haveUsage ? 'provider_usage' : 'unknown',
           },
           insertId: `${runInsertId}-finish`,
         });
