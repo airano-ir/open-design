@@ -4210,6 +4210,13 @@ function HtmlViewer({
     return applyManualEdit({ id: pending.id, kind: 'set-style', styles: pending.styles }, pending.label);
   }
 
+  async function exitManualEditModeAfterFlush(): Promise<boolean> {
+    const ok = await flushManualEditStyleSave();
+    if (!ok) return false;
+    setManualEditMode(false);
+    return true;
+  }
+
   async function selectManualEditTarget(target: ManualEditTarget) {
     if (!(await flushManualEditStyleSave())) return;
     const base = sourceRef.current ?? '';
@@ -5079,9 +5086,7 @@ function HtmlViewer({
                 setManualEditMode(true);
                 return;
               }
-              void flushManualEditStyleSave().then((ok) => {
-                if (ok) setManualEditMode(false);
-              });
+              void exitManualEditModeAfterFlush();
             }}
           >
             <Icon name="edit" size={13} />
@@ -5095,15 +5100,25 @@ function HtmlViewer({
             aria-pressed={drawOverlayOpen}
             onClick={() => {
               const next = !drawOverlayOpen;
-              if (next) {
-                setManualEditMode(false);
+              if (!next) {
+                setDrawOverlayOpen(false);
+                return;
+              }
+              const activateDraw = () => {
                 setBoardMode(false);
                 clearBoardComposer();
                 setInspectMode(false);
                 setDrawOverlayMode('draw');
                 setMode('preview');
+                setDrawOverlayOpen(true);
+              };
+              if (manualEditMode) {
+                void exitManualEditModeAfterFlush().then((ok) => {
+                  if (ok) activateDraw();
+                });
+                return;
               }
-              setDrawOverlayOpen(next);
+              activateDraw();
             }}
           >
             <Icon name="draw" size={13} />

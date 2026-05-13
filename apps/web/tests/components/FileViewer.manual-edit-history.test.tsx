@@ -30,6 +30,66 @@ afterEach(() => {
 });
 
 describe('FileViewer manual edit history regressions', () => {
+  it('flushes pending style edits before activating draw mode from manual edit', async () => {
+    const initialSource = '<!doctype html><html><body><h1 data-od-id="hero" style="color: #111111">Hero</h1></body></html>';
+    let saveResolve!: (value: Response) => void;
+    const saveResponse = new Promise<Response>((resolve) => {
+      saveResolve = resolve;
+    });
+    const savedSources: string[] = [];
+    const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : input instanceof Request ? input.url : String(input);
+      if (url.includes('/api/projects/project-1/deployments')) {
+        return new Response(JSON.stringify({ deployments: [] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      if (url.includes('/api/projects/project-1/files') && init?.method === 'POST') {
+        const payload = JSON.parse(String(init.body)) as { content: string };
+        savedSources.push(payload.content);
+        return saveResponse;
+      }
+      if (url.includes('/api/projects/project-1/raw/preview.html')) {
+        return new Response(initialSource, { status: 200 });
+      }
+      return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FileViewer
+        projectId="project-1"
+        file={htmlPreviewFile()}
+        liveHtml={initialSource}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('manual-edit-mode-toggle'));
+    await waitFor(() => expect(panelState.props).not.toBeNull());
+
+    act(() => {
+      panelState.props?.onStyleChange?.('hero', { color: '#ef4444' }, 'Style: Hero');
+    });
+    fireEvent.click(screen.getByTestId('draw-overlay-toggle'));
+
+    await waitFor(() => expect(savedSources).toHaveLength(1));
+    expect(savedSources[0]).toContain('rgb(239, 68, 68)');
+    expect(screen.getByTestId('manual-edit-mode-toggle').getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByTestId('draw-overlay-toggle').getAttribute('aria-pressed')).toBe('false');
+
+    await act(async () => {
+      saveResolve(new Response(JSON.stringify({ file: htmlPreviewFile() }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }));
+      await saveResponse;
+    });
+
+    await waitFor(() => expect(screen.getByTestId('manual-edit-mode-toggle').getAttribute('aria-pressed')).toBe('false'));
+    expect(screen.getByTestId('draw-overlay-toggle').getAttribute('aria-pressed')).toBe('true');
+  });
+
   it('uses the undone source snapshot for a follow-up edit after undo', async () => {
     const initialSource = '<!doctype html><html><body><h1 data-od-id="hero" style="color: #111111">Hero</h1></body></html>';
     let persistedSource = initialSource;
