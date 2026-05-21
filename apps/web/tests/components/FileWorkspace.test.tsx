@@ -309,6 +309,44 @@ describe('FileWorkspace upload input', () => {
   });
 });
 
+describe('FileWorkspace tab chrome', () => {
+  it('keeps the sole file tab visible when it does not duplicate the project title', () => {
+    render(
+      <FileWorkspace
+        projectId="project-1"
+        projectTitle="Landing Page"
+        projectKind="prototype"
+        files={[workspaceFile('index.html')]}
+        liveArtifacts={[]}
+        onRefreshFiles={vi.fn()}
+        isDeck={false}
+        tabsState={{ tabs: ['index.html'], active: 'index.html' }}
+        onTabsStateChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('tab', { name: /index\.html/i })).toBeTruthy();
+  });
+
+  it('hides the sole file tab only when it duplicates the project title', () => {
+    render(
+      <FileWorkspace
+        projectId="project-1"
+        projectTitle="index.html"
+        projectKind="prototype"
+        files={[workspaceFile('index.html')]}
+        liveArtifacts={[]}
+        onRefreshFiles={vi.fn()}
+        isDeck={false}
+        tabsState={{ tabs: ['index.html'], active: 'index.html' }}
+        onTabsStateChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole('tab', { name: /index\.html/i })).toBeNull();
+  });
+});
+
 describe('DesignFilesPanel plugin folders', () => {
   it('surfaces generated plugin folders with agent-routed CLI actions', async () => {
     const onPluginFolderAgentAction = vi.fn();

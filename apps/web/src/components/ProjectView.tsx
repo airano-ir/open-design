@@ -3034,7 +3034,8 @@ export function ProjectView({
     if (existing.includes(selected)) return;
     const metadata: ProjectMetadata = { ...base, linkedDirs: [...existing, selected] };
     const result = await patchProject(project.id, { metadata });
-    onProjectChange(result ?? { ...project, metadata });
+    if (!result) return;
+    onProjectChange(result);
   }, [project, onProjectChange]);
 
   const handleUnlinkFolder = useCallback(async (dir: string) => {
@@ -3045,7 +3046,8 @@ export function ProjectView({
       linkedDirs: existing.filter((d) => d !== dir),
     };
     const result = await patchProject(project.id, { metadata });
-    onProjectChange(result ?? { ...project, metadata });
+    if (!result) return;
+    onProjectChange(result);
   }, [project, onProjectChange]);
 
   const handleSaveInstructions = useCallback(async () => {
@@ -3813,6 +3815,7 @@ export function ProjectView({
         ) : null}
         <FileWorkspace
           projectId={project.id}
+          projectTitle={project.name}
           projectKind={projectKindToTracking(project.metadata?.kind) ?? 'prototype'}
           files={projectFiles}
           liveArtifacts={liveArtifacts}
