@@ -220,11 +220,15 @@ function onlineErrorMessage(error: unknown): string {
 async function requestPackagedWebBundleOperation(
   config: ToolPackConfig,
   key: typeof SIDECAR_EVENTS.PACKAGED_BUNDLE_ACTIVATE
+    | typeof SIDECAR_EVENTS.PACKAGED_BUNDLE_CLEAR
     | typeof SIDECAR_EVENTS.PACKAGED_BUNDLE_ENSURE
+    | typeof SIDECAR_EVENTS.PACKAGED_BUNDLE_FETCH
+    | typeof SIDECAR_EVENTS.PACKAGED_BUNDLE_LOCAL
     | typeof SIDECAR_EVENTS.PACKAGED_BUNDLE_RESTART
+    | typeof SIDECAR_EVENTS.PACKAGED_BUNDLE_RESET
     | typeof SIDECAR_EVENTS.PACKAGED_BUNDLE_STATUS
     | typeof SIDECAR_EVENTS.PACKAGED_BUNDLE_SWITCH,
-  payload: PackagedBundleActivationInput | { key: typeof TOOLS_PACK_WEB_BUNDLE_KEY },
+  payload: PackagedBundleActivationInput | { key: typeof TOOLS_PACK_WEB_BUNDLE_KEY; publicationUrl?: string },
   timeoutMs: number,
 ): Promise<PackagedBundleOperationResult> {
   return await requestJsonIpc<PackagedBundleOperationResult>(
@@ -364,6 +368,34 @@ export async function ensurePackagedWebBundle(
   );
 }
 
+export async function localPackagedWebBundle(
+  config: ToolPackConfig,
+): Promise<PackagedBundleOperationResult> {
+  return await requestPackagedWebBundleOperation(
+    config,
+    SIDECAR_EVENTS.PACKAGED_BUNDLE_LOCAL,
+    { key: TOOLS_PACK_WEB_BUNDLE_KEY },
+    5000,
+  );
+}
+
+export async function fetchPackagedWebBundle(
+  config: ToolPackConfig,
+  input: {
+    publicationUrl?: string;
+  } = {},
+): Promise<PackagedBundleOperationResult> {
+  return await requestPackagedWebBundleOperation(
+    config,
+    SIDECAR_EVENTS.PACKAGED_BUNDLE_FETCH,
+    {
+      key: TOOLS_PACK_WEB_BUNDLE_KEY,
+      ...(input.publicationUrl == null || input.publicationUrl.length === 0 ? {} : { publicationUrl: input.publicationUrl }),
+    },
+    180_000,
+  );
+}
+
 export async function restartPackagedWebBundle(
   config: ToolPackConfig,
 ): Promise<PackagedBundleOperationResult> {
@@ -372,6 +404,28 @@ export async function restartPackagedWebBundle(
     SIDECAR_EVENTS.PACKAGED_BUNDLE_RESTART,
     { key: TOOLS_PACK_WEB_BUNDLE_KEY },
     90_000,
+  );
+}
+
+export async function resetPackagedWebBundle(
+  config: ToolPackConfig,
+): Promise<PackagedBundleOperationResult> {
+  return await requestPackagedWebBundleOperation(
+    config,
+    SIDECAR_EVENTS.PACKAGED_BUNDLE_RESET,
+    { key: TOOLS_PACK_WEB_BUNDLE_KEY },
+    120_000,
+  );
+}
+
+export async function clearPackagedWebBundle(
+  config: ToolPackConfig,
+): Promise<PackagedBundleOperationResult> {
+  return await requestPackagedWebBundleOperation(
+    config,
+    SIDECAR_EVENTS.PACKAGED_BUNDLE_CLEAR,
+    { key: TOOLS_PACK_WEB_BUNDLE_KEY },
+    120_000,
   );
 }
 

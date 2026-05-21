@@ -15,6 +15,10 @@ import {
   type DaemonStatusSnapshot,
   type PackagedBundleActivationInput,
   type PackagedBundleActivationSnapshot,
+  type PackagedBundleClearSnapshot,
+  type PackagedBundleFetchInput,
+  type PackagedBundleFetchSnapshot,
+  type PackagedBundleLocalSnapshot,
   type PackagedBundleOperation,
   type PackagedBundleOperationResult,
   type PackagedBundleRuntimeSnapshot,
@@ -46,6 +50,11 @@ import {
   type PackagedBundleActivationFile,
   type PackagedWebSidecarImplementation,
 } from "./bundle-activation.js";
+import { fetchPackagedRemoteBundle } from "./bundle-remote.js";
+import {
+  clearPackagedBundleKey,
+  readPackagedBundleLocalSnapshot,
+} from "./bundle-settings.js";
 import type { PackagedWebOutputMode } from "./config.js";
 import type { PackagedNamespacePaths } from "./paths.js";
 
@@ -234,6 +243,10 @@ function extractPort(url: string): string {
 // @open-design/platform's wellKnownUserToolchainBins so the daemon
 // resolver and this PATH builder cannot drift again. See issue #442.
 const PACKAGED_POSIX_SYSTEM_BINS = ["/usr/bin", "/bin", "/usr/sbin", "/sbin"] as const;
+const PACKAGED_BUNDLE_PUBLIC_ORIGIN_ENV = "OD_BUNDLE_PUBLIC_ORIGIN";
+const PACKAGED_BUNDLE_PUBLICATION_URL_ENV = "OD_BUNDLE_PUBLICATION_URL";
+const DEFAULT_BUNDLE_PUBLIC_ORIGIN = "https://releases.open-design.ai/bundles";
+const PACKAGED_WEB_BUNDLE_PATH_KEY = "od-sidecar-web";
 
 export function resolvePackagedPathEnv(basePath = process.env.PATH ?? ""): string {
   const candidates = [
@@ -264,6 +277,14 @@ function createPackagedDaemonManagedPathEnv(
     OD_DATA_DIR: paths.dataRoot,
     OD_RESOURCE_ROOT: paths.resourceRoot,
   };
+}
+
+function defaultBundleChannel(epoch: string | null): string {
+  return epoch != null && /(?:^|[-.])beta(?:[-.]|$)/i.test(epoch) ? "beta" : "stable";
+}
+
+function packagePlatformTag(): string {
+  return `${process.platform}-${process.arch}`;
 }
 
 export type PackagedDaemonSpawnEnvOptions = {
@@ -475,10 +496,18 @@ class PackagedSidecarSupervisor implements PackagedSidecarHandle {
     switch (message.key) {
       case SIDECAR_EVENTS.PACKAGED_BUNDLE_STATUS:
         return await this.bundleStatus(message.payload.key);
+      case SIDECAR_EVENTS.PACKAGED_BUNDLE_LOCAL:
+        return await this.bundleLocal(message.payload.key);
+      case SIDECAR_EVENTS.PACKAGED_BUNDLE_FETCH:
+        return await this.bundleFetch(message.payload);
       case SIDECAR_EVENTS.PACKAGED_BUNDLE_ENSURE:
         return await this.bundleEnsure(message.payload.key);
       case SIDECAR_EVENTS.PACKAGED_BUNDLE_RESTART:
         return await this.bundleRestart(message.payload.key);
+      case SIDECAR_EVENTS.PACKAGED_BUNDLE_RESET:
+        return await this.bundleReset(message.payload.key);
+      case SIDECAR_EVENTS.PACKAGED_BUNDLE_CLEAR:
+        return await this.bundleClear(message.payload.key);
       case SIDECAR_EVENTS.PACKAGED_BUNDLE_SWITCH:
         return await this.bundleSwitch(message.payload);
       case SIDECAR_EVENTS.PACKAGED_BUNDLE_ACTIVATE:
@@ -673,14 +702,33 @@ class PackagedSidecarSupervisor implements PackagedSidecarHandle {
     };
   }
 
+  private async localSnapshot(key: string): Promise<PackagedBundleLocalSnapshot> {
+    const implementation = this.implementations.web;
+    return await readPackagedBundleLocalSnapshot({
+      activeSource: implementation.source === "bundle" ? "bundle" : "builtin",
+      ...(implementation.source === "bundle" && implementation.ref?.version != null
+        ? { activeVersion: implementation.ref.version }
+        : {}),
+      key,
+      paths: this.paths,
+    });
+  }
+
   private async operationResult(
     operation: PackagedBundleOperation,
     previous: PackagedBundleRuntimeSnapshot | undefined,
     key = PACKAGED_WEB_SIDECAR_BUNDLE_KEY,
+    extra: {
+      clear?: PackagedBundleClearSnapshot;
+      fetch?: PackagedBundleFetchSnapshot;
+    } = {},
   ): Promise<PackagedBundleOperationResult> {
     return {
       accepted: true,
       activation: await this.activationSnapshot(key),
+      ...(extra.clear == null ? {} : { clear: extra.clear }),
+      ...(extra.fetch == null ? {} : { fetch: extra.fetch }),
+      local: await this.localSnapshot(key),
       mode: "online",
       operation,
       ...(previous == null ? {} : { previous }),
@@ -719,7 +767,7 @@ class PackagedSidecarSupervisor implements PackagedSidecarHandle {
   }
 
   private async runExclusive(
-    operation: Exclude<PackagedBundleOperation, "status">,
+    operation: Exclude<PackagedBundleOperation, "local" | "status">,
     run: () => Promise<PackagedBundleOperationResult>,
   ): Promise<PackagedBundleOperationResult> {
     if (this.operation != null) {
@@ -738,6 +786,38 @@ class PackagedSidecarSupervisor implements PackagedSidecarHandle {
   private async bundleStatus(key: string): Promise<PackagedBundleOperationResult> {
     this.assertSupportedBundleKey(key);
     return await this.operationResult("status", undefined, key);
+  }
+
+  private async bundleLocal(key: string): Promise<PackagedBundleOperationResult> {
+    this.assertSupportedBundleKey(key);
+    return await this.operationResult("local", undefined, key);
+  }
+
+  private publicationUrlForKey(input: PackagedBundleFetchInput): string {
+    if (input.publicationUrl != null && input.publicationUrl.length > 0) return input.publicationUrl;
+    const direct = process.env[PACKAGED_BUNDLE_PUBLICATION_URL_ENV];
+    if (direct != null && direct.length > 0) return direct;
+    const origin = (process.env[PACKAGED_BUNDLE_PUBLIC_ORIGIN_ENV] ?? DEFAULT_BUNDLE_PUBLIC_ORIGIN).replace(/\/+$/, "");
+    const channel = defaultBundleChannel(this.options.bundleEpoch ?? this.options.appVersion);
+    return `${origin}/${PACKAGED_WEB_BUNDLE_PATH_KEY}/${channel}/latest/publication.json`;
+  }
+
+  private async bundleFetch(input: PackagedBundleFetchInput): Promise<PackagedBundleOperationResult> {
+    this.assertSupportedBundleKey(input.key);
+    return await this.runExclusive("fetch", async () => {
+      if (this.options.bundleEpoch == null) {
+        throw new Error("packaged bundle fetch requires host bundleEpoch");
+      }
+      const previous = this.runtimeSnapshot(input.key, null);
+      const fetched = await fetchPackagedRemoteBundle({
+        hostEpoch: this.options.bundleEpoch,
+        key: input.key,
+        paths: this.paths,
+        platform: packagePlatformTag(),
+        publicationUrl: this.publicationUrlForKey(input),
+      });
+      return await this.operationResult("fetch", previous, input.key, { fetch: fetched.fetch });
+    });
   }
 
   private async bundleEnsure(key: string): Promise<PackagedBundleOperationResult> {
@@ -763,6 +843,54 @@ class PackagedSidecarSupervisor implements PackagedSidecarHandle {
       await this.startWebFromActivation();
       this.webTransitionReason = null;
       return await this.operationResult("restart", previous, key);
+    });
+  }
+
+  private async bundleReset(key: string): Promise<PackagedBundleOperationResult> {
+    this.assertSupportedBundleKey(key);
+    return await this.runExclusive("reset", async () => {
+      const previous = this.runtimeSnapshot(key, null);
+      const activation = createPackagedBundleActivationFile({ web: "builtin" });
+      const candidate = await this.resolveCandidateImplementation(activation);
+      const needsTransition = this.implementations.web.source === "bundle" || !this.isWebRunning();
+      if (needsTransition) {
+        try {
+          this.webTransitionReason = "web-switching";
+          await this.closeWebChild();
+          await this.startWebWithImplementation(candidate);
+          this.webTransitionReason = null;
+        } catch (error) {
+          await this.closeWebChild().catch(() => undefined);
+          await this.startWebFromActivation().catch(() => undefined);
+          throw new Error(`web bundle reset failed: ${error instanceof Error ? error.message : String(error)}`);
+        }
+      }
+      await writePackagedBundleActivationFile({ activation, paths: this.paths });
+      return await this.operationResult("reset", previous, key);
+    });
+  }
+
+  private async bundleClear(key: string): Promise<PackagedBundleOperationResult> {
+    this.assertSupportedBundleKey(key);
+    return await this.runExclusive("clear", async () => {
+      const previous = this.runtimeSnapshot(key, null);
+      const activation = createPackagedBundleActivationFile({ web: "builtin" });
+      const candidate = await this.resolveCandidateImplementation(activation);
+      if (this.implementations.web.source === "bundle") {
+        try {
+          this.webTransitionReason = "web-switching";
+          await this.closeWebChild();
+          await this.startWebWithImplementation(candidate);
+          this.webTransitionReason = null;
+        } catch (error) {
+          await this.closeWebChild().catch(() => undefined);
+          await this.startWebFromActivation().catch(() => undefined);
+          throw new Error(`web bundle clear failed before deleting local bundles: ${error instanceof Error ? error.message : String(error)}`);
+        }
+      }
+      await writePackagedBundleActivationFile({ activation, paths: this.paths });
+      const clear = await clearPackagedBundleKey({ key, paths: this.paths });
+      return await this.operationResult("clear", previous, key, { clear });
     });
   }
 

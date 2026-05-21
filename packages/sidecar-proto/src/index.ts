@@ -90,8 +90,12 @@ export const SIDECAR_EVENTS = Object.freeze({
   INSPECT_STATUS: "inspect.status",
   INSPECT_UPDATE: "inspect.update",
   PACKAGED_BUNDLE_ACTIVATE: "packaged.bundle.activate",
+  PACKAGED_BUNDLE_CLEAR: "packaged.bundle.clear",
   PACKAGED_BUNDLE_ENSURE: "packaged.bundle.ensure",
+  PACKAGED_BUNDLE_FETCH: "packaged.bundle.fetch",
+  PACKAGED_BUNDLE_LOCAL: "packaged.bundle.local",
   PACKAGED_BUNDLE_RESTART: "packaged.bundle.restart",
+  PACKAGED_BUNDLE_RESET: "packaged.bundle.reset",
   PACKAGED_BUNDLE_STATUS: "packaged.bundle.status",
   PACKAGED_BUNDLE_SWITCH: "packaged.bundle.switch",
 } as const);
@@ -376,13 +380,21 @@ export const PACKAGED_BUNDLE_KEYS = Object.freeze({
 
 export type PackagedBundleOperation =
   | "activate"
+  | "clear"
   | "ensure"
+  | "fetch"
+  | "local"
   | "restart"
+  | "reset"
   | "status"
   | "switch";
 
 export type PackagedBundleTargetInput = {
   key: string;
+};
+
+export type PackagedBundleFetchInput = PackagedBundleTargetInput & {
+  publicationUrl?: string;
 };
 
 export type PackagedBundlePresentationSnapshot = {
@@ -427,6 +439,88 @@ export type PackagedBundleRuntimeSnapshot = {
   version?: string;
 };
 
+export type PackagedBundleLocalAliasSnapshot = {
+  label: string;
+  path: string;
+  publicationUrl?: string;
+  version: string;
+};
+
+export type PackagedBundleLocalEntrySnapshot =
+  | {
+      active: boolean;
+      key: string;
+      label: string;
+      path: "internal";
+      source: "internal";
+    }
+  | {
+      active: boolean;
+      aliases: PackagedBundleLocalAliasSnapshot[];
+      createdAt: string;
+      digest: {
+        algorithm: "sha256";
+        value: string;
+      };
+      key: string;
+      label: string;
+      path: string;
+      presentation?: PackagedBundlePresentationSnapshot;
+      publication?: {
+        channel: string;
+        digest?: {
+          algorithm: "sha256";
+          value: string;
+        };
+        pathKey: string;
+        url?: string;
+        version: string;
+      };
+      source: "public";
+      version: string;
+    };
+
+export type PackagedBundleLocalSnapshot = {
+  entries: PackagedBundleLocalEntrySnapshot[];
+  key: string;
+  settingsPath: string;
+  storePath: string;
+};
+
+export type PackagedBundleFetchSnapshot = {
+  artifact?: {
+    digest: {
+      algorithm: "sha256";
+      value: string;
+    };
+    size?: number;
+    url: string;
+  };
+  imported: boolean;
+  local: Extract<PackagedBundleLocalEntrySnapshot, { source: "public" }>;
+  publication: {
+    channel: string;
+    digest: {
+      algorithm: "sha256";
+      value: string;
+    };
+    pathKey: string;
+    url: string;
+    version: string;
+    versionOrTag: string;
+  };
+  selected: {
+    platform: string;
+    version: string;
+  };
+};
+
+export type PackagedBundleClearSnapshot = {
+  deleted: number;
+  key: string;
+  settingsCleared: boolean;
+};
+
 export type PackagedBundleActivationSnapshot =
   | {
       key: string;
@@ -451,6 +545,9 @@ export type PackagedBundleActivationSnapshot =
 export type PackagedBundleOperationResult = {
   accepted: true;
   activation?: PackagedBundleActivationSnapshot;
+  clear?: PackagedBundleClearSnapshot;
+  fetch?: PackagedBundleFetchSnapshot;
+  local?: PackagedBundleLocalSnapshot;
   mode: "online";
   operation: PackagedBundleOperation;
   previous?: PackagedBundleRuntimeSnapshot;
@@ -499,6 +596,16 @@ export type SidecarPackagedBundleStatusEventMessage = {
   payload: PackagedBundleTargetInput;
   type: typeof SIDECAR_MESSAGES.EVENT;
 };
+export type SidecarPackagedBundleLocalEventMessage = {
+  key: typeof SIDECAR_EVENTS.PACKAGED_BUNDLE_LOCAL;
+  payload: PackagedBundleTargetInput;
+  type: typeof SIDECAR_MESSAGES.EVENT;
+};
+export type SidecarPackagedBundleFetchEventMessage = {
+  key: typeof SIDECAR_EVENTS.PACKAGED_BUNDLE_FETCH;
+  payload: PackagedBundleFetchInput;
+  type: typeof SIDECAR_MESSAGES.EVENT;
+};
 export type SidecarPackagedBundleEnsureEventMessage = {
   key: typeof SIDECAR_EVENTS.PACKAGED_BUNDLE_ENSURE;
   payload: PackagedBundleTargetInput;
@@ -506,6 +613,16 @@ export type SidecarPackagedBundleEnsureEventMessage = {
 };
 export type SidecarPackagedBundleRestartEventMessage = {
   key: typeof SIDECAR_EVENTS.PACKAGED_BUNDLE_RESTART;
+  payload: PackagedBundleTargetInput;
+  type: typeof SIDECAR_MESSAGES.EVENT;
+};
+export type SidecarPackagedBundleResetEventMessage = {
+  key: typeof SIDECAR_EVENTS.PACKAGED_BUNDLE_RESET;
+  payload: PackagedBundleTargetInput;
+  type: typeof SIDECAR_MESSAGES.EVENT;
+};
+export type SidecarPackagedBundleClearEventMessage = {
+  key: typeof SIDECAR_EVENTS.PACKAGED_BUNDLE_CLEAR;
   payload: PackagedBundleTargetInput;
   type: typeof SIDECAR_MESSAGES.EVENT;
 };
@@ -528,8 +645,12 @@ export type SidecarEventMessage =
   | SidecarInspectUpdateEventMessage
   | SidecarDesktopExportPdfEventMessage
   | SidecarPackagedBundleStatusEventMessage
+  | SidecarPackagedBundleLocalEventMessage
+  | SidecarPackagedBundleFetchEventMessage
   | SidecarPackagedBundleEnsureEventMessage
   | SidecarPackagedBundleRestartEventMessage
+  | SidecarPackagedBundleResetEventMessage
+  | SidecarPackagedBundleClearEventMessage
   | SidecarPackagedBundleSwitchEventMessage
   | SidecarPackagedBundleActivateEventMessage;
 export type DesktopEvalMessage = { input: DesktopEvalInput; type: typeof SIDECAR_MESSAGES.EVAL };
@@ -795,6 +916,17 @@ function normalizePackagedBundleTargetInput(input: unknown, label: string): Pack
   return { key: normalizeNonEmptyString(value.key, `${label} key`) };
 }
 
+function normalizePackagedBundleFetchInput(input: unknown, label: string): PackagedBundleFetchInput {
+  const value = assertObject(input, label);
+  assertKnownKeys(value, ["key", "publicationUrl"], label);
+  return {
+    key: normalizeNonEmptyString(value.key, `${label} key`),
+    ...(value.publicationUrl == null ? {} : {
+      publicationUrl: normalizeNonEmptyString(value.publicationUrl, `${label} publicationUrl`),
+    }),
+  };
+}
+
 function normalizeBundleLocalizedText(input: unknown, label: string): Record<string, string> {
   const value = assertObject(input, label);
   const result: Record<string, string> = {};
@@ -892,6 +1024,18 @@ function normalizeSidecarEventMessage(input: unknown, label: string): SidecarEve
         payload: normalizePackagedBundleTargetInput(value.payload, `${label} payload`),
         type: SIDECAR_MESSAGES.EVENT,
       };
+    case SIDECAR_EVENTS.PACKAGED_BUNDLE_LOCAL:
+      return {
+        key,
+        payload: normalizePackagedBundleTargetInput(value.payload, `${label} payload`),
+        type: SIDECAR_MESSAGES.EVENT,
+      };
+    case SIDECAR_EVENTS.PACKAGED_BUNDLE_FETCH:
+      return {
+        key,
+        payload: normalizePackagedBundleFetchInput(value.payload, `${label} payload`),
+        type: SIDECAR_MESSAGES.EVENT,
+      };
     case SIDECAR_EVENTS.PACKAGED_BUNDLE_ENSURE:
       return {
         key,
@@ -899,6 +1043,18 @@ function normalizeSidecarEventMessage(input: unknown, label: string): SidecarEve
         type: SIDECAR_MESSAGES.EVENT,
       };
     case SIDECAR_EVENTS.PACKAGED_BUNDLE_RESTART:
+      return {
+        key,
+        payload: normalizePackagedBundleTargetInput(value.payload, `${label} payload`),
+        type: SIDECAR_MESSAGES.EVENT,
+      };
+    case SIDECAR_EVENTS.PACKAGED_BUNDLE_RESET:
+      return {
+        key,
+        payload: normalizePackagedBundleTargetInput(value.payload, `${label} payload`),
+        type: SIDECAR_MESSAGES.EVENT,
+      };
+    case SIDECAR_EVENTS.PACKAGED_BUNDLE_CLEAR:
       return {
         key,
         payload: normalizePackagedBundleTargetInput(value.payload, `${label} payload`),

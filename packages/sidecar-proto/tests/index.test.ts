@@ -130,6 +130,42 @@ describe("open-design sidecar contract", () => {
       type: "event",
     });
     expect(normalizeDesktopSidecarMessage({
+      key: SIDECAR_EVENTS.PACKAGED_BUNDLE_FETCH,
+      payload: { key: "od:sidecar:web", publicationUrl: "https://example.com/od-sidecar-web/beta/latest/publication.json" },
+      type: SIDECAR_MESSAGES.EVENT,
+    })).toEqual({
+      key: "packaged.bundle.fetch",
+      payload: { key: "od:sidecar:web", publicationUrl: "https://example.com/od-sidecar-web/beta/latest/publication.json" },
+      type: "event",
+    });
+    expect(normalizeDesktopSidecarMessage({
+      key: SIDECAR_EVENTS.PACKAGED_BUNDLE_LOCAL,
+      payload: { key: "od:sidecar:web" },
+      type: SIDECAR_MESSAGES.EVENT,
+    })).toEqual({
+      key: "packaged.bundle.local",
+      payload: { key: "od:sidecar:web" },
+      type: "event",
+    });
+    expect(normalizeDesktopSidecarMessage({
+      key: SIDECAR_EVENTS.PACKAGED_BUNDLE_RESET,
+      payload: { key: "od:sidecar:web" },
+      type: SIDECAR_MESSAGES.EVENT,
+    })).toEqual({
+      key: "packaged.bundle.reset",
+      payload: { key: "od:sidecar:web" },
+      type: "event",
+    });
+    expect(normalizeDesktopSidecarMessage({
+      key: SIDECAR_EVENTS.PACKAGED_BUNDLE_CLEAR,
+      payload: { key: "od:sidecar:web" },
+      type: SIDECAR_MESSAGES.EVENT,
+    })).toEqual({
+      key: "packaged.bundle.clear",
+      payload: { key: "od:sidecar:web" },
+      type: "event",
+    });
+    expect(normalizeDesktopSidecarMessage({
       key: SIDECAR_EVENTS.PACKAGED_BUNDLE_SWITCH,
       payload: {
         key: "od:sidecar:web",

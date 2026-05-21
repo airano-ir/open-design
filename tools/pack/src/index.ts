@@ -6,9 +6,13 @@ import {
   activatePackagedWebBundleOnline,
   activatePackagedBuiltinWebBundle,
   activatePackagedWebBundle,
+  clearPackagedWebBundle,
   ensurePackagedWebBundle,
+  fetchPackagedWebBundle,
+  localPackagedWebBundle,
   readPackagedWebBundleStatus,
   restartPackagedWebBundle,
+  resetPackagedWebBundle,
   switchPackagedWebBundle,
   switchPackagedWebBundlePublication,
   switchPackagedWebBundlePublicationUrl,
@@ -272,7 +276,7 @@ addBuildOptions(addSharedOptions(cli.command("linux <action>", "Linux packaging 
     }
   });
 
-cli.command("bundle <action>", "Packaged web bundle commands: activate|builtin|status|ensure|restart|switch")
+cli.command("bundle <action>", "Packaged web bundle commands: activate|builtin|status|local|fetch|ensure|restart|reset|clear|switch")
   .option("--cache-dir <path>", "tools-pack cache directory")
   .option("--dir <path>", "tools-pack root directory")
   .option("--json", "print JSON")
@@ -281,7 +285,7 @@ cli.command("bundle <action>", "Packaged web bundle commands: activate|builtin|s
   .option("--builtin", "target the built-in packaged web runtime")
   .option("--online", "send activation/builtin through the running packaged IPC instead of writing the offline pointer")
   .option("--publication <pathKey/channel/version>", "switch to a publication record, e.g. od-sidecar-web/beta/latest")
-  .option("--publication-url <url>", "switch to a remote publication.json URL and download its selected artifact")
+  .option("--publication-url <url>", "remote publication.json URL for fetch or switch")
   .option("--registry-base-path <path>", "bundle publication registry base path")
   .option("--bundle-version <version>", "web bundle version <epoch>.web.M")
   .action(async (action: string, options: BundleCliOptions) => {
@@ -309,8 +313,22 @@ cli.command("bundle <action>", "Packaged web bundle commands: activate|builtin|s
         case "ensure":
           printJson(await ensurePackagedWebBundle(config));
           return;
+        case "local":
+          printJson(await localPackagedWebBundle(config));
+          return;
+        case "fetch":
+          printJson(await fetchPackagedWebBundle(config, {
+            publicationUrl: options.publicationUrl,
+          }));
+          return;
         case "restart":
           printJson(await restartPackagedWebBundle(config));
+          return;
+        case "reset":
+          printJson(await resetPackagedWebBundle(config));
+          return;
+        case "clear":
+          printJson(await clearPackagedWebBundle(config));
           return;
         case "status":
           printJson(await readPackagedWebBundleStatus(config));

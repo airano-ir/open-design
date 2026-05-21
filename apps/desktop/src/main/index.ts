@@ -16,6 +16,9 @@ import {
   type DesktopExportPdfInput,
   type DesktopScreenshotInput,
   type DesktopUpdateInput,
+  type PackagedBundleLocalEntrySnapshot,
+  type PackagedBundleOperationResult,
+  type PackagedBundlePresentationSnapshot,
   type RegisterDesktopAuthResult,
   type SidecarEventMessage,
   type SidecarStamp,
@@ -153,6 +156,208 @@ function buildUpdateMenuItems(updater: DesktopUpdater): MenuItemConstructorOptio
   ];
 }
 
+const DESKTOP_WEB_BUNDLE_KEY = "od:sidecar:web";
+
+type DesktopBundleMenuController = {
+  clear(key: string): Promise<PackagedBundleOperationResult>;
+  fetch(key: string): Promise<PackagedBundleOperationResult>;
+  local(key: string): Promise<PackagedBundleOperationResult>;
+  reset(key: string): Promise<PackagedBundleOperationResult>;
+  status(key: string): Promise<PackagedBundleOperationResult>;
+  switch(input: {
+    key: string;
+    presentation?: PackagedBundlePresentationSnapshot;
+    version: string;
+  }): Promise<PackagedBundleOperationResult>;
+};
+
+type DesktopBundleMenuState = {
+  busy: boolean;
+  error: string | null;
+  result: PackagedBundleOperationResult | null;
+};
+
+function createDesktopBundleMenuController(
+  handler: DesktopMainOptions["handleSidecarEvent"],
+): DesktopBundleMenuController | null {
+  if (handler == null) return null;
+  const sidecarHandler = handler;
+
+  async function request(message: SidecarEventMessage): Promise<PackagedBundleOperationResult> {
+    const result = await sidecarHandler(message);
+    if (result == null || typeof result !== "object") {
+      throw new Error("packaged bundle IPC did not return a result");
+    }
+    return result as PackagedBundleOperationResult;
+  }
+
+  return {
+    clear: (key) => request({
+      key: SIDECAR_EVENTS.PACKAGED_BUNDLE_CLEAR,
+      payload: { key },
+      type: SIDECAR_MESSAGES.EVENT,
+    }),
+    fetch: (key) => request({
+      key: SIDECAR_EVENTS.PACKAGED_BUNDLE_FETCH,
+      payload: { key },
+      type: SIDECAR_MESSAGES.EVENT,
+    }),
+    local: (key) => request({
+      key: SIDECAR_EVENTS.PACKAGED_BUNDLE_LOCAL,
+      payload: { key },
+      type: SIDECAR_MESSAGES.EVENT,
+    }),
+    reset: (key) => request({
+      key: SIDECAR_EVENTS.PACKAGED_BUNDLE_RESET,
+      payload: { key },
+      type: SIDECAR_MESSAGES.EVENT,
+    }),
+    status: (key) => request({
+      key: SIDECAR_EVENTS.PACKAGED_BUNDLE_STATUS,
+      payload: { key },
+      type: SIDECAR_MESSAGES.EVENT,
+    }),
+    switch: (input) => request({
+      key: SIDECAR_EVENTS.PACKAGED_BUNDLE_SWITCH,
+      payload: {
+        key: input.key,
+        ...(input.presentation == null ? {} : { presentation: input.presentation }),
+        source: "bundle",
+        version: input.version,
+      },
+      type: SIDECAR_MESSAGES.EVENT,
+    }),
+  };
+}
+
+function bundleStatusDetail(result: PackagedBundleOperationResult): string {
+  const runtime = result.runtime;
+  const local = result.local;
+  const publicCount = local?.entries.filter((entry) => entry.source === "public").length ?? 0;
+  return [
+    `Source: ${runtime.source}`,
+    `State: ${runtime.state}`,
+    `Version: ${runtime.version ?? "internal"}`,
+    `Host epoch: ${runtime.hostEpoch ?? "unknown"}`,
+    `PID: ${runtime.pid ?? "none"}`,
+    `URL: ${runtime.url ?? "unavailable"}`,
+    `Local public bundles: ${publicCount}`,
+    ...(runtime.fallbackReason == null ? [] : [`Fallback: ${runtime.fallbackReason}`]),
+  ].join("\n");
+}
+
+async function showBundleStatusDialog(result: PackagedBundleOperationResult): Promise<void> {
+  await dialog.showMessageBox({
+    buttons: ["OK"],
+    detail: bundleStatusDetail(result),
+    message: "Open Design bundle status",
+    type: "info",
+  });
+}
+
+function publicBundleLabel(entry: Extract<PackagedBundleLocalEntrySnapshot, { source: "public" }>): string {
+  const alias = entry.aliases.find((candidate) => candidate.label === "latest") ?? entry.aliases[0];
+  const prefix = entry.active ? "✓ " : "";
+  return `${prefix}${alias?.path ?? entry.path}`;
+}
+
+function buildBundleMenuItems(input: {
+  action: (run: () => Promise<PackagedBundleOperationResult>, options?: { dialog?: "status" }) => void;
+  controller: DesktopBundleMenuController;
+  refresh: () => void;
+  state: DesktopBundleMenuState;
+}): MenuItemConstructorOptions[] {
+  const localEntries = input.state.result?.local?.entries ?? [];
+  const publicEntries = localEntries.filter((entry): entry is Extract<PackagedBundleLocalEntrySnapshot, { source: "public" }> =>
+    entry.source === "public",
+  );
+  const internal = localEntries.find((entry) => entry.source === "internal");
+  const busy = input.state.busy || input.state.result?.runtime.operation != null;
+  return [
+    {
+      enabled: !busy,
+      label: "Status",
+      click() {
+        input.action(() => input.controller.status(DESKTOP_WEB_BUNDLE_KEY), { dialog: "status" });
+      },
+    },
+    {
+      enabled: !busy,
+      label: "Fetch",
+      click() {
+        input.action(() => input.controller.fetch(DESKTOP_WEB_BUNDLE_KEY));
+      },
+    },
+    {
+      enabled: !busy,
+      label: "Local",
+      submenu: [
+        {
+          enabled: !busy,
+          label: `${internal?.active === true ? "✓ " : ""}internal`,
+          click() {
+            input.action(() => input.controller.reset(DESKTOP_WEB_BUNDLE_KEY));
+          },
+        },
+        { type: "separator" },
+        ...(
+          publicEntries.length === 0
+            ? [{ enabled: false, label: "No public bundles" } satisfies MenuItemConstructorOptions]
+            : publicEntries.flatMap((entry): MenuItemConstructorOptions[] => [
+                {
+                  enabled: !busy,
+                  label: publicBundleLabel(entry),
+                  click() {
+                    input.action(() => input.controller.switch({
+                      key: DESKTOP_WEB_BUNDLE_KEY,
+                      ...(entry.presentation == null ? {} : { presentation: entry.presentation }),
+                      version: entry.version,
+                    }));
+                  },
+                },
+                ...entry.aliases.map((alias): MenuItemConstructorOptions => ({
+                  enabled: false,
+                  label: `  ${alias.path}`,
+                })),
+              ])
+        ),
+      ],
+    },
+    { type: "separator" },
+    {
+      enabled: !busy,
+      label: "Reset",
+      click() {
+        input.action(() => input.controller.reset(DESKTOP_WEB_BUNDLE_KEY));
+      },
+    },
+    {
+      enabled: !busy,
+      label: `Clear ${DESKTOP_WEB_BUNDLE_KEY}`,
+      click() {
+        input.action(() => input.controller.clear(DESKTOP_WEB_BUNDLE_KEY));
+      },
+    },
+    ...(input.state.error == null
+      ? []
+      : [
+          { type: "separator" as const },
+          {
+            enabled: false,
+            label: input.state.error,
+          },
+        ]),
+    { type: "separator" },
+    {
+      enabled: !busy,
+      label: "Refresh",
+      click() {
+        input.refresh();
+      },
+    },
+  ];
+}
+
 async function showUpdateResultDialog(updater: DesktopUpdater, status = updater.snapshot()): Promise<void> {
   if (!status.enabled) return;
   if (status.state === "downloaded") {
@@ -188,9 +393,56 @@ async function showUpdateResultDialog(updater: DesktopUpdater, status = updater.
   }
 }
 
-function installDesktopMenu(updater: DesktopUpdater): () => void {
+function installDesktopMenu(updater: DesktopUpdater, bundleController: DesktopBundleMenuController | null): () => void {
+  const bundleState: DesktopBundleMenuState = {
+    busy: false,
+    error: null,
+    result: null,
+  };
+  let disposed = false;
+
   const rebuild = () => {
     const updateItems = buildUpdateMenuItems(updater);
+    const bundleItems = bundleController == null
+      ? []
+      : buildBundleMenuItems({
+          action(run, options) {
+            bundleState.busy = true;
+            bundleState.error = null;
+            rebuild();
+            void run()
+              .then(async (result) => {
+                bundleState.result = result;
+                if (options?.dialog === "status") await showBundleStatusDialog(result);
+              })
+              .catch((error: unknown) => {
+                bundleState.error = error instanceof Error ? error.message : String(error);
+                dialog.showErrorBox("Open Design bundle action failed", bundleState.error);
+              })
+              .finally(() => {
+                bundleState.busy = false;
+                rebuild();
+              });
+          },
+          controller: bundleController,
+          refresh() {
+            bundleState.busy = true;
+            bundleState.error = null;
+            rebuild();
+            void bundleController.local(DESKTOP_WEB_BUNDLE_KEY)
+              .then((result) => {
+                bundleState.result = result;
+              })
+              .catch((error: unknown) => {
+                bundleState.error = error instanceof Error ? error.message : String(error);
+              })
+              .finally(() => {
+                bundleState.busy = false;
+                rebuild();
+              });
+          },
+          state: bundleState,
+        });
     const template: MenuItemConstructorOptions[] = [
       ...(process.platform === "darwin"
         ? [
@@ -257,6 +509,14 @@ function installDesktopMenu(updater: DesktopUpdater): () => void {
             : [{ role: "close" as const }]),
         ],
       },
+      ...(bundleController == null
+        ? []
+        : [
+            {
+              label: "Bundle",
+              submenu: bundleItems,
+            },
+          ]),
       {
         label: "Help",
         submenu: [
@@ -273,7 +533,28 @@ function installDesktopMenu(updater: DesktopUpdater): () => void {
   };
 
   rebuild();
-  return updater.subscribe(rebuild);
+  if (bundleController != null) {
+    bundleState.busy = true;
+    void bundleController.local(DESKTOP_WEB_BUNDLE_KEY)
+      .then((result) => {
+        if (disposed) return;
+        bundleState.result = result;
+      })
+      .catch((error: unknown) => {
+        if (disposed) return;
+        bundleState.error = error instanceof Error ? error.message : String(error);
+      })
+      .finally(() => {
+        if (disposed) return;
+        bundleState.busy = false;
+        rebuild();
+      });
+  }
+  const unsubscribeUpdater = updater.subscribe(rebuild);
+  return () => {
+    disposed = true;
+    unsubscribeUpdater();
+  };
 }
 
 const REGISTER_DESKTOP_AUTH_RETRY_DELAYS_MS = [120, 240, 480, 960, 1500];
@@ -413,7 +694,8 @@ export async function runDesktopMain(
     requestQuit: shutdownAndExit,
     updater,
   });
-  disposeMenu = installDesktopMenu(updater);
+  const bundleMenuController = createDesktopBundleMenuController(options.handleSidecarEvent);
+  disposeMenu = installDesktopMenu(updater, bundleMenuController);
   updateScheduler = createDesktopUpdaterScheduler(updater, {
     backoffInitialMs: updater.config.checkBackoffInitialMs,
     backoffMaxMs: updater.config.checkBackoffMaxMs,
