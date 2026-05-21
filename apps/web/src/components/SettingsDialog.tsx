@@ -4884,7 +4884,9 @@ function MediaProvidersSection({
         setReloadNotice({ kind: 'error', message: t('settings.mediaProviderReloadError') });
         return;
       }
-      setCfg((curr) => mergeDaemonMediaProviders(curr, next));
+      setCfg((curr) => mergeDaemonMediaProviders(curr, next, {
+        preservePendingLocalSecretEdits: true,
+      }));
       setReloadNotice({ kind: 'success', message: t('settings.mediaProviderReloadSuccess') });
     } finally {
       setReloadRunning(false);

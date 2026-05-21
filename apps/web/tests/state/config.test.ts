@@ -244,6 +244,7 @@ describe('mergeDaemonMediaProviders', () => {
           baseUrl: 'https://daemon.example/v1',
         },
       },
+      { preservePendingLocalSecretEdits: true },
     );
 
     expect(merged.mediaProviders).toEqual({
@@ -280,6 +281,7 @@ describe('mergeDaemonMediaProviders', () => {
           baseUrl: 'https://daemon-openai.example/v1',
         },
       },
+      { preservePendingLocalSecretEdits: true },
     );
 
     expect(merged.mediaProviders).toEqual({
@@ -341,6 +343,7 @@ describe('mergeDaemonMediaProviders', () => {
           baseUrl: 'https://daemon.example/v1',
         },
       },
+      { preservePendingLocalSecretEdits: true },
     );
 
     expect(merged.mediaProviders).toEqual({
@@ -385,6 +388,37 @@ describe('mergeDaemonMediaProviders', () => {
         apiKeyTail: '9876',
         baseUrl: 'https://daemon.example/v1',
         model: 'gpt-image-1-mini',
+      },
+    });
+  });
+
+  it('prefers daemon-backed media provider state during startup reloads by default', () => {
+    const merged = mergeDaemonMediaProviders(
+      {
+        ...DEFAULT_CONFIG,
+        mediaProviders: {
+          openai: {
+            apiKey: 'sk-stale-local',
+            baseUrl: 'https://local-stale.example/v1',
+          },
+        },
+      },
+      {
+        openai: {
+          apiKey: '',
+          apiKeyConfigured: true,
+          apiKeyTail: '9876',
+          baseUrl: 'https://daemon.example/v1',
+        },
+      },
+    );
+
+    expect(merged.mediaProviders).toEqual({
+      openai: {
+        apiKey: '',
+        apiKeyConfigured: true,
+        apiKeyTail: '9876',
+        baseUrl: 'https://daemon.example/v1',
       },
     });
   });

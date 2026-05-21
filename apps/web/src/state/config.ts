@@ -680,6 +680,9 @@ export function mergeDaemonConfig(
 export function mergeDaemonMediaProviders(
   localConfig: AppConfig,
   daemonProviders: AppConfig['mediaProviders'] | null,
+  options?: {
+    preservePendingLocalSecretEdits?: boolean;
+  },
 ): AppConfig {
   if (daemonProviders == null) {
     return { ...localConfig };
@@ -699,7 +702,8 @@ export function mergeDaemonMediaProviders(
     if (!isStoredMediaProviderEntryPresent(daemonEntry)) continue;
     const localEntry = mediaProviders[providerId];
     const preserveLocalPendingEdit = Boolean(
-      hasRecoverableLocalMediaProviderFields(localEntry)
+      options?.preservePendingLocalSecretEdits
+      && hasRecoverableLocalMediaProviderFields(localEntry)
       && hasUnsavedLocalMediaProviderSecret(localEntry),
     );
     mediaProviders[providerId] = preserveLocalPendingEdit
