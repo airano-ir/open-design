@@ -195,6 +195,7 @@ import { observePendingInstallerApplyAttempts } from './update-apply-observation
 import {
   agentIdToTracking,
   deriveConfigureGlobals,
+  type ObservabilityEventRequest,
 } from '@open-design/contracts/analytics';
 import {
   redactSecrets,
@@ -4295,6 +4296,69 @@ export async function startServer({
         installationId: null,
       });
     }
+  });
+
+  // Cross-process safety-event bridge. Used by:
+  //   - Electron main process (renderer crash via render-process-gone)
+  //   - Any future helper / sidecar that needs to report a safety event
+  //     without owning its own posthog-node client
+  //
+  // The route DOES NOT check the user's analytics consent: this is the
+  // same "safety telemetry always flows" contract the web error-tracking
+  // module relies on. If POSTHOG_KEY is not set on the daemon (fork
+  // builds), captureSafety is a no-op on NOOP_SERVICE.
+  app.post('/api/observability/event', express.json({ limit: '64kb' }), (req, res) => {
+    const body = (req.body ?? {}) as Partial<ObservabilityEventRequest>;
+    const eventName = typeof body.event === 'string' ? body.event.trim() : '';
+    if (!eventName) {
+      res.status(400).json({ error: 'missing or invalid `event` field' });
+      return;
+    }
+    const properties =
+      body.properties != null && typeof body.properties === 'object' && !Array.isArray(body.properties)
+        ? (body.properties as Record<string, unknown>)
+        : {};
+    analyticsService.captureSafety({
+      eventName,
+      appVersion: cachedAppVersion?.version ?? '0.0.0',
+      properties,
+    });
+    res.json({ ok: true });
+  });
+
+  // Daemon-side uncaught errors. Without these, a crash in any daemon
+  // request handler or background task leaves no PostHog signal — the
+  // user sees a 500 (or worse, a connection drop) and we see nothing.
+  // Both listeners install AFTER the analyticsService is created so the
+  // captureSafety dispatch path is guaranteed to be ready.
+  process.on('uncaughtException', (error) => {
+    analyticsService.captureSafety({
+      eventName: 'daemon_uncaught_exception',
+      appVersion: cachedAppVersion?.version ?? '0.0.0',
+      properties: {
+        error_message: error?.message ?? String(error),
+        error_name: error?.name ?? 'Error',
+        // Stack truncation: 8 KB ceiling to keep the ingest payload bounded
+        // even when the stack contains huge native frames. Most actionable
+        // stacks fit in well under 2 KB.
+        error_stack: typeof error?.stack === 'string' ? error.stack.slice(0, 8192) : undefined,
+      },
+    });
+    // Re-throw is NOT what we want here — Node's default unhandled
+    // exception behavior is to exit. We log + dispatch and let the
+    // process die naturally so a supervisor restarts it cleanly.
+  });
+  process.on('unhandledRejection', (reason) => {
+    const asError = reason instanceof Error ? reason : null;
+    analyticsService.captureSafety({
+      eventName: 'daemon_unhandled_rejection',
+      appVersion: cachedAppVersion?.version ?? '0.0.0',
+      properties: {
+        error_message: asError?.message ?? (typeof reason === 'string' ? reason : String(reason)),
+        error_name: asError?.name ?? 'NonErrorRejection',
+        error_stack: typeof asError?.stack === 'string' ? asError.stack.slice(0, 8192) : undefined,
+      },
+    });
   });
 
   // Tracks runs whose completion has already been forwarded to Langfuse so

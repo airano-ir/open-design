@@ -90,11 +90,29 @@ export interface AnalyticsService {
     properties: Record<string, unknown>;
     insertId: string;
   }): void;
+  /**
+   * Safety / reliability events (renderer crashes, daemon uncaught errors,
+   * SSE health, etc.) that intentionally BYPASS the user's analytics
+   * consent toggle. The product policy is: we always retain ground-truth
+   * stability data even for opted-out users — the user-facing consent copy
+   * in Settings → Privacy must call this out.
+   *
+   * Falls back to a synthetic distinctId when the installationId is not
+   * yet stamped (first-launch or fork builds without an app-config file).
+   */
+  captureSafety(args: {
+    eventName: string;
+    distinctId?: string;
+    appVersion: string;
+    properties: Record<string, unknown>;
+    insertId?: string;
+  }): void;
   shutdown(): Promise<void>;
 }
 
 const NOOP_SERVICE: AnalyticsService = {
   capture: () => undefined,
+  captureSafety: () => undefined,
   shutdown: async () => undefined,
 };
 
@@ -165,6 +183,39 @@ export function createAnalyticsService(args: {
         }
       })();
     },
+    captureSafety: ({ eventName, distinctId, appVersion, properties, insertId }) => {
+      // No consent re-check here — that's the entire point of this surface.
+      // We still fall back gracefully when the installationId is missing
+      // (cold start before the daemon has stamped one in app-config) by
+      // synthesizing an anonymous distinct id rooted at the process boot.
+      const resolvedInsertId = insertId ?? randomInsertId();
+      void (async () => {
+        try {
+          const resolvedDistinctId =
+            distinctId && distinctId.length > 0
+              ? distinctId
+              : await readInstallationIdSafe(args.dataDir);
+          client.capture({
+            distinctId: resolvedDistinctId,
+            event: eventName,
+            properties: {
+              ...properties,
+              event_id: resolvedInsertId,
+              event_schema_version: EVENT_SCHEMA_VERSION,
+              ui_version: appVersion,
+              app_version: appVersion,
+              device_id: resolvedDistinctId,
+              client_type: 'daemon',
+              capture_source: 'daemon/safety',
+              $insert_id: resolvedInsertId,
+            },
+          });
+        } catch {
+          // Capture failures must never propagate. The whole point of this
+          // path is best-effort observability into a degraded state.
+        }
+      })();
+    },
     shutdown: async () => {
       try {
         await client.shutdown();
@@ -173,6 +224,24 @@ export function createAnalyticsService(args: {
       }
     },
   };
+}
+
+const SYNTHETIC_DISTINCT_ID = `daemon-anon-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+
+async function readInstallationIdSafe(dataDir: string): Promise<string> {
+  try {
+    const cfg = await readAppConfig(dataDir);
+    if (typeof cfg.installationId === 'string' && cfg.installationId.length > 0) {
+      return cfg.installationId;
+    }
+  } catch {
+    // fall through to synthetic id
+  }
+  return SYNTHETIC_DISTINCT_ID;
+}
+
+function randomInsertId(): string {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 // Re-export so server.ts and route handlers don't need a second import
