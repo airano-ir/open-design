@@ -45,6 +45,30 @@ describe('/api/orbit/run', () => {
     });
   });
 
+  it('rejects non-object request bodies with HTTP 400', async () => {
+    const arrayResponse = await fetch(`${baseUrl}/api/orbit/run`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify([]),
+    });
+
+    expect(arrayResponse.status).toBe(400);
+    await expect(arrayResponse.json()).resolves.toEqual({
+      error: 'orbit run request body must be an object',
+    });
+
+    const stringResponse = await fetch(`${baseUrl}/api/orbit/run`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify('zh-CN'),
+    });
+
+    expect(stringResponse.status).toBe(400);
+    await expect(stringResponse.json()).resolves.toEqual({
+      error: 'orbit run request body must be an object',
+    });
+  });
+
   it('rejects empty-string locales with HTTP 400', async () => {
     const response = await fetch(`${baseUrl}/api/orbit/run`, {
       method: 'POST',

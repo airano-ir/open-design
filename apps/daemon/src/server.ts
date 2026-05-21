@@ -264,7 +264,7 @@ import {
   setToken,
 } from './mcp-tokens.js';
 import { agentCliEnvForAgent, readAppConfig, readPluginEnvKnobs, writeAppConfig } from './app-config.js';
-import { OrbitService, formatLocalProjectTimestamp, renderOrbitTemplateSystemPrompt } from './orbit.js';
+import { OrbitService, formatLocalProjectTimestamp, parseOrbitRunRequestBody, renderOrbitTemplateSystemPrompt } from './orbit.js';
 import { buildOrbitNoLiveArtifactSummary } from './orbit-agent-summary.js';
 import {
   RoutineService,
@@ -2953,6 +2953,18 @@ export async function startServer({
 
   const app = express();
   app.use(express.json({ limit: '4mb' }));
+  app.use((err, req, res, next) => {
+    if (
+      req.path === '/api/orbit/run' &&
+      typeof err?.status === 'number' &&
+      err.status === 400 &&
+      typeof err?.body === 'string' &&
+      /^[\s"]|^[0-9-]|^(true|false|null)/.test(err.body)
+    ) {
+      return res.status(400).json({ error: 'orbit run request body must be an object' });
+    }
+    return next(err);
+  });
 
   // Plan §3.K1 — bearer-token middleware.
   //
@@ -8477,14 +8489,7 @@ export async function startServer({
       return res.status(403).json({ error: 'cross-origin request rejected' });
     }
     try {
-      const locale = (() => {
-        if (!req.body || typeof req.body !== 'object' || !('locale' in req.body)) return undefined;
-        const locale = (req.body as { locale?: unknown }).locale;
-        if (locale === null || typeof locale === 'string') return locale;
-        const error = new Error('orbit run locale must be a string or null') as Error & { status: number };
-        error.status = 400;
-        throw error;
-      })();
+      const { locale } = parseOrbitRunRequestBody(req.body);
       res.json(await orbitService.start('manual', { locale }));
     } catch (err) {
       const status = typeof err === 'object' && err && 'status' in err && typeof err.status === 'number'

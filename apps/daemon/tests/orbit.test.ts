@@ -8,6 +8,7 @@ import {
   buildOrbitPrompt,
   buildOrbitSystemPrompt,
   OrbitService,
+  parseOrbitRunRequestBody,
   renderOrbitTemplateSystemPrompt,
   type OrbitRunHandler,
   type OrbitTemplateSelection,
@@ -198,6 +199,38 @@ describe('OrbitService', () => {
         await new Promise((resolve) => setTimeout(resolve, 0));
         status = await service.status();
       }
+      expect(status.lastRun?.markdown).toContain('# Orbit 每日活动摘要');
+      expect(status.lastRun?.markdown).toContain('生成时间:');
+      expect(status.lastRun?.markdown).toContain('- 摘要: Agent 运行成功。');
+      expect(status.lastRun?.markdown).not.toContain('# Daily Orbit Activity Summary');
+      expect(status.lastRun?.markdown).not.toContain('Agent run succeeded.');
+    } finally {
+      await rm(dataDir, { recursive: true, force: true });
+    }
+  });
+
+  it('keeps the persisted summary scaffold in English for default-locale runs', async () => {
+    const dataDir = await mkdtemp(path.join(os.tmpdir(), 'orbit-test-'));
+    try {
+      const service = new OrbitService(dataDir);
+      service.setRunHandler(async () => ({
+        projectId: 'project-1',
+        agentRunId: 'agent-1',
+        completion: Promise.resolve({
+          agentRunId: 'agent-1',
+          status: 'succeeded',
+        }),
+      }));
+
+      await service.start('manual');
+
+      let status = await service.status();
+      for (let attempt = 0; attempt < 10 && status.running; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        status = await service.status();
+      }
+      expect(status.lastRun?.markdown).toContain('# Daily Orbit Activity Summary');
+      expect(status.lastRun?.markdown).toContain('Generated:');
     } finally {
       await rm(dataDir, { recursive: true, force: true });
     }
@@ -782,5 +815,12 @@ describe('OrbitService', () => {
     } finally {
       await rm(dataDir, { recursive: true, force: true });
     }
+  });
+});
+
+describe('parseOrbitRunRequestBody', () => {
+  it('rejects non-object bodies', () => {
+    expect(() => parseOrbitRunRequestBody([])).toThrowError('orbit run request body must be an object');
+    expect(() => parseOrbitRunRequestBody('zh-CN')).toThrowError('orbit run request body must be an object');
   });
 });

@@ -1,4 +1,5 @@
 import type { Express } from 'express';
+import { parseOrbitRunRequestBody } from './orbit.js';
 import type { RouteDeps } from './server-context.js';
 
 export interface RegisterMediaRoutesDeps extends RouteDeps<'db' | 'http' | 'paths' | 'ids' | 'media' | 'appConfig' | 'orbit' | 'nativeDialogs' | 'projectStore' | 'projectFiles' | 'conversations' | 'research'> {}
@@ -17,15 +18,6 @@ export function registerMediaRoutes(app: Express, ctx: RegisterMediaRoutesDeps) 
   const { insertConversation, upsertMessage } = ctx.conversations;
   const { searchResearch, ResearchError } = ctx.research;
   const getResolvedPort = () => resolvedPortRef.current;
-
-  function parseOrbitRunLocale(body: unknown): string | null | undefined {
-    if (!body || typeof body !== 'object' || !('locale' in body)) return undefined;
-    const locale = (body as { locale?: unknown }).locale;
-    if (locale === null || typeof locale === 'string') return locale;
-    const error = new Error('orbit run locale must be a string or null') as Error & { status: number };
-    error.status = 400;
-    throw error;
-  }
 
   app.get('/api/media/models', (_req, res) => {
     res.json({
@@ -125,7 +117,7 @@ export function registerMediaRoutes(app: Express, ctx: RegisterMediaRoutesDeps) 
       return res.status(403).json({ error: 'cross-origin request rejected' });
     }
     try {
-      const locale = parseOrbitRunLocale(req.body);
+      const { locale } = parseOrbitRunRequestBody(req.body);
       res.json(await orbitService.start('manual', { locale }));
     } catch (err: any) {
       const status = typeof err?.status === 'number' ? err.status : 500;
