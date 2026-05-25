@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-25T02:42:05.226Z",
+  "generatedAt": "2026-05-25T03:18:29.291Z",
   "contributors": {
     "1115052994": {
       "lastAnnouncedTier": "spark",
@@ -577,11 +577,11 @@
       "lastAnnouncedAt": "2026-05-15T07:15:43.582Z"
     },
     "portseif": {
-      "lastAnnouncedTier": "signal",
-      "lastKnownScore": 142,
-      "lastCheckedAt": "2026-05-24T14:59:10.880Z",
+      "lastAnnouncedTier": "node",
+      "lastKnownScore": 158,
+      "lastCheckedAt": "2026-05-25T03:18:29.291Z",
       "scoreVersion": "weighted-v1",
-      "lastAnnouncedAt": "2026-05-15T07:50:54.781Z"
+      "lastAnnouncedAt": "2026-05-25T03:18:29.291Z"
     },
     "sondh0127": {
       "lastAnnouncedTier": "spark",
