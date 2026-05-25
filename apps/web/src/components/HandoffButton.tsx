@@ -177,13 +177,15 @@ export function HandoffButton({ projectId, onRequestRevealInFinder }: Props) {
         >
           {primary ? (
             <>
-              <span className="handoff-code-glyph" aria-hidden>&lt;/&gt;</span>
-              <span className="handoff-trigger-label">{t('handoff.openAction')}</span>
+              <EditorIcon editorId={primary.id} size={20} />
+              <span className="handoff-trigger-label sr-only">
+                {primaryTitle}
+              </span>
             </>
           ) : (
             <>
-              <span className="handoff-code-glyph" aria-hidden>&lt;/&gt;</span>
-              <span className="handoff-trigger-label">{t('handoff.openAction')}</span>
+              <EditorIcon editorId="finder" size={20} />
+              <span className="handoff-trigger-label sr-only">{primaryTitle}</span>
             </>
           )}
         </button>

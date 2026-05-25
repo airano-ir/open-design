@@ -1519,10 +1519,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 58px;
+  width: 32px;
+  min-width: 32px;
   height: 30px;
-  gap: 5px;
-  padding: 0 8px;
+  gap: 0;
+  padding: 0;
   border: 0;
   background: transparent;
   color: var(--text);
@@ -1560,13 +1561,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 160px;
-}
-.app .handoff-code-glyph {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--text);
 }
 .app .handoff-caret {
   display: inline-flex;
