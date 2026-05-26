@@ -38,6 +38,7 @@ describe('AMR account failure classification', () => {
   it('does not classify non-billing throttling as AMR balance errors', () => {
     expect(classifyAmrAccountFailure('HTTP 429 rate limit reached')).toBeNull();
     expect(classifyAmrAccountFailure('quota exceeded')).toBeNull();
+    expect(classifyAmrAccountFailure('temporary wallet balance lookup outage')).toBeNull();
   });
 
   it('classifies expired token, invalid session, and missing login text as AMR auth errors', () => {

@@ -2038,14 +2038,22 @@ export function ProjectView({
               onProjectsRefresh();
             },
             onError: (err) => {
+              const amrFailureText = amrAccountFailureText(err);
               textBuffer.flush();
               textBuffer.cancel();
               unregisterTextBuffer();
-              setError(err.message);
-              appendAssistantErrorEvent(message.id, err.message);
+              setError(amrFailureText ?? err.message);
+              appendAssistantErrorEvent(message.id, amrFailureText ?? err.message);
               updateMessageById(
                 message.id,
-                (prev) => ({ ...prev, runStatus: 'failed', endedAt: prev.endedAt ?? Date.now() }),
+                (prev) => ({
+                  ...prev,
+                  runStatus: 'failed',
+                  endedAt: prev.endedAt ?? Date.now(),
+                  events: amrFailureText
+                    ? appendAmrFailureTextEvent(prev.events ?? [], amrFailureText)
+                    : prev.events,
+                }),
                 true,
               );
               completedReattachRunsRef.current.add(runId);

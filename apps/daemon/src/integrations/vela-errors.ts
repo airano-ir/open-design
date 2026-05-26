@@ -29,7 +29,6 @@ function containsInsufficientBalanceSignal(value: string): boolean {
     value.includes('insufficient funds') ||
     value.includes('not enough balance') ||
     value.includes('not enough credits') ||
-    value.includes('wallet balance') ||
     value.includes('balance is empty') ||
     value.includes('balance too low') ||
     value.includes('billing balance')
