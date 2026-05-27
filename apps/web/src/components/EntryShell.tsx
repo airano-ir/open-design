@@ -1546,11 +1546,6 @@ function OnboardingView({
     : isLastStep
       ? t('settings.onboardingFinish')
       : t('settings.onboardingContinue');
-  const primaryActionIcon = step === 1
-    ? null
-    : isLastStep
-      ? 'check'
-      : 'chevron-right';
 
   return (
     <section className="onboarding-view" aria-labelledby="onboarding-title">
@@ -1899,7 +1894,6 @@ function OnboardingView({
                 disabled={amrLoginPending}
               >
                 <span>{primaryActionLabel}</span>
-                {primaryActionIcon ? <Icon name={primaryActionIcon} size={16} /> : null}
               </button>
             </div>
           )}
