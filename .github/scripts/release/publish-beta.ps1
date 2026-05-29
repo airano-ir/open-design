@@ -25,6 +25,14 @@ function Optional-Env([string]$Name, [string]$Fallback = "") {
   return $value
 }
 
+function Get-PublicOrigin {
+  $value = Optional-Env "S3_PUBLIC_ORIGIN"
+  if ([string]::IsNullOrWhiteSpace($value)) {
+    throw "S3_PUBLIC_ORIGIN is required; refuse to derive public metadata URLs from the private S3 endpoint"
+  }
+  return $value.TrimEnd('/')
+}
+
 function Set-GitHubOutput([string]$Name, [string]$Value) {
   if ([string]::IsNullOrWhiteSpace($Name) -or [string]::IsNullOrWhiteSpace($Value)) {
     return
@@ -141,7 +149,7 @@ $endpoint = Require-Env "S3_ENDPOINT"
 $bucket = Require-Env "S3_BUCKET"
 $accessKey = Require-Env "S3_ACCESS_KEY_ID"
 $secretKey = Require-Env "S3_SECRET_ACCESS_KEY"
-$publicOrigin = (Optional-Env "S3_PUBLIC_ORIGIN" "$($endpoint.TrimEnd('/'))/$bucket").TrimEnd('/')
+$publicOrigin = Get-PublicOrigin
 $versionPrefix = "$channel/versions/$releaseVersion$assetSuffix"
 $latestPrefix = "$channel/latest"
 $installerUrl = "$publicOrigin/$versionPrefix/$installerName"
