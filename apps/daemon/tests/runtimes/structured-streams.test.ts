@@ -999,7 +999,7 @@ describe('structured agent stream fixtures', () => {
   });
 
   it('routes GitHub Copilot failing tool executions through the tool-loop guard', () => {
-    const guard = createToolLoopGuard();
+    const guard = createToolLoopGuard({ mode: 'halt' });
     const handler = createCopilotStreamHandler((event: any) => {
       if (event?.type === 'tool_use' && typeof event.id === 'string') {
         guard.observeToolUse(event.id, event.name ?? 'tool', event.input);
