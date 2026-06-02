@@ -24,21 +24,7 @@
   <a href="QUICKSTART.md"><img alt="quickstart" src="https://img.shields.io/badge/quickstart-3%20commands-green?style=flat" /></a>
 </p>
 
-<p align="center">
-  <a href="README.md"><img alt="English" src="https://img.shields.io/badge/English-d9d9d9" /></a>
-  <a href="README.es.md"><img alt="Español" src="https://img.shields.io/badge/Español-d9d9d9" /></a>
-  <a href="README.pt-BR.md"><img alt="Português" src="https://img.shields.io/badge/Português-d9d9d9" /></a>
-  <a href="README.de.md"><img alt="Deutsch" src="https://img.shields.io/badge/Deutsch-d9d9d9" /></a>
-  <a href="README.fr.md"><img alt="Français" src="https://img.shields.io/badge/Français-d9d9d9" /></a>
-  <a href="README.zh-CN.md"><img alt="简体中文" src="https://img.shields.io/badge/简体中文-d9d9d9" /></a>
-  <a href="README.zh-TW.md"><img alt="繁體中文" src="https://img.shields.io/badge/繁體中文-d9d9d9" /></a>
-  <a href="README.ko.md"><img alt="한국어" src="https://img.shields.io/badge/한국어-d9d9d9" /></a>
-  <a href="README.ja-JP.md"><img alt="日本語" src="https://img.shields.io/badge/日本語-d9d9d9" /></a>
-  <img alt="العربية" src="https://img.shields.io/badge/العربية-d9d9d9" />
-  <a href="README.ru.md"><img alt="Русский" src="https://img.shields.io/badge/Русский-d9d9d9" /></a>
-  <a href="README.uk.md"><img alt="Українська" src="https://img.shields.io/badge/Українська-d9d9d9" /></a>
-  <a href="README.tr.md"><img alt="Türkçe" src="https://img.shields.io/badge/Türkçe-d9d9d9" /></a>
-</p>
+<p align="center"><a href="README.md">English</a> · <a href="README.es.md">Español</a> · <a href="README.pt-BR.md">Português</a> · <a href="README.de.md">Deutsch</a> · <a href="README.fr.md">Français</a> · <a href="README.zh-CN.md">简体中文</a> · <a href="README.zh-TW.md">繁體中文</a> · <a href="README.ko.md">한국어</a> · <a href="README.ja-JP.md">日本語</a> · <b>العربية</b> · <a href="README.ru.md">Русский</a> · <a href="README.uk.md">Українська</a> · <a href="README.tr.md">Türkçe</a></p>
 
 ---
 

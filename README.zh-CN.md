@@ -19,24 +19,10 @@
   <a href="https://github.com/nexu-io/open-design/releases"><img alt="release" src="https://img.shields.io/github/v/release/nexu-io/open-design?style=flat&color=blueviolet&label=release&include_prereleases&display_name=tag" /></a>
   <a href="LICENSE"><img alt="license" src="https://img.shields.io/badge/license-Apache%202.0-blue.svg?style=flat" /></a>
   <a href="https://discord.gg/qhbcCH8Am4"><img alt="discord" src="https://img.shields.io/discord/1479002485040480266?style=flat&logo=discord&logoColor=white&label=discord&color=5865F2&cacheSeconds=3600" /></a>
-  <a href="QUICKSTART.md"><img alt="quickstart" src="https://img.shields.io/badge/quickstart-3%20commands-green?style=flat" /></a>
+  <a href="QUICKSTART.zh-CN.md"><img alt="quickstart" src="https://img.shields.io/badge/quickstart-3%20commands-green?style=flat" /></a>
 </p>
 
-<p align="center">
-  <a href="README.md"><img alt="English" src="https://img.shields.io/badge/English-d9d9d9" /></a>
-  <a href="README.es.md"><img alt="Español" src="https://img.shields.io/badge/Español-d9d9d9" /></a>
-  <a href="README.pt-BR.md"><img alt="Português" src="https://img.shields.io/badge/Português-d9d9d9" /></a>
-  <a href="README.de.md"><img alt="Deutsch" src="https://img.shields.io/badge/Deutsch-d9d9d9" /></a>
-  <a href="README.fr.md"><img alt="Français" src="https://img.shields.io/badge/Français-d9d9d9" /></a>
-  <img alt="简体中文" src="https://img.shields.io/badge/简体中文-d9d9d9" />
-  <a href="README.zh-TW.md"><img alt="繁體中文" src="https://img.shields.io/badge/繁體中文-d9d9d9" /></a>
-  <a href="README.ko.md"><img alt="한국어" src="https://img.shields.io/badge/한국어-d9d9d9" /></a>
-  <a href="README.ja-JP.md"><img alt="日本語" src="https://img.shields.io/badge/日本語-d9d9d9" /></a>
-  <a href="README.ar.md"><img alt="العربية" src="https://img.shields.io/badge/العربية-d9d9d9" /></a>
-  <a href="README.ru.md"><img alt="Русский" src="https://img.shields.io/badge/Русский-d9d9d9" /></a>
-  <a href="README.uk.md"><img alt="Українська" src="https://img.shields.io/badge/Українська-d9d9d9" /></a>
-  <a href="README.tr.md"><img alt="Türkçe" src="https://img.shields.io/badge/Türkçe-d9d9d9" /></a>
-</p>
+<p align="center"><a href="README.md">English</a> · <a href="README.es.md">Español</a> · <a href="README.pt-BR.md">Português</a> · <a href="README.de.md">Deutsch</a> · <a href="README.fr.md">Français</a> · <b>简体中文</b> · <a href="README.zh-TW.md">繁體中文</a> · <a href="README.ko.md">한국어</a> · <a href="README.ja-JP.md">日本語</a> · <a href="README.ar.md">العربية</a> · <a href="README.ru.md">Русский</a> · <a href="README.uk.md">Українська</a> · <a href="README.tr.md">Türkçe</a></p>
 
 ---
 
@@ -346,7 +332,7 @@ corepack enable && pnpm install
 pnpm tools-dev run web
 ```
 
-Node `~24`，pnpm `10.33.x`。Windows 用户请参见 [`docs/windows-troubleshooting.md`](docs/windows-troubleshooting.md)。完整的快速开始指南、环境变量、Nix flake 和打包构建流程 → [`QUICKSTART.md`](QUICKSTART.md)。
+Node `~24`，pnpm `10.33.x`。Windows 用户请参见 [`docs/windows-troubleshooting.md`](docs/windows-troubleshooting.md)。完整的快速开始指南、环境变量、Nix flake 和打包构建流程 → [`QUICKSTART.zh-CN.md`](QUICKSTART.zh-CN.md)。
 
 ### 一个完整的工作流——从需求到工件
 
@@ -644,7 +630,7 @@ pnpm --filter @open-design/<package> test
 gh pr create --fill
 ```
 
-完整的 Agent 友好贡献流程、代码风格和 PR 标准 → [`CONTRIBUTING.md`](CONTRIBUTING.md)（[Deutsch](CONTRIBUTING.de.md) · [Français](CONTRIBUTING.fr.md) · [简体中文](CONTRIBUTING.zh-CN.md) · [日本語](CONTRIBUTING.ja-JP.md) · [Português](CONTRIBUTING.pt-BR.md)）。
+完整的 Agent 友好贡献流程、代码风格和 PR 标准 → [English](CONTRIBUTING.md)（[Deutsch](CONTRIBUTING.de.md) · [Français](CONTRIBUTING.fr.md) · [简体中文](CONTRIBUTING.zh-CN.md) · [日本語](CONTRIBUTING.ja-JP.md) · [Português](CONTRIBUTING.pt-BR.md)）。
 
 ### 🏅 Open Design Fellow 计划
 
