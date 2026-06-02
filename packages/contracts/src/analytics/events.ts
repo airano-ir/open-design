@@ -229,6 +229,7 @@ export type TrackingRunFailureDetail =
   | 'spawn_eperm'
   | 'stdin_write_eof'
   | 'agent_protocol_error'
+  | 'permission_request_not_found'
   | 'qoder_stop_sequence'
   | 'exit_code'
   | 'terminated_unknown'

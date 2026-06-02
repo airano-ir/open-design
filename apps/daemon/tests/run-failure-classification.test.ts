@@ -416,6 +416,18 @@ describe('classifyRunFailure', () => {
       failure_category: 'process_exit',
       failure_detail: 'agent_protocol_error',
     });
+    expect(
+      classify(
+        'AGENT_EXECUTION_FAILED',
+        'json-rpc id 4: opencode event stream: reply opencode permission: opencode POST /session/ses_17891e641ffe507UiYkoj7Qb5w/permissions/per_e876f835100166WeTqK11P7ZvV returned HTTP 404: {"_tag":"PermissionNotFoundError","requestID":"per_e876f835100166WeTqK11P7ZvV","message":"Permission request not found: per_e876f835100166WeTqK11P7ZvV"}',
+      ),
+    ).toMatchObject({
+      failure_category: 'process_exit',
+      failure_detail: 'permission_request_not_found',
+      failure_stage: 'child_close',
+      retryable: true,
+      user_action: 'retry',
+    });
     expect(classify('AGENT_EXECUTION_FAILED', 'stdin: write EOF')).toMatchObject({
       failure_category: 'process_exit',
       failure_detail: 'stdin_write_eof',

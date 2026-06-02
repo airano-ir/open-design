@@ -125,6 +125,11 @@ function isToolErrorText(text: string): boolean {
     /\b(error|failed|failure)\b/i.test(text);
 }
 
+function isPermissionRequestNotFoundText(text: string): boolean {
+  return /\b(PermissionNotFoundError|Permission request not found|permissions\/per_[A-Za-z0-9_-]+\s+returned\s+HTTP\s+404)\b/i
+    .test(text);
+}
+
 function isAuthDetailText(text: string): boolean {
   return /\b(refresh token|access token could not be refreshed|stale local profile|different or stale local profile|missing environment variable: `?[A-Z0-9_]*API_KEY`?|api key.*missing|credentials? (?:are )?missing|not logged in)\b/i
     .test(text);
@@ -373,6 +378,17 @@ export function classifyRunFailure(
       'tool_execution',
       retryableHint ?? false,
       retryableHint ? 'retry' : 'none',
+    );
+  }
+
+  if (isPermissionRequestNotFoundText(text)) {
+    const retryable = retryableHint ?? true;
+    return classification(
+      'process_exit',
+      'permission_request_not_found',
+      'child_close',
+      retryable,
+      retryable ? 'retry' : 'none',
     );
   }
 
