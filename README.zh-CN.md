@@ -118,26 +118,27 @@ Open Design 是这样一种产物：Anthropic 随 Claude Design 推出的 **Agen
 
 ## 平台兼容性
 
-> Open Design 以 **技能、CLI 和 MCP 服务器**的形式交付，主流编码 Agent 可原生消费。安装一次，然后在下方任一 Agent 内调用 `open-design`（或 `od`）——相同的循环，无需重新适配 UI。
+> Open Design 以 **技能、CLI 和 MCP 服务器**的形式交付，主流编码 Agent 可原生消费。装好 OD 后，一行 `od mcp install <agent>` 把 MCP 服务器 wire 进对应 Agent 的配置，任何 Agent 内调用相同工具。
 
 | 平台 | 状态 | 安装方式 |
 |---|---|---|
-| [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | ✅ **原生** | `curl -fsSL https://open-design.ai/install.sh \| sh -s claude` |
-| [Cursor](https://www.cursor.com/cli) | ✅ 支持 | `curl -fsSL https://open-design.ai/install.sh \| sh -s cursor` |
-| [VS Code + GitHub Copilot](https://github.com/features/copilot) | ✅ 支持 | `curl -fsSL https://open-design.ai/install.sh \| sh -s copilot` |
-| [GitHub Copilot CLI](https://github.com/features/copilot/cli) | ✅ 支持 | `curl -fsSL https://open-design.ai/install.sh \| sh -s copilot` |
-| [Codex CLI](https://github.com/openai/codex) | ✅ 支持 | `curl -fsSL https://open-design.ai/install.sh \| sh -s codex` |
-| [OpenCode](https://opencode.ai/) | ✅ 支持 | `curl -fsSL https://open-design.ai/install.sh \| sh -s opencode` |
-| [OpenClaw](https://github.com/openclaw/openclaw) | ✅ 支持 | `curl -fsSL https://open-design.ai/install.sh \| sh -s openclaw` |
-| [Antigravity](https://antigravity.google) | ✅ 支持 | `curl -fsSL https://open-design.ai/install.sh \| sh -s antigravity` |
-| Gemini CLI | ✅ 支持 | `curl -fsSL https://open-design.ai/install.sh \| sh -s gemini` |
-| [Pi Agent](https://github.com/badlogic/pi-mono) | ✅ 支持 | `curl -fsSL https://open-design.ai/install.sh \| sh -s pi` |
-| [Mistral Vibe CLI](https://github.com/mistralai/mistral-vibe) | ✅ 支持 | `curl -fsSL https://open-design.ai/install.sh \| sh -s vibe` |
-| [Hermes Agent](https://github.com/nousresearch/hermes-agent) | ✅ 支持 | `curl -fsSL https://open-design.ai/install.sh \| sh -s hermes` |
-| [Cline](https://github.com/cline/cline) | ✅ 支持 | `curl -fsSL https://open-design.ai/install.sh \| sh -s cline` |
-| Kimi CLI | ✅ 支持 | `curl -fsSL https://open-design.ai/install.sh \| sh -s kimi` |
-| [Trae](https://www.trae.ai/) | ✅ 支持 | `curl -fsSL https://open-design.ai/install.sh \| sh -s trae` |
-| Devin for Terminal · Qwen Code · Qoder CLI · Kiro · Kilo · DeepSeek TUI | ✅ 支持 | 在 `PATH` 上自动检测，无需配置 |
+| [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | ✅ 支持 | `od mcp install claude` |
+| [Codex CLI](https://github.com/openai/codex) | ✅ 支持 | `od mcp install codex` |
+| [Cursor](https://www.cursor.com/cli) | ✅ 支持 | `od mcp install cursor` |
+| [VS Code + GitHub Copilot](https://github.com/features/copilot) | ✅ 支持 | `od mcp install copilot` |
+| [GitHub Copilot CLI](https://github.com/features/copilot/cli) | ✅ 支持 | `od mcp install copilot` |
+| Gemini CLI | ✅ 支持 | `od mcp install gemini` |
+| [OpenCode](https://opencode.ai/) | ✅ 支持 | `od mcp install opencode` |
+| [OpenClaw](https://github.com/openclaw/openclaw) | ✅ 支持 | `od mcp install openclaw` |
+| [Antigravity](https://antigravity.google) | ✅ 支持 | `od mcp install antigravity` |
+| [Cline](https://github.com/cline/cline) | ✅ 支持 | `od mcp install cline` |
+| [Trae](https://www.trae.ai/) | ✅ 支持 | `od mcp install trae` |
+| Kimi CLI | ✅ 支持 | `od mcp install kimi` |
+| [Pi Agent](https://github.com/badlogic/pi-mono) | ✅ 支持 | `od mcp install pi` |
+| [Mistral Vibe CLI](https://github.com/mistralai/mistral-vibe) | ✅ 支持 | `od mcp install vibe` |
+| [Hermes Agent](https://github.com/nousresearch/hermes-agent) | ✅ 支持 | `od mcp install hermes` |
+
+`od mcp install <agent> --print` 干跑预览 · `--uninstall` 卸载 · 完整清单 `od mcp install --help`。
 
 **未安装任何 CLI？** `POST /api/proxy/{anthropic,openai,azure,google,ollama,senseaudio}/stream` 的 BYOK 代理提供同样的循环（无需 spawn 进程）——粘贴 `baseUrl` + `apiKey` + `model`，支持 OpenAI、Anthropic、Azure OpenAI、Google Gemini、Ollama、LM Studio、vLLM 或任何 OpenAI 兼容端点。每个目标的 SSRF 防护在守护进程边缘拦截内网 IP / link-local / CGNAT。
 

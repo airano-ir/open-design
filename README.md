@@ -82,26 +82,27 @@ It is also the **Figma alternative for the agent era** — instead of pixel-push
 
 ## Platform Compatibility
 
-> Open Design ships as **Skills, CLIs, and an MCP server** that mainstream coding agents consume natively. Install once, then invoke `open-design` (or `od`) from inside any of the agents below — same loop, no UI re-tooling.
+> Open Design ships as **Skills, CLIs, and an MCP server** that mainstream coding agents consume natively. Once Open Design is installed, a single `od mcp install <agent>` wires the MCP server into that agent's config — same loop, no UI re-tooling.
 
 | Platform | Status | Install method |
 |---|---|---|
-| [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | ✅ **Native** | Plugin marketplace · `claude plugin install open-design` |
-| [Cursor](https://www.cursor.com/cli) | ✅ Supported | Auto-discovery from `PATH` · Cursor deeplink in **Settings → MCP server** |
-| [VS Code + GitHub Copilot](https://github.com/features/copilot) | ✅ Supported | Auto-discovery from `PATH` |
-| [GitHub Copilot CLI](https://github.com/features/copilot/cli) | ✅ Supported | `od plugin install copilot` |
-| [Codex CLI](https://github.com/openai/codex) | ✅ Supported | `curl -fsSL https://open-design.ai/install.sh \| sh -s codex` |
-| [OpenCode](https://opencode.ai/) | ✅ Supported | `curl -fsSL https://open-design.ai/install.sh \| sh -s opencode` |
-| [OpenClaw](https://github.com/openclaw/openclaw) | ✅ Supported | `curl -fsSL https://open-design.ai/install.sh \| sh -s openclaw` |
-| [Antigravity](https://antigravity.google) | ✅ Supported | `curl -fsSL https://open-design.ai/install.sh \| sh -s antigravity` |
-| Gemini CLI | ✅ Supported | `curl -fsSL https://open-design.ai/install.sh \| sh -s gemini` |
-| [Pi Agent](https://github.com/badlogic/pi-mono) | ✅ Supported | `curl -fsSL https://open-design.ai/install.sh \| sh -s pi` |
-| [Mistral Vibe CLI](https://github.com/mistralai/mistral-vibe) | ✅ Supported | `curl -fsSL https://open-design.ai/install.sh \| sh -s vibe` |
-| [Hermes Agent](https://github.com/nousresearch/hermes-agent) | ✅ Supported | `curl -fsSL https://open-design.ai/install.sh \| sh -s hermes` |
-| [Cline](https://github.com/cline/cline) | ✅ Supported | `curl -fsSL https://open-design.ai/install.sh \| sh -s cline` |
-| Kimi CLI | ✅ Supported | `curl -fsSL https://open-design.ai/install.sh \| sh -s kimi` |
-| [Trae](https://www.trae.ai/) | ✅ Supported | `curl -fsSL https://open-design.ai/install.sh \| sh -s trae` |
-| Devin for Terminal · Qwen Code · Qoder CLI · Kiro · Kilo · DeepSeek TUI | ✅ Supported | auto-detected on `PATH`, no setup |
+| [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | ✅ Supported | `od mcp install claude` |
+| [Codex CLI](https://github.com/openai/codex) | ✅ Supported | `od mcp install codex` |
+| [Cursor](https://www.cursor.com/cli) | ✅ Supported | `od mcp install cursor` |
+| [VS Code + GitHub Copilot](https://github.com/features/copilot) | ✅ Supported | `od mcp install copilot` |
+| [GitHub Copilot CLI](https://github.com/features/copilot/cli) | ✅ Supported | `od mcp install copilot` |
+| Gemini CLI | ✅ Supported | `od mcp install gemini` |
+| [OpenCode](https://opencode.ai/) | ✅ Supported | `od mcp install opencode` |
+| [OpenClaw](https://github.com/openclaw/openclaw) | ✅ Supported | `od mcp install openclaw` |
+| [Antigravity](https://antigravity.google) | ✅ Supported | `od mcp install antigravity` |
+| [Cline](https://github.com/cline/cline) | ✅ Supported | `od mcp install cline` |
+| [Trae](https://www.trae.ai/) | ✅ Supported | `od mcp install trae` |
+| Kimi CLI | ✅ Supported | `od mcp install kimi` |
+| [Pi Agent](https://github.com/badlogic/pi-mono) | ✅ Supported | `od mcp install pi` |
+| [Mistral Vibe CLI](https://github.com/mistralai/mistral-vibe) | ✅ Supported | `od mcp install vibe` |
+| [Hermes Agent](https://github.com/nousresearch/hermes-agent) | ✅ Supported | `od mcp install hermes` |
+
+`od mcp install <agent> --print` to preview the change · `--uninstall` to remove · `od mcp install --help` for the full list.
 
 **No CLI installed?** The BYOK proxy at `POST /api/proxy/{anthropic,openai,azure,google,ollama,senseaudio}/stream` is the same loop minus the spawn — paste a `baseUrl` + `apiKey` + `model` for OpenAI, Anthropic, Azure OpenAI, Google Gemini, Ollama, LM Studio, vLLM, or any OpenAI-compatible endpoint. Per-target SSRF guard blocks internal IPs / link-local / CGNAT at the daemon edge.
 
