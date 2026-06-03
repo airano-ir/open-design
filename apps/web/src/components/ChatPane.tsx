@@ -10,41 +10,75 @@ import {
   type DragEvent as ReactDragEvent,
   type MutableRefObject,
   type ReactNode,
-} from 'react';
-import { useAnalytics } from '../analytics/provider';
-import { trackChatPanelClick, trackRunFailedToastSurfaceView } from '../analytics/events';
-import { attributedAmrUrl, recordAmrEntry } from '../analytics/amr-attribution';
-import { useT } from '../i18n';
-import type { Dict } from '../i18n/types';
-import { copyToClipboard } from '../lib/copy-to-clipboard';
-import { projectRawUrl } from '../providers/registry';
-import type { TodoItem } from '../runtime/todos';
-import type { AppliedPluginSnapshot, ChatSessionMode, WorkspaceContextItem } from '@open-design/contracts';
-import type { TrackingProjectKind } from '@open-design/contracts/analytics';
+} from "react";
+import { useAnalytics } from "../analytics/provider";
+import {
+  trackChatPanelClick,
+  trackRunFailedToastSurfaceView,
+} from "../analytics/events";
+import { attributedAmrUrl, recordAmrEntry } from "../analytics/amr-attribution";
+import { useT } from "../i18n";
+import type { Dict } from "../i18n/types";
+import { copyToClipboard } from "../lib/copy-to-clipboard";
+import { projectRawUrl } from "../providers/registry";
+import type { TodoItem } from "../runtime/todos";
+import type {
+  AppliedPluginSnapshot,
+  ChatSessionMode,
+  WorkspaceContextItem,
+} from "@open-design/contracts";
+import type { TrackingProjectKind } from "@open-design/contracts/analytics";
 import {
   DESIGN_SYSTEM_WORKSPACE_DISPLAY_DESCRIPTION,
   DESIGN_SYSTEM_WORKSPACE_DISPLAY_TITLE,
   isDesignSystemWorkspacePrompt,
-} from '../design-system-auto-prompt';
-import { latestTodoWriteInputForPinnedCard } from '../runtime/todos';
-import { TodoCard } from './ToolCard';
-import type { AppConfig, ChatAttachment, ChatCommentAttachment, ChatMessage, ChatMessageFeedbackChange, Conversation, DesignSystemSummary, PreviewComment, Project, ProjectFile, ProjectMetadata, SkillSummary } from '../types';
-import { dayKey, dayLabel, exactDateTime, messageTime, relativeTimeLong, shortTime } from '../utils/chatTime';
-import { commentTargetDisplayName, commentsToAttachments, simplePositionLabel } from '../comments';
-import { AssistantMessage } from './AssistantMessage';
-import { AmrGuidance } from './AmrGuidance';
-import { AMR_RECHARGE_URL, resolveRunFailureUi } from '../runtime/amr-guidance';
+} from "../design-system-auto-prompt";
+import { latestTodoWriteInputForPinnedCard } from "../runtime/todos";
+import { TodoCard } from "./ToolCard";
+import type {
+  AppConfig,
+  ChatAttachment,
+  ChatCommentAttachment,
+  ChatMessage,
+  ChatMessageFeedbackChange,
+  Conversation,
+  DesignSystemSummary,
+  PreviewComment,
+  Project,
+  ProjectFile,
+  ProjectMetadata,
+  SkillSummary,
+} from "../types";
+import {
+  dayKey,
+  dayLabel,
+  exactDateTime,
+  messageTime,
+  relativeTimeLong,
+  shortTime,
+} from "../utils/chatTime";
+import {
+  commentTargetDisplayName,
+  commentsToAttachments,
+  simplePositionLabel,
+} from "../comments";
+import { AssistantMessage } from "./AssistantMessage";
+import { AmrGuidance } from "./AmrGuidance";
+import { AMR_RECHARGE_URL, resolveRunFailureUi } from "../runtime/amr-guidance";
 import {
   ChatComposer,
   type ChatComposerHandle,
   type ChatSendMeta,
-} from './ChatComposer';
-import type { PluginFolderAgentAction } from './design-files/pluginFolderActions';
-import { Icon, type IconName } from './Icon';
-import { repoConnectCopy } from './design-system-github-evidence';
-import type { SettingsSection } from './SettingsDialog';
+} from "./ChatComposer";
+import type { PluginFolderAgentAction } from "./design-files/pluginFolderActions";
+import { Icon, type IconName } from "./Icon";
+import { repoConnectCopy } from "./design-system-github-evidence";
+import type { SettingsSection } from "./SettingsDialog";
 
-type TranslateFn = (key: keyof Dict, vars?: Record<string, string | number>) => string;
+type TranslateFn = (
+  key: keyof Dict,
+  vars?: Record<string, string | number>
+) => string;
 
 // Featured starter prompts shown on the empty chat. Clicking one fills
 // the composer (does not auto-send) so users can tweak before sending.
@@ -75,46 +109,46 @@ const DEFAULT_STARTER_KEYS: Array<{
   promptKey: keyof Dict;
 }> = [
   {
-    icon: '▤',
-    titleKey: 'chat.example1Title',
-    tagKey: 'chat.example1Tag',
-    promptKey: 'chat.example1Prompt',
+    icon: "▤",
+    titleKey: "chat.example1Title",
+    tagKey: "chat.example1Tag",
+    promptKey: "chat.example1Prompt",
   },
   {
-    icon: '▦',
-    titleKey: 'chat.example2Title',
-    tagKey: 'chat.example2Tag',
-    promptKey: 'chat.example2Prompt',
+    icon: "▦",
+    titleKey: "chat.example2Title",
+    tagKey: "chat.example2Tag",
+    promptKey: "chat.example2Prompt",
   },
   {
-    icon: '◈',
-    titleKey: 'chat.example3Title',
-    tagKey: 'chat.example3Tag',
-    promptKey: 'chat.example3Prompt',
+    icon: "◈",
+    titleKey: "chat.example3Title",
+    tagKey: "chat.example3Tag",
+    promptKey: "chat.example3Prompt",
   },
 ];
 
 const IMAGE_STARTERS: StarterPrompt[] = [
   {
-    icon: '◯',
-    title: 'Editorial portrait',
-    tag: 'Portrait',
+    icon: "◯",
+    title: "Editorial portrait",
+    tag: "Portrait",
     prompt:
-      'A close-up editorial portrait of a young creative director in their late 20s, soft natural light through tall studio windows, warm neutral palette (cream, taupe, soft black), shot at 85mm f/1.8 with shallow depth of field, sharp gaze straight to camera, subtle film grain, no makeup look.',
+      "A close-up editorial portrait of a young creative director in their late 20s, soft natural light through tall studio windows, warm neutral palette (cream, taupe, soft black), shot at 85mm f/1.8 with shallow depth of field, sharp gaze straight to camera, subtle film grain, no makeup look.",
   },
   {
-    icon: '▭',
-    title: 'Product hero',
-    tag: 'E-commerce',
+    icon: "▭",
+    title: "Product hero",
+    tag: "E-commerce",
     prompt:
-      'A premium product hero shot of a single matte ceramic coffee mug on a warm cream paper backdrop. Hard rim light from the upper-left, gentle elongated shadow stretching to the lower-right, faint steam rising from the cup. Square crop, centered composition, room above for headline copy, no props or hands in frame.',
+      "A premium product hero shot of a single matte ceramic coffee mug on a warm cream paper backdrop. Hard rim light from the upper-left, gentle elongated shadow stretching to the lower-right, faint steam rising from the cup. Square crop, centered composition, room above for headline copy, no props or hands in frame.",
   },
   {
-    icon: '◐',
-    title: 'Flat illustration',
-    tag: 'Illustration',
+    icon: "◐",
+    title: "Flat illustration",
+    tag: "Illustration",
     prompt:
-      'A flat vector illustration of a cozy reading nook by a rainy window — geometric shapes, restrained 5-color palette (cream, terracotta, deep teal, burnt sienna, soft black), thin 1.5px line accents, no gradients, no textures, soft drop shadows only on the foreground armchair.',
+      "A flat vector illustration of a cozy reading nook by a rainy window — geometric shapes, restrained 5-color palette (cream, terracotta, deep teal, burnt sienna, soft black), thin 1.5px line accents, no gradients, no textures, soft drop shadows only on the foreground armchair.",
   },
 ];
 
@@ -124,25 +158,25 @@ const IMAGE_STARTERS: StarterPrompt[] = [
 // nail in 5-10 seconds.
 const VIDEO_SEEDANCE_STARTERS: StarterPrompt[] = [
   {
-    icon: '◉',
-    title: 'Product reveal',
-    tag: 'Cinematic',
+    icon: "◉",
+    title: "Product reveal",
+    tag: "Cinematic",
     prompt:
-      'A 5-second product reveal: a minimal high-end skincare bottle on a clean cream stone surface, soft side light from camera-left, slow camera push-in, subtle depth-of-field shift from the cap to the label, restrained motion, no text overlays, no people in frame.',
+      "A 5-second product reveal: a minimal high-end skincare bottle on a clean cream stone surface, soft side light from camera-left, slow camera push-in, subtle depth-of-field shift from the cap to the label, restrained motion, no text overlays, no people in frame.",
   },
   {
-    icon: '▣',
-    title: 'Lantern close-up',
-    tag: 'Mood',
+    icon: "▣",
+    title: "Lantern close-up",
+    tag: "Mood",
     prompt:
-      'A 6-second cinematic close-up of a young woman holding a glowing paper lantern in a misty pine forest at golden hour. Shallow depth of field on her eyes, gentle dolly-in, ambient particles drifting through the warm shaft of light, no dialogue, ambient forest sound only.',
+      "A 6-second cinematic close-up of a young woman holding a glowing paper lantern in a misty pine forest at golden hour. Shallow depth of field on her eyes, gentle dolly-in, ambient particles drifting through the warm shaft of light, no dialogue, ambient forest sound only.",
   },
   {
-    icon: '⌘',
-    title: 'Neon street drift',
-    tag: 'Action',
+    icon: "⌘",
+    title: "Neon street drift",
+    tag: "Action",
     prompt:
-      'A 5-second street-racing tracking shot at night in a neon-lit cyberpunk Hong Kong alley. Low-angle camera following a matte-black sports car drifting around a tight corner, motion blur on the wheels, lens flares from oncoming neon signs, rain-slick asphalt reflecting the lights, no on-screen text.',
+      "A 5-second street-racing tracking shot at night in a neon-lit cyberpunk Hong Kong alley. Low-angle camera following a matte-black sports car drifting around a tight corner, motion blur on the wheels, lens flares from oncoming neon signs, rain-slick asphalt reflecting the lights, no on-screen text.",
   },
 ];
 
@@ -154,25 +188,25 @@ const VIDEO_SEEDANCE_STARTERS: StarterPrompt[] = [
 // skills/hyperframes/references/html-in-canvas.md.
 const VIDEO_HYPERFRAMES_STARTERS: StarterPrompt[] = [
   {
-    icon: '◉',
-    title: 'Magnifying glass reveal',
-    tag: 'HTML-in-canvas',
+    icon: "◉",
+    title: "Magnifying glass reveal",
+    tag: "HTML-in-canvas",
     prompt:
-      'Make a 5-second composition with a single line of bold display text on a clean canvas. Animate a round magnifying glass that travels left to right across the line, with subtle glass refraction warping the letters underneath as it passes. Use HyperFrames html-in-canvas — capture the text DOM and run the lens shader on top via a vfx-liquid-glass-style pass. Pure CSS for the text; the glass is a WebGL layer.',
+      "Make a 5-second composition with a single line of bold display text on a clean canvas. Animate a round magnifying glass that travels left to right across the line, with subtle glass refraction warping the letters underneath as it passes. Use HyperFrames html-in-canvas — capture the text DOM and run the lens shader on top via a vfx-liquid-glass-style pass. Pure CSS for the text; the glass is a WebGL layer.",
   },
   {
-    icon: '▦',
-    title: 'CRT terminal scene',
-    tag: 'Vintage VFX',
+    icon: "▦",
+    title: "CRT terminal scene",
+    tag: "Vintage VFX",
     prompt:
       "Make a CRT-screen composition: dark canvas, monospace terminal text typing `npx hyperframes init my-video`, then `claude` invoked with the prompt 'Add a CRT effect using HTML-in-canvas'. Apply a subtle convex-curvature shader, scanlines, slight chromatic aberration, and a soft phosphor glow on top of the live DOM via html-in-canvas. The terminal text stays as real CSS so it's pixel-sharp before the shader pass.",
   },
   {
-    icon: '◈',
-    title: 'Glitch breakdown',
-    tag: 'Glitch',
+    icon: "◈",
+    title: "Glitch breakdown",
+    tag: "Glitch",
     prompt:
-      'Build a 6-second composition that displays a hero headline and a one-line subhead on a dark canvas, then breaks into a hard digital glitch — RGB channel split, horizontal displacement bands, brief frame-stutter, and a final clean reset. Capture the live DOM via html-in-canvas and run the glitch pass on top, so the type is real CSS underneath the shader.',
+      "Build a 6-second composition that displays a hero headline and a one-line subhead on a dark canvas, then breaks into a hard digital glitch — RGB channel split, horizontal displacement bands, brief frame-stutter, and a final clean reset. Capture the live DOM via html-in-canvas and run the glitch pass on top, so the type is real CSS underneath the shader.",
   },
 ];
 
@@ -181,23 +215,23 @@ const VIDEO_HYPERFRAMES_STARTERS: StarterPrompt[] = [
 // match that. If/when the music + sfx tabs come back, broaden this set.
 const AUDIO_STARTERS: StarterPrompt[] = [
   {
-    icon: '♪',
-    title: 'Brand voiceover',
-    tag: 'Speech',
+    icon: "♪",
+    title: "Brand voiceover",
+    tag: "Speech",
     prompt:
       "A 30-second warm-toned narrative voiceover for a product launch video — confident but conversational, mid-tempo, with a beat of pause after the brand name. Script: 'Three years in the making. One simple promise. Meet [product name] — the way work was supposed to feel.' English, neutral North American accent.",
   },
   {
-    icon: '♫',
-    title: 'Onboarding narration',
-    tag: 'Speech',
+    icon: "♫",
+    title: "Onboarding narration",
+    tag: "Speech",
     prompt:
       "A 20-second friendly onboarding narration for a mobile app's first-launch screen. Reassuring, smiling tone, slow enough to feel attentive without sounding scripted. Script: 'Welcome to Loop. Let's set up your space — three quick questions and you're in. You can change any of this later.'",
   },
   {
-    icon: '♬',
-    title: 'Story passage read',
-    tag: 'Speech',
+    icon: "♬",
+    title: "Story passage read",
+    tag: "Speech",
     prompt:
       "A 45-second cinematic read of an opening passage. Low, measured delivery with breath between sentences, slightly intimate close-mic'd quality. Script: 'The city sleeps in pieces. A neon sign flickers above the ramen counter. Across the avenue, a window glows — the only one still on this side of midnight.'",
   },
@@ -205,16 +239,16 @@ const AUDIO_STARTERS: StarterPrompt[] = [
 
 function pickStarters(
   metadata: ProjectMetadata | undefined,
-  t: TranslateFn,
+  t: TranslateFn
 ): StarterPrompt[] {
   const kind = metadata?.kind;
-  if (kind === 'image') return IMAGE_STARTERS;
-  if (kind === 'video') {
-    return metadata?.videoModel === 'hyperframes-html'
+  if (kind === "image") return IMAGE_STARTERS;
+  if (kind === "video") {
+    return metadata?.videoModel === "hyperframes-html"
       ? VIDEO_HYPERFRAMES_STARTERS
       : VIDEO_SEEDANCE_STARTERS;
   }
-  if (kind === 'audio') return AUDIO_STARTERS;
+  if (kind === "audio") return AUDIO_STARTERS;
   return DEFAULT_STARTER_KEYS.map((entry) => ({
     icon: entry.icon,
     title: t(entry.titleKey),
@@ -258,7 +292,7 @@ interface Props {
     prompt: string,
     attachments: ChatAttachment[],
     commentAttachments: ChatCommentAttachment[],
-    meta?: ChatSendMeta,
+    meta?: ChatSendMeta
   ) => void;
   onRetry?: (assistantMessage: ChatMessage) => void;
   onStop: () => void;
@@ -273,8 +307,11 @@ interface Props {
   onRequestDesignSystemDetails?: (system: DesignSystemSummary) => void;
   onRequestPluginFolderAgentAction?: (
     relativePath: string,
-    action: PluginFolderAgentAction,
-  ) => Promise<{ message?: string; url?: string } | void> | { message?: string; url?: string } | void;
+    action: PluginFolderAgentAction
+  ) =>
+    | Promise<{ message?: string; url?: string } | void>
+    | { message?: string; url?: string }
+    | void;
   activePluginActionPaths?: Set<string>;
   hiddenPluginActionPaths?: Set<string>;
   forceStreamingMessageIds?: Set<string>;
@@ -288,8 +325,14 @@ interface Props {
   onSubmitForm?: (text: string) => void;
   // Focus the right-hand Questions tab from the chat banner.
   onOpenQuestions?: () => void;
-  onContinueRemainingTasks?: (assistantMessage: ChatMessage, todos: TodoItem[]) => void;
-  onAssistantFeedback?: (assistantMessage: ChatMessage, change: ChatMessageFeedbackChange) => void;
+  onContinueRemainingTasks?: (
+    assistantMessage: ChatMessage,
+    todos: TodoItem[]
+  ) => void;
+  onAssistantFeedback?: (
+    assistantMessage: ChatMessage,
+    change: ChatMessageFeedbackChange
+  ) => void;
   // "Next step" affordance handlers forwarded to the last assistant message.
   onArtifactShare?: (fileName: string) => void;
   onArtifactChip?: (fileName: string, prompt: string) => void;
@@ -335,7 +378,7 @@ interface Props {
   composerDraftSignal?: { text: string; nonce: number };
   // Optional pet wiring forwarded straight through to ChatComposer's
   // /pet button. When omitted the composer hides the button entirely.
-  petConfig?: AppConfig['pet'];
+  petConfig?: AppConfig["pet"];
   onAdoptPet?: (petId: string) => void;
   onTogglePet?: () => void;
   onOpenPetSettings?: () => void;
@@ -355,7 +398,7 @@ interface Props {
   // SenseAudio BYOK only — wired straight through to ChatComposer for the
   // in-composer image-model picker. Active protocol is read so the picker
   // hides when the user is on any other BYOK tab (azure / openai / …).
-  byokApiProtocol?: AppConfig['apiProtocol'];
+  byokApiProtocol?: AppConfig["apiProtocol"];
   byokImageModel?: string;
   onChangeByokImageModel?: (model: string) => void;
   composerFooterAccessory?: ReactNode;
@@ -375,7 +418,7 @@ interface Props {
   designSystemPicker?: ReactNode;
 }
 
-type Tab = 'chat' | 'comments';
+type Tab = "chat" | "comments";
 
 const CHAT_MESSAGE_VIRTUALIZE_THRESHOLD = 80;
 const CHAT_MESSAGE_OVERSCAN_PX = 900;
@@ -413,7 +456,7 @@ export function ChatPane({
   queuedItems = [],
   error,
   projectId,
-  sessionMode = 'design',
+  sessionMode = "design",
   onSessionModeChange,
   projectKindForTracking = null,
   projectFiles,
@@ -541,9 +584,9 @@ export function ChatPane({
     onArtifactChip,
     onForkFromMessage,
   };
-  const [tab, setTab] = useState<Tab>('chat');
+  const [tab, setTab] = useState<Tab>("chat");
   const [showConvList, setShowConvList] = useState(false);
-  const [conversationSearch, setConversationSearch] = useState('');
+  const [conversationSearch, setConversationSearch] = useState("");
   const deferredConversationSearch = useDeferredValue(conversationSearch);
   const [scrolledFromBottom, setScrolledFromBottom] = useState(false);
   const [chatLogScrollable, setChatLogScrollable] = useState(false);
@@ -556,8 +599,10 @@ export function ChatPane({
   // component remounts (the ChatPane key includes conversationId, so switching
   // conversations unmounts and remounts the component). The stored value is the
   // snapshot key, so a fresh TodoWrite snapshot still re-shows the card.
-  const dismissedStorageKey = `dismissedTodo:${activeConversationId ?? 'none'}`;
-  const [dismissedPinnedTodoKey, setDismissedPinnedTodoKey] = useState<string | null>(() => {
+  const dismissedStorageKey = `dismissedTodo:${activeConversationId ?? "none"}`;
+  const [dismissedPinnedTodoKey, setDismissedPinnedTodoKey] = useState<
+    string | null
+  >(() => {
     try {
       return sessionStorage.getItem(dismissedStorageKey);
     } catch {
@@ -576,19 +621,25 @@ export function ChatPane({
       // sessionStorage access can fail in private browsing
     }
   }, [dismissedStorageKey]);
-  const [editingQueuedSendId, setEditingQueuedSendId] = useState<string | null>(null);
+  const [editingQueuedSendId, setEditingQueuedSendId] = useState<string | null>(
+    null
+  );
   // Reverse scan (no array copy) + memo so this and the maps below don't
   // recompute on every non-`messages` render (scroll, hover, toggles).
   const lastAssistantId = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i]!.role === 'assistant') return messages[i]!.id;
+      if (messages[i]!.role === "assistant") return messages[i]!.id;
     }
     return undefined;
   }, [messages]);
   const hasActiveRunMessage = messages.some(
-    (m) => m.role === 'assistant' && isActiveRunStatus(m.runStatus),
+    (m) => m.role === "assistant" && isActiveRunStatus(m.runStatus)
   );
-  const retryAssistant = retryableAssistantMessage(messages, lastAssistantId, streaming);
+  const retryAssistant = retryableAssistantMessage(
+    messages,
+    lastAssistantId,
+    streaming
+  );
   // The failed run's error event lives on the (persisted) assistant message, so
   // the error card + AMR card survive a reload — unlike the ephemeral global
   // `error` state. Drive both off this event.
@@ -596,7 +647,7 @@ export function ChatPane({
     const evs = retryAssistant?.events ?? [];
     for (let i = evs.length - 1; i >= 0; i--) {
       const ev = evs[i];
-      if (ev?.kind === 'status' && ev.label === 'error') return ev;
+      if (ev?.kind === "status" && ev.label === "error") return ev;
     }
     return null;
   })();
@@ -609,7 +660,9 @@ export function ChatPane({
   // string; fall back to the live global error (also covers conversation-load
   // / audio errors) then the persisted run error so a reload still shows it.
   const rawError = error ?? failedRunErrorEvent?.detail ?? null;
-  const displayError = runFailureUi?.messageKey ? t(runFailureUi.messageKey) : rawError;
+  const displayError = runFailureUi?.messageKey
+    ? t(runFailureUi.messageKey)
+    : rawError;
   // The failed run whose error this top-level card represents. AssistantMessage
   // suppresses only THIS message's per-message error pill (to avoid the
   // duplicate); other failed turns — older history, or once a follow-up makes
@@ -618,13 +671,13 @@ export function ChatPane({
     retryAssistant && failedRunErrorEvent ? retryAssistant.id : null;
   // AMR promotion card payload (only the non-AMR model/auth/quota case).
   const amrSwitchPayload =
-    runFailureUi?.showSwitchCard
-    && failedRunErrorEvent?.code !== 'UPSTREAM_UNAVAILABLE'
-    && retryAssistant
-    && failedRunErrorEvent?.code
+    runFailureUi?.showSwitchCard &&
+    failedRunErrorEvent?.code !== "UPSTREAM_UNAVAILABLE" &&
+    retryAssistant &&
+    failedRunErrorEvent?.code
       ? {
           errorCode: failedRunErrorEvent.code,
-          projectId: projectId ?? '',
+          projectId: projectId ?? "",
           projectKind: projectKindForTracking,
           conversationId: activeConversationId,
           assistantMessageId: retryAssistant.id,
@@ -640,21 +693,21 @@ export function ChatPane({
     if (amrSwitchPayload) return;
 
     const key = [
-      projectId ?? '',
-      activeConversationId ?? '',
+      projectId ?? "",
+      activeConversationId ?? "",
       retryAssistant.id,
-      retryAssistant.runId ?? '',
+      retryAssistant.runId ?? "",
       failedRunErrorEvent.code,
-    ].join(':');
+    ].join(":");
     if (runFailedToastSurfaceKeysRef.current.has(key)) return;
     runFailedToastSurfaceKeysRef.current.add(key);
 
     trackRunFailedToastSurfaceView(analytics.track, {
-      page_name: 'chat_panel',
-      area: 'chat_panel',
-      element: 'run_failed_toast',
+      page_name: "chat_panel",
+      area: "chat_panel",
+      element: "run_failed_toast",
       error_code: failedRunErrorEvent.code,
-      project_id: projectId ?? '',
+      project_id: projectId ?? "",
       project_kind: projectKindForTracking,
       conversation_id: activeConversationId,
       assistant_message_id: retryAssistant.id,
@@ -670,15 +723,16 @@ export function ChatPane({
     projectKindForTracking,
     retryAssistant,
   ]);
-  const composerDraftStorageKey = projectId && activeConversationId
-    ? `od:chat-composer:draft:${projectId}:${activeConversationId}`
-    : undefined;
+  const composerDraftStorageKey =
+    projectId && activeConversationId
+      ? `od:chat-composer:draft:${projectId}:${activeConversationId}`
+      : undefined;
   // Only the first user message gets the active-plugin chip — the
   // plugin is project-scoped so re-stamping it on every reply would be
   // noise. Subsequent messages still run under the same snapshot.
   const firstUserMessageId = useMemo(
-    () => messages.find((m) => m.role === 'user')?.id,
-    [messages],
+    () => messages.find((m) => m.role === "user")?.id,
+    [messages]
   );
   // Map each assistant message id to the user message that follows it
   // (if any) so QuestionFormView can render its locked "answered" state
@@ -688,7 +742,7 @@ export function ChatPane({
     for (let i = 0; i < messages.length - 1; i++) {
       const m = messages[i]!;
       const next = messages[i + 1]!;
-      if (m.role === 'assistant' && next.role === 'user') {
+      if (m.role === "assistant" && next.role === "user") {
         map.set(m.id, next.content);
       }
     }
@@ -716,7 +770,7 @@ export function ChatPane({
     const previous = lastSeenInitialDraftRef.current;
     lastSeenInitialDraftRef.current = initialDraft;
     if (previous && initialDraft === undefined) {
-      composerRef.current?.setDraft('');
+      composerRef.current?.setDraft("");
     }
   }, [initialDraft]);
 
@@ -754,14 +808,17 @@ export function ChatPane({
     requestAnimationFrame(() => {
       // If the last assistant message contains a question form, scroll to
       // the form instead of the bottom, so the user sees the form first.
-      const lastAssistantMsg = [...messages].reverse().find((m) => m.role === 'assistant');
-      if (lastAssistantMsg?.content.includes('<question-form')) {
-        const assistantEls = el.querySelectorAll('.msg.assistant');
+      const lastAssistantMsg = [...messages]
+        .reverse()
+        .find((m) => m.role === "assistant");
+      if (lastAssistantMsg?.content.includes("<question-form")) {
+        const assistantEls = el.querySelectorAll(".msg.assistant");
         const lastAssistantEl = assistantEls[assistantEls.length - 1];
-        const formEl = lastAssistantEl?.querySelector<HTMLElement>('[data-form-id]');
+        const formEl =
+          lastAssistantEl?.querySelector<HTMLElement>("[data-form-id]");
         if (formEl && !scrolledToFormRef.current.has(formEl.dataset.formId!)) {
           scrolledToFormRef.current.add(formEl.dataset.formId!);
-          formEl.scrollIntoView({ block: 'start', behavior: 'smooth' });
+          formEl.scrollIntoView({ block: "start", behavior: "smooth" });
           pinnedToBottomRef.current = false;
           setScrolledFromBottom(true);
           return;
@@ -800,7 +857,7 @@ export function ChatPane({
 
     // A brand-new user turn from a local send: switch to "anchor to top"
     // mode and smooth-scroll their message to the top of the viewport.
-    const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+    const lastUser = [...messages].reverse().find((m) => m.role === "user");
     const prevUserId = prevLastUserIdRef.current;
     prevLastUserIdRef.current = lastUser?.id;
     if (anchorPendingRef.current && lastUser && lastUser.id !== prevUserId) {
@@ -825,14 +882,17 @@ export function ChatPane({
     if (pinnedToBottomRef.current) {
       // If the last assistant message contains a question form, scroll to
       // the form instead of the bottom, so the user lands on the form.
-      const lastAssistantMsg = [...messages].reverse().find((m) => m.role === 'assistant');
-      if (lastAssistantMsg?.content.includes('<question-form')) {
-        const assistantEls = el.querySelectorAll('.msg.assistant');
+      const lastAssistantMsg = [...messages]
+        .reverse()
+        .find((m) => m.role === "assistant");
+      if (lastAssistantMsg?.content.includes("<question-form")) {
+        const assistantEls = el.querySelectorAll(".msg.assistant");
         const lastAssistantEl = assistantEls[assistantEls.length - 1];
-        const formEl = lastAssistantEl?.querySelector<HTMLElement>('[data-form-id]');
+        const formEl =
+          lastAssistantEl?.querySelector<HTMLElement>("[data-form-id]");
         if (formEl && !scrolledToFormRef.current.has(formEl.dataset.formId!)) {
           scrolledToFormRef.current.add(formEl.dataset.formId!);
-          formEl.scrollIntoView({ block: 'start', behavior: 'smooth' });
+          formEl.scrollIntoView({ block: "start", behavior: "smooth" });
           pinnedToBottomRef.current = false;
           setScrolledFromBottom(true);
           return;
@@ -858,10 +918,12 @@ export function ChatPane({
   // bottom-followers stay pinned even when new messages stream in
   // off-tab. Issue #790.
   const savedChatScrollRef = useRef<
-    { pinnedToBottom: true } | { pinnedToBottom: false; scrollTop: number } | null
+    | { pinnedToBottom: true }
+    | { pinnedToBottom: false; scrollTop: number }
+    | null
   >(null);
   useEffect(() => {
-    if (tab !== 'chat') return;
+    if (tab !== "chat") return;
     const el = logRef.current;
     if (!el) return;
 
@@ -947,13 +1009,13 @@ export function ChatPane({
       pinnedToBottomRef.current = distance < 80;
     }
     syncScrollable(el);
-    el.addEventListener('scroll', onScroll);
+    el.addEventListener("scroll", onScroll);
     return () => {
       // Capture final scroll state before unmount; the ref normally
       // tracks via onScroll, but programmatic scrolls or layout shifts
       // right before unmount can leave it stale.
       snapshot(el);
-      el.removeEventListener('scroll', onScroll);
+      el.removeEventListener("scroll", onScroll);
       if (chatLogScrollIdleTimerRef.current !== null) {
         window.clearTimeout(chatLogScrollIdleTimerRef.current);
         chatLogScrollIdleTimerRef.current = null;
@@ -963,7 +1025,7 @@ export function ChatPane({
   }, [tab]);
 
   useEffect(() => {
-    if (tab !== 'chat') return;
+    if (tab !== "chat") return;
     const el = logRef.current;
     if (!el) return;
 
@@ -992,7 +1054,7 @@ export function ChatPane({
     };
 
     const resizeObserver =
-      typeof ResizeObserver !== 'undefined'
+      typeof ResizeObserver !== "undefined"
         ? new ResizeObserver(() => {
             const target = logRef.current;
             if (target) {
@@ -1060,7 +1122,7 @@ export function ChatPane({
     syncQueuedSendStrip();
 
     const mutationObserver =
-      typeof MutationObserver !== 'undefined'
+      typeof MutationObserver !== "undefined"
         ? new MutationObserver(() => {
             syncObservedChildren();
             syncPinnedTodo();
@@ -1102,38 +1164,38 @@ export function ChatPane({
       setShowConvList(false);
     }
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setShowConvList(false);
+      if (e.key === "Escape") setShowConvList(false);
     }
-    document.addEventListener('mousedown', onPointer);
-    document.addEventListener('keydown', onKey);
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("keydown", onKey);
     return () => {
-      document.removeEventListener('mousedown', onPointer);
-      document.removeEventListener('keydown', onKey);
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("keydown", onKey);
     };
   }, [showConvList]);
 
   useEffect(() => {
     if (showConvList) return;
-    setConversationSearch('');
+    setConversationSearch("");
   }, [showConvList]);
 
   const activeConversation =
     conversations.find((c) => c.id === activeConversationId) ?? null;
   const filteredConversations = useMemo(
     () => filterConversations(conversations, deferredConversationSearch, t),
-    [conversations, deferredConversationSearch, t],
+    [conversations, deferredConversationSearch, t]
   );
 
   function resetTailSpacer() {
     const s = tailSpacerRef.current;
-    if (s) s.style.height = '0px';
+    if (s) s.style.height = "0px";
   }
 
   // Content offset (distance from the top of the scroll content) of the most
   // recent user message. Invariant to the current scrollTop, so it's safe to
   // call regardless of where the user has scrolled.
   function lastUserMsgTopInContent(el: HTMLDivElement): number | null {
-    const userEls = el.querySelectorAll<HTMLElement>('.msg.user');
+    const userEls = el.querySelectorAll<HTMLElement>(".msg.user");
     const msgEl = userEls[userEls.length - 1];
     if (!msgEl) return null;
     const elRect = el.getBoundingClientRect();
@@ -1154,7 +1216,10 @@ export function ChatPane({
     if (msgTopInContent === null) return;
     const spacerH = spacer.offsetHeight;
     const contentBelow = el.scrollHeight - spacerH - msgTopInContent;
-    const needed = Math.max(0, el.clientHeight - contentBelow - ANCHOR_TOP_PADDING);
+    const needed = Math.max(
+      0,
+      el.clientHeight - contentBelow - ANCHOR_TOP_PADDING
+    );
     spacer.style.height = `${needed}px`;
   }
 
@@ -1168,7 +1233,7 @@ export function ChatPane({
     const msgTopInContent = lastUserMsgTopInContent(el);
     if (msgTopInContent === null) return;
     const target = Math.max(0, msgTopInContent - ANCHOR_TOP_PADDING);
-    el.scrollTo({ top: target, behavior: 'smooth' });
+    el.scrollTo({ top: target, behavior: "smooth" });
   }
 
   function jumpToBottom() {
@@ -1177,7 +1242,7 @@ export function ChatPane({
     anchorActiveRef.current = false;
     pinnedToBottomRef.current = true;
     resetTailSpacer();
-    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }
 
   return (
@@ -1198,7 +1263,9 @@ export function ChatPane({
           <span className="chat-project-header-title">{projectHeader}</span>
         ) : null}
         <div
-          className={`chat-history-wrap chat-session-switcher${showConvList ? ' open' : ''}`}
+          className={`chat-history-wrap chat-session-switcher${
+            showConvList ? " open" : ""
+          }`}
           ref={historyWrapRef}
         >
           <button
@@ -1207,10 +1274,12 @@ export function ChatPane({
             data-testid="conversation-history-trigger"
             title={
               activeConversation?.title
-                ? `${t('chat.conversationsTitle')} · ${activeConversation.title}`
-                : t('chat.conversationsTitle')
+                ? `${t("chat.conversationsTitle")} · ${
+                    activeConversation.title
+                  }`
+                : t("chat.conversationsTitle")
             }
-            aria-label={t('chat.conversationsAria')}
+            aria-label={t("chat.conversationsAria")}
             aria-haspopup="menu"
             aria-expanded={showConvList}
             onClick={() => {
@@ -1218,9 +1287,9 @@ export function ChatPane({
                 const next = !v;
                 if (next) {
                   trackChatPanelClick(analytics.track, {
-                    page_name: 'chat_panel',
-                    area: 'chat_panel',
-                    element: 'history',
+                    page_name: "chat_panel",
+                    area: "chat_panel",
+                    element: "history",
                   });
                 }
                 return next;
@@ -1230,15 +1299,21 @@ export function ChatPane({
             <Icon name="comment" size={16} />
           </button>
           {showConvList ? (
-            <div className="chat-history-menu" role="menu" data-testid="conversation-history-menu">
+            <div
+              className="chat-history-menu"
+              role="menu"
+              data-testid="conversation-history-menu"
+            >
               <div className="chat-history-menu-head">
                 <span className="chat-history-menu-title">
-                  {t('chat.conversationsHeading')}
+                  {t("chat.conversationsHeading")}
                 </span>
                 <span className="chat-history-menu-count">
                   {filteredConversations.length === conversations.length
                     ? compactCount(conversations.length)
-                    : `${compactCount(filteredConversations.length)} / ${compactCount(conversations.length)}`}
+                    : `${compactCount(
+                        filteredConversations.length
+                      )} / ${compactCount(conversations.length)}`}
                 </span>
                 {onNewConversation ? (
                   <button
@@ -1249,16 +1324,16 @@ export function ChatPane({
                     onClick={() => {
                       if (newConversationDisabled) return;
                       trackChatPanelClick(analytics.track, {
-                        page_name: 'chat_panel',
-                        area: 'chat_panel',
-                        element: 'new_chat',
+                        page_name: "chat_panel",
+                        area: "chat_panel",
+                        element: "new_chat",
                       });
                       onNewConversation();
                       setShowConvList(false);
                     }}
                   >
                     <Icon name="plus" size={11} />
-                    <span>{t('chat.new')}</span>
+                    <span>{t("chat.new")}</span>
                   </button>
                 ) : null}
               </div>
@@ -1267,7 +1342,9 @@ export function ChatPane({
                 <input
                   type="search"
                   value={conversationSearch}
-                  onChange={(event) => setConversationSearch(event.currentTarget.value)}
+                  onChange={(event) =>
+                    setConversationSearch(event.currentTarget.value)
+                  }
                   placeholder="Search conversations"
                   data-testid="conversation-history-search"
                 />
@@ -1275,17 +1352,20 @@ export function ChatPane({
                   <button
                     type="button"
                     className="chat-history-search-clear"
-                    onClick={() => setConversationSearch('')}
-                    aria-label={t('chat.comments.clear')}
+                    onClick={() => setConversationSearch("")}
+                    aria-label={t("chat.comments.clear")}
                   >
                     <Icon name="close" size={10} />
                   </button>
                 ) : null}
               </label>
-              <div className="chat-history-list" data-testid="conversation-list">
+              <div
+                className="chat-history-list"
+                data-testid="conversation-list"
+              >
                 {conversations.length === 0 ? (
                   <div className="chat-history-empty">
-                    {t('chat.emptyConversations')}
+                    {t("chat.emptyConversations")}
                   </div>
                 ) : filteredConversations.length === 0 ? (
                   <div className="chat-history-empty">
@@ -1297,7 +1377,11 @@ export function ChatPane({
                       key={c.id}
                       conversation={c}
                       active={c.id === activeConversationId}
-                      messageCount={conversationMessageCount(c, activeConversationId, messages.length)}
+                      messageCount={conversationMessageCount(
+                        c,
+                        activeConversationId,
+                        messages.length
+                      )}
                       onSelect={() => {
                         onSelectConversation(c.id);
                         setShowConvList(false);
@@ -1312,16 +1396,18 @@ export function ChatPane({
           ) : null}
         </div>
       </div>
-      {tab === 'chat' ? (
+      {tab === "chat" ? (
         <>
           <div className="chat-log-wrap">
             <div
               className={[
-                'chat-log',
-                loading ? 'is-loading' : '',
-                chatLogScrollable ? 'is-scrollable' : '',
-                chatLogScrolling ? 'is-scrolling' : '',
-              ].filter(Boolean).join(' ')}
+                "chat-log",
+                loading ? "is-loading" : "",
+                chatLogScrollable ? "is-scrollable" : "",
+                chatLogScrolling ? "is-scrolling" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
               ref={logRef}
               aria-busy={loading}
               onClickCapture={(e) => {
@@ -1331,7 +1417,7 @@ export function ChatPane({
                 // to the bottom on the height change and push the header up,
                 // so unpin the moment the user toggles one open.
                 const toggle = (e.target as HTMLElement).closest(
-                  '.thinking-toggle, .action-card-toggle, button.op-card-head, [aria-expanded]',
+                  ".thinking-toggle, .action-card-toggle, button.op-card-head, [aria-expanded]"
                 );
                 if (toggle && logRef.current?.contains(toggle)) {
                   pinnedToBottomRef.current = false;
@@ -1345,7 +1431,7 @@ export function ChatPane({
                 <div className="chat-empty-wrap">
                   <div className="chat-empty">
                     <span className="chat-empty-title">
-                      {t('chat.startTitle')}
+                      {t("chat.startTitle")}
                     </span>
                   </div>
                   <div className="chat-examples" role="list">
@@ -1358,23 +1444,27 @@ export function ChatPane({
                         style={{ animationDelay: `${i * 70}ms` }}
                         onClick={() => {
                           trackChatPanelClick(analytics.track, {
-                            page_name: 'chat_panel',
-                            area: 'chat_panel',
-                            element: 'template_card',
+                            page_name: "chat_panel",
+                            area: "chat_panel",
+                            element: "template_card",
                           });
                           composerRef.current?.setDraft(ex.prompt);
                         }}
-                        title={t('chat.fillInputTitle')}
+                        title={t("chat.fillInputTitle")}
                       >
                         <span className="chat-example-icon" aria-hidden>
                           {ex.icon}
                         </span>
                         <span className="chat-example-body">
                           <span className="chat-example-head">
-                            <span className="chat-example-title">{ex.title}</span>
+                            <span className="chat-example-title">
+                              {ex.title}
+                            </span>
                             <span className="chat-example-tag">{ex.tag}</span>
                           </span>
-                          <span className="chat-example-prompt">{ex.prompt}</span>
+                          <span className="chat-example-prompt">
+                            {ex.prompt}
+                          </span>
                         </span>
                         <span className="chat-example-cta" aria-hidden>
                           ↵
@@ -1415,13 +1505,17 @@ export function ChatPane({
                 projectId={projectId}
                 projectKindForTracking={projectKindForTracking}
                 activeConversationId={activeConversationId}
-                activeConversationKey={activeConversationId ?? 'no-conversation'}
+                activeConversationKey={
+                  activeConversationId ?? "no-conversation"
+                }
                 projectFiles={projectFiles}
                 projectFileNames={projectFileNames}
                 onRequestOpenFile={onRequestOpenFile}
                 onRequestPluginDetails={onRequestPluginDetails}
                 onRequestDesignSystemDetails={onRequestDesignSystemDetails}
-                onRequestPluginFolderAgentAction={onRequestPluginFolderAgentAction}
+                onRequestPluginFolderAgentAction={
+                  onRequestPluginFolderAgentAction
+                }
                 activePluginActionPaths={activePluginActionPaths}
                 hiddenPluginActionPaths={hiddenPluginActionPaths}
                 forceStreamingMessageIds={forceStreamingMessageIds}
@@ -1452,12 +1546,15 @@ export function ChatPane({
                   <span className="chat-error-text">{displayError}</span>
                   {retryAssistant && onRetry && runFailureUi ? (
                     <div className="chat-error-actions">
-                      {runFailureUi.primaryAction === 'authorize' ? (
+                      {runFailureUi.primaryAction === "authorize" ? (
                         <button
                           type="button"
                           className="chat-error-action"
                           onClick={() => {
-                            recordAmrEntry(analytics.track, 'chat_error_authorize_retry');
+                            recordAmrEntry(
+                              analytics.track,
+                              "chat_error_authorize_retry"
+                            );
                             if (onSwitchToAmrAndRetry) {
                               onSwitchToAmrAndRetry(retryAssistant);
                             } else {
@@ -1465,9 +1562,10 @@ export function ChatPane({
                             }
                           }}
                         >
-                          {t('chat.amrError.authorizeCta')}
+                          {t("chat.amrError.authorizeCta")}
                         </button>
-                      ) : runFailureUi.primaryAction === 'launch-terminal-auth' ? (
+                      ) : runFailureUi.primaryAction ===
+                        "launch-terminal-auth" ? (
                         <button
                           type="button"
                           className="chat-error-action"
@@ -1475,9 +1573,10 @@ export function ChatPane({
                             onLaunchAntigravityOauth?.();
                           }}
                         >
-                          {t('chat.antigravityError.launchTerminalCta')}
+                          {t("chat.antigravityError.launchTerminalCta")}
                         </button>
-                      ) : runFailureUi.primaryAction === 'launch-terminal-switch-model' ? (
+                      ) : runFailureUi.primaryAction ===
+                        "launch-terminal-switch-model" ? (
                         <button
                           type="button"
                           className="chat-error-action"
@@ -1485,34 +1584,35 @@ export function ChatPane({
                             onLaunchAntigravityOauth?.();
                           }}
                         >
-                          {t('chat.antigravityError.launchSwitchModelCta')}
+                          {t("chat.antigravityError.launchSwitchModelCta")}
                         </button>
-                      ) : runFailureUi.primaryAction === 'recharge' ? (
+                      ) : runFailureUi.primaryAction === "recharge" ? (
                         <button
                           type="button"
                           className="chat-error-action"
                           onClick={() => {
                             const attribution = recordAmrEntry(
                               analytics.track,
-                              'chat_error_recharge',
+                              "chat_error_recharge"
                             );
                             window.open(
                               attributedAmrUrl(AMR_RECHARGE_URL, attribution),
-                              '_blank',
-                              'noopener,noreferrer',
+                              "_blank",
+                              "noopener,noreferrer"
                             );
                           }}
                         >
-                          {t('chat.amrError.rechargeCta')}
+                          {t("chat.amrError.rechargeCta")}
                         </button>
                       ) : null}
-                      {runFailureUi.primaryAction === 'retry' || runFailureUi.secondaryRetry ? (
+                      {runFailureUi.primaryAction === "retry" ||
+                      runFailureUi.secondaryRetry ? (
                         <button
                           type="button"
                           className="ghost chat-error-retry"
                           onClick={() => onRetry(retryAssistant)}
                         >
-                          {t('promptTemplates.retry')}
+                          {t("promptTemplates.retry")}
                         </button>
                       ) : null}
                     </div>
@@ -1535,7 +1635,11 @@ export function ChatPane({
               {/* Dynamic spacer: when a turn is anchored to the top, this
                   grows just enough to let the user message reach the top of
                   the viewport, then shrinks as the reply streams in below. */}
-              <div className="chat-log-tail-spacer" ref={tailSpacerRef} aria-hidden />
+              <div
+                className="chat-log-tail-spacer"
+                ref={tailSpacerRef}
+                aria-hidden
+              />
             </div>
             {/* Always mounted so the CSS transition can play in both
                 directions; the `chat-jump-btn-active` class flips the
@@ -1543,14 +1647,20 @@ export function ChatPane({
                 keep it out of the a11y tree when it's not visible. */}
             <button
               type="button"
-              className={`chat-jump-btn${scrolledFromBottom ? ' chat-jump-btn-active' : ''}`}
+              className={`chat-jump-btn${
+                scrolledFromBottom ? " chat-jump-btn-active" : ""
+              }`}
               onClick={jumpToBottom}
-              title={t('chat.scrollToLatest')}
+              title={t("chat.scrollToLatest")}
               aria-hidden={!scrolledFromBottom}
               tabIndex={scrolledFromBottom ? 0 : -1}
             >
-              <Icon name="arrow-up" size={12} style={{ transform: 'rotate(180deg)' }} />
-              <span>{t('chat.jumpToLatest')}</span>
+              <Icon
+                name="arrow-up"
+                size={12}
+                style={{ transform: "rotate(180deg)" }}
+              />
+              <span>{t("chat.jumpToLatest")}</span>
             </button>
           </div>
           <PinnedTodoSlot
@@ -1599,7 +1709,9 @@ export function ChatPane({
               pinnedToBottomRef.current = true;
               scrolledToFormRef.current = new Set();
               if (editingQueuedSendId && onUpdateQueuedSend) {
-                const original = queuedItems.find((item) => item.id === editingQueuedSendId);
+                const original = queuedItems.find(
+                  (item) => item.id === editingQueuedSendId
+                );
                 const update: QueuedSendUpdate = {
                   prompt,
                   attachments,
@@ -1660,12 +1772,12 @@ interface AssistantCallbacks {
 
 type ChatRenderItem =
   | {
-      kind: 'separator';
+      kind: "separator";
       key: string;
       timestamp: number;
     }
   | {
-      kind: 'message';
+      kind: "message";
       key: string;
       message: ChatMessage;
     };
@@ -1678,7 +1790,7 @@ function ChatConversationLoading({ t }: { t: TranslateFn }) {
         <span />
         <span />
       </span>
-      <span className="chat-loading-copy">{t('common.loading')}</span>
+      <span className="chat-loading-copy">{t("common.loading")}</span>
       <span className="chat-loading-lines" aria-hidden>
         <span />
         <span />
@@ -1736,7 +1848,10 @@ function ChatRows({
   onRequestOpenFile?: (name: string) => void;
   onRequestPluginDetails?: (pluginId: string) => void;
   onRequestDesignSystemDetails?: (system: DesignSystemSummary) => void;
-  onRequestPluginFolderAgentAction?: (relativePath: string, action: PluginFolderAgentAction) => void;
+  onRequestPluginFolderAgentAction?: (
+    relativePath: string,
+    action: PluginFolderAgentAction
+  ) => void;
   activePluginActionPaths?: Set<string>;
   hiddenPluginActionPaths?: Set<string>;
   forceStreamingMessageIds?: Set<string>;
@@ -1748,11 +1863,17 @@ function ChatRows({
   errorCardOwnerId: string | null;
   nextUserContentByAssistantId: Map<string, string>;
   assistantCallbacksRef: MutableRefObject<AssistantCallbacks>;
-  onContinueRemainingTasks?: (assistantMessage: ChatMessage, todos: TodoItem[]) => void;
+  onContinueRemainingTasks?: (
+    assistantMessage: ChatMessage,
+    todos: TodoItem[]
+  ) => void;
   onArtifactShare?: (fileName: string) => void;
   onArtifactChip?: (fileName: string, prompt: string) => void;
   onForkFromMessage?: (message: ChatMessage) => void;
-  onAssistantFeedback?: (message: ChatMessage, change: ChatMessageFeedbackChange) => void;
+  onAssistantFeedback?: (
+    message: ChatMessage,
+    change: ChatMessageFeedbackChange
+  ) => void;
   forkingMessageId?: string | null;
   t: TranslateFn;
   onAssistantFormSubmitStart: () => void;
@@ -1771,7 +1892,7 @@ function ChatRows({
   });
 
   const renderItem = (item: ChatRenderItem) => {
-    if (item.kind === 'separator') {
+    if (item.kind === "separator") {
       return <DaySeparator ts={item.timestamp} />;
     }
     const m = item.message;
@@ -1779,9 +1900,9 @@ function ChatRows({
       m,
       streaming,
       lastAssistantId,
-      forceStreamingMessageIds,
+      forceStreamingMessageIds
     );
-    if (m.role === 'user') {
+    if (m.role === "user") {
       return (
         <UserMessage
           message={m}
@@ -1792,14 +1913,10 @@ function ChatRows({
           onRequestDesignSystemDetails={onRequestDesignSystemDetails}
           t={t}
           activePluginSnapshot={
-            m.id === firstUserMessageId
-              ? activePluginSnapshot ?? null
-              : null
+            m.id === firstUserMessageId ? activePluginSnapshot ?? null : null
           }
           activeDesignSystem={
-            m.id === firstUserMessageId
-              ? activeDesignSystem ?? null
-              : null
+            m.id === firstUserMessageId ? activeDesignSystem ?? null : null
           }
         />
       );
@@ -1830,7 +1947,11 @@ function ChatRows({
         onOpenQuestions={onOpenQuestions}
         onContinueRemainingTasks={
           m.id === lastAssistantId && onContinueRemainingTasks
-            ? (todos) => assistantCallbacksRef.current.onContinueRemainingTasks?.(m, todos)
+            ? (todos) =>
+                assistantCallbacksRef.current.onContinueRemainingTasks?.(
+                  m,
+                  todos
+                )
             : undefined
         }
         onForkFromMessage={
@@ -1841,17 +1962,20 @@ function ChatRows({
         forking={forkingMessageId === m.id}
         onFeedback={
           onAssistantFeedback
-            ? (rating) => assistantCallbacksRef.current.onAssistantFeedback?.(m, rating)
+            ? (rating) =>
+                assistantCallbacksRef.current.onAssistantFeedback?.(m, rating)
             : undefined
         }
         onArtifactShare={
           onArtifactShare
-            ? (fileName) => assistantCallbacksRef.current.onArtifactShare?.(fileName)
+            ? (fileName) =>
+                assistantCallbacksRef.current.onArtifactShare?.(fileName)
             : undefined
         }
         onArtifactChip={
           onArtifactChip
-            ? (fileName, prompt) => assistantCallbacksRef.current.onArtifactChip?.(fileName, prompt)
+            ? (fileName, prompt) =>
+                assistantCallbacksRef.current.onArtifactChip?.(fileName, prompt)
             : undefined
         }
       />
@@ -1911,7 +2035,7 @@ function VirtualChatRow({
       onMeasure(itemKey, height);
     };
     measure();
-    if (typeof ResizeObserver === 'undefined') return undefined;
+    if (typeof ResizeObserver === "undefined") return undefined;
     const observer = new ResizeObserver(measure);
     observer.observe(node);
     return () => observer.disconnect();
@@ -1936,13 +2060,13 @@ function buildChatRenderItems(messages: ChatMessage[]): ChatRenderItem[] {
       const timestamp = messageTime(message);
       if (timestamp === undefined) continue;
       items.push({
-        kind: 'separator',
+        kind: "separator",
         key: `day:${dayKey(timestamp)}:${message.id}`,
         timestamp,
       });
     }
     items.push({
-      kind: 'message',
+      kind: "message",
       key: `message:${message.id}`,
       message,
     });
@@ -1951,21 +2075,23 @@ function buildChatRenderItems(messages: ChatMessage[]): ChatRenderItem[] {
 }
 
 function estimateChatRenderItemHeight(item: ChatRenderItem): number {
-  if (item.kind === 'separator') return 34 + CHAT_VIRTUAL_ROW_GAP_PX;
+  if (item.kind === "separator") return 34 + CHAT_VIRTUAL_ROW_GAP_PX;
   const message = item.message;
   const contentLength = message.content?.length ?? 0;
-  const attachmentCount = (message.attachments?.length ?? 0) + (message.commentAttachments?.length ?? 0);
+  const attachmentCount =
+    (message.attachments?.length ?? 0) +
+    (message.commentAttachments?.length ?? 0);
   const eventCount = message.events?.length ?? 0;
   const fileCount = message.producedFiles?.length ?? 0;
-  const base = message.role === 'user' ? 82 : 118;
+  const base = message.role === "user" ? 82 : 118;
   const contentRows = Math.min(18, Math.ceil(contentLength / 120));
   return (
-    base
-    + contentRows * 18
-    + attachmentCount * 34
-    + eventCount * 28
-    + fileCount * 32
-    + CHAT_VIRTUAL_ROW_GAP_PX
+    base +
+    contentRows * 18 +
+    attachmentCount * 34 +
+    eventCount * 28 +
+    fileCount * 32 +
+    CHAT_VIRTUAL_ROW_GAP_PX
   );
 }
 
@@ -1985,7 +2111,7 @@ function useMeasuredVirtualWindow<T extends { key: string }>(
     overscanPx: number;
     resetKey: string;
     initialTailRows: number;
-  },
+  }
 ) {
   const measuredHeightsRef = useRef<Map<string, number>>(new Map());
   const [measureVersion, setMeasureVersion] = useState(0);
@@ -2009,7 +2135,8 @@ function useMeasuredVirtualWindow<T extends { key: string }>(
           scrollTop: el.scrollTop,
           height: el.clientHeight || CHAT_VIRTUAL_DEFAULT_VIEWPORT_PX,
         };
-        return current.scrollTop === next.scrollTop && current.height === next.height
+        return current.scrollTop === next.scrollTop &&
+          current.height === next.height
           ? current
           : next;
       });
@@ -2019,15 +2146,15 @@ function useMeasuredVirtualWindow<T extends { key: string }>(
       frame = requestAnimationFrame(readViewport);
     };
     scheduleRead();
-    el.addEventListener('scroll', scheduleRead, { passive: true });
+    el.addEventListener("scroll", scheduleRead, { passive: true });
     const observer =
-      typeof ResizeObserver !== 'undefined'
+      typeof ResizeObserver !== "undefined"
         ? new ResizeObserver(scheduleRead)
         : null;
     observer?.observe(el);
     return () => {
       if (frame !== null) cancelAnimationFrame(frame);
-      el.removeEventListener('scroll', scheduleRead);
+      el.removeEventListener("scroll", scheduleRead);
       observer?.disconnect();
     };
   }, [containerRef, enabled]);
@@ -2041,7 +2168,7 @@ function useMeasuredVirtualWindow<T extends { key: string }>(
       const measured = measuredHeightsRef.current.get(item.key);
       const size = Math.max(
         CHAT_VIRTUAL_MIN_ROW_HEIGHT,
-        measured ?? estimateSize(item),
+        measured ?? estimateSize(item)
       );
       sizes.push(size);
       cursor += size;
@@ -2063,8 +2190,8 @@ function useMeasuredVirtualWindow<T extends { key: string }>(
     const endTarget = viewport.scrollTop + height + overscanPx;
     let start = 0;
     while (
-      start < items.length - 1
-      && (layout.offsets[start] ?? 0) + (layout.sizes[start] ?? 0) < startTarget
+      start < items.length - 1 &&
+      (layout.offsets[start] ?? 0) + (layout.sizes[start] ?? 0) < startTarget
     ) {
       start += 1;
     }
@@ -2136,7 +2263,10 @@ function PinnedTodoSlot({
   }
   if (snapshotKey === dismissedKey) return null;
   return (
-    <div className={`chat-pinned-todo${exiting ? ' chat-pinned-todo-exit' : ''}`} ref={containerRef}>
+    <div
+      className={`chat-pinned-todo${exiting ? " chat-pinned-todo-exit" : ""}`}
+      ref={containerRef}
+    >
       <TodoCard
         input={input}
         runStreaming={streaming}
@@ -2175,28 +2305,33 @@ function QueuedSendStrip({
   const [dragState, setDragState] = useState<QueuedSendDragState | null>(null);
   if (items.length === 0) return null;
   const canReorder = Boolean(onReorder && items.length > 1);
-  const overflowCount = Math.max(0, items.length - QUEUED_SEND_VISIBLE_ROW_COUNT);
+  const overflowCount = Math.max(
+    0,
+    items.length - QUEUED_SEND_VISIBLE_ROW_COUNT
+  );
 
   const handleDragStart = (
     event: ReactDragEvent<HTMLButtonElement>,
-    item: QueuedSendItem,
+    item: QueuedSendItem
   ) => {
     if (!canReorder) return;
-    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData(QUEUED_SEND_DRAG_MIME, item.id);
-    event.dataTransfer.setData('text/plain', item.id);
+    event.dataTransfer.setData("text/plain", item.id);
     setDragState({ draggingId: item.id, overId: item.id, edge: null });
   };
 
   const handleDragOver = (
     event: ReactDragEvent<HTMLDivElement>,
-    targetId: string,
+    targetId: string
   ) => {
     if (!canReorder) return;
-    const draggingId = dragState?.draggingId || event.dataTransfer.getData(QUEUED_SEND_DRAG_MIME);
+    const draggingId =
+      dragState?.draggingId ||
+      event.dataTransfer.getData(QUEUED_SEND_DRAG_MIME);
     if (!draggingId) return;
     event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
+    event.dataTransfer.dropEffect = "move";
     if (draggingId === targetId) {
       if (dragState?.overId !== targetId || dragState.edge !== null) {
         setDragState({ draggingId, overId: targetId, edge: null });
@@ -2205,9 +2340,9 @@ function QueuedSendStrip({
     }
     const edge = queuedDropEdgeForEvent(event);
     if (
-      dragState?.draggingId !== draggingId
-      || dragState.overId !== targetId
-      || dragState.edge !== edge
+      dragState?.draggingId !== draggingId ||
+      dragState.overId !== targetId ||
+      dragState.edge !== edge
     ) {
       setDragState({ draggingId, overId: targetId, edge });
     }
@@ -2215,23 +2350,24 @@ function QueuedSendStrip({
 
   const handleDrop = (
     event: ReactDragEvent<HTMLDivElement>,
-    targetId: string,
+    targetId: string
   ) => {
     if (!canReorder) return;
     event.preventDefault();
     const draggingId =
-      dragState?.draggingId
-      || event.dataTransfer.getData(QUEUED_SEND_DRAG_MIME)
-      || event.dataTransfer.getData('text/plain');
+      dragState?.draggingId ||
+      event.dataTransfer.getData(QUEUED_SEND_DRAG_MIME) ||
+      event.dataTransfer.getData("text/plain");
     if (!draggingId || draggingId === targetId) {
       setDragState(null);
       return;
     }
-    const edge = dragState?.overId === targetId && dragState.edge
-      ? dragState.edge
-      : queuedDropEdgeForEvent(event);
+    const edge =
+      dragState?.overId === targetId && dragState.edge
+        ? dragState.edge
+        : queuedDropEdgeForEvent(event);
     const nextIds = reorderQueuedSendIds(items, draggingId, targetId, edge);
-    if (nextIds.join('\0') !== items.map((item) => item.id).join('\0')) {
+    if (nextIds.join("\0") !== items.map((item) => item.id).join("\0")) {
       onReorder?.(nextIds);
     }
     setDragState(null);
@@ -2244,32 +2380,40 @@ function QueuedSendStrip({
       data-testid="chat-queued-send-strip"
       onDragLeave={(event) => {
         const related = event.relatedTarget;
-        if (related instanceof Node && event.currentTarget.contains(related)) return;
+        if (related instanceof Node && event.currentTarget.contains(related))
+          return;
         setDragState(null);
       }}
     >
       <div className="chat-queued-send-header">
         <div className="chat-queued-send-heading">
           <strong>
-            {items.length} {t('chat.queuedHeader')}
+            {items.length} {t("chat.queuedHeader")}
           </strong>
           <span aria-hidden>↩</span>
-          <span>{t('chat.queuedToSend')}</span>
+          <span>{t("chat.queuedToSend")}</span>
         </div>
       </div>
-      <div className={`chat-queued-send-list${overflowCount > 0 ? ' is-scrollable' : ''}`}>
+      <div
+        className={`chat-queued-send-list${
+          overflowCount > 0 ? " is-scrollable" : ""
+        }`}
+      >
         {items.map((item, index) => {
           const isDragging = dragState?.draggingId === item.id;
-          const dropClass = dragState?.overId === item.id
-            && dragState.draggingId !== item.id
-            && dragState.edge
-            ? ` chat-queued-send-row-drop-${dragState.edge}`
-            : '';
+          const dropClass =
+            dragState?.overId === item.id &&
+            dragState.draggingId !== item.id &&
+            dragState.edge
+              ? ` chat-queued-send-row-drop-${dragState.edge}`
+              : "";
           return (
             <div
-              className={`chat-queued-send-row${index === 0 ? ' chat-queued-send-row-active' : ''}${
-                editingId === item.id ? ' chat-queued-send-row-editing' : ''
-              }${isDragging ? ' chat-queued-send-row-dragging' : ''}${dropClass}`}
+              className={`chat-queued-send-row${
+                index === 0 ? " chat-queued-send-row-active" : ""
+              }${editingId === item.id ? " chat-queued-send-row-editing" : ""}${
+                isDragging ? " chat-queued-send-row-dragging" : ""
+              }${dropClass}`}
               key={item.id}
               onDragOver={(event) => handleDragOver(event, item.id)}
               onDrop={(event) => handleDrop(event, item.id)}
@@ -2277,10 +2421,10 @@ function QueuedSendStrip({
               <button
                 type="button"
                 className="chat-queued-send-drag-handle chat-queued-send-tooltip od-tooltip"
-                title={t('chat.queuedReorder')}
-                data-tooltip={t('chat.queuedReorder')}
+                title={t("chat.queuedReorder")}
+                data-tooltip={t("chat.queuedReorder")}
                 data-tooltip-placement="right"
-                aria-label={t('chat.queuedReorder')}
+                aria-label={t("chat.queuedReorder")}
                 draggable={canReorder}
                 disabled={!canReorder}
                 onDragStart={(event) => handleDragStart(event, item)}
@@ -2289,7 +2433,9 @@ function QueuedSendStrip({
                 <Icon name="grip-vertical" size={14} />
               </button>
               <div className="chat-queued-send-main">
-                <span className="chat-queued-send-title">{summarizeQueuedPrompt(item, t)}</span>
+                <span className="chat-queued-send-title">
+                  {summarizeQueuedPrompt(item, t)}
+                </span>
                 <QueuedSendMetaChips item={item} />
               </div>
               <div className="chat-queued-send-actions">
@@ -2297,10 +2443,10 @@ function QueuedSendStrip({
                   <button
                     type="button"
                     className="chat-queued-send-action chat-queued-send-tooltip od-tooltip"
-                    title={t('chat.queuedEdit')}
-                    data-tooltip={t('chat.queuedEdit')}
+                    title={t("chat.queuedEdit")}
+                    data-tooltip={t("chat.queuedEdit")}
                     data-tooltip-placement="top"
-                    aria-label={t('chat.queuedEdit')}
+                    aria-label={t("chat.queuedEdit")}
                     onClick={() => onEdit(item)}
                   >
                     <Icon name="pencil" size={13} />
@@ -2309,10 +2455,10 @@ function QueuedSendStrip({
                 <button
                   type="button"
                   className="chat-queued-send-action chat-queued-send-tooltip od-tooltip"
-                  title={t('chat.send')}
-                  data-tooltip={t('chat.send')}
+                  title={t("chat.send")}
+                  data-tooltip={t("chat.send")}
                   data-tooltip-placement="top"
-                  aria-label={t('chat.send')}
+                  aria-label={t("chat.send")}
                   onClick={() => onSendNow?.(item.id)}
                   disabled={!onSendNow}
                 >
@@ -2323,10 +2469,10 @@ function QueuedSendStrip({
                     type="button"
                     className="chat-queued-send-action chat-queued-send-tooltip od-tooltip"
                     onClick={() => onRemove(item.id)}
-                    title={t('chat.comments.remove')}
-                    data-tooltip={t('chat.comments.remove')}
+                    title={t("chat.comments.remove")}
+                    data-tooltip={t("chat.comments.remove")}
                     data-tooltip-placement="top"
-                    aria-label={t('chat.comments.remove')}
+                    aria-label={t("chat.comments.remove")}
                   >
                     <Icon name="trash" size={13} />
                   </button>
@@ -2338,17 +2484,17 @@ function QueuedSendStrip({
       </div>
       {overflowCount > 0 ? (
         <div className="chat-queued-send-overflow">
-          +{overflowCount} {t('chat.queuedMore')}
+          +{overflowCount} {t("chat.queuedMore")}
         </div>
       ) : null}
     </div>
   );
 }
 
-const QUEUED_SEND_DRAG_MIME = 'application/x-open-design-queued-send';
+const QUEUED_SEND_DRAG_MIME = "application/x-open-design-queued-send";
 const QUEUED_SEND_VISIBLE_ROW_COUNT = 4;
 
-type QueuedSendDropEdge = 'before' | 'after';
+type QueuedSendDropEdge = "before" | "after";
 
 interface QueuedSendDragState {
   draggingId: string;
@@ -2356,16 +2502,18 @@ interface QueuedSendDragState {
   edge: QueuedSendDropEdge | null;
 }
 
-function queuedDropEdgeForEvent(event: ReactDragEvent<HTMLElement>): QueuedSendDropEdge {
+function queuedDropEdgeForEvent(
+  event: ReactDragEvent<HTMLElement>
+): QueuedSendDropEdge {
   const rect = event.currentTarget.getBoundingClientRect();
-  return event.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
+  return event.clientY < rect.top + rect.height / 2 ? "before" : "after";
 }
 
 function reorderQueuedSendIds(
   items: QueuedSendItem[],
   draggingId: string,
   targetId: string,
-  edge: QueuedSendDropEdge,
+  edge: QueuedSendDropEdge
 ): string[] {
   const ids = items.map((item) => item.id);
   const from = ids.indexOf(draggingId);
@@ -2373,13 +2521,13 @@ function reorderQueuedSendIds(
   const [draggedId] = ids.splice(from, 1);
   const targetIndex = ids.indexOf(targetId);
   if (targetIndex < 0 || !draggedId) return items.map((item) => item.id);
-  ids.splice(edge === 'after' ? targetIndex + 1 : targetIndex, 0, draggedId);
+  ids.splice(edge === "after" ? targetIndex + 1 : targetIndex, 0, draggedId);
   return ids;
 }
 
 function summarizeQueuedPrompt(item: QueuedSendItem, t: TranslateFn): string {
-  const normalized = item.prompt.replace(/\s+/g, ' ').trim();
-  const text = normalized || t('chat.queuedFollowUpFallback');
+  const normalized = item.prompt.replace(/\s+/g, " ").trim();
+  const text = normalized || t("chat.queuedFollowUpFallback");
   return text.length > 58 ? `${text.slice(0, 57)}...` : text;
 }
 
@@ -2391,20 +2539,29 @@ function QueuedSendMetaChips({ item }: { item: QueuedSendItem }) {
   const ctx = item.meta?.context;
   const files = item.attachments?.length ?? 0;
   const marks = item.commentAttachments?.length ?? 0;
-  const plugins = item.meta?.appliedPluginSnapshot ? 1 : ctx?.pluginIds?.length ?? 0;
+  const plugins = item.meta?.appliedPluginSnapshot
+    ? 1
+    : ctx?.pluginIds?.length ?? 0;
   const skills = ctx?.skillIds?.length ?? 0;
   const mcp = ctx?.mcpServerIds?.length ?? 0;
   const connectors = ctx?.connectorIds?.length ?? 0;
   const workspace = ctx?.workspaceItems?.length ?? 0;
-  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+  const plural = (n: number, word: string) =>
+    `${n} ${word}${n === 1 ? "" : "s"}`;
   const chips: Array<{ key: string; label: string }> = [];
-  if (files > 0) chips.push({ key: 'files', label: plural(files, 'file') });
-  if (marks > 0) chips.push({ key: 'marks', label: plural(marks, 'mark') });
-  if (plugins > 0) chips.push({ key: 'plugins', label: plural(plugins, 'plugin') });
-  if (skills > 0) chips.push({ key: 'skills', label: plural(skills, 'skill') });
-  if (mcp > 0) chips.push({ key: 'mcp', label: `${mcp} MCP` });
-  if (connectors > 0) chips.push({ key: 'connectors', label: plural(connectors, 'connector') });
-  if (workspace > 0) chips.push({ key: 'workspace', label: plural(workspace, 'workspace context') });
+  if (files > 0) chips.push({ key: "files", label: plural(files, "file") });
+  if (marks > 0) chips.push({ key: "marks", label: plural(marks, "mark") });
+  if (plugins > 0)
+    chips.push({ key: "plugins", label: plural(plugins, "plugin") });
+  if (skills > 0) chips.push({ key: "skills", label: plural(skills, "skill") });
+  if (mcp > 0) chips.push({ key: "mcp", label: `${mcp} MCP` });
+  if (connectors > 0)
+    chips.push({ key: "connectors", label: plural(connectors, "connector") });
+  if (workspace > 0)
+    chips.push({
+      key: "workspace",
+      label: plural(workspace, "workspace context"),
+    });
   if (chips.length === 0) return null;
   return (
     <div className="chat-queued-send-chips">
@@ -2437,20 +2594,20 @@ function CommentsPanel({
   return (
     <div className="comments-panel" data-testid="comments-panel">
       <CommentSection
-        title={t('chat.comments.attached')}
-        empty={t('chat.comments.emptyAttached')}
+        title={t("chat.comments.attached")}
+        empty={t("chat.comments.emptyAttached")}
         comments={attachedComments}
-        actionLabel={t('chat.comments.remove')}
+        actionLabel={t("chat.comments.remove")}
         onAction={(comment) => onDetach?.(comment.id)}
         attached
       />
       <CommentSection
-        title={t('chat.comments.saved')}
-        empty={t('chat.comments.emptySaved')}
+        title={t("chat.comments.saved")}
+        empty={t("chat.comments.emptySaved")}
         comments={saved}
-        actionLabel={t('chat.comments.add')}
+        actionLabel={t("chat.comments.add")}
         onAction={(comment) => onAttach?.(comment)}
-        secondaryActionLabel={t('chat.comments.remove')}
+        secondaryActionLabel={t("chat.comments.remove")}
         onSecondaryAction={(comment) => onDelete?.(comment.id)}
       />
       {saved.length > 0 ? (
@@ -2460,7 +2617,7 @@ function CommentsPanel({
             className="primary"
             onClick={() => saved.forEach((comment) => onAttach?.(comment))}
           >
-            {t('chat.comments.addAll')}
+            {t("chat.comments.addAll")}
           </button>
         </div>
       ) : null}
@@ -2496,7 +2653,7 @@ function CommentSection({
         comments.map((comment) => (
           <article
             key={comment.id}
-            className={`comment-card${attached ? ' attached' : ''}`}
+            className={`comment-card${attached ? " attached" : ""}`}
             data-testid={`comment-card-${comment.elementId}`}
           >
             <div className="comment-card-top">
@@ -2511,7 +2668,11 @@ function CommentSection({
                     {secondaryActionLabel}
                   </button>
                 ) : null}
-                <button type="button" className="comment-card-action" onClick={() => onAction(comment)}>
+                <button
+                  type="button"
+                  className="comment-card-action"
+                  onClick={() => onAction(comment)}
+                >
                   {actionLabel}
                 </button>
               </div>
@@ -2530,33 +2691,33 @@ function CommentSection({
   );
 }
 
-function isActiveRunStatus(status: ChatMessage['runStatus']): boolean {
-  return status === 'queued' || status === 'running';
+function isActiveRunStatus(status: ChatMessage["runStatus"]): boolean {
+  return status === "queued" || status === "running";
 }
 
-function isTerminalRunStatus(status: ChatMessage['runStatus']): boolean {
-  return status === 'succeeded' || status === 'failed' || status === 'canceled';
+function isTerminalRunStatus(status: ChatMessage["runStatus"]): boolean {
+  return status === "succeeded" || status === "failed" || status === "canceled";
 }
 
 export function retryableAssistantMessage(
   messages: ChatMessage[],
   lastAssistantId: string | null | undefined,
-  paneStreaming: boolean,
+  paneStreaming: boolean
 ): ChatMessage | null {
   if (paneStreaming) return null;
   const last = messages[messages.length - 1];
-  if (!last || last.role !== 'assistant') return null;
+  if (!last || last.role !== "assistant") return null;
   if (last.id !== lastAssistantId) return null;
-  return last.runStatus === 'failed' ? last : null;
+  return last.runStatus === "failed" ? last : null;
 }
 
 export function isAssistantMessageStreaming(
   message: ChatMessage,
   paneStreaming: boolean,
   lastAssistantId: string | null | undefined,
-  forceStreamingMessageIds?: Set<string>,
+  forceStreamingMessageIds?: Set<string>
 ): boolean {
-  if (message.role !== 'assistant') return false;
+  if (message.role !== "assistant") return false;
   if (forceStreamingMessageIds?.has(message.id)) return true;
   if (isActiveRunStatus(message.runStatus)) return true;
   if (message.id !== lastAssistantId) return false;
@@ -2569,24 +2730,28 @@ export function isAssistantMessageStreaming(
 function filterConversations(
   conversations: Conversation[],
   query: string,
-  t: TranslateFn,
+  t: TranslateFn
 ): Conversation[] {
   const normalized = query.trim().toLocaleLowerCase();
   if (!normalized) return conversations;
   return conversations.filter((conversation) => {
-    const title = conversation.title || t('chat.untitledConversation');
+    const title = conversation.title || t("chat.untitledConversation");
     const meta = conversationMetaLabel(conversation, t);
-    return `${title} ${conversation.id} ${meta}`.toLocaleLowerCase().includes(normalized);
+    return `${title} ${conversation.id} ${meta}`
+      .toLocaleLowerCase()
+      .includes(normalized);
   });
 }
 
 function conversationMessageCount(
   conversation: Conversation,
   activeConversationId: string | null,
-  activeMessageCount: number,
+  activeMessageCount: number
 ): number | null {
   if (conversation.id === activeConversationId) return activeMessageCount;
-  return typeof conversation.messageCount === 'number' ? conversation.messageCount : null;
+  return typeof conversation.messageCount === "number"
+    ? conversation.messageCount
+    : null;
 }
 
 function compactCount(value: number): string {
@@ -2610,36 +2775,42 @@ function ConversationRow({
   onDelete: () => void;
   t: TranslateFn;
 }) {
-  const displayTitle =
-    conversation.title || t('chat.untitledConversation');
+  const displayTitle = conversation.title || t("chat.untitledConversation");
 
   return (
     <div
-      className={`chat-conv-item${active ? ' active' : ''}`}
+      className={`chat-conv-item${active ? " active" : ""}`}
       data-testid={`conversation-item-${conversation.id}`}
     >
       <button
         type="button"
         className="chat-conv-item-name"
         data-testid={`conversation-select-${conversation.id}`}
-        style={{ background: 'transparent', border: 'none', padding: 0, textAlign: 'left' }}
+        style={{
+          background: "transparent",
+          border: "none",
+          padding: 0,
+          textAlign: "left",
+        }}
         onClick={onSelect}
       >
         {displayTitle}
       </button>
       <span className="chat-conv-item-meta">
-        {messageCount !== null ? `${compactCount(messageCount)} msg · ` : ''}
+        {messageCount !== null ? `${compactCount(messageCount)} msg · ` : ""}
         {conversationMetaLabel(conversation, t)}
       </span>
       <button
         type="button"
         className="chat-conv-item-del"
         data-testid={`conversation-delete-${conversation.id}`}
-        title={t('chat.deleteConversation')}
+        title={t("chat.deleteConversation")}
         onClick={(e) => {
           e.stopPropagation();
           if (
-            confirm(t('chat.deleteConversationConfirm', { title: displayTitle }))
+            confirm(
+              t("chat.deleteConversationConfirm", { title: displayTitle })
+            )
           ) {
             onDelete();
           }
@@ -2679,12 +2850,13 @@ function UserMessageImpl({
   const attachments = sortChatAttachmentsForDisplay(message.attachments ?? []);
   const commentAttachments = message.commentAttachments ?? [];
   const workspaceItems = message.runContext?.workspaceItems ?? [];
-  const messagePluginSnapshot = message.appliedPluginSnapshot ?? activePluginSnapshot ?? null;
+  const messagePluginSnapshot =
+    message.appliedPluginSnapshot ?? activePluginSnapshot ?? null;
   const hasRunContext = Boolean(
     message.sessionMode ||
       workspaceItems.length > 0 ||
       messagePluginSnapshot ||
-      activeDesignSystem,
+      activeDesignSystem
   );
   const [copied, setCopied] = useState(false);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -2707,13 +2879,15 @@ function UserMessageImpl({
     }, 2000);
   }
 
-  const isDesignSystemWorkspaceRequest = isDesignSystemWorkspacePrompt(message.content);
+  const isDesignSystemWorkspaceRequest = isDesignSystemWorkspacePrompt(
+    message.content
+  );
   const ts = messageTime(message);
 
   return (
     <div className="msg user">
       <div className="role">
-        <span>{t('chat.you')}</span>
+        <span>{t("chat.you")}</span>
         <MessageTimestamp message={message} t={t} />
       </div>
       {hasRunContext ? (
@@ -2746,7 +2920,7 @@ function UserMessageImpl({
       {attachments.length > 0 ? (
         <div className="user-attachments">
           {attachments.map((a, index) => {
-            const baseName = a.path.split('/').pop() || a.path;
+            const baseName = a.path.split("/").pop() || a.path;
             const openable =
               !!onRequestOpenFile &&
               (projectFileNames ? projectFileNames.has(baseName) : true);
@@ -2757,15 +2931,22 @@ function UserMessageImpl({
               <button
                 type="button"
                 key={a.path}
-                className={`user-attachment staged-${a.kind}${openable ? ' openable' : ''}`}
+                className={`user-attachment staged-${a.kind}${
+                  openable ? " openable" : ""
+                }`}
                 onClick={handleOpen}
                 disabled={!openable}
-                title={openable ? t('chat.openFile', { name: baseName }) : a.path}
+                title={
+                  openable ? t("chat.openFile", { name: baseName }) : a.path
+                }
               >
-                <span className="staged-order" aria-label={`Attachment ${index + 1}`}>
+                <span
+                  className="staged-order"
+                  aria-label={`Attachment ${index + 1}`}
+                >
                   {index + 1}
                 </span>
-                {a.kind === 'image' && projectId ? (
+                {a.kind === "image" && projectId ? (
                   <img src={projectRawUrl(projectId, a.path)} alt={a.name} />
                 ) : (
                   <Icon name="file" size={14} />
@@ -2776,16 +2957,27 @@ function UserMessageImpl({
           })}
         </div>
       ) : null}
-      {commentAttachments.some((attachment) => attachment.selectionKind !== 'visual') ? (
+      {commentAttachments.some(
+        (attachment) => attachment.selectionKind !== "visual"
+      ) ? (
         <div className="user-attachments comment-history-attachments">
-          {commentAttachments.filter((attachment) => attachment.selectionKind !== 'visual').map((a) => (
-            <span key={a.id} className="user-attachment staged-comment">
-              <span className="staged-name" title={a.comment ? `${commentTargetDisplayName(a)}: ${a.comment}` : commentTargetDisplayName(a)}>
-                <strong>{commentTargetDisplayName(a)}</strong>
-                {a.comment ? <span>{a.comment}</span> : null}
+          {commentAttachments
+            .filter((attachment) => attachment.selectionKind !== "visual")
+            .map((a) => (
+              <span key={a.id} className="user-attachment staged-comment">
+                <span
+                  className="staged-name"
+                  title={
+                    a.comment
+                      ? `${commentTargetDisplayName(a)}: ${a.comment}`
+                      : commentTargetDisplayName(a)
+                  }
+                >
+                  <strong>{commentTargetDisplayName(a)}</strong>
+                  {a.comment ? <span>{a.comment}</span> : null}
+                </span>
               </span>
-            </span>
-          ))}
+            ))}
         </div>
       ) : null}
       {message.content && isDesignSystemWorkspaceRequest ? (
@@ -2817,10 +3009,10 @@ function UserMessageImpl({
               type="button"
               className="ghost user-copy-btn"
               onClick={handleCopy}
-              aria-label={copied ? t('chat.copyDone') : t('chat.copyPrompt')}
-              title={copied ? t('chat.copyDone') : t('chat.copyPrompt')}
+              aria-label={copied ? t("chat.copyDone") : t("chat.copyPrompt")}
+              title={copied ? t("chat.copyDone") : t("chat.copyPrompt")}
             >
-              <Icon name={copied ? 'check' : 'copy'} size={13} />
+              <Icon name={copied ? "check" : "copy"} size={13} />
             </button>
           </div>
         </div>
@@ -2892,16 +3084,15 @@ function MessageSessionModeChip({
   mode: ChatSessionMode;
   t: TranslateFn;
 }) {
-  const label = mode === 'chat'
-    ? t('chat.mode.chat.label')
-    : t('chat.mode.design.label');
+  const label =
+    mode === "chat" ? t("chat.mode.chat.label") : t("chat.mode.design.label");
   return (
     <div
       className={`msg-mode-chip msg-mode-chip--${mode}`}
       data-testid="msg-session-mode-chip"
       title={label}
     >
-      <Icon name={mode === 'chat' ? 'comment' : 'sparkles'} size={12} />
+      <Icon name={mode === "chat" ? "comment" : "sparkles"} size={12} />
       <span>{label}</span>
     </div>
   );
@@ -2928,7 +3119,10 @@ function ActiveDesignSystemChip({
   );
   if (!onOpenDetails) {
     return (
-      <div className="msg-plugin-chip msg-plugin-chip--design-system" data-testid="msg-design-system-chip">
+      <div
+        className="msg-plugin-chip msg-plugin-chip--design-system"
+        data-testid="msg-design-system-chip"
+      >
         {content}
       </div>
     );
@@ -2955,17 +3149,30 @@ function DaySeparator({ ts }: { ts: number | undefined }) {
   );
 }
 
-function MessageTimestamp({ message, t }: { message: ChatMessage; t: TranslateFn }) {
+function MessageTimestamp({
+  message,
+  t,
+}: {
+  message: ChatMessage;
+  t: TranslateFn;
+}) {
   const ts = messageTime(message);
   if (!ts) return null;
   return (
-    <time className="msg-time" dateTime={new Date(ts).toISOString()} title={exactDateTime(ts)}>
+    <time
+      className="msg-time"
+      dateTime={new Date(ts).toISOString()}
+      title={exactDateTime(ts)}
+    >
       {relativeTimeLong(ts, t)}
     </time>
   );
 }
 
-function shouldShowDaySeparator(prev: ChatMessage | undefined, curr: ChatMessage): boolean {
+function shouldShowDaySeparator(
+  prev: ChatMessage | undefined,
+  curr: ChatMessage
+): boolean {
   const currTime = messageTime(curr);
   if (!currTime) return false;
   const prevTime = prev ? messageTime(prev) : undefined;
@@ -2973,8 +3180,8 @@ function shouldShowDaySeparator(prev: ChatMessage | undefined, curr: ChatMessage
   return dayKey(prevTime) !== dayKey(currTime);
 }
 
-const WORKSPACE_DESIGN_FILES_TAB = '__design_files__';
-const WORKSPACE_DESIGN_SYSTEM_TAB = '__design_system__';
+const WORKSPACE_DESIGN_FILES_TAB = "__design_files__";
+const WORKSPACE_DESIGN_SYSTEM_TAB = "__design_system__";
 
 function ActiveWorkspaceContextChip({
   item,
@@ -3021,21 +3228,21 @@ function ActiveWorkspaceContextChip({
 
 function workspaceContextOpenTarget(item: WorkspaceContextItem): string | null {
   if (item.tabId) return item.tabId;
-  if (item.kind === 'design-files') return WORKSPACE_DESIGN_FILES_TAB;
-  if (item.kind === 'design-system') return WORKSPACE_DESIGN_SYSTEM_TAB;
-  if (item.kind === 'file' || item.kind === 'live-artifact') {
+  if (item.kind === "design-files") return WORKSPACE_DESIGN_FILES_TAB;
+  if (item.kind === "design-system") return WORKSPACE_DESIGN_SYSTEM_TAB;
+  if (item.kind === "file" || item.kind === "live-artifact") {
     return item.path ?? item.label;
   }
   return null;
 }
 
 function workspaceContextIcon(item: WorkspaceContextItem): IconName {
-  if (item.kind === 'browser') return 'globe';
-  if (item.kind === 'folder' || item.kind === 'design-files') return 'folder';
-  if (item.kind === 'terminal') return 'terminal';
-  if (item.kind === 'side-chat') return 'comment';
-  if (item.kind === 'design-system') return 'blocks';
-  return 'file';
+  if (item.kind === "browser") return "globe";
+  if (item.kind === "folder" || item.kind === "design-files") return "folder";
+  if (item.kind === "terminal") return "terminal";
+  if (item.kind === "side-chat") return "comment";
+  if (item.kind === "design-system") return "blocks";
+  return "file";
 }
 
 function workspaceContextTitle(item: WorkspaceContextItem): string {
@@ -3045,41 +3252,49 @@ function workspaceContextTitle(item: WorkspaceContextItem): string {
     item.absolutePath ? `absolute: ${item.absolutePath}` : null,
     item.url ? `url: ${item.url}` : null,
     item.title ? `title: ${item.title}` : null,
-  ].filter(Boolean).join(' | ');
+  ]
+    .filter(Boolean)
+    .join(" | ");
 }
 
-function workspaceContextKindLabel(kind: WorkspaceContextItem['kind']): string {
+function workspaceContextKindLabel(kind: WorkspaceContextItem["kind"]): string {
   switch (kind) {
-    case 'browser':
-      return 'Browser';
-    case 'design-files':
-      return 'Design files';
-    case 'design-system':
-      return 'Design system';
-    case 'folder':
-      return 'Folder';
-    case 'terminal':
-      return 'Terminal';
-    case 'side-chat':
-      return 'Side chat';
-    case 'live-artifact':
-      return 'Live artifact';
-    case 'file':
+    case "browser":
+      return "Browser";
+    case "design-files":
+      return "Design files";
+    case "design-system":
+      return "Design system";
+    case "folder":
+      return "Folder";
+    case "terminal":
+      return "Terminal";
+    case "side-chat":
+      return "Side chat";
+    case "live-artifact":
+      return "Live artifact";
+    case "file":
     default:
-      return 'File';
+      return "File";
   }
 }
 
-function sortChatAttachmentsForDisplay(attachments: ChatAttachment[]): ChatAttachment[] {
+function sortChatAttachmentsForDisplay(
+  attachments: ChatAttachment[]
+): ChatAttachment[] {
   return attachments
     .map((attachment, index) => ({ attachment, index }))
     .sort((a, b) => {
-      const aOrder = typeof a.attachment.order === 'number' && Number.isFinite(a.attachment.order)
-        ? a.attachment.order
-        : a.index;
-      const bOrder = typeof b.attachment.order === 'number' && Number.isFinite(b.attachment.order)
-        ? b.attachment.order
-        : b.index;
+      const aOrder =
+        typeof a.attachment.order === "number" &&
+        Number.isFinite(a.attachment.order)
+          ? a.attachment.order
+          : a.index;
+      const bOrder =
+        typeof b.attachment.order === "number" &&
+        Number.isFinite(b.attachment.order)
+          ? b.attachment.order
+          : b.index;
       if (aOrder !== bOrder) return aOrder - bOrder;
       return a.index - b.index;
     })
@@ -3091,34 +3306,35 @@ function relTime(ts: number, t: TranslateFn): string {
   const min = 60_000;
   const hr = 60 * min;
   const day = 24 * hr;
-  if (diff < min) return t('common.now');
-  if (diff < hr) return t('common.minutesShort', { n: Math.floor(diff / min) });
-  if (diff < day) return t('common.hoursShort', { n: Math.floor(diff / hr) });
-  if (diff < 7 * day) return t('common.daysShort', { n: Math.floor(diff / day) });
+  if (diff < min) return t("common.now");
+  if (diff < hr) return t("common.minutesShort", { n: Math.floor(diff / min) });
+  if (diff < day) return t("common.hoursShort", { n: Math.floor(diff / hr) });
+  if (diff < 7 * day)
+    return t("common.daysShort", { n: Math.floor(diff / day) });
   return new Date(ts).toLocaleDateString();
 }
 
 export function conversationMetaLabel(
   conversation: Conversation,
-  t: TranslateFn,
+  t: TranslateFn
 ): string {
   const latestRun = conversation.latestRun;
   if (
     latestRun &&
-    (latestRun.status === 'succeeded' ||
-      latestRun.status === 'failed' ||
-      latestRun.status === 'canceled') &&
-    typeof conversation.totalDurationMs === 'number' &&
+    (latestRun.status === "succeeded" ||
+      latestRun.status === "failed" ||
+      latestRun.status === "canceled") &&
+    typeof conversation.totalDurationMs === "number" &&
     Number.isFinite(conversation.totalDurationMs)
   ) {
     return formatDurationShort(conversation.totalDurationMs);
   }
   if (
     latestRun &&
-    (latestRun.status === 'succeeded' ||
-      latestRun.status === 'failed' ||
-      latestRun.status === 'canceled') &&
-    typeof latestRun.durationMs === 'number' &&
+    (latestRun.status === "succeeded" ||
+      latestRun.status === "failed" ||
+      latestRun.status === "canceled") &&
+    typeof latestRun.durationMs === "number" &&
     Number.isFinite(latestRun.durationMs)
   ) {
     return formatDurationShort(latestRun.durationMs);
@@ -3131,5 +3347,5 @@ function formatDurationShort(ms: number): string {
   if (s < 60) return `${s.toFixed(s < 10 ? 1 : 0)}s`;
   const m = Math.floor(s / 60);
   const rem = Math.floor(s - m * 60);
-  return `${m}m ${rem.toString().padStart(2, '0')}s`;
+  return `${m}m ${rem.toString().padStart(2, "0")}s`;
 }

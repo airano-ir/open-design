@@ -2346,6 +2346,7 @@ export function CommentSidePanel({
   sending,
   queueOnSend = false,
   sendDisabled = false,
+  renderCreateForm = true,
   t,
   composer,
 }: {
@@ -2365,6 +2366,7 @@ export function CommentSidePanel({
   sending: boolean;
   queueOnSend?: boolean;
   sendDisabled?: boolean;
+  renderCreateForm?: boolean;
   t: TranslateFn;
   composer?: ReactNode;
 }) {
@@ -2624,7 +2626,7 @@ export function CommentSidePanel({
         </div>
       ) : null}
       {composer ? <div className="comment-side-composer">{composer}</div> : null}
-      {onCreateComment ? (
+      {renderCreateForm && onCreateComment ? (
         <form
           className="comment-side-new-comment composer"
           onSubmit={(event) => {
@@ -2753,6 +2755,7 @@ function CommentSideDock({
   sending,
   queueOnSend = false,
   sendDisabled = false,
+  renderCreateForm = true,
   t,
   composer,
 }: {
@@ -2772,6 +2775,7 @@ function CommentSideDock({
   sending: boolean;
   queueOnSend?: boolean;
   sendDisabled?: boolean;
+  renderCreateForm?: boolean;
   t: TranslateFn;
   composer?: ReactNode;
 }) {
@@ -2797,6 +2801,7 @@ function CommentSideDock({
         sending={sending}
         queueOnSend={queueOnSend}
         sendDisabled={sendDisabled}
+        renderCreateForm={renderCreateForm}
         t={t}
         composer={composer}
       />
@@ -7834,6 +7839,7 @@ function HtmlViewer({
       sending={sendingBoardBatch}
       queueOnSend={commentQueueOnSend}
       sendDisabled={commentSendDisabled}
+      renderCreateForm={!commentPortalHost}
       t={t}
       composer={null}
     />
