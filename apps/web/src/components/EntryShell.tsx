@@ -292,18 +292,12 @@ interface Props {
   onRenameProject: (id: string, name: string) => void;
   onChangeDefaultDesignSystem: (id: string) => void;
   onCreateDesignSystem?: () => void;
-  renderDesignSystemCreation?: (
-    onBack: () => void,
-    hooks?: {
-      onBeforeGenerate?: (snapshot: DesignSystemGenerateSnapshot) => void;
-      onGenerateSettled?: (
-        snapshot: DesignSystemGenerateSnapshot,
-        outcome:
-          | { result: 'success' }
-          | { result: 'failed'; errorCode: string },
-      ) => void;
-    },
-  ) => ReactNode;
+  // NOTE: first-run onboarding intentionally no longer hosts guided
+  // design-system creation. The previous step-3 design-system surface was
+  // replaced by the newsletter step, so EntryShell deliberately does not
+  // accept a `renderDesignSystemCreation` renderer. Guided creation stays
+  // reachable from the standalone `design-system-create` route and the
+  // Design Systems tab; do not re-thread an onboarding renderer here.
   onOpenDesignSystem?: (id: string) => void;
   onDesignSystemsRefresh?: () => Promise<void> | void;
   onPersistComposioKey: (composio: AppConfig['composio']) => Promise<void> | void;
@@ -400,7 +394,6 @@ export function EntryShell({
   onRenameProject,
   onChangeDefaultDesignSystem,
   onCreateDesignSystem,
-  renderDesignSystemCreation,
   onOpenDesignSystem,
   onDesignSystemsRefresh,
   onPersistComposioKey,
@@ -588,7 +581,6 @@ export function EntryShell({
             onApiModelChange={onApiModelChange}
             onConfigPersist={onConfigPersist}
             onRefreshAgents={onRefreshAgents}
-            renderDesignSystemCreation={renderDesignSystemCreation}
             onFinish={finishOnboarding}
           />
         </main>
@@ -817,18 +809,6 @@ function OnboardingView({
   onApiModelChange: (model: string) => void;
   onConfigPersist: (cfg: AppConfig) => Promise<void> | void;
   onRefreshAgents: () => Promise<AgentInfo[]> | AgentInfo[];
-  renderDesignSystemCreation?: (
-    onBack: () => void,
-    hooks?: {
-      onBeforeGenerate?: (snapshot: DesignSystemGenerateSnapshot) => void;
-      onGenerateSettled?: (
-        snapshot: DesignSystemGenerateSnapshot,
-        outcome:
-          | { result: 'success' }
-          | { result: 'failed'; errorCode: string },
-      ) => void;
-    },
-  ) => ReactNode;
   onFinish: () => void;
 }) {
   const t = useT();
