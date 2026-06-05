@@ -339,6 +339,40 @@ An experiment is successful only when quality, reliability, latency, and cost
 are considered together. A lower-cost run that fails the task is not an
 improvement.
 
+### Fixed Dataset Trust Contract
+
+Fixed datasets are the trust anchor for human-agent collaboration. Agents can
+discover issues, propose prompt/skill/model/runtime changes, and run the
+experiments, but humans should not have to accept those proposals on narrative
+confidence alone. A fixed dataset gives the team a shared, repeatable evidence
+surface before a change reaches production.
+
+For every optimization proposal, the agent should report:
+
+- which fixed dataset or approved provisional baseline was used;
+- which candidate changed, including git sha, agent/model routing, prompt stack
+  fingerprint, skill/design-system versions, and evaluator version;
+- pass/fail status for each blocking quality, reliability, latency, and cost
+  metric;
+- the concrete traces, dataset items, artifacts, and annotations behind any
+  failure or tradeoff;
+- whether any sensitive attachment or generated artifact entered the evaluation
+  fixture set, and who approved that promotion.
+
+The default trust rule is conservative:
+
+- quality must not regress on fixed task datasets;
+- stability must not regress;
+- latency and cost must improve or stay flat, unless a human explicitly accepts
+  a quality tradeoff;
+- sensitive artifact or attachment cases cannot become long-lived fixtures
+  without human approval.
+
+This contract turns observability into a collaboration mechanism. The agent does
+the repetitive measurement work; the human reviews evidence, calibrates
+judgment-heavy evaluators, and approves only the risk that cannot be reduced to
+data.
+
 ## Human and Agent Responsibilities
 
 The loop is AI Native because agents should operate the routine diagnosis and
@@ -351,12 +385,14 @@ Agent-owned work:
 - cluster low-score or high-cost traces into failure modes;
 - propose dataset and annotation candidates;
 - run experiments for candidate prompt, skill, model, or runtime changes;
-- summarize tradeoffs across quality, reliability, latency, and cost;
+- summarize pass/fail evidence and tradeoffs across quality, reliability,
+  latency, and cost;
 - draft optimization PRs or prompt/skill changes when the risk is low.
 
 Human-owned work:
 
 - approve production releases and high-risk behavior changes;
+- approve provisional baselines and sensitive fixture promotion;
 - label ambiguous or subjective quality cases;
 - approve major system prompt, skill, or design-system changes;
 - decide quality versus cost tradeoffs when metrics conflict;
@@ -368,8 +404,8 @@ The intended working loop is:
 agent finds a signal
   -> agent explains the likely cause
   -> agent proposes data/evaluator/prompt/runtime changes
-  -> experiment proves or rejects the proposal
-  -> human approves only the meaningful risk
+  -> fixed-dataset experiment proves or rejects the proposal
+  -> human reviews the pass/fail evidence and approves only the meaningful risk
 ```
 
 ## Metrics
@@ -486,6 +522,8 @@ Data completeness:
   are treated as durable wins.
 - Gate releases on quality not regressing while reliability, latency, or cost
   improves.
+- Treat fixed-dataset pass/fail evidence as the default trust artifact for
+  product and engineering review.
 
 The release gate should use a fixed comparator so the same experiment result
 produces the same pass/fail decision across implementations:
