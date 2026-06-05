@@ -764,17 +764,83 @@ jobs:
 
       - name: Download mac_arm64 publish manifest
         if: ${{ inputs.enable_mac_arm64 && needs.build_mac_arm64.result == 'success' }}
-        uses: actions/download-artifact@v8
-        with:
-          name: open-design-beta-s-mac-arm64-publish-manifest
-          path: ${{ runner.temp }}/release-platform-manifests
+        env:
+          ARTIFACT_NAME: open-design-beta-s-mac-arm64-publish-manifest
+          GITHUB_TOKEN: ${{ github.token }}
+          RELEASE_MANIFEST_DIR: ${{ runner.temp }}/release-platform-manifests
+        run: |
+          set -euo pipefail
+          if ! command -v rehash >/dev/null 2>&1; then
+            rehash() { hash -r; }
+          fi
+          # shellcheck disable=SC1090
+          source "$OPEN_DESIGN_RELEASE_PROFILE"
+          mkdir -p "$RELEASE_MANIFEST_DIR"
+          tmp_dir="$(mktemp -d)"
+          trap 'rm -rf "$tmp_dir"' EXIT
+          for attempt in 1 2 3; do
+            if archive_url="$(
+              curl -fsSL \
+                -H "Authorization: Bearer $GITHUB_TOKEN" \
+                -H "Accept: application/vnd.github+json" \
+                "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?per_page=100" |
+                jq -r --arg name "$ARTIFACT_NAME" '.artifacts[] | select(.name == $name and (.expired | not)) | .archive_download_url' |
+                head -n 1
+            )" &&
+              [ -n "$archive_url" ] &&
+              curl -fsSL \
+                -H "Authorization: Bearer $GITHUB_TOKEN" \
+                -H "Accept: application/vnd.github+json" \
+                "$archive_url" -o "$tmp_dir/artifact.zip"; then
+              ditto -x -k "$tmp_dir/artifact.zip" "$RELEASE_MANIFEST_DIR"
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "failed to download $ARTIFACT_NAME after $attempt attempts" >&2
+              exit 1
+            fi
+            sleep "$((attempt * 5))"
+          done
 
       - name: Download win_x64 publish manifest
         if: ${{ inputs.enable_win_x64 && needs.build_win_x64.result == 'success' }}
-        uses: actions/download-artifact@v8
-        with:
-          name: open-design-beta-s-win-x64-publish-manifest
-          path: ${{ runner.temp }}/release-platform-manifests
+        env:
+          ARTIFACT_NAME: open-design-beta-s-win-x64-publish-manifest
+          GITHUB_TOKEN: ${{ github.token }}
+          RELEASE_MANIFEST_DIR: ${{ runner.temp }}/release-platform-manifests
+        run: |
+          set -euo pipefail
+          if ! command -v rehash >/dev/null 2>&1; then
+            rehash() { hash -r; }
+          fi
+          # shellcheck disable=SC1090
+          source "$OPEN_DESIGN_RELEASE_PROFILE"
+          mkdir -p "$RELEASE_MANIFEST_DIR"
+          tmp_dir="$(mktemp -d)"
+          trap 'rm -rf "$tmp_dir"' EXIT
+          for attempt in 1 2 3; do
+            if archive_url="$(
+              curl -fsSL \
+                -H "Authorization: Bearer $GITHUB_TOKEN" \
+                -H "Accept: application/vnd.github+json" \
+                "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?per_page=100" |
+                jq -r --arg name "$ARTIFACT_NAME" '.artifacts[] | select(.name == $name and (.expired | not)) | .archive_download_url' |
+                head -n 1
+            )" &&
+              [ -n "$archive_url" ] &&
+              curl -fsSL \
+                -H "Authorization: Bearer $GITHUB_TOKEN" \
+                -H "Accept: application/vnd.github+json" \
+                "$archive_url" -o "$tmp_dir/artifact.zip"; then
+              ditto -x -k "$tmp_dir/artifact.zip" "$RELEASE_MANIFEST_DIR"
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "failed to download $ARTIFACT_NAME after $attempt attempts" >&2
+              exit 1
+            fi
+            sleep "$((attempt * 5))"
+          done
 
       - name: Publish beta metadata
         env:

@@ -230,11 +230,12 @@ describe("packaged smoke workflow", () => {
     expect(workflow).toContain("name: Publish beta metadata to Nexu S3");
     expect(workflow).toContain("Download mac_arm64 publish manifest");
     expect(workflow).toContain("Download win_x64 publish manifest");
+    expect(workflow).toContain(".archive_download_url");
+    expect(workflow).toContain('ditto -x -k "$tmp_dir/artifact.zip" "$RELEASE_MANIFEST_DIR"');
     expect(workflow).toContain(".github/workflow/scripts/release/storage/publish-beta-metadata.ts");
     expect(workflow).toContain("RELEASE_ASSET_SUFFIX: auto");
     expect(workflow).toContain("RELEASE_MANIFEST_DIR: ${{ runner.temp }}/release-platform-manifests");
     expect(workflow).toContain("actions/upload-artifact@");
-    expect(workflow).toContain("actions/download-artifact@");
     expect(workflow).toContain('STATE_SOURCE: ${{ needs.metadata.outputs.state_source }}');
     expect(workflow).toContain("Verify beta metadata");
     expect(workflow).toContain(".github/workflow/scripts/release/storage/verify-beta-metadata.ts");
