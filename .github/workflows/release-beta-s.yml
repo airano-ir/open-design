@@ -739,12 +739,16 @@ jobs:
       mac_x64_url: ${{ steps.outputs.outputs.mac_x64_dmg_url }}
       linux_x64_url: ${{ steps.outputs.outputs.linux_x64_appImage_url }}
     steps:
-      - name: Checkout
+      - name: Checkout release scripts
         uses: actions/checkout@v6.0.2
         with:
           clean: true
           fetch-depth: 1
           lfs: false
+          path: _release-scripts
+          ref: ${{ needs.metadata.outputs.commit }}
+          sparse-checkout: |
+            .github/workflow/scripts/release/storage
 
       - name: Download mac_arm64 platform manifest
         if: ${{ inputs.enable_mac_arm64 && needs.build_mac_arm64.result == 'success' }}
@@ -827,6 +831,7 @@ jobs:
           RELEASE_VERSION: ${{ needs.metadata.outputs.beta_version }}
           STATE_SOURCE: ${{ needs.metadata.outputs.state_source }}
           WIN_X64_RESULT: ${{ needs.build_win_x64.result }}
+        working-directory: _release-scripts
         run: |
           set -euo pipefail
           if ! command -v rehash >/dev/null 2>&1; then
@@ -855,6 +860,7 @@ jobs:
           RELEASE_METADATA_URL: ${{ steps.outputs.outputs.version_metadata_url }}
           RELEASE_VERSION: ${{ needs.metadata.outputs.beta_version }}
           WIN_X64_RESULT: ${{ needs.build_win_x64.result }}
+        working-directory: _release-scripts
         run: |
           set -euo pipefail
           if ! command -v rehash >/dev/null 2>&1; then
@@ -868,6 +874,7 @@ jobs:
         env:
           RELEASE_METADATA_URL: ${{ steps.outputs.outputs.version_metadata_url }}
           RELEASE_SUMMARY_PATH: ${{ runner.temp }}/release-metadata/summary.md
+        working-directory: _release-scripts
         run: |
           set -euo pipefail
           if ! command -v rehash >/dev/null 2>&1; then
