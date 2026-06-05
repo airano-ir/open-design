@@ -244,7 +244,7 @@ describe('HomeView context picker', () => {
     }));
   });
 
-  it('keeps a context-only `Use` selection in the submit payload without an @mention', async () => {
+  it('keeps a context-only `Use` selection in the submit payload without an @mention, then clears the composer chip', async () => {
     // Regression: the submit-time reconciliation dropped every context that
     // lacked an inline `@mention` token, which silently discarded contexts
     // staged through the plain `Use` action (which never writes a token). The
@@ -307,6 +307,9 @@ describe('HomeView context picker', () => {
         expect.objectContaining({ id: 'chart-plugin', title: 'Chart Plugin' }),
       ],
     }));
+    await waitFor(() => {
+      expect(screen.queryByTestId('home-hero-context-plugin-chart-plugin')).toBeNull();
+    });
   });
 
   it('drops a context-only `Use` selection from the submit payload once its chip is cleared', async () => {
