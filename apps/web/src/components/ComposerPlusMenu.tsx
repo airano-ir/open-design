@@ -193,6 +193,7 @@ export function ComposerPlusMenu({
                     type="button"
                     role="menuitem"
                     className="plus-menu__item"
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => {
                       close();
                       onPickConnector(connector);
@@ -248,6 +249,7 @@ export function ComposerPlusMenu({
                     type="button"
                     role="menuitem"
                     className="plus-menu__item"
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => {
                       close();
                       onPickPlugin(plugin);
@@ -303,6 +305,7 @@ export function ComposerPlusMenu({
                     type="button"
                     role="menuitem"
                     className="plus-menu__item"
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => {
                       close();
                       onPickMcp(server);
