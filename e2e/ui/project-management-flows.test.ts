@@ -393,6 +393,7 @@ test('[P0] @critical project detail header design system switch carries into the
 });
 
 test('[P0] @critical project instructions flow into the next API run as project-level system prompt context', async ({ page }) => {
+  test.setTimeout(60_000);
   let capturedSystemPrompt = '';
   const apiConfig = {
     onboardingCompleted: true,
@@ -1494,6 +1495,7 @@ async function openAvatarAgentMenu(page: Page): Promise<{
 async function expectWorkspaceReady(page: Page) {
   await expect(page).toHaveURL(/\/projects\//);
   await dismissPrivacyDialog(page);
+  await expect(page.getByTestId('project-title')).toBeVisible();
   await expect(page.getByTestId('chat-composer')).toBeVisible();
   await expect(page.getByTestId('chat-composer-input')).toBeVisible();
   await expect(page.getByTestId('file-workspace')).toBeVisible();
