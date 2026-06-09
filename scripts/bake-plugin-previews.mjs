@@ -37,7 +37,12 @@
 import puppeteer from 'puppeteer-core';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, rmSync, writeFileSync, readFileSync, statSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
+
+// Bump when the bake recipe changes (capture geometry, timing, encoder, waits…)
+// so every plugin re-bakes even though its page content is byte-identical.
+const BAKE_VERSION = 1;
 
 // ---- config ---------------------------------------------------------------
 const BASE_URL = process.env.BASE_URL || 'http://127.0.0.1:17579';
@@ -241,16 +246,31 @@ const browser = await puppeteer.launch({
 const manifestPath = path.join(OUT, 'manifest.json');
 const previews = existsSync(manifestPath)
   ? (JSON.parse(readFileSync(manifestPath, 'utf8')).previews || {}) : {};
-let ok = 0, skip = 0;
+let ok = 0, skip = 0, reused = 0;
 for (const id of ids) {
   const t0 = Date.now();
+  // Content-hash skip: a plugin whose preview HTML (and the bake recipe) is
+  // unchanged reuses its existing clip — no render, and the CI step re-uploads
+  // nothing. Editing the page or bumping BAKE_VERSION invalidates the hash.
+  let hash = null;
+  try {
+    const html = await (await fetch(`${BASE_URL}/api/plugins/${encodeURIComponent(id)}/preview`)).text();
+    hash = createHash('sha256').update(html).update(` ${BAKE_VERSION}`).digest('hex').slice(0, 16);
+  } catch {}
+  const prev = previews[id];
+  if (hash && prev && prev.hash === hash
+      && existsSync(path.join(OUT, prev.video)) && existsSync(path.join(OUT, prev.poster))) {
+    reused += 1;
+    console.log(`  = ${id}: unchanged, reused`);
+    continue;
+  }
   let r;
   try { r = await bakeOne(browser, id); } catch (e) { r = { id, skipped: `error ${e.message}` }; }
   if (r.skipped) { skip += 1; console.log(`  ~ ${id}: skip (${r.skipped})`); continue; }
-  previews[id] = { video: r.video, poster: r.poster, durationMs: r.durationMs, holdMs: r.holdMs };
+  previews[id] = { video: r.video, poster: r.poster, durationMs: r.durationMs, holdMs: r.holdMs, hash };
   ok += 1;
-  console.log(`  + ${id}: ${(r.bytes / 1024).toFixed(0)}KB webm, ${(r.posterBytes / 1024).toFixed(0)}KB poster (${((Date.now() - t0) / 1000).toFixed(1)}s)`);
+  console.log(`  + ${id}: ${(r.bytes / 1024).toFixed(0)}KB mp4, ${(r.posterBytes / 1024).toFixed(0)}KB poster (${((Date.now() - t0) / 1000).toFixed(1)}s)`);
   writeFileSync(manifestPath, JSON.stringify({ generatedAt: null, previews }, null, 2));
 }
 await browser.close();
-console.log(`done: ${ok} baked, ${skip} skipped -> ${manifestPath}`);
+console.log(`done: ${ok} baked, ${reused} reused (unchanged), ${skip} skipped -> ${manifestPath}`);
