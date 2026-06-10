@@ -21,7 +21,13 @@ const MAX_TIMEOUT_MS = 24 * 60 * 60 * 1000;
 // `OD_ACP_STAGE_TIMEOUT_MS=0` would call `setTimeout(..., 0)` and fail every
 // ACP session on the next tick instead of disabling the watchdog.
 const DEFAULT_STAGE_TIMEOUT_MS = 600_000;
-const ACP_ARTIFACT_ECHO_START_RE = /^\s*<\s*(?:\|?\s*DSML[\s,]+artifact\b|artifact\b)/i;
+const ACP_ARTIFACT_OPEN_PATTERN = String.raw`<\s*(?:\|?\s*DSML[\s,]+artifact\b|artifact\b)`;
+const ACP_GENERATED_FILE_PREFIX_PATTERN =
+  String.raw`(?:here\s+is|here'?s)\s+the\s+generated\s+file\s*:?\s*(?:\r?\n|\s)*`;
+const ACP_ARTIFACT_ECHO_START_RE = new RegExp(
+  String.raw`^\s*(?:${ACP_ARTIFACT_OPEN_PATTERN}|${ACP_GENERATED_FILE_PREFIX_PATTERN}${ACP_ARTIFACT_OPEN_PATTERN})`,
+  'i',
+);
 
 type JsonRpcId = string | number;
 type JsonObject = Record<string, unknown>;

@@ -555,6 +555,44 @@ test('attachAcpSession keeps ACP suppression after plain incremental prose befor
   assert.deepEqual(textDeltas, ['Build passes.\n\n', 'Tail']);
 });
 
+test('attachAcpSession suppresses prose-prefixed delayed artifact echo after plain prose', () => {
+  const child = new FakeAcpChild();
+  const events: Array<{ event: string; payload: unknown }> = [];
+
+  attachAcpSession({
+    child: child as never,
+    prompt: 'build landing page',
+    cwd: '/tmp/od-project',
+    model: null,
+    mcpServers: [],
+    send: (event, payload) => events.push({ event, payload }),
+  });
+
+  writeAcpResult(child, 1, {});
+  writeAcpResult(child, 2, { sessionId: 'session-1' });
+  writeAcpUpdate(child, {
+    sessionUpdate: 'tool_call_update',
+    toolCallId: 'call-1',
+    title: 'edit',
+    status: 'completed',
+  });
+  writeAcpUpdate(child, {
+    sessionUpdate: 'agent_message_chunk',
+    content: { text: 'Build passes.\n\n' },
+  });
+  writeAcpUpdate(child, {
+    sessionUpdate: 'agent_message_chunk',
+    content: { text: 'Here is the generated file:\n<artifact identifier="page">raw html</artifact>Tail' },
+  });
+  writeAcpResult(child, 3, { usage: { inputTokens: 1, outputTokens: 2 } });
+
+  const textDeltas = events
+    .filter((entry) => entry.event === 'agent' && (entry.payload as { type?: unknown }).type === 'text_delta')
+    .map((entry) => (entry.payload as { delta?: unknown }).delta);
+
+  assert.deepEqual(textDeltas, ['Build passes.\n\n', 'Here is the generated file:\nTail']);
+});
+
 test('attachAcpSession keeps ACP suppression after unrelated failed tool before echo chunk', () => {
   const child = new FakeAcpChild();
   const events: Array<{ event: string; payload: unknown }> = [];
