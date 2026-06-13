@@ -1739,6 +1739,7 @@ export function HomeView({
         <Dialog
           backdropClassName="home-hero-confirm__backdrop"
           className="home-hero-confirm"
+          includeChromeClassName={false}
           ariaLabelledBy="home-hero-confirm-title"
           closeOnBackdrop={false}
         >
