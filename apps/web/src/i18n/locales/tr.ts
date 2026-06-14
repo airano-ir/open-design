@@ -3187,11 +3187,12 @@ export const tr: Dict = {
   'onboarding.brandSubtitle': 'Paste a website and we\'ll turn its brand signals into a reusable brand kit for future work.',
   'onboarding.brandSkip': 'Skip for now',
   'onboarding.brandDone': 'Brand kit extracted',
-  'brandPicker.heading': 'Ya da sevdiğin bir markadan başla',
+  'brandPicker.heading': 'Sevdiğin bir markadan başla',
   'brandPicker.subtext': 'Kitini doğrudan web sitesinden çıkarmak için herhangi bir markaya tıkla.',
   'brandPicker.quickPicksLabel': 'Popüler markalar — çıkarmak için tıkla',
   'brandPicker.searchPlaceholder': 'Marka ara…',
   'brandPicker.allCategories': 'Tümü',
   'brandPicker.extractAction': 'Çıkar',
   'brandPicker.showMore': 'Daha fazla göster',
+  'brandPicker.opening': 'Çıkarma başlatılıyor — {brand} açılıyor…',
 };

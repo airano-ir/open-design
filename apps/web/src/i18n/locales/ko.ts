@@ -3187,11 +3187,12 @@ export const ko: Dict = {
   'onboarding.brandSubtitle': 'Paste a website and we\'ll turn its brand signals into a reusable brand kit for future work.',
   'onboarding.brandSkip': 'Skip for now',
   'onboarding.brandDone': 'Brand kit extracted',
-  'brandPicker.heading': '또는 좋아하는 브랜드로 시작하세요',
+  'brandPicker.heading': '좋아하는 브랜드로 시작하세요',
   'brandPicker.subtext': '브랜드를 클릭하면 해당 웹사이트에서 바로 브랜드 키트를 추출합니다.',
   'brandPicker.quickPicksLabel': '인기 브랜드 — 클릭하여 추출',
   'brandPicker.searchPlaceholder': '브랜드 검색…',
   'brandPicker.allCategories': '전체',
   'brandPicker.extractAction': '추출',
   'brandPicker.showMore': '더 보기',
+  'brandPicker.opening': '추출을 시작하는 중 — {brand} 여는 중…',
 };

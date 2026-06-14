@@ -3187,11 +3187,12 @@ export const ar: Dict = {
   'onboarding.brandSubtitle': 'Paste a website and we\'ll turn its brand signals into a reusable brand kit for future work.',
   'onboarding.brandSkip': 'Skip for now',
   'onboarding.brandDone': 'Brand kit extracted',
-  'brandPicker.heading': 'أو ابدأ من علامة تجارية تحبها',
+  'brandPicker.heading': 'ابدأ من علامة تجارية تحبها',
   'brandPicker.subtext': 'انقر على أي علامة تجارية لاستخراج حزمتها مباشرة من موقعها الإلكتروني.',
   'brandPicker.quickPicksLabel': 'علامات تجارية شائعة — انقر للاستخراج',
   'brandPicker.searchPlaceholder': 'ابحث عن العلامات التجارية…',
   'brandPicker.allCategories': 'الكل',
   'brandPicker.extractAction': 'استخراج',
   'brandPicker.showMore': 'عرض المزيد',
+  'brandPicker.opening': 'جارٍ بدء الاستخراج — جارٍ فتح {brand}…',
 };

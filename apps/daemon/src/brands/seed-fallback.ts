@@ -160,6 +160,9 @@ export function deriveSeedPalette(
 
   // Chromatic colors (real hues), ordered by frequency; grays/extremes separate.
   const chromatic = ranked.filter((c) => c.s >= 0.18 && c.l > 0.08 && c.l < 0.95);
+  // Vivid mid-luminance hues make the strongest accent candidates (a pale wash
+  // or a near-black is a poor accent even when technically chromatic).
+  const vivid = chromatic.filter((c) => c.s >= 0.32 && c.l >= 0.22 && c.l <= 0.8);
   const byLight = [...ranked].sort((a, b) => b.l - a.l);
   const byDark = [...ranked].sort((a, b) => a.l - b.l);
 
@@ -177,8 +180,11 @@ export function deriveSeedPalette(
   const themeRgb = themeColor ? toRgb(normalizeColor(themeColor) ?? '') : null;
   let accentHex: string | null = null;
   if (themeRgb && saturation(themeRgb) >= 0.18) accentHex = toHex(themeRgb);
-  if (!accentHex) accentHex = chromatic[0]?.hex ?? null;
-  const accentSecondaryHex = chromatic.find((c) => c.hex !== accentHex)?.hex ?? null;
+  if (!accentHex) accentHex = vivid[0]?.hex ?? chromatic[0]?.hex ?? null;
+  const accentSecondaryHex =
+    vivid.find((c) => c.hex !== accentHex)?.hex ??
+    chromatic.find((c) => c.hex !== accentHex)?.hex ??
+    null;
 
   const bgRgb = background?.rgb ?? { r: 255, g: 255, b: 255 };
   const fgRgb = foreground?.rgb ?? { r: 26, g: 26, b: 24 };
@@ -203,6 +209,8 @@ export function deriveSeedPalette(
 
 const SERIF_HINT_RE = /serif|playfair|tiempos|georgia|garamond|merriweather|lora|times|caslon|freight/i;
 const MONO_HINT_RE = /mono|consol|courier|menlo|code|jetbrains|fira code|source code/i;
+/** Icon/symbol faces are UI chrome, not brand typography (mirrors fonts.ts). */
+const ICON_FAMILY_RE = /icon|awesome|glyph|symbols?|emoji|icomoon|fontello|pictogram|remix/i;
 
 /** Build a font spec, attaching a matching Google-Fonts stylesheet URL when one
  *  of the page's linked GF URLs covers the family. */
@@ -238,7 +246,9 @@ export function deriveSeedTypography(
   for (const f of [...fonts.map((f) => f.family), ...fontFaceFamilies]) {
     const fam = f.trim();
     const key = fam.toLowerCase();
-    if (!fam || seen.has(key)) continue;
+    // Drop icon/symbol faces — they are UI chrome, not brand typography, and
+    // render as illegible glyph soup in the specimen tiles.
+    if (!fam || seen.has(key) || ICON_FAMILY_RE.test(fam)) continue;
     seen.add(key);
     families.push(fam);
   }
@@ -248,6 +258,7 @@ export function deriveSeedTypography(
   const nonMono = families.filter((f) => f !== mono);
   const serif = nonMono.find((f) => SERIF_HINT_RE.test(f)) ?? null;
   const display = serif ?? nonMono[0] ?? families[0];
+  if (!display) return null;
   const body = nonMono.find((f) => f !== display) ?? nonMono[0] ?? display;
 
   const typography: NonNullable<SeedSlot['typography']> = {

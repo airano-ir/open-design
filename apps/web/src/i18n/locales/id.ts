@@ -3187,11 +3187,12 @@ export const id: Dict = {
   'onboarding.brandSubtitle': 'Paste a website and we\'ll turn its brand signals into a reusable brand kit for future work.',
   'onboarding.brandSkip': 'Skip for now',
   'onboarding.brandDone': 'Brand kit extracted',
-  'brandPicker.heading': 'Atau mulai dari brand yang kamu suka',
+  'brandPicker.heading': 'Mulai dari brand yang kamu suka',
   'brandPicker.subtext': 'Klik brand mana pun untuk mengekstrak kit-nya langsung dari situs webnya.',
   'brandPicker.quickPicksLabel': 'Brand populer — klik untuk mengekstrak',
   'brandPicker.searchPlaceholder': 'Cari brand…',
   'brandPicker.allCategories': 'Semua',
   'brandPicker.extractAction': 'Ekstrak',
   'brandPicker.showMore': 'Tampilkan lebih banyak',
+  'brandPicker.opening': 'Memulai ekstraksi — membuka {brand}…',
 };

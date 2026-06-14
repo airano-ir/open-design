@@ -3182,11 +3182,12 @@ export const fa: Dict = {
   'onboarding.brandSubtitle': 'Paste a website and we\'ll turn its brand signals into a reusable brand kit for future work.',
   'onboarding.brandSkip': 'Skip for now',
   'onboarding.brandDone': 'Brand kit extracted',
-  'brandPicker.heading': 'یا از برندی که دوست دارید شروع کنید',
+  'brandPicker.heading': 'از برندی که دوست دارید شروع کنید',
   'brandPicker.subtext': 'روی هر برند کلیک کنید تا کیت آن مستقیماً از وب‌سایتش استخراج شود.',
   'brandPicker.quickPicksLabel': 'برندهای محبوب — برای استخراج کلیک کنید',
   'brandPicker.searchPlaceholder': 'جستجوی برندها…',
   'brandPicker.allCategories': 'همه',
   'brandPicker.extractAction': 'استخراج',
   'brandPicker.showMore': 'نمایش بیشتر',
+  'brandPicker.opening': 'در حال شروع استخراج — در حال باز کردن {brand}…',
 };

@@ -3187,11 +3187,12 @@ export const ja: Dict = {
   'onboarding.brandSubtitle': 'Paste a website and we\'ll turn its brand signals into a reusable brand kit for future work.',
   'onboarding.brandSkip': 'Skip for now',
   'onboarding.brandDone': 'Brand kit extracted',
-  'brandPicker.heading': 'または好きなブランドから始める',
+  'brandPicker.heading': '好きなブランドから始める',
   'brandPicker.subtext': 'ブランドをクリックすると、その Web サイトから直接ブランドキットを抽出できます。',
   'brandPicker.quickPicksLabel': '人気のブランド — クリックして抽出',
   'brandPicker.searchPlaceholder': 'ブランドを検索…',
   'brandPicker.allCategories': 'すべて',
   'brandPicker.extractAction': '抽出',
   'brandPicker.showMore': 'もっと見る',
+  'brandPicker.opening': '抽出を開始しています — {brand} を開いています…',
 };

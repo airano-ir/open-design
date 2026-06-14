@@ -3187,11 +3187,12 @@ export const hu: Dict = {
   'onboarding.brandSubtitle': 'Paste a website and we\'ll turn its brand signals into a reusable brand kit for future work.',
   'onboarding.brandSkip': 'Skip for now',
   'onboarding.brandDone': 'Brand kit extracted',
-  'brandPicker.heading': 'Vagy indíts egy márkából, amit szeretsz',
+  'brandPicker.heading': 'Indíts egy márkából, amit szeretsz',
   'brandPicker.subtext': 'Kattints bármelyik márkára, hogy a készletét közvetlenül a weboldaláról kinyerd.',
   'brandPicker.quickPicksLabel': 'Népszerű márkák – kattints a kinyeréshez',
   'brandPicker.searchPlaceholder': 'Márkák keresése…',
   'brandPicker.allCategories': 'Mind',
   'brandPicker.extractAction': 'Kinyerés',
   'brandPicker.showMore': 'Több megjelenítése',
+  'brandPicker.opening': 'Kinyerés indítása – {brand} megnyitása…',
 };

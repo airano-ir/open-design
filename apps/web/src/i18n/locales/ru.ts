@@ -3187,11 +3187,12 @@ export const ru: Dict = {
   'onboarding.brandSubtitle': 'Paste a website and we\'ll turn its brand signals into a reusable brand kit for future work.',
   'onboarding.brandSkip': 'Skip for now',
   'onboarding.brandDone': 'Brand kit extracted',
-  'brandPicker.heading': 'Или начните с бренда, который вам нравится',
+  'brandPicker.heading': 'Начните с бренда, который вам нравится',
   'brandPicker.subtext': 'Нажмите на любой бренд, чтобы извлечь его кит прямо с сайта.',
   'brandPicker.quickPicksLabel': 'Популярные бренды — нажмите, чтобы извлечь',
   'brandPicker.searchPlaceholder': 'Поиск брендов…',
   'brandPicker.allCategories': 'Все',
   'brandPicker.extractAction': 'Извлечь',
   'brandPicker.showMore': 'Показать ещё',
+  'brandPicker.opening': 'Запуск извлечения — открываем {brand}…',
 };

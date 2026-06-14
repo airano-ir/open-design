@@ -3187,11 +3187,12 @@ export const th: Dict = {
   'onboarding.brandSubtitle': 'Paste a website and we\'ll turn its brand signals into a reusable brand kit for future work.',
   'onboarding.brandSkip': 'Skip for now',
   'onboarding.brandDone': 'Brand kit extracted',
-  'brandPicker.heading': 'หรือเริ่มจากแบรนด์ที่คุณชื่นชอบ',
+  'brandPicker.heading': 'เริ่มจากแบรนด์ที่คุณชื่นชอบ',
   'brandPicker.subtext': 'คลิกแบรนด์ใดก็ได้เพื่อดึงชุดแบรนด์จากเว็บไซต์ของแบรนด์นั้นโดยตรง',
   'brandPicker.quickPicksLabel': 'แบรนด์ยอดนิยม — คลิกเพื่อดึงข้อมูล',
   'brandPicker.searchPlaceholder': 'ค้นหาแบรนด์…',
   'brandPicker.allCategories': 'ทั้งหมด',
   'brandPicker.extractAction': 'ดึงข้อมูล',
   'brandPicker.showMore': 'แสดงเพิ่มเติม',
+  'brandPicker.opening': 'กำลังเริ่มดึงข้อมูล — กำลังเปิด {brand}…',
 };

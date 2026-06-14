@@ -551,11 +551,205 @@
     });
   }
 
+  // ---- In-page preview overlays (lightbox / masonry / asset modal) ----
+  // The kit runs in a sandboxed iframe with no top-navigation, so enlarging an
+  // image and previewing a brand asset's full page must happen as in-page DOM
+  // overlays rather than real navigation.
+  var SAMPLES = imagerySamples();
+  var ovStack = [];
+
+  function mkOverlay(id) {
+    var ov = document.createElement('div');
+    ov.className = 'ov';
+    ov.id = id;
+    var back = document.createElement('div');
+    back.className = 'ov-back';
+    ov.appendChild(back);
+    back.addEventListener('click', function () { closeOverlay(ov); });
+    document.body.appendChild(ov);
+    return ov;
+  }
+  function openOverlay(ov) {
+    if (ovStack.indexOf(ov) === -1) ovStack.push(ov);
+    ov.classList.add('open');
+    // Two frames so the browser registers the pre-transition state first.
+    requestAnimationFrame(function () { requestAnimationFrame(function () { ov.classList.add('in'); }); });
+  }
+  function closeOverlay(ov) {
+    ov.classList.remove('in');
+    var i = ovStack.indexOf(ov);
+    if (i !== -1) ovStack.splice(i, 1);
+    setTimeout(function () { if (!ov.classList.contains('in')) ov.classList.remove('open'); }, 160);
+  }
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && ovStack.length) closeOverlay(ovStack[ovStack.length - 1]);
+  });
+
+  // Lightbox: a single enlarged image with optional prev/next + caption.
+  var lightOv = null, lightImg = null, lightCap = null, lightIdx = 0;
+  function buildLight() {
+    if (lightOv) return;
+    lightOv = mkOverlay('ov-light');
+    var panel = document.createElement('div');
+    panel.className = 'ov-panel';
+    lightImg = document.createElement('img');
+    lightCap = document.createElement('div');
+    lightCap.className = 'light-cap';
+    panel.appendChild(lightImg);
+    panel.appendChild(lightCap);
+    lightOv.appendChild(panel);
+    var close = document.createElement('button');
+    close.className = 'ov-close';
+    close.type = 'button';
+    close.innerHTML = '&times;';
+    close.setAttribute('aria-label', 'Close');
+    close.addEventListener('click', function () { closeOverlay(lightOv); });
+    lightOv.appendChild(close);
+    if (SAMPLES.length > 1) {
+      var prev = document.createElement('button');
+      prev.className = 'light-nav light-prev';
+      prev.type = 'button';
+      prev.innerHTML = '\u2039';
+      prev.setAttribute('aria-label', 'Previous image');
+      prev.addEventListener('click', function (e) { e.stopPropagation(); showLight(lightIdx - 1); });
+      var next = document.createElement('button');
+      next.className = 'light-nav light-next';
+      next.type = 'button';
+      next.innerHTML = '\u203a';
+      next.setAttribute('aria-label', 'Next image');
+      next.addEventListener('click', function (e) { e.stopPropagation(); showLight(lightIdx + 1); });
+      lightOv.appendChild(prev);
+      lightOv.appendChild(next);
+    }
+  }
+  function showLight(idx) {
+    if (!SAMPLES.length) return;
+    buildLight();
+    lightIdx = (idx % SAMPLES.length + SAMPLES.length) % SAMPLES.length;
+    var s = SAMPLES[lightIdx];
+    lightImg.src = s.file;
+    lightImg.alt = s.caption || brand.name || '';
+    lightCap.textContent = s.caption || s.kind || '';
+    openOverlay(lightOv);
+  }
+
+  // Masonry "view all" modal: every image in a waterfall (column) layout.
+  var gridOv = null;
+  function buildGrid() {
+    if (gridOv) return;
+    gridOv = mkOverlay('ov-grid');
+    var panel = document.createElement('div');
+    panel.className = 'ov-panel';
+    var bar = document.createElement('div');
+    bar.className = 'grid-bar';
+    var h = document.createElement('h3');
+    h.textContent = 'All images · ' + SAMPLES.length;
+    var x = document.createElement('button');
+    x.className = 'icon-x';
+    x.type = 'button';
+    x.innerHTML = '&times;';
+    x.setAttribute('aria-label', 'Close');
+    x.addEventListener('click', function () { closeOverlay(gridOv); });
+    bar.appendChild(h);
+    bar.appendChild(x);
+    var scroll = document.createElement('div');
+    scroll.className = 'grid-scroll';
+    var mas = document.createElement('div');
+    mas.className = 'masonry';
+    SAMPLES.forEach(function (s, i) {
+      var item = document.createElement('div');
+      item.className = 'm-item';
+      var im = document.createElement('img');
+      im.src = s.file;
+      im.alt = s.caption || '';
+      im.loading = 'lazy';
+      item.appendChild(im);
+      item.addEventListener('click', function () { showLight(i); });
+      mas.appendChild(item);
+    });
+    scroll.appendChild(mas);
+    panel.appendChild(bar);
+    panel.appendChild(scroll);
+    gridOv.appendChild(panel);
+  }
+  function openGrid() { buildGrid(); openOverlay(gridOv); }
+
+  // Asset preview modal: the asset's full page in an iframe (relative src
+  // resolves under the kit's raw URL load).
+  var assetOv = null, assetFrame = null, assetTitle = null, assetSub = null;
+  function buildAsset() {
+    if (assetOv) return;
+    assetOv = mkOverlay('ov-asset');
+    var panel = document.createElement('div');
+    panel.className = 'ov-panel';
+    var bar = document.createElement('div');
+    bar.className = 'asset-bar';
+    var left = document.createElement('div');
+    assetTitle = document.createElement('span');
+    assetTitle.className = 'ab-title';
+    assetSub = document.createElement('span');
+    assetSub.className = 'ab-sub';
+    left.appendChild(assetTitle);
+    left.appendChild(assetSub);
+    var x = document.createElement('button');
+    x.className = 'icon-x';
+    x.type = 'button';
+    x.innerHTML = '&times;';
+    x.setAttribute('aria-label', 'Close');
+    x.addEventListener('click', function () { closeOverlay(assetOv); });
+    bar.appendChild(left);
+    bar.appendChild(x);
+    assetFrame = document.createElement('iframe');
+    assetFrame.className = 'asset-modal-frame';
+    assetFrame.title = 'Asset preview';
+    panel.appendChild(bar);
+    panel.appendChild(assetFrame);
+    assetOv.appendChild(panel);
+  }
+  function openAsset(href, label, desc) {
+    if (!href) return;
+    buildAsset();
+    assetTitle.textContent = label || 'Preview';
+    assetSub.textContent = desc || '';
+    assetFrame.src = href;
+    openOverlay(assetOv);
+  }
+
+  // Wire imagery thumbnails → lightbox (click + keyboard).
+  Array.prototype.forEach.call(document.querySelectorAll('.shot[data-idx]'), function (el) {
+    var idx = Number(el.getAttribute('data-idx')) || 0;
+    el.addEventListener('click', function () { showLight(idx); });
+    el.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showLight(idx); }
+    });
+  });
+  var viewAllBtn = document.getElementById('gallery-view-all');
+  if (viewAllBtn) viewAllBtn.addEventListener('click', openGrid);
+
+  // Wire brand-asset tiles → in-page full preview modal (click + keyboard).
+  Array.prototype.forEach.call(document.querySelectorAll('.asset[data-asset-href]'), function (el) {
+    var open = function () {
+      openAsset(el.getAttribute('data-asset-href'), el.getAttribute('data-asset-label'), el.getAttribute('data-asset-desc'));
+    };
+    el.addEventListener('click', open);
+    el.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+    });
+  });
+
   // While extraction is live, softly reload so the page fills in as the agent
   // updates brand.json + re-runs `od brand preview`. Stops the moment the
-  // payload reports a ready brand.
+  // payload reports a ready brand. While a preview overlay is open the reload
+  // is deferred (re-armed) so it never yanks the lightbox / asset modal out
+  // from under the user mid-interaction.
   if (extracting) {
-    setTimeout(function () { try { location.reload(); } catch (e) {} }, 3500);
+    var armReload = function () {
+      setTimeout(function () {
+        if (ovStack.length) { armReload(); return; }
+        try { location.reload(); } catch (e) {}
+      }, 3500);
+    };
+    armReload();
   }
 })();
 </script>

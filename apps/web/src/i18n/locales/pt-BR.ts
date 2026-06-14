@@ -3187,11 +3187,12 @@ export const ptBR: Dict = {
   'onboarding.brandSubtitle': 'Paste a website and we\'ll turn its brand signals into a reusable brand kit for future work.',
   'onboarding.brandSkip': 'Skip for now',
   'onboarding.brandDone': 'Brand kit extracted',
-  'brandPicker.heading': 'Ou comece com uma marca que você ama',
+  'brandPicker.heading': 'Comece com uma marca que você ama',
   'brandPicker.subtext': 'Clique em qualquer marca para extrair o kit direto do site dela.',
   'brandPicker.quickPicksLabel': 'Marcas populares — clique para extrair',
   'brandPicker.searchPlaceholder': 'Buscar marcas…',
   'brandPicker.allCategories': 'Todas',
   'brandPicker.extractAction': 'Extrair',
   'brandPicker.showMore': 'Mostrar mais',
+  'brandPicker.opening': 'Iniciando a extração — abrindo {brand}…',
 };

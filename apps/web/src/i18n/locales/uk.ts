@@ -3187,11 +3187,12 @@ export const uk: Dict = {
   'onboarding.brandSubtitle': 'Paste a website and we\'ll turn its brand signals into a reusable brand kit for future work.',
   'onboarding.brandSkip': 'Skip for now',
   'onboarding.brandDone': 'Brand kit extracted',
-  'brandPicker.heading': 'Або почніть із бренду, який вам подобається',
+  'brandPicker.heading': 'Почніть із бренду, який вам подобається',
   'brandPicker.subtext': 'Натисніть на будь-який бренд, щоб витягти його кіт прямо з сайту.',
   'brandPicker.quickPicksLabel': 'Популярні бренди — натисніть, щоб витягти',
   'brandPicker.searchPlaceholder': 'Пошук брендів…',
   'brandPicker.allCategories': 'Усі',
   'brandPicker.extractAction': 'Витягти',
   'brandPicker.showMore': 'Показати більше',
+  'brandPicker.opening': 'Запуск вилучення — відкриваємо {brand}…',
 };
