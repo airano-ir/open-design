@@ -252,6 +252,7 @@ export const ptBR: Dict = {
   'settings.amrAccountStatus': 'Status da conta AMR',
   'settings.amrConsole': 'Console AMR',
   'settings.amrLoginErrorCompact': 'Falha no login do AMR.',
+  'settings.amrLoginErrorRecovery': 'Try signing in again. If the browser did not open, check your AMR installation or choose Local CLI for now.',
   'settings.advanced': 'Avançado',
   'settings.amrLogin': 'Entrar',
   'settings.amrLogout': 'Sair',

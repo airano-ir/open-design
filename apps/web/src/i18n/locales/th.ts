@@ -252,6 +252,7 @@ export const th: Dict = {
   'settings.amrAccountStatus': 'สถานะบัญชี AMR',
   'settings.amrConsole': 'AMR Console',
   'settings.amrLoginErrorCompact': 'การลงชื่อเข้าใช้ AMR ล้มเหลว',
+  'settings.amrLoginErrorRecovery': 'Try signing in again. If the browser did not open, check your AMR installation or choose Local CLI for now.',
   'settings.advanced': 'ขั้นสูง',
   'settings.amrLogin': 'ลงชื่อเข้าใช้',
   'settings.amrLogout': 'ออกจากระบบ',

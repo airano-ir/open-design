@@ -252,6 +252,7 @@ export const ja: Dict = {
   'settings.amrAccountStatus': 'AMR アカウントの状態',
   'settings.amrConsole': 'AMR コンソール',
   'settings.amrLoginErrorCompact': 'AMR へのサインインに失敗しました。',
+  'settings.amrLoginErrorRecovery': 'Try signing in again. If the browser did not open, check your AMR installation or choose Local CLI for now.',
   'settings.advanced': '詳細設定',
   'settings.amrLogin': 'サインイン',
   'settings.amrLogout': 'サインアウト',

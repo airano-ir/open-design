@@ -252,6 +252,7 @@ export const tr: Dict = {
   'settings.amrAccountStatus': 'AMR hesap durumu',
   'settings.amrConsole': 'AMR Konsolu',
   'settings.amrLoginErrorCompact': 'AMR oturum açma başarısız oldu.',
+  'settings.amrLoginErrorRecovery': 'Try signing in again. If the browser did not open, check your AMR installation or choose Local CLI for now.',
   'settings.advanced': 'Gelişmiş',
   'settings.amrLogin': 'Oturum aç',
   'settings.amrLogout': 'Oturumu kapat',

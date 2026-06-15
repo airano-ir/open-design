@@ -283,6 +283,7 @@ export interface Dict {
   'settings.amrAccountStatus': string;
   'settings.amrConsole': string;
   'settings.amrLoginErrorCompact': string;
+  'settings.amrLoginErrorRecovery': string;
   'settings.apiSection': string;
   'settings.quickFillProvider': string;
   'settings.providerPreset': string;

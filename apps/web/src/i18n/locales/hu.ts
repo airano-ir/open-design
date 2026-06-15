@@ -252,6 +252,7 @@ export const hu: Dict = {
   'settings.amrAccountStatus': 'AMR fiók állapota',
   'settings.amrConsole': 'AMR konzol',
   'settings.amrLoginErrorCompact': 'Az AMR bejelentkezés sikertelen.',
+  'settings.amrLoginErrorRecovery': 'Try signing in again. If the browser did not open, check your AMR installation or choose Local CLI for now.',
   'settings.advanced': 'Speciális',
   'settings.amrLogin': 'Bejelentkezés',
   'settings.amrLogout': 'Kijelentkezés',

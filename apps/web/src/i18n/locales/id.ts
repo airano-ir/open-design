@@ -252,6 +252,7 @@ export const id: Dict = {
   'settings.amrAccountStatus': 'Status akun AMR',
   'settings.amrConsole': 'Konsol AMR',
   'settings.amrLoginErrorCompact': 'Proses masuk AMR gagal.',
+  'settings.amrLoginErrorRecovery': 'Try signing in again. If the browser did not open, check your AMR installation or choose Local CLI for now.',
   'settings.advanced': 'Lanjutan',
   'settings.amrLogin': 'Masuk',
   'settings.amrLogout': 'Keluar',

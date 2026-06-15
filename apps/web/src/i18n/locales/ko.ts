@@ -252,6 +252,7 @@ export const ko: Dict = {
   'settings.amrAccountStatus': 'AMR 계정 상태',
   'settings.amrConsole': 'AMR 콘솔',
   'settings.amrLoginErrorCompact': 'AMR 로그인에 실패했습니다.',
+  'settings.amrLoginErrorRecovery': 'Try signing in again. If the browser did not open, check your AMR installation or choose Local CLI for now.',
   'settings.advanced': '고급',
   'settings.amrLogin': '로그인',
   'settings.amrLogout': '로그아웃',

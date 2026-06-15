@@ -252,6 +252,7 @@ export const uk: Dict = {
   'settings.amrAccountStatus': 'Статус облікового запису AMR',
   'settings.amrConsole': 'Консоль AMR',
   'settings.amrLoginErrorCompact': 'Не вдалося ввійти в AMR.',
+  'settings.amrLoginErrorRecovery': 'Try signing in again. If the browser did not open, check your AMR installation or choose Local CLI for now.',
   'settings.advanced': 'Розширені',
   'settings.amrLogin': 'Увійти',
   'settings.amrLogout': 'Вийти',

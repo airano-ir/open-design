@@ -411,9 +411,38 @@ describe('EntryShell onboarding Open Design AMR runtime', () => {
     fireEvent.click(await screen.findByRole('button', { name: /Sign in to continue/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole('alert').textContent).toBe(startupError);
+      const alert = screen.getByRole('alert');
+      expect(alert.textContent).toContain(startupError);
+      expect(alert.textContent).toContain('Try signing in again.');
+      expect(alert.textContent).toContain('choose Local CLI');
     });
     expect(screen.queryByText('AMR sign-in failed.')).toBeNull();
+    expect(screen.queryByText('Signing in…')).toBeNull();
+  });
+
+  it('shows AMR sign-in recovery guidance when the daemon has no error detail', async () => {
+    const fetchMock = vi.fn(async (input, init) => {
+      const url = String(input);
+      if (url.endsWith('/api/integrations/vela/status')) {
+        return jsonResponse({ loggedIn: false, profile: 'prod', user: null, configPath: '/x' });
+      }
+      if (url.endsWith('/api/integrations/vela/login') && init?.method === 'POST') {
+        return jsonResponse({}, 500);
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+    globalThis.fetch = fetchMock as typeof fetch;
+    renderOnboarding();
+
+    fireEvent.click(await screen.findByRole('button', { name: /Sign in to continue/i }));
+
+    await waitFor(() => {
+      const alert = screen.getByRole('alert');
+      expect(alert.textContent).toContain('AMR sign-in failed.');
+      expect(alert.textContent).toContain('Try signing in again.');
+      expect(alert.textContent).toContain('check your AMR installation');
+      expect(alert.textContent).toContain('choose Local CLI');
+    });
     expect(screen.queryByText('Signing in…')).toBeNull();
   });
 
@@ -494,7 +523,10 @@ describe('EntryShell onboarding Open Design AMR runtime', () => {
       await vi.advanceTimersByTimeAsync(AMR_LOGIN_TIMEOUT_MS);
     });
     expect(fetchMock).toHaveBeenCalledWith('/api/integrations/vela/login/cancel', { method: 'POST' });
-    expect(screen.getByText('AMR sign-in failed.')).toBeTruthy();
+    const alert = screen.getByRole('alert');
+    expect(alert.textContent).toContain('AMR sign-in failed.');
+    expect(alert.textContent).toContain('Try signing in again.');
+    expect(alert.textContent).toContain('choose Local CLI');
     expect(screen.queryByText('Signing in…')).toBeNull();
     expect(screen.getByRole('button', { name: /Sign in to continue/i }).hasAttribute('disabled')).toBe(false);
     expect(props.onCompleteOnboarding).not.toHaveBeenCalled();

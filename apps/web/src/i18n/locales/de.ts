@@ -252,6 +252,7 @@ export const de: Dict = {
   'settings.amrAccountStatus': 'AMR-Kontostatus',
   'settings.amrConsole': 'AMR-Konsole',
   'settings.amrLoginErrorCompact': 'AMR-Anmeldung fehlgeschlagen.',
+  'settings.amrLoginErrorRecovery': 'Try signing in again. If the browser did not open, check your AMR installation or choose Local CLI for now.',
   'settings.advanced': 'Erweitert',
   'settings.amrLogin': 'Anmelden',
   'settings.amrLogout': 'Abmelden',

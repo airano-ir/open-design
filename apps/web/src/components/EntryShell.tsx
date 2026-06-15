@@ -1506,7 +1506,7 @@ function OnboardingView({
           const cancelResult = await cancelVelaLogin();
           closeAmrActivationWindowBestEffort();
           if (!cancelResult.ok) {
-            setAmrLoginError(t('settings.amrLoginErrorCompact'));
+            setAmrLoginError(onboardingAmrLoginError());
             return;
           }
           notifyAmrLoginStatusChanged('login-canceled');
@@ -1515,7 +1515,7 @@ function OnboardingView({
       }
       if (!loginResult.ok && !loginResult.alreadyRunning) {
         resolveAmrAuthTracking(analytics.track, 'failed', 'spawn_failed');
-        setAmrLoginError(loginResult.error || t('settings.amrLoginErrorCompact'));
+        setAmrLoginError(onboardingAmrLoginError(loginResult.error));
         return;
       }
       if (await pollAmrLoginCompletion()) {
@@ -1542,10 +1542,17 @@ function OnboardingView({
     closeAmrActivationWindowBestEffort();
     setAmrLoginCancelPending(false);
     if (!result.ok) {
-      setAmrLoginError(t('settings.amrLoginErrorCompact'));
+      setAmrLoginError(onboardingAmrLoginError());
       return;
     }
     notifyAmrLoginStatusChanged('login-canceled');
+  }
+
+  function onboardingAmrLoginError(reason?: string | null): string {
+    const trimmedReason = reason?.trim();
+    const recovery = t('settings.amrLoginErrorRecovery');
+    if (trimmedReason) return `${trimmedReason} ${recovery}`;
+    return `${t('settings.amrLoginErrorCompact')} ${recovery}`;
   }
 
   async function pollAmrLoginCompletion(): Promise<boolean> {
@@ -1572,7 +1579,7 @@ function OnboardingView({
         } else {
           resolveAmrAuthTracking(analytics.track, 'failed', 'login_stopped');
         }
-        setAmrLoginError(t('settings.amrLoginErrorCompact'));
+        setAmrLoginError(onboardingAmrLoginError());
         return false;
       }
     }

@@ -252,6 +252,7 @@ export const zhCN: Dict = {
   'settings.amrAccountStatus': 'AMR 账户状态',
   'settings.amrConsole': 'AMR 控制台',
   'settings.amrLoginErrorCompact': 'AMR 登录失败。',
+  'settings.amrLoginErrorRecovery': 'Try signing in again. If the browser did not open, check your AMR installation or choose Local CLI for now.',
   'settings.advanced': '高级设置',
   'settings.amrLogin': '登录',
   'settings.amrLogout': '登出',

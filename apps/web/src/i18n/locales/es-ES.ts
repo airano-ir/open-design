@@ -252,6 +252,7 @@ export const esES: Dict = {
   'settings.amrAccountStatus': 'Estado de la cuenta AMR',
   'settings.amrConsole': 'Consola AMR',
   'settings.amrLoginErrorCompact': 'Error al iniciar sesión en AMR.',
+  'settings.amrLoginErrorRecovery': 'Try signing in again. If the browser did not open, check your AMR installation or choose Local CLI for now.',
   'settings.advanced': 'Avanzado',
   'settings.amrLogin': 'Iniciar sesión',
   'settings.amrLogout': 'Cerrar sesión',

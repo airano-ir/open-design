@@ -252,6 +252,7 @@ export const zhTW: Dict = {
   'settings.amrAccountStatus': 'AMR 帳戶狀態',
   'settings.amrConsole': '控制台',
   'settings.amrLoginErrorCompact': 'AMR 登入失敗。',
+  'settings.amrLoginErrorRecovery': 'Try signing in again. If the browser did not open, check your AMR installation or choose Local CLI for now.',
   'settings.advanced': '進階',
   'settings.amrLogin': '登入',
   'settings.amrLogout': '登出',
