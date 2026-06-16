@@ -9,7 +9,16 @@
 // The popup and the on-page toolbar both message this worker rather than
 // talking to the daemon directly, so all daemon traffic lives in one place.
 
+try {
+  if (typeof importScripts === 'function') importScripts('i18n.js');
+} catch {
+  // The extension still works with English fallback if the helper cannot load.
+}
+
 const DEFAULT_DAEMON_URL = 'http://127.0.0.1:7456';
+const I18N = globalThis.OD_CLIPPER_I18N;
+const currentLocale = () => (I18N?.currentLocale ? I18N.currentLocale() : 'en');
+const t = (key, vars) => (I18N?.t ? I18N.t(key, vars, currentLocale()) : key);
 
 async function getDaemonUrl() {
   const { daemonUrl } = await chrome.storage.local.get(['daemonUrl']);
@@ -45,7 +54,7 @@ async function ingest(body) {
     // 413 means the capture is bigger than the daemon will accept — surface a
     // concise, actionable message instead of the server's full HTML error page.
     if (resp.status === 413) {
-      throw new Error('capture too large — try unchecking “Inline images” in Advanced');
+      throw new Error(t('errorCaptureTooLarge'));
     }
     const raw = await resp.text().catch(() => '');
     // Strip any HTML (Express error pages) and collapse whitespace so the popup
@@ -365,9 +374,9 @@ async function downloadFigma(opts) {
   return { truncated: cap.truncated, partialImages: cap.partialImages || 0 };
 }
 
-// --- design-system capture -------------------------------------------------
+// --- brand-kit capture -----------------------------------------------------
 //
-// brand-capture.js does not snapshot the page. It extracts brand/design-system
+// brand-capture.js does not snapshot the page. It extracts brand/product
 // signals and fills a stable HTML template, then the worker inlines the
 // discovered logos/images/fonts exactly like the full-page capture path.
 
@@ -376,22 +385,24 @@ async function captureDesignSystem(opts) {
   const tab = await activeTab();
   await sendToTab(tab.id, { type: 'odClipper:hideForCapture' });
   let cap;
+  const locale = currentLocale();
   try {
-    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['brand-capture.js'] });
+    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['i18n.js', 'brand-capture.js'] });
     const [out] = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
-      func: () => window.__odBrandCapture(),
+      func: (captureLocale) => window.__odBrandCapture({ locale: captureLocale }),
+      args: [locale],
     });
     cap = out && out.result;
   } finally {
     await sendToTab(tab.id, { type: 'odClipper:restoreAfterCapture' });
   }
-  if (!cap || !cap.html) throw new Error('design system capture failed');
+  if (!cap || !cap.html) throw new Error(t('errorBrandKitCaptureFailed'));
   const { map, skipped } = await buildResourceMap(cap.resources, includeImages);
   return {
     html: inlineHtml(cap.html, map),
     partialImages: skipped,
-    title: cap.title || `${tab.title || 'Captured'} Design System`,
+    title: cap.title || t('brandFileTitle', { title: tab.title || t('brandFallbackTitle') }),
     url: cap.url || tab.url,
     summary: cap.summary || {},
   };
@@ -603,7 +614,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: 'od-save-image',
-    title: 'Save image to Open Design Library',
+    title: t('saveImageToLibrary'),
     contexts: ['image'],
   });
 });

@@ -516,15 +516,15 @@
       <div class="surface" id="surface"></div>
       <div class="hintbar">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#e8896a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3.5"/><path d="M12 18.5V22"/><path d="M2 12h3.5"/><path d="M18.5 12H22"/></svg>
-        <span><b>Select an element</b> &nbsp;·&nbsp; hover, then click to capture</span>
+        <span><b>${esc(t('elementPickerTitle'))}</b> &nbsp;·&nbsp; ${esc(t('elementPickerHint'))}</span>
         <span class="kbd">Esc</span>
-        <button data-act="cancel" type="button" aria-label="Cancel"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+        <button data-act="cancel" type="button" aria-label="${esc(t('cancel'))}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
       </div>
       <div class="box" id="box">
         <div class="label" id="label"></div>
         <button class="chip" id="chip" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
-          Capture
+          ${esc(t('capture'))}
         </button>
       </div>`);
     boxEl = pickShadow.getElementById('box');
@@ -616,7 +616,7 @@
     if (e.key === 'Escape') {
       e.preventDefault();
       endElementPick();
-      toast('Element pick cancelled');
+      toast(t('elementPickCancelled'));
     }
   }
 
@@ -660,7 +660,7 @@
     if (!el) return;
     const rect = el.getBoundingClientRect();
     if (rect.width < 1 || rect.height < 1) {
-      toast('That element has no visible size');
+      toast(t('elementNoVisibleSize'));
       return;
     }
     const meta = describeElement(el, rect);
@@ -689,17 +689,17 @@
     } catch (err) {
       console.warn('[Open Design] element capture failed', err);
       setBusy(false);
-      toast('Extension error — reload the page');
+      toast(t('extensionErrorReload'));
       return;
     }
     setBusy(false);
     if (!res || !res.ok) {
       toast(res && res.error === 'not running'
-        ? 'Open Design isn’t running — start the app'
-        : `Failed: ${(res && res.error) || 'unknown'}`);
+        ? t('openDesignStartApp')
+        : t('failed', { error: (res && res.error) || t('unknown') }));
       return;
     }
-    toast(res.deduped ? 'Element already in library' : 'Saved element to library');
+    toast(res.deduped ? t('elementAlreadyInLibrary') : t('elementSaved'));
   }
 
   function startElementPick() {
@@ -915,7 +915,7 @@
     closeImagePicker();
     const images = collectImagesInPage();
     if (!images.length) {
-      toast('No images found on this page');
+      toast(t('noImagesFound'));
       return;
     }
     imagePickerHost = document.createElement('div');
@@ -1032,7 +1032,7 @@
         }
       </style>
       <div class="overlay" id="ov">
-        <div class="panel" role="dialog" aria-label="Select images to save">
+        <div class="panel" role="dialog" aria-label="${esc(t('selectImagesToSave'))}">
           <div class="head">
             <span class="mark" aria-hidden="true">
               <svg viewBox="0 0 93 93" xmlns="http://www.w3.org/2000/svg">
@@ -1041,14 +1041,14 @@
                 <path d="M44.59 59.66 35.84 36.64a.94.94 0 0 1 1.18-1.19l23.04 8.91c.95.37.69 1.78-.33 1.78H46.36v13.19c0 1.03-1.41 1.29-1.77.33Z" fill="#fff"/>
               </svg>
             </span>
-            <span class="title">Select images to save</span>
-            <span class="count" id="count">0 / ${images.length} selected</span>
-            <button data-a="all">Select all</button>
-            <button data-a="none">Clear</button>
-            <button class="x" data-a="close" aria-label="Close">✕</button>
+            <span class="title">${esc(t('selectImagesToSave'))}</span>
+            <span class="count" id="count">${esc(t('selectedCount', { selected: 0, total: images.length }))}</span>
+            <button data-a="all">${esc(t('selectAll'))}</button>
+            <button data-a="none">${esc(t('clear'))}</button>
+            <button class="x" data-a="close" aria-label="${esc(t('close'))}">✕</button>
           </div>
           <div class="grid" id="grid"></div>
-          <div class="foot"><button class="save" id="save" disabled>Save 0 to Library</button></div>
+          <div class="foot"><button class="save" id="save" disabled>${esc(t('saveNToLibrary', { count: 0 }))}</button></div>
         </div>
       </div>`);
 
@@ -1067,12 +1067,12 @@
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.dataset.i = String(i);
-      checkbox.setAttribute('aria-label', img.alt || `Image ${i + 1}`);
+      checkbox.setAttribute('aria-label', img.alt || t('imageLabel', { index: i + 1 }));
       const thumb = makeThumb(img);
       const loc = document.createElement('button');
       loc.type = 'button';
       loc.className = 'loc';
-      loc.title = 'Find on page';
+      loc.title = t('findOnPage');
       setHTML(loc, LOC_SVG);
       const dim = document.createElement('span');
       dim.className = 'dim';
@@ -1088,8 +1088,8 @@
     // O(n) re-scan of the whole grid on every click.
     let selected = 0;
     function paintCount() {
-      countEl.textContent = `${selected} / ${images.length} selected`;
-      saveBtn.textContent = `Save ${selected} to Library`;
+      countEl.textContent = t('selectedCount', { selected, total: images.length });
+      saveBtn.textContent = t('saveNToLibrary', { count: selected });
       saveBtn.disabled = selected === 0;
     }
     grid.addEventListener('change', (e) => {
@@ -1134,12 +1134,12 @@
       const chosen = checkboxes.filter((c) => c.checked).map((c) => images[Number(c.dataset.i)]);
       if (!chosen.length) return;
       saveBtn.disabled = true;
-      saveBtn.textContent = 'Saving…';
+      saveBtn.textContent = t('saving');
       closeImagePicker();
       // Spinner on the bar through the save, matching every other capture action.
       // ingestImages takes no screenshot, so the bar stays put — no blink.
       setBusy(true);
-      toast(`Saving ${chosen.length} image(s)…`);
+      toast(t('savingImages', { count: chosen.length }));
       let res;
       try {
         res = await chrome.runtime.sendMessage({
@@ -1150,17 +1150,17 @@
         });
       } catch {
         setBusy(false);
-        toast('Extension error — reload the page');
+        toast(t('extensionErrorReload'));
         return;
       }
       setBusy(false);
       if (!res || !res.ok) {
         toast(res && res.error === 'not running'
-          ? 'Open Design isn’t running — start the app'
-          : `Failed: ${(res && res.error) || 'unknown'}`);
+          ? t('openDesignStartApp')
+          : t('failed', { error: (res && res.error) || t('unknown') }));
         return;
       }
-      toast(`Saved ${res.count}/${res.total} image(s) to library`);
+      toast(t('savedImagesCount', { count: res.count, total: res.total }));
     });
 
     document.documentElement.appendChild(imagePickerHost);
@@ -1213,7 +1213,7 @@
       </style>
       <div class="surface" id="surface"></div>
       <div class="sel" id="sel"><span class="size" id="size"></span></div>
-      <div class="hintbar"><b>Drag</b> &nbsp;to select a region &nbsp;<span class="kbd">Esc</span></div>`);
+      <div class="hintbar"><b>${esc(t('dragToSelectRegion'))}</b> &nbsp;${esc(t('dragToSelectRegionTail'))} &nbsp;<span class="kbd">Esc</span></div>`);
     document.documentElement.appendChild(regionHost);
     regionRectEl = regionShadow.getElementById('sel');
     const sizeEl = regionShadow.getElementById('size');
@@ -1246,7 +1246,7 @@
       const r = place(regionStart, { x: e.clientX, y: e.clientY });
       regionStart = null;
       if (r.w < 6 || r.h < 6) {
-        toast('Region too small — drag a larger box');
+        toast(t('regionTooSmall'));
         return;
       }
       void commitRegionCapture(r);
@@ -1258,7 +1258,7 @@
     if (e.key === 'Escape') {
       e.preventDefault();
       endRegionPick();
-      toast('Region capture cancelled');
+      toast(t('regionCancelled'));
     }
   }
 
@@ -1296,17 +1296,17 @@
       });
     } catch {
       setBusy(false);
-      toast('Extension error — reload the page');
+      toast(t('extensionErrorReload'));
       return;
     }
     setBusy(false);
     if (!res || !res.ok) {
       toast(res && res.error === 'not running'
-        ? 'Open Design isn’t running — start the app'
-        : `Failed: ${(res && res.error) || 'unknown'}`);
+        ? t('openDesignStartApp')
+        : t('failed', { error: (res && res.error) || t('unknown') }));
       return;
     }
-    toast(res.deduped ? 'Region already in library' : 'Saved region to library');
+    toast(res.deduped ? t('regionAlreadyInLibrary') : t('regionSaved'));
   }
 
   // --- per-image hover capture badge ---------------------------------------
@@ -1357,10 +1357,10 @@
         .badge:hover ~ .tip { opacity: 1; transform: translateY(0); transition-delay: 120ms; }
       </style>
       <div class="wrap">
-        <button class="badge" id="b" type="button" aria-label="Save image to Open Design Library">
+        <button class="badge" id="b" type="button" aria-label="${esc(t('saveImageToLibrary'))}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         </button>
-        <span class="tip">Save image to Open Design</span>
+        <span class="tip">${esc(t('saveImageToOpenDesign'))}</span>
       </div>`);
     document.documentElement.appendChild(imgBadgeHost);
     imgBadgeBtn = sh.getElementById('b');
@@ -1378,7 +1378,7 @@
       hideImageBadge();
       // The badge vanishes on click, so the toast is the only feedback — keep it
       // a spinner that holds until the result replaces it.
-      toast('Saving image…', { loading: true });
+      toast(t('savingImage'), { loading: true });
       let res;
       try {
         res = await chrome.runtime.sendMessage({
@@ -1388,16 +1388,16 @@
           sourceTitle: document.title,
         });
       } catch {
-        toast('Extension error — reload the page');
+        toast(t('extensionErrorReload'));
         return;
       }
       if (!res || !res.ok) {
         toast(res && res.error === 'not running'
-          ? 'Open Design isn’t running — start the app'
-          : `Failed: ${(res && res.error) || 'unknown'}`);
+          ? t('openDesignStartApp')
+          : t('failed', { error: (res && res.error) || t('unknown') }));
         return;
       }
-      toast(res.count ? 'Saved image to library' : 'Couldn’t save that image');
+      toast(res.count ? t('imageSaved') : t('imageSaveFailed'));
     });
   }
 

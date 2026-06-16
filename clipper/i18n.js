@@ -5,7 +5,7 @@
 // this small browser/worker-safe dictionary instead of importing app code.
 
 (function () {
-  const LOCALES = ['en', 'id', 'de', 'zh-CN', 'zh-TW', 'pt-BR', 'es-ES', 'ru', 'fa', 'ar', 'ja', 'ko', 'pl', 'hu', 'fr', 'uk', 'tr', 'th', 'it'];
+  const LOCALES = ['en', 'id', 'de', 'zh-CN', 'zh-TW', 'pt-BR', 'es-ES', 'ru', 'fa', 'ar', 'ja', 'ko', 'pl', 'hu', 'fr', 'uk', 'tr', 'th', 'it', 'vi', 'nl'];
   const RTL = new Set(['ar', 'fa']);
 
   const en = {
@@ -469,6 +469,30 @@
       brandAssetMap: 'Mappa asset brand', brandIdentity: 'Identità', brandLogo: 'Logo',
       brandImages: 'Immagini', brandTypography: 'Tipografia', brandPalette: 'Palette', brandVoice: 'Voce',
       brandComponents: 'Componenti', brandComponentKit: 'Kit componenti',
+    },
+    vi: {
+      extensionDescription: 'Lưu trang, bộ thương hiệu, ảnh chụp màn hình, hình ảnh và JSON nhập Figma vào Open Design Library.',
+      statusConnected: 'Đã kết nối', statusOffline: 'Ngoại tuyến', capturePageTitle: 'Chụp trang',
+      screenshot: 'Ảnh chụp màn hình', region: 'Vùng', pickImages: 'Chọn hình ảnh', pickElement: 'Chọn phần tử',
+      extractBrandKit: 'Trích xuất bộ thương hiệu', advanced: 'Nâng cao', inlineImages: 'Nhúng hình ảnh',
+      onPageBar: 'Thanh trên trang', save: 'Lưu', refreshPage: 'Tải lại trang',
+      toolbarExtractBrandKit: 'Trích xuất bộ thương hiệu', savedBrandKitShort: 'Đã lưu bộ thương hiệu',
+      brandExtracted: 'Bộ thương hiệu đã trích xuất', brandPageTitleSuffix: 'Chụp Bộ Thương Hiệu',
+      brandAssetMap: 'Bản đồ tài sản thương hiệu', brandIdentity: 'Nhận diện', brandLogo: 'Logo',
+      brandImages: 'Hình ảnh', brandTypography: 'Kiểu chữ', brandPalette: 'Bảng màu', brandVoice: 'Giọng điệu',
+      brandComponents: 'Thành phần', brandComponentKit: 'Bộ thành phần',
+    },
+    nl: {
+      extensionDescription: 'Sla pagina’s, merkkits, screenshots, afbeeldingen en Figma-import-JSON op in je Open Design Library.',
+      statusConnected: 'Verbonden', statusOffline: 'Offline', capturePageTitle: 'Pagina vastleggen',
+      screenshot: 'Screenshot', region: 'Gebied', pickImages: 'Afbeeldingen kiezen', pickElement: 'Element kiezen',
+      extractBrandKit: 'Merkkit extraheren', advanced: 'Geavanceerd', inlineImages: 'Afbeeldingen insluiten',
+      onPageBar: 'Paginabalk', save: 'Opslaan', refreshPage: 'Pagina herladen',
+      toolbarExtractBrandKit: 'Merkkit extraheren', savedBrandKitShort: 'Merkkit opgeslagen',
+      brandExtracted: 'Geëxtraheerde merkkit', brandPageTitleSuffix: 'Merkkit-vastlegging',
+      brandAssetMap: 'Kaart met merkassets', brandIdentity: 'Identiteit', brandLogo: 'Logo',
+      brandImages: 'Afbeeldingen', brandTypography: 'Typografie', brandPalette: 'Palet', brandVoice: 'Stem',
+      brandComponents: 'Componenten', brandComponentKit: 'Componentkit',
     },
   };
 

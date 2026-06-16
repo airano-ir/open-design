@@ -11,6 +11,16 @@
   const MAX_IMAGES = 15;
   const MAX_LOGOS = 8;
   const MAX_RESOURCES = 120;
+  const I18N = globalThis.OD_CLIPPER_I18N;
+  let activeLocale = I18N?.currentLocale ? I18N.currentLocale() : 'en';
+
+  function setActiveLocale(locale) {
+    activeLocale = I18N?.normalizeLocale ? (I18N.normalizeLocale(locale) || activeLocale) : (locale || activeLocale);
+  }
+
+  function tr(key, vars) {
+    return I18N?.t ? I18N.t(key, vars, activeLocale) : key;
+  }
 
   function text(value) {
     return String(value || '').replace(/\s+/g, ' ').trim();
@@ -364,11 +374,11 @@
       text(document.querySelector('h1')?.textContent) ||
       text(document.title) ||
       hostOf(location.href) ||
-      'Captured brand';
+      tr('brandFallbackTitle');
     const description =
       meta('description') ||
       text(document.querySelector('main p, article p, [class*="subtitle" i], [class*="description" i]')?.textContent) ||
-      'Programmatically extracted from the live web page.';
+      tr('brandFallbackDescription');
     const headings = Array.from(document.querySelectorAll('h1, h2, h3'))
       .map((el) => text(el.textContent))
       .filter(Boolean)
@@ -412,8 +422,17 @@
   }
 
   function swatchName(index, color, role) {
-    const names = ['Background', 'Surface', 'Foreground', 'Muted', 'Border', 'Accent', 'Support', 'Highlight'];
-    return role || names[index] || `Color ${index + 1}`;
+    const names = [
+      tr('swatchBackground'),
+      tr('swatchSurface'),
+      tr('swatchForeground'),
+      tr('swatchMuted'),
+      tr('swatchBorder'),
+      tr('swatchAccent'),
+      tr('swatchSupport'),
+      tr('swatchHighlight'),
+    ];
+    return role || names[index] || tr('swatchColor', { index: index + 1 });
   }
 
   function renderHtml(data, fontFaces) {
@@ -429,17 +448,17 @@
     const logoHtml = data.assets.logos.length
       ? data.assets.logos.map((item) => `
         <figure class="asset-card logo-card">
-          <img src="${escapeHtml(item.src)}" alt="${escapeHtml(item.label || 'Brand asset')}" />
-          <figcaption>${escapeHtml(item.label || 'Logo asset')}</figcaption>
+          <img src="${escapeHtml(item.src)}" alt="${escapeHtml(item.label || tr('brandAssetAlt'))}" />
+          <figcaption>${escapeHtml(item.label || tr('brandLogoAsset'))}</figcaption>
         </figure>`).join('')
       : `<div class="empty-card">${escapeHtml(data.content.title.slice(0, 1).toUpperCase())}</div>`;
     const imagesHtml = data.assets.images.length
       ? data.assets.images.map((item, i) => `
         <figure class="asset-card image-card">
-          <img src="${escapeHtml(item.src)}" alt="${escapeHtml(item.label || `Brand image ${i + 1}`)}" />
-          <figcaption>${escapeHtml(item.label || `Image ${i + 1}`)}</figcaption>
+          <img src="${escapeHtml(item.src)}" alt="${escapeHtml(item.label || tr('brandImageAlt', { index: i + 1 }))}" />
+          <figcaption>${escapeHtml(item.label || tr('brandImageLabel', { index: i + 1 }))}</figcaption>
         </figure>`).join('')
-      : `<div class="empty-note">No large page images were detected.</div>`;
+      : `<div class="empty-note">${escapeHtml(tr('brandNoImages'))}</div>`;
     const paletteHtml = palette.map((item, i) => {
       const role = item.roles?.[0] ? String(item.roles[0]).replace(/^--/, '') : '';
       return `
@@ -447,7 +466,7 @@
           <div class="swatch-color" style="background:${escapeHtml(item.hex)};color:${contrastText(item.hex)}">${escapeHtml(item.hex)}</div>
           <div class="swatch-body">
             <strong>${escapeHtml(swatchName(i, item.hex, role))}</strong>
-            <span>${escapeHtml((item.roles || []).join(' / ') || 'observed color')}</span>
+            <span>${escapeHtml((item.roles || []).join(' / ') || tr('brandObservedColor'))}</span>
           </div>
         </article>`;
     }).join('');
@@ -459,18 +478,20 @@
       </article>`).join('');
     const headingsHtml = data.content.headings.length
       ? data.content.headings.map((h) => `<li>${escapeHtml(h)}</li>`).join('')
-      : '<li>No heading sample was available.</li>';
+      : `<li>${escapeHtml(tr('brandNoHeading'))}</li>`;
     const keywordHtml = data.content.keywords.length
       ? data.content.keywords.map((k) => `<span>${escapeHtml(k)}</span>`).join('')
-      : '<span>captured brand</span>';
+      : `<span>${escapeHtml(tr('brandKeywordFallback'))}</span>`;
     const json = escapeScriptJson(JSON.stringify(data, null, 2));
+    const htmlLocale = I18N?.htmlLang ? I18N.htmlLang(activeLocale) : activeLocale;
+    const dir = I18N?.isRtl && I18N.isRtl(activeLocale) ? 'rtl' : 'ltr';
 
     return `<!doctype html>
-<html lang="en" data-theme="light">
+<html lang="${escapeHtml(htmlLocale)}" dir="${escapeHtml(dir)}" data-theme="light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${escapeHtml(data.content.title)} — Design System Capture</title>
+    <title>${escapeHtml(data.content.title)} — ${escapeHtml(tr('brandPageTitleSuffix'))}</title>
     <meta name="od-library-kind" content="design-system" />
     <style>
       ${safeCss(fontCss)}
@@ -585,33 +606,33 @@
               ${logo ? `<img src="${escapeHtml(logo.src)}" alt="${escapeHtml(logo.label || data.content.title)}" />` : `<span class="brand-fallback">${escapeHtml(data.content.title.slice(0, 1).toUpperCase())}</span>`}
             </div>
             <div>
-              <p class="eyebrow">Extracted design system</p>
+              <p class="eyebrow">${escapeHtml(tr('brandExtracted'))}</p>
               <h1>${escapeHtml(data.content.title)}</h1>
               <p class="domain">${escapeHtml(data.content.domain || data.content.url)}</p>
             </div>
           </div>
           <p class="description">${escapeHtml(data.content.description)}</p>
         </div>
-        <div class="theme-toggle" aria-label="Theme">
-          <button type="button" data-theme-button="light">Light</button>
-          <button type="button" data-theme-button="dark">Dark</button>
+        <div class="theme-toggle" aria-label="${escapeHtml(tr('brandTheme'))}">
+          <button type="button" data-theme-button="light">${escapeHtml(tr('brandLight'))}</button>
+          <button type="button" data-theme-button="dark">${escapeHtml(tr('brandDark'))}</button>
         </div>
       </header>
 
       <section class="section">
-        <div class="section-head"><h2>Brand asset map</h2><span class="eyebrow">6 extracted groups</span></div>
+        <div class="section-head"><h2>${escapeHtml(tr('brandAssetMap'))}</h2><span class="eyebrow">${escapeHtml(tr('brandAssetMapSub'))}</span></div>
         <div class="asset-types">
-          <article class="asset-type"><strong>Logo</strong><span>${data.assets.logos.length} marks and app icons</span></article>
-          <article class="asset-type"><strong>Images</strong><span>${data.assets.images.length} representative images</span></article>
-          <article class="asset-type"><strong>Typography</strong><span>${data.typography.families.length} font families</span></article>
-          <article class="asset-type"><strong>Palette</strong><span>${palette.length} observed colors</span></article>
-          <article class="asset-type"><strong>Voice</strong><span>${data.content.headings.length} heading samples</span></article>
-          <article class="asset-type"><strong>Components</strong><span>Buttons, fields, cards and navigation</span></article>
+          <article class="asset-type"><strong>${escapeHtml(tr('brandLogo'))}</strong><span>${escapeHtml(tr('brandLogoCount', { count: data.assets.logos.length }))}</span></article>
+          <article class="asset-type"><strong>${escapeHtml(tr('brandImages'))}</strong><span>${escapeHtml(tr('brandImageCount', { count: data.assets.images.length }))}</span></article>
+          <article class="asset-type"><strong>${escapeHtml(tr('brandTypography'))}</strong><span>${escapeHtml(tr('brandFontCount', { count: data.typography.families.length }))}</span></article>
+          <article class="asset-type"><strong>${escapeHtml(tr('brandPalette'))}</strong><span>${escapeHtml(tr('brandColorCount', { count: palette.length }))}</span></article>
+          <article class="asset-type"><strong>${escapeHtml(tr('brandVoice'))}</strong><span>${escapeHtml(tr('brandHeadingCount', { count: data.content.headings.length }))}</span></article>
+          <article class="asset-type"><strong>${escapeHtml(tr('brandComponents'))}</strong><span>${escapeHtml(tr('brandComponentSummary'))}</span></article>
         </div>
       </section>
 
       <section class="section">
-        <div class="section-head"><h2>Identity</h2><span class="eyebrow">${escapeHtml(data.content.documentTitle || data.content.domain)}</span></div>
+        <div class="section-head"><h2>${escapeHtml(tr('brandIdentity'))}</h2><span class="eyebrow">${escapeHtml(data.content.documentTitle || data.content.domain)}</span></div>
         <div class="identity">
           <p>${escapeHtml(data.content.description)}</p>
           <div class="chips">${keywordHtml}</div>
@@ -619,46 +640,46 @@
       </section>
 
       <section class="section">
-        <div class="section-head"><h2>Logo</h2><span class="eyebrow">Brand marks</span></div>
+        <div class="section-head"><h2>${escapeHtml(tr('brandLogo'))}</h2><span class="eyebrow">${escapeHtml(tr('brandLogoSub'))}</span></div>
         <div class="logo-grid">${logoHtml}</div>
       </section>
 
       <section class="section">
-        <div class="section-head"><h2>Typography</h2><span class="eyebrow">Live computed styles</span></div>
+        <div class="section-head"><h2>${escapeHtml(tr('brandTypography'))}</h2><span class="eyebrow">${escapeHtml(tr('brandTypographySub'))}</span></div>
         <div class="type-grid">${typeHtml}</div>
       </section>
 
       <section class="section">
-        <div class="section-head"><h2>Palette</h2><span class="eyebrow">Light and dark tokens</span></div>
+        <div class="section-head"><h2>${escapeHtml(tr('brandPalette'))}</h2><span class="eyebrow">${escapeHtml(tr('brandPaletteSub'))}</span></div>
         <div class="palette-grid">${paletteHtml}</div>
       </section>
 
       <section class="section">
-        <div class="section-head"><h2>Component Kit</h2><span class="eyebrow">Template filled from page tokens</span></div>
+        <div class="section-head"><h2>${escapeHtml(tr('brandComponentKit'))}</h2><span class="eyebrow">${escapeHtml(tr('brandComponentKitSub'))}</span></div>
         <div class="component-preview">
           <div class="kit-row">
-            <span class="btn">Primary action</span>
-            <span class="btn secondary">Secondary</span>
-            <input class="field" value="Form field" aria-label="Form field sample" />
+            <span class="btn">${escapeHtml(tr('brandPrimaryAction'))}</span>
+            <span class="btn secondary">${escapeHtml(tr('brandSecondaryAction'))}</span>
+            <input class="field" value="${escapeHtml(tr('brandFormField'))}" aria-label="${escapeHtml(tr('brandFormFieldSample'))}" />
           </div>
           <div class="kit-row">
-            <article class="mini-card"><strong>Surface card</strong><span>Radius, border, color and type inherit from the extracted system.</span></article>
-            <article class="mini-card"><strong>Navigation item</strong><span>${escapeHtml(data.content.headings[0] || 'Overview')}</span></article>
+            <article class="mini-card"><strong>${escapeHtml(tr('brandSurfaceCard'))}</strong><span>${escapeHtml(tr('brandSurfaceCardText'))}</span></article>
+            <article class="mini-card"><strong>${escapeHtml(tr('brandNavigationItem'))}</strong><span>${escapeHtml(data.content.headings[0] || tr('brandIdentity'))}</span></article>
           </div>
         </div>
       </section>
 
       <section class="section">
-        <div class="section-head"><h2>Images</h2><span class="eyebrow">Representative assets</span></div>
+        <div class="section-head"><h2>${escapeHtml(tr('brandImages'))}</h2><span class="eyebrow">${escapeHtml(tr('brandImagesSub'))}</span></div>
         <div class="image-grid">${imagesHtml}</div>
       </section>
 
       <section class="section">
-        <div class="section-head"><h2>Voice & Content</h2><span class="eyebrow">Detected headings</span></div>
+        <div class="section-head"><h2>${escapeHtml(tr('brandVoiceContent'))}</h2><span class="eyebrow">${escapeHtml(tr('brandVoiceContentSub'))}</span></div>
         <ol class="headings">${headingsHtml}</ol>
       </section>
 
-      <p class="data-note">This file contains a structured JSON payload at <code>#od-design-system-data</code> for future automation.</p>
+      <p class="data-note">${tr('brandDataNote')}</p>
     </main>
     <script type="application/json" id="od-design-system-data">${json}</script>
     <script>
@@ -672,7 +693,8 @@
 </html>`;
   }
 
-  window.__odBrandCapture = function () {
+  window.__odBrandCapture = function (opts) {
+    setActiveLocale(opts && opts.locale);
     const resources = new Set();
     const elements = visibleElements();
     const content = collectContent();
@@ -696,7 +718,7 @@
     return {
       html: renderHtml(data, fontFaces),
       resources: Array.from(resources).filter(isHttp).slice(0, MAX_RESOURCES),
-      title: `${content.title} Design System`,
+      title: tr('brandFileTitle', { title: content.title }),
       url: location.href,
       summary: {
         colors: palette.length,

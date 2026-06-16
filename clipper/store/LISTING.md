@@ -40,22 +40,22 @@ Open Design Web Clipper
 
 ### Summary / short description (max 132)
 ```
-Clip pages, design systems, screenshots, images, and Figma import JSON into your Open Design Library — local-first, one click, no login.
+Clip pages, brand kits, screenshots, images, and Figma import JSON into your Open Design Library — local-first, one click, no login.
 ```
 
 ### Detailed description (max 16,000)
 ```
 Open Design Web Clipper saves anything you find on the web straight into your Open Design Library — the local asset registry of the open-source Open Design app. One click, no account, no pairing, no tokens.
 
-Built for designers, researchers, and builders who collect references all day: drop a full page, a design-system capture, a screenshot, a set of images, or an editable Figma import JSON into your Library and keep working.
+Built for designers, researchers, and builders who collect references all day: drop a full page, a brand-kit capture, a screenshot, a set of images, or an editable Figma import JSON into your Library and keep working.
 
 ━━ WHAT YOU CAN CLIP ━━
 
 • Capture page → Library
   A self-contained, high-fidelity HTML snapshot. Stylesheets are inlined, images are embedded as data URIs, and scripts are stripped — so the page stays exactly as you saw it, forever, even if the original changes or goes offline.
 
-• 提取设计系统
-  Programmatically extracts logo candidates, images, typography, fonts, palette, product description, headings, and a reusable component kit into a templated HTML design-system asset with light/dark modes.
+• Extract brand kit
+  Programmatically extracts logo candidates, images, typography, fonts, palette, product description, headings, and a reusable component kit into a templated HTML brand-kit asset with light/dark modes.
 
 • Screenshot
   Save the visible tab as an image in one click.
@@ -105,7 +105,7 @@ Open source: https://github.com/nexu-io/open-design
 
 ### Single purpose (required field)
 ```
-Capture web content — full pages, design systems, screenshots, images, page elements, and Figma import JSON — and save it into the user's locally running Open Design app Library.
+Capture web content — full pages, brand kits, screenshots, images, page elements, and Figma import JSON — and save it into the user's locally running Open Design app Library.
 ```
 
 ### Permission justifications (one per requested permission)
@@ -184,7 +184,7 @@ And the dual background key (already in `manifest.json`) — Firefox uses
 ```
 
 - **Name:** `Open Design Web Clipper`
-- **Summary (≤250):** `Clip web pages, design systems, screenshots, images, and Figma import JSON straight into your Open Design Library. Local-first, one click — no account, no pairing, no tokens.`
+- **Summary (≤250):** `Clip web pages, brand kits, screenshots, images, and Figma import JSON straight into your Open Design Library. Local-first, one click — no account, no pairing, no tokens.`
 - **Description:** reuse the Chrome detailed description
 - **Categories:** `Other` + `Web Development` (or `Photos, Music & Videos`)
 - **Tags (up to 5):** `web-clipper`, `screenshot`, `figma`, `capture`, `design`
@@ -213,16 +213,17 @@ nothing is collected by, or transmitted to, the developer.
 - **名称:** `Open Design Web Clipper`（品牌名保持英文；本地化副标题：网页剪藏）
 - **简短描述 (≤132):**
 ```
-一键将任意网页、截图、图片或 Figma 文件剪藏到本地的 Open Design 素材库 —— 本地优先，无需登录。
+一键将任意网页、品牌套件、截图、图片或 Figma 导入 JSON 剪藏到本地的 Open Design 素材库 —— 本地优先，无需登录。
 ```
 - **详细描述:**
 ```
 Open Design Web Clipper 把你在网上看到的任何内容一键剪藏进 Open Design 素材库（开源 Open Design 应用的本地资源库）。无需账号、无需配对、无需令牌。
 
-为整天收集素材的设计师、研究者和创作者而生：整页快照、截图、批量图片，或可编辑的 Figma 捕获，统统进入素材库，工作不中断。
+为整天收集素材的设计师、研究者和创作者而生：整页快照、品牌套件、截图、批量图片，或可编辑的 Figma 导入 JSON，统统进入素材库，工作不中断。
 
 【你能剪藏什么】
 • 整页 → 素材库：高保真、自包含的 HTML 快照（内联样式与图片、剥离脚本），页面永久保真。
+• 提取品牌套件：程序化提取 logo、图片、字体、色板、产品描述、标题和组件套件，并生成支持明暗模式的 HTML 品牌套件。
 • 截图：一键保存可见区域。
 • 选择图片：页面所有图片网格 + 复选框，精确保存你要的那几张。
 • 选择元素：DevTools 式拾取器，悬停高亮、点击保存为裁剪截图 + outerHTML + 元数据。

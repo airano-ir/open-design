@@ -204,4 +204,19 @@ describe('LibrarySection lazy-mount contract', () => {
       expect(srcs).toContain('/raw/ds-1');
     });
   });
+
+  it('holds the in-view thumbnail behind a loading skeleton until its bytes land', async () => {
+    lazyInView = true;
+    render(<LibrarySection active onOpenProject={() => {}} />);
+    await screen.findByText('A photo');
+    // The shimmer-until-loaded contract (mirrors the clipper image picker): the
+    // <img> mounts hidden (`data-loaded="false"`) so the skeleton — not a
+    // half-painted image — is what shows while the bytes are in flight. jsdom
+    // never fires `load`, so the thumbnail stays in the loading state here.
+    await waitFor(() => {
+      const img = document.querySelector('img');
+      expect(img).not.toBeNull();
+      expect(img?.getAttribute('data-loaded')).toBe('false');
+    });
+  });
 });

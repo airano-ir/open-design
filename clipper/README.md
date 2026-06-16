@@ -42,7 +42,7 @@ nothing to misconfigure.
 
 - **Popup** → *Capture page → Library* (a self-contained, high-fidelity HTML
   snapshot — readable stylesheets inlined, images inlined as data URIs, scripts
-  stripped), *提取设计系统* (a programmatic brand/design-system HTML capture saved
+  stripped), *Extract brand kit* (a programmatic brand-kit HTML capture saved
   as a `design-system` Library asset), *Download Figma (.json)* (a structured
   Figma import JSON for the OD Figma plugin — see `../figma-plugin/`), *Pick
   element → capture*, *Pick images*, or *Capture screenshot* (visible tab).
@@ -53,7 +53,7 @@ nothing to misconfigure.
 - **Pick images** → an on-page overlay grid of every image on the page with
   checkboxes, *Select all* / *Clear*, and *Save N to Library* — so you choose
   exactly which images to save instead of grabbing them all.
-- **On-page toolbar** → an optional floating page / design-system / Figma JSON /
+- **On-page toolbar** → an optional floating page / brand-kit / Figma JSON /
   screenshot / image / element launcher
   anchored **top-center** of the page (Figma-style), with a gap from the edge so
   it reads as a deliberate surface. It's **hidden by default**; turn it on with
@@ -65,10 +65,10 @@ nothing to misconfigure.
   snapshot.
 - **Right-click an image** → *Save image to Open Design Library*.
 
-### Page → design system
+### Page → brand kit
 
-*提取设计系统* is intentionally separate from full-page capture. It reads the live
-page with JavaScript and fills a stable design-system HTML template with:
+*Extract brand kit* is intentionally separate from full-page capture. It reads
+the live page with JavaScript and fills a stable brand-kit HTML template with:
 
 - logo/app-icon candidates and representative images;
 - computed typography, font-family usage, and readable `@font-face` rules;
@@ -78,8 +78,8 @@ page with JavaScript and fills a stable design-system HTML template with:
   from the extracted tokens.
 
 The result is saved to the Library as `kind: "design-system"` with `text/html`
-bytes, so it previews like an HTML asset but filters as a design-system asset in
-the Library and *Select from library* picker.
+bytes, so it previews like an HTML asset but filters as a brand-kit asset in the
+Library and *Select from library* picker.
 
 ### Page → Figma JSON
 

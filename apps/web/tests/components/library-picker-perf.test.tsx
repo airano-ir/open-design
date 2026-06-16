@@ -111,4 +111,19 @@ describe('LibraryPicker lazy thumbnails', () => {
       expect(img?.getAttribute('decoding')).toBe('async');
     });
   });
+
+  it('shimmers until the in-view <img> finishes loading', async () => {
+    lazyInView = true;
+    render(<LibraryPicker onClose={() => {}} onConfirm={() => {}} />);
+    await screen.findByText('Solo');
+    // Same shimmer-until-loaded contract as the Library grid and the clipper
+    // image picker: the <img> mounts hidden (`data-loaded="false"`) behind a
+    // skeleton until its bytes decode. jsdom never fires `load`, so it stays
+    // loading here.
+    await waitFor(() => {
+      const img = document.querySelector('img');
+      expect(img).not.toBeNull();
+      expect(img?.getAttribute('data-loaded')).toBe('false');
+    });
+  });
 });
