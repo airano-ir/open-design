@@ -69,7 +69,9 @@ import { loadWorkspaceLocalEnv } from "./local-env.js";
 import { resolveSharedPortsFromRunningState } from "./shared-ports.js";
 
 type CliOptions = ToolDevOptions & {
+  envFile?: string | string[];
   expr?: string;
+  noEnvFile?: boolean;
   parentPid?: number;
   path?: string;
   selector?: string;
@@ -90,8 +92,6 @@ function exitWithError(error: unknown): never {
 
 process.on("uncaughtException", exitWithError);
 process.on("unhandledRejection", exitWithError);
-
-loadWorkspaceLocalEnv({ workspaceRoot: WORKSPACE_ROOT });
 
 function printJson(payload: unknown): void {
   process.stdout.write(`${JSON.stringify(payload, null, 2)}\n`);
@@ -1073,11 +1073,26 @@ async function runForeground(config: ToolDevConfig, appName: string | undefined,
 }
 
 const cli = cac("tools-dev");
+const CLI_COMMANDS = new Set(["start", "run", "status", "stop", "restart", "logs", "inspect", "check", "help"]);
+const OPTIONS_WITH_VALUE = new Set([
+  "--daemon-port",
+  "--env-file",
+  "--expr",
+  "--namespace",
+  "--path",
+  "--selector",
+  "--timeout",
+  "--tools-dev-root",
+  "--update-action",
+  "--web-port",
+]);
 
 function addSharedOptions(command: ReturnType<typeof cli.command>) {
   return command
     .option("--namespace <name>", "runtime namespace (default: default)")
     .option("--tools-dev-root <path>", "tools-dev runtime root")
+    .option("--env-file <path>", "load env file before resolving tools-dev config; repeatable")
+    .option("--no-env-file", "skip automatic .env file loading")
     .option("--json", "print JSON");
 }
 
@@ -1172,10 +1187,32 @@ cli.help();
 
 const rawCliArgs = process.argv.slice(2);
 const cliArgs = rawCliArgs[0] === "--" ? rawCliArgs.slice(1) : rawCliArgs;
+loadWorkspaceLocalEnv({
+  args: cliArgs,
+  log: (message) => process.stderr.write(`${message}\n`),
+  workspaceRoot: WORKSPACE_ROOT,
+});
 process.argv.splice(2, process.argv.length - 2, ...cliArgs);
 
-if (cliArgs.length === 0 || (cliArgs[0]?.startsWith("-") && cliArgs[0] !== "--help" && cliArgs[0] !== "-h")) {
-  process.argv.splice(2, 0, "start");
+function firstPositionalArgIndex(args: readonly string[]): number {
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === "--") return index + 1 < args.length ? index + 1 : -1;
+    if (arg.startsWith("--") && arg.includes("=")) continue;
+    if (OPTIONS_WITH_VALUE.has(arg)) {
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith("-")) continue;
+    return index;
+  }
+  return -1;
+}
+
+const firstPositionalIndex = firstPositionalArgIndex(cliArgs);
+const firstPositional = firstPositionalIndex >= 0 ? cliArgs[firstPositionalIndex] : undefined;
+if (firstPositional !== "--help" && firstPositional !== "-h" && !CLI_COMMANDS.has(firstPositional ?? "")) {
+  process.argv.splice(firstPositionalIndex >= 0 ? 2 + firstPositionalIndex : 2, 0, "start");
 }
 
 cli.parse();
