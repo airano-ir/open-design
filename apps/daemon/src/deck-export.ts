@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { PDFDocument } from 'pdf-lib';
@@ -16,6 +17,9 @@ export interface BuildDeckRenderInputOptions {
   daemonUrl: string;
   fileName: string;
   index?: number;
+  // Directory the desktop renderer writes the rendered images into (returned as
+  // file paths) instead of base64 data URLs — keeps large images off the IPC.
+  outputDir?: string;
   pageImageFormat?: 'png' | 'jpeg';
   projectId: string;
   projectsRoot: string;
@@ -48,6 +52,7 @@ export async function buildDeckRenderInput(
       baseHref: rawBaseHref(options.daemonUrl, options.projectId, options.fileName),
       html: file.buffer.toString('utf8'),
       ...(options.index == null ? {} : { index: options.index }),
+      ...(options.outputDir == null ? {} : { outputDir: options.outputDir }),
       ...(options.pageImageFormat == null ? {} : { pageImageFormat: options.pageImageFormat }),
       ...(options.scale == null ? {} : { scale: options.scale }),
       ...(options.stitch == null ? {} : { stitch: options.stitch }),
@@ -66,6 +71,24 @@ export interface SlideImage {
  * is not a base64 PNG/JPEG data URL so a malformed renderer response surfaces as
  * an export failure rather than a corrupt file.
  */
+/**
+ * Reads the image files the desktop renderer wrote (the `outputDir` handoff)
+ * into raw buffers tagged with their format (by extension). The companion to
+ * {@link decodeSlideDataUrls} for the file-path path, which avoids shuttling
+ * base64 image bytes through the JSON IPC channel for large images.
+ */
+export async function readSlideFiles(paths: string[]): Promise<SlideImage[]> {
+  return Promise.all(
+    paths.map(async (filePath, index) => {
+      if (typeof filePath !== 'string' || filePath.length === 0) {
+        throw new Error(`slide ${index + 1} has no file path`);
+      }
+      const buffer = await readFile(filePath);
+      return { buffer, jpeg: /\.jpe?g$/i.test(filePath) };
+    }),
+  );
+}
+
 export function decodeSlideDataUrls(urls: string[]): SlideImage[] {
   return urls.map((url, index) => {
     const match = /^data:image\/(png|jpeg);base64,([A-Za-z0-9+/=]+)$/.exec(url ?? '');

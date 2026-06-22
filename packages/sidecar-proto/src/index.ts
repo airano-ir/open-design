@@ -260,16 +260,27 @@ export type DesktopRenderSlidesInput = {
   // Deck only: render every slide and stitch them top-to-bottom into a single
   // tall image (used by image export of a deck). Ignored for ordinary pages.
   stitch?: boolean;
+  // When set, the renderer writes each rendered image to a file inside this
+  // directory and returns the file paths in `slideFiles` instead of base64
+  // data URLs in `slides`. The daemon (which owns the data root) creates and
+  // owns this directory and reads/deletes the files afterwards — this avoids
+  // pushing tens of MB of base64 through the JSON IPC channel for large images.
+  // desktop only writes to the absolute path it is given; it never derives it.
+  outputDir?: string;
 };
 
 // `mode` reports what the renderer found: `deck` = one PNG per 1920x1080 slide;
 // `page` = a single full-document PNG at natural size (the artifact has no
 // `.slide` sections, e.g. an ordinary website).
+// When the request set `outputDir`, the images are returned as absolute file
+// paths in `slideFiles` (binary on disk, no base64); otherwise as base64 data
+// URLs in `slides`.
 export type DesktopRenderSlidesResult = {
   error?: string;
   height?: number;
   mode?: "deck" | "page";
   ok: boolean;
+  slideFiles?: string[];
   slides?: string[];
   width?: number;
 };
@@ -676,7 +687,7 @@ function normalizeDesktopExportPdfInput(input: unknown): DesktopExportPdfInput {
 
 function normalizeDesktopRenderSlidesInput(input: unknown): DesktopRenderSlidesInput {
   const value = assertObject(input, "desktop render slides input");
-  assertKnownKeys(value, ["baseHref", "html", "index", "pageImageFormat", "scale", "stitch"], "desktop render slides input");
+  assertKnownKeys(value, ["baseHref", "html", "index", "outputDir", "pageImageFormat", "scale", "stitch"], "desktop render slides input");
   if (value.scale != null && (typeof value.scale !== "number" || !Number.isFinite(value.scale) || value.scale <= 0)) {
     throw new Error("desktop render slides scale must be a positive number");
   }
@@ -693,6 +704,7 @@ function normalizeDesktopRenderSlidesInput(input: unknown): DesktopRenderSlidesI
     ...(value.baseHref == null ? {} : { baseHref: normalizeNonEmptyString(value.baseHref, "desktop render slides baseHref") }),
     html: normalizeNonEmptyString(value.html, "desktop render slides html"),
     ...(value.index == null ? {} : { index: value.index }),
+    ...(value.outputDir == null ? {} : { outputDir: normalizeNonEmptyString(value.outputDir, "desktop render slides outputDir") }),
     ...(value.pageImageFormat == null ? {} : { pageImageFormat: value.pageImageFormat }),
     ...(value.scale == null ? {} : { scale: value.scale }),
     ...(value.stitch == null ? {} : { stitch: value.stitch }),

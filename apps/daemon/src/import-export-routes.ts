@@ -13,6 +13,7 @@ import {
   buildScreenshotPdf,
   buildScreenshotPptx,
   decodeSlideDataUrls,
+  readSlideFiles,
   type BuildDeckRenderInputOptions,
 } from './deck-export.js';
 import { authorizeReasoningEgress, sendReasoningEgressDenial } from './reasoning-egress.js';
@@ -396,12 +397,14 @@ export function registerImportRoutes(app: Express, ctx: RegisterImportRoutesDeps
 
 }
 
-export interface RegisterProjectExportRoutesDeps extends RouteDeps<'db' | 'http' | 'paths' | 'projectStore' | 'exports' | 'projectFiles' | 'validation'> {}
+export interface RegisterProjectExportRoutesDeps extends RouteDeps<'db' | 'http' | 'paths' | 'node' | 'ids' | 'projectStore' | 'exports' | 'projectFiles' | 'validation'> {}
 
 export function registerProjectExportRoutes(app: Express, ctx: RegisterProjectExportRoutesDeps) {
   const { db } = ctx;
   const { sendApiError } = ctx.http;
-  const { PROJECTS_DIR } = ctx.paths;
+  const { PROJECTS_DIR, RUNTIME_DATA_DIR_CANONICAL } = ctx.paths;
+  const { fs, path } = ctx.node;
+  const { randomId } = ctx.ids;
   const { getProject } = ctx.projectStore;
   const { listFiles, readProjectFile, resolveProjectFilePath } = ctx.projectFiles;
   const { isSafeId } = ctx.validation;
@@ -434,6 +437,11 @@ export function registerProjectExportRoutes(app: Express, ctx: RegisterProjectEx
         'screenshot export is only available in the desktop runtime',
       );
     }
+    // Scratch dir under the daemon data root: the desktop renderer writes the
+    // rendered images here and returns their file paths, so large images never
+    // cross the JSON IPC channel as base64. The daemon owns it and deletes it in
+    // the finally below. Derived from RUNTIME_DATA_DIR per the data-dir contract.
+    const renderOutputDir = path.join(RUNTIME_DATA_DIR_CANONICAL, 'export-render', randomId());
     try {
       const { fileName, title, scale, index } = body || {};
       if (typeof fileName !== 'string' || fileName.length === 0) {
@@ -442,6 +450,7 @@ export function registerProjectExportRoutes(app: Express, ctx: RegisterProjectEx
       const renderOptions: BuildDeckRenderInputOptions = {
         daemonUrl: daemonUrlRef.current,
         fileName,
+        outputDir: renderOutputDir,
         projectId,
         projectsRoot: PROJECTS_DIR,
       };
@@ -463,7 +472,9 @@ export function registerProjectExportRoutes(app: Express, ctx: RegisterProjectEx
       const { input, title: resolvedTitle, defaultFilename } =
         await buildDeckRenderInput(renderOptions);
       const rendered = await desktopSlideRenderer(input);
-      if (!rendered.ok || !Array.isArray(rendered.slides) || rendered.slides.length === 0) {
+      const hasFiles = Array.isArray(rendered.slideFiles) && rendered.slideFiles.length > 0;
+      const hasDataUrls = Array.isArray(rendered.slides) && rendered.slides.length > 0;
+      if (!rendered.ok || (!hasFiles && !hasDataUrls)) {
         return sendApiError(
           res,
           502,
@@ -481,7 +492,11 @@ export function registerProjectExportRoutes(app: Express, ctx: RegisterProjectEx
           'this artifact is not a slide deck — export it as PDF or an image instead',
         );
       }
-      const images = decodeSlideDataUrls(rendered.slides);
+      // Prefer the on-disk file handoff; fall back to base64 data URLs for older
+      // desktop builds that don't honor outputDir.
+      const images = hasFiles
+        ? await readSlideFiles(rendered.slideFiles as string[])
+        : decodeSlideDataUrls(rendered.slides as string[]);
       let buffer: Buffer;
       let contentType: string;
       let ext: string;
@@ -517,6 +532,10 @@ export function registerProjectExportRoutes(app: Express, ctx: RegisterProjectEx
         status === 404 ? 'FILE_NOT_FOUND' : 'BAD_REQUEST',
         String(err?.message || err),
       );
+    } finally {
+      // Remove the scratch render dir regardless of success — these files are
+      // pure transient handoff, never served or persisted.
+      await fs.promises.rm(renderOutputDir, { recursive: true, force: true }).catch(() => {});
     }
   }
   // Streams a ZIP of the project's on-disk tree so the "Download as .zip"

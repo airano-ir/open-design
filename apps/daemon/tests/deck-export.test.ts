@@ -1,9 +1,14 @@
-import { describe, expect, it } from 'vitest';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
   buildScreenshotPdf,
   buildScreenshotPptx,
   decodeSlideDataUrls,
+  readSlideFiles,
 } from '../src/deck-export.js';
 
 // 1x1 transparent PNG.
@@ -37,6 +42,42 @@ describe('decodeSlideDataUrls', () => {
 
   it('rejects a value that is not a data URL', () => {
     expect(() => decodeSlideDataUrls(['not-a-data-url'])).toThrow();
+  });
+});
+
+describe('readSlideFiles', () => {
+  let dir = '';
+  beforeAll(async () => {
+    dir = mkdtempSync(path.join(tmpdir(), 'od-slide-files-'));
+    await writeFile(path.join(dir, 'slide-0.png'), Buffer.from(PNG_BASE64, 'base64'));
+    await writeFile(
+      path.join(dir, 'slide-1.jpeg'),
+      Buffer.from(JPEG_DATA_URL.split(',')[1]!, 'base64'),
+    );
+  });
+  afterAll(() => {
+    if (dir) rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('reads files into tagged buffers (jpeg flag from extension)', async () => {
+    const [png, jpeg] = await readSlideFiles([
+      path.join(dir, 'slide-0.png'),
+      path.join(dir, 'slide-1.jpeg'),
+    ]);
+    expect(png!.jpeg).toBe(false);
+    expect(png!.buffer.subarray(0, 4).toString('hex')).toBe('89504e47');
+    expect(jpeg!.jpeg).toBe(true);
+    expect(jpeg!.buffer.subarray(0, 2).toString('hex')).toBe('ffd8');
+  });
+
+  it('throws when a path is empty', async () => {
+    await expect(readSlideFiles([''])).rejects.toThrow();
+  });
+
+  it('throws when a file does not exist', async () => {
+    await expect(readSlideFiles([path.join(dir, 'missing.png')])).rejects.toMatchObject({
+      code: 'ENOENT',
+    });
   });
 });
 

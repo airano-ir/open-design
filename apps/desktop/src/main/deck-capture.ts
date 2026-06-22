@@ -1,7 +1,37 @@
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
+
 import { BrowserWindow, nativeImage } from "electron";
 import type { DesktopRenderSlidesInput, DesktopRenderSlidesResult } from "@open-design/sidecar-proto";
 
 import { waitForPrintableContent } from "./pdf-export.js";
+
+// Returns the rendered images either as on-disk files (when the daemon provided
+// an `outputDir`) or as base64 data URLs (legacy/fallback). Writing files keeps
+// tens of MB of image bytes off the JSON IPC channel — the daemon, which owns
+// and created the directory, reads the files back and deletes them. desktop only
+// ever writes to the absolute path the daemon handed it.
+async function emitImages(
+  images: Array<{ buffer: Buffer; jpeg: boolean }>,
+  outputDir: string | undefined,
+): Promise<Pick<DesktopRenderSlidesResult, "slideFiles" | "slides">> {
+  if (outputDir) {
+    await mkdir(outputDir, { recursive: true });
+    const slideFiles: string[] = [];
+    for (let i = 0; i < images.length; i++) {
+      const img = images[i]!;
+      const file = path.join(outputDir, `slide-${i}.${img.jpeg ? "jpeg" : "png"}`);
+      await writeFile(file, img.buffer);
+      slideFiles.push(file);
+    }
+    return { slideFiles };
+  }
+  return {
+    slides: images.map(
+      (img) => `data:image/${img.jpeg ? "jpeg" : "png"};base64,${img.buffer.toString("base64")}`,
+    ),
+  };
+}
 
 // Deck slides are authored at 1920x1080 (16:9). We render at that logical size
 // and let Electron's capturePage emit the display's native pixel scale (2x on
@@ -77,7 +107,7 @@ export async function renderDeckSlides(
     // deck. Capture the whole document at its natural size instead of forcing a
     // 1920x1080 slide. This is what image export of a non-deck artifact wants.
     if (!Number.isInteger(count) || count < 1) {
-      return await capturePage(window, input.pageImageFormat === "jpeg");
+      return await capturePage(window, input.pageImageFormat === "jpeg", input.outputDir);
     }
 
     // Deck: pin the 1920x1080 stage.
@@ -86,13 +116,14 @@ export async function renderDeckSlides(
     // Image export of a deck wants every slide stitched top-to-bottom into one
     // tall image (the "whole deck as one picture").
     if (input.stitch) {
-      return await stitchDeckSlides(window, count, input.pageImageFormat === "jpeg");
+      return await stitchDeckSlides(window, count, input.pageImageFormat === "jpeg", input.outputDir);
     }
 
     // Otherwise render every slide (or just the one requested by image export).
     const indices =
       input.index != null && input.index >= 0 && input.index < count ? [input.index] : range(count);
-    const slides: string[] = [];
+    const jpeg = input.pageImageFormat === "jpeg";
+    const images: Array<{ buffer: Buffer; jpeg: boolean }> = [];
     let width = SLIDE_W;
     let height = SLIDE_H;
     for (const i of indices) {
@@ -103,9 +134,9 @@ export async function renderDeckSlides(
       const size = image.getSize();
       width = size.width;
       height = size.height;
-      slides.push(image.toDataURL());
+      images.push({ buffer: jpeg ? image.toJPEG(82) : image.toPNG(), jpeg });
     }
-    return { ok: true, slides, width, height, mode: "deck" };
+    return { ok: true, ...(await emitImages(images, input.outputDir)), width, height, mode: "deck" };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : String(error) };
   } finally {
@@ -134,6 +165,7 @@ async function stitchDeckSlides(
   window: BrowserWindow,
   count: number,
   jpeg: boolean,
+  outputDir: string | undefined,
 ): Promise<DesktopRenderSlidesResult> {
   let W = 0;
   let slideHpx = 0;
@@ -158,10 +190,9 @@ async function stitchDeckSlides(
   const H = slideHpx * placed;
   const img = nativeImage.createFromBitmap(bgra ?? Buffer.alloc(4), { width: W || 1, height: H || 1 });
   const bytes = jpeg ? img.toJPEG(82) : img.toPNG();
-  const mime = jpeg ? "image/jpeg" : "image/png";
   return {
     ok: true,
-    slides: [`data:${mime};base64,${bytes.toString("base64")}`],
+    ...(await emitImages([{ buffer: bytes, jpeg }], outputDir)),
     width: W,
     height: H,
     mode: "deck",
@@ -190,7 +221,11 @@ const FALLBACK_MAX_TEXTURE = 8192;
  *     or comes back blank below the fold (scroll-driven pages). RAM-bound, so it
  *     handles arbitrarily long pages; capped by a memory budget.
  */
-async function capturePage(window: BrowserWindow, jpeg: boolean): Promise<DesktopRenderSlidesResult> {
+async function capturePage(
+  window: BrowserWindow,
+  jpeg: boolean,
+  outputDir: string | undefined,
+): Promise<DesktopRenderSlidesResult> {
   // Lay the document out at a desktop width first so width-dependent content
   // (responsive layouts) renders the way a desktop visitor sees it.
   window.setContentSize(PAGE_W, PAGE_VIEW_H);
@@ -246,10 +281,9 @@ async function capturePage(window: BrowserWindow, jpeg: boolean): Promise<Deskto
           clip: { x: 0, y: 0, width: docW, height: docH, scale: 1 },
           ...(jpeg ? { format: "jpeg", quality: 82 } : { format: "png" }),
         })) as { data: string };
-        const mime = jpeg ? "image/jpeg" : "image/png";
         return {
           ok: true,
-          slides: [`data:${mime};base64,${shot.data}`],
+          ...(await emitImages([{ buffer: Buffer.from(shot.data, "base64"), jpeg }], outputDir)),
           width: outWpx,
           height: outHpx,
           mode: "page",
@@ -257,7 +291,7 @@ async function capturePage(window: BrowserWindow, jpeg: boolean): Promise<Deskto
       }
       // Otherwise fall through to scroll-segment (too tall, or blank below fold).
       const cappedLogicalH = Math.min(docH, Math.floor(ramMaxOutH / dpr));
-      return await scrollSegmentStitch(window, cappedLogicalH, jpeg);
+      return await scrollSegmentStitch(window, cappedLogicalH, jpeg, outputDir);
     }
   } catch {
     // CDP path failed — fall through to scroll-segment.
@@ -280,7 +314,7 @@ async function capturePage(window: BrowserWindow, jpeg: boolean): Promise<Deskto
     PAGE_VIEW_H,
     Math.min(Number.isFinite(measured) ? measured : PAGE_VIEW_H, Math.floor(ramMaxOutH / dpr)),
   );
-  return await scrollSegmentStitch(window, totalLogical, jpeg);
+  return await scrollSegmentStitch(window, totalLogical, jpeg, outputDir);
 }
 
 // Freezes animations/transitions and scroll-prewarms the page so reveal-on-
@@ -391,6 +425,7 @@ async function scrollSegmentStitch(
   window: BrowserWindow,
   totalLogical: number,
   jpeg: boolean,
+  outputDir: string | undefined,
 ): Promise<DesktopRenderSlidesResult> {
   window.setContentSize(PAGE_W, PAGE_VIEW_H);
   await nextFrames(window);
@@ -436,10 +471,9 @@ async function scrollSegmentStitch(
 
   const img = nativeImage.createFromBitmap(bgra ?? Buffer.alloc(4), { width: W || 1, height: H || 1 });
   const bytes = jpeg ? img.toJPEG(82) : img.toPNG();
-  const mime = jpeg ? "image/jpeg" : "image/png";
   return {
     ok: true,
-    slides: [`data:${mime};base64,${bytes.toString("base64")}`],
+    ...(await emitImages([{ buffer: bytes, jpeg }], outputDir)),
     width: W,
     height: H,
     mode: "page",

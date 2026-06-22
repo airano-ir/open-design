@@ -5978,6 +5978,8 @@ export async function startServer({
     db,
     http: httpDeps,
     paths: pathDeps,
+    node: nodeDeps,
+    ids: idDeps,
     projectStore: projectStoreDeps,
     exports: projectExportDeps,
     projectFiles: projectFileDeps,
