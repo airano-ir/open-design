@@ -186,6 +186,7 @@ function isAgentProtocolErrorText(text: string): boolean {
   return /\bjson-rpc id \d+: Internal error\b/i.test(text) ||
     /\bACP session exited before completion\b/i.test(text) ||
     /\bQoder run failed: (?:stop_sequence|end_turn)\b/i.test(text) ||
+    /\bthread\/start failed\b/i.test(text) ||
     /\bfailed to parse request\b/i.test(text);
 }
 
@@ -199,12 +200,14 @@ function isPermissionRequestNotFoundText(text: string): boolean {
 }
 
 function isAuthDetailText(text: string): boolean {
-  return /\b(refresh token|access token could not be refreshed|stale local profile|different or stale local profile|credentials from a different local environment|missing environment variable: `?[A-Z0-9_]*API_KEY`?|api key.*(?:missing|invalid)|invalid api key|credentials? (?:are )?missing|not logged in|Authentication required)\b/i
+  return /\b(refresh token|access token could not be refreshed|stale local profile|different or stale local profile|credentials from a different local environment|missing environment variable: `?[A-Z0-9_]*API_KEY`?|api key.*(?:missing|invalid)|invalid api key|credentials? (?:are )?missing|not logged in|Authentication required|carry the api (?:secret )?key)\b/i
     .test(text);
 }
 
 function isPromptTooLargeText(text: string): boolean {
-  return /\b(context window|prompt too large|maximum context|too many tokens|input.*too large|exceeds the safe size|composed prompt exceeds|prompt token count .* exceeds|maximum context length|reduce the length of (?:the )?(?:messages|input prompt))\b/i
+  // `prefill context too large` is the local-runtime (MLX) shape of the same
+  // "the prompt does not fit" failure that currently leaks into execution_failed.
+  return /\b(context window|prompt too large|maximum context|too many tokens|input.*too large|exceeds the safe size|composed prompt exceeds|prompt token count .* exceeds|maximum context length|context too large|prefill context too large|reduce the length of (?:the )?(?:messages|input prompt))\b/i
     .test(text);
 }
 

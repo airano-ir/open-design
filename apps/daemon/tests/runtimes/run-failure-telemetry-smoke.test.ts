@@ -215,6 +215,21 @@ describe('run failure telemetry smoke', () => {
       'env-spawn-enoent',
       'Error: spawn /opt/homebrew/lib/node_modules/@openai/codex/codex ENOENT',
     );
+    await writeFakeClaude(
+      binDir,
+      'a-prefill',
+      'MLX prefill memory guard rejected this prompt: Prefill context too large for available memory',
+    );
+    await writeFakeClaude(
+      binDir,
+      'a-thread-start',
+      'Reading prompt from stdin... Error: thread/start: thread/start failed: failed to start session',
+    );
+    await writeFakeClaude(
+      binDir,
+      'a-auth',
+      "login fail: Please carry the API secret key in the 'Authorization' field of the request header (1004)",
+    );
 
     process.env.OD_CHAT_RUN_INACTIVITY_TIMEOUT_MS = '5000';
     delete process.env.POSTHOG_KEY;
@@ -230,6 +245,9 @@ describe('run failure telemetry smoke', () => {
       { bin: 'amr-model', category: 'model_unavailable', detail: 'model_not_found' },
       { bin: 'env-node-path', category: 'process_exit', detail: 'cli_not_installed' },
       { bin: 'env-spawn-enoent', category: 'process_exit', detail: 'cli_not_installed' },
+      { bin: 'a-prefill', category: 'prompt_too_large', detail: 'prompt_too_large' },
+      { bin: 'a-thread-start', category: 'process_exit', detail: 'agent_protocol_error' },
+      { bin: 'a-auth', category: 'auth', detail: 'auth_required' },
     ] as const;
 
     for (const item of cases) {

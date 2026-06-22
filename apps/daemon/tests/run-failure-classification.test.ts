@@ -987,3 +987,33 @@ describe('classifyRunFailure — binary-not-found reclassification out of execut
     expect(result?.failure_detail).toBe('cli_not_installed');
   });
 });
+
+// Batch A: more named causes that currently leak into execution_failed, routed
+// to existing categories. Real production texts sampled from Langfuse (#3408 P1).
+describe('classifyRunFailure — batch A reclassification out of execution_failed', () => {
+  it('classifies a local-runtime "Prefill context too large" as prompt_too_large', () => {
+    const result = classify(
+      'AGENT_EXECUTION_FAILED',
+      'MLX prefill memory guard rejected this prompt: Prefill context too large for available memory (preflight safety margin)',
+    );
+    expect(result?.failure_category).toBe('prompt_too_large');
+    expect(result?.failure_detail).toBe('prompt_too_large');
+  });
+
+  it('classifies an ACP "thread/start failed" as agent_protocol_error', () => {
+    const result = classify(
+      'AGENT_EXECUTION_FAILED',
+      'Reading prompt from stdin... Error: thread/start: thread/start failed: failed to start session',
+    );
+    expect(result?.failure_category).toBe('process_exit');
+    expect(result?.failure_detail).toBe('agent_protocol_error');
+  });
+
+  it('classifies a vela "login fail: carry the API secret key" as an auth failure', () => {
+    const result = classify(
+      'AGENT_EXECUTION_FAILED',
+      "login fail: Please carry the API secret key in the 'Authorization' field of the request header (1004)",
+    );
+    expect(result?.failure_category).toBe('auth');
+  });
+});
