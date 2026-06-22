@@ -1315,6 +1315,9 @@ function expectWindowsUpdaterSmokeContract(workflow: string, channel: "beta" | "
   if (channel === "stable") {
     expect(workflow).toContain("Build stable win_x64 update fixture");
     expect(workflow).toContain('full Windows stable smoke requires stable version x.y.z');
+    expect(workflow).toContain('pnpm.cmd exec tools-pack win cleanup --dir $toolsPackDir --namespace "${{ needs.metadata.outputs.win_namespace }}" --json');
+    expect(workflow).toContain("--cache-dir $cacheDir `");
+    expect(workflow).toContain('pnpm.cmd exec tools-pack win validate-payload --namespace "${{ needs.metadata.outputs.win_namespace }}" --payload-path $build.payloadPath --expected-version "${{ needs.metadata.outputs.release_version }}" --json');
   } else {
     expect(workflow).toContain(`Build ${channel} win_x64 update fixture`);
     expect(workflow).toContain(`full Windows smoke requires a counted ${channel} version`);

@@ -732,6 +732,7 @@ jobs:
           $toolsPackDir = "${{ runner.temp }}/tools-pack"
           $cacheDir = "${{ runner.temp }}/tools-pack-cache"
           $buildJsonPath = Join-Path $env:RUNNER_TEMP "windows-tools-pack-build.json"
+          pnpm.cmd exec tools-pack win cleanup --dir $toolsPackDir --namespace "${{ needs.metadata.outputs.win_namespace }}" --json
           $buildArgs = @(
             "exec", "tools-pack", "win", "build",
             "--dir", $toolsPackDir,
@@ -753,8 +754,10 @@ jobs:
             Write-Warning "Windows tools-pack cached build failed; removing restored cache and retrying without cache."
             "cache_failed=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
             Remove-Item -Recurse -Force -ErrorAction SilentlyContinue $cacheDir
+            pnpm.cmd exec tools-pack win cleanup --dir $toolsPackDir --namespace "${{ needs.metadata.outputs.win_namespace }}" --json
             $buildOutput = pnpm exec tools-pack win build `
               --dir $toolsPackDir `
+              --cache-dir $cacheDir `
               --namespace "${{ needs.metadata.outputs.win_namespace }}" `
               --portable `
               --app-version "${{ needs.metadata.outputs.release_version }}" `
@@ -766,6 +769,8 @@ jobs:
             }
           }
           $buildOutput | Set-Content -Path $buildJsonPath
+          $build = $buildOutput | ConvertFrom-Json
+          pnpm.cmd exec tools-pack win validate-payload --namespace "${{ needs.metadata.outputs.win_namespace }}" --payload-path $build.payloadPath --expected-version "${{ needs.metadata.outputs.release_version }}" --json
           $buildOutput
 
       - name: Delete failed Windows tools-pack cache
