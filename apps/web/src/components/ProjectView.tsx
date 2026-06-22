@@ -7164,9 +7164,14 @@ function buildSeedOverlayForNewConversation(
   const isTrimmedPersistedPrefix =
     visibleMessages.length < persistedMessages.length
     && visibleMessages.every((message, index) => persistedMessages[index]?.id === message.id);
+  const persistedRetainedPrefixLength = visibleMessages.findLastIndex(
+    (message, index) => persistedMessages[index]?.id === message.id,
+  ) + 1;
   const seedTrimAfterMessageId =
     isTrimmedVisiblePrefix || isTrimmedPersistedPrefix
-      ? (visibleMessages.at(-1)?.id ?? null)
+      ? (persistedRetainedPrefixLength > 0
+          ? persistedMessages[persistedRetainedPrefixLength - 1]?.id ?? null
+          : null)
       : null;
   const seedMessageOverrides = visibleMessages.flatMap((message) => {
     const compact = compactSeedMessageOverride(message);

@@ -921,6 +921,99 @@ describe('ProjectView conversation run isolation', () => {
     );
   });
 
+  it('uses the last persisted retained id when trimmed messages still include visible-only rows', async () => {
+    const persistedUser: ChatMessage = {
+      id: 'user-persisted',
+      role: 'user',
+      content: 'Keep the editorial grid and muted palette.',
+      createdAt: 1,
+    };
+    const persistedAssistant: ChatMessage = {
+      ...succeededAssistant,
+      id: 'assistant-persisted',
+      content: 'Persisted baseline draft',
+      createdAt: 2,
+    };
+    const deferredSaves: Array<{ resolve: (value: boolean) => void }> = [];
+    conversationAMessages = [persistedUser, persistedAssistant];
+    saveMessage.mockImplementation(
+      () =>
+        new Promise<boolean>((resolve) => {
+          deferredSaves.push({ resolve });
+        }),
+    );
+    let sendCount = 0;
+    streamViaDaemon.mockImplementation(async (input: unknown) => {
+      sendCount += 1;
+      const options = input as {
+        handlers: {
+          onDelta?: (delta: string) => void;
+          onDone?: (fullText?: string) => void;
+          onError: (error: Error) => void;
+        };
+        onRunCreated?: (runId: string) => void;
+        onRunStatus?: (status: NonNullable<ChatMessage['runStatus']>) => void;
+      };
+      options.onRunCreated?.(`run-${sendCount}`);
+      if (sendCount === 1) {
+        options.onRunStatus?.('running');
+        options.handlers.onDelta?.('Visible-only successful draft');
+        options.handlers.onDone?.();
+        return;
+      }
+      const error = new Error('daemon stream disconnected before run completed') as Error & {
+        resumable?: boolean;
+      };
+      error.resumable = true;
+      options.handlers.onError(error);
+    });
+
+    renderProjectView();
+
+    await waitFor(() => expect(screen.getByTestId('active-conversation').textContent).toBe('conv-a'));
+    await waitFor(() => expect(screen.getByTestId('send-message')).toHaveProperty('disabled', false));
+
+    fireEvent.click(screen.getByTestId('send-message'));
+
+    await waitFor(() => expect(streamViaDaemon).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(screen.getByTestId('assistant-summary').textContent).toContain('Visible-only successful draft'),
+    );
+
+    fireEvent.click(screen.getByTestId('send-message-alt'));
+
+    await waitFor(() => expect(streamViaDaemon).toHaveBeenCalledTimes(2));
+    await waitFor(() => {
+      const summary = screen.getByTestId('assistant-summary').textContent ?? '';
+      expect(summary).toContain('Visible-only successful draft');
+      expect(summary).toContain('|failed|');
+    });
+
+    fireEvent.click(screen.getByTestId('new-conversation'));
+
+    await waitFor(() => expect(createConversation).toHaveBeenCalledTimes(1));
+    expect(createConversation).toHaveBeenCalledWith(
+      'project-1',
+      undefined,
+      {
+        seedFromConversationId: 'conv-a',
+        seedTrimAfterMessageId: persistedAssistant.id,
+        seedMessageOverrides: expect.arrayContaining([
+          expect.objectContaining({
+            role: 'user',
+            content: 'hello from b',
+          }),
+          expect.objectContaining({
+            role: 'assistant',
+            content: 'Visible-only successful draft',
+          }),
+        ]),
+      },
+    );
+
+    deferredSaves.forEach(({ resolve }) => resolve(true));
+  });
+
   it('keeps the new conversation payload compact when the visible messages update', async () => {
     const userMessage: ChatMessage = {
       id: 'user-a',
