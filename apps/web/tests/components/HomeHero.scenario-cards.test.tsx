@@ -9,7 +9,11 @@
 //     route to a working scenario plugin.
 
 import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('../../src/components/home-hero/PlaceholderCarousel', () => ({
+  PlaceholderCarousel: () => null,
+}));
 
 import { HomeHero } from '../../src/components/HomeHero';
 import { findChip, orderedCreateChips } from '../../src/components/home-hero/chips';

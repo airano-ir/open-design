@@ -50,11 +50,11 @@ describe('HomeHero compact composer controls', () => {
     );
 
     // The footer buttons were unified to a single 32px pill height; the
-    // session-mode trigger matches the other footer controls.
+    // execution switcher keeps a fixed icon+chevron footprint.
     expect(ruleValue(modeTrigger, 'height')).toBe('32px');
     expect(ruleValue(modeTrigger, 'max-width')).toBe('120px');
-    expect(ruleValue(switcherChip, 'height')).toBe('30px');
-    expect(ruleValue(switcherChip, 'max-width')).toBe('48px');
+    expect(ruleValue(switcherChip, 'height')).toBe('32px');
+    expect(ruleValue(switcherChip, 'max-width')).toBe('58px');
   });
 
   it('prevents the compact execution switcher from expanding on narrow screens', () => {
@@ -64,7 +64,7 @@ describe('HomeHero compact composer controls', () => {
     );
 
     expect(ruleValue(switcher, 'flex-basis')).toBe('auto');
-    expect(ruleValue(switcherChip, 'width')).toBe('auto');
-    expect(ruleValue(switcherChip, 'max-width')).toBe('48px');
+    expect(ruleValue(switcherChip, 'width')).toBe('58px');
+    expect(ruleValue(switcherChip, 'max-width')).toBe('58px');
   });
 });

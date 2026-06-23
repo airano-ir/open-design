@@ -25,7 +25,7 @@
     "build": "next build",
     "build:sidecar": "tsc -p tsconfig.sidecar.json",
     "typecheck": "tsc -b --noEmit",
-    "test": "vitest run -c vitest.config.ts"
+    "test": "vitest run -c vitest.config.ts --maxWorkers=2"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.32.1",

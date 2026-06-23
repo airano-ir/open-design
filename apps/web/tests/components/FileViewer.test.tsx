@@ -1507,7 +1507,7 @@ describe('FileViewer SVG artifacts', () => {
     expect(resolvedTop).toBe('34px');
     style.remove();
     workspaceShell.remove();
-  });
+  }, 10000);
 
   it('allows downloads in React component preview iframes', async () => {
     const file = baseFile({

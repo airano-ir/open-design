@@ -12,9 +12,14 @@ vi.mock('../../src/providers/registry', async () => {
   );
   return {
     ...actual,
-    // The detail pane fetches the showcase HTML for the selected system; keep
-    // it inert so the tests only exercise the list/scope behaviour.
-    fetchDesignSystemShowcase: vi.fn(async () => null),
+    fetchDesignSystem: vi.fn(async (id: string) => ({
+      id,
+      title: id === 'linear' ? 'Linear' : 'Acme Design System',
+      summary: id === 'linear' ? 'Quiet issue-tracker system.' : 'Internal product system.',
+      category: id === 'linear' ? 'Productivity & SaaS' : 'Custom',
+      body: `# ${id}\n\n## Colors\n- Primary #111111`,
+    })),
+    fetchDesignSystemShowcase: vi.fn(async () => '<main>Showcase</main>'),
     updateDesignSystemDraft: vi.fn(async () => null),
     deleteDesignSystemDraft: vi.fn(async () => true),
   };
@@ -119,12 +124,12 @@ describe('DesignSystemsTab', () => {
     expect(onCreate).toHaveBeenCalledOnce();
 
     // Acme is the only user system, so it auto-selects into the detail pane,
-    // exposing the Open action that routes back into the authoring flow.
-    fireEvent.click(screen.getByText('Open'));
+    // exposing the agent edit action that routes back into the authoring flow.
+    fireEvent.click(screen.getByRole('button', { name: /Edit with agent/i }));
     expect(onOpenSystem).toHaveBeenCalledWith('user:acme');
   });
 
-  it('keeps preview distinct from edit for built-in library systems', () => {
+  it('keeps preview distinct from edit for built-in library systems', async () => {
     const onOpenSystem = vi.fn();
     const onPreview = vi.fn();
     render(
@@ -140,8 +145,8 @@ describe('DesignSystemsTab', () => {
 
     openOfficialPresets();
     // Linear auto-selects; a built-in preset is previewable but not editable.
-    expect(screen.queryByText('Edit')).toBeNull();
-    fireEvent.click(screen.getByTestId('design-system-preview-linear'));
+    expect(screen.queryByRole('button', { name: /Edit with agent/i })).toBeNull();
+    fireEvent.click(await screen.findByTestId('design-kit-cover-preview'));
 
     expect(onPreview).toHaveBeenCalledWith('linear');
     expect(onOpenSystem).not.toHaveBeenCalledWith('linear');

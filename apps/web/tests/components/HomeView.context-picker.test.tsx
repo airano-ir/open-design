@@ -9,6 +9,11 @@ import {
   type McpServerConfig,
   type SkillSummary,
 } from '@open-design/contracts';
+
+vi.mock('../../src/components/home-hero/PlaceholderCarousel', () => ({
+  PlaceholderCarousel: () => null,
+}));
+
 import { HomeView } from '../../src/components/HomeView';
 import { homeHeroPromptText, setHomeHeroPrompt } from '../helpers/home-hero-lexical';
 
