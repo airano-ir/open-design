@@ -61,6 +61,27 @@ const ALLOWED_ORIGINS = [
 ];
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Free/personal mailbox providers. A Workspace-for-Teams lead must come from a
+// company domain, so we reject these. A blocklist (not an allowlist) is the only
+// tractable approach — business domains are unbounded.
+const PERSONAL_EMAIL_DOMAINS = new Set<string>([
+  "gmail.com", "googlemail.com",
+  "outlook.com", "outlook.com.cn", "hotmail.com", "hotmail.co.uk", "live.com", "live.cn", "msn.com",
+  "yahoo.com", "yahoo.com.cn", "yahoo.co.jp", "ymail.com", "rocketmail.com",
+  "icloud.com", "me.com", "mac.com",
+  "aol.com", "gmx.com", "gmx.net", "mail.com", "zoho.com",
+  "protonmail.com", "proton.me", "tutanota.com", "yandex.com",
+  "qq.com", "vip.qq.com", "foxmail.com",
+  "163.com", "126.com", "yeah.net", "188.com",
+  "sina.com", "sina.cn", "vip.sina.com", "sohu.com", "vip.sohu.com",
+  "aliyun.com", "139.com", "189.cn", "wo.cn", "21cn.com", "tom.com", "263.net", "china.com",
+]);
+
+function isBusinessEmail(email: string): boolean {
+  const at = email.lastIndexOf("@");
+  if (at < 0) return false;
+  return !PERSONAL_EMAIL_DOMAINS.has(email.slice(at + 1).toLowerCase());
+}
 const MAX_EMAIL_LENGTH = 254;
 const MAX_SHORT = 200;
 const MAX_MESSAGE = 4000;
@@ -75,12 +96,12 @@ const ALLOWED_BUDGETS = new Set([
   "unsure",
 ]);
 const BUDGET_LABELS: Record<string, string> = {
-  lt_50: "Under $50 / mo",
-  usd_50_200: "$50 – $200 / mo",
-  usd_200_1k: "$200 – $1,000 / mo",
-  usd_1k_5k: "$1,000 – $5,000 / mo",
-  usd_5k_plus: "$5,000+ / mo",
-  unsure: "Not sure yet",
+  lt_50: "每月 $50 以下",
+  usd_50_200: "每月 $50 – $200",
+  usd_200_1k: "每月 $200 – $1,000",
+  usd_1k_5k: "每月 $1,000 – $5,000",
+  usd_5k_plus: "每月 $5,000 以上",
+  unsure: "还不确定",
 };
 const ALLOWED_USE_CASES = new Set([
   "product_design",
@@ -92,13 +113,13 @@ const ALLOWED_USE_CASES = new Set([
   "other",
 ]);
 const USE_CASE_LABELS: Record<string, string> = {
-  product_design: "Product & app design",
-  design_system: "Design system",
-  prototype: "Prototype / app UI",
-  marketing: "Marketing & landing pages",
-  deck: "Presentation / deck",
-  dashboards: "Dashboards / internal tools",
-  other: "Something else",
+  product_design: "产品与应用设计",
+  design_system: "设计系统",
+  prototype: "原型 / 应用 UI",
+  marketing: "营销与落地页",
+  deck: "演示文稿 / Deck",
+  dashboards: "仪表盘 / 内部工具",
+  other: "其他",
 };
 
 function corsHeaders(origin: string | null): Record<string, string> {
@@ -179,20 +200,20 @@ function buildFeishuCard(lead: ContactLead): Record<string, unknown> {
     config: { wide_screen_mode: true },
     header: {
       template: "green",
-      title: { tag: "plain_text", content: "🚀 New Workspace-for-Teams lead" },
+      title: { tag: "plain_text", content: "🚀 新的「团队版」留资线索" },
     },
     elements: [
       {
         tag: "div",
         fields: [
-          fieldRow("Name", lead.name),
-          fieldRow("Email", lead.email),
-          fieldRow("Company", lead.company),
-          fieldRow("Team size", lead.teamSize),
-          fieldRow("Budget", BUDGET_LABELS[lead.budget] ?? lead.budget),
-          fieldRow("Use case", lead.useCases.map((v) => USE_CASE_LABELS[v] ?? v).join(", ")),
-          fieldRow("Role", lead.role),
-          fieldRow("Locale", lead.locale),
+          fieldRow("姓名", lead.name),
+          fieldRow("企业邮箱", lead.email),
+          fieldRow("公司", lead.company),
+          fieldRow("团队规模", lead.teamSize),
+          fieldRow("预算", BUDGET_LABELS[lead.budget] ?? lead.budget),
+          fieldRow("使用场景", lead.useCases.map((v) => USE_CASE_LABELS[v] ?? v).join("、")),
+          fieldRow("职位", lead.role),
+          fieldRow("语言", lead.locale),
         ],
       },
       ...(lead.message
@@ -200,7 +221,7 @@ function buildFeishuCard(lead: ContactLead): Record<string, unknown> {
             { tag: "hr" },
             {
               tag: "div",
-              text: { tag: "lark_md", content: `**Message**\n${lead.message}` },
+              text: { tag: "lark_md", content: `**留言**\n${lead.message}` },
             },
           ]
         : []),
@@ -210,7 +231,7 @@ function buildFeishuCard(lead: ContactLead): Record<string, unknown> {
         elements: [
           {
             tag: "plain_text",
-            content: `source: ${lead.source}${geo ? ` · ${geo}` : ""} · ${lead.submittedAt}`,
+            content: `来源：${lead.source}${geo ? ` · ${geo}` : ""} · ${lead.submittedAt}`,
           },
         ],
       },
@@ -298,6 +319,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const email = readString(payload.email, MAX_EMAIL_LENGTH).toLowerCase();
   if (!email || !EMAIL_RE.test(email)) {
     return json({ ok: false, error: "invalid_email" }, 400, origin);
+  }
+  if (!isBusinessEmail(email)) {
+    return json({ ok: false, error: "personal_email" }, 400, origin);
   }
 
   const name = readString(payload.name, MAX_SHORT);
