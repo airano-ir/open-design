@@ -278,7 +278,7 @@ describe('EntryShell settings menu', () => {
     expect(screen.getByText('Appearance')).toBeTruthy();
     expect(screen.getByRole('menuitem', { name: /Join Discord/i })).toBeTruthy();
     expect(screen.getByRole('menuitem', { name: /1.2k online/i })).toBeTruthy();
-    expect(screen.getByRole('menuitem', { name: /Follow @nexudotio on X/i })).toBeTruthy();
+    expect(screen.getByRole('menuitem', { name: /Follow @OpenDesignHQ on X/i })).toBeTruthy();
 
     fireEvent.click(screen.getByTestId('entry-settings-open-details'));
 
@@ -618,7 +618,7 @@ describe('EntryShell onboarding Open Design AMR runtime', () => {
     ) as typeof fetch;
     renderOnboarding();
 
-    fireEvent.click(await screen.findByRole('button', { name: /Continue \(signed in\)/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Continue$/i }));
 
     expect(screen.getByRole('heading', { name: 'About you' })).toBeTruthy();
     expect(screen.queryByText('Saved to your Memory')).toBeNull();
@@ -635,7 +635,7 @@ describe('EntryShell onboarding Open Design AMR runtime', () => {
     ) as typeof fetch;
     renderOnboarding();
 
-    fireEvent.click(await screen.findByRole('button', { name: /Continue \(signed in\)/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Continue$/i }));
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'About you' })).toBeTruthy();
     });
@@ -646,10 +646,10 @@ describe('EntryShell onboarding Open Design AMR runtime', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Continue$/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Extract your design system' })).toBeTruthy();
+      expect(screen.getByRole('heading', { name: 'Create once, build everywhere' })).toBeTruthy();
     });
     expect(screen.getByRole('button', { name: /^Back$/i })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Finish setup/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Build a design system' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /Skip for now/i })).toBeNull();
   });
 
@@ -682,11 +682,13 @@ describe('EntryShell onboarding Open Design AMR runtime', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /^Continue$/i }));
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Extract your design system' })).toBeTruthy();
+      expect(screen.getByRole('heading', { name: 'Create once, build everywhere' })).toBeTruthy();
     });
-    fireEvent.click(screen.getByRole('button', { name: /Finish setup/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Build a design system' }));
 
-    expect(props.onCompleteOnboarding).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(props.onCompleteOnboarding).toHaveBeenCalledTimes(1);
+    });
 
     const pageViews = trackedEvents('page_view').map(([, payload]) => payload);
     expect(pageViews).toEqual(
@@ -788,9 +790,9 @@ describe('EntryShell onboarding Open Design AMR runtime', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /^Continue$/i }));
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Extract your design system' })).toBeTruthy();
+      expect(screen.getByRole('heading', { name: 'Create once, build everywhere' })).toBeTruthy();
     });
-    fireEvent.click(screen.getByRole('button', { name: /Finish setup/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Build a design system' }));
 
     const subscribeCall = fetchMock.mock.calls.find(([url]) => String(url).endsWith('/subscribe'));
     expect(subscribeCall).toBeTruthy();
@@ -833,9 +835,9 @@ describe('EntryShell onboarding Open Design AMR runtime', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /^Continue$/i }));
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Extract your design system' })).toBeTruthy();
+      expect(screen.getByRole('heading', { name: 'Create once, build everywhere' })).toBeTruthy();
     });
-    fireEvent.click(screen.getByRole('button', { name: /Finish setup/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Build a design system' }));
 
     expect(fetchMock.mock.calls.some(([url]) => String(url).endsWith('/subscribe'))).toBe(false);
   });
@@ -925,9 +927,9 @@ describe('EntryShell onboarding Open Design AMR runtime', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /^Continue$/i }));
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Extract your design system' })).toBeTruthy();
+      expect(screen.getByRole('heading', { name: 'Create once, build everywhere' })).toBeTruthy();
     });
-    fireEvent.click(screen.getByRole('button', { name: /Finish setup/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Build a design system' }));
 
     const aboutYouSubmits = trackedEvents('ui_click')
       .map(([, payload]) => payload as Record<string, unknown>)
@@ -970,9 +972,9 @@ describe('EntryShell onboarding Open Design AMR runtime', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /^Continue$/i }));
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Extract your design system' })).toBeTruthy();
+      expect(screen.getByRole('heading', { name: 'Create once, build everywhere' })).toBeTruthy();
     });
-    fireEvent.click(screen.getByRole('button', { name: /Finish setup/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Build a design system' }));
 
     // The detour crosses the About-you step twice, but the snapshot must
     // not double-fire.
@@ -1035,14 +1037,16 @@ describe('EntryShell onboarding Open Design AMR runtime', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /^Continue$/i }));
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Extract your design system' })).toBeTruthy();
+      expect(screen.getByRole('heading', { name: 'Create once, build everywhere' })).toBeTruthy();
     });
-    fireEvent.click(screen.getByRole('button', { name: /Finish setup/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Build a design system' }));
 
     expect(props.onModeChange).toHaveBeenCalledWith('api');
     expect(props.onApiModelChange).toHaveBeenCalledWith('claude-opus-4-8');
     expect(props.onConfigPersist).toHaveBeenCalled();
-    expect(props.onCompleteOnboarding).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(props.onCompleteOnboarding).toHaveBeenCalledTimes(1);
+    });
     expect((props.onConfigPersist as ReturnType<typeof vi.fn>).mock.calls.at(-1)?.[0]).toMatchObject({
       mode: 'api',
       apiProtocol: 'anthropic',

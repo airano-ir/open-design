@@ -204,3 +204,30 @@ function headerValue(value: unknown): string | undefined {
   }
   return value == null ? undefined : String(value);
 }
+
+/**
+ * Zero-config OD Clipper bypass for the `/api` origin middleware.
+ *
+ * `apiRelativePath` MUST be `req.path` as observed INSIDE `app.use('/api', …)`.
+ * Express strips the mounted `/api` prefix there, so a request to
+ * `/api/library/ingest` arrives as `/library/ingest`. Matching `'/library/'`
+ * is therefore the correct (and only working) prefix — matching
+ * `'/api/library/'` here would never fire because the mount prefix is gone.
+ *
+ * Returns true only for a locally-installed browser extension (an origin a web
+ * page cannot forge) targeting the OD Library surface. The daemon is
+ * loopback-bound, so such a request is necessarily a local extension reaching
+ * the local daemon; it is auto-trusted without a pairing handshake. Every other
+ * origin (including ordinary cross-origin web pages) falls through to the
+ * normal same-origin / allow-list checks.
+ */
+export function isZeroConfigClipperLibraryRequest(
+  apiRelativePath: string,
+  origin: unknown,
+): boolean {
+  if (!apiRelativePath.startsWith('/library/')) return false;
+  return (
+    typeof origin === 'string' &&
+    (origin.startsWith('chrome-extension://') || origin.startsWith('moz-extension://'))
+  );
+}

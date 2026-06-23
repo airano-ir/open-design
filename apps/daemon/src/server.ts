@@ -585,6 +585,7 @@ import {
   configuredAllowedOrigins,
   isAllowedBrowserOrigin,
   isLocalSameOrigin,
+  isZeroConfigClipperLibraryRequest,
 } from './origin-validation.js';
 import { registerLibraryRoutes } from './routes/library.js';
 import {
@@ -3487,14 +3488,10 @@ export async function startServer({
     // pairing handshake, no token. (Loopback already constrains this to the
     // user's own machine; the tradeoff is that any locally-installed extension
     // can reach the library, acceptable for a local-first creative tool.)
-    if (req.path.startsWith('/library/')) {
-      const extOrigin = req.headers.origin;
-      if (
-        typeof extOrigin === 'string' &&
-        (extOrigin.startsWith('chrome-extension://') || extOrigin.startsWith('moz-extension://'))
-      ) {
-        return next();
-      }
+    // NOTE: `req.path` here is mount-relative (the `/api` prefix is stripped),
+    // so the predicate matches `/library/...`, not `/api/library/...`.
+    if (isZeroConfigClipperLibraryRequest(req.path, req.headers.origin)) {
+      return next();
     }
 
     const origin = req.headers.origin;

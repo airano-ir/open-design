@@ -2231,6 +2231,10 @@ export interface Dict {
   'chat.forkConversationFailed': string;
   'chat.startTitle': string;
   'chat.startHint': string;
+  'brandEnrichment.title': string;
+  'brandEnrichment.body': string;
+  'brandEnrichment.cta': string;
+  'brandEnrichment.busy': string;
   'chat.fillInputTitle': string;
   'chat.jumpToLatest': string;
   'chat.scrollToLatest': string;

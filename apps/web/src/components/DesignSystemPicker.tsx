@@ -51,6 +51,8 @@ interface Props {
   variant?: 'project' | 'footer' | 'home';
   /** Footer variant: visually-hidden label for the trigger button. */
   label?: string;
+  /** Hide the recursive "Create" action when the picker is already on create. */
+  showCreateAction?: boolean;
 }
 
 export function DesignSystemPicker({
@@ -60,6 +62,7 @@ export function DesignSystemPicker({
   onChange,
   variant = 'project',
   label,
+  showCreateAction = true,
 }: Props) {
   const { locale, t } = useI18n();
   const [open, setOpen] = useState(false);
@@ -276,15 +279,17 @@ export function DesignSystemPicker({
               >
                 {t('common.clear')}
               </button>
-              <button
-                type="button"
-                className="project-ds-picker-action project-ds-picker-action--primary"
-                data-testid="project-ds-picker-create"
-                onClick={createDesignSystem}
-              >
-                <Icon name="plus" size={12} strokeWidth={2} />
-                <span>{t('common.create')}</span>
-              </button>
+              {showCreateAction ? (
+                <button
+                  type="button"
+                  className="project-ds-picker-action project-ds-picker-action--primary"
+                  data-testid="project-ds-picker-create"
+                  onClick={createDesignSystem}
+                >
+                  <Icon name="plus" size={12} strokeWidth={2} />
+                  <span>{t('common.create')}</span>
+                </button>
+              ) : null}
             </div>
             <div className="project-ds-picker-body">
               <div className="project-ds-picker-list" role="listbox">

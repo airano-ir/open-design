@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent, type KeyboardEvent, type ReactNode } from 'react';
 import { Button, Textarea } from '@open-design/components';
-import type { ConnectorConnectResponse, ConnectorDetail, ConnectorStatusResponse, LibraryAsset } from '@open-design/contracts';
+import type {
+  ConnectorConnectResponse,
+  ConnectorDetail,
+  ConnectorStatusResponse,
+  DesignSystemSummary,
+  LibraryAsset,
+} from '@open-design/contracts';
 import { streamViaDaemon } from '../providers/daemon';
 import {
   connectConnector,
@@ -73,6 +79,7 @@ import { ChatPane } from './ChatPane';
 import { DesignSystemAssetDropzone } from './DesignSystemAssetDropzone';
 import { BrandPickerModal } from './BrandPickerModal';
 import { DesignSystemCreateHero } from './DesignSystemCreateHero';
+import { DesignSystemPicker } from './DesignSystemPicker';
 import { LibraryPicker } from './LibraryPicker';
 import { notifyConnectorsChanged } from './connectors-events';
 import { connectorAuthSnapshotChanged } from './connectors-state';
@@ -158,6 +165,7 @@ interface CreationProps {
     snapshot: DesignSystemGenerateSnapshot,
     outcome: { result: 'success' } | { result: 'failed'; errorCode: string },
   ) => void;
+  designSystems?: DesignSystemSummary[];
 }
 
 const SOURCE_PROCESSING_MIN_VISIBLE_MS = 900;
@@ -322,6 +330,7 @@ export function DesignSystemCreationFlow({
   chrome = 'standalone',
   onBeforeGenerate,
   onGenerateSettled,
+  designSystems = [],
 }: CreationProps) {
   const [step, setStep] = useState<SetupStep>('setup');
   // A Library "create design system from selection" hand-off pre-fills the
@@ -341,10 +350,15 @@ export function DesignSystemCreationFlow({
   const [libraryPickerOpen, setLibraryPickerOpen] = useState(false);
   const [designMdMode, setDesignMdMode] = useState<DesignMdMode>('edit');
   const [designMdPreviewTheme, setDesignMdPreviewTheme] = useState<DesignMdPreviewTheme>('light');
+  const [referenceDesignSystemId, setReferenceDesignSystemId] = useState<string | null>(null);
+  const [referenceDesignSystemLoading, setReferenceDesignSystemLoading] = useState(false);
+  const [referenceDesignSystemError, setReferenceDesignSystemError] = useState<string | null>(null);
+  const referenceDesignSystemRequestRef = useRef(0);
   // "Start from a brand" reference picker on the URL field + the Advanced
   // disclosure that hides the lower-frequency source inputs.
   const [brandPickerOpen, setBrandPickerOpen] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [heroCollapsed, setHeroCollapsed] = useState(false);
   // Two-phase brand/design-system extraction kickoff (POST /api/brands):
   // a fast programmatic pass registers a usable user:<id> design system
   // synchronously, then the brand-extract skill enriches it in the project.
@@ -587,9 +601,46 @@ export function DesignSystemCreationFlow({
   }
 
   function handleSourceUrlKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (isImeComposing(event)) return;
     if (event.key !== 'Enter') return;
     event.preventDefault();
     handleAddSourceUrl();
+  }
+
+  function handleReferenceDesignSystemChange(id: string | null) {
+    const requestId = ++referenceDesignSystemRequestRef.current;
+    setReferenceDesignSystemId(id);
+    setReferenceDesignSystemError(null);
+
+    if (id == null) {
+      setReferenceDesignSystemLoading(false);
+      setDesignMdMode('edit');
+      setState((curr) => ({ ...curr, designMd: '' }));
+      return;
+    }
+
+    setReferenceDesignSystemLoading(true);
+    void fetchDesignSystem(id)
+      .then((detail) => {
+        if (referenceDesignSystemRequestRef.current !== requestId) return;
+        if (!detail) {
+          setReferenceDesignSystemError('Could not load that design system.');
+          return;
+        }
+        setState((curr) => ({ ...curr, designMd: detail.body }));
+        setDesignMdMode('edit');
+        setDesignMdPreviewTheme('light');
+      })
+      .catch((err) => {
+        if (referenceDesignSystemRequestRef.current !== requestId) return;
+        setReferenceDesignSystemError(
+          err instanceof Error ? err.message : 'Could not load that design system.',
+        );
+      })
+      .finally(() => {
+        if (referenceDesignSystemRequestRef.current !== requestId) return;
+        setReferenceDesignSystemLoading(false);
+      });
   }
 
   function handleRemoveSourceUrl(url: string) {
@@ -631,6 +682,7 @@ export function DesignSystemCreationFlow({
   }
 
   function handleFigmaUrlKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (isImeComposing(event)) return;
     if (event.key !== 'Enter') return;
     event.preventDefault();
     handleAddFigmaUrl();
@@ -892,7 +944,9 @@ export function DesignSystemCreationFlow({
   }
 
   return (
-    <div className={`ds-setup-shell${embedded ? ' ds-setup-shell--embedded' : ''}`}>
+    <div
+      className={`ds-setup-shell${embedded ? ' ds-setup-shell--embedded' : ''}${!embedded && heroCollapsed ? ' ds-setup-shell--hero-collapsed' : ''}`}
+    >
       {sourceProcessingCount > 0 ? (
         <div
           className="ds-source-upload-loading"
@@ -938,6 +992,18 @@ export function DesignSystemCreationFlow({
           </Button>
         </header>
       )}
+      {!embedded && heroCollapsed ? (
+        <Button
+          variant="ghost"
+          className="ds-setup-hero-restore"
+          aria-label="Show design system guide"
+          title="Show design system guide"
+          onClick={() => setHeroCollapsed(false)}
+        >
+          <Icon name="chevron-right" />
+          <span>Guide</span>
+        </Button>
+      ) : null}
 
       <main className="ds-setup-form">
         {embedded ? (
@@ -945,25 +1011,37 @@ export function DesignSystemCreationFlow({
             <h1>Generate from your material</h1>
             <p>Start with a website or brand reference, then add any source files you already have.</p>
           </>
-        ) : (
+        ) : heroCollapsed ? null : (
           <aside className="ds-setup-hero-col">
-            <DesignSystemCreateHero stacked />
+            <div className="ds-setup-hero-frame">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="ds-setup-hero-collapse"
+                aria-label="Collapse design system guide"
+                title="Collapse guide"
+                onClick={() => setHeroCollapsed(true)}
+              >
+                <Icon name="chevron-left" />
+              </Button>
+              <DesignSystemCreateHero stacked />
+            </div>
           </aside>
         )}
 
         <div className="ds-setup-form-col">
         <section className="ds-resource-section">
-          <h2>Extract from source material</h2>
-          <p>Paste a website, a DESIGN.md, or files that show your style. Open Design first creates a usable system quickly, then AI can refine it inside the project.</p>
+          <h2>Extract from GitHub, websites, or source material</h2>
+          <p>Start with a GitHub repo, website, DESIGN.md, or files that show your style. Open Design first creates a usable system quickly, then AI can refine it inside the project.</p>
           <div className="ds-resource-card">
             <div className="ds-resource-row">
-              <strong>Website</strong>
+              <strong>GitHub or website</strong>
               <div className="ds-resource-inline">
                 <input
                   value={state.sourceUrl}
                   onChange={(event) => setState((curr) => ({ ...curr, sourceUrl: event.target.value }))}
                   onKeyDown={handleSourceUrlKeyDown}
-                  placeholder="https://example.com"
+                  placeholder="https://github.com/org/repo"
                 />
                 <button
                   type="button"
@@ -1061,7 +1139,18 @@ export function DesignSystemCreationFlow({
               <strong>Paste DESIGN.md <span>optional</span></strong>
               <div className="ds-design-md-field">
                 <div className="ds-design-md-field-head">
-                  <span>Paste a DESIGN.md to create directly from tokens, rationale and component guidance.</span>
+                  <span>
+                    Paste a DESIGN.md to create directly from tokens, rationale and component guidance.
+                    <a
+                      href="https://github.com/VoltAgent/awesome-design-md/"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="ds-design-md-reference-link"
+                    >
+                      Reference
+                      <Icon name="external-link" size={12} />
+                    </a>
+                  </span>
                   <div className="ds-design-md-actions" aria-label="DESIGN.md view mode">
                     <button
                       type="button"
@@ -1082,6 +1171,25 @@ export function DesignSystemCreationFlow({
                     </button>
                   </div>
                 </div>
+                {designSystems.length > 0 ? (
+                  <div className="ds-design-md-reference-picker">
+                    <span>Copy from existing design system</span>
+                    <DesignSystemPicker
+                      designSystems={designSystems}
+                      selectedId={referenceDesignSystemId}
+                      onChange={handleReferenceDesignSystemChange}
+                      showCreateAction={false}
+                    />
+                    {referenceDesignSystemLoading ? (
+                      <span className="ds-design-md-reference-status">Loading DESIGN.md...</span>
+                    ) : null}
+                    {referenceDesignSystemError ? (
+                      <span className="ds-design-md-reference-status is-error">
+                        {referenceDesignSystemError}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
                 {designMdMode === 'preview' && state.designMd.trim() ? (
                   <DesignMdComponentKitPreview
                     markdown={state.designMd}
@@ -4464,6 +4572,13 @@ function hasCreationSource(state: SetupState): boolean {
     || state.assetFiles.length > 0
     || state.assetFileObjects.length > 0
   );
+}
+
+function isImeComposing(event: KeyboardEvent<HTMLInputElement>): boolean {
+  const nativeEvent = event.nativeEvent as KeyboardEvent<HTMLInputElement>['nativeEvent'] & {
+    keyCode?: number;
+  };
+  return nativeEvent.isComposing || nativeEvent.keyCode === 229 || event.key === 'Process';
 }
 
 function isGithubRepositoryUrl(url: string): boolean {

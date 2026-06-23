@@ -567,9 +567,9 @@ interface Props {
   // empty chat state. Gated to the empty state, so it disappears once a turn
   // is sent.
   brandEnrichmentEligible?: boolean;
-  // Runs the optional brand-enrichment turn with the user-picked per-turn skill
-  // ids (may be empty). The parent sends the project's seeded enrichment prompt.
-  onContinueBrandEnrichment?: (skillIds: string[]) => void;
+  // Runs the optional brand-enrichment turn. The parent sends the project's
+  // seeded enrichment prompt with the default per-turn skill bundle.
+  onContinueBrandEnrichment?: () => void;
   // Bumped by the parent to push a draft into the composer (used by the
   // "Import repo" CTA). The nonce lets the same text fire more than once.
   composerDraftSignal?: { text: string; nonce: number };
@@ -2050,7 +2050,8 @@ export function ChatPane({
                       </div>
                       {brandEnrichmentEligible ? (
                         <BrandEnrichmentBanner
-                          onContinue={(skillIds) => onContinueBrandEnrichment?.(skillIds)}
+                          busy={Boolean(streaming || sendDisabled || loading || !activeConversationId)}
+                          onContinue={() => onContinueBrandEnrichment?.()}
                         />
                       ) : null}
                       <div className="chat-examples" role="list">

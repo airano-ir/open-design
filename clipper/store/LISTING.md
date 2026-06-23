@@ -251,7 +251,7 @@ Open Design Web Clipper 把你在网上看到的任何内容一键剪藏进 Open
 | `assets/icon.svg` | vector | Icon source (brand mark + ember capture badge) |
 | `assets/icon-512.png` | 512×512 | High-res icon master |
 | `assets/store-logo-300.png` | 300×300 | Edge store logo |
-| `assets/hero-bg.png` | 1536×1024 | AI background art (fal · gpt-image-2) for banners |
+| `assets/hero-bg.jpg` | 1536×1024 | AI background art (fal · gpt-image-2) for banners (JPEG to stay under the repo blob-size guard) |
 | `assets/promo-marquee.png` | 1400×560 | Chrome marquee promo tile |
 | `assets/promo-small.png` | 440×280 | Chrome small promo tile |
 | `assets/screenshot-frame.html` | — | Template to frame raw 1280×800 captures on-brand |

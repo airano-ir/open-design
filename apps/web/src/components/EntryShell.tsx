@@ -2316,9 +2316,57 @@ function OnboardingView({
                 <Icon name="sparkles" size={13} aria-hidden />
                 <span>{t('settings.onboardingDesignTitle')}</span>
               </span>
-              <div className="onboarding-view__build-head">
-                <h2>{t('onboarding.buildTitle')}</h2>
-                <p>{t('onboarding.buildBody')}</p>
+              <div className="onboarding-view__build-layout">
+                <div className="onboarding-view__build-copy">
+                  <div className="onboarding-view__build-head">
+                    <h2>{t('onboarding.buildTitle')}</h2>
+                    <p>{t('onboarding.buildBody')}</p>
+                  </div>
+                  <div className="onboarding-view__build-benefits">
+                    <div>
+                      <Icon name="file-text" size={15} aria-hidden />
+                      <strong>One brand memory</strong>
+                      <span>Colors, type, spacing, components, and voice become a DESIGN.md your agents can reuse.</span>
+                    </div>
+                    <div>
+                      <Icon name="swatchbook" size={15} aria-hidden />
+                      <strong>Every output stays aligned</strong>
+                      <span>Prototype, slide, PDF, dashboard, and marketing work all pull from the same rules.</span>
+                    </div>
+                    <div>
+                      <Icon name="github" size={15} aria-hidden />
+                      <strong>Start from what you have</strong>
+                      <span>Use a GitHub repo, website, existing DESIGN.md, screenshots, fonts, or Figma files.</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="onboarding-view__build-preview" aria-hidden>
+                  <div className="onboarding-view__build-preview-head">
+                    <span />
+                    <span />
+                    <span />
+                    <strong>DESIGN.md</strong>
+                  </div>
+                  <div className="onboarding-view__build-preview-body">
+                    <small>Brand system</small>
+                    <div className="onboarding-view__build-preview-swatches">
+                      <i />
+                      <i />
+                      <i />
+                      <i />
+                    </div>
+                    <div className="onboarding-view__build-preview-type">
+                      <strong>Aa</strong>
+                      <span>Aa</span>
+                      <em>Aa</em>
+                    </div>
+                    <div className="onboarding-view__build-preview-lines">
+                      <span />
+                      <span />
+                      <span />
+                    </div>
+                  </div>
+                </div>
               </div>
               <ul className="onboarding-view__build-chips">
                 {t('onboarding.buildArtifacts')

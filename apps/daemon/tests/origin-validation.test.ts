@@ -8,6 +8,7 @@ import {
   configuredAllowedOrigins,
   isAllowedBrowserOrigin,
   isLocalSameOrigin,
+  isZeroConfigClipperLibraryRequest,
 } from '../src/origin-validation.js';
 
 type TestRequestOptions = {
@@ -45,6 +46,12 @@ function createOriginMiddleware(resolvedPort: number, host = '127.0.0.1') {
   const _NULL_ORIGIN_SAFE_GET_RE =
     /^\/projects\/[^/]+\/(?:raw|preview)\/|^\/codex-pets\/[^/]+\/spritesheet$|^\/asset-cache$/;
   return (req: Request, res: Response, next: NextFunction) => {
+    // Mirror the real /api middleware: the zero-config clipper bypass runs
+    // first, using the same predicate server.ts uses. `req.path` is
+    // mount-relative here (the `/api` prefix is stripped by app.use('/api')).
+    if (isZeroConfigClipperLibraryRequest(req.path, req.headers.origin)) {
+      return next();
+    }
     const origin = req.headers.origin;
     if (origin == null || origin === '') return next();
     if (origin === 'null') {
@@ -87,6 +94,7 @@ function makeTestApp(port: number, host = '127.0.0.1') {
     res.json({ file: req.params.name });
   });
   app.post('/api/projects', (req, res) => res.json({ project: req.body }));
+  app.post('/api/library/ingest', (req, res) => res.json({ ingested: true }));
   app.delete('/api/projects/:id', (req, res) => res.json({ ok: true }));
   app.get('/api/codex-pets/:id/spritesheet', (req, res) => {
     // Mimics the real spritesheet route that sets CORS for Origin: null
@@ -418,8 +426,82 @@ describe('daemon origin validation middleware', () => {
     expect(res.status).toBe(403);
   });
 
+  // --- Zero-config OD Clipper bypass for /api/library/* ---
+  //
+  // Regression guard: the bypass predicate runs inside app.use('/api', …),
+  // where Express strips the `/api` mount prefix, so it must match
+  // `/library/...` (NOT `/api/library/...`). If the prefix were wrong, a
+  // first-contact (unpaired) extension hitting /api/library/ingest would fall
+  // through to the global origin validator and get 403 — breaking the
+  // fresh-install capture/import flow.
+
+  it('lets an unpaired browser-extension origin reach /api/library/ingest', async () => {
+    const res = await request(port, 'POST', '/api/library/ingest', {
+      origin: 'chrome-extension://abcdefghijklmnopabcdefghijklmnop',
+      headers: { 'content-type': 'application/json' },
+    });
+    expect(res.status).toBe(200);
+    expect(JSON.parse(res.body)).toEqual({ ingested: true });
+  });
+
+  it('lets a Firefox extension origin reach /api/library/ingest', async () => {
+    const res = await request(port, 'POST', '/api/library/ingest', {
+      origin: 'moz-extension://11111111-2222-3333-4444-555555555555',
+      headers: { 'content-type': 'application/json' },
+    });
+    expect(res.status).toBe(200);
+  });
+
+  it('still blocks an unrelated cross-origin web page from /api/library/ingest', async () => {
+    const res = await request(port, 'POST', '/api/library/ingest', {
+      origin: 'http://evil.com',
+      headers: { 'content-type': 'application/json' },
+    });
+    expect(res.status).toBe(403);
+    expect(JSON.parse(res.body)).toEqual({ error: 'Cross-origin requests are not allowed' });
+  });
+
+  it('does not extend the extension bypass to non-library routes', async () => {
+    const res = await request(port, 'POST', '/api/projects', {
+      origin: 'chrome-extension://abcdefghijklmnopabcdefghijklmnop',
+      headers: { 'content-type': 'application/json' },
+    });
+    expect(res.status).toBe(403);
+  });
+
   // Note: fail-closed coverage when port=0 is tested in the dedicated
   // describe block below ("fail-closed before port resolution").
+});
+
+describe('isZeroConfigClipperLibraryRequest predicate', () => {
+  // The middleware sees a mount-relative path: GET /api/library/ingest arrives
+  // as /library/ingest. These cases lock in that contract.
+  it('accepts a chrome extension origin on a mount-relative library path', () => {
+    expect(
+      isZeroConfigClipperLibraryRequest('/library/ingest', 'chrome-extension://abc'),
+    ).toBe(true);
+  });
+
+  it('accepts a moz extension origin on a mount-relative library path', () => {
+    expect(
+      isZeroConfigClipperLibraryRequest('/library/grid', 'moz-extension://abc'),
+    ).toBe(true);
+  });
+
+  it('rejects the full /api-prefixed path (prefix is already stripped by the mount)', () => {
+    expect(
+      isZeroConfigClipperLibraryRequest('/api/library/ingest', 'chrome-extension://abc'),
+    ).toBe(false);
+  });
+
+  it('rejects a non-extension origin even on a library path', () => {
+    expect(isZeroConfigClipperLibraryRequest('/library/ingest', 'http://evil.com')).toBe(false);
+    expect(isZeroConfigClipperLibraryRequest('/library/ingest', undefined)).toBe(false);
+  });
+
+  it('rejects an extension origin on a non-library path', () => {
+    expect(isZeroConfigClipperLibraryRequest('/projects', 'chrome-extension://abc')).toBe(false);
+  });
 });
 
 describe('origin validation: fail-closed before port resolution', () => {

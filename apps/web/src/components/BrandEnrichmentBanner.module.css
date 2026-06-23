@@ -67,49 +67,6 @@
   color: var(--text-muted);
 }
 
-.skills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-}
-
-.skillChip {
-  appearance: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  min-height: 28px;
-  padding: 0 11px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
-  background: var(--bg-panel);
-  color: var(--text-muted);
-  font: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background-color 140ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)),
-    border-color 140ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)),
-    color 140ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
-}
-
-.skillChip:hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
-  color: var(--text-strong);
-}
-
-.skillChipOn {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 12%, var(--bg-panel));
-  color: var(--accent);
-}
-
-.skillChip:disabled {
-  cursor: default;
-  opacity: 0.6;
-}
-
 .cta {
   align-self: flex-start;
   appearance: none;

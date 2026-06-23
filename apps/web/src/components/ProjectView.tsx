@@ -108,6 +108,10 @@ import type { TodoItem } from '../runtime/todos';
 import { appendErrorStatusEvent } from '../runtime/chat-events';
 import { RESUME_CONTINUE_PROMPT } from '../runtime/resume';
 import { setDesignSystemFocus } from '../runtime/brands';
+import {
+  buildBrandEnrichmentPrompt,
+  installedBrandEnrichmentSkillIds,
+} from '../runtime/brand-enrichment';
 import { useBrandReadyPrompt } from '../runtime/useBrandReadyPrompt';
 import {
   buildDesignSystemPackageAuditRepairPrompt,
@@ -5804,6 +5808,8 @@ export function ProjectView({
     autoSendSeedRef.current = isAutoSend ? (project.pendingPrompt ?? '') : '';
     autoSendAttachmentsRef.current = isAutoSend ? readAutoSendAttachments(project.id) : [];
   }
+  const brandEnrichmentEligibleForProject =
+    project.metadata?.kind === 'brand' && !autoSendFirstMessageRef.current;
   const [initialDraft, setInitialDraft] = useState<
     { projectId: string; value: string } | undefined
   >(
@@ -5827,7 +5833,15 @@ export function ProjectView({
     onClearPendingPrompt();
   }, [project.id, project.pendingPrompt, onClearPendingPrompt]);
   const chatInitialDraft =
-    chatSeed?.value ?? (initialDraft?.projectId === project.id ? initialDraft.value : undefined);
+    chatSeed?.value ??
+    (
+      brandEnrichmentEligibleForProject
+        ? undefined
+        : (initialDraft?.projectId === project.id ? initialDraft.value : undefined)
+    );
+  const brandEnrichmentPromptSeed =
+    project.pendingPrompt?.trim() ||
+    (initialDraft?.projectId === project.id ? initialDraft.value.trim() : '');
 
   // Continue in CLI / Finalize design package handlers + keyboard
   // shortcut wiring. Close to the JSX so the data flow is easy to
@@ -6213,19 +6227,19 @@ export function ProjectView({
               connectRepoNeeded={connectRepoNeeded}
               githubConnected={githubConnected}
               onConnectRepo={handleConnectRepo}
-              brandEnrichmentEligible={
-                project.metadata?.kind === 'brand' && !autoSendFirstMessageRef.current
-              }
-              onContinueBrandEnrichment={(skillIds) => {
+              brandEnrichmentEligible={brandEnrichmentEligibleForProject}
+              onContinueBrandEnrichment={() => {
                 // Programmatically-extracted brand projects open with a finished
-                // design system but no agent run. This sends the seeded
-                // enrichment prompt with the user's chosen per-turn skills so the
-                // agent refines the SAME registered design system in place.
-                const seed = (
-                  project.pendingPrompt?.trim() ||
-                  'Refine and enrich this design system: sharpen the palette, typography, logo and components from the source site, then update the registered design system in place.'
+                // design system but no agent run. This sends the hidden seeded
+                // enrichment prompt plus the default design-system skill bundle,
+                // refining the SAME registered design system in place.
+                const skillIds = installedBrandEnrichmentSkillIds(skills);
+                void handleSend(
+                  buildBrandEnrichmentPrompt(brandEnrichmentPromptSeed),
+                  [],
+                  [],
+                  skillIds.length > 0 ? { skillIds } : undefined,
                 );
-                void handleSend(seed, [], [], skillIds.length > 0 ? { skillIds } : undefined);
               }}
               composerDraftSignal={composerDraftSignal}
               petConfig={config.pet}

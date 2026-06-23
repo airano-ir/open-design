@@ -2125,6 +2125,7 @@ function AppInner() {
     appMain = (
       <DesignSystemCreationFlow
         onBack={() => navigate({ kind: 'home', view: 'design-systems' })}
+        designSystems={enabledDS}
         onCreated={(projectId, project) => {
           if (project) {
             setProjects((curr) => [
