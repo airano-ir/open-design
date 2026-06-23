@@ -38,7 +38,7 @@ jobs:
         run: |
           set -euo pipefail
           row="$(gh pr list --repo "$REPO" --head "$BRANCH" --state open \
-                  --json number,baseRefName,isDraft,title \
+                  --json number,baseRefName,isDraft,title,author,isCrossRepository,headRefOid \
                   --jq '[.[] | select(.baseRefName | startswith("release/v"))][0] // empty')"
           if [ -z "$row" ]; then
             echo "found=false" >> "$GITHUB_OUTPUT"
@@ -51,19 +51,35 @@ jobs:
             echo "base=$(printf '%s' "$row" | jq -r .baseRefName)"
             echo "draft=$(printf '%s' "$row" | jq -r .isDraft)"
             echo "title=$(printf '%s' "$row" | jq -r .title)"
+            echo "author=$(printf '%s' "$row" | jq -r '.author.login')"
+            echo "cross=$(printf '%s' "$row" | jq -r '.isCrossRepository')"
+            echo "head_oid=$(printf '%s' "$row" | jq -r '.headRefOid')"
           } >> "$GITHUB_OUTPUT"
 
       - name: Auto-merge clean backport on green CI
-        if: ${{ steps.pr.outputs.found == 'true' && steps.pr.outputs.draft == 'false' && github.event.workflow_run.conclusion == 'success' }}
+        # Guards (release/v* has no required checks, so this workflow IS the gate):
+        #  - author == the release bot and same-repo (not a fork) — so a stranger can't get a
+        #    branch named backport-* auto-merged with the App token.
+        #  - PR head == the exact SHA CI passed on (head_oid == workflow_run.head_sha), and
+        #    --match-head-commit re-checks at merge time — so a commit pushed after CI went
+        #    green is never merged untested.
+        if: >-
+          ${{ steps.pr.outputs.found == 'true'
+              && steps.pr.outputs.draft == 'false'
+              && steps.pr.outputs.author == 'open-design-release-bot[bot]'
+              && steps.pr.outputs.cross == 'false'
+              && steps.pr.outputs.head_oid == github.event.workflow_run.head_sha
+              && github.event.workflow_run.conclusion == 'success' }}
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}
           REPO: ${{ github.repository }}
           NUM: ${{ steps.pr.outputs.number }}
           BASE: ${{ steps.pr.outputs.base }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
-          echo "CI green — squash-merging clean backport PR #$NUM into $BASE"
-          gh pr merge "$NUM" --repo "$REPO" --squash --delete-branch
+          echo "CI green on $HEAD_SHA — squash-merging clean backport PR #$NUM into $BASE"
+          gh pr merge "$NUM" --repo "$REPO" --squash --delete-branch --match-head-commit "$HEAD_SHA"
 
       - name: Notify Feishu on failed backport CI
         if: ${{ steps.pr.outputs.found == 'true' && github.event.workflow_run.conclusion == 'failure' }}
