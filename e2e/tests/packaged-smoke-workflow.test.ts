@@ -227,10 +227,13 @@ describe("packaged smoke workflow", () => {
     expect(workflow).toContain('startswith("release/v")');
 
     // A human commit pushed on top of the cherry-pick (conflict resolution, CI fix) is never
-    // reviewed, so auto-approve/merge require pristine == 'true' — every commit committed by
-    // github-actions[bot]. Otherwise the PR falls back to human review.
+    // reviewed, so auto-approve/merge require pristine == 'true': every commit's committer is
+    // github-actions[bot]. The committers are paginated across all commits and any non-bot one
+    // fails the count. Otherwise the PR falls back to human review.
     expect(workflow).toContain("steps.pr.outputs.pristine == 'true'");
-    expect(workflow).toContain('(.committer.login // "") == "github-actions[bot]"');
+    expect(workflow).toContain('.[].committer.login // "none"');
+    expect(workflow).toContain("--paginate");
+    expect(workflow).toContain("grep -Fvxc 'github-actions[bot]'");
 
     // The PR is resolved from the run's authoritative workflow_run.pull_requests association
     // (filtered to the release/* base at exactly the run's SHA), not a branch-name guess, and the
