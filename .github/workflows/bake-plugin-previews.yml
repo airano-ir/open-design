@@ -92,7 +92,6 @@ jobs:
         # enqueues it once `Validate workspace` is green.
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}
-          APP_TOKEN: ${{ steps.app.outputs.token }}
           REPO: ${{ github.repository }}
         run: |
           OLD=data/plugin-previews/manifest.json
@@ -106,27 +105,36 @@ jobs:
             unchanged) echo "previews unchanged (only generatedAt moved) — nothing to review"; exit 0 ;;
             *) echo "unexpected diff result: '$diff_result'" >&2; exit 1 ;;
           esac
-          cp "$NEW" "$OLD"
           BRANCH="chore/plugin-previews"
-          # Commit AS github-actions[bot] (its canonical noreply email) so GitHub
-          # resolves the commits API `.committer.login` to that bot. The auto-merge
-          # reactor's `pristine` gate trusts that GitHub-backed login — not the raw
-          # committer email, which a collaborator could trivially spoof — to prove
-          # no human commit rode in. (Pushing via the App token below is what
-          # triggers CI; the commit identity is independent of the push token.)
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # Rebuild the rolling branch from the current main HEAD + this manifest,
-          # so it always carries exactly the freshest manifest on top of main.
-          git checkout -B "$BRANCH"
-          git add "$OLD"
-          git commit -m "chore(plugin-previews): refresh baked preview manifest"
-          # Bot-owned branch; force-push is safe (nobody else writes it). Push via
-          # the App token (not the checkout's GITHUB_TOKEN) so the manifest commit
-          # actually triggers CI on the PR.
-          git push --force \
-            "https://x-access-token:${APP_TOKEN}@github.com/${REPO}.git" "$BRANCH"
-          # Reuse the existing open PR (force-push already refreshed it); only
+          # Create the manifest commit through the Git Data API with the App token, NOT a local
+          # `git commit` + push. A commit created through the API is signed by GitHub
+          # (verification.verified=true) and committed by the App bot (committer.type=Bot) — a
+          # non-spoofable provenance pair the auto-merge reactor's `pristine` gate checks. A local
+          # commit's committer is just a git header any collaborator with push access can set (even
+          # to the bot's noreply email), so committer.login/email cannot prove the bot authored it;
+          # only GitHub's own signature, which a local commit does not carry, can.
+          # The branch is rebuilt as `main HEAD + one manifest commit` each run.
+          BASE_SHA="$(gh api "repos/$REPO/git/ref/heads/main" --jq .object.sha)"
+          BASE_TREE="$(gh api "repos/$REPO/git/commits/$BASE_SHA" --jq .tree.sha)"
+          BLOB_SHA="$(jq -n --arg c "$(base64 -w0 < "$NEW")" '{content:$c,encoding:"base64"}' \
+            | gh api "repos/$REPO/git/blobs" --input - --jq .sha)"
+          TREE_SHA="$(jq -n --arg bt "$BASE_TREE" --arg sha "$BLOB_SHA" \
+            '{base_tree:$bt,tree:[{path:"data/plugin-previews/manifest.json",mode:"100644",type:"blob",sha:$sha}]}' \
+            | gh api "repos/$REPO/git/trees" --input - --jq .sha)"
+          COMMIT_SHA="$(jq -n --arg t "$TREE_SHA" --arg p "$BASE_SHA" \
+            --arg m "chore(plugin-previews): refresh baked preview manifest" \
+            '{message:$m,tree:$t,parents:[$p]}' \
+            | gh api "repos/$REPO/git/commits" --input - --jq .sha)"
+          # Force-update the rolling branch ref (create it if absent). Moving the ref with the App
+          # token — not GITHUB_TOKEN — is what lets the resulting PR run CI.
+          if gh api "repos/$REPO/git/ref/heads/$BRANCH" >/dev/null 2>&1; then
+            jq -n --arg s "$COMMIT_SHA" '{sha:$s,force:true}' \
+              | gh api "repos/$REPO/git/refs/heads/$BRANCH" -X PATCH --input - >/dev/null
+          else
+            jq -n --arg s "$COMMIT_SHA" --arg r "refs/heads/$BRANCH" '{ref:$r,sha:$s}' \
+              | gh api "repos/$REPO/git/refs" --input - >/dev/null
+          fi
+          # Reuse the existing open PR (the ref update already refreshed it); only
           # create one if none is open.
           if [ "$(gh pr view "$BRANCH" --json state --jq '.state' 2>/dev/null)" = "OPEN" ]; then
             echo "rolling PR already open for $BRANCH — force-push refreshed it in place"

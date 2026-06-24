@@ -290,14 +290,15 @@ describe("packaged smoke workflow", () => {
     expect(workflow).toContain('select(.base.ref == "main")');
 
     // A human commit pushed onto the rolling branch is unreviewed, so auto-approve/merge require
-    // pristine == 'true': every commit's GitHub-resolved committer login is github-actions[bot]
-    // (the same GitHub-backed field backport-automerge.yml trusts — NOT the raw git committer
-    // email, which is set in plaintext in bake-plugin-previews.yml and a collaborator could spoof).
-    // Paginated across all commits; any non-bot one fails the count.
+    // pristine == 'true': every commit must be BOTH GitHub-signed (verification.verified) AND
+    // committed by a Bot (committer.type). A git committer login/email is a spoofable header, so it
+    // is NOT trusted; only GitHub's own signature (which the API-created bake commit carries and a
+    // human's locally pushed commit does not) proves bot provenance. Paginated across all commits;
+    // any non-conforming one fails the count.
     expect(workflow).toContain("steps.pr.outputs.pristine == 'true'");
-    expect(workflow).toContain('.[].committer.login // "none"');
+    expect(workflow).toContain('\\(.commit.verification.verified):\\(.committer.type // "none")');
     expect(workflow).toContain("--paginate");
-    expect(workflow).toContain("grep -Fvxc 'github-actions[bot]'");
+    expect(workflow).toContain("grep -Fvxc 'true:Bot'");
 
     // The PR is resolved from the run's authoritative workflow_run.pull_requests association
     // (filtered to the main base at exactly the run's SHA), not a branch-name guess, and the merge
@@ -356,18 +357,21 @@ describe("packaged smoke workflow", () => {
     const workflow = await readFile(bakePreviewsWorkflowPath, "utf8");
 
     // 1. The rolling PR is authored with the release-bot App token, not GITHUB_TOKEN — a
-    //    GITHUB_TOKEN-authored push triggers no CI, so the PR could never clear main's required
-    //    `Validate workspace` check or the merge queue.
+    //    GITHUB_TOKEN-authored ref update triggers no CI, so the PR could never clear main's
+    //    required `Validate workspace` check or the merge queue.
     expect(workflow).toContain("actions/create-github-app-token");
     expect(workflow).toContain("secrets.RELEASE_BOT_APP_ID");
     expect(workflow).toContain("GH_TOKEN: ${{ steps.app.outputs.token }}");
-    // 2. The manifest commit is pushed via the App token (so it triggers CI), not the checkout's
-    //    persisted GITHUB_TOKEN.
-    expect(workflow).toContain("x-access-token:${APP_TOKEN}");
-    // 3. The commit is made AS github-actions[bot] so GitHub resolves .committer.login to the bot,
-    //    which is what the auto-merge reactor's pristine gate trusts.
-    expect(workflow).toContain('git config user.name "github-actions[bot]"');
-    expect(workflow).toContain("41898282+github-actions[bot]@users.noreply.github.com");
+    // 2. The manifest commit is created through the Git Data API (blob -> tree -> commit -> ref),
+    //    NOT a local `git commit` + push. Only an API commit is GitHub-signed, which is the
+    //    non-spoofable provenance the reactor's pristine gate verifies. A regression back to a
+    //    local push (whose committer identity a collaborator can forge) fails here.
+    expect(workflow).toContain("git/blobs");
+    expect(workflow).toContain("git/trees");
+    expect(workflow).toContain("git/commits");
+    expect(workflow).toContain("git/refs");
+    expect(workflow).not.toContain("x-access-token:");
+    expect(workflow).not.toContain("git config user.name");
   });
 
   it("[P2] keeps PR and merge queue CI separated by hot/full validation mode", async () => {

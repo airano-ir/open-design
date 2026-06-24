@@ -62,23 +62,27 @@ jobs:
           fi
           row="$(gh pr view "$num" --repo "$REPO" \
                   --json number,baseRefName,isDraft,title,author,isCrossRepository,headRefOid)"
-          # "Pristine" = every commit on the branch was committed by github-actions[bot].
-          # The rolling branch is rebuilt as `main HEAD + one manifest commit`, but a
-          # human with write access could push extra commits onto chore/plugin-previews.
-          # Trust GitHub's resolved `.committer.login` (the same field backport-automerge.yml
-          # checks), NOT the raw git committer email — that email is set in plaintext in
-          # bake-plugin-previews.yml and a collaborator could spoof it to fake pristine.
-          # The bake job commits as github-actions[bot] so GitHub maps its commits to that
-          # login. Paginate across ALL commits — a >100-commit PR must not pass on its first
-          # page; one non-bot committer anywhere fails it. Fail closed on a partial/failed
-          # lookup: capture gh's exit via `if !` and blank the list, so pristine needs a
-          # complete, successful enumeration of every commit.
-          if ! logins="$(gh api "repos/$REPO/pulls/$num/commits?per_page=100" --paginate \
-                          --jq '.[].committer.login // "none"' 2>/dev/null)"; then
-            logins=""
+          # "Pristine" = every commit on the branch carries non-spoofable bot provenance. The
+          # rolling branch is rebuilt as `main HEAD + one manifest commit`, but a human with write
+          # access could push extra commits onto chore/plugin-previews. A git committer identity
+          # (login/email) is just a header that collaborator can set to the bot's, so it cannot
+          # prove the bot authored a commit. Instead require, for EVERY commit, both:
+          #   - commit.verification.verified == true: GitHub signed it. The bake job creates the
+          #     manifest commit through the Git Data API, which GitHub auto-signs; a local commit a
+          #     human pushes is unsigned (verified=false), even with the bot's noreply email.
+          #   - committer.type == Bot: excludes a human who signs with their own registered key
+          #     (verified=true but committer.type=User). A human cannot be both GitHub-signed AND a
+          #     Bot, so the pair is forge-proof.
+          # Paginate across ALL commits — a >100-commit PR must not pass on its first page; one
+          # non-conforming commit anywhere fails it. Fail closed on a partial/failed lookup:
+          # capture gh's exit via `if !` and blank the list, so pristine needs a complete,
+          # successful enumeration of every commit.
+          if ! rows="$(gh api "repos/$REPO/pulls/$num/commits?per_page=100" --paginate \
+                        --jq '.[] | "\(.commit.verification.verified):\(.committer.type // "none")"' 2>/dev/null)"; then
+            rows=""
           fi
-          nonbot="$(printf '%s\n' "$logins" | grep -Fvxc 'github-actions[bot]' || true)"
-          if [ -n "$logins" ] && [ "${nonbot:-1}" = "0" ]; then
+          bad="$(printf '%s\n' "$rows" | grep -Fvxc 'true:Bot' || true)"
+          if [ -n "$rows" ] && [ "${bad:-1}" = "0" ]; then
             pristine=true
           else
             pristine=false
