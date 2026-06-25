@@ -957,7 +957,6 @@ describe('App project creation routing', () => {
       target: { value: 'https://acme.com' },
     });
     fireEvent.click(screen.getByRole('button', { name: /continue to generation/i }));
-    fireEvent.click(screen.getByRole('button', { name: /extract design system/i }));
 
     await waitFor(() => {
       expect(screen.getByTestId('project-route-conversation').textContent).toBe('conv-brand-acme');
