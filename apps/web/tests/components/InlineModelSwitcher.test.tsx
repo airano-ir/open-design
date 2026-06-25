@@ -150,13 +150,13 @@ describe('InlineModelSwitcher AMR row', () => {
     expect(screen.queryByTestId('inline-model-switcher-amr-reminder')).toBeNull();
     const popover = screen.getByTestId('inline-model-switcher-popover');
     expect(
-      within(popover).getByTestId('inline-model-switcher-agent-amr-reminder'),
+      within(popover).getByTestId('inline-model-switcher-account-amr-reminder'),
     ).toBeTruthy();
 
     fireEvent.click(screen.getByTestId('inline-model-switcher-chip'));
     fireEvent.click(screen.getByTestId('inline-model-switcher-chip'));
     expect(
-      screen.queryByTestId('inline-model-switcher-agent-amr-reminder'),
+      screen.queryByTestId('inline-model-switcher-account-amr-reminder'),
     ).toBeNull();
 
     view.unmount();
@@ -227,7 +227,7 @@ describe('InlineModelSwitcher AMR row', () => {
     });
     expect(amrButton.querySelector('.inline-switcher__agent-status-icon')).toBeNull();
     expect(
-      amrButton.querySelector('.inline-switcher__agent-name')?.textContent,
+      amrButton.querySelector('.inline-switcher__account-name')?.textContent,
     ).toBe('Open Design');
     expect(within(popover).queryByText(/AMR \(vela\)/i)).toBeNull();
     expect(within(popover).queryByText(/vela/i)).toBeNull();

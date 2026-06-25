@@ -40,6 +40,7 @@ import type { Dict } from '../i18n/types';
 import { AgentIcon } from './AgentIcon';
 import { AgentDiagnosticRow } from './AgentDiagnosticRow';
 import { AmrLoginPill } from './AmrLoginPill';
+import { PlanBadge } from './PlanBadge';
 import {
   AMR_LOGIN_STATUS_EVENT,
   amrLoginStatusEventReason,
@@ -1235,7 +1236,6 @@ export function SettingsDialog({
   const [amrCardStatusReady, setAmrCardStatusReady] = useState(false);
   const [amrWalletSnapshot, setAmrWalletSnapshot] = useState<AmrWalletSnapshot | null>(null);
   const [amrWalletReady, setAmrWalletReady] = useState(false);
-  const [amrWalletRefreshing, setAmrWalletRefreshing] = useState(false);
   const [hoveredAgentCardId, setHoveredAgentCardId] = useState<string | null>(null);
   const [providerTestState, setProviderTestState] = useState<TestState>({
     status: 'idle',
@@ -1245,42 +1245,16 @@ export function SettingsDialog({
     onAmrLoginStatusChange?.(amrCardStatus);
   }, [amrCardStatus, onAmrLoginStatusChange]);
 
-  const refreshAmrWallet = useCallback(async (refresh = false) => {
-    if (amrCardStatus?.loggedIn !== true) {
-      setAmrWalletSnapshot(null);
-      setAmrWalletReady(false);
-      return;
-    }
-    if (refresh) setAmrWalletRefreshing(true);
-    try {
-      const next = await fetchAmrWalletSnapshot({ refresh });
-      setAmrWalletSnapshot(next);
-      setAmrWalletReady(true);
-    } finally {
-      if (refresh) setAmrWalletRefreshing(false);
-    }
-  }, [amrCardStatus?.loggedIn]);
-
   const formatAmrWalletBalance = useCallback((balanceUsd: string | null | undefined) => {
     if (!balanceUsd) return null;
     const amount = Number(balanceUsd);
     if (!Number.isFinite(amount)) return `$${balanceUsd}`;
     return new Intl.NumberFormat(locale, {
       currency: 'USD',
-      maximumFractionDigits: 4,
+      maximumFractionDigits: 2,
       minimumFractionDigits: 2,
       style: 'currency',
     }).format(amount);
-  }, [locale]);
-
-  const formatAmrWalletTime = useCallback((value: string | null | undefined) => {
-    if (!value) return null;
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
-    return new Intl.DateTimeFormat(locale, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(date);
   }, [locale]);
 
   useEffect(() => {
@@ -1315,7 +1289,6 @@ export function SettingsDialog({
     if (!hasAmrAgent || amrCardStatus?.loggedIn !== true) {
       setAmrWalletSnapshot(null);
       setAmrWalletReady(false);
-      setAmrWalletRefreshing(false);
       return;
     }
     let cancelled = false;
@@ -3725,12 +3698,6 @@ export function SettingsDialog({
                             isAmrAgent && active && amrCardStatus?.loggedIn
                               ? canUpgradeVelaPlan(amrCardStatus.account?.plan)
                               : false;
-                          const amrWalletTime =
-                            amrWalletVisible && amrWalletSnapshot?.status === 'available'
-                              ? formatAmrWalletTime(
-                                  amrWalletSnapshot?.updatedAt ?? amrWalletSnapshot?.fetchedAt,
-                                )
-                              : null;
                           const amrRevealPendingCancelAction =
                             isAmrAgent &&
                             active &&
@@ -3837,6 +3804,15 @@ export function SettingsDialog({
                                           <span className="agent-card-amr-email-text" title={amrCardEmail}>
                                             {amrCardEmail}
                                           </span>
+                                          <PlanBadge
+                                            plan={amrCardPlanLabel}
+                                            size="sm"
+                                            title={
+                                              amrCardPlanLabel
+                                                ? `${t('settings.amrPlan')} ${amrCardPlanLabel}`
+                                                : undefined
+                                            }
+                                          />
                                           {amrCardProfileBadge ? (
                                             <span className="agent-card-amr-profile-badge">
                                               {amrCardProfileBadge}
@@ -3844,18 +3820,8 @@ export function SettingsDialog({
                                           ) : null}
                                         </div>
                                       ) : null}
-                                      {amrCardPlanLabel || amrWalletVisible ? (
+                                      {amrWalletVisible ? (
                                         <div className="agent-card-amr-meta-row">
-                                          {amrCardPlanLabel ? (
-                                            <span className="agent-card-amr-balance">
-                                              <span className="agent-card-amr-balance-label">
-                                                {t('settings.amrPlan')}
-                                              </span>
-                                              <span className="agent-card-amr-balance-value agent-card-amr-plan-value">
-                                                {amrCardPlanLabel}
-                                              </span>
-                                            </span>
-                                          ) : null}
                                           {amrWalletVisible ? (
                                             <span className="agent-card-amr-balance">
                                               <span className="agent-card-amr-balance-label">
@@ -3874,14 +3840,6 @@ export function SettingsDialog({
                                           ) : null}
                                         </div>
                                       ) : null}
-                                      {amrWalletTime ? (
-                                        <div className="agent-card-amr-wallet__meta">
-                                          {t('settings.amrWalletUpdatedAt', { time: amrWalletTime })}
-                                          {amrWalletSnapshot?.source === 'daemon_cache'
-                                            ? ` · ${t('settings.amrWalletCached')}`
-                                            : ''}
-                                        </div>
-                                      ) : null}
                                       {!active && modelSummary ? (
                                         <div className="agent-card-model-summary">
                                           <span>{t('settings.modelPicker')}</span>
@@ -3890,22 +3848,6 @@ export function SettingsDialog({
                                       ) : null}
                                   </div>
                                 </button>
-                                {amrWalletVisible ? (
-                                  <button
-                                    type="button"
-                                    className="agent-card-amr-wallet-refresh"
-                                    aria-label={t('settings.amrWalletRefreshTitle')}
-                                    disabled={amrWalletRefreshing}
-                                    onClick={() => void refreshAmrWallet(true)}
-                                  >
-                                    <Icon
-                                      name={amrWalletRefreshing ? 'spinner' : 'refresh'}
-                                      size={13}
-                                      className={amrWalletRefreshing ? 'icon-spin' : undefined}
-                                    />
-                                    <VisuallyHidden>{t('settings.amrWalletRefresh')}</VisuallyHidden>
-                                  </button>
-                                ) : null}
                                 {isAmrAgent ? (
                                   active && amrCardStatusReady ? (
                                     <span

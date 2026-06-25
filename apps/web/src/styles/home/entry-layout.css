@@ -1342,6 +1342,10 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
+  /* Open Design (the account card) is pinned to the top of the 代理 group;
+     the third-party CLI grid follows it. The card sits before this grid in the
+     flex column source order, so this order keeps it on top. */
+  order: 1;
 }
 .inline-switcher__agent-row {
   display: flex;
@@ -1470,6 +1474,19 @@
   border: 1px solid var(--border-soft);
   border-radius: var(--radius);
   background: var(--bg-subtle);
+  transition: background-color 120ms var(--ease-out),
+    border-color 120ms var(--ease-out);
+}
+/* The Open Design entry is also the agent selector now: hovering the clickable
+   area previews selectability, and the active agent gets the same accent
+   highlight the grid rows use. */
+.inline-switcher__account:has(.inline-switcher__account-select:hover):not(.is-active) {
+  background: var(--bg-panel);
+  border-color: var(--border);
+}
+.inline-switcher__account.is-active {
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--border));
+  background: var(--accent-tint);
 }
 .inline-switcher__account-id {
   display: inline-flex;
@@ -1479,6 +1496,28 @@
   font-size: 13px;
   font-weight: 500;
   color: var(--text-strong);
+}
+/* The icon+name+plan+balance block is the radio control that selects Open
+   Design; the upgrade / sign-in buttons stay siblings so they never nest in
+   this button. */
+.inline-switcher__account-select {
+  flex: 1 1 auto;
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  cursor: pointer;
+}
+.inline-switcher__account-id-icon {
+  position: relative;
+  flex: 0 0 auto;
+  display: inline-flex;
+}
+.inline-switcher__amr-reminder-dot--account {
+  top: -1px;
+  right: -1px;
 }
 .inline-switcher__account-name {
   overflow: hidden;
@@ -1497,20 +1536,7 @@
   gap: 7px;
   min-width: 0;
 }
-/* Current tier shown as a small neutral pill right after the Open Design name
-   (identity + tier as one group); balance sits on the subtitle line below. */
-.inline-switcher__account-plan-badge {
-  flex: 0 0 auto;
-  padding: 0 7px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--text-strong) 8%, transparent);
-  color: var(--text-strong);
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.7;
-  text-transform: capitalize;
-}
-/* Plan + balance as a muted subtitle line under the Open Design name. Each
+/* Balance shown as a muted subtitle line under the Open Design name. Each
    stat is "label value"; the gap (not a literal separator) keeps them apart. */
 .inline-switcher__account-subtitle {
   display: flex;

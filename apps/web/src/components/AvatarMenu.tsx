@@ -5,6 +5,7 @@ import { amrHandoffDeviceId, attributedAmrUrl, recordAmrEntry } from '../analyti
 import { useAnalytics } from '../analytics/provider';
 import { useT } from '../i18n';
 import { AgentIcon } from './AgentIcon';
+import { PlanBadge } from './PlanBadge';
 import { RemixIcon } from './RemixIcon';
 import { SearchableModelSelect } from './modelOptions';
 import type { AgentInfo, AppConfig, ExecMode, ProviderModelOption } from '../types';
@@ -165,7 +166,11 @@ export function AvatarMenu({
     [agents, config.agentId],
   );
 
-  const installedAgents = agents.filter((a) => a.available);
+  // Pin Open Design (amr) to the top of the code-agent list; keep every other
+  // agent in its original daemon-provided order (Array.sort is stable).
+  const installedAgents = agents
+    .filter((a) => a.available)
+    .sort((a, b) => Number(b.id === 'amr') - Number(a.id === 'amr'));
   const amrAvailable = installedAgents.some((a) => a.id === 'amr');
   const amrProfile = config.agentCliEnv?.amr?.OPEN_DESIGN_AMR_PROFILE;
 
@@ -331,7 +336,7 @@ export function AvatarMenu({
           </div>
           <button
             type="button"
-            className={`avatar-item${config.mode === 'daemon' ? ' active' : ''}`}
+            className={`avatar-item avatar-item--mode${config.mode === 'daemon' ? ' active' : ''}`}
             aria-current={config.mode === 'daemon' ? 'true' : undefined}
             onClick={() => {
               if (config.mode === 'daemon') {
@@ -358,10 +363,15 @@ export function AvatarMenu({
             {!daemonLive ? (
               <span className="avatar-item-meta">{t('avatar.metaOffline')}</span>
             ) : null}
+            {config.mode === 'daemon' ? (
+              <span className="avatar-item__check" aria-hidden>
+                <RemixIcon name="check-line" size={15} />
+              </span>
+            ) : null}
           </button>
           <button
             type="button"
-            className={`avatar-item${config.mode === 'api' ? ' active' : ''}`}
+            className={`avatar-item avatar-item--mode${config.mode === 'api' ? ' active' : ''}`}
             aria-current={config.mode === 'api' ? 'true' : undefined}
             onClick={() => onModeChange('api')}
           >
@@ -369,6 +379,11 @@ export function AvatarMenu({
               <RemixIcon name="link" size={15} />
             </span>
             <span>{t('avatar.useApi')}</span>
+            {config.mode === 'api' ? (
+              <span className="avatar-item__check" aria-hidden>
+                <RemixIcon name="check-line" size={15} />
+              </span>
+            ) : null}
           </button>
 
           {config.mode === 'daemon' && installedAgents.length > 0 ? (
@@ -406,11 +421,7 @@ export function AvatarMenu({
                             <span className="avatar-amr-row__name">
                               {displayAgentName(a)}
                             </span>
-                            {amrPlanDisplay ? (
-                              <span className="avatar-amr-row__plan-badge">
-                                {amrPlanDisplay}
-                              </span>
-                            ) : null}
+                            <PlanBadge plan={amrPlanDisplay} size="md" />
                           </span>
                           {amrBalanceLabel ? (
                             <span className="avatar-amr-row__subtitle">

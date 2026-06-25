@@ -1122,6 +1122,23 @@
 .avatar-item.active:hover {
   background: color-mix(in srgb, var(--accent-tint) 82%, var(--bg-subtle));
 }
+/* Mode rows (本机 CLI / API·BYOK) mark the current choice with a trailing check
+   + bold text instead of a filled block, so they don't compete with the agent
+   row's filled selection highlight directly below. */
+.avatar-item--mode.active {
+  background: transparent;
+  font-weight: 600;
+}
+.avatar-item--mode.active:hover {
+  background: var(--bg-subtle);
+}
+.avatar-item__check {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+  color: var(--accent-strong);
+}
 
 /* Open Design agent row carries account info + actions inline. */
 .avatar-amr-row {
@@ -1167,6 +1184,7 @@
 .avatar-amr-row__name-row {
   display: inline-flex;
   align-items: center;
+  gap: 8px;
   min-width: 0;
 }
 .avatar-amr-row__subtitle {
@@ -1181,19 +1199,6 @@
   font-size: 11px;
   font-weight: 500;
   color: var(--text-muted);
-}
-/* Current tier as a small neutral pill right after the Open Design name. */
-.avatar-amr-row__plan-badge {
-  flex: 0 0 auto;
-  margin-left: 8px;
-  padding: 0 7px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--text-strong) 8%, transparent);
-  color: var(--text-strong);
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.7;
-  text-transform: capitalize;
 }
 .avatar-amr-row__upgrade,
 .avatar-amr-row__upgrade:visited {

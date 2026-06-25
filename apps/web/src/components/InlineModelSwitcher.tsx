@@ -52,6 +52,7 @@ import type { AgentInfo, ApiProtocol, AppConfig, ExecMode } from '../types';
 import { apiProtocolLabel } from '../utils/apiProtocol';
 import { AgentIcon } from './AgentIcon';
 import { Icon } from './Icon';
+import { PlanBadge } from './PlanBadge';
 import {
   AMR_LOGIN_STATUS_EVENT,
   AMR_LOGIN_POLL_INTERVAL_MS,
@@ -730,7 +731,9 @@ export function InlineModelSwitcher({
                     className="inline-switcher__agent-grid"
                     role="radiogroup"
                   >
-                    {installedAgents.map((a) => {
+                    {installedAgents
+                      .filter((a) => a.id !== 'amr')
+                      .map((a) => {
                       const active = config.agentId === a.id;
                       const agentName = displayAgentChipName(a);
                       const showAgentReminder =
@@ -783,21 +786,41 @@ export function InlineModelSwitcher({
                     })}
                   </div>
                 )}
-              </div>
 
               {amrInstalled ? (
-                <div className="inline-switcher__account">
-                  <span className="inline-switcher__account-id">
-                    <AgentIcon id="amr" size={24} />
+                <div
+                  className={
+                    'inline-switcher__account' +
+                    (config.agentId === 'amr' ? ' is-active' : '')
+                  }
+                >
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={config.agentId === 'amr'}
+                    aria-label={`Open Design ${amrInlineStatus}`}
+                    className="inline-switcher__account-id inline-switcher__account-select"
+                    data-testid="inline-model-switcher-agent-amr"
+                    title={amrLoginPending ? amrPendingHoverLabel : undefined}
+                    onClick={() => void handleAgentButtonClick('amr')}
+                  >
+                    <span className="inline-switcher__account-id-icon">
+                      <AgentIcon id="amr" size={24} />
+                      {showAmrReminderInPopover && config.agentId !== 'amr' ? (
+                        <span
+                          className="inline-switcher__amr-reminder-dot inline-switcher__amr-reminder-dot--account"
+                          data-testid="inline-model-switcher-account-amr-reminder"
+                          aria-hidden="true"
+                        />
+                      ) : null}
+                    </span>
                     <span className="inline-switcher__account-text">
                       <span className="inline-switcher__account-name-row">
                         <span className="inline-switcher__account-name">
                           Open Design
                         </span>
-                        {amrLoggedIn && amrPlanLabel ? (
-                          <span className="inline-switcher__account-plan-badge">
-                            {amrPlanLabel}
-                          </span>
+                        {amrLoggedIn ? (
+                          <PlanBadge plan={amrPlanLabel} size="md" />
                         ) : null}
                       </span>
                       {amrLoggedIn && amrBalanceLabel ? (
@@ -813,7 +836,7 @@ export function InlineModelSwitcher({
                         </span>
                       ) : null}
                     </span>
-                  </span>
+                  </button>
                   {amrLoginError ? (
                     <span className="inline-switcher__account-status is-error">
                       {amrLoginError}
@@ -881,6 +904,7 @@ export function InlineModelSwitcher({
                   )}
                 </div>
               ) : null}
+              </div>
 
               {currentAgent &&
               currentAgent.models &&
