@@ -81,9 +81,14 @@ const LOGO_EXT_PRIORITY = ['.svg', '.png', '.webp', '.jpg', '.jpeg', '.gif', '.i
 const PROGRAMMATIC_CANCEL_ERROR = 'Programmatic extraction stopped by the user.';
 const BROWSER_HTML_EXTRACTION_ERROR = 'Could not extract a design system from the provided page.';
 
+type ActiveProgrammaticBrandExtraction = {
+  controller: AbortController;
+  settled: Promise<unknown>;
+};
+
 export function registerBrandRoutes(app: Application, deps: BrandRoutesDeps): void {
   const { brandsRoot, userDesignSystemsRoot, projectsRoot, skillsRoot, dataDir, db, randomId } = deps;
-  const activeProgrammaticBrandExtractions = new Map<string, AbortController>();
+  const activeProgrammaticBrandExtractions = new Map<string, ActiveProgrammaticBrandExtraction>();
 
   function trackProgrammaticBrandExtraction(
     brandId: string,
@@ -91,19 +96,24 @@ export function registerBrandRoutes(app: Application, deps: BrandRoutesDeps): vo
     backgroundExtraction: Promise<unknown> | null,
   ): void {
     if (!backgroundExtraction) return;
-    activeProgrammaticBrandExtractions.set(brandId, controller);
+    const active: ActiveProgrammaticBrandExtraction = {
+      controller,
+      settled: backgroundExtraction,
+    };
+    activeProgrammaticBrandExtractions.set(brandId, active);
     void backgroundExtraction.finally(() => {
-      if (activeProgrammaticBrandExtractions.get(brandId) === controller) {
+      if (activeProgrammaticBrandExtractions.get(brandId) === active) {
         activeProgrammaticBrandExtractions.delete(brandId);
       }
     });
   }
 
-  function abortActiveProgrammaticBrandExtraction(brandId: string): void {
+  async function abortActiveProgrammaticBrandExtraction(brandId: string): Promise<void> {
     const active = activeProgrammaticBrandExtractions.get(brandId);
     if (!active) return;
-    active.abort();
+    active.controller.abort();
     activeProgrammaticBrandExtractions.delete(brandId);
+    await active.settled.catch(() => undefined);
   }
 
   async function markBrowserHtmlExtractionFailed(brandId: string, previousMeta: BrandMeta): Promise<void> {
@@ -218,7 +228,7 @@ export function registerBrandRoutes(app: Application, deps: BrandRoutesDeps): vo
   app.post('/api/brands/:id/continue-extraction', async (req: Request, res: Response) => {
     const id = String(req.params.id);
     try {
-      abortActiveProgrammaticBrandExtraction(id);
+      await abortActiveProgrammaticBrandExtraction(id);
       const programmaticAbortController = new AbortController();
       const backgroundExtractionRef: { current: Promise<unknown> | null } = { current: null };
       const transcriptAgent = await deps.resolveTranscriptAgent?.().catch(() => null);
@@ -260,8 +270,9 @@ export function registerBrandRoutes(app: Application, deps: BrandRoutesDeps): vo
         res.status(404).json({ error: 'brand not found' });
         return;
       }
-      abortActiveProgrammaticBrandExtraction(id);
-      if (detail.meta.status !== 'ready') {
+      await abortActiveProgrammaticBrandExtraction(id);
+      const currentMeta = readBrandDetail(brandsRoot, id)?.meta ?? detail.meta;
+      if (currentMeta.status !== 'ready') {
         patchMeta(brandsRoot, id, {
           status: 'failed',
           error: PROGRAMMATIC_CANCEL_ERROR,
@@ -277,8 +288,8 @@ export function registerBrandRoutes(app: Application, deps: BrandRoutesDeps): vo
           skillsRoot,
           projectsRoot,
           previewStatus: 'draft',
-          ...(detail.meta.projectId ? { projectId: detail.meta.projectId } : {}),
-          ...(detail.meta.locale ? { locale: detail.meta.locale } : {}),
+          ...(currentMeta.projectId ? { projectId: currentMeta.projectId } : {}),
+          ...(currentMeta.locale ? { locale: currentMeta.locale } : {}),
         }).catch((err) => {
           console.warn(`[brand] failed to render stopped draft preview for ${id}`, err);
         });
@@ -296,7 +307,7 @@ export function registerBrandRoutes(app: Application, deps: BrandRoutesDeps): vo
           console.warn(`[brand] failed to reconcile stopped transcript for ${id}`, err);
         });
       }
-      const next = readBrandDetail(brandsRoot, id)?.meta ?? detail.meta;
+      const next = readBrandDetail(brandsRoot, id)?.meta ?? currentMeta;
       res.json({ ok: true, status: next.status });
     } catch (err) {
       res.status(500).json({ error: String(err) });
@@ -388,7 +399,7 @@ export function registerBrandRoutes(app: Application, deps: BrandRoutesDeps): vo
         res.status(404).json({ error: 'brand not found' });
         return;
       }
-      abortActiveProgrammaticBrandExtraction(id);
+      await abortActiveProgrammaticBrandExtraction(id);
       const result = await extractBrandFromHtml({
         id,
         meta,

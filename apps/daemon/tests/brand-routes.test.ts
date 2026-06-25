@@ -528,6 +528,71 @@ describe('brand routes', () => {
     }
   });
 
+  it('does not downgrade a brand that finalizes while cancel aborts active extraction', async () => {
+    let prefetchStarted!: () => void;
+    const prefetchStartedPromise = new Promise<void>((resolve) => {
+      prefetchStarted = resolve;
+    });
+    let observedSignal: AbortSignal | null = null;
+    const prefetch = vi.fn((_url: string, brandDir: string, opts?: { signal?: AbortSignal }) => {
+      observedSignal = opts?.signal ?? null;
+      prefetchStarted();
+      return new Promise<PrefetchResult | null>((resolve) => {
+        observedSignal?.addEventListener(
+          'abort',
+          () => {
+            const metaPath = path.join(brandDir, 'meta.json');
+            const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
+            writeFileSync(
+              metaPath,
+              JSON.stringify({
+                ...meta,
+                status: 'ready',
+                error: undefined,
+                extractionTerminalError: undefined,
+                extractionTerminalRunId: undefined,
+              }),
+            );
+            resolve(null);
+          },
+          { once: true },
+        );
+      });
+    });
+    const getObservedSignal = () => {
+      if (!observedSignal) throw new Error('expected prefetch abort signal');
+      return observedSignal;
+    };
+    const server = await startBrandServer({
+      prefetch,
+      logoFallback: NO_LOGO_FALLBACK,
+      imageryFallback: NO_IMAGERY_FALLBACK,
+    });
+    try {
+      const started = await server.requestJson('/api/brands', {
+        method: 'POST',
+        body: { url: 'acme.com' },
+      });
+      expect(started.status).toBe(200);
+      await prefetchStartedPromise;
+      expect(getObservedSignal().aborted).toBe(false);
+
+      const cancel = await server.requestJson(`/api/brands/${started.body.id}/cancel-extraction`, {
+        method: 'POST',
+      });
+
+      expect(getObservedSignal().aborted).toBe(true);
+      expect(cancel.status).toBe(200);
+      expect(cancel.body).toEqual({ ok: true, status: 'ready' });
+      const meta = JSON.parse(readFileSync(path.join(brandsRoot, started.body.id, 'meta.json'), 'utf8'));
+      expect(meta.status).toBe('ready');
+      expect(meta.error).toBeUndefined();
+      expect(meta.extractionTerminalError).toBeUndefined();
+    } finally {
+      await server.close();
+    }
+  });
+
   it('keeps cancel terminal when browser HTML extraction is in flight', async () => {
     let prefetchStarted!: () => void;
     const prefetchStartedPromise = new Promise<void>((resolve) => {
