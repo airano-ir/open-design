@@ -190,7 +190,6 @@ import { DesignSystemPicker } from './DesignSystemPicker';
 import { PluginDetailsModal } from './PluginDetailsModal';
 import { DesignSystemPreviewModal } from './DesignSystemPreviewModal';
 import { ChatPane } from './ChatPane';
-import { SessionModeToggle } from './SessionModeToggle';
 import type { QuestionFormOpenRequest } from './AssistantMessage';
 import type { ChatSendMeta } from './ChatComposer';
 import {
@@ -6400,11 +6399,6 @@ export function ProjectView({
   // not in the top-right header.
   const executionControls = (
     <>
-      <SessionModeToggle
-        mode={activeSessionMode}
-        onChange={handleActiveConversationSessionModeChange}
-        disabled={currentConversationControlStreaming}
-      />
       <AvatarMenu
         config={config}
         agents={agents}
@@ -6800,6 +6794,7 @@ export function ProjectView({
       {contextDesignSystemDetails ? (
         <DesignSystemPreviewModal
           system={contextDesignSystemDetails}
+          initialViewId="kit"
           onClose={() => setContextDesignSystemDetails(null)}
         />
       ) : null}
