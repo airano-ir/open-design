@@ -312,6 +312,7 @@ interface Props {
   integrationInitialTab?: IntegrationTab;
   composioConfigLoading?: boolean;
   skillsLoading?: boolean;
+  newProjectLoading?: boolean;
   designSystemsLoading?: boolean;
   projectsLoading?: boolean;
   // Execution / model-switching context. Threaded down from `App` so the
@@ -444,6 +445,7 @@ export function EntryShell({
   integrationInitialTab = 'mcp',
   composioConfigLoading = false,
   skillsLoading = false,
+  newProjectLoading = skillsLoading,
   designSystemsLoading = false,
   projectsLoading = false,
   config,
@@ -574,18 +576,6 @@ export function EntryShell({
   function openNewProject(tab: CreateTab = 'prototype') {
     setNewProjectInitialTab(tab);
     setNewProjectOpen(true);
-  }
-
-  function startBlankProjectFromRail() {
-    setNewProjectOpen(false);
-    void Promise.resolve(onCreateProject({
-      name: t('common.untitled'),
-      skillId: null,
-      designSystemId: null,
-      metadata: { kind: 'other' },
-    })).catch((err) => {
-      console.warn('Failed to create blank project from entry rail', err);
-    });
   }
 
   function handleCreate(input: CreateInput) {
@@ -769,7 +759,7 @@ export function EntryShell({
         <EntryNavRail
           view={view}
           onViewChange={changeView}
-          onNewProject={startBlankProjectFromRail}
+          onNewProject={() => openNewProject()}
           open={railOpen}
           onClose={() => setRailOpen(false)}
         />
@@ -978,7 +968,7 @@ export function EntryShell({
         mediaProviders={config.mediaProviders}
         connectors={connectors}
         connectorsLoading={connectorsLoading}
-        loading={skillsLoading}
+        loading={newProjectLoading}
         onCreate={handleCreate}
         onImportClaudeDesign={onImportClaudeDesign}
         {...(onImportFolder ? { onImportFolder } : {})}

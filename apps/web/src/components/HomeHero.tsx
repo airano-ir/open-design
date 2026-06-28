@@ -8,7 +8,9 @@
 // without owning their data lifecycles.
 
 import {
+  Suspense,
   forwardRef,
+  lazy,
   useEffect,
   useImperativeHandle,
   useMemo,
@@ -93,11 +95,14 @@ import {
   type PlaceholderScenario,
 } from './home-hero/placeholderScenarios';
 import {
-  localTemplatePresetSearchText,
-  localTemplatePresetsForChip,
   type LocalTemplatePreset,
 } from './home-hero/local-template-presets';
-import { TemplatePreview } from './home-hero/TemplatePreview';
+
+const TemplatePreview = lazy(() =>
+  import('./home-hero/TemplatePreview').then((module) => ({
+    default: module.TemplatePreview,
+  })),
+);
 
 export interface HomeHeroSubmitHandler {
   (): void;
@@ -656,10 +661,28 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
     );
   }, [activeExamplePlugins, activeChipId, selectedSubcategory, pluginOptions]);
 
-  const activeLocalTemplatePresets = useMemo(
-    () => localTemplatePresetsForChip(activeChipId, locale, selectedSubcategory),
-    [activeChipId, locale, selectedSubcategory],
-  );
+  const [activeLocalTemplatePresets, setActiveLocalTemplatePresets] = useState<
+    LocalTemplatePreset[]
+  >([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (activeChipId !== 'social-card' && activeChipId !== 'diagram') {
+      setActiveLocalTemplatePresets([]);
+      return () => {
+        cancelled = true;
+      };
+    }
+    void import('./home-hero/local-template-presets').then((module) => {
+      if (cancelled) return;
+      setActiveLocalTemplatePresets(
+        module.localTemplatePresetsForChip(activeChipId, locale, selectedSubcategory),
+      );
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeChipId, locale, selectedSubcategory]);
 
   // First-run guide, beat 1: pulse the Prototype chip for brand-new users.
   // The settle delay lets the hero finish its entrance before the sheen.
@@ -1924,7 +1947,9 @@ function LocalTemplatePresets({
                 onClick={() => onPick(preset)}
               >
                 <span className="home-hero__plugin-preset-preview home-hero__local-preset-preview" aria-hidden>
-                  <TemplatePreview preset={preset} />
+                  <Suspense fallback={<TemplatePreviewFallback preset={preset} />}>
+                    <TemplatePreview preset={preset} />
+                  </Suspense>
                 </span>
                 <span className="home-hero__plugin-preset-title">
                   <span>{preset.title}</span>
@@ -1937,6 +1962,18 @@ function LocalTemplatePresets({
         <EdgeScrollZones {...edgeScroll} />
       </div>
     </div>
+  );
+}
+
+function TemplatePreviewFallback({ preset }: { preset: LocalTemplatePreset }) {
+  return (
+    <span
+      className={`tpl-preview tpl-preview--${preset.preview.kind}`}
+      data-layout={preset.preview.layout}
+      data-palette={preset.preview.palette}
+    >
+      <span className="tpl-preview__fallback" />
+    </span>
   );
 }
 
@@ -3308,6 +3345,20 @@ function homeHeroChipSearchText(
     ...promptTexts,
     localTemplatePresetSearchText(chipId, locale),
   ].join(' ');
+}
+
+function localTemplatePresetSearchText(chipId: string, locale: Locale): string {
+  if (chipId === 'social-card') {
+    return locale === 'zh-CN' || locale === 'zh-TW'
+      ? '社交卡片 海报 小红书 微信 朋友圈 公众号 X Twitter Threads LinkedIn Instagram YouTube Reddit Product Hunt 信息图 金句 数据卡 轮播 封面'
+      : 'social card poster x twitter threads linkedin instagram youtube reddit product hunt wechat rednote carousel quote metric data card thumbnail story cover';
+  }
+  if (chipId === 'diagram') {
+    return locale === 'zh-CN' || locale === 'zh-TW'
+      ? '图表 架构图 流程图 时序图 状态机 矩阵 RAG agent loop 数据流 系统架构 技术图'
+      : 'diagram architecture flowchart sequence state machine matrix rag agent loop data flow system architecture technical graph';
+  }
+  return '';
 }
 
 export function homeHeroExamplePluginsForChip(
