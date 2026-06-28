@@ -93,7 +93,7 @@ If you would rather skip the GUI entirely and call Open Design as a skill or MCP
 
 ```bash
 od mcp install <agent>
-# <agent> = claude | codex | cursor | copilot | gemini | opencode | …
+# od ships with Open Design; <agent> = claude | codex | cursor | copilot | gemini | opencode | …
 ```
 
 Then, inside the agent, just ask: `Use open-design to generate a landing page with the Airbnb design system`.

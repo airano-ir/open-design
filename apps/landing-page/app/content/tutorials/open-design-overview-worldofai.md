@@ -75,7 +75,7 @@ Then open the local URL it prints (the port is assigned dynamically — copy the
 
 ```bash
 od mcp install <agent>
-# <agent> = claude | codex | cursor | copilot | gemini | opencode | …
+# od ships with Open Design; <agent> = claude | codex | cursor | copilot | gemini | opencode | …
 ```
 
 The first launch opens the welcome daemon, where you configure the basics: pick a default agent and model (the app auto-detects local CLIs, or plug in an OpenAI-compatible key), optionally add media-provider keys for image/video/audio, and wire up any MCP services. Save, get started, then create a prototype — give it a name, choose **High fidelity** over wireframe, and write your brief. The agent asks a few clarifying questions (platform, article angle, design direction), plans its work, reads the design system, and builds the artifact. In WorldofAI's run, Codex produced a clean newsletter landing page in about five minutes — billed against his own Codex plan, routed entirely through Open Design's skills.

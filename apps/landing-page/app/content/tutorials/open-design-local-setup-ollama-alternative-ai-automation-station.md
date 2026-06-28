@@ -69,7 +69,7 @@ To drive Open Design from the terminal — calling it as a skill or MCP server i
 
 ```bash
 od mcp install <agent>
-# <agent> = claude | codex | cursor | copilot | gemini | opencode | …
+# od ships with Open Design; <agent> = claude | codex | cursor | copilot | gemini | opencode | …
 ```
 
 Then ask, inside the agent: `Use open-design to generate a dense analytics dashboard with the Airbnb design system`.
