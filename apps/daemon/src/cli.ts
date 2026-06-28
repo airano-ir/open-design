@@ -1430,14 +1430,20 @@ function exitWithStructuredError({ code, message, data }) {
 // would drop the only diagnostic the daemon actually returned to a
 // headless caller.
 async function structuredHttpFailure(resp, fallbackCode = 'daemon-not-running') {
+  let raw = '';
   let parsed;
-  try { parsed = await resp.json(); } catch { parsed = {}; }
+  try {
+    raw = await resp.text();
+    parsed = raw ? JSON.parse(raw) : {};
+  } catch {
+    parsed = {};
+  }
   const errorObj =
     typeof parsed?.error === 'string'
       ? { message: parsed.error }
       : parsed?.error;
   const errCode = normalizeRecoverableErrorCode(errorObj?.code, errorObj?.message);
-  if (errCode && errCode in RECOVERABLE_EXIT_CODES) {
+  if (errCode) {
     exitWithStructuredError({
       code:    errCode,
       message: errorObj?.message ?? `HTTP ${resp.status}`,
@@ -1446,7 +1452,7 @@ async function structuredHttpFailure(resp, fallbackCode = 'daemon-not-running') 
   }
   exitWithStructuredError({
     code:    fallbackCode,
-    message: errorObj?.message ?? `HTTP ${resp.status}: ${await resp.text().catch(() => '')}`,
+    message: errorObj?.message ?? `HTTP ${resp.status}${raw ? `: ${raw}` : ''}`,
     data:    structuredErrorData(errorObj),
   });
 }
@@ -3608,8 +3614,8 @@ async function runPluginDuplicate(rest) {
       message: `Cannot reach daemon at ${await pluginDaemonUrl(flags)}: ${err?.message ?? err}`,
     });
   }
-  const data = await resp.json().catch(() => ({}));
   if (!resp.ok) return structuredHttpFailure(resp);
+  const data = await resp.json().catch(() => ({}));
   if (flags.json) {
     process.stdout.write(JSON.stringify(data, null, 2) + '\n');
     return;

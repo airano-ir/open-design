@@ -109,6 +109,23 @@ async function runCli(
   }) as { stdout: string; stderr: string };
 }
 
+async function runCliResult(
+  args: string[],
+  options: { timeout?: number } = {},
+): Promise<{ stdout: string; stderr: string; code: number | null }> {
+  try {
+    const { stdout, stderr } = await runCli(args, options);
+    return { stdout, stderr, code: 0 };
+  } catch (err) {
+    const failed = err as { stdout?: string; stderr?: string; code?: number | null };
+    return {
+      stdout: failed.stdout ?? '',
+      stderr: failed.stderr ?? '',
+      code: failed.code ?? 1,
+    };
+  }
+}
+
 async function readSseUntilSuccess(resp: Response) {
   if (!resp.body) throw new Error('install: no body');
   const reader = resp.body.getReader();
@@ -247,6 +264,23 @@ describe('Plan §8 e2e-3 (entry slice) — headless install → project → run'
     expect(body.error).toMatchObject({
       code: 'UNSUPPORTED_DUPLICATE_DEPENDENCIES',
     });
+    expect(body.error?.message).toContain('../open-design-landing/assets/hero.png');
+  });
+
+  it('surfaces duplicate daemon errors through CLI structured stderr', async () => {
+    const result = await runCliResult([
+      'plugin',
+      'duplicate',
+      'example-open-design-landing-deck',
+      '--json',
+    ]);
+
+    expect(result.code).toBe(1);
+    expect(result.stdout).toBe('');
+    const body = JSON.parse(result.stderr.trim()) as {
+      error?: { code?: string; message?: string };
+    };
+    expect(body.error?.code).toBe('UNSUPPORTED_DUPLICATE_DEPENDENCIES');
     expect(body.error?.message).toContain('../open-design-landing/assets/hero.png');
   });
 
