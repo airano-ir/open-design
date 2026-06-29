@@ -6,6 +6,7 @@ import { promisify } from "node:util";
 
 import { hashJson, hashPath, type CacheNode, ToolPackCache } from "../cache.js";
 import type { ToolPackConfig } from "../config.js";
+import { domToPptxBundleResource } from "../dom-to-pptx-resource.js";
 import { winResources } from "../resources.js";
 import { electronBuilderVersionForAppVersion, versionCoreForAppVersion } from "../versions.js";
 import {
@@ -191,10 +192,7 @@ async function runElectronBuilderRaw(
       { from: paths.packagedConfigPath, to: "open-design-config.json" },
       // Vendored dom-to-pptx browser bundle for editable PPTX export (read from
       // process.resourcesPath by the desktop main at runtime).
-      {
-        from: join(process.cwd(), "apps/desktop/vendor/dom-to-pptx/dom-to-pptx.bundle.js"),
-        to: "dom-to-pptx.bundle.js",
-      },
+      domToPptxBundleResource(config),
     ],
     files: [...ELECTRON_BUILDER_FILE_PATTERNS],
     forceCodeSigning: false,
