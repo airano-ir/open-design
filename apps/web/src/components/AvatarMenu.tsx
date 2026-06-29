@@ -21,7 +21,10 @@ import {
   type VelaLoginStatus,
 } from '../providers/daemon';
 import { isMacPlatform } from '../utils/platform';
-import { amrPlansUrlForProfile } from '../runtime/amr-guidance';
+import {
+  amrConsoleUrlForProfile,
+  amrPlansUrlForProfile,
+} from '../runtime/amr-guidance';
 
 interface Props {
   config: AppConfig;
@@ -205,9 +208,22 @@ export function AvatarMenu({
   const amrBalanceLabel = amrAccount?.loggedIn
     ? formatVelaBalanceUsd(amrAccount.account?.balanceUsd)
     : null;
+  const amrConsoleUrl = amrConsoleUrlForProfile(amrProfile);
   const amrCanUpgrade =
     !!amrAccount?.loggedIn && canUpgradeVelaPlan(amrAccount.account?.plan);
   const amrPlansUrl = amrPlansUrlForProfile(amrProfile);
+  const handleAmrConsoleClick = (event: ReactMouseEvent<HTMLAnchorElement>) => {
+    const attribution = recordAmrEntry(analytics.track, 'avatar_amr_console', new Date(), {
+      metricsConsent: config.telemetry?.metrics === true,
+    });
+    const deviceId = amrHandoffDeviceId({
+      metricsConsent: config.telemetry?.metrics === true,
+      resolvedDeviceId: getResolvedDeviceId(),
+      installationId: config.installationId,
+    });
+    event.currentTarget.href = attributedAmrUrl(amrConsoleUrl, attribution, deviceId);
+    setOpen(false);
+  };
   const handleAmrUpgradeClick = (event: ReactMouseEvent<HTMLAnchorElement>) => {
     const attribution = recordAmrEntry(analytics.track, 'avatar_amr_upgrade', new Date(), {
       metricsConsent: config.telemetry?.metrics === true,
@@ -443,6 +459,19 @@ export function AvatarMenu({
                           ) : null}
                         </span>
                       </button>
+                      {amrAccount?.loggedIn ? (
+                        <a
+                          className="avatar-amr-row__console"
+                          href={amrConsoleUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={t('avatar.amrConsole')}
+                          title={t('avatar.amrConsoleMeta')}
+                          onClick={handleAmrConsoleClick}
+                        >
+                          <RemixIcon name="wallet-3-line" size={14} />
+                        </a>
+                      ) : null}
                       {amrCanUpgrade ? (
                         <a
                           className="avatar-amr-row__upgrade"

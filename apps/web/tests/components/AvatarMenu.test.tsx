@@ -262,6 +262,18 @@ describe('AvatarMenu', () => {
       '$247.51',
     );
 
+    const consoleLink = screen.getByRole('link', {
+      name: 'avatar.amrConsole',
+    }) as HTMLAnchorElement;
+    fireEvent.click(consoleLink);
+    const consoleUrl = new URL(consoleLink.href);
+    expect(consoleUrl.searchParams.get('view')).toBeNull();
+    expect(consoleUrl.searchParams.get('od_entry_source')).toBe('avatar_amr_console');
+    expect(consoleUrl.searchParams.get('source')).toBe('open_design');
+    expect(consoleUrl.searchParams.get('od_device_id')).toBe('od-install-abc');
+
+    openMenu();
+    expect(await screen.findByText('Plus')).toBeTruthy();
     const upgrade = screen.getByRole('link', {
       name: 'settings.amrUpgrade',
     }) as HTMLAnchorElement;
@@ -269,6 +281,60 @@ describe('AvatarMenu', () => {
     const url = new URL(upgrade.href);
     expect(url.searchParams.get('view')).toBe('plans');
     expect(url.searchParams.get('od_entry_source')).toBe('avatar_amr_upgrade');
+    expect(url.searchParams.get('source')).toBe('open_design');
+    expect(url.searchParams.get('od_device_id')).toBe('od-install-abc');
+  });
+
+  it('keeps the avatar AMR console link for non-upgradeable plans', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = input.toString();
+      if (url === '/api/integrations/vela/status') {
+        return new Response(
+          JSON.stringify({
+            loggedIn: true,
+            loginInFlight: false,
+            profile: 'test',
+            user: { id: 'u1', email: 'a@b.c' },
+            account: { plan: 'max', balanceUsd: '247.5087' },
+            configPath: '/Users/test/.amr/config.json',
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        );
+      }
+      return new Response('{}', { status: 202 });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderMenu({
+      config: {
+        ...baseConfig,
+        agentId: 'amr',
+        telemetry: { metrics: true },
+        installationId: 'od-install-abc',
+        agentCliEnv: { amr: { OPEN_DESIGN_AMR_PROFILE: 'test' } },
+      },
+      agents: [
+        {
+          id: 'amr',
+          name: 'Open Design AMR',
+          bin: 'vela',
+          available: true,
+          models: [{ id: 'default', label: 'Default (CLI config)' }],
+        },
+      ],
+    });
+
+    openMenu();
+    expect(await screen.findByText('Max')).toBeTruthy();
+    expect(screen.queryByRole('link', { name: 'settings.amrUpgrade' })).toBeNull();
+
+    const consoleLink = screen.getByRole('link', {
+      name: 'avatar.amrConsole',
+    }) as HTMLAnchorElement;
+    fireEvent.click(consoleLink);
+    const url = new URL(consoleLink.href);
+    expect(url.searchParams.get('view')).toBeNull();
+    expect(url.searchParams.get('od_entry_source')).toBe('avatar_amr_console');
     expect(url.searchParams.get('source')).toBe('open_design');
     expect(url.searchParams.get('od_device_id')).toBe('od-install-abc');
   });
