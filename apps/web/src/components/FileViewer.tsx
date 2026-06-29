@@ -7761,9 +7761,8 @@ function HtmlViewer({
   // PPTX export is slide-based, so show it only for explicit decks plus
   // structured deck runtimes. Do not key this off plain `.slide`: ordinary
   // parallax/long pages may use that class but must remain page-mode exports.
-  const hostExportAvailable = isOpenDesignHostAvailable();
   const showPptxExport = canShare && deckExportSignal;
-  const canPptx = showPptxExport && !streaming && hostExportAvailable;
+  const canPptx = showPptxExport && !streaming;
   const showMarkdownExport = source !== null && isMarkdownArtifact;
   const showImageExport = canShare;
 
@@ -9145,9 +9144,7 @@ function HtmlViewer({
                       title={
                         streaming
                           ? t('fileViewer.exportPptxBusy')
-                          : hostExportAvailable
-                            ? t('fileViewer.exportPptxHint')
-                            : t('fileViewer.exportPptxNa')
+                          : t('fileViewer.exportPptxHint')
                       }
                       onClick={() => {
                         setDownloadMenuOpen(false);

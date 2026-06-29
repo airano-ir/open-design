@@ -2594,7 +2594,7 @@ describe('FileViewer SVG artifacts', () => {
     expect(downloadItems).toContain('Export as PPTX');
   });
 
-  it('opens a PPTX mode dialog and defaults to editable export', async () => {
+  it('opens a PPTX mode dialog in a browser and defaults to editable export', async () => {
     const originalCreateObjectUrl = URL.createObjectURL;
     const originalRevokeObjectUrl = URL.revokeObjectURL;
     Object.defineProperty(URL, 'createObjectURL', {
@@ -2606,7 +2606,6 @@ describe('FileViewer SVG artifacts', () => {
       value: vi.fn(),
     });
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
-    const restoreHost = installMockOpenDesignHost();
     const fetchMock = vi.fn(async () => new Response('PK-editable-pptx', { status: 200 }));
     vi.stubGlobal('fetch', fetchMock);
     const file = baseFile({
@@ -2662,7 +2661,6 @@ describe('FileViewer SVG artifacts', () => {
         );
       });
     } finally {
-      restoreHost();
       if (originalCreateObjectUrl) {
         Object.defineProperty(URL, 'createObjectURL', {
           configurable: true,
