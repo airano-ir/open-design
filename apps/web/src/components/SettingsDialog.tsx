@@ -2377,13 +2377,6 @@ export function SettingsDialog({
       model: 'step-2-mini',
     },
     {
-      id: 'bedrock',
-      title: 'AWS Bedrock',
-      protocol: 'bedrock',
-      baseUrl: 'https://bedrock-runtime.us-east-1.amazonaws.com',
-      model: 'anthropic.claude-3-5-sonnet-20241022-v2:0',
-    },
-    {
       id: 'deepseek',
       title: 'DeepSeek',
       protocol: 'openai',

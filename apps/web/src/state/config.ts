@@ -239,21 +239,6 @@ export const KNOWN_PROVIDERS: KnownProvider[] = [
     models: ['step-2-mini', 'step-1-8k', 'step-1-32k'],
   },
   {
-    label: 'AWS Bedrock',
-    protocol: 'bedrock',
-    baseUrl: 'https://bedrock-runtime.us-east-1.amazonaws.com',
-    model: 'anthropic.claude-3-5-sonnet-20241022-v2:0',
-    models: [
-      'anthropic.claude-3-5-sonnet-20241022-v2:0',
-      'anthropic.claude-3-5-haiku-20241022-v1:0',
-      'anthropic.claude-3-haiku-20240307-v1:0',
-      'amazon.nova-pro-v1:0',
-      'amazon.nova-lite-v1:0',
-      'amazon.nova-micro-v1:0',
-    ],
-    requiresApiKey: false,
-  },
-  {
     label: 'DeepSeek — OpenAI',
     protocol: 'openai',
     baseUrl: 'https://api.deepseek.com',
