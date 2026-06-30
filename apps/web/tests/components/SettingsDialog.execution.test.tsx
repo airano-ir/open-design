@@ -2000,6 +2000,56 @@ describe('SettingsDialog execution settings Local CLI interactions', () => {
     vi.unstubAllGlobals();
   });
 
+  it('pins Open Design to the top of the installed CLI list', () => {
+    const claudeAgent: AgentInfo = {
+      id: 'claude',
+      name: 'Claude Code',
+      bin: 'claude',
+      available: true,
+      version: '2.1.196',
+      models: [{ id: 'default', label: 'Default' }],
+    };
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = input.toString();
+      if (url === '/api/memory') {
+        return new Response(
+          JSON.stringify({ enabled: true, memories: [], extraction: null }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        );
+      }
+      if (url === '/api/integrations/vela/status') {
+        return new Response(
+          JSON.stringify({
+            loggedIn: false,
+            loginInFlight: false,
+            profile: 'local',
+            user: null,
+            configPath: '/Users/test/.amr/config.json',
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        );
+      }
+      return new Response('{}', { status: 200 });
+    }));
+
+    renderSettingsDialog(
+      { mode: 'daemon', agentId: 'codex' },
+      { agents: [availableAgents[0]!, claudeAgent, amrAgent] },
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: /Local CLI.*3 installed/i }));
+
+    expect(
+      screen
+        .getAllByTestId(/^settings-agent-card-/)
+        .map((card) => card.getAttribute('data-testid')),
+    ).toEqual([
+      'settings-agent-card-amr',
+      'settings-agent-card-codex',
+      'settings-agent-card-claude',
+    ]);
+  });
+
   it('lets users switch to Local CLI, select an installed agent, and autosave', async () => {
     const installed = availableAgents[0]!;
     const unavailable: AgentInfo = {
@@ -2817,6 +2867,69 @@ describe('SettingsDialog execution settings Local CLI interactions', () => {
     expect(screen.queryByText(/^vela$/i)).toBeNull();
   });
 
+<<<<<<< HEAD
+=======
+  it('shows the Settings AMR wallet fallback balance for old Vela CLI status payloads', async () => {
+    let walletCalls = 0;
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = input.toString();
+      if (url === '/api/memory') {
+        return new Response(
+          JSON.stringify({ enabled: true, memories: [], extraction: null }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        );
+      }
+      if (url === '/api/integrations/vela/status') {
+        return new Response(
+          JSON.stringify({
+            loggedIn: true,
+            profile: 'local',
+            user: {
+              id: 'user-1',
+              email: 'signed-in@example.com',
+              name: 'Signed In User',
+            },
+            configPath: '/Users/test/.amr/config.json',
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        );
+      }
+      if (url === '/api/integrations/vela/wallet' || url === '/api/integrations/vela/wallet?refresh=1') {
+        walletCalls += 1;
+        return new Response(
+          JSON.stringify({
+            status: 'available',
+            profile: 'local',
+            user: { id: 'user-1', email: 'signed-in@example.com' },
+            balanceUsd: '1.0000',
+            updatedAt: '2026-06-29T08:00:00.000Z',
+            fetchedAt: '2026-06-29T08:00:01.000Z',
+            stale: false,
+            source: 'vela_api',
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        );
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderSettingsDialog(
+      { mode: 'daemon', agentId: 'amr' },
+      { agents: [amrAgent] },
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: /Local CLI.*1 installed/i }));
+
+    expect(await screen.findByText('$1.00')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Refresh AMR wallet balance' })).toBeNull();
+    expect(walletCalls).toBe(1);
+    expect(fetchMock).toHaveBeenCalledWith('/api/integrations/vela/wallet', {
+      cache: 'no-store',
+    });
+  });
+
+>>>>>>> bb3d826c6 (Refine Open Design CLI picker controls (#4928))
   it('renders env-backed AMR login inside Settings without fabricating account details', async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = input.toString();

@@ -6,6 +6,7 @@ import { useAnalytics } from '../analytics/provider';
 import { useT } from '../i18n';
 import { AgentIcon } from './AgentIcon';
 import { RemixIcon } from './RemixIcon';
+import { orderAgentsWithOpenDesignFirst } from './agentOrdering';
 import { SearchableModelSelect } from './modelOptions';
 import type { AgentInfo, AppConfig, ExecMode, ProviderModelOption } from '../types';
 import { SUGGESTED_MODELS_BY_PROTOCOL } from '../state/apiProtocols';
@@ -14,7 +15,13 @@ import { mergeProviderModelOptions, providerModelsCacheKey } from './SettingsDia
 import { apiProtocolLabel } from '../utils/apiProtocol';
 import { fetchProviderModels } from '../providers/provider-models';
 import { isMacPlatform } from '../utils/platform';
+<<<<<<< HEAD
 import { amrConsoleUrlForProfile } from '../runtime/amr-guidance';
+=======
+import {
+  amrPlansUrlForProfile,
+} from '../runtime/amr-guidance';
+>>>>>>> bb3d826c6 (Refine Open Design CLI picker controls (#4928))
 
 interface Props {
   config: AppConfig;
@@ -159,14 +166,76 @@ export function AvatarMenu({
     [agents, config.agentId],
   );
 
+<<<<<<< HEAD
   const installedAgents = agents.filter((a) => a.available);
+=======
+  const installedAgents = orderAgentsWithOpenDesignFirst(
+    agents.filter((a) => a.available),
+  );
+>>>>>>> bb3d826c6 (Refine Open Design CLI picker controls (#4928))
   const amrAvailable = installedAgents.some((a) => a.id === 'amr');
   const showAmrAccountShortcut =
     config.mode === 'daemon' && currentAgent?.id === 'amr' && amrAvailable;
   const amrProfile = config.agentCliEnv?.amr?.OPEN_DESIGN_AMR_PROFILE;
+<<<<<<< HEAD
   const amrConsoleUrl = amrConsoleUrlForProfile(amrProfile);
   const handleAmrConsoleClick = (event: ReactMouseEvent<HTMLAnchorElement>) => {
     const attribution = recordAmrEntry(analytics.track, 'avatar_amr_console', new Date(), {
+=======
+
+  // Fetch the live account (plan tier + wallet balance) when the popover opens,
+  // whenever the Open Design runtime is installed — so the Open Design agent row
+  // can show the real plan/balance even when another agent is currently active.
+  const [amrAccount, setAmrAccount] = useState<VelaLoginStatus | null>(null);
+  const [amrWalletSnapshot, setAmrWalletSnapshot] =
+    useState<AmrWalletSnapshot | null>(null);
+  useEffect(() => {
+    if (!open || !amrAvailable) {
+      setAmrAccount(null);
+      setAmrWalletSnapshot(null);
+      return;
+    }
+    let cancelled = false;
+    setAmrAccount(null);
+    setAmrWalletSnapshot(null);
+    void fetchVelaLoginStatus()
+      .then(async (status) => {
+        if (cancelled) return;
+        setAmrAccount(status);
+        if (status?.loggedIn && !formatVelaBalanceUsd(status.account?.balanceUsd)) {
+          const wallet = await fetchAmrWalletSnapshot();
+          if (!cancelled) setAmrWalletSnapshot(wallet);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setAmrAccount(null);
+          setAmrWalletSnapshot(null);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, amrAvailable]);
+  const amrPlanTrimmed = amrAccount?.loggedIn
+    ? amrAccount.account?.plan?.trim() || ''
+    : '';
+  const amrPlanDisplay = amrPlanTrimmed
+    ? amrPlanTrimmed.charAt(0).toUpperCase() + amrPlanTrimmed.slice(1)
+    : null;
+  const amrBalanceLabel = amrAccount?.loggedIn
+    ? formatVelaBalanceUsd(amrAccount.account?.balanceUsd) ??
+      (amrWalletSnapshot?.status === 'available'
+        ? formatVelaBalanceUsd(amrWalletSnapshot.balanceUsd)
+        : null)
+    : null;
+  const amrResolvedProfile = amrAccount?.profile ?? amrProfile;
+  const amrCanUpgrade =
+    !!amrAccount?.loggedIn && canUpgradeVelaPlan(amrAccount.account?.plan);
+  const amrPlansUrl = amrPlansUrlForProfile(amrResolvedProfile);
+  const handleAmrUpgradeClick = (event: ReactMouseEvent<HTMLAnchorElement>) => {
+    const attribution = recordAmrEntry(analytics.track, 'avatar_amr_upgrade', new Date(), {
+>>>>>>> bb3d826c6 (Refine Open Design CLI picker controls (#4928))
       metricsConsent: config.telemetry?.metrics === true,
     });
     const deviceId = amrHandoffDeviceId({
@@ -174,11 +243,15 @@ export function AvatarMenu({
       resolvedDeviceId: getResolvedDeviceId(),
       installationId: config.installationId,
     });
+<<<<<<< HEAD
     event.currentTarget.href = attributedAmrUrl(
       amrConsoleUrl,
       attribution,
       deviceId,
     );
+=======
+    event.currentTarget.href = attributedAmrUrl(amrPlansUrl, attribution, deviceId);
+>>>>>>> bb3d826c6 (Refine Open Design CLI picker controls (#4928))
     setOpen(false);
   };
 
@@ -378,6 +451,69 @@ export function AvatarMenu({
               <div className="avatar-section-label">{t('avatar.codeAgent')}</div>
               {installedAgents.map((a) => {
                 const selected = config.agentId === a.id;
+<<<<<<< HEAD
+=======
+                // Open Design row carries the account (balance + plan) inline,
+                // plus Upgrade and Console actions, so it is a container rather
+                // than a single select button (which can't nest buttons/links).
+                if (a.id === 'amr') {
+                  return (
+                    <div
+                      key={a.id}
+                      className={`avatar-item avatar-amr-row${selected ? ' active' : ''}`}
+                      data-testid={`avatar-agent-option-${a.id}`}
+                    >
+                      <button
+                        type="button"
+                        className="avatar-amr-row__select"
+                        aria-current={selected ? 'true' : undefined}
+                        onClick={() => {
+                          recordAmrEntry(
+                            analytics.track,
+                            'avatar_amr_agent_card',
+                            new Date(),
+                            { metricsConsent: config.telemetry?.metrics === true },
+                          );
+                          onAgentChange('amr');
+                        }}
+                      >
+                        <AgentIcon id="amr" size={24} />
+                        <span className="avatar-amr-row__text">
+                          <span className="avatar-amr-row__name-row">
+                            <span className="avatar-amr-row__name">
+                              {displayAgentName(a)}
+                            </span>
+                            <PlanBadge plan={amrPlanDisplay} size="md" />
+                          </span>
+                          {amrBalanceLabel ? (
+                            <span className="avatar-amr-row__subtitle">
+                              <span className="avatar-amr-row__stat">
+                                <span className="avatar-amr-row__stat-label">
+                                  {t('settings.amrBalance')}
+                                </span>
+                                <span className="avatar-amr-row__stat-value">
+                                  {amrBalanceLabel}
+                                </span>
+                              </span>
+                            </span>
+                          ) : null}
+                        </span>
+                      </button>
+                      {amrCanUpgrade ? (
+                        <a
+                          className="avatar-amr-row__upgrade"
+                          href={amrPlansUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={handleAmrUpgradeClick}
+                        >
+                          {t('settings.amrUpgrade')}
+                        </a>
+                      ) : null}
+                    </div>
+                  );
+                }
+>>>>>>> bb3d826c6 (Refine Open Design CLI picker controls (#4928))
                 return (
                   <button
                     type="button"

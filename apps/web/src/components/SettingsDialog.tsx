@@ -40,6 +40,11 @@ import type { Dict } from '../i18n/types';
 import { AgentIcon } from './AgentIcon';
 import { AgentDiagnosticRow } from './AgentDiagnosticRow';
 import { AmrLoginPill } from './AmrLoginPill';
+<<<<<<< HEAD
+=======
+import { PlanBadge } from './PlanBadge';
+import { orderAgentsWithOpenDesignFirst } from './agentOrdering';
+>>>>>>> bb3d826c6 (Refine Open Design CLI picker controls (#4928))
 import {
   AMR_LOGIN_STATUS_EVENT,
   amrLoginStatusEventReason,
@@ -3370,7 +3375,9 @@ export function SettingsDialog({
     about: { title: t('settings.about'), subtitle: t('settings.aboutHint') },
   };
   const activeHeader = sectionHeader[activeSection];
-  const installedAgents = agents.filter((a) => a.available);
+  const installedAgents = orderAgentsWithOpenDesignFirst(
+    agents.filter((a) => a.available),
+  );
   const unavailableAgents = agents.filter((a) => !a.available);
   const initialAgentScanRunning = agentsLoading && agents.length === 0;
   const agentModelOptionLabel = (
