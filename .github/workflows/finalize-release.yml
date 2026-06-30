@@ -1,6 +1,5 @@
 name: finalize-release
-# Post-publish bookend to cut-release.yml. When a STABLE GitHub Release
-# (open-design-vX.Y.Z) is published, this finalizes the release:
+# Post-publish bookend to cut-release.yml. When a STABLE release ships, this:
 #   1. Deletes the now-obsolete "backport release/vX.Y.Z" label — a shipped
 #      release takes no more backports, so the label only invites mistakes.
 #   2. Opens a PR bumping main's synchronized workspace versions to X.Y.(Z+1),
@@ -9,29 +8,32 @@ name: finalize-release
 #      arms it for the merge queue (gh pr merge --auto enqueues on green), and
 #      requests a @nexu-io/core-maintainers review.
 #
-# Why this PR still needs ONE human approval (unlike backport-automerge /
-# bake-plugin-previews-automerge, which merge bot PRs hands-free): main enforces
-# require_code_owner_review, and the bump touches CODEOWNERS-owned release
-# manifests (apps/packaged, apps/desktop, packages/platform, packages/sidecar*,
-# tools/pack, tools/dev). A bot approval cannot satisfy the code-owner gate, so
-# a core-maintainer must approve. Once they do, the armed merge queue squashes it
-# in automatically — no manual file editing, label cleanup, or enqueue. (release/v*
-# has require_code_owner_review=false, which is why backports CAN auto-approve.)
+# Trigger: workflow_run on release-stable completing — NOT `release: published`.
+# release-stable.yml promotes its own draft to published with `gh release edit
+# --draft=false` using GITHUB_TOKEN, and a release event minted by GITHUB_TOKEN
+# does not trigger other workflows (GitHub's loop guard). So we react to the
+# build finishing instead, exactly like backport-automerge / bake-plugin-
+# previews-automerge react to ci. The "was this a real publish?" signal is
+# authoritative: a real run leaves the open-design-vX.Y.Z release published
+# (draft=false); a dry-run (metadata/prepublish) does not, so finalize no-ops.
 #
-# Only release-stable.yml creates a GitHub Release; prerelease/preview/beta
-# publish to R2 only and never fire this. The job `if` still guards on the
-# open-design-vX.Y.Z tag shape and !prerelease so a stray release can't trip it.
-#
-# release-stable.yml creates the Release as a DRAFT; publishing the draft (after
-# the owner writes the real release note) is the moment this runs.
+# Why the bump PR still needs ONE human approval (unlike the other automerge
+# bots, which merge hands-free): main enforces require_code_owner_review, and the
+# bump touches CODEOWNERS-owned release manifests (apps/packaged, apps/desktop,
+# packages/platform, packages/sidecar*, tools/pack, tools/dev). A bot approval
+# can't satisfy the code-owner gate, so a core-maintainer must approve. Once they
+# do, the armed merge queue squashes it in automatically — no manual file editing,
+# label cleanup, or enqueue. (release/v* has require_code_owner_review=false,
+# which is why backports CAN auto-approve.)
 
 on:
-  release:
-    types: [published]
+  workflow_run:
+    workflows: ["release-stable"]
+    types: [completed]
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Stable release tag, e.g. open-design-v0.12.0'
+        description: 'Stable release tag to finalize, e.g. open-design-v0.12.0'
         required: true
         default: ''
 
@@ -43,8 +45,8 @@ jobs:
     if: >-
       github.repository == 'nexu-io/open-design' &&
       (github.event_name == 'workflow_dispatch' ||
-       (github.event.release.prerelease == false &&
-        startsWith(github.event.release.tag_name, 'open-design-v')))
+       (github.event.workflow_run.conclusion == 'success' &&
+        startsWith(github.event.workflow_run.head_branch, 'release/v')))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/create-github-app-token@v2
@@ -53,39 +55,66 @@ jobs:
           app-id: ${{ secrets.RELEASE_BOT_APP_ID }}
           private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
 
-      - name: Resolve + validate the shipped version
+      - name: Resolve the shipped version (and confirm it really published)
         id: ver
         env:
-          # Never interpolate the raw tag into the shell; pass via env and validate.
-          RAW_TAG: ${{ github.event.release.tag_name || inputs.tag }}
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          EVENT: ${{ github.event_name }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          INPUT_TAG: ${{ inputs.tag }}
         run: |
           set -euo pipefail
-          ver="${RAW_TAG#open-design-v}"
-          # Strict x.y.z, digits only — rejects prerelease/preview tags, shell metacharacters, etc.
+          # workflow_dispatch -> the tag input; workflow_run -> the release branch it built.
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            ver="${INPUT_TAG#open-design-v}"
+          else
+            ver="${HEAD_BRANCH#release/v}"
+          fi
           if ! printf '%s' "$ver" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo "::error::Tag '$RAW_TAG' is not a stable open-design-vX.Y.Z tag; nothing to finalize."
+            echo "::error::Could not resolve a stable X.Y.Z version (event=$EVENT, branch='$HEAD_BRANCH', tag='$INPUT_TAG')."
             exit 1
+          fi
+          tag="open-design-v$ver"
+          # Real-publish gate: release-stable only flips the release to published (draft=false)
+          # on a real run. A dry-run (metadata/prepublish) leaves no published release, so a
+          # build that "succeeded" as a dry-run must NOT finalize. This is the authoritative
+          # discriminator — not the build conclusion alone.
+          state=$(gh release view "$tag" --repo nexu-io/open-design --json isDraft,isPrerelease 2>/dev/null || echo '')
+          if [ -z "$state" ]; then
+            echo "No release $tag (dry-run, failed publish, or not shipped) — nothing to finalize."
+            echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          draft=$(printf '%s' "$state" | jq -r '.isDraft')
+          pre=$(printf '%s' "$state" | jq -r '.isPrerelease')
+          if [ "$draft" != "false" ] || [ "$pre" != "false" ]; then
+            echo "$tag is draft=$draft prerelease=$pre — not a published stable; skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
           major=${ver%%.*}; rest=${ver#*.}; minor=${rest%%.*}; patch=${rest##*.}
           next="${major}.${minor}.$((patch+1))"
           {
+            echo "skip=false"
             echo "version=$ver"
             echo "next=$next"
             echo "branch=release-bot/bump-main-v$next"
           } >> "$GITHUB_OUTPUT"
           echo "Shipped stable v$ver -> bump main to v$next"
 
-      - uses: actions/checkout@v4
+      - name: Checkout main
+        if: steps.ver.outputs.skip != 'true'
+        uses: actions/checkout@v4
         with:
           ref: main            # we bump main, regardless of which ref the release tag points at
           fetch-depth: 0
           token: ${{ steps.app.outputs.token }}
 
       - uses: actions/setup-node@v4
+        if: steps.ver.outputs.skip != 'true'
         with:
           node-version: 24
 
       - name: Delete the shipped release's backport label
+        if: steps.ver.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}
           VERSION: ${{ steps.ver.outputs.version }}
@@ -101,13 +130,14 @@ jobs:
 
       - name: Bump main's synchronized workspace versions
         id: bump
+        if: steps.ver.outputs.skip != 'true'
         env:
           NEXT: ${{ steps.ver.outputs.next }}
         run: |
           set -euo pipefail
           current=$(node -p "require('./package.json').version")
           # Idempotency: only ever move main forward. If main is already at or ahead
-          # of NEXT (re-publish, or a later cut already moved it), do nothing.
+          # of NEXT (re-run, or a later cut already moved it), do nothing.
           lower=$(printf '%s\n%s\n' "$current" "$NEXT" | sort -V | head -1)
           if [ "$current" = "$NEXT" ] || [ "$lower" = "$NEXT" ]; then
             echo "main is at $current (>= $NEXT); no bump needed."
@@ -132,7 +162,7 @@ jobs:
           echo "changed=true" >> "$GITHUB_OUTPUT"
 
       - name: Open the bump PR, arm the merge queue, request review
-        if: steps.bump.outputs.changed == 'true'
+        if: steps.ver.outputs.skip != 'true' && steps.bump.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}
           VERSION: ${{ steps.ver.outputs.version }}
