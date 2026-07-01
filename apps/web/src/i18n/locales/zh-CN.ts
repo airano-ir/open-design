@@ -1684,6 +1684,7 @@ export const zhCN: Dict = {
   'chat.annotationAddingToInput': '正在添加...',
   'chat.annotationQueue': '加入队列',
   'chat.annotationQueueing': '加入队列中...',
+  'chat.annotationSubmitOptions': '提交选项',
   'chat.annotationSending': '发送中...',
   'chat.annotationSendDisabledReason': '当前正有任务在执行',
   'chat.annotationPreviewMissing': '无法截到下面的预览，请重试',

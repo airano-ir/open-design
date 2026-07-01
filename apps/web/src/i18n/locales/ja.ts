@@ -1684,6 +1684,7 @@ export const ja: Dict = {
   'chat.annotationAddingToInput': '追加中...',
   'chat.annotationQueue': 'キューに追加',
   'chat.annotationQueueing': 'キューに追加中...',
+  'chat.annotationSubmitOptions': '送信オプション',
   'chat.annotationSending': '送信中...',
   'chat.annotationSendDisabledReason': 'タスクが実行中です',
   'chat.annotationPreviewMissing': 'プレビューをキャプチャできませんでした。もう一度お試しください。',

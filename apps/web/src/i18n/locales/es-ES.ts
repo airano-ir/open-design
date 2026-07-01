@@ -1684,6 +1684,7 @@ export const esES: Dict = {
   'chat.annotationAddingToInput': 'Añadiendo...',
   'chat.annotationQueue': 'Cola',
   'chat.annotationQueueing': 'Añadiendo a la cola...',
+  'chat.annotationSubmitOptions': 'Opciones de envío',
   'chat.annotationSending': 'Enviando...',
   'chat.annotationSendDisabledReason': 'Hay una tarea en ejecución',
   'chat.annotationPreviewMissing': 'No se pudo capturar la vista previa. Inténtalo de nuevo.',

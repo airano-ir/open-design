@@ -1684,6 +1684,7 @@ export const ru: Dict = {
   'chat.annotationAddingToInput': 'Добавление...',
   'chat.annotationQueue': 'Очередь',
   'chat.annotationQueueing': 'Добавление в очередь...',
+  'chat.annotationSubmitOptions': 'Параметры отправки',
   'chat.annotationSending': 'Отправка...',
   'chat.annotationSendDisabledReason': 'Сейчас выполняется задача',
   'chat.annotationPreviewMissing': 'Не удалось сделать предпросмотр. Попробуйте ещё раз.',

@@ -1684,6 +1684,7 @@ export const tr: Dict = {
   'chat.annotationAddingToInput': 'Ekleniyor...',
   'chat.annotationQueue': 'Kuyruğa al',
   'chat.annotationQueueing': 'Kuyruğa alınıyor...',
+  'chat.annotationSubmitOptions': 'Gönderme seçenekleri',
   'chat.annotationSending': 'Gönderiliyor...',
   'chat.annotationSendDisabledReason': 'Şu anda bir görev çalışıyor',
   'chat.annotationPreviewMissing': 'Önizleme yakalanamadı. Lütfen tekrar deneyin.',

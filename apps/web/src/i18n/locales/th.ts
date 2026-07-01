@@ -1684,6 +1684,7 @@ export const th: Dict = {
   'chat.annotationAddingToInput': 'กำลังเพิ่ม...',
   'chat.annotationQueue': 'คิว',
   'chat.annotationQueueing': 'กำลังเข้าคิว...',
+  'chat.annotationSubmitOptions': 'ตัวเลือกการส่ง',
   'chat.annotationSending': 'กำลังส่ง...',
   'chat.annotationSendDisabledReason': 'มีงานกำลังทำงานอยู่',
   'chat.annotationPreviewMissing': 'ไม่สามารถจับภาพตัวอย่างได้ โปรดลองอีกครั้ง',

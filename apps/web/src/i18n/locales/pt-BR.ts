@@ -1684,6 +1684,7 @@ export const ptBR: Dict = {
   'chat.annotationAddingToInput': 'Adicionando...',
   'chat.annotationQueue': 'Fila',
   'chat.annotationQueueing': 'Enfileirando...',
+  'chat.annotationSubmitOptions': 'Opções de envio',
   'chat.annotationSending': 'Enviando...',
   'chat.annotationSendDisabledReason': 'Uma tarefa está em execução no momento',
   'chat.annotationPreviewMissing': 'Não foi possível capturar a prévia. Tente novamente.',

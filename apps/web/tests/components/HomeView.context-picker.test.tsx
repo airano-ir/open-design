@@ -500,7 +500,7 @@ describe('HomeView context picker', () => {
     }));
   });
 
-  it('blocks submit when referenced project dirs are missing', async () => {
+  it('submits referenced project context without blocking when its folder is missing', async () => {
     const referenceProject = {
       id: 'reference-a',
       name: 'Reference A',
@@ -529,7 +529,7 @@ describe('HomeView context picker', () => {
           headers: { 'content-type': 'application/json' },
         });
       }
-      if (typeof url === 'string' && url === '/api/projects/reference-a') {
+      if (typeof url === 'string' && (url === '/api/projects/reference-a' || url.startsWith('/api/projects/reference-a?'))) {
         return new Response(JSON.stringify({
           project: referenceProject,
           resolvedDir: '/tmp/open-design/missing-reference-a',
@@ -573,11 +573,22 @@ describe('HomeView context picker', () => {
     });
     fireEvent.click(screen.getByTestId('home-hero-submit'));
 
-    expect((await screen.findByRole('alert')).textContent).toContain(
-      'selected folder no longer exists',
-    );
-    expect(onSubmit).not.toHaveBeenCalled();
-    expect(homeHeroPromptText().trim()).toBe('@Reference A');
+    // A missing folder must not block the run. The reference still rides along
+    // as textual workspace context (the agent just reports the empty/missing
+    // folder), but the non-existent dir is dropped from linkedDirs so the
+    // daemon's all-or-nothing linkedDirs validation still passes.
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    const payload = onSubmit.mock.calls[0]?.[0];
+    expect(payload?.initialRunContext?.workspaceItems).toEqual([
+      expect.objectContaining({
+        id: 'project:reference-a',
+        kind: 'project',
+        label: 'Reference A',
+        absolutePath: '/tmp/open-design/missing-reference-a',
+      }),
+    ]);
+    expect(payload?.linkedDirs).toBeUndefined();
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
   it('keeps referenced project context visible after its inline mention is deleted', async () => {
@@ -609,7 +620,7 @@ describe('HomeView context picker', () => {
           headers: { 'content-type': 'application/json' },
         });
       }
-      if (typeof url === 'string' && url === '/api/projects/reference-a') {
+      if (typeof url === 'string' && (url === '/api/projects/reference-a' || url.startsWith('/api/projects/reference-a?'))) {
         return new Response(JSON.stringify({
           project: referenceProject,
           resolvedDir: '/tmp/open-design/reference-a',

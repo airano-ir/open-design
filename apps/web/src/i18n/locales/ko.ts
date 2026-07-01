@@ -1684,6 +1684,7 @@ export const ko: Dict = {
   'chat.annotationAddingToInput': '추가 중...',
   'chat.annotationQueue': '대기열',
   'chat.annotationQueueing': '대기열에 추가 중...',
+  'chat.annotationSubmitOptions': '제출 옵션',
   'chat.annotationSending': '전송 중...',
   'chat.annotationSendDisabledReason': '현재 작업이 실행 중입니다',
   'chat.annotationPreviewMissing': '미리보기를 캡처할 수 없습니다. 다시 시도해 주세요.',

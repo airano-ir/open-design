@@ -1684,6 +1684,7 @@ export const uk: Dict = {
   'chat.annotationAddingToInput': 'Додавання...',
   'chat.annotationQueue': 'Черга',
   'chat.annotationQueueing': 'Додавання в чергу...',
+  'chat.annotationSubmitOptions': 'Параметри надсилання',
   'chat.annotationSending': 'Надсилання...',
   'chat.annotationSendDisabledReason': 'Наразі виконується завдання',
   'chat.annotationPreviewMissing': 'Не вдалося захопити попередній перегляд. Спробуйте ще раз.',

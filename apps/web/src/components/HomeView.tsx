@@ -82,7 +82,7 @@ import type { PlaceholderScenario } from './home-hero/placeholderScenarios';
 import { consumePendingHomeChip, HOME_CHIP_INTENT_EVENT } from '../runtime/home-intent';
 import { navigate } from '../router';
 import { setPendingDesignSystemCreateEntry } from '../analytics/ds-create-entry';
-import { workspaceContextLinkedDir, workspaceContextLinkedDirs } from './workspace-context';
+import { workspaceContextLinkedDirs } from './workspace-context';
 import {
   buildHomeMediaComposer,
   homeMediaSurfaceForChipId,
@@ -1889,6 +1889,13 @@ export function HomeView({
           status: item.connector.status,
           ...(item.connector.accountLabel ? { accountLabel: item.connector.accountLabel } : {}),
         }));
+      // A referenced project or linked folder reaches the agent two ways: as
+      // textual workspace context (kept even when the folder is empty or has
+      // been deleted — the agent just reports that) and, for folders that
+      // still exist, as read-only `--add-dir` access. The daemon validates
+      // linkedDirs all-or-nothing, so one missing folder would drop read
+      // access to every reference; we therefore feed it only the dirs that
+      // still exist and never block the submission on a missing one.
       const contextLinkedDirCandidates = workspaceContextLinkedDirs(contextWorkspaceItems);
       const contextLinkedDirs =
         contextLinkedDirCandidates.length === 0
@@ -1898,15 +1905,6 @@ export function HomeView({
                 contextLinkedDirCandidates.map(async (dir) => ((await dirExists(dir)) ? dir : null)),
               )
             ).filter((dir): dir is string => Boolean(dir));
-      const confirmedContextLinkedDirs = new Set(contextLinkedDirs);
-      const confirmedContextWorkspaceItems = contextWorkspaceItems.filter((item) => {
-        const dir = workspaceContextLinkedDir(item);
-        return dir === null || confirmedContextLinkedDirs.has(dir);
-      });
-      if (confirmedContextWorkspaceItems.length !== contextWorkspaceItems.length) {
-        setError('Could not add reference context because a selected folder no longer exists. Remove it or pick it again.');
-        return;
-      }
       const submittedProjectKind =
         submittedActive?.projectKind ?? fallbackProjectKind ?? projectKindForSkill(activeSkill) ?? 'other';
       const submittedProjectMetadata = submittedActive?.mediaSurface
@@ -1948,8 +1946,8 @@ export function HomeView({
         contextPlugins,
         contextMcpServers,
         contextConnectors,
-        ...(confirmedContextWorkspaceItems.length > 0
-          ? { initialRunContext: { workspaceItems: confirmedContextWorkspaceItems } }
+        ...(contextWorkspaceItems.length > 0
+          ? { initialRunContext: { workspaceItems: contextWorkspaceItems } }
           : {}),
         attachments: stagedFiles,
         ...(workingDir ? { workingDir } : {}),

@@ -1684,6 +1684,7 @@ export const de: Dict = {
   'chat.annotationAddingToInput': 'Wird hinzugefügt...',
   'chat.annotationQueue': 'Warteschlange',
   'chat.annotationQueueing': 'Wird eingereiht...',
+  'chat.annotationSubmitOptions': 'Sendeoptionen',
   'chat.annotationSending': 'Wird gesendet...',
   'chat.annotationSendDisabledReason': 'Eine Aufgabe wird gerade ausgeführt',
   'chat.annotationPreviewMissing': 'Vorschau konnte nicht erfasst werden. Bitte versuche es erneut.',

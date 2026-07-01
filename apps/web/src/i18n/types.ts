@@ -2431,6 +2431,7 @@ export interface Dict {
   'chat.annotationAddingToInput': string;
   'chat.annotationQueue': string;
   'chat.annotationQueueing': string;
+  'chat.annotationSubmitOptions': string;
   'chat.annotationSending': string;
   'chat.annotationSendDisabledReason': string;
   'chat.annotationPreviewMissing': string;

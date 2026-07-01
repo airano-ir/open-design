@@ -1684,6 +1684,7 @@ export const ar: Dict = {
   'chat.annotationAddingToInput': 'جارٍ الإضافة...',
   'chat.annotationQueue': 'قائمة الانتظار',
   'chat.annotationQueueing': 'جارٍ الإضافة إلى قائمة الانتظار...',
+  'chat.annotationSubmitOptions': 'خيارات الإرسال',
   'chat.annotationSending': 'جارٍ الإرسال...',
   'chat.annotationSendDisabledReason': 'هناك مهمة قيد التشغيل حاليًا',
   'chat.annotationPreviewMissing': 'تعذّر التقاط المعاينة. يُرجى المحاولة مرة أخرى.',

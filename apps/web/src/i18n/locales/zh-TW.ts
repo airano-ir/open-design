@@ -1684,6 +1684,7 @@ export const zhTW: Dict = {
   'chat.annotationAddingToInput': '正在加入...',
   'chat.annotationQueue': '加入佇列',
   'chat.annotationQueueing': '加入佇列中...',
+  'chat.annotationSubmitOptions': '提交選項',
   'chat.annotationSending': '傳送中...',
   'chat.annotationSendDisabledReason': '目前正有任務執行中',
   'chat.annotationPreviewMissing': '無法截到下方預覽，請重試',

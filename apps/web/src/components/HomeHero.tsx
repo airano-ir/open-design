@@ -76,6 +76,8 @@ import { applyFacetSelection } from './plugins-home/facets';
 import { inferPluginPreview } from './plugins-home/preview';
 import { pluginSubfacetLabel } from './plugins-home/subfacetLabel';
 import { ComposerPlusMenu } from './ComposerPlusMenu';
+import { ContextChipHoverCard } from './ContextChipHoverCard';
+import { workspaceContextDetailLine, workspaceContextKindLabel } from './workspace-context';
 import { FigmaHelpModal } from './FigmaHelpModal';
 import { TemplatePicker } from './home-hero/TemplatePicker';
 import { LibraryPicker } from './LibraryPicker';
@@ -1351,10 +1353,12 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
               </span>
             ) : null}
             {contextOnlyPlugins.map((plugin) => (
-              <span
+              <ContextChipHoverCard
                 key={`ctx-plugin-${plugin.id}`}
                 className="home-hero__active-chip home-hero__active-chip--context"
                 data-testid={`home-hero-context-plugin-${plugin.id}`}
+                typeLabel="Plugin"
+                detail={plugin.id}
               >
                 <span className="home-hero__active-icon" aria-hidden>
                   <Icon name="sliders" size={12} />
@@ -1371,15 +1375,17 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
                 >
                   <Icon name="close" size={9} />
                 </button>
-              </span>
+              </ContextChipHoverCard>
             ))}
             {contextOnlyMcpServers.map((server) => {
               const label = server.label || server.id;
               return (
-                <span
+                <ContextChipHoverCard
                   key={`ctx-mcp-${server.id}`}
                   className="home-hero__active-chip home-hero__active-chip--context"
                   data-testid={`home-hero-context-mcp-${server.id}`}
+                  typeLabel="MCP server"
+                  detail={server.url || server.id}
                 >
                   <span className="home-hero__active-icon" aria-hidden>
                     <Icon name="sliders" size={12} />
@@ -1396,14 +1402,16 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
                   >
                     <Icon name="close" size={9} />
                   </button>
-                </span>
+                </ContextChipHoverCard>
               );
             })}
             {contextOnlyConnectors.map((connector) => (
-              <span
+              <ContextChipHoverCard
                 key={`ctx-connector-${connector.id}`}
                 className="home-hero__active-chip home-hero__active-chip--context"
                 data-testid={`home-hero-context-connector-${connector.id}`}
+                typeLabel="Connector"
+                detail={connector.provider || connector.id}
               >
                 <span className="home-hero__active-icon" aria-hidden>
                   <Icon name="link" size={12} />
@@ -1420,13 +1428,15 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
                 >
                   <Icon name="close" size={9} />
                 </button>
-              </span>
+              </ContextChipHoverCard>
             ))}
             {contextWorkspaceItems.map((item) => (
-              <span
+              <ContextChipHoverCard
                 key={`ctx-workspace-${item.id}`}
                 className="home-hero__active-chip home-hero__active-chip--context"
                 data-testid={`home-hero-context-workspace-${item.id}`}
+                typeLabel={workspaceContextKindLabel(item.kind)}
+                detail={workspaceContextDetailLine(item)}
               >
                 <span className="home-hero__active-icon" aria-hidden>
                   <Icon name={item.kind === 'local-code' ? 'terminal' : 'folder'} size={12} />
@@ -1447,7 +1457,7 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
                 >
                   <Icon name="close" size={9} />
                 </button>
-              </span>
+              </ContextChipHoverCard>
             ))}
           </div>
         ) : null}

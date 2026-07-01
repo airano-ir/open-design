@@ -1684,6 +1684,7 @@ export const pl: Dict = {
   'chat.annotationAddingToInput': 'Dodawanie...',
   'chat.annotationQueue': 'Kolejka',
   'chat.annotationQueueing': 'Dodawanie do kolejki...',
+  'chat.annotationSubmitOptions': 'Opcje wysyłania',
   'chat.annotationSending': 'Wysyłanie...',
   'chat.annotationSendDisabledReason': 'Zadanie jest obecnie w toku',
   'chat.annotationPreviewMissing': 'Nie udało się przechwycić podglądu. Spróbuj ponownie.',

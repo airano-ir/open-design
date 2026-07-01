@@ -1684,6 +1684,7 @@ export const hu: Dict = {
   'chat.annotationAddingToInput': 'Hozzáadás...',
   'chat.annotationQueue': 'Sorba állítás',
   'chat.annotationQueueing': 'Sorba állítás...',
+  'chat.annotationSubmitOptions': 'Küldési beállítások',
   'chat.annotationSending': 'Küldés...',
   'chat.annotationSendDisabledReason': 'Jelenleg fut egy feladat',
   'chat.annotationPreviewMissing': 'Nem sikerült rögzíteni az előnézetet. Kérjük, próbálja újra.',

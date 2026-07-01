@@ -1684,6 +1684,7 @@ export const en: Dict = {
   'chat.annotationAddingToInput': 'Adding...',
   'chat.annotationQueue': 'Queue',
   'chat.annotationQueueing': 'Queueing...',
+  'chat.annotationSubmitOptions': 'Submit options',
   'chat.annotationSending': 'Sending...',
   'chat.annotationSendDisabledReason': 'A task is currently running',
   'chat.annotationPreviewMissing': 'Could not capture the preview. Please try again.',

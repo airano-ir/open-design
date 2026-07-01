@@ -1684,6 +1684,7 @@ export const fa: Dict = {
   'chat.annotationAddingToInput': 'در حال افزودن...',
   'chat.annotationQueue': 'صف',
   'chat.annotationQueueing': 'در حال افزودن به صف...',
+  'chat.annotationSubmitOptions': 'گزینه‌های ارسال',
   'chat.annotationSending': 'در حال ارسال...',
   'chat.annotationSendDisabledReason': 'در حال حاضر یک وظیفه در حال اجراست',
   'chat.annotationPreviewMissing': 'امکان ثبت پیش‌نمایش وجود نداشت. لطفاً دوباره تلاش کنید.',

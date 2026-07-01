@@ -288,7 +288,7 @@ beforeEach(() => {
         headers: { 'content-type': 'application/json' },
       });
     }
-    const projectDetailMatch = /^\/api\/projects\/([^/]+)$/.exec(url);
+    const projectDetailMatch = /^\/api\/projects\/([^/?]+)(?:\?.*)?$/.exec(url);
     if (projectDetailMatch && init?.method !== 'PATCH') {
       const projectId = decodeURIComponent(projectDetailMatch[1]!);
       const detail = referenceProjectDetails[projectId] ?? null;

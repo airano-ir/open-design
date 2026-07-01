@@ -3396,7 +3396,9 @@ describe('FileViewer tweaks toolbar', () => {
     clickAgentTool('draw-overlay-toggle');
     const note = screen.getByPlaceholderText('Add a note for this mark');
     fireEvent.change(note, { target: { value: 'mark this' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Queue' }));
+    // Queue is a choice in the submit dropdown.
+    fireEvent.click(screen.getByRole('button', { name: 'Submit options' }));
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Queue' }));
 
     expect(screen.getByPlaceholderText('Add a note for this mark')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Click' })).toBeNull();
@@ -3839,7 +3841,9 @@ describe('FileViewer tweaks toolbar', () => {
     // so the annotation is staged for the next turn rather than sent mid-run.
     const send = screen.getByRole('button', { name: 'Send' }) as HTMLButtonElement;
     expect(send.disabled).toBe(true);
-    const queue = screen.getByRole('button', { name: 'Queue' }) as HTMLButtonElement;
+    // Queue now lives in the submit dropdown; open it to reach the fallback.
+    fireEvent.click(screen.getByRole('button', { name: 'Submit options' }));
+    const queue = screen.getByRole('menuitemradio', { name: 'Queue' }) as HTMLButtonElement;
     expect(queue.disabled).toBe(false);
 
     fireEvent.click(send);

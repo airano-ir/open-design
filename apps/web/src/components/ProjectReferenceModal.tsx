@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import type { Project } from '../types';
 import { useI18n } from '../i18n';
 import { getProjectDetail, listProjects } from '../state/projects';
+import { dirExists } from '../providers/registry';
 import { Icon } from './Icon';
 import styles from './ProjectReferenceModal.module.css';
 
@@ -48,9 +49,21 @@ export function ProjectReferenceModal({ currentProjectId, onClose, onSelect }: P
     setSelectedIds([]);
     setLoadError(null);
     void listProjects({ throwOnError: true })
-      .then((rows) => {
+      .then(async (rows) => {
         if (cancelled) return;
-        const filtered = rows.filter((project) => project.id !== currentProjectId);
+        const candidates = rows.filter((project) => project.id !== currentProjectId);
+        // Hide imported/external projects whose on-disk folder is gone — they
+        // can't be referenced. Managed projects have no external baseDir and
+        // are always materializable on demand, so they skip the probe (and a
+        // daemon that can't answer leaves everything visible).
+        const stillExists = await Promise.all(
+          candidates.map(async (project) => {
+            const baseDir = project.metadata?.baseDir?.trim();
+            return baseDir ? dirExists(baseDir) : true;
+          }),
+        );
+        if (cancelled) return;
+        const filtered = candidates.filter((_, index) => stillExists[index]);
         setProjects(filtered);
         setSelectedIds((current) => current.length > 0 ? current : filtered[0] ? [filtered[0].id] : []);
       })
@@ -92,7 +105,10 @@ export function ProjectReferenceModal({ currentProjectId, onClose, onSelect }: P
     try {
       const selections: ProjectReferenceSelection[] = [];
       for (const project of selectedProjects) {
-        const detail = await getProjectDetail(project.id);
+        // `ensureDir` materializes a managed project's folder before we read
+        // its resolved dir, so an empty (never-generated) project references
+        // to a real directory instead of a path that fails existence checks.
+        const detail = await getProjectDetail(project.id, { ensureDir: true });
         const resolvedDir =
           detail?.resolvedDir?.trim() || detail?.project.metadata?.baseDir?.trim() || '';
         if (!detail || !resolvedDir) {

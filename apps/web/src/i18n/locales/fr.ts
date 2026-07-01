@@ -1684,6 +1684,7 @@ export const fr: Dict = {
   'chat.annotationAddingToInput': 'Ajout…',
   'chat.annotationQueue': 'File d’attente',
   'chat.annotationQueueing': 'Ajout à la file…',
+  'chat.annotationSubmitOptions': 'Options d\'envoi',
   'chat.annotationSending': 'Envoi…',
   'chat.annotationSendDisabledReason': 'Une tâche est déjà en cours',
   'chat.annotationPreviewMissing': 'Impossible de capturer l’aperçu. Veuillez réessayer.',
