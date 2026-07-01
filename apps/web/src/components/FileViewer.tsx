@@ -9585,6 +9585,7 @@ function HtmlViewer({
                 type="button"
                 role="tab"
                 className={`viewer-tab od-tooltip ${mode === id ? 'active' : ''}`}
+                aria-label={label}
                 aria-selected={mode === id}
                 title={label}
                 data-tooltip={label}
