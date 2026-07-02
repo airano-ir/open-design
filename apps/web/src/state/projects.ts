@@ -21,6 +21,7 @@ import type {
   PluginInstallOutcome,
   PluginShareAction,
   ProjectPluginFolderInstallRequest,
+  ProjectDetailResponse,
   TerminalSession,
 } from '@open-design/contracts';
 import { randomUUID } from '../utils/uuid';
@@ -57,6 +58,23 @@ export async function getProject(id: string): Promise<Project | null> {
     if (!resp.ok) return null;
     const json = (await resp.json()) as { project: Project };
     return json.project;
+  } catch {
+    return null;
+  }
+}
+
+export async function getProjectDetail(id: string): Promise<ProjectDetailResponse | null> {
+  try {
+    const resp = await fetch(`/api/projects/${encodeURIComponent(id)}`);
+    if (!resp.ok) return null;
+    const json = (await resp.json()) as Partial<ProjectDetailResponse>;
+    if (!json.project) return null;
+    return {
+      project: json.project,
+      resolvedDir: typeof json.resolvedDir === 'string'
+        ? json.resolvedDir
+        : json.project.metadata?.baseDir ?? '',
+    };
   } catch {
     return null;
   }

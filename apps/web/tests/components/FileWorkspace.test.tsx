@@ -15,11 +15,16 @@ import { DesignFilesPanel } from '../../src/components/DesignFilesPanel';
 import { projectSplitClassName, projectSplitStyle } from '../../src/components/ProjectView';
 import {
   fetchProjectFileText,
+  fetchPluginExampleHtml,
+  fetchPluginPreviewHtml,
   uploadProjectFiles,
   writeProjectTextFile,
   fetchProjectFolders,
 } from '../../src/providers/registry';
+import { listPlugins } from '../../src/state/projects';
+import type { InstalledPluginRecord } from '@open-design/contracts';
 import type { ChatMessage, ProjectFile, ProjectFolder } from '../../src/types';
+import { I18nProvider } from '../../src/i18n';
 
 vi.mock('../../src/providers/registry', async () => {
   const actual = await vi.importActual<typeof import('../../src/providers/registry')>(
@@ -31,7 +36,19 @@ vi.mock('../../src/providers/registry', async () => {
     uploadProjectFiles: vi.fn(),
     writeProjectBase64File: vi.fn(),
     writeProjectTextFile: vi.fn(),
+    fetchPluginExampleHtml: vi.fn(),
+    fetchPluginPreviewHtml: vi.fn(),
     fetchProjectFolders: vi.fn().mockResolvedValue([]),
+  };
+});
+
+vi.mock('../../src/state/projects', async () => {
+  const actual = await vi.importActual<typeof import('../../src/state/projects')>(
+    '../../src/state/projects',
+  );
+  return {
+    ...actual,
+    listPlugins: vi.fn(),
   };
 });
 
@@ -187,6 +204,9 @@ vi.mock('../../src/components/DesignFilesPanel', async () => {
 });
 
 const mockedFetchProjectFileText = vi.mocked(fetchProjectFileText);
+const mockedFetchPluginExampleHtml = vi.mocked(fetchPluginExampleHtml);
+const mockedFetchPluginPreviewHtml = vi.mocked(fetchPluginPreviewHtml);
+const mockedListPlugins = vi.mocked(listPlugins);
 const mockedUploadProjectFiles = vi.mocked(uploadProjectFiles);
 const mockedWriteProjectTextFile = vi.mocked(writeProjectTextFile);
 
@@ -206,6 +226,9 @@ beforeAll(() => {
 
 beforeEach(() => {
   mockedFetchProjectFileText.mockResolvedValue('');
+  mockedFetchPluginExampleHtml.mockResolvedValue({ unavailable: true, kind: 'html' });
+  mockedFetchPluginPreviewHtml.mockResolvedValue({ unavailable: true, kind: 'html' });
+  mockedListPlugins.mockResolvedValue([]);
 });
 
 afterEach(() => {
@@ -874,6 +897,128 @@ describe('FileWorkspace upload input', () => {
         expect.objectContaining({
           tabs: ['slides.html'],
           active: 'slides.html',
+        }),
+      );
+    });
+  });
+
+  it('surfaces Community-style page presets with localized create dialog copy', () => {
+    render(
+      <I18nProvider initial="zh-CN">
+        <FileWorkspace
+          projectId="project-1"
+          projectKind="prototype"
+          files={[]}
+          liveArtifacts={[]}
+          onRefreshFiles={vi.fn()}
+          isDeck={false}
+          tabsState={{ tabs: [], active: null }}
+          onTabsStateChange={vi.fn()}
+        />
+      </I18nProvider>,
+    );
+
+    fireEvent.click(screen.getByTestId('workspace-pages-menu-trigger'));
+    fireEvent.click(screen.getByRole('menuitem', { name: /新建空白页面/i }));
+
+    const dialog = screen.getByRole('dialog', { name: /新建页面/i });
+    expect(within(dialog).getByPlaceholderText('搜索模板')).toBeTruthy();
+    expect(within(dialog).getByText('Open Design 落地页')).toBeTruthy();
+    expect(within(dialog).getByText('看板任务板')).toBeTruthy();
+    expect(within(dialog).getByText('社媒轮播')).toBeTruthy();
+
+    fireEvent.click(within(dialog).getByRole('button', { name: /视频/i }));
+    expect(within(dialog).getByText('三国电影感短片')).toBeTruthy();
+
+    fireEvent.change(within(dialog).getByPlaceholderText('搜索模板'), {
+      target: { value: 'jingle' },
+    });
+    expect(within(dialog).getByText('音频 Jingle')).toBeTruthy();
+  });
+
+  it('creates a page from a Community plugin example when available', async () => {
+    const onRefreshFiles = vi.fn();
+    const onTabsStateChange = vi.fn();
+    const pluginHtml = '<!doctype html><html><head><title>Dynamic Landing</title></head><body>From plugin</body></html>';
+    mockedListPlugins.mockResolvedValueOnce([
+      {
+        id: 'example-dynamic-landing',
+        title: 'Dynamic Landing',
+        version: '1.0.0',
+        sourceKind: 'bundled',
+        source: 'bundled',
+        trust: 'bundled',
+        capabilitiesGranted: [],
+        manifest: {
+          name: 'example-dynamic-landing',
+          version: '1.0.0',
+          title: 'Dynamic Landing',
+          title_i18n: { en: 'Dynamic Landing', 'zh-CN': '动态落地页' },
+          description: 'A live Community template.',
+          description_i18n: { en: 'A live Community template.', 'zh-CN': '一个社区模板。' },
+          tags: ['landing'],
+          od: {
+            mode: 'prototype',
+            useCase: {
+              exampleOutputs: [{ path: 'examples/dynamic.html', title: 'Dynamic example' }],
+            },
+          },
+        },
+        fsPath: '/tmp/example-dynamic-landing',
+        installedAt: 0,
+        updatedAt: 0,
+      } as InstalledPluginRecord,
+    ]);
+    mockedFetchPluginExampleHtml.mockResolvedValueOnce({ html: pluginHtml });
+    mockedWriteProjectTextFile.mockResolvedValueOnce({
+      name: 'dynamic-landing.html',
+      path: 'dynamic-landing.html',
+      type: 'file',
+      size: pluginHtml.length,
+      mtime: 1710000000,
+      kind: 'html',
+      mime: 'text/html',
+    });
+
+    render(
+      <FileWorkspace
+        projectId="project-1"
+        projectKind="prototype"
+        files={[]}
+        liveArtifacts={[]}
+        onRefreshFiles={onRefreshFiles}
+        isDeck={false}
+        tabsState={{ tabs: [], active: null }}
+        onTabsStateChange={onTabsStateChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('workspace-pages-menu-trigger'));
+    fireEvent.click(screen.getByRole('menuitem', { name: /New blank page/i }));
+    const dialog = screen.getByRole('dialog', { name: /Create page/i });
+    fireEvent.click(within(dialog).getByRole('button', { name: /Prototype/i }));
+    await waitFor(() => expect(within(dialog).getByText('Dynamic Landing')).toBeTruthy());
+
+    const card = within(dialog).getByText('Dynamic Landing').closest('article');
+    expect(card).toBeTruthy();
+    fireEvent.click(within(card as HTMLElement).getByRole('button', { name: 'Use' }));
+
+    await waitFor(() => {
+      expect(mockedFetchPluginExampleHtml).toHaveBeenCalledWith('example-dynamic-landing', 'dynamic');
+    });
+    await waitFor(() => {
+      expect(mockedWriteProjectTextFile).toHaveBeenCalledWith(
+        'project-1',
+        'dynamic-landing.html',
+        pluginHtml,
+      );
+    });
+    await waitFor(() => expect(onRefreshFiles).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(onTabsStateChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tabs: ['dynamic-landing.html'],
+          active: 'dynamic-landing.html',
         }),
       );
     });

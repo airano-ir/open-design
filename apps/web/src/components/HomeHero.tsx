@@ -29,6 +29,7 @@ import type {
   InputFieldSpec,
   InstalledPluginRecord,
   McpServerConfig,
+  WorkspaceContextItem,
 } from '@open-design/contracts';
 import { DesignSystemPicker } from './DesignSystemPicker';
 import type { SkillSummary } from '../types';
@@ -83,6 +84,10 @@ import { assetTitle } from './LibraryAssetMeta';
 import { libraryAssetRawUrl } from '../providers/registry';
 import type { LibraryAsset } from '@open-design/contracts';
 import { WorkingDirPicker } from './WorkingDirPicker';
+import {
+  ProjectReferenceModal,
+  type ProjectReferenceSelection,
+} from './ProjectReferenceModal';
 import {
   LexicalComposerInput,
   type LexicalComposerInputHandle,
@@ -157,9 +162,12 @@ interface Props {
   contextOnlyPlugins?: InstalledPluginRecord[];
   contextOnlyMcpServers?: McpServerConfig[];
   contextOnlyConnectors?: ConnectorDetail[];
+  contextWorkspaceItems?: WorkspaceContextItem[];
   onRemovePluginContext?: (pluginId: string) => void;
   onRemoveMcpContext?: (serverId: string) => void;
   onRemoveConnectorContext?: (connectorId: string) => void;
+  onAddWorkspaceContext?: (item: WorkspaceContextItem) => void;
+  onRemoveWorkspaceContext?: (id: string) => void;
   onAddPlugin?: () => void;
   onAddConnector?: () => void;
   onAddMcp?: () => void;
@@ -209,7 +217,8 @@ interface Props {
   showActivePluginChip?: boolean;
   workingDir?: string | null;
   recentDirs?: string[];
-  onPickWorkingDir?: () => void;
+  onPickWorkingDir?: () => Promise<string | null | void> | string | null | void;
+  onPickLocalCodeDir?: () => Promise<string | null> | string | null | void;
   onSelectRecentWorkingDir?: (dir: string) => void;
   onClearWorkingDir?: () => void;
   onExamplePromptStatusChange?: (info: ExamplePromptInfo | null) => void;
@@ -261,6 +270,7 @@ const EMPTY_STAGED_FILES: File[] = [];
 const EMPTY_SKILLS: SkillSummary[] = [];
 const EMPTY_MCP_OPTIONS: McpServerConfig[] = [];
 const EMPTY_CONNECTOR_OPTIONS: ConnectorDetail[] = [];
+const EMPTY_WORKSPACE_ITEMS: WorkspaceContextItem[] = [];
 
 export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
   {
@@ -286,9 +296,12 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
     contextOnlyPlugins = EMPTY_PLUGIN_CONTEXTS,
     contextOnlyMcpServers = EMPTY_MCP_OPTIONS,
     contextOnlyConnectors = EMPTY_CONNECTOR_OPTIONS,
+    contextWorkspaceItems = EMPTY_WORKSPACE_ITEMS,
     onRemovePluginContext = () => undefined,
     onRemoveMcpContext = () => undefined,
     onRemoveConnectorContext = () => undefined,
+    onAddWorkspaceContext = () => undefined,
+    onRemoveWorkspaceContext = () => undefined,
     onAddPlugin = () => undefined,
     onAddConnector = () => undefined,
     onAddMcp = () => undefined,
@@ -330,6 +343,7 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
     workingDir = null,
     recentDirs = [],
     onPickWorkingDir,
+    onPickLocalCodeDir,
     onSelectRecentWorkingDir,
     onClearWorkingDir,
     onExamplePromptStatusChange,
@@ -345,7 +359,9 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
   const [hoveredPlugin, setHoveredPlugin] = useState<InstalledPluginRecord | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [libraryPickerOpen, setLibraryPickerOpen] = useState(false);
+  const [projectReferenceOpen, setProjectReferenceOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const homeHeroRef = useRef<HTMLElement | null>(null);
   // Two-flash attention pulse on the send button; armed via the
   // imperative `pulseSend()` handle, cleared when the animation ends.
   const [sendAttention, setSendAttention] = useState(false);
@@ -588,6 +604,7 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
         mcpOptions,
         pluginOptions,
         connectorOptions,
+        contextWorkspaceItems,
         selectedPluginContexts,
         stagedFiles,
         skillOptions,
@@ -599,6 +616,7 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
       mcpOptions,
       pluginOptions,
       connectorOptions,
+      contextWorkspaceItems,
       selectedPluginContexts,
       stagedFiles,
       skillOptions,
@@ -902,6 +920,66 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
     onPickConnector(connector, next);
   }
 
+  function insertInlineMentionSeparator() {
+    const current = editorRef.current?.getText() ?? prompt;
+    if (current.trim() && !/\s$/.test(current)) {
+      editorRef.current?.insertText(' ');
+    }
+  }
+
+  function appendWorkspacePrompt(item: WorkspaceContextItem) {
+    onAddWorkspaceContext(item);
+    insertInlineMentionSeparator();
+    editorRef.current?.insertMention({
+      token: inlineMentionToken(item.label),
+      entity: { id: item.id, kind: 'workspace', label: item.label },
+    });
+    onPromptChange(editorRef.current?.getText() ?? prompt);
+    dismissMentionPicker();
+    requestAnimationFrame(() => editorRef.current?.focus());
+  }
+
+  function handleReferenceProjects(selections: ProjectReferenceSelection[]) {
+    for (const selection of selections) {
+      const path = selection.resolvedDir.trim();
+      const label = selection.project.name || selection.project.id;
+      appendWorkspacePrompt({
+        id: `project:${selection.project.id}`,
+        kind: 'project',
+        label,
+        title: label,
+        path: selection.project.id,
+        ...(path ? { absolutePath: path } : {}),
+      });
+    }
+    setProjectReferenceOpen(false);
+  }
+
+  async function handleLinkLocalCodeContext() {
+    const selected = await onPickLocalCodeDir?.();
+    if (!selected) return;
+    const label = selected.split(/[/\\]/).filter(Boolean).pop() || selected;
+    appendWorkspacePrompt({
+      id: `local-code:${selected}`,
+      kind: 'local-code',
+      label,
+      title: label,
+      path: selected,
+      absolutePath: selected,
+    });
+  }
+
+  function openDesignSystemPicker() {
+    const trigger = homeHeroRef.current?.querySelector<HTMLButtonElement>(
+      '[data-testid="home-hero-design-system-trigger"]',
+    );
+    if (!trigger || trigger.disabled) return;
+    window.requestAnimationFrame(() => {
+      if (trigger.getAttribute('aria-expanded') !== 'true') trigger.click();
+      trigger.focus({ preventScroll: true });
+    });
+  }
+
   // Lexical reports the active @-trigger derived from the caret. HomeHero
   // has no slash surface, so only the mention branch is wired.
   function handleTrigger({
@@ -1082,12 +1160,13 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
     Boolean(activeSkillTitle) ||
     contextOnlyPlugins.length > 0 ||
     contextOnlyMcpServers.length > 0 ||
-    contextOnlyConnectors.length > 0;
+    contextOnlyConnectors.length > 0 ||
+    contextWorkspaceItems.length > 0;
 
   let optionRenderIndex = 0;
 
   return (
-    <section className="home-hero" data-testid="home-hero">
+    <section ref={homeHeroRef} className="home-hero" data-testid="home-hero">
       <div className="home-hero__brand" aria-hidden>
         <span className="home-hero__brand-mark">
           <img src="/app-icon.svg" alt="" draggable={false} />
@@ -1343,6 +1422,33 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
                 </button>
               </span>
             ))}
+            {contextWorkspaceItems.map((item) => (
+              <span
+                key={`ctx-workspace-${item.id}`}
+                className="home-hero__active-chip home-hero__active-chip--context"
+                data-testid={`home-hero-context-workspace-${item.id}`}
+              >
+                <span className="home-hero__active-icon" aria-hidden>
+                  <Icon name={item.kind === 'local-code' ? 'terminal' : 'folder'} size={12} />
+                </span>
+                <span className="home-hero__active-label">{item.label}</span>
+                <button
+                  type="button"
+                  className="home-hero__active-clear od-tooltip"
+                  onClick={() => {
+                    const nextPrompt = stripHomeMentionToken(prompt, item.label);
+                    if (nextPrompt !== prompt) onPromptChange(nextPrompt);
+                    onRemoveWorkspaceContext(item.id);
+                  }}
+                  aria-label={t('chat.removeAria', { name: item.label })}
+                  title={t('common.close')}
+                  data-tooltip={t('common.close')}
+                  data-testid={`home-hero-context-clear-${item.id}`}
+                >
+                  <Icon name="close" size={9} />
+                </button>
+              </span>
+            ))}
           </div>
         ) : null}
         <div className="home-hero__prompt-surface">
@@ -1521,6 +1627,7 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
           <div className="home-hero__foot-left">
             <ComposerPlusMenu
               triggerTestId="home-hero-plus-trigger"
+              placementPreference="down"
               onOpen={() =>
                 trackHomeChatComposerClick(analytics.track, {
                   page_name: 'home',
@@ -1607,6 +1714,22 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
                 });
                 fileInputRef.current?.click();
               }}
+              onReferenceProject={() => {
+                trackHomeChatComposerClick(analytics.track, {
+                  page_name: 'home',
+                  area: 'chat_composer',
+                  element: 'plus_pick',
+                });
+                setProjectReferenceOpen(true);
+              }}
+              onLinkLocalCode={onPickLocalCodeDir ? () => {
+                trackHomeChatComposerClick(analytics.track, {
+                  page_name: 'home',
+                  area: 'chat_composer',
+                  element: 'working_dir',
+                });
+                void handleLinkLocalCodeContext();
+              } : undefined}
               onSelectFromLibrary={() => {
                 trackHomeChatComposerClick(analytics.track, {
                   page_name: 'home',
@@ -1623,11 +1746,18 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
                 });
                 onImportFigma();
               } : undefined}
+              onOpenDesignSystems={onDesignSystemChange ? openDesignSystemPicker : undefined}
             />
             {libraryPickerOpen ? (
               <LibraryPicker
                 onClose={() => setLibraryPickerOpen(false)}
                 onConfirm={(assets) => importLibraryAssets(assets)}
+              />
+            ) : null}
+            {projectReferenceOpen ? (
+              <ProjectReferenceModal
+                onClose={() => setProjectReferenceOpen(false)}
+                onSelect={handleReferenceProjects}
               />
             ) : null}
             <TemplatePicker
@@ -2130,6 +2260,7 @@ function buildHomeMentionEntities({
   activeSkillId,
   activeSkillTitle,
   connectorOptions,
+  contextWorkspaceItems,
   mcpOptions,
   pluginOptions,
   selectedPluginContexts,
@@ -2140,6 +2271,7 @@ function buildHomeMentionEntities({
   activeSkillId: string | null;
   activeSkillTitle: string | null;
   connectorOptions: ConnectorDetail[];
+  contextWorkspaceItems: WorkspaceContextItem[];
   mcpOptions: McpServerConfig[];
   pluginOptions: InstalledPluginRecord[];
   selectedPluginContexts: InstalledPluginRecord[];
@@ -2147,6 +2279,15 @@ function buildHomeMentionEntities({
   skillOptions: SkillSummary[];
 }): InlineMentionEntity[] {
   const entities: InlineMentionEntity[] = [];
+  for (const item of contextWorkspaceItems) {
+    entities.push({
+      id: item.id,
+      kind: 'workspace',
+      label: item.label,
+      token: inlineMentionToken(item.label),
+      title: `Workspace: ${item.label}`,
+    });
+  }
   const fileSeen = new Set<string>();
   for (const file of stagedFiles) {
     if (fileSeen.has(file.name)) continue;

@@ -19,12 +19,14 @@ import {
   trackTabLauncherClick,
 } from '../analytics/events';
 import { deriveUploadCohort } from '../analytics/upload-tracking';
-import { useT } from '../i18n';
+import { useI18n, useT } from '../i18n';
 import { isMacPlatform } from '../utils/platform';
 import {
   deleteProjectFile,
   fetchProjectFileText,
   fetchProjectFolders,
+  fetchPluginExampleHtml,
+  fetchPluginPreviewHtml,
   projectFileUrl,
   projectRawUrl,
   applyLibraryAsset,
@@ -88,8 +90,15 @@ import {
   type ProjectFile,
   type ProjectFolder,
 } from '../types';
-import type { ChatSessionMode, RunContextSelection, WorkspaceContextItem } from '@open-design/contracts';
-import { createTerminal, killTerminal } from '../state/projects';
+import {
+  resolveLocalizedText,
+  type ChatSessionMode,
+  type InstalledPluginRecord,
+  type LocalizedText,
+  type RunContextSelection,
+  type WorkspaceContextItem,
+} from '@open-design/contracts';
+import { createTerminal, killTerminal, listPlugins } from '../state/projects';
 import type { QuestionForm } from '../artifacts/question-form';
 import { DesignFilesPanel, type DesignFilesNavState } from './DesignFilesPanel';
 import {
@@ -109,6 +118,11 @@ import { TabLauncherMenu } from './workspace/TabLauncherMenu';
 import { buildLauncherActions, type LauncherContext } from './workspace/tab-launcher';
 import { SideChatTab, type ActiveConversationChatState } from './workspace/SideChatTab';
 import { TerminalViewer } from './workspace/TerminalViewer';
+import { CURATED_PLUGIN_IDS_BY_CHIP, curatedPluginPriority } from './plugins-home/curatedPriority';
+import { extractCategories } from './plugins-home/facets';
+import { localizePluginDescription, localizePluginTitle } from './plugins-home/localization';
+import { inferPluginPreview, type PluginPreviewSpec } from './plugins-home/preview';
+import { useInView } from './plugins-home/useInView';
 import { LiveArtifactBadges } from './LiveArtifactBadges';
 import { MissingBrandFontsBanner } from './MissingBrandFontsBanner';
 import { LibraryPicker } from './LibraryPicker';
@@ -358,7 +372,7 @@ const SKETCH_AUTOSAVE_DELAY_MS = 800;
 // Stable empty folder list so the render-phase project-switch reset is
 // idempotent (passing a fresh `[]` each render would re-trigger the reset).
 const EMPTY_PROJECT_FOLDERS: ProjectFolder[] = [];
-type ProjectPagePresetId =
+type ProjectPageKind =
   | 'slides'
   | 'prototype'
   | 'wireframe'
@@ -369,103 +383,612 @@ type ProjectPagePresetId =
   | 'hyperframes'
   | 'audio'
   | 'liveArtifact';
-type ProjectPageCategoryId = 'recommended' | ProjectPagePresetId;
+type ProjectPageCategoryId = 'recommended' | ProjectPageKind;
+type ProjectPagePresetId = string;
+type ProjectPagePresetSource = 'blank' | 'community';
 interface ProjectPagePreset {
   id: ProjectPagePresetId;
-  category: Exclude<ProjectPageCategoryId, 'recommended'>;
-  titleKey: keyof Dict;
-  descriptionKey: keyof Dict;
+  category: ProjectPageKind;
+  title?: LocalizedText;
+  description?: LocalizedText;
+  titleKey?: keyof Dict;
+  descriptionKey?: keyof Dict;
   icon: IconName;
   fileBaseName: string;
+  source: ProjectPagePresetSource;
+  plugin?: InstalledPluginRecord;
+  pluginPreview?: PluginPreviewSpec;
+  pluginHtmlPreview?: PluginPreviewSpec;
   featured?: boolean;
 }
-const PROJECT_PAGE_PRESETS: ProjectPagePreset[] = [
+
+function pageText(en: string, zhCN?: string, zhTW?: string): LocalizedText {
+  if (!zhCN && !zhTW) return en;
+  return {
+    en,
+    'zh-CN': zhCN ?? en,
+    'zh-TW': zhTW ?? zhCN ?? en,
+  };
+}
+
+const BLANK_PAGE_PRESETS: ProjectPagePreset[] = [
   {
-    id: 'slides',
+    id: 'blank-slides',
     category: 'slides',
     titleKey: 'homeHero.chip.deck',
     descriptionKey: 'homeHero.chip.deckDesc',
     icon: 'present',
     fileBaseName: 'slides',
+    source: 'blank',
     featured: true,
   },
   {
-    id: 'prototype',
+    id: 'blank-prototype',
     category: 'prototype',
     titleKey: 'homeHero.chip.prototype',
     descriptionKey: 'homeHero.chip.prototypeDesc',
     icon: 'layout',
     fileBaseName: 'prototype',
+    source: 'blank',
     featured: true,
   },
   {
-    id: 'wireframe',
+    id: 'blank-wireframe',
     category: 'wireframe',
     titleKey: 'homeHero.chip.wireframe',
     descriptionKey: 'homeHero.chip.wireframeDesc',
     icon: 'grid',
     fileBaseName: 'wireframe',
+    source: 'blank',
     featured: true,
   },
   {
-    id: 'mobile',
+    id: 'blank-mobile',
     category: 'mobile',
     titleKey: 'homeHero.chip.mobile',
     descriptionKey: 'homeHero.chip.mobileDesc',
     icon: 'smartphone',
     fileBaseName: 'mobile-app',
+    source: 'blank',
     featured: true,
   },
   {
-    id: 'document',
+    id: 'blank-document',
     category: 'document',
     titleKey: 'homeHero.chip.document',
     descriptionKey: 'homeHero.chip.documentDesc',
     icon: 'file-text',
     fileBaseName: 'document',
+    source: 'blank',
     featured: true,
   },
   {
-    id: 'image',
+    id: 'blank-image',
     category: 'image',
     titleKey: 'homeHero.chip.image',
     descriptionKey: 'homeHero.chip.imageDesc',
     icon: 'image',
     fileBaseName: 'image-board',
+    source: 'blank',
   },
   {
-    id: 'video',
+    id: 'blank-video',
     category: 'video',
     titleKey: 'homeHero.chip.video',
     descriptionKey: 'homeHero.chip.videoDesc',
     icon: 'play',
     fileBaseName: 'video-storyboard',
+    source: 'blank',
   },
   {
-    id: 'hyperframes',
+    id: 'blank-hyperframes',
     category: 'hyperframes',
     titleKey: 'homeHero.chip.hyperframes',
     descriptionKey: 'homeHero.chip.hyperframesDesc',
     icon: 'sparkles',
     fileBaseName: 'hyperframes',
+    source: 'blank',
   },
   {
-    id: 'audio',
+    id: 'blank-audio',
     category: 'audio',
     titleKey: 'homeHero.chip.audio',
     descriptionKey: 'homeHero.chip.audioDesc',
     icon: 'volume',
     fileBaseName: 'audio-brief',
+    source: 'blank',
   },
   {
-    id: 'liveArtifact',
+    id: 'blank-live-artifact',
     category: 'liveArtifact',
     titleKey: 'homeHero.chip.liveArtifact',
     descriptionKey: 'homeHero.chip.liveArtifactDesc',
     icon: 'kanban',
     fileBaseName: 'live-artifact',
+    source: 'blank',
   },
 ];
+
+const COMMUNITY_PAGE_PRESETS: ProjectPagePreset[] = [
+  {
+    id: 'community-open-design-landing',
+    category: 'prototype',
+    title: pageText('Open Design Landing', 'Open Design 落地页', 'Open Design 落地頁'),
+    description: pageText(
+      'Editorial landing page with a strong hero, proof points, and product narrative.',
+      '带强主视觉、信任证明和产品叙事的编辑风落地页。',
+      '帶強主視覺、信任證明和產品敘事的編輯風落地頁。',
+    ),
+    icon: 'globe',
+    fileBaseName: 'open-design-landing',
+    source: 'community',
+    featured: true,
+  },
+  {
+    id: 'community-kanban-board',
+    category: 'prototype',
+    title: pageText('Kanban Board', '看板任务板', '看板任務板'),
+    description: pageText(
+      'Dense work board with lanes, tags, filters, and task cards for operational flows.',
+      '适合运营流程的密集工作看板，包含泳道、标签、筛选和任务卡片。',
+      '適合營運流程的密集工作看板，包含泳道、標籤、篩選和任務卡片。',
+    ),
+    icon: 'kanban',
+    fileBaseName: 'kanban-board',
+    source: 'community',
+    featured: true,
+  },
+  {
+    id: 'community-social-carousel',
+    category: 'prototype',
+    title: pageText('Social Carousel', '社媒轮播', '社群輪播'),
+    description: pageText(
+      'Multi-panel social story layout for campaigns, launches, and creator content.',
+      '用于活动、发布和创作者内容的多页社媒故事版。',
+      '用於活動、發布和創作者內容的多頁社群故事版。',
+    ),
+    icon: 'slides',
+    fileBaseName: 'social-carousel',
+    source: 'community',
+    featured: true,
+  },
+  {
+    id: 'community-blog-post',
+    category: 'document',
+    title: pageText('Blog Post', '博客文章', '部落格文章'),
+    description: pageText(
+      'Long-form editorial article with pull quotes, section rhythm, and readable typography.',
+      '带引用、章节节奏和高可读排版的长篇编辑文章。',
+      '帶引用、章節節奏和高可讀排版的長篇編輯文章。',
+    ),
+    icon: 'file-text',
+    fileBaseName: 'blog-post',
+    source: 'community',
+    featured: true,
+  },
+  {
+    id: 'community-wireframe-sketch',
+    category: 'wireframe',
+    title: pageText('Wireframe Sketch', '手绘线框', '手繪線框'),
+    description: pageText(
+      'Hand-sketched screen map for early structure, hierarchy, and annotation passes.',
+      '用于早期结构、层级和批注推演的手绘线框页面。',
+      '用於早期結構、層級和批註推演的手繪線框頁面。',
+    ),
+    icon: 'draw',
+    fileBaseName: 'wireframe-sketch',
+    source: 'community',
+  },
+  {
+    id: 'community-wireframe-greybox',
+    category: 'wireframe',
+    title: pageText('Wireframe Greybox', '灰盒线框', '灰盒線框'),
+    description: pageText(
+      'Crisp greybox layout for dashboards, forms, tables, and multi-panel tools.',
+      '适合仪表盘、表单、表格和多面板工具的清晰灰盒布局。',
+      '適合儀表板、表單、表格和多面板工具的清晰灰盒版面。',
+    ),
+    icon: 'grid',
+    fileBaseName: 'wireframe-greybox',
+    source: 'community',
+  },
+  {
+    id: 'community-wireframe-mobile-flow',
+    category: 'wireframe',
+    title: pageText('Mobile Flow Wireframe', '移动流程线框', '行動流程線框'),
+    description: pageText(
+      'Phone-screen flow map for onboarding, checkout, or task completion paths.',
+      '用于入门、结账或任务完成路径的手机屏流程图。',
+      '用於入門、結帳或任務完成路徑的手機螢幕流程圖。',
+    ),
+    icon: 'smartphone',
+    fileBaseName: 'wireframe-mobile-flow',
+    source: 'community',
+  },
+  {
+    id: 'community-mobile-app',
+    category: 'mobile',
+    title: pageText('Mobile App', '移动应用', '行動應用'),
+    description: pageText(
+      'Native-feeling mobile screen with product hierarchy, controls, and states.',
+      '带产品层级、控件和状态的原生感移动界面。',
+      '帶產品層級、控制元件和狀態的原生感行動介面。',
+    ),
+    icon: 'smartphone',
+    fileBaseName: 'mobile-app-screen',
+    source: 'community',
+  },
+  {
+    id: 'community-mobile-onboarding',
+    category: 'mobile',
+    title: pageText('Mobile Onboarding', '移动端引导', '行動端引導'),
+    description: pageText(
+      'First-run app flow with value props, permissions, and account setup states.',
+      '首启应用流程，包含价值点、权限请求和账号设置状态。',
+      '首次啟動應用流程，包含價值點、權限請求和帳號設定狀態。',
+    ),
+    icon: 'smartphone',
+    fileBaseName: 'mobile-onboarding',
+    source: 'community',
+  },
+  {
+    id: 'community-gamified-app',
+    category: 'mobile',
+    title: pageText('Gamified App', '游戏化应用', '遊戲化應用'),
+    description: pageText(
+      'Mobile progression screen with streaks, rewards, missions, and playful states.',
+      '带连续记录、奖励、任务和趣味状态的移动进度页面。',
+      '帶連續紀錄、獎勵、任務和趣味狀態的行動進度頁面。',
+    ),
+    icon: 'star',
+    fileBaseName: 'gamified-app',
+    source: 'community',
+  },
+  {
+    id: 'community-resume-modern',
+    category: 'document',
+    title: pageText('Modern Resume', '现代简历', '現代履歷'),
+    description: pageText(
+      'Structured resume page with professional hierarchy, highlights, and printable rhythm.',
+      '带专业层级、亮点模块和打印节奏的结构化简历页面。',
+      '帶專業層級、亮點模組和列印節奏的結構化履歷頁面。',
+    ),
+    icon: 'file-text',
+    fileBaseName: 'modern-resume',
+    source: 'community',
+  },
+  {
+    id: 'community-data-report',
+    category: 'document',
+    title: pageText('Data Report', '数据报告', '資料報告'),
+    description: pageText(
+      'Analytical report with KPI callouts, charts, commentary, and executive summary.',
+      '包含 KPI 亮点、图表、解读和管理摘要的分析报告。',
+      '包含 KPI 亮點、圖表、解讀和管理摘要的分析報告。',
+    ),
+    icon: 'file-text',
+    fileBaseName: 'data-report',
+    source: 'community',
+  },
+  {
+    id: 'community-invoice',
+    category: 'document',
+    title: pageText('Invoice', '发票', '發票'),
+    description: pageText(
+      'Clean commercial document with line items, totals, terms, and payment notes.',
+      '整洁的商务文档，包含明细、总计、条款和付款说明。',
+      '整潔的商務文件，包含明細、總計、條款和付款說明。',
+    ),
+    icon: 'file-text',
+    fileBaseName: 'invoice',
+    source: 'community',
+  },
+  {
+    id: 'community-live-dashboard',
+    category: 'liveArtifact',
+    title: pageText('Live Dashboard', '实时仪表盘', '即時儀表板'),
+    description: pageText(
+      'Refreshable operations dashboard with KPIs, charts, controls, and data states.',
+      '可刷新的运营仪表盘，包含 KPI、图表、控件和数据状态。',
+      '可重新整理的營運儀表板，包含 KPI、圖表、控制元件和資料狀態。',
+    ),
+    icon: 'kanban',
+    fileBaseName: 'live-dashboard',
+    source: 'community',
+  },
+  {
+    id: 'community-trading-analysis',
+    category: 'liveArtifact',
+    title: pageText('Trading Analysis Dashboard', '交易分析看板', '交易分析看板'),
+    description: pageText(
+      'Market analysis workspace with chart panels, positions, alerts, and watchlists.',
+      '市场分析工作台，包含图表面板、持仓、提醒和关注列表。',
+      '市場分析工作台，包含圖表面板、持倉、提醒和關注列表。',
+    ),
+    icon: 'kanban',
+    fileBaseName: 'trading-analysis-dashboard',
+    source: 'community',
+  },
+  {
+    id: 'community-social-media-matrix',
+    category: 'liveArtifact',
+    title: pageText('Social Media Matrix', '社媒矩阵追踪', '社群矩陣追蹤'),
+    description: pageText(
+      'Content operations grid for channels, campaigns, publishing status, and metrics.',
+      '内容运营矩阵，跟踪渠道、活动、发布状态和指标。',
+      '內容營運矩陣，追蹤渠道、活動、發布狀態和指標。',
+    ),
+    icon: 'grid',
+    fileBaseName: 'social-media-matrix',
+    source: 'community',
+  },
+  {
+    id: 'community-pitch-book',
+    category: 'slides',
+    title: pageText('Pitch Book', '融资路演稿', '募資簡報'),
+    description: pageText(
+      'Investor-ready narrative deck with market, product, traction, team, and ask.',
+      '面向投资人的叙事型幻灯片，覆盖市场、产品、牵引力、团队和融资诉求。',
+      '面向投資人的敘事型投影片，涵蓋市場、產品、牽引力、團隊和募資訴求。',
+    ),
+    icon: 'present',
+    fileBaseName: 'pitch-book',
+    source: 'community',
+  },
+  {
+    id: 'community-replit-deck',
+    category: 'slides',
+    title: pageText('Replit Deck', 'Replit 风格幻灯片', 'Replit 風格投影片'),
+    description: pageText(
+      'Product storytelling deck with developer energy, system diagrams, and launch rhythm.',
+      '带开发者气质、系统图和发布节奏的产品叙事幻灯片。',
+      '帶開發者氣質、系統圖和發布節奏的產品敘事投影片。',
+    ),
+    icon: 'present',
+    fileBaseName: 'replit-deck',
+    source: 'community',
+  },
+  {
+    id: 'community-guizang-ppt',
+    category: 'slides',
+    title: pageText('Guizang PPT', '归藏 PPT', '歸藏 PPT'),
+    description: pageText(
+      'Polished Chinese presentation style with strong section rhythm and dense visuals.',
+      '成熟中文演示风格，章节节奏强，视觉信息密度高。',
+      '成熟中文簡報風格，章節節奏強，視覺資訊密度高。',
+    ),
+    icon: 'present',
+    fileBaseName: 'guizang-ppt',
+    source: 'community',
+  },
+  {
+    id: 'community-frontend-slides',
+    category: 'slides',
+    title: pageText('Frontend Slides', '前端分享幻灯片', '前端分享投影片'),
+    description: pageText(
+      'Technical talk deck with code-friendly structure, diagrams, and pacing.',
+      '适合技术分享的幻灯片，包含代码友好结构、图解和节奏控制。',
+      '適合技術分享的投影片，包含程式碼友善結構、圖解和節奏控制。',
+    ),
+    icon: 'present',
+    fileBaseName: 'frontend-slides',
+    source: 'community',
+  },
+  {
+    id: 'community-ecommerce-live-stream',
+    category: 'image',
+    title: pageText('E-commerce Live Stream UI', '电商直播界面', '電商直播介面'),
+    description: pageText(
+      'Image direction board for commerce livestream overlays, offers, and product cards.',
+      '用于电商直播叠层、优惠和商品卡片的图片方向板。',
+      '用於電商直播疊層、優惠和商品卡片的圖片方向板。',
+    ),
+    icon: 'image',
+    fileBaseName: 'ecommerce-live-stream-ui',
+    source: 'community',
+  },
+  {
+    id: 'community-dance-infographic',
+    category: 'image',
+    title: pageText('Dance Infographic', '舞蹈信息图', '舞蹈資訊圖'),
+    description: pageText(
+      'Storyboard-style visual sheet for choreography, motion beats, and explainers.',
+      '用于编舞、动作节拍和解说的故事板式视觉页面。',
+      '用於編舞、動作節拍和解說的故事板式視覺頁面。',
+    ),
+    icon: 'image',
+    fileBaseName: 'dance-infographic',
+    source: 'community',
+  },
+  {
+    id: 'community-avatar-portrait',
+    category: 'image',
+    title: pageText('Avatar Portrait', '头像肖像', '頭像肖像'),
+    description: pageText(
+      'Portrait art direction page for identity, lighting, styling, and crop references.',
+      '用于身份、光线、造型和裁切参考的肖像视觉方向页。',
+      '用於身份、光線、造型和裁切參考的肖像視覺方向頁。',
+    ),
+    icon: 'image',
+    fileBaseName: 'avatar-portrait',
+    source: 'community',
+  },
+  {
+    id: 'community-showa-magazine',
+    category: 'image',
+    title: pageText('Showa Magazine Cover', '昭和杂志封面', '昭和雜誌封面'),
+    description: pageText(
+      'Retro editorial image brief for magazine covers, posters, and social graphics.',
+      '复古编辑风图片 brief，适合杂志封面、海报和社媒图形。',
+      '復古編輯風圖片 brief，適合雜誌封面、海報和社群圖形。',
+    ),
+    icon: 'image',
+    fileBaseName: 'showa-magazine-cover',
+    source: 'community',
+  },
+  {
+    id: 'community-three-kingdoms-video',
+    category: 'video',
+    title: pageText('Three Kingdoms Cinematic', '三国电影感短片', '三國電影感短片'),
+    description: pageText(
+      'Cinematic video storyboard with hero action, environment notes, timing, and negatives.',
+      '电影感视频故事板，包含英雄动作、环境说明、时间线和负面约束。',
+      '電影感影片故事板，包含英雄動作、環境說明、時間軸和負面約束。',
+    ),
+    icon: 'play',
+    fileBaseName: 'three-kingdoms-cinematic',
+    source: 'community',
+  },
+  {
+    id: 'community-romance-short-film',
+    category: 'video',
+    title: pageText('Romance Short Film', '浪漫短片', '浪漫短片'),
+    description: pageText(
+      'Short-film plan with scene beats, lighting, camera moves, dialogue, and sound.',
+      '短片策划页，包含场景节拍、光线、镜头运动、对白和声音。',
+      '短片企劃頁，包含場景節拍、光線、鏡頭運動、對白和聲音。',
+    ),
+    icon: 'play',
+    fileBaseName: 'romance-short-film',
+    source: 'community',
+  },
+  {
+    id: 'community-hand-dance-video',
+    category: 'video',
+    title: pageText('Hand Dance Video', '手势舞视频', '手勢舞影片'),
+    description: pageText(
+      'Performance video sheet for motion timing, close-ups, styling, and edit beats.',
+      '表演类视频页面，规划动作时机、特写、造型和剪辑节拍。',
+      '表演類影片頁面，規劃動作時機、特寫、造型和剪輯節拍。',
+    ),
+    icon: 'play',
+    fileBaseName: 'hand-dance-video',
+    source: 'community',
+  },
+  {
+    id: 'community-supercar-video',
+    category: 'video',
+    title: pageText('Luxury Supercar Video', '豪车宣传片', '豪車宣傳片'),
+    description: pageText(
+      'Premium product-film storyboard with hero shots, pacing, materials, and sound design.',
+      '高端产品影片故事板，覆盖主视觉镜头、节奏、材质和声音设计。',
+      '高端產品影片故事板，涵蓋主視覺鏡頭、節奏、材質和聲音設計。',
+    ),
+    icon: 'play',
+    fileBaseName: 'luxury-supercar-video',
+    source: 'community',
+  },
+  {
+    id: 'community-hf-app-showcase',
+    category: 'hyperframes',
+    title: pageText('HyperFrames App Showcase', 'HyperFrames 应用展示', 'HyperFrames 應用展示'),
+    description: pageText(
+      'HTML motion composition plan with floating devices, labels, transitions, and timing.',
+      'HTML 动效方案，包含漂浮设备、标签、转场和时间线。',
+      'HTML 動效方案，包含漂浮裝置、標籤、轉場和時間軸。',
+    ),
+    icon: 'sparkles',
+    fileBaseName: 'hyperframes-app-showcase',
+    source: 'community',
+  },
+  {
+    id: 'community-hf-brand-sizzle',
+    category: 'hyperframes',
+    title: pageText('HyperFrames Brand Sizzle', 'HyperFrames 品牌混剪', 'HyperFrames 品牌混剪'),
+    description: pageText(
+      'Motion brand reel with kinetic type, scene cuts, shader transitions, and end card.',
+      '品牌动效混剪，包含动态排版、场景剪辑、着色器转场和收尾卡。',
+      '品牌動效混剪，包含動態排版、場景剪輯、著色器轉場和收尾卡。',
+    ),
+    icon: 'sparkles',
+    fileBaseName: 'hyperframes-brand-sizzle',
+    source: 'community',
+  },
+  {
+    id: 'community-hf-social-overlay',
+    category: 'hyperframes',
+    title: pageText('HyperFrames Social Overlay', 'HyperFrames 社交叠层', 'HyperFrames 社群疊層'),
+    description: pageText(
+      'Vertical motion stack with social cards, captions, lower thirds, and CTA timing.',
+      '竖屏动效叠层，包含社交卡片、字幕、下三分之一和 CTA 时间点。',
+      '直式動效疊層，包含社群卡片、字幕、下三分之一和 CTA 時間點。',
+    ),
+    icon: 'sparkles',
+    fileBaseName: 'hyperframes-social-overlay',
+    source: 'community',
+  },
+  {
+    id: 'community-hf-flight-map',
+    category: 'hyperframes',
+    title: pageText('HyperFrames Flight Map', 'HyperFrames 航线地图', 'HyperFrames 航線地圖'),
+    description: pageText(
+      'Animated route map brief with path drawing, counters, city labels, and camera moves.',
+      '动态航线地图 brief，包含路径绘制、计数器、城市标签和镜头运动。',
+      '動態航線地圖 brief，包含路徑繪製、計數器、城市標籤和鏡頭運動。',
+    ),
+    icon: 'sparkles',
+    fileBaseName: 'hyperframes-flight-map',
+    source: 'community',
+  },
+  {
+    id: 'community-hf-website-promo',
+    category: 'hyperframes',
+    title: pageText('Website to Video Promo', '网站转宣传片', '網站轉宣傳片'),
+    description: pageText(
+      'Website capture-to-motion plan with viewport shots, transitions, and marketing pacing.',
+      '网站捕获转动效方案，包含多视口镜头、转场和营销节奏。',
+      '網站擷取轉動效方案，包含多視口鏡頭、轉場和行銷節奏。',
+    ),
+    icon: 'sparkles',
+    fileBaseName: 'website-to-video-promo',
+    source: 'community',
+  },
+  {
+    id: 'community-audio-jingle',
+    category: 'audio',
+    title: pageText('Audio Jingle', '音频 Jingle', '音訊 Jingle'),
+    description: pageText(
+      'Audio generation brief for jingles, beds, voiceovers, SFX, duration, and delivery notes.',
+      '音频生成 brief，规划 jingle、铺底音乐、旁白、音效、时长和交付说明。',
+      '音訊生成 brief，規劃 jingle、鋪底音樂、旁白、音效、時長和交付說明。',
+    ),
+    icon: 'volume',
+    fileBaseName: 'audio-jingle',
+    source: 'community',
+  },
+];
+
+const PROJECT_PAGE_PRESETS: ProjectPagePreset[] = [
+  ...BLANK_PAGE_PRESETS,
+  ...COMMUNITY_PAGE_PRESETS,
+];
+const PROJECT_PAGE_PRESET_FILE_BASE_NAMES = new Set(
+  PROJECT_PAGE_PRESETS.map((preset) => preset.fileBaseName.toLowerCase()),
+);
+const PROJECT_PAGE_CATEGORY_ORDER: ProjectPageCategoryId[] = [
+  'recommended',
+  'prototype',
+  'liveArtifact',
+  'slides',
+  'wireframe',
+  'mobile',
+  'document',
+  'image',
+  'video',
+  'hyperframes',
+  'audio',
+];
+const COMMUNITY_PLUGIN_CHIP_TO_PAGE_KIND: Record<string, ProjectPageKind> = {
+  prototype: 'prototype',
+  wireframe: 'wireframe',
+  mobile: 'mobile',
+  document: 'document',
+  deck: 'slides',
+  image: 'image',
+  video: 'video',
+  hyperframes: 'hyperframes',
+  'live-artifact': 'liveArtifact',
+};
 const PROJECT_PAGE_CATEGORIES: Array<{
   id: ProjectPageCategoryId;
   icon: IconName;
@@ -738,7 +1261,7 @@ export function FileWorkspace({
   onSubmitQuestionForm,
   focusQuestionsRequest = null,
 }: Props) {
-  const t = useT();
+  const { locale, t } = useI18n();
   // The chat column only shows a compact Questions banner; the form itself
   // lives here, including after submission when a banner click can reopen the
   // answered preview.
@@ -825,6 +1348,7 @@ export function FileWorkspace({
   const [pageCreatorPreviewId, setPageCreatorPreviewId] =
     useState<ProjectPagePresetId>(() => defaultPagePresetId(projectKind));
   const [pageCreating, setPageCreating] = useState(false);
+  const [communityPluginPresets, setCommunityPluginPresets] = useState<ProjectPagePreset[]>([]);
   const [pagesMenuPosition, setPagesMenuPosition] = useState<{
     top: number;
     left: number;
@@ -897,12 +1421,23 @@ export function FileWorkspace({
     [files],
   );
 
+  const projectPagePresets = useMemo(
+    () => [
+      ...BLANK_PAGE_PRESETS,
+      ...(communityPluginPresets.length > 0 ? communityPluginPresets : COMMUNITY_PAGE_PRESETS),
+    ],
+    [communityPluginPresets],
+  );
+  const pagePresetBaseNames = useMemo(
+    () => pagePresetFileBaseNameSet(projectPagePresets),
+    [projectPagePresets],
+  );
   const pageFileNames = useMemo(() => new Set(persistedTabs), [persistedTabs]);
   const pageFiles = useMemo(
     () => visibleFiles
-      .filter((file) => isProjectPageFile(file, pageFileNames))
+      .filter((file) => isProjectPageFile(file, pageFileNames, pagePresetBaseNames))
       .sort((a, b) => b.mtime - a.mtime || a.name.localeCompare(b.name)),
-    [pageFileNames, visibleFiles],
+    [pageFileNames, pagePresetBaseNames, visibleFiles],
   );
 
   const updatePagesMenuPosition = useCallback(() => {
@@ -931,6 +1466,22 @@ export function FileWorkspace({
     setPageCreatorCategory('recommended');
     setPageCreatorPreviewId(defaultPagePresetId(projectKind));
   }, [projectId, projectKind]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = () => {
+      void listPlugins().then((records) => {
+        if (cancelled) return;
+        setCommunityPluginPresets(communityPluginPagePresets(records));
+      });
+    };
+    load();
+    window.addEventListener('open-design:plugins-changed', load);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('open-design:plugins-changed', load);
+    };
+  }, []);
 
   const loadSketchFile = useCallback((file: ProjectFile): Promise<boolean> => {
     const sourceKey = sketchFileSourceKey(projectId, file);
@@ -1995,11 +2546,12 @@ export function FileWorkspace({
 
   async function createBlankPage(presetId: ProjectPagePresetId) {
     if (pageCreating) return;
-    const preset = projectPagePresetById(presetId) ?? PROJECT_PAGE_PRESETS[0]!;
+    const preset = projectPagePresetById(presetId, projectPagePresets) ?? projectPagePresets[0] ?? PROJECT_PAGE_PRESETS[0]!;
     const target = nextHtmlPagePath(visibleFiles, preset.fileBaseName);
     setPageCreating(true);
     try {
-      const file = await writeProjectTextFile(projectId, target, initialHtmlPage(target, preset, t));
+      const content = await contentForPagePreset(target, preset, t, locale);
+      const file = await writeProjectTextFile(projectId, target, content);
       if (!file) {
         // Never let a failed create read as a silent no-op click.
         setLauncherToast(t('workspace.pageCreateFailed'));
@@ -2655,7 +3207,7 @@ export function FileWorkspace({
     },
   };
   const launcherActions = buildLauncherActions(launcherContext);
-  const activePageFile = activeFile && isProjectPageFile(activeFile, pageFileNames) ? activeFile : null;
+  const activePageFile = activeFile && isProjectPageFile(activeFile, pageFileNames, pagePresetBaseNames) ? activeFile : null;
   const pagesButtonLabel = activePageFile
     ? pageDisplayName(activePageFile.name)
     : activeTab === DESIGN_FILES_TAB
@@ -3302,6 +3854,8 @@ export function FileWorkspace({
       <PageCreatorDialog
         open={pageCreatorOpen}
         t={t}
+        locale={locale}
+        presets={projectPagePresets}
         query={pageCreatorQuery}
         category={pageCreatorCategory}
         previewId={pageCreatorPreviewId}
@@ -5308,39 +5862,190 @@ ${t('designFiles.documentTemplate.nextBody')}
 function defaultPagePresetId(projectKind: TrackingProjectKind): ProjectPagePresetId {
   switch (projectKind) {
     case 'slide_deck':
-      return 'slides';
+      return 'blank-slides';
     case 'document':
-      return 'document';
+      return 'blank-document';
     case 'template':
     case 'prototype':
     case 'wireframe':
     case 'mobile':
     default:
-      return 'prototype';
+      return 'blank-prototype';
   }
 }
 
-function projectPagePresetById(id: ProjectPagePresetId): ProjectPagePreset | undefined {
-  return PROJECT_PAGE_PRESETS.find((preset) => preset.id === id);
+function projectPagePresetById(
+  id: ProjectPagePresetId,
+  presets: ProjectPagePreset[] = PROJECT_PAGE_PRESETS,
+): ProjectPagePreset | undefined {
+  return presets.find((preset) => preset.id === id);
 }
 
-function isProjectPageFile(file: ProjectFile, pageFileNames: Set<string>): boolean {
+function pagePresetTitle(preset: ProjectPagePreset, t: TranslateFn, locale?: string): string {
+  if (preset.plugin) return localizePluginTitle(locale ?? 'en', preset.plugin);
+  if (preset.titleKey) return t(preset.titleKey);
+  return resolveLocalizedText(preset.title, locale) || preset.id;
+}
+
+function pagePresetDescription(preset: ProjectPagePreset, t: TranslateFn, locale?: string): string {
+  if (preset.plugin) return localizePluginDescription(locale ?? 'en', preset.plugin);
+  if (preset.descriptionKey) return t(preset.descriptionKey);
+  return resolveLocalizedText(preset.description, locale);
+}
+
+function pagePresetMatchesCategory(preset: ProjectPagePreset, category: ProjectPageCategoryId): boolean {
+  if (category === 'recommended') return preset.featured === true;
+  return preset.category === category;
+}
+
+function pagePresetSourceLabel(preset: ProjectPagePreset, t: TranslateFn): string {
+  return preset.source === 'blank' ? t('workspace.newBlankPage') : t('pluginsHome.title');
+}
+
+function projectPageKindForCommunityPlugin(record: InstalledPluginRecord): ProjectPageKind | null {
+  for (const [chipId, pageKind] of Object.entries(COMMUNITY_PLUGIN_CHIP_TO_PAGE_KIND)) {
+    const ids = (CURATED_PLUGIN_IDS_BY_CHIP as Record<string, readonly string[] | undefined>)[chipId];
+    if (ids?.includes(record.id)) return pageKind;
+  }
+  const primaryCategory = extractCategories(record)[0];
+  switch (primaryCategory) {
+    case 'prototype':
+      return 'prototype';
+    case 'live-artifact':
+      return 'liveArtifact';
+    case 'deck':
+      return 'slides';
+    case 'image':
+      return 'image';
+    case 'video':
+      return 'video';
+    case 'hyperframes':
+      return 'hyperframes';
+    case 'audio':
+      return 'audio';
+    default:
+      return null;
+  }
+}
+
+function iconForPageKind(kind: ProjectPageKind): IconName {
+  switch (kind) {
+    case 'slides':
+      return 'present';
+    case 'prototype':
+      return 'layout';
+    case 'wireframe':
+      return 'grid';
+    case 'mobile':
+      return 'smartphone';
+    case 'document':
+      return 'file-text';
+    case 'image':
+      return 'image';
+    case 'video':
+      return 'play';
+    case 'hyperframes':
+      return 'sparkles';
+    case 'audio':
+      return 'volume';
+    case 'liveArtifact':
+      return 'kanban';
+  }
+}
+
+function slugifyPageFileBaseName(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '')
+    || 'community-page';
+}
+
+function communityPluginPagePresets(records: InstalledPluginRecord[]): ProjectPagePreset[] {
+  return records
+    .map((record): ProjectPagePreset | null => {
+      const category = projectPageKindForCommunityPlugin(record);
+      if (!category) return null;
+      return {
+        id: `community-plugin-${record.id}`,
+        category,
+        icon: iconForPageKind(category),
+        fileBaseName: slugifyPageFileBaseName(record.title || record.manifest?.title || record.id),
+        source: 'community',
+        plugin: record,
+        pluginPreview: inferPluginPreview(record, { preferBaked: true }),
+        pluginHtmlPreview: inferPluginPreview(record),
+        featured: curatedPluginPriority(record) !== null,
+      };
+    })
+    .filter((preset): preset is ProjectPagePreset => preset !== null)
+    .sort((a, b) => {
+      const aFeatured = a.featured === true;
+      const bFeatured = b.featured === true;
+      if (aFeatured !== bFeatured) return aFeatured ? -1 : 1;
+      const aCategoryRank = PROJECT_PAGE_CATEGORY_ORDER.indexOf(a.category);
+      const bCategoryRank = PROJECT_PAGE_CATEGORY_ORDER.indexOf(b.category);
+      if (aCategoryRank !== bCategoryRank) return aCategoryRank - bCategoryRank;
+      const aPriority = a.plugin ? curatedPluginPriority(a.plugin) : null;
+      const bPriority = b.plugin ? curatedPluginPriority(b.plugin) : null;
+      if (aPriority !== null || bPriority !== null) {
+        return (aPriority ?? Number.MAX_SAFE_INTEGER) - (bPriority ?? Number.MAX_SAFE_INTEGER);
+      }
+      return a.fileBaseName.localeCompare(b.fileBaseName);
+    });
+}
+
+function pagePresetFileBaseNameSet(presets: ProjectPagePreset[]): Set<string> {
+  return new Set(presets.map((preset) => preset.fileBaseName.toLowerCase()));
+}
+
+async function contentForPagePreset(
+  target: string,
+  preset: ProjectPagePreset,
+  t: TranslateFn,
+  locale?: string,
+): Promise<string> {
+  if (preset.plugin && preset.pluginHtmlPreview?.kind === 'html') {
+    const preview = preset.pluginHtmlPreview;
+    const result = preview.source === 'preview'
+      ? await fetchPluginPreviewHtml(preset.plugin.id)
+      : await fetchPluginExampleHtml(preset.plugin.id, preview.exampleStem ?? '');
+    if ('html' in result && typeof result.html === 'string' && result.html.trim().length > 0) {
+      return result.html;
+    }
+  }
+  return initialHtmlPage(target, preset, t, locale);
+}
+
+function isProjectPageFile(
+  file: ProjectFile,
+  pageFileNames: Set<string>,
+  pagePresetBaseNames: Set<string> = PROJECT_PAGE_PRESET_FILE_BASE_NAMES,
+): boolean {
   return (
     file.kind === 'html'
     && !isLiveArtifactImplementationPath(file.name)
     && (
       pageFileNames.has(file.name)
-      || isLikelyPrimaryPageFileName(file.name)
+      || isLikelyPrimaryPageFileName(file.name, pagePresetBaseNames)
     )
   );
 }
 
-function isLikelyPrimaryPageFileName(name: string): boolean {
+function isLikelyPrimaryPageFileName(
+  name: string,
+  pagePresetBaseNames: Set<string> = PROJECT_PAGE_PRESET_FILE_BASE_NAMES,
+): boolean {
   const normalized = normalizeProjectFilePath(name).toLowerCase();
   const basename = normalized.split('/').filter(Boolean).pop() ?? normalized;
   if (!/\.html?$/i.test(basename)) return false;
   if (basename === 'index.html') return true;
   const stem = basename.replace(/\.html?$/i, '');
+  const baseStem = stem.replace(/-\d+$/i, '');
+  if (pagePresetBaseNames.has(baseStem)) return true;
   return /^(page|prototype|wireframe|mobile-app|mobile|slides?|deck|presentation|document|resume|image-board|video-storyboard|hyperframes|audio-brief|live-artifact)(-\d+)?$/i.test(stem);
 }
 
@@ -5387,30 +6092,33 @@ function nextHtmlPagePath(files: ProjectFile[], baseName: string): string {
   return `${safeBaseName}-${Date.now()}.html`;
 }
 
-function initialHtmlPage(path: string, preset: ProjectPagePreset, t: TranslateFn): string {
-  const title = pageTitleFromPath(path, t(preset.titleKey));
-  switch (preset.id) {
+function initialHtmlPage(path: string, preset: ProjectPagePreset, t: TranslateFn, locale?: string): string {
+  const title = pageTitleFromPath(path, pagePresetTitle(preset, t, locale));
+  const communityDescription = preset.source === 'community'
+    ? pagePresetDescription(preset, t, locale)
+    : undefined;
+  switch (preset.category) {
     case 'slides':
-      return initialSlidesPage(title);
+      return initialSlidesPage(title, communityDescription);
     case 'document':
-      return initialDocumentPage(title);
+      return initialDocumentPage(title, communityDescription);
     case 'wireframe':
-      return initialWireframePage(title);
+      return initialWireframePage(title, communityDescription);
     case 'mobile':
-      return initialMobilePage(title);
+      return initialMobilePage(title, communityDescription);
     case 'image':
-      return initialImagePage(title);
+      return initialImagePage(title, communityDescription);
     case 'video':
-      return initialVideoPage(title);
+      return initialVideoPage(title, communityDescription);
     case 'hyperframes':
-      return initialHyperframesPage(title);
+      return initialHyperframesPage(title, communityDescription);
     case 'audio':
-      return initialAudioPage(title);
+      return initialAudioPage(title, communityDescription);
     case 'liveArtifact':
-      return initialLiveArtifactPage(title);
+      return initialLiveArtifactPage(title, communityDescription);
     case 'prototype':
     default:
-      return initialPrototypePage(title);
+      return initialPrototypePage(title, communityDescription);
   }
 }
 
@@ -5421,8 +6129,16 @@ function pageTitleFromPath(path: string, fallback: string): string {
   return title || fallback;
 }
 
-function initialPrototypePage(title: string): string {
+const DEFAULT_PROTOTYPE_PAGE_BODY =
+  'Turn product intent, references, and iteration notes into a polished page that can be reviewed, remixed, and shipped.';
+const DEFAULT_DOCUMENT_PAGE_BODY =
+  'Use this page for a brief, memo, case study, or structured design note that should read well in preview.';
+const DEFAULT_SLIDES_PAGE_BODY =
+  'A focused starter for narrative, critique, speaker notes, and live presentation.';
+
+function initialPrototypePage(title: string, body = DEFAULT_PROTOTYPE_PAGE_BODY): string {
   const safeTitle = escapeHtmlText(title);
+  const safeBody = escapeHtmlText(body);
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -5452,7 +6168,7 @@ function initialPrototypePage(title: string): string {
       <div>
         <div class="eyebrow">Open Design</div>
         <h1>${safeTitle}</h1>
-        <p>Turn product intent, references, and iteration notes into a polished page that can be reviewed, remixed, and shipped.</p>
+        <p>${safeBody}</p>
       </div>
       <p>Replace this starter with your own audience, workflow, and key screen.</p>
     </section>
@@ -5467,60 +6183,54 @@ function initialPrototypePage(title: string): string {
 `;
 }
 
-function initialWireframePage(title: string): string {
-  return initialPrototypePage(title)
-    .replace('Turn product intent, references, and iteration notes into a polished page that can be reviewed, remixed, and shipped.', 'Map structure, priority, and flows before polishing visual style.')
+function initialWireframePage(title: string, body = 'Map structure, priority, and flows before polishing visual style.'): string {
+  return initialPrototypePage(title, body)
     .replace('1. Promise', '1. Flow')
     .replace('2. Interaction', '2. Screen')
     .replace('3. Proof', '3. Questions');
 }
 
-function initialMobilePage(title: string): string {
-  return initialPrototypePage(title)
+function initialMobilePage(title: string, body = 'Shape a mobile app screen with clear hierarchy, native-feeling controls, and handoff-ready states.'): string {
+  return initialPrototypePage(title, body)
     .replace('width: min(1080px, 100%); min-height: 640px;', 'width: min(430px, 100%); min-height: 820px;')
-    .replace('grid-template-columns: 1fr 0.9fr;', 'grid-template-columns: 1fr;')
-    .replace('Turn product intent, references, and iteration notes into a polished page that can be reviewed, remixed, and shipped.', 'Shape a mobile app screen with clear hierarchy, native-feeling controls, and handoff-ready states.');
+    .replace('grid-template-columns: 1fr 0.9fr;', 'grid-template-columns: 1fr;');
 }
 
-function initialImagePage(title: string): string {
-  return initialPrototypePage(title)
+function initialImagePage(title: string, body = 'Collect image direction, composition notes, references, and generation constraints in one reviewable page.'): string {
+  return initialPrototypePage(title, body)
     .replace('Prototype outline', 'Image direction')
     .replace('1. Promise', '1. Subject')
     .replace('2. Interaction', '2. Composition')
-    .replace('3. Proof', '3. Style')
-    .replace('Turn product intent, references, and iteration notes into a polished page that can be reviewed, remixed, and shipped.', 'Collect image direction, composition notes, references, and generation constraints in one reviewable page.');
+    .replace('3. Proof', '3. Style');
 }
 
-function initialVideoPage(title: string): string {
-  return initialPrototypePage(title)
+function initialVideoPage(title: string, body = 'Draft scenes, timing, captions, motion, and export requirements before rendering video.'): string {
+  return initialPrototypePage(title, body)
     .replace('Prototype outline', 'Video storyboard')
     .replace('1. Promise', '1. Hook')
     .replace('2. Interaction', '2. Sequence')
-    .replace('3. Proof', '3. Output')
-    .replace('Turn product intent, references, and iteration notes into a polished page that can be reviewed, remixed, and shipped.', 'Draft scenes, timing, captions, motion, and export requirements before rendering video.');
+    .replace('3. Proof', '3. Output');
 }
 
-function initialHyperframesPage(title: string): string {
-  return initialVideoPage(title)
-    .replace('Draft scenes, timing, captions, motion, and export requirements before rendering video.', 'Author an HTML motion piece with scenes, transitions, audio-reactive moments, and capture notes.');
+function initialHyperframesPage(title: string, body = 'Author an HTML motion piece with scenes, transitions, audio-reactive moments, and capture notes.'): string {
+  return initialVideoPage(title, body);
 }
 
-function initialAudioPage(title: string): string {
-  return initialDocumentPage(title)
-    .replace('Use this page for a brief, memo, case study, or structured design note that should read well in preview.', 'Use this page for voice, music, sound design, pronunciation, pacing, and final-use notes.');
+function initialAudioPage(title: string, body = 'Use this page for voice, music, sound design, pronunciation, pacing, and final-use notes.'): string {
+  return initialDocumentPage(title, body);
 }
 
-function initialLiveArtifactPage(title: string): string {
-  return initialPrototypePage(title)
+function initialLiveArtifactPage(title: string, body = 'Plan data sources, widgets, filters, refresh cadence, and empty/loading/error states.'): string {
+  return initialPrototypePage(title, body)
     .replace('Prototype outline', 'Live artifact plan')
     .replace('1. Promise', '1. Data')
     .replace('2. Interaction', '2. Controls')
-    .replace('3. Proof', '3. States')
-    .replace('Turn product intent, references, and iteration notes into a polished page that can be reviewed, remixed, and shipped.', 'Plan data sources, widgets, filters, refresh cadence, and empty/loading/error states.');
+    .replace('3. Proof', '3. States');
 }
 
-function initialSlidesPage(title: string): string {
+function initialSlidesPage(title: string, body = DEFAULT_SLIDES_PAGE_BODY): string {
   const safeTitle = escapeHtmlText(title);
+  const safeBody = escapeHtmlText(body);
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -5600,7 +6310,7 @@ function initialSlidesPage(title: string): string {
       <section class="slide active cover" data-screen-label="01 Cover">
         <div class="kicker">Open Design deck</div>
         <h1>${safeTitle}</h1>
-        <p class="body">A focused starter for narrative, critique, speaker notes, and live presentation.</p>
+        <p class="body">${safeBody}</p>
         <div class="num">01</div>
         <div class="footer"><span>Starter deck</span><span>1920 x 1080</span></div>
       </section>
@@ -5715,8 +6425,9 @@ function initialSlidesPage(title: string): string {
 `;
 }
 
-function initialDocumentPage(title: string): string {
+function initialDocumentPage(title: string, body = DEFAULT_DOCUMENT_PAGE_BODY): string {
   const safeTitle = escapeHtmlText(title);
+  const safeBody = escapeHtmlText(body);
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -5741,7 +6452,7 @@ function initialDocumentPage(title: string): string {
   <article>
     <div class="meta">Open Design document</div>
     <h1>${safeTitle}</h1>
-    <p>Use this page for a brief, memo, case study, or structured design note that should read well in preview.</p>
+    <p>${safeBody}</p>
     <h2>Purpose</h2>
     <p>State the audience, the decision, and the desired result.</p>
     <h2>Key Points</h2>
@@ -6197,9 +6908,94 @@ function escapeDesignSystemPreviewCssUrl(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\a ');
 }
 
+function PageCreatorPresetFrame({
+  preset,
+  t,
+  locale,
+  sourceLabel,
+}: {
+  preset: ProjectPagePreset;
+  t: TranslateFn;
+  locale?: string;
+  sourceLabel: string;
+}) {
+  const preview = preset.pluginPreview;
+  const { ref, inView } = useInView<HTMLSpanElement>({ rootMargin: '520px', once: false });
+
+  if (preset.source === 'blank') {
+    return (
+      <span ref={ref} className="page-creator-card-frame" aria-hidden>
+        <span className="page-creator-blank-thumb">
+          <span className="page-creator-blank-plus">
+            <Icon name="plus" size={28} />
+          </span>
+          <span>{sourceLabel}</span>
+        </span>
+      </span>
+    );
+  }
+
+  if (preview?.kind === 'media') {
+    return (
+      <span ref={ref} className="page-creator-card-frame" aria-hidden>
+        {preview.poster ? (
+          <img
+            className="page-creator-plugin-media"
+            src={preview.poster}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            referrerPolicy="no-referrer"
+          />
+        ) : (
+          <span className="page-creator-blank-thumb">
+            <span className="page-creator-blank-plus">
+              <Icon name={preset.icon} size={24} />
+            </span>
+            <span>{sourceLabel}</span>
+          </span>
+        )}
+      </span>
+    );
+  }
+
+  if (preview?.kind === 'html') {
+    return (
+      <span ref={ref} className="page-creator-card-frame" aria-hidden>
+        {inView ? (
+          <iframe title="" src={preview.src} sandbox="allow-scripts" loading="lazy" tabIndex={-1} />
+        ) : (
+          <span className="page-creator-preview-skeleton" />
+        )}
+      </span>
+    );
+  }
+
+  return (
+    <span ref={ref} className="page-creator-card-frame" aria-hidden>
+      {inView ? (
+        // allow-scripts (still origin-isolated) so templates that scale
+        // themselves — the slides deck stage — preview at fit instead of a
+        // clipped corner.
+        <iframe
+          title=""
+          srcDoc={initialHtmlPage(`${preset.fileBaseName}.html`, preset, t, locale)}
+          sandbox="allow-scripts"
+          loading="lazy"
+          tabIndex={-1}
+        />
+      ) : (
+        <span className="page-creator-preview-skeleton" />
+      )}
+    </span>
+  );
+}
+
 function PageCreatorDialog({
   open,
   t,
+  locale,
+  presets,
   query,
   category,
   previewId,
@@ -6212,6 +7008,8 @@ function PageCreatorDialog({
 }: {
   open: boolean;
   t: TranslateFn;
+  locale?: string;
+  presets: ProjectPagePreset[];
   query: string;
   category: ProjectPageCategoryId;
   previewId: ProjectPagePresetId;
@@ -6230,25 +7028,37 @@ function PageCreatorDialog({
   if (!open) return null;
 
   const normalizedQuery = query.trim().toLocaleLowerCase();
-  const filteredPresets = PROJECT_PAGE_PRESETS.filter((preset) => {
+  const filteredPresets = presets.filter((preset) => {
+    const title = pagePresetTitle(preset, t, locale);
+    const description = pagePresetDescription(preset, t, locale);
     const haystack = [
       preset.id,
       preset.fileBaseName,
       preset.category,
-      t(preset.titleKey),
-      t(preset.descriptionKey),
+      pagePresetSourceLabel(preset, t),
+      title,
+      description,
     ].join(' ').toLocaleLowerCase();
     if (normalizedQuery) return haystack.includes(normalizedQuery);
-    if (category === 'recommended') return preset.featured === true;
-    return preset.category === category;
+    return pagePresetMatchesCategory(preset, category);
   });
+  const categoryCounts = new Map<ProjectPageCategoryId, number>(
+    PROJECT_PAGE_CATEGORIES.map((item) => [
+      item.id,
+      presets.filter((preset) => pagePresetMatchesCategory(preset, item.id)).length,
+    ]),
+  );
   const previewPreset =
-    projectPagePresetById(previewId) ?? filteredPresets[0] ?? PROJECT_PAGE_PRESETS[0]!;
+    projectPagePresetById(previewId, presets) ?? filteredPresets[0] ?? presets[0] ?? PROJECT_PAGE_PRESETS[0]!;
   const modalPreviewPreset = modalPreviewId
-    ? projectPagePresetById(modalPreviewId) ?? previewPreset
+    ? projectPagePresetById(modalPreviewId, presets) ?? previewPreset
     : null;
-  const modalPreviewSrcDoc = modalPreviewPreset
-    ? initialHtmlPage(`${modalPreviewPreset.fileBaseName}.html`, modalPreviewPreset, t)
+  const modalPreviewUrl =
+    modalPreviewPreset?.pluginHtmlPreview?.kind === 'html'
+      ? modalPreviewPreset.pluginHtmlPreview.src
+      : null;
+  const modalPreviewSrcDoc = modalPreviewPreset && !modalPreviewUrl
+    ? initialHtmlPage(`${modalPreviewPreset.fileBaseName}.html`, modalPreviewPreset, t, locale)
     : '';
 
   const dialog = (
@@ -6302,14 +7112,15 @@ function PageCreatorDialog({
                 onClick={() => {
                   onCategoryChange(item.id);
                   onQueryChange('');
-                  const firstPreset = PROJECT_PAGE_PRESETS.find((preset) =>
-                    item.id === 'recommended' ? preset.featured === true : preset.category === item.id,
+                  const firstPreset = presets.find((preset) =>
+                    pagePresetMatchesCategory(preset, item.id),
                   );
                   if (firstPreset) onPreviewChange(firstPreset.id);
                 }}
               >
                 <Icon name={item.icon} size={13} />
                 <span>{t(item.labelKey)}</span>
+                <span className="page-creator-sidebar-count">{categoryCounts.get(item.id) ?? 0}</span>
               </button>
             ))}
           </aside>
@@ -6319,28 +7130,37 @@ function PageCreatorDialog({
                 <p className="page-creator-empty">{t('workspace.pageCreatorEmpty')}</p>
               ) : (
                 filteredPresets.map((preset) => {
-                  const srcDoc = initialHtmlPage(`${preset.fileBaseName}.html`, preset, t);
+                  const title = pagePresetTitle(preset, t, locale);
+                  const description = pagePresetDescription(preset, t, locale);
+                  const sourceLabel = pagePresetSourceLabel(preset, t);
                   return (
                     <article
                       key={preset.id}
-                      className={`page-creator-card ${previewPreset.id === preset.id ? 'active' : ''}`}
+                      className={[
+                        'page-creator-card',
+                        `page-creator-card--${preset.source}`,
+                        previewPreset.id === preset.id ? 'active' : '',
+                      ].filter(Boolean).join(' ')}
                       role="listitem"
                       onMouseEnter={() => onPreviewChange(preset.id)}
                       onFocus={() => onPreviewChange(preset.id)}
                     >
                       <div className="page-creator-card-preview">
-                        <span className="page-creator-card-frame" aria-hidden>
-                          {/* allow-scripts (still origin-isolated) so templates
-                              that scale themselves — the slides deck stage —
-                              preview at fit instead of a clipped corner. */}
-                          <iframe title="" srcDoc={srcDoc} sandbox="allow-scripts" loading="lazy" tabIndex={-1} />
-                        </span>
+                        <PageCreatorPresetFrame
+                          preset={preset}
+                          t={t}
+                          locale={locale}
+                          sourceLabel={sourceLabel}
+                        />
                         <span className="page-creator-card-copy">
+                          <span className={`page-creator-source page-creator-source--${preset.source}`}>
+                            {sourceLabel}
+                          </span>
                           <strong>
                             <Icon name={preset.icon} size={14} />
-                            {t(preset.titleKey)}
+                            {title}
                           </strong>
-                          <span>{t(preset.descriptionKey)}</span>
+                          <span>{description}</span>
                         </span>
                         <span className="page-creator-card-actions">
                           <button
@@ -6382,13 +7202,13 @@ function PageCreatorDialog({
             className="page-template-preview-modal"
             role="dialog"
             aria-modal="true"
-            aria-label={`${t('workspace.pageCreatorPreview')} ${t(modalPreviewPreset.titleKey)}`}
+            aria-label={`${t('workspace.pageCreatorPreview')} ${pagePresetTitle(modalPreviewPreset, t, locale)}`}
             onMouseDown={(event) => event.stopPropagation()}
           >
             <header className="page-template-preview-head">
               <div>
                 <p className="page-creator-kicker">{t('workspace.pageCreatorPreview')}</p>
-                <h3>{t(modalPreviewPreset.titleKey)}</h3>
+                <h3>{pagePresetTitle(modalPreviewPreset, t, locale)}</h3>
               </div>
               <button
                 type="button"
@@ -6403,8 +7223,8 @@ function PageCreatorDialog({
             </header>
             <iframe
               className="page-template-preview-frame"
-              title={t(modalPreviewPreset.titleKey)}
-              srcDoc={modalPreviewSrcDoc}
+              title={pagePresetTitle(modalPreviewPreset, t, locale)}
+              {...(modalPreviewUrl ? { src: modalPreviewUrl } : { srcDoc: modalPreviewSrcDoc })}
               sandbox="allow-scripts"
             />
             <footer className="page-template-preview-foot">

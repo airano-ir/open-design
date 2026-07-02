@@ -388,7 +388,7 @@ function kindLabel(kind: ProjectFileKind, t: TranslateFn): string {
 
 function workspaceContextIconName(kind: WorkspaceContextItem['kind']): IconName {
   if (kind === 'browser') return 'globe';
-  if (kind === 'design-files' || kind === 'folder') return 'folder';
+  if (kind === 'design-files' || kind === 'folder' || kind === 'project' || kind === 'local-code') return 'folder';
   if (kind === 'design-system') return 'blocks';
   if (kind === 'terminal') return 'terminal';
   if (kind === 'side-chat') return 'comment';
@@ -406,6 +406,10 @@ function workspaceContextKindLabel(kind: WorkspaceContextItem['kind']): string {
       return 'Design system';
     case 'folder':
       return 'Folder';
+    case 'project':
+      return 'Project';
+    case 'local-code':
+      return 'Local code';
     case 'terminal':
       return 'Terminal';
     case 'side-chat':
