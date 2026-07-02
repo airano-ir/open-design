@@ -95,7 +95,7 @@ export function MembersView({ solo = false }: { solo?: boolean }) {
 
   function sendInvites(rows: PendingInvite[]) {
     setPendingInvites((prev) => [...prev, ...rows]);
-    setToast(`已向 ${rows.length} 位同事发送邀请短信和邮件`);
+    setToast(`已向 ${rows.length} 位同事发送邀请邮件`);
     window.setTimeout(() => setToast(null), 3200);
   }
 
