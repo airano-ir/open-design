@@ -5458,10 +5458,12 @@ export async function startServer({
       );
     if (!def.bin)
       return design.runs.fail(run, 'AGENT_UNAVAILABLE', 'agent has no binary');
-    const byokOpenCodeProvider = buildOpenCodeByokProviderConfig(
-      byokProvider,
-      typeof model === 'string' ? model : null,
-    );
+    const byokOpenCodeProvider = def.id === 'byok-opencode'
+      ? buildOpenCodeByokProviderConfig(
+          byokProvider,
+          typeof model === 'string' ? model : null,
+        )
+      : null;
     if (def.id === 'byok-opencode' && !byokOpenCodeProvider) {
       return design.runs.fail(
         run,
