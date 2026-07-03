@@ -2458,7 +2458,7 @@ export const zhTW: Dict = {
     "為一家關注氣候議題的非營利機構製作互動式年度報告 —— 長捲動編輯式佈局，混合大段引言區塊、資料視覺化（堆疊柱狀圖、動態計數器、專案地點分布的等值線地圖）、攝影分隔頁、捐贈者牆，以及最終行動號召。現代襯線內文、無襯線圖表標籤、大地紙張配色。",
   'home.recommendation.eyebrow': '為你推薦',
   'home.recommendation.primaryCta': '在 Studio 中開始',
-  'home.recommendation.change': '換一個試試',
+  'home.recommendation.change': '換一換',
   'home.recommendation.browseAll': '瀏覽全部類型',
   'home.recommendation.defaultProjectName': '新增專案',
   'studio.firstArtifactHint.title': '你的第一個設計已就緒',

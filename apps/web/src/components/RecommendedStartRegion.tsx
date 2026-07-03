@@ -149,8 +149,10 @@ export function RecommendedStartRegion({ recommendation, onStart, onDismiss }: P
           className={styles.change}
           onClick={handleChange}
           data-testid="home-recommendation-change"
+          title={t('home.recommendation.change')}
+          aria-label={t('home.recommendation.change')}
         >
-          {t('home.recommendation.change')}
+          <Icon name="refresh" size={15} />
         </button>
       ) : null}
       <button
