@@ -464,6 +464,91 @@ process.stdin.on('end', () => {
     );
   });
 
+  it('passes keyless BYOK provider config without auth fields to OpenCode', async () => {
+    if (!process.env.OD_DATA_DIR) {
+      throw new Error('OD_DATA_DIR is required for BYOK OpenCode config tests');
+    }
+
+    const projectId = `proj-${randomUUID()}`;
+    const markerDir = await fsp.mkdtemp(join(tmpdir(), 'od-byok-opencode-keyless-'));
+    tempDirs.push(markerDir);
+    const envFile = join(markerDir, 'opencode-config-content.json');
+    const keyFile = join(markerDir, 'byok-key.txt');
+    const argsFile = join(markerDir, 'args.json');
+
+    const createProjectResponse = await fetch(`${baseUrl}/api/projects`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: projectId, name: 'BYOK keyless OpenCode fixture' }),
+    });
+    expect(createProjectResponse.ok).toBe(true);
+
+    await withFakeAgent(
+      'opencode',
+      `
+const fs = require('node:fs');
+process.stdin.resume();
+process.stdin.on('end', () => {
+  fs.writeFileSync(${JSON.stringify(envFile)}, process.env.OPENCODE_CONFIG_CONTENT || '');
+  fs.writeFileSync(${JSON.stringify(keyFile)}, process.env.OPEN_DESIGN_BYOK_API_KEY || '');
+  fs.writeFileSync(${JSON.stringify(argsFile)}, JSON.stringify(process.argv.slice(2)));
+  console.log(JSON.stringify({ type: 'step_start' }));
+  console.log(JSON.stringify({ type: 'text', part: { text: 'byok-opencode-keyless-ok' } }));
+  console.log(JSON.stringify({ type: 'step_finish', part: { tokens: { input: 1, output: 1 } } }));
+  process.exit(0);
+});
+`,
+      async () => {
+        const response = await fetch(`${baseUrl}/api/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            agentId: 'byok-opencode',
+            projectId,
+            message: 'hello',
+            model: 'model',
+            byokProvider: {
+              protocol: 'openai',
+              apiKey: '',
+              baseUrl: 'http://127.0.0.1:8000/v1',
+              requiresApiKey: false,
+            },
+          }),
+        });
+        const body = await response.text();
+
+        expect(response.ok).toBe(true);
+        expect(body).toContain('byok-opencode-keyless-ok');
+
+        expect(await fsp.readFile(keyFile, 'utf8')).toBe('');
+        expect(JSON.parse(await fsp.readFile(argsFile, 'utf8'))).toEqual([
+          'run',
+          '--format',
+          'json',
+          '-m',
+          'open-design-byok/model',
+        ]);
+        const rawConfig = await fsp.readFile(envFile, 'utf8');
+        const parsed = JSON.parse(rawConfig) as {
+          provider?: Record<string, {
+            npm?: string;
+            options?: Record<string, unknown>;
+            models?: Record<string, unknown>;
+          }>;
+        };
+        const provider = parsed.provider?.['open-design-byok'];
+        expect(provider).toMatchObject({
+          npm: '@ai-sdk/openai',
+          options: {
+            baseURL: 'http://127.0.0.1:8000/v1',
+          },
+        });
+        expect(provider?.options).not.toHaveProperty('apiKey');
+        expect(rawConfig).not.toContain('OPEN_DESIGN_BYOK_API_KEY');
+      },
+    );
+  });
+
   it('does not pass forged BYOK provider config to other local runtimes', async () => {
     if (!process.env.OD_DATA_DIR) {
       throw new Error('OD_DATA_DIR is required for BYOK OpenCode config tests');

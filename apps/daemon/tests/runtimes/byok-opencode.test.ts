@@ -233,18 +233,20 @@ describe('byok-opencode runtime config', () => {
     );
 
     expect(out?.modelId).toBe('open-design-byok/llama3.2');
-    expect(out?.env).toEqual({ [BYOK_OPENCODE_API_KEY_ENV]: '' });
+    expect(out?.env).toEqual({});
     expect(out?.config).toMatchObject({
       provider: {
         [BYOK_OPENCODE_PROVIDER_ID]: {
           npm: '@ai-sdk/openai-compatible',
           options: {
             baseURL: 'http://localhost:11434/v1',
-            apiKey: `{env:${BYOK_OPENCODE_API_KEY_ENV}}`,
           },
         },
       },
     });
+    const provider = (out?.config.provider as Record<string, { options?: Record<string, unknown> }> | undefined)
+      ?.[BYOK_OPENCODE_PROVIDER_ID];
+    expect(provider?.options).not.toHaveProperty('apiKey');
   });
 
   it('still requires an API key for non-local Ollama providers', () => {
@@ -266,17 +268,19 @@ describe('byok-opencode runtime config', () => {
     );
 
     expect(out?.modelId).toBe('open-design-byok/model');
-    expect(out?.env).toEqual({ [BYOK_OPENCODE_API_KEY_ENV]: '' });
+    expect(out?.env).toEqual({});
     expect(out?.config).toMatchObject({
       provider: {
         [BYOK_OPENCODE_PROVIDER_ID]: {
           npm: '@ai-sdk/openai',
           options: {
             baseURL: 'http://127.0.0.1:8000/v1',
-            apiKey: `{env:${BYOK_OPENCODE_API_KEY_ENV}}`,
           },
         },
       },
     });
+    const provider = (out?.config.provider as Record<string, { options?: Record<string, unknown> }> | undefined)
+      ?.[BYOK_OPENCODE_PROVIDER_ID];
+    expect(provider?.options).not.toHaveProperty('apiKey');
   });
 });

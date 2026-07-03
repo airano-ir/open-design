@@ -55,14 +55,20 @@ export function buildOpenCodeByokProviderConfig(
       ? provider.baseUrl.trim()
       : defaultBaseUrl,
   );
-  if (requiresApiKey(provider, baseUrl) && !apiKey) return null;
+  const needsApiKey = requiresApiKey(provider, baseUrl);
+  if (needsApiKey && !apiKey) return null;
   if (!rawModel || rawModel.toLowerCase() === 'default') return null;
   if (!baseUrl) return null;
 
   const modelId = opencodeByokModelId(rawModel);
   if (!modelId) return null;
 
-  const providerEntry = buildProviderEntry(protocol, baseUrl, provider.apiVersion);
+  const providerEntry = buildProviderEntry(
+    protocol,
+    baseUrl,
+    provider.apiVersion,
+    needsApiKey,
+  );
   const config = {
     provider: {
       [BYOK_OPENCODE_PROVIDER_ID]: {
@@ -84,9 +90,7 @@ export function buildOpenCodeByokProviderConfig(
   return {
     providerId: BYOK_OPENCODE_PROVIDER_ID,
     modelId,
-    env: {
-      [BYOK_OPENCODE_API_KEY_ENV]: apiKey,
-    },
+    env: needsApiKey ? { [BYOK_OPENCODE_API_KEY_ENV]: apiKey } : {},
     config,
   };
 }
@@ -158,8 +162,11 @@ function buildProviderEntry(
   protocol: ByokChatProviderConfig['protocol'],
   baseUrl: string,
   apiVersion: string | undefined,
+  includeApiKey: boolean,
 ): { npm: ProviderPackage; options: Record<string, unknown> } {
-  const keyRef = `{env:${BYOK_OPENCODE_API_KEY_ENV}}`;
+  const apiKeyOption = includeApiKey
+    ? { apiKey: `{env:${BYOK_OPENCODE_API_KEY_ENV}}` }
+    : {};
   const usesAzureOpenAICompatiblePath =
     protocol === 'azure' && /\/openai\/v\d+(?:$|\/)/.test(safeUrlPathname(baseUrl));
   switch (protocol) {
@@ -167,7 +174,7 @@ function buildProviderEntry(
       return {
         npm: '@ai-sdk/anthropic',
         options: {
-          apiKey: keyRef,
+          ...apiKeyOption,
           ...(baseUrl ? { baseURL: baseUrl } : {}),
         },
       };
@@ -175,7 +182,7 @@ function buildProviderEntry(
       return {
         npm: '@ai-sdk/azure',
         options: {
-          apiKey: keyRef,
+          ...apiKeyOption,
           ...(baseUrl ? { baseURL: baseUrl } : {}),
           ...(usesAzureOpenAICompatiblePath
             ? {}
@@ -187,7 +194,7 @@ function buildProviderEntry(
       return {
         npm: '@ai-sdk/google',
         options: {
-          apiKey: keyRef,
+          ...apiKeyOption,
           ...(baseUrl ? { baseURL: baseUrl } : {}),
         },
       };
@@ -196,14 +203,14 @@ function buildProviderEntry(
         npm: '@ai-sdk/openai-compatible',
         options: {
           baseURL: baseUrl,
-          apiKey: keyRef,
+          ...apiKeyOption,
         },
       };
     case 'openai':
       return {
         npm: '@ai-sdk/openai',
         options: {
-          apiKey: keyRef,
+          ...apiKeyOption,
           ...(baseUrl ? { baseURL: baseUrl } : {}),
         },
       };
@@ -213,7 +220,7 @@ function buildProviderEntry(
         npm: '@ai-sdk/openai-compatible',
         options: {
           baseURL: baseUrl,
-          apiKey: keyRef,
+          ...apiKeyOption,
         },
       };
   }
