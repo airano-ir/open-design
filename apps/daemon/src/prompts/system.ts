@@ -253,6 +253,32 @@ export function resolveExclusiveSurface(args: {
     ?? (composedSurfaceModes.length === 1 ? composedSurfaceModes[0] ?? null : null);
 }
 
+// Deck-ish vocabulary across English and Chinese briefs. Kept deliberately
+// generous: a false positive only re-injects the deck framework a freeform
+// run would previously have received unconditionally, while a false negative
+// means the agent hand-rolls deck scaffolding — so every borderline term
+// stays in.
+const DECK_INTENT_SIGNAL =
+  /\b(slides?|deck|keynote|presentation|pitch\s?deck|ppt(x)?|slideshow|carousel)\b|幻灯|简报|讲稿|演示|路演|汇报|宣讲|课件|讲解|演讲|提案/i;
+
+/**
+ * Whether the outgoing user request reads as a slide-deck brief. Gates the
+ * ~20K maybe-deck framework injection for freeform (kind=other / no
+ * metadata) projects: those runs previously carried the full framework on
+ * every turn "just in case". Must be fed the SAME text the agent will see
+ * (for transcript-resending agents that includes prior turns, so a deck
+ * mention anywhere in the conversation keeps the framework present).
+ * Callers that cannot supply the request text should pass undefined to
+ * `freeformDeckSignal`, which preserves the legacy always-inject behavior.
+ */
+export function detectDeckIntentSignal(
+  ...texts: Array<string | null | undefined>
+): boolean {
+  return texts.some(
+    (text) => typeof text === 'string' && DECK_INTENT_SIGNAL.test(text),
+  );
+}
+
 export const BASE_SYSTEM_PROMPT = renderOfficialDesignerPrompt('filesystem');
 
 export const SKIP_DISCOVERY_BRIEF_OVERRIDE = `# Automated project mode — skip discovery form
@@ -264,56 +290,31 @@ This project was created through the daemon API with \`skipDiscoveryBrief: true\
 // image with fal"). Without this, agents in prototype/deck projects try to
 // call provider REST APIs directly and ask the user for keys that the daemon
 // already holds in .od/media-config.json.
+// Kept deliberately compact: this hint ships on EVERY non-media project
+// (the vast majority never generate media), so the worked generate→wait
+// bash recipe lives in `od media help` (printMediaHelp in cli.ts) and the
+// CLI's own stderr handoff guidance instead of the prompt. The hint only
+// needs to (1) route the agent to the dispatcher instead of provider APIs,
+// (2) state the handoff/exit-code semantics, and (3) pin the behavioral
+// rules agents historically fumbled (PowerShell translation, jq, asking
+// for API keys, substituting fal-ai/* model paths).
 const MEDIA_DISPATCH_HINT = `
 
 ---
 
 ## Media generation (if asked)
 
-If the user asks you to generate an image, video, or audio file — regardless of which provider or model they mention (fal, Replicate, OpenAI, etc.) — use the daemon dispatcher via your **Bash tool**. Do NOT call provider REST APIs directly.
-
-The daemon injects these env vars into your shell (**POSIX bash — not PowerShell**):
-
-- \`OD_NODE_BIN\`   — absolute path to the Node runtime
-- \`OD_BIN\`        — absolute path to the OD CLI script
-- \`OD_PROJECT_ID\` — the active project id
-
-**Always use the generate→wait loop below.** \`media generate\` always exits 0 — either with \`{"file":{...}}\` if done within ~25s, or with \`{"taskId":"..."}\` as a handoff for slow models (flux-pro-ultra ~60–180s, veo-3-fal longer). Whenever the output contains a \`taskId\`, keep polling with \`media wait\` until exit 0 (done) or exit 5 (failed).
-
-Use **POSIX \`$VAR\` syntax** — do NOT translate to PowerShell (\`$env:VAR\`, \`&\` operator). Uses \`python3\` for JSON parsing (do NOT use \`jq\`):
+If the user asks you to generate an image, video, or audio file — regardless of which provider or model they mention (fal, Replicate, OpenAI, etc.) — dispatch it through the daemon CLI via your **Bash tool**. Do NOT call provider REST APIs directly, and **never ask the user for an API key** — the daemon reads provider credentials from its config; on an auth error, tell the user to check Settings → AI Providers.
 
 \`\`\`bash
-# POSIX bash — do NOT convert to PowerShell
-out=\$("$OD_NODE_BIN" "$OD_BIN" media generate \\
-  --project "$OD_PROJECT_ID" \\
-  --surface image \\
-  --model flux-pro-ultra \\
-  --prompt "..." \\
-  --aspect 16:9)
-ec=\$?
-if [ "\$ec" -ne 0 ]; then echo "\$out" >&2; exit "\$ec"; fi
-last=\$(printf '%s\\n' "\$out" | tail -1)
-task_id=\$(printf '%s\\n' "\$last" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('taskId',''))" 2>/dev/null)
-since=\$(printf '%s\\n' "\$last" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('nextSince',0))" 2>/dev/null)
-since="\${since:-0}"
-while [ -n "\$task_id" ]; do
-  out=\$("$OD_NODE_BIN" "$OD_BIN" media wait "\$task_id" --since "\$since")
-  ec=\$?
-  last=\$(printf '%s\\n' "\$out" | tail -1)
-  since=\$(printf '%s\\n' "\$last" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('nextSince',\$since))" 2>/dev/null)
-  since="\${since:-0}"
-  if [ "\$ec" -eq 0 ]; then
-    task_id=""
-  elif [ "\$ec" -ne 2 ]; then
-    echo "\$out" >&2; exit "\$ec"
-  fi
-done
-printf '%s\\n' "\$last"
+# POSIX bash — do NOT translate to PowerShell (\$env:VAR, & operator)
+"$OD_NODE_BIN" "$OD_BIN" media generate --project "$OD_PROJECT_ID" \\
+  --surface image --model flux-pro-ultra --prompt "..." --aspect 16:9
 \`\`\`
 
-**Never ask the user for an API key.** The daemon reads provider credentials from its config; keys are never passed through the shell. If the provider returns an auth error, tell the user to open Settings → AI Providers and confirm the key is configured there.
+The command exits \`0\` with one line of JSON: \`{"file":{...}}\` when done within ~25s, or \`{"taskId":"..."}\` as a SUCCESSFUL handoff for slow models. On a handoff, run the exact \`media wait\` command the CLI prints on stderr and repeat it until exit \`0\` (done) or exit \`5\` (failed); exit \`2\` means still running — not a failure. Parse JSON with \`python3\`, never \`jq\`.
 
-For the best fal image model use \`--model flux-pro-ultra\`. For video use \`--model veo-3-fal\` or \`--model wan-2.1-t2v\`. Always pass \`--surface\` explicitly (\`image\`, \`video\`, or \`audio\`). Any \`fal-ai/*\` path (e.g. \`fal-ai/flux/schnell\`, \`fal-ai/wan-i2v\`) is also a valid \`--model\` value for image/video — pass it through as-is without substitution.`;
+Models: best fal image is \`--model flux-pro-ultra\`; video is \`--model veo-3-fal\` or \`--model wan-2.1-t2v\`. Always pass \`--surface\` explicitly (\`image\`, \`video\`, or \`audio\`). Any \`fal-ai/*\` path (e.g. \`fal-ai/flux/schnell\`) is also a valid \`--model\` value — pass it through as-is without substitution. Full flags and the worked polling recipe: \`"$OD_NODE_BIN" "$OD_BIN" media help\`.`;
 
 function renderByokMediaDefaultsHint(defaults?: ByokMediaDefaults): string {
   const lines: string[] = [];
@@ -557,6 +558,12 @@ export interface ComposeInput {
   // native tools; text_artifact runs (BYOK/plain) deliver source through
   // assistant-text <artifact> blocks.
   executionProfile?: ExecutionProfile | undefined;
+  // Whether the outgoing request text reads as a slide-deck brief (see
+  // `detectDeckIntentSignal`). Only consulted for the freeform maybe-deck
+  // branch: `false` skips the ~20K conditional framework injection,
+  // `true`/`undefined` keep it. Deck-kind projects ignore this — their
+  // framework is unconditional.
+  freeformDeckSignal?: boolean | undefined;
 }
 
 export function composeSystemPrompt({
@@ -595,6 +602,7 @@ export function composeSystemPrompt({
   mediaExecution,
   byokMediaDefaults,
   executionProfile,
+  freeformDeckSignal,
 }: ComposeInput): string {
   // Injection resistance goes FIRST — before everything else — so no later
   // section (skill body, user instructions, project instructions, tool result)
@@ -874,7 +882,12 @@ export function composeSystemPrompt({
     !!skillBody && /assets\/template\.html/.test(skillBody);
   if (!isAskMode && isDeckProject && !hasSkillSeed) {
     parts.push(`\n\n---\n\n${DECK_FRAMEWORK_DIRECTIVE}`);
-  } else if (!isAskMode && isFreeformProject && !hasSkillSeed) {
+  } else if (
+    !isAskMode &&
+    isFreeformProject &&
+    !hasSkillSeed &&
+    (freeformDeckSignal ?? true)
+  ) {
     // Freeform / kind=other projects skip the kind picker entirely and
     // land here. If the user's brief is a deck/keynote/slides ("讲解",
     // "presentation", "make a deck"), the agent used to invent its own

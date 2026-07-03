@@ -1135,6 +1135,27 @@ Common options:
   --daemon-url <url>
 
 Output: a single line of JSON: {"file": { name, size, kind, mime, ... }}
+  Slow models return {"taskId": "...", "nextSince": n} with exit 0 instead —
+  a successful queued handoff, not a failure. Poll with \`media wait\`:
+  exit 0 = done ({"file": ...} on stdout), exit 2 = still running (re-run
+  the wait command stderr prints, carrying forward nextSince), 5 = failed.
+
+Worked generate→wait loop (POSIX bash — do NOT translate to PowerShell;
+parse JSON with python3, not jq):
+
+  out=\$("\$OD_NODE_BIN" "\$OD_BIN" media generate --project "\$OD_PROJECT_ID" \\
+    --surface image --model flux-pro-ultra --prompt "..." --aspect 16:9)
+  last=\$(printf '%s\\n' "\$out" | tail -1)
+  task_id=\$(printf '%s\\n' "\$last" | python3 -c "import sys,json; print(json.load(sys.stdin).get('taskId',''))" 2>/dev/null)
+  since=\$(printf '%s\\n' "\$last" | python3 -c "import sys,json; print(json.load(sys.stdin).get('nextSince',0))" 2>/dev/null)
+  while [ -n "\$task_id" ]; do
+    out=\$("\$OD_NODE_BIN" "\$OD_BIN" media wait "\$task_id" --since "\${since:-0}")
+    ec=\$?
+    last=\$(printf '%s\\n' "\$out" | tail -1)
+    since=\$(printf '%s\\n' "\$last" | python3 -c "import sys,json; print(json.load(sys.stdin).get('nextSince',0))" 2>/dev/null)
+    if [ "\$ec" -eq 0 ]; then task_id=""; elif [ "\$ec" -ne 2 ]; then echo "\$out" >&2; exit "\$ec"; fi
+  done
+  printf '%s\\n' "\$last"
 
 Skills should call this and then reference the returned filename in their
 artifact / message body. The daemon writes the bytes into the project's

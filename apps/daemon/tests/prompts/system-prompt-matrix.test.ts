@@ -165,8 +165,13 @@ const SCENARIOS: ReadonlyArray<[name: string, input: ComposeInput]> = [
       executionProfile: 'filesystem',
     },
   ],
-  // Freeform (kind=other) gets the conditional maybe-deck variant.
+  // Freeform (kind=other) with a deck-ish brief keeps the maybe-deck variant.
   ['freeform-other', { metadata: { kind: 'other' }, executionProfile: 'filesystem' }],
+  // Freeform whose visible conversation has no deck vocabulary drops it.
+  [
+    'freeform-other-no-deck-signal',
+    { metadata: { kind: 'other' }, executionProfile: 'filesystem', freeformDeckSignal: false },
+  ],
   // Media surface: discovery layer out, media contract in, dispatch hint out.
   [
     'media-image',
