@@ -812,6 +812,16 @@ export async function listPluginsFresh(): Promise<InstalledPluginRecord[]> {
   return listPlugins();
 }
 
+// Test-only: drop the warm visible-plugins cache so each case starts cold. The
+// module-level cache intentionally survives Home remounts in the app, but that
+// same persistence leaks across test cases in a worker (a case's mocked
+// `/api/plugins` payload would satisfy the next case via `listPluginsFresh`).
+// The web vitest setup calls this in a global `afterEach`.
+export function resetPluginsCache(): void {
+  cachedVisiblePlugins = null;
+  cachedVisibleAt = 0;
+}
+
 export function isVisiblePlugin(plugin: InstalledPluginRecord): boolean {
   const od = (plugin.manifest?.od ?? {}) as Record<string, unknown>;
   return od.hidden !== true;

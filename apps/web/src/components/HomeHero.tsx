@@ -2218,6 +2218,19 @@ function PluginPromptPresets({
   );
 }
 
+// A web-clone example card (clone-nexu, clone-vercel, …) carries the site it
+// reproduces as its `targetUrl` input default. Pull it out so the composer seed
+// can be the same short "clone this site:" scaffold the Website-clone chip uses,
+// with just the URL appended — never the multi-paragraph build spec.
+function webCloneCardTargetUrl(record: InstalledPluginRecord): string | null {
+  const inputs = record.manifest?.od?.inputs;
+  if (!Array.isArray(inputs)) return null;
+  const field = inputs.find((entry) => entry?.name === 'targetUrl');
+  const value = field?.default ?? field?.placeholder;
+  const url = typeof value === 'string' ? value.trim() : '';
+  return url.length > 0 ? url : null;
+}
+
 function PluginPromptPresetCard({
   active,
   chipId,
@@ -2249,9 +2262,16 @@ function PluginPromptPresetCard({
   const preview = useMemo(() => inferPluginPreview(record, { preferBaked: true }), [record]);
   // Home cards keep their richer structured-preview path as the last-resort
   // fallback (the detail modal injects a simpler one).
-  const seedPrompt = examplePresetSeedPrompt(record, locale, () =>
-    pluginPresetPromptPreview(record, locale, chipId),
-  ).text;
+  // Website-clone example cards seed the composer with the same short
+  // "clone this site: <url>" scaffold the Website-clone chip uses (localized
+  // prefix + the card's target URL), so picking "Clone Nexu" drops in
+  // `想要复刻的网站链接：https://nexu.io` rather than the full build spec.
+  const cloneTargetUrl = webCloneCardTargetUrl(record);
+  const seedPrompt = cloneTargetUrl
+    ? `${t('homeHero.chip.webClonePromptSeed')}${cloneTargetUrl}`
+    : examplePresetSeedPrompt(record, locale, () =>
+        pluginPresetPromptPreview(record, locale, chipId),
+      ).text;
   // Decks ship a fixed 16:9 stage; tag them so the preset thumbnail uses a 16:9
   // frame the iframe fills natively, instead of letterboxing the stage with a
   // dark band above it (matches the Community gallery deck treatment).
