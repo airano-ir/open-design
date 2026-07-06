@@ -121,6 +121,29 @@ describe('scrubUserPaths', () => {
     expect(scrubbed).not.toContain('Doe');
     expect(scrubbed).toContain('C:\\Users\\<redacted>\\App\\Resources');
   });
+
+  it('redacts SLASH-separated Windows home paths with spaces (forward-slash form)', () => {
+    // JS/Electron/Node diagnostics frequently normalize Windows paths to forward
+    // slashes; the profile segment can still contain a literal space. The POSIX
+    // "/Users/" rule alone would stop at the space and leak the tail.
+    expect(scrubUserPaths('C:/Users/John Doe/AppData/Roaming')).toBe(
+      'C:/Users/<redacted>/AppData/Roaming',
+    );
+  });
+
+  it('scrubs a slash-form spaced Windows profile embedded in a crash message', () => {
+    const raw =
+      "Cannot find package 'better-sqlite3' imported from C:/Users/John Doe/App/Resources/app/daemon/server.mjs";
+    const scrubbed = scrubUserPaths(raw);
+    expect(scrubbed).not.toContain('John Doe');
+    expect(scrubbed).not.toContain('Doe');
+    expect(scrubbed).toContain('C:/Users/<redacted>/App/Resources');
+  });
+
+  it('does not over-redact across lines in a multi-line stack', () => {
+    const scrubbed = scrubUserPaths('a C:\\Users\\John Doe\\x\nb /Users/bob/y');
+    expect(scrubbed).toBe('a C:\\Users\\<redacted>\\x\nb /Users/<redacted>/y');
+  });
 });
 
 describe('resolveStartupDistinctId', () => {

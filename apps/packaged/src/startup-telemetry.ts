@@ -152,14 +152,19 @@ export function parseDaemonLogTail(logText: string): {
 // can't import the web module anyway, so we ship a focused scrubber here.
 export function scrubUserPaths(value: string): string {
   return value
-    .replace(/\/(Users|home)\/[^/\s]+/g, "/$1/<redacted>")
-    // Consume the WHOLE Windows profile segment up to the next backslash, not
-    // just up to the first whitespace: a profile dir can contain spaces
-    // ("C:\\Users\\John Doe\\..."), and stopping at the space would leak the
-    // rest of the segment ("<redacted> Doe\\..."). POSIX home segments cannot
-    // contain spaces, and file:// URLs percent-encode them, so only this
-    // backslash form needs the whitespace-tolerant boundary.
-    .replace(/([A-Za-z]:\\Users\\)[^\\]+/g, "$1<redacted>");
+    // Windows profile dirs FIRST, either separator style (`C:\Users\…` or the
+    // slash-normalized `C:/Users/…` that JS/Electron/Node diagnostics commonly
+    // emit). Consume the WHOLE segment up to the next slash/backslash — a
+    // profile dir can contain spaces ("John Doe"), and a whitespace boundary
+    // would leak the tail ("<redacted> Doe/…"). Anchored on `<drive>:` so it
+    // only fires on a real Windows home path; `\r\n` in the class stops it from
+    // running across lines in a multi-line stack. Runs before the POSIX rule
+    // because that rule also matches the "/Users/" inside a `C:/Users/` path.
+    .replace(/([A-Za-z]:[\\/]Users[\\/])[^\\/\r\n]+/g, "$1<redacted>")
+    // POSIX home dirs. Real macOS/Linux home segments cannot contain spaces, so
+    // the whitespace boundary is correct here and avoids over-redacting a
+    // following word in free-form crash text.
+    .replace(/\/(Users|home)\/[^/\s]+/g, "/$1/<redacted>");
 }
 
 function osName(platform: NodeJS.Platform = process.platform): string {
