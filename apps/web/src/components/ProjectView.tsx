@@ -236,6 +236,7 @@ import {
   consumePendingOnboardingEntry,
   type OnboardingEntry,
 } from '../onboarding/onboarding-entry';
+import { sentPrefilledPrompt } from '../onboarding/first-prompt';
 import { BrandReadyPrompt } from './BrandReadyPrompt';
 import { useDesignMdState } from '../hooks/useDesignMdState';
 import { useFinalizeProject } from '../hooks/useFinalizeProject';
@@ -1327,9 +1328,16 @@ export function ProjectView({
   // successful generation of a recommendation-started project.
   const onboardingEntryInitRef = useRef(false);
   const onboardingEntryRef = useRef<OnboardingEntry | null>(null);
+  // Snapshot the prompt the recommendation prefilled into the composer, taken
+  // at mount before `onClearPendingPrompt` wipes it. The first-prompt-sent
+  // funnel event compares the actually-sent prompt against this seed so
+  // `has_prefilled_prompt` reflects real behavior — the user is free to edit,
+  // clear, or replace the suggestion before sending (spec §7.4 / §8.2).
+  const onboardingSeedPromptRef = useRef('');
   if (!onboardingEntryInitRef.current) {
     onboardingEntryInitRef.current = true;
     onboardingEntryRef.current = consumePendingOnboardingEntry();
+    onboardingSeedPromptRef.current = (project.pendingPrompt ?? '').trim();
   }
   const onboardingFirstPromptSentRef = useRef(false);
   const onboardingFirstGenDoneRef = useRef(false);
@@ -4678,7 +4686,11 @@ export function ProjectView({
           entry_source: entry.source,
           product_type: entry.productType,
           recommendation_id: entry.recommendationId,
-          has_prefilled_prompt: true,
+          // True only when the user sent the prefilled suggestion unmodified;
+          // an edited, cleared, replaced, or starter-swapped prompt (or an
+          // attachments-only send) reports false so the send-through split
+          // stays honest.
+          has_prefilled_prompt: sentPrefilledPrompt(onboardingSeedPromptRef.current, prompt),
         });
       }
       const effectiveAttachments = mergeChatAttachments(
