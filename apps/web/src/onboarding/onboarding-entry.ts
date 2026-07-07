@@ -52,6 +52,35 @@ function keyForProject(projectId: string): string {
 // session actually creates.
 const parsedEntryCache = new Map<string, OnboardingEntry>();
 
+// Once-per-project funnel guards, kept beside the entry cache so they share its
+// exact lifetime. The two onboarding funnel events (`onboarding_first_prompt_sent`,
+// `onboarding_first_generation_completed`) are meant to fire once per
+// recommendation-started project, but ProjectView remounts whenever the user
+// leaves and reopens a project, resetting mount-local refs while the entry keeps
+// coming back from `parsedEntryCache`. Project-scoped module flags make the
+// once-only guard survive those remounts. A page refresh clears both the entry
+// cache and these flags together, but that also clears the (consumed)
+// sessionStorage slot, so the entry itself is gone and the events can't fire
+// anyway — the guards only need to hold within a session.
+const firstPromptSentProjects = new Set<string>();
+const firstGenerationCompletedProjects = new Set<string>();
+
+export function hasSentFirstOnboardingPrompt(projectId: string): boolean {
+  return Boolean(projectId) && firstPromptSentProjects.has(projectId);
+}
+
+export function markFirstOnboardingPromptSent(projectId: string): void {
+  if (projectId) firstPromptSentProjects.add(projectId);
+}
+
+export function hasCompletedFirstOnboardingGeneration(projectId: string): boolean {
+  return Boolean(projectId) && firstGenerationCompletedProjects.has(projectId);
+}
+
+export function markFirstOnboardingGenerationCompleted(projectId: string): void {
+  if (projectId) firstGenerationCompletedProjects.add(projectId);
+}
+
 // Stash the entry for a specific created project. Called from the create
 // success path, where the project id is finally known — never before, so an
 // unrelated project mount cannot consume it.

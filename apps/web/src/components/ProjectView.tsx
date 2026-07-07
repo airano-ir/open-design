@@ -238,6 +238,10 @@ import { Toast } from './Toast';
 import { FirstArtifactHint } from './FirstArtifactHint';
 import {
   consumeOnboardingEntryForProject,
+  hasSentFirstOnboardingPrompt,
+  markFirstOnboardingPromptSent,
+  hasCompletedFirstOnboardingGeneration,
+  markFirstOnboardingGenerationCompleted,
   type OnboardingEntry,
 } from '../onboarding/onboarding-entry';
 import { producedPreviewableArtifact } from '../onboarding/first-generation';
@@ -1359,8 +1363,11 @@ export function ProjectView({
     onboardingEntryRef.current = consumeOnboardingEntryForProject(project.id);
     onboardingSeedPromptRef.current = (project.pendingPrompt ?? '').trim();
   }
-  const onboardingFirstPromptSentRef = useRef(false);
-  const onboardingFirstGenDoneRef = useRef(false);
+  // The once-per-project funnel guards live in the onboarding-entry module
+  // (project-keyed), not mount-local refs: ProjectView remounts on every
+  // leave/reopen, and the entry now survives those remounts via its cache, so a
+  // mount-local guard would let the funnel events re-fire on a later
+  // conversation/run of the same project.
   const iframeKeepAlivePool = useIframeKeepAlivePool();
   const handleThemeChange = onThemeChange ?? (() => {});
   const projectDetail = useProjectDetail(project.id);
@@ -4715,28 +4722,6 @@ export function ProjectView({
         attachments.length === 0 &&
         commentAttachments.length === 0
       ) return false;
-      // First genuine send in a recommendation-started project — the
-      // send-through half of the onboarding funnel. Fires once, on the first
-      // message of the conversation (not retries).
-      if (
-        onboardingEntryRef.current &&
-        !onboardingFirstPromptSentRef.current &&
-        !retryTarget &&
-        historyBase.length === 0
-      ) {
-        onboardingFirstPromptSentRef.current = true;
-        const entry = onboardingEntryRef.current;
-        trackOnboardingFirstPromptSent(analytics.track, {
-          entry_source: entry.source,
-          product_type: entry.productType,
-          recommendation_id: entry.recommendationId,
-          // True only when the user sent the prefilled suggestion unmodified;
-          // an edited, cleared, replaced, or starter-swapped prompt (or an
-          // attachments-only send) reports false so the send-through split
-          // stays honest.
-          has_prefilled_prompt: sentPrefilledPrompt(onboardingSeedPromptRef.current, prompt),
-        });
-      }
       const effectiveAttachments = mergeChatAttachments(
         attachments,
         ...commentAttachments.map((attachment) =>
@@ -4848,6 +4833,33 @@ export function ProjectView({
         } finally {
           amrGateInFlightConversationsRef.current.delete(gateConversationId);
         }
+      }
+      // First genuine send in a recommendation-started project — the
+      // send-through half of the onboarding funnel. Fires once per project (the
+      // guard is project-scoped so it survives ProjectView remounts), on the
+      // first message of the conversation (not retries). Placed AFTER the
+      // queue-only / busy / AMR balance gates above: those can abort the send
+      // without creating a run, so emitting earlier would over-count blocked
+      // attempts and then suppress the real retry via the once-only guard. By
+      // here the send is committed to creating a run.
+      if (
+        onboardingEntryRef.current &&
+        !hasSentFirstOnboardingPrompt(project.id) &&
+        !retryTarget &&
+        historyBase.length === 0
+      ) {
+        markFirstOnboardingPromptSent(project.id);
+        const entry = onboardingEntryRef.current;
+        trackOnboardingFirstPromptSent(analytics.track, {
+          entry_source: entry.source,
+          product_type: entry.productType,
+          recommendation_id: entry.recommendationId,
+          // True only when the user sent the prefilled suggestion unmodified;
+          // an edited, cleared, replaced, or starter-swapped prompt (or an
+          // attachments-only send) reports false so the send-through split
+          // stays honest.
+          has_prefilled_prompt: sentPrefilledPrompt(onboardingSeedPromptRef.current, prompt),
+        });
       }
       setChatSeed(null);
       const runConversationId = activeConversationId;
@@ -5401,11 +5413,11 @@ export function ProjectView({
               if (
                 ownsCurrentRun &&
                 onboardingEntryRef.current &&
-                !onboardingFirstGenDoneRef.current &&
+                !hasCompletedFirstOnboardingGeneration(project.id) &&
                 finalRunStatus === 'succeeded' &&
                 producedPreviewableArtifact(produced)
               ) {
-                onboardingFirstGenDoneRef.current = true;
+                markFirstOnboardingGenerationCompleted(project.id);
                 const entry = onboardingEntryRef.current;
                 trackOnboardingFirstGenerationCompleted(analytics.track, {
                   entry_source: entry.source,
