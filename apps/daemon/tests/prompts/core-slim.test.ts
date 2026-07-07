@@ -50,7 +50,10 @@ const repoRoot = path.resolve(__dirname, '../../../..');
 // clarification (a later explicit user request overrides a conflicting
 // earlier constraint — the blue->yellow example), per the maintainer's
 // direction to prioritize followability over byte count here.
-const SLIM_CORE_BYTE_BUDGET = 14_336;
+// Bumped from 14_336 to restore load-bearing production-value craft guidance
+// (real imagery via the media tool, cohesive palette + interaction depth) whose
+// absence caused visible slim regressions on visual-first pages (P1 hero, P5 buttons).
+const SLIM_CORE_BYTE_BUDGET = 15_360;
 
 describe('renderSlimCoreCharter — byte budget', () => {
   it('stays under the byte budget in both execution profiles', () => {
