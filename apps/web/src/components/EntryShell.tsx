@@ -150,6 +150,11 @@ import {
   notifyAmrLoginStatusChanged,
 } from './amrLoginPolling';
 import { closeAmrActivationWindowBestEffort } from './AmrLoginPill';
+import {
+  amrLoginFailureForOutcome,
+  amrLoginFailureForSpawn,
+  amrLoginReasonText,
+} from '../runtime/amr-login-failure';
 import { smoothScrollToTop } from '../utils/smoothScrollToTop';
 import { summarizeProjectNameFromPrompt } from '../utils/projectName';
 import { LIBRARY_UI_VISIBLE } from '../features/libraryUi';
@@ -1905,7 +1910,9 @@ function OnboardingView({
       }
       if (!loginResult.ok && !loginResult.alreadyRunning) {
         resolveAmrAuthTracking(analytics.track, 'failed', 'spawn_failed');
-        setAmrLoginError(loginResult.error || t('settings.amrLoginErrorCompact'));
+        setAmrLoginError(
+          amrLoginReasonText(t, amrLoginFailureForSpawn(loginResult)),
+        );
         return;
       }
       if (await pollAmrLoginCompletion()) {
@@ -1962,7 +1969,9 @@ function OnboardingView({
         } else {
           resolveAmrAuthTracking(analytics.track, 'failed', 'login_stopped');
         }
-        setAmrLoginError(t('settings.amrLoginErrorCompact'));
+        setAmrLoginError(
+          amrLoginReasonText(t, amrLoginFailureForOutcome(outcome, nextStatus)),
+        );
         return false;
       }
     }

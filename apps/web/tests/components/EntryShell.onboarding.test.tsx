@@ -638,15 +638,20 @@ describe('EntryShell onboarding Open Design AMR runtime', () => {
     expect(screen.getByRole('button', { name: /Cancel sign-in/i })).toBeTruthy();
   });
 
-  it('shows daemon startup errors when AMR sign-in fails immediately', async () => {
-    const startupError = 'profile "prod" api URL: is not configured';
+  it('shows a classified reason when AMR sign-in fails immediately', async () => {
     const fetchMock = vi.fn(async (input, init) => {
       const url = String(input);
       if (url.endsWith('/api/integrations/vela/status')) {
         return jsonResponse({ loggedIn: false, profile: 'prod', user: null, configPath: '/x' });
       }
       if (url.endsWith('/api/integrations/vela/login') && init?.method === 'POST') {
-        return jsonResponse({ error: startupError }, 500);
+        return jsonResponse(
+          {
+            error: 'connect ECONNREFUSED amr-api.open-design.ai:443',
+            failure: { code: 'AMR_LOGIN_NETWORK', recovery: 'retry' },
+          },
+          500,
+        );
       }
       throw new Error(`unexpected fetch: ${url}`);
     });
@@ -655,8 +660,12 @@ describe('EntryShell onboarding Open Design AMR runtime', () => {
 
     await clickCloudSignIn();
 
+    // The daemon-classified failure drives a specific, actionable reason rather
+    // than the raw error string or the generic "Sign-in failed." (issue #426).
     await waitFor(() => {
-      expect(screen.getByRole('alert').textContent).toBe(startupError);
+      expect(screen.getByRole('alert').textContent).toBe(
+        'Network problem — couldn’t reach the sign-in service. Check your connection and retry.',
+      );
     });
     expect(screen.queryByText('Sign-in failed.')).toBeNull();
     expect(screen.queryByText('Signing in…')).toBeNull();
@@ -744,7 +753,7 @@ describe('EntryShell onboarding Open Design AMR runtime', () => {
       await vi.advanceTimersByTimeAsync(AMR_LOGIN_TIMEOUT_MS);
     });
     expect(fetchMock).toHaveBeenCalledWith('/api/integrations/vela/login/cancel', { method: 'POST' });
-    expect(screen.getByText('Sign-in failed.')).toBeTruthy();
+    expect(screen.getByText('Sign-in timed out. Start sign-in again.')).toBeTruthy();
     expect(screen.queryByText('Signing in…')).toBeNull();
     expect(
       screen

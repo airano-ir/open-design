@@ -460,7 +460,10 @@ describe('AmrLoginPill', () => {
       ) {
         return jsonResponse({
           status: 500,
-          body: { error: 'profile "prod" api URL: is not configured' },
+          body: {
+            error: 'connect ECONNREFUSED amr-api.open-design.ai:443',
+            failure: { code: 'AMR_LOGIN_NETWORK', recovery: 'retry' },
+          },
         });
       }
       throw new Error(`unexpected fetch: ${url}`);
@@ -473,8 +476,10 @@ describe('AmrLoginPill', () => {
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeTruthy();
     });
+    // The daemon-classified failure drives a specific reason, not the raw
+    // error string and not the generic "Sign-in failed." (issue #426).
     expect(screen.getByRole('alert').textContent).toBe(
-      'profile "prod" api URL: is not configured',
+      'Network problem — couldn’t reach the sign-in service. Check your connection and retry.',
     );
     expect(screen.queryByText('Sign-in failed.')).toBeNull();
     expect(screen.queryByText('Signing in…')).toBeNull();
@@ -715,7 +720,8 @@ describe('AmrLoginPill', () => {
           (init as RequestInit | undefined)?.method === 'POST',
       ),
     ).toBe(true);
-    expect(screen.getByText('Sign-in failed.')).toBeTruthy();
+    // A poll timeout now reads as a specific, actionable reason.
+    expect(screen.getByText('Sign-in timed out. Start sign-in again.')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Sign in' })).toBeTruthy();
     expect(screen.queryByText('Signing in…')).toBeNull();
   });

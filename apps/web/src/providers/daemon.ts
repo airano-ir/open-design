@@ -22,6 +22,7 @@ import type {
   ChatSseEvent,
   ChatSseStartPayload,
   DaemonAgentPayload,
+  AmrLoginFailure,
   AmrModelsResponse,
   AmrWalletSnapshot,
   ByokChatProviderConfig,
@@ -824,6 +825,10 @@ export interface VelaLoginStatus {
   activationUrl?: string;
   userCode?: string;
   browserOpenFailed?: boolean;
+  // Classified reason the LAST sign-in attempt failed, surfaced while signed
+  // out and not signing in (issue #426). Lets the UI show a specific reason +
+  // recovery step instead of a generic "Sign-in failed."
+  lastLoginFailure?: AmrLoginFailure;
 }
 
 // AMR (vela) login surfaces three thin endpoints on the daemon:
@@ -869,6 +874,9 @@ export interface StartVelaLoginResult {
   pid?: number;
   alreadyRunning?: boolean;
   error?: string;
+  // Classified spawn failure from the daemon (issue #426), so the caller can
+  // show a specific reason instead of the raw error string.
+  failure?: AmrLoginFailure;
 }
 
 export async function startVelaLogin(
@@ -887,12 +895,15 @@ export async function startVelaLogin(
       const body = (await resp.json()) as { pid?: number };
       return { ok: true, status: resp.status, pid: body.pid };
     }
-    const body = (await resp.json().catch(() => null)) as { error?: string } | null;
+    const body = (await resp.json().catch(() => null)) as
+      | { error?: string; failure?: AmrLoginFailure }
+      | null;
     return {
       ok: false,
       status: resp.status,
       alreadyRunning: resp.status === 409,
       error: body?.error ?? '',
+      ...(body?.failure ? { failure: body.failure } : {}),
     };
   } catch (err) {
     return { ok: false, status: 0, error: err instanceof Error ? err.message : String(err) };

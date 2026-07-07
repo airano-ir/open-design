@@ -32,6 +32,11 @@ import {
   type AmrEntryAttribution,
 } from '../analytics/amr-attribution';
 import { amrPlansUrlForProfile } from '../runtime/amr-guidance';
+import {
+  amrLoginFailureForOutcome,
+  amrLoginFailureForSpawn,
+  amrLoginReasonText,
+} from '../runtime/amr-login-failure';
 import { getResolvedDeviceId } from '../analytics/client';
 import { trackExecutionSettingsPopoverClick } from '../analytics/events';
 import {
@@ -233,7 +238,9 @@ export function InlineModelSwitcher({
         }
         amrLoginStartedAtRef.current = null;
         setAmrLoginPending(false);
-        setAmrLoginError(t('settings.amrLoginErrorCompact'));
+        setAmrLoginError(
+          amrLoginReasonText(t, amrLoginFailureForOutcome(outcome, next)),
+        );
       }
     };
     amrPollRef.current = window.setInterval(() => {
@@ -259,7 +266,7 @@ export function InlineModelSwitcher({
       resolveAmrAuthTracking(analytics.track, 'failed', 'spawn_failed');
       amrLoginStartedAtRef.current = null;
       setAmrLoginPending(false);
-      setAmrLoginError(result.error || t('settings.amrLoginErrorCompact'));
+      setAmrLoginError(amrLoginReasonText(t, amrLoginFailureForSpawn(result)));
       return;
     }
     notifyAmrLoginStatusChanged('login-started');

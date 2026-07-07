@@ -62,3 +62,22 @@ export const AMR_LOGIN_FAILURE_CODES: readonly AmrLoginFailureCode[] = [
   'AMR_LOGIN_BROWSER_OPEN_FAILED',
   'AMR_LOGIN_UNKNOWN',
 ] as const;
+
+// Neutral English one-line reason per code. The single source of truth for the
+// human-readable summary: the `od` CLI prints these directly, and the web UI
+// mirrors them as localized i18n strings. Keep in sync with the code union.
+export const AMR_LOGIN_FAILURE_SUMMARY: Record<AmrLoginFailureCode, string> = {
+  AMR_LOGIN_BINARY_MISSING:
+    'The sign-in component is missing. Restart or reinstall Open Design.',
+  AMR_LOGIN_SPAWN_FAILED:
+    'Could not start the sign-in process. Please try again.',
+  AMR_LOGIN_NETWORK:
+    'Network problem — could not reach the sign-in service. Check your connection and retry.',
+  AMR_LOGIN_PROXY_BLOCKED:
+    'A proxy or VPN blocked sign-in. Turn it off and retry.',
+  AMR_LOGIN_TIMEOUT: 'Sign-in timed out. Start sign-in again.',
+  AMR_LOGIN_INTERRUPTED: 'Sign-in was interrupted. Please sign in again.',
+  AMR_LOGIN_BROWSER_OPEN_FAILED:
+    'Could not open the browser automatically. Open the sign-in page to continue.',
+  AMR_LOGIN_UNKNOWN: 'Sign-in failed. Please try again.',
+};

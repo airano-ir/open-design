@@ -16,7 +16,7 @@ import { splitResearchSubcommand } from './research/cli-args.js';
 import { resolveDaemonUrl } from './daemon-url.js';
 import { requestJsonIpc } from '@open-design/sidecar';
 import { SIDECAR_ENV, SIDECAR_MESSAGES } from '@open-design/sidecar-proto';
-import { EXPORT_FORMATS, EXPORT_IMAGE_FORMATS } from '@open-design/contracts';
+import { EXPORT_FORMATS, EXPORT_IMAGE_FORMATS, AMR_LOGIN_FAILURE_SUMMARY } from '@open-design/contracts';
 import { buildExportCliRequestBody, buildExportCliResultEnvelope, resolveExportCliDeckMode } from './export-cli-request.js';
 import { exportRoutePath } from './export-cli-routing.js';
 import {
@@ -627,6 +627,7 @@ async function runAmr(args) {
   if (!sub || sub === 'help' || args.includes('--help') || args.includes('-h')) {
     console.log(`Usage:
   od amr status [--refresh] [--json]
+  od amr login  [--json]
 
 Options:
   --daemon-url <url>   Open Design daemon HTTP base.
@@ -679,9 +680,83 @@ Options:
       if (wallet?.error?.message) console.log(`Reason\t${wallet.error.message}`);
       return;
     }
+    case 'login':
+      return runAmrLogin(base, flags);
     default:
       console.error(`unknown subcommand: od amr ${sub}`);
       process.exit(2);
+  }
+}
+
+// Localized reason lives in the web UI; the CLI mirrors the neutral English
+// summary from contracts so the same failure vocabulary drives both surfaces.
+function amrLoginReasonSummary(failure) {
+  if (!failure || typeof failure.code !== 'string') return '';
+  return AMR_LOGIN_FAILURE_SUMMARY[failure.code] ?? '';
+}
+
+// Poll the vela status until the sign-in completes, fails, or times out. Mirrors
+// the web poll loop (2s interval, 5-min ceiling) so the CLI reports the same
+// classified failure the UI would show (issue #426).
+const AMR_CLI_LOGIN_POLL_INTERVAL_MS = 2000;
+const AMR_CLI_LOGIN_TIMEOUT_MS = 5 * 60 * 1000;
+
+async function runAmrLogin(base, flags) {
+  const loginResp = await fetch(`${base}/api/integrations/vela/login`, {
+    method: 'POST',
+  });
+  if (!loginResp.ok && loginResp.status !== 202) {
+    const body = await loginResp.json().catch(() => null);
+    const failure = body?.failure ?? null;
+    if (flags.json) {
+      process.stdout.write(
+        JSON.stringify(
+          { ok: false, error: body?.error ?? `HTTP ${loginResp.status}`, failure },
+          null,
+          2,
+        ) + '\n',
+      );
+    } else {
+      console.error(`Sign-in failed\t${failure?.code ?? 'AMR_LOGIN_UNKNOWN'}`);
+      const reason = amrLoginReasonSummary(failure) || body?.error;
+      if (reason) console.error(`Reason\t${reason}`);
+    }
+    process.exit(1);
+  }
+
+  if (!flags.json) {
+    console.log('Sign-in started. Complete it in your browser…');
+  }
+  const startedAt = Date.now();
+  for (;;) {
+    await new Promise((resolve) => setTimeout(resolve, AMR_CLI_LOGIN_POLL_INTERVAL_MS));
+    const statusResp = await fetch(`${base}/api/integrations/vela/status`);
+    if (!statusResp.ok) return structuredHttpFailure(statusResp);
+    const status = await statusResp.json();
+    if (status?.loggedIn) {
+      if (flags.json) {
+        process.stdout.write(JSON.stringify({ ok: true, status }, null, 2) + '\n');
+      } else {
+        const account = status?.user?.email ?? status?.user?.id ?? 'signed in';
+        console.log(`Signed in\t${account}`);
+      }
+      return;
+    }
+    const timedOut = Date.now() - startedAt >= AMR_CLI_LOGIN_TIMEOUT_MS;
+    const failure = timedOut
+      ? { code: 'AMR_LOGIN_TIMEOUT', recovery: 'reauth' }
+      : status?.lastLoginFailure ?? null;
+    if (failure) {
+      if (timedOut) await fetch(`${base}/api/integrations/vela/login/cancel`, { method: 'POST' }).catch(() => {});
+      if (flags.json) {
+        process.stdout.write(JSON.stringify({ ok: false, failure }, null, 2) + '\n');
+      } else {
+        console.error(`Sign-in failed\t${failure.code}`);
+        const reason = amrLoginReasonSummary(failure);
+        if (reason) console.error(`Reason\t${reason}`);
+      }
+      process.exit(1);
+    }
   }
 }
 

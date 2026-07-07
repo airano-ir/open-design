@@ -381,6 +381,12 @@ export interface Dict {
   'settings.amrPlan': string;
   'settings.amrUpgrade': string;
   'settings.amrLoginErrorCompact': string;
+  'settings.amrLoginReasonBinaryMissing': string;
+  'settings.amrLoginReasonSpawnFailed': string;
+  'settings.amrLoginReasonNetwork': string;
+  'settings.amrLoginReasonProxyBlocked': string;
+  'settings.amrLoginReasonTimeout': string;
+  'settings.amrLoginReasonInterrupted': string;
   'settings.apiSection': string;
   'settings.quickFillProvider': string;
   'settings.providerPreset': string;

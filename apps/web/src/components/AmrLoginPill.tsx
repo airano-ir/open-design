@@ -29,6 +29,11 @@ import {
 } from './amrLoginPolling';
 import { Icon } from './Icon';
 import { amrConsoleUrlForProfile, amrProfileBadgeLabel } from '../runtime/amr-guidance';
+import {
+  amrLoginFailureForOutcome,
+  amrLoginFailureForSpawn,
+  amrLoginReasonText,
+} from '../runtime/amr-login-failure';
 
 interface AmrLoginPillProps {
   className?: string;
@@ -376,7 +381,9 @@ export function AmrLoginPill({
         loginStartedAtRef.current = null;
         loginPendingRef.current = false;
         setPending(null);
-        setErrorMessage(t('settings.amrLoginErrorCompact'));
+        setErrorMessage(
+          amrLoginReasonText(t, amrLoginFailureForOutcome(outcome, next)),
+        );
       }
     };
     pollRef.current = window.setInterval(() => {
@@ -476,7 +483,7 @@ export function AmrLoginPill({
         loginStartedAtRef.current = null;
         loginPendingRef.current = false;
         setPending(null);
-        setErrorMessage(result.error || t('settings.amrLoginErrorCompact'));
+        setErrorMessage(amrLoginReasonText(t, amrLoginFailureForSpawn(result)));
         return;
       }
       notifyAmrLoginStatusChanged('login-started');
