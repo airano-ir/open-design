@@ -69,10 +69,10 @@ describe("contact-sales validation", () => {
 
   it("keeps the in-app `client` source strict (name + full enums)", async () => {
     assert.equal((await call({ name: "Ada", email: "ada@acme.com", source: "client" })).body.error, "missing_fields");
-    // With a name and the full enum contract, client is accepted; industry
-    // predates the field there and stays optional.
-    const { industry: _industry, ...withoutIndustry } = ENTERPRISE_OK;
-    assert.equal((await call({ ...withoutIndustry, name: "Ada", source: "client" })).status, 200);
+    // With a name and the full enum contract, client is accepted; industry and
+    // location predate the field there and stay optional.
+    const { industry: _industry, location: _location, ...clientContract } = ENTERPRISE_OK;
+    assert.equal((await call({ ...clientContract, name: "Ada", source: "client" })).status, 200);
   });
 
   it("keeps the shared contract: known team-size/seat-range/budget enums + a use case are required", async () => {

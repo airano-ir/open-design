@@ -428,7 +428,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     !ALLOWED_TEAM_SIZES.has(teamSize) ||
     !ALLOWED_SEATS.has(seats) ||
     !ALLOWED_BUDGETS.has(budget) ||
-    !location ||
+    (isSharedLeadForm && !location) ||
     useCases.length === 0
   ) {
     return json({ ok: false, error: "missing_fields" }, 400, origin);
