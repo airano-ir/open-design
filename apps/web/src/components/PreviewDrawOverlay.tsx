@@ -65,6 +65,7 @@ interface Props {
   sendDisabled?: boolean;
   sendDisabledReason?: string;
   onToolbarClick?: (element: DrawToolbarElement, submitAction?: AnnotationAction) => void;
+  toolbarHost?: HTMLElement | null;
 }
 
 const STROKE_COLOR = '#ff3b30';
@@ -89,6 +90,7 @@ export function PreviewDrawOverlay({
   sendDisabled = false,
   sendDisabledReason,
   onToolbarClick,
+  toolbarHost,
 }: Props) {
   const t = useT();
   const wrapRef = useRef<HTMLDivElement | null>(null);
@@ -759,21 +761,19 @@ export function PreviewDrawOverlay({
   }
 
   // In a scaled, clipped device frame (tablet/mobile viewports) the draw toolbar would
-  // be cut off by the frame, and an absolutely-positioned toolbar inside the preview
-  // scroll area scrolls away with the content. Portal it to the non-scrolling preview
-  // body (.viewer-body) so it stays fully visible and pinned; CSS then docks it in a
-  // reserved strip below the device frame. Falls back to inline when there is no
-  // .viewer-body ancestor. Resolve the host in a layout effect (pre-paint) so the very
-  // first `active` paint is already portaled — with a post-paint effect the clipped
-  // inline toolbar would flash for one frame before the host is found.
-  const [toolbarHost, setToolbarHost] = useState<HTMLElement | null>(null);
+  // be cut off by the frame. Prefer the caller-provided preview viewport so the toolbar
+  // is constrained to the same visible product surface; fall back to .viewer-body for
+  // direct component usage. Resolve in a layout effect to avoid a clipped first paint.
+  const [resolvedToolbarHost, setResolvedToolbarHost] = useState<HTMLElement | null>(null);
   useLayoutEffect(() => {
     if (!active) {
-      setToolbarHost(null);
+      setResolvedToolbarHost(null);
       return;
     }
-    setToolbarHost((wrapRef.current?.closest('.viewer-body') as HTMLElement | null) ?? null);
-  }, [active]);
+    setResolvedToolbarHost(
+      toolbarHost ?? (wrapRef.current?.closest('.viewer-body') as HTMLElement | null) ?? null,
+    );
+  }, [active, toolbarHost]);
 
   const overlayPointer = active ? 'auto' : 'none';
   const showCanvas = active || hasInk || hasBox;
@@ -1210,7 +1210,7 @@ export function PreviewDrawOverlay({
             document.body,
           ) : null}
         </>,
-        toolbarHost,
+        resolvedToolbarHost,
       ) : null}
     </div>
   );
@@ -1376,14 +1376,14 @@ const closeButtonStyle: CSSProperties = {
 // covered the controls; a flex column keeps them apart at any height.
 const previewDrawDockStyle: CSSProperties = {
   position: 'absolute',
-  left: 'calc(50% - 52px)',
+  left: '50%',
   bottom: 16,
   transform: 'translateX(-50%)',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
   gap: 8,
-  maxWidth: 'min(760px, calc(100% - 144px))',
+  maxWidth: 'min(760px, calc(100% - 32px))',
   zIndex: 91,
   pointerEvents: 'none',
 };

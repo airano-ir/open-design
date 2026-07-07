@@ -492,6 +492,12 @@ export function BoardComposerPopover({
     target.position.height,
     target.hoverPoint?.x,
     target.hoverPoint?.y,
+    bounds?.width,
+    bounds?.height,
+    bounds?.scrollLeft,
+    bounds?.scrollTop,
+    offset?.x,
+    offset?.y,
   ].join('\0');
   useEffect(() => {
     setManualPosition(null);

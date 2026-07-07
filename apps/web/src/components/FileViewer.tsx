@@ -6156,6 +6156,8 @@ function HtmlViewer({
   const [manualEditViewportWidth, setManualEditViewportWidth] = useState<number | null>(null);
   const [commentPortalHost, setCommentPortalHost] = useState<HTMLElement | null>(null);
   const [previewBodyRef, previewBodySize] = usePreviewCanvasSize<HTMLDivElement>();
+  const [commentComposerHost, setCommentComposerHost] = useState<HTMLDivElement | null>(null);
+  const [commentPreviewCanvasNode, setCommentPreviewCanvasNode] = useState<HTMLDivElement | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const urlPreviewIframeRef = useRef<HTMLIFrameElement | null>(null);
   const srcDocPreviewIframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -6177,6 +6179,12 @@ function HtmlViewer({
       source === urlPreviewIframeRef.current?.contentWindow ||
       source === srcDocPreviewIframeRef.current?.contentWindow
     );
+  }, []);
+  const setCommentComposerHostRef = useCallback((node: HTMLDivElement | null) => {
+    setCommentComposerHost((current) => (current === node ? current : node));
+  }, []);
+  const setCommentPreviewCanvasRef = useCallback((node: HTMLDivElement | null) => {
+    setCommentPreviewCanvasNode((current) => (current === node ? current : node));
   }, []);
   useEffect(() => {
     if (!onBrandExtractionStopRequest) return;
@@ -10527,7 +10535,26 @@ function HtmlViewer({
     : null;
   const activeComposerAttachments =
     activeComposerComment?.attachments ?? activeCommentExistingAttachments;
-  const commentComposer = boardMode && activeCommentTarget && activeCommentTargetVisible ? (
+  const commentComposerPortalMetrics = (() => {
+    if (!commentComposerHost || !commentPreviewCanvasNode) return null;
+    const hostRect = commentComposerHost.getBoundingClientRect();
+    const canvasRect = commentPreviewCanvasNode.getBoundingClientRect();
+    if (hostRect.width <= 0 || hostRect.height <= 0) return null;
+    return {
+      host: commentComposerHost,
+      bounds: {
+        width: hostRect.width,
+        height: hostRect.height,
+        scrollLeft: commentComposerHost.scrollLeft,
+        scrollTop: commentComposerHost.scrollTop,
+      },
+      offset: {
+        x: canvasRect.left - hostRect.left + commentComposerHost.scrollLeft + overlayPreviewTransform.offsetX,
+        y: canvasRect.top - hostRect.top + commentComposerHost.scrollTop + overlayPreviewTransform.offsetY,
+      },
+    };
+  })();
+  const commentComposerNode = boardMode && activeCommentTarget && activeCommentTargetVisible ? (
     <BoardComposerPopover
       target={activeCommentTarget}
       existing={activeComposerComment}
@@ -10576,12 +10603,20 @@ function HtmlViewer({
       sendDisabled={commentSendDisabled}
       t={t}
       scale={overlayPreviewScale}
-      offset={{ x: overlayPreviewTransform.offsetX, y: overlayPreviewTransform.offsetY }}
-      bounds={previewBodySize}
+      offset={
+        commentComposerPortalMetrics?.offset ?? {
+          x: overlayPreviewTransform.offsetX,
+          y: overlayPreviewTransform.offsetY,
+        }
+      }
+      bounds={commentComposerPortalMetrics?.bounds ?? previewBodySize}
       docked={false}
       commenting
     />
   ) : null;
+  const commentComposer = commentComposerNode && commentComposerPortalMetrics
+    ? createPortal(commentComposerNode, commentComposerPortalMetrics.host)
+    : commentComposerNode;
   const boardPreviewImage =
     boardPreviewIndex !== null ? boardImagePreviews[boardPreviewIndex] ?? null : null;
   const boardImagePreviewModal = boardPreviewImage
@@ -11505,6 +11540,7 @@ function HtmlViewer({
           <div
             className={`${manualEditMode ? 'manual-edit-workspace' : commentPreviewLayoutClass} preview-viewport preview-viewport-${previewViewport}${drawOverlayOpen ? ' preview-draw-active' : ''}`}
             data-testid={manualEditMode ? undefined : 'comment-preview-layout'}
+            ref={manualEditMode ? undefined : setCommentComposerHostRef}
             style={previewViewportStyle(previewViewport, previewScale, boardPreviewCanvasSize, boardPreviewScaleOptions)}
             onMouseLeave={manualEditMode ? clearManualEditHover : undefined}
           >
@@ -11523,6 +11559,7 @@ function HtmlViewer({
             <div
               className={manualEditMode ? 'manual-edit-canvas' : 'comment-preview-canvas'}
               data-testid={manualEditMode ? undefined : 'comment-preview-canvas'}
+              ref={manualEditMode ? undefined : setCommentPreviewCanvasRef}
             >
               <div className={manualEditMode ? undefined : 'comment-frame-clip'} style={manualEditMode ? { height: '100%' } : undefined}>
                 <div
@@ -11542,6 +11579,7 @@ function HtmlViewer({
                     sendDisabled={streaming}
                     sendDisabledReason={t('chat.annotationSendDisabledReason')}
                     onToolbarClick={fireDrawToolbarClick}
+                    toolbarHost={manualEditMode ? null : commentComposerHost}
                   >
                     <div className="artifact-preview-transport-stack">
                       {OD_PREVIEW_KEEP_ALIVE ? (

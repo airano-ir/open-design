@@ -97,8 +97,8 @@ describe('PreviewDrawOverlay', () => {
     expect(canvas?.style.zIndex).toBe('80');
     expect(dock?.style.zIndex).toBe('91');
     expect(dock?.style.flexDirection).toBe('column');
-    expect(dock?.style.left).toBe('calc(50% - 52px)');
-    expect(dock?.style.maxWidth).toContain('100% - 144px');
+    expect(dock?.style.left).toBe('50%');
+    expect(dock?.style.maxWidth).toContain('100% - 32px');
     expect(toolbar?.style.flexWrap).toBe('wrap');
     expect(toolCluster?.style.flex).toBe('0 0 auto');
     expect(noteActions?.style.flex).toBe('1 1 360px');
@@ -487,6 +487,28 @@ describe('PreviewDrawOverlay', () => {
       expect(wrap.contains(input!)).toBe(false);
       expect(body.contains(input!)).toBe(true);
     });
+  });
+
+  it('uses the caller-provided preview viewport as the draw toolbar host', async () => {
+    const toolbarHost = document.createElement('div');
+    toolbarHost.className = 'preview-viewport';
+    document.body.appendChild(toolbarHost);
+
+    try {
+      const { container } = render(
+        <PreviewDrawOverlay active toolbarHost={toolbarHost}>
+          <div style={{ width: 320, height: 200 }} />
+        </PreviewDrawOverlay>,
+      );
+
+      await waitFor(() => {
+        const input = toolbarHost.querySelector<HTMLInputElement>('.preview-draw-note-input');
+        expect(input).toBeTruthy();
+        expect(container.querySelector<HTMLInputElement>('.preview-draw-note-input')).toBeNull();
+      });
+    } finally {
+      toolbarHost.remove();
+    }
   });
 
   it('hides draw chrome before a compositor annotation snapshot', async () => {

@@ -254,6 +254,42 @@ describe('FileViewer preview scale', () => {
     expect(rule).toContain('overflow: hidden;');
   });
 
+  it('uses a centered compact deck rail on mobile and tablet preview frames', () => {
+    const css = readExpandedIndexCss();
+
+    expect(css).toContain(
+      '.preview-viewport:not(.preview-viewport-desktop).comment-preview-layer-with-deck-rail',
+    );
+    expect(css).toContain('--deck-device-frame-radius: 18px;');
+    expect(css).toContain('--deck-compact-rail-width: 56px;');
+    expect(css).toContain('.preview-viewport-mobile.comment-preview-layer-with-deck-rail');
+    expect(css).toMatch(
+      /\.preview-viewport:not\(\.preview-viewport-desktop\)\.comment-preview-layer-with-deck-rail \.deck-thumbnail-rail\s*\{[\s\S]*width: var\(--deck-compact-rail-width\);[\s\S]*height: calc\(var\(--preview-viewport-height\) \* var\(--preview-scale, 1\)\);[\s\S]*border-radius: var\(--deck-device-frame-radius\) 0 0 var\(--deck-device-frame-radius\);/,
+    );
+    expect(css).toMatch(
+      /\.preview-viewport:not\(\.preview-viewport-desktop\)\.comment-preview-layer-with-deck-rail \.deck-thumbnail-frame\s*\{[\s\S]*display: none;/,
+    );
+    expect(css).toMatch(
+      /\.preview-viewport:not\(\.preview-viewport-desktop\)\.comment-preview-layer-with-deck-rail \.deck-thumbnail-number\s*\{[\s\S]*width: 28px;[\s\S]*height: 28px;[\s\S]*align-items: center;[\s\S]*justify-content: center;/,
+    );
+    expect(css).toMatch(
+      /\.preview-viewport:not\(\.preview-viewport-desktop\)\.comment-preview-layer-with-deck-rail \.deck-thumbnail-button\.active \.deck-thumbnail-number\s*\{[\s\S]*box-shadow: 0 0 0 2px/,
+    );
+    expect(css).toMatch(
+      /\.preview-viewport:not\(\.preview-viewport-desktop\)\.comment-preview-layer-with-deck-rail\.comment-preview-layer-deck-rail-collapsed \.comment-preview-canvas\s*\{[\s\S]*border-left: 1px solid var\(--border-strong\);[\s\S]*border-radius: var\(--deck-device-frame-radius\);/,
+    );
+  });
+
+  it('reserves safe preview space while the draw toolbar is active', () => {
+    const css = readExpandedIndexCss();
+
+    expect(css).toContain('.preview-viewport.preview-draw-active');
+    expect(css).toContain('--preview-draw-dock-clearance: 120px;');
+    expect(css).toContain('padding-bottom: var(--preview-draw-dock-clearance);');
+    expect(css).toContain('.preview-viewport:not(.preview-viewport-desktop).preview-draw-active');
+    expect(css).toContain('--preview-draw-dock-clearance: 104px;');
+  });
+
   it('keeps manual edit canvas layout aligned with comment preview on device viewports (#2960)', () => {
     const css = readExpandedIndexCss();
 
@@ -4729,6 +4765,52 @@ describe('FileViewer tweaks toolbar', () => {
     await waitFor(() => {
       expect(layout.className).not.toContain('comment-preview-layer-with-side-dock');
       expect(Number(layout.style.getPropertyValue('--preview-scale'))).toBeCloseTo((700 - 48) / 1180);
+    });
+  });
+
+  it('portals the comment composer to the preview viewport instead of the clipped canvas', async () => {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockImplementation(function getBoundingClientRectMock(this: HTMLElement) {
+        if (this.classList.contains('viewer-body')) return testRect(0, 0, 900, 700);
+        if (this.dataset.testid === 'comment-preview-layout') return testRect(0, 0, 900, 700);
+        if (this.dataset.testid === 'comment-preview-canvas') return testRect(260, 32, 390, 640);
+        if (this.dataset.testid === 'comment-popover') return testRect(0, 0, 320, 320);
+        return testRect(0, 0, 0, 0);
+      });
+
+    render(
+      <FileViewer
+        projectId="project-1"
+        projectKind="prototype"
+        file={htmlPreviewFile()}
+        liveHtml='<html><body><main data-od-id="hero">Hero</main></body></html>'
+      />,
+    );
+
+    clickAgentTool('board-mode-toggle');
+    const frame = screen.getByTestId('artifact-preview-frame') as HTMLIFrameElement;
+    window.dispatchEvent(new MessageEvent('message', {
+      source: frame.contentWindow,
+      data: {
+        type: 'od:comment-target',
+        elementId: 'hero',
+        selector: '[data-od-id="hero"]',
+        label: 'Hero',
+        text: 'Hero',
+        position: { x: 8, y: 12, width: 120, height: 48 },
+        hoverPoint: { x: 12, y: 16 },
+        htmlHint: '<main data-od-id="hero">Hero</main>',
+      },
+    }));
+
+    const layout = screen.getByTestId('comment-preview-layout');
+    const canvas = screen.getByTestId('comment-preview-canvas');
+    await screen.findByTestId('comment-popover');
+
+    await waitFor(() => {
+      const popover = screen.getByTestId('comment-popover');
+      expect(layout.contains(popover)).toBe(true);
+      expect(canvas.contains(popover)).toBe(false);
     });
   });
 
