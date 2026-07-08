@@ -360,22 +360,32 @@ export function AmrLoginPill({
       setErrorMessage(null);
       setPending(null);
       setCanceledVisible(false);
-      return;
     }
-    // The Settings card mounts this pill with `initialStatus` + `skipInitialRefresh`
-    // and refetches on window focus, so a host-pushed signed-out snapshot never
-    // flows through `refresh()`. Mirror refresh()'s terminal mapping here (unless
-    // the pill's own login is mid-flight) so the classified reason surfaces on
-    // that surface after reload/focus too — and clears when the daemon no longer
-    // reports `lastLoginFailure` (restart drops the in-memory exit) (issue #426).
-    if (initialStatus && !initialStatus.loginInFlight && !loginPendingRef.current) {
-      setErrorMessage(
-        initialStatus.lastLoginFailure
-          ? amrLoginReasonText(t, initialStatus.lastLoginFailure)
-          : null,
-      );
-    }
-  }, [initialStatus, stopPolling, t]);
+    // NOTE: keep this effect's deps to `[initialStatus, stopPolling]` — no `t`.
+    // A per-render `t` identity would re-run `setStatus(initialStatus)` on every
+    // render and clobber a local post-cancel status (loginInFlight:false) back
+    // to the host's still-in-flight snapshot, bouncing the pill to "Signing in…"
+    // (#3158). The classified-reason mapping that needs `t` lives in its own
+    // effect below.
+  }, [initialStatus, stopPolling]);
+
+  // The Settings card mounts this pill with `initialStatus` + `skipInitialRefresh`
+  // and refetches on window focus, so a host-pushed signed-out snapshot never
+  // flows through `refresh()`. Mirror refresh()'s terminal mapping here (unless
+  // the pill's own login is mid-flight) so the classified reason surfaces on
+  // that surface after reload/focus too — and clears when the daemon no longer
+  // reports `lastLoginFailure` (restart drops the in-memory exit) (issue #426).
+  // Split off the status-sync effect (and thus off `setStatus`) so re-running on
+  // a fresh `t` only ever calls the idempotent setErrorMessage (#3158).
+  useEffect(() => {
+    if (!initialStatus || initialStatus.loggedIn) return;
+    if (initialStatus.loginInFlight || loginPendingRef.current) return;
+    setErrorMessage(
+      initialStatus.lastLoginFailure
+        ? amrLoginReasonText(t, initialStatus.lastLoginFailure)
+        : null,
+    );
+  }, [initialStatus, t]);
 
   useEffect(() => {
     if (!canceledVisible) return;
