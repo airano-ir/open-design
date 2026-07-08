@@ -156,6 +156,10 @@ function migrate(db: SqliteDb): void {
       status TEXT NOT NULL,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL,
+      anchor_state TEXT,
+      anchored_version INTEGER,
+      author_member_id TEXT,
+      last_good_position_json TEXT,
       UNIQUE(project_id, conversation_id, file_path, element_id, slide_key),
       FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
       FOREIGN KEY(conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
@@ -329,6 +333,21 @@ function migrate(db: SqliteDb): void {
     db.exec(`ALTER TABLE preview_comments ADD COLUMN slide_index INTEGER`);
   }
   migratePreviewCommentsSlideKey(db);
+  // Team collaboration anchor columns — added after the slide-key rebuild so a legacy
+  // table rebuild cannot drop them.
+  const previewCommentAnchorCols = db.prepare(`PRAGMA table_info(preview_comments)`).all() as DbRow[];
+  if (!previewCommentAnchorCols.some((c: DbRow) => c.name === 'anchor_state')) {
+    db.exec(`ALTER TABLE preview_comments ADD COLUMN anchor_state TEXT`);
+  }
+  if (!previewCommentAnchorCols.some((c: DbRow) => c.name === 'anchored_version')) {
+    db.exec(`ALTER TABLE preview_comments ADD COLUMN anchored_version INTEGER`);
+  }
+  if (!previewCommentAnchorCols.some((c: DbRow) => c.name === 'author_member_id')) {
+    db.exec(`ALTER TABLE preview_comments ADD COLUMN author_member_id TEXT`);
+  }
+  if (!previewCommentAnchorCols.some((c: DbRow) => c.name === 'last_good_position_json')) {
+    db.exec(`ALTER TABLE preview_comments ADD COLUMN last_good_position_json TEXT`);
+  }
   const deploymentCols = db.prepare(`PRAGMA table_info(deployments)`).all() as DbRow[];
   if (!deploymentCols.some((c: DbRow) => c.name === 'status')) {
     db.exec(`ALTER TABLE deployments ADD COLUMN status TEXT NOT NULL DEFAULT 'ready'`);
@@ -1610,6 +1629,8 @@ export function listPreviewComments(db: SqliteDb, projectId: string, conversatio
               pod_members_json AS podMembersJson, style_json AS styleJson,
               attachments_json AS attachmentsJson,
               slide_index AS slideIndex,
+              anchor_state AS anchorState, anchored_version AS anchoredVersion,
+              author_member_id AS authorMemberId, last_good_position_json AS lastGoodPositionJson,
               note, status, created_at AS createdAt, updated_at AS updatedAt
          FROM preview_comments
         WHERE project_id = ? AND conversation_id = ?
@@ -1643,6 +1664,15 @@ export function upsertPreviewComment(db: SqliteDb, projectId: string, conversati
     : 0;
   const slideIndex = Number.isFinite(target.slideIndex) ? Math.max(0, Math.round(target.slideIndex)) : null;
   const slideKey = slideIndex ?? -1;
+  // Team collaboration creation metadata. anchor_state / last_good_position stay null at
+  // creation — the drift ladder resolves and writes them back (updatePreviewCommentAnchor).
+  const anchoredVersion = Number.isFinite(target.anchoredVersion)
+    ? Math.max(0, Math.round(target.anchoredVersion))
+    : null;
+  const authorMemberId =
+    typeof input?.authorMemberId === 'string' && input.authorMemberId.trim()
+      ? input.authorMemberId.trim()
+      : null;
   const now = Date.now();
   const existing = db
     .prepare(
@@ -1661,8 +1691,9 @@ export function upsertPreviewComment(db: SqliteDb, projectId: string, conversati
     `INSERT INTO preview_comments
        (id, project_id, conversation_id, file_path, element_id, selector, label,
         text, position_json, html_hint, selection_kind, member_count, pod_members_json,
-        style_json, attachments_json, slide_index, slide_key, note, status, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        style_json, attachments_json, slide_index, slide_key, note, status, created_at, updated_at,
+        anchored_version, author_member_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(project_id, conversation_id, file_path, element_id, slide_key) DO UPDATE SET
        selector = excluded.selector,
        label = excluded.label,
@@ -1677,6 +1708,8 @@ export function upsertPreviewComment(db: SqliteDb, projectId: string, conversati
        slide_index = excluded.slide_index,
        note = excluded.note,
        status = 'open',
+       anchored_version = excluded.anchored_version,
+       author_member_id = excluded.author_member_id,
        updated_at = excluded.updated_at`,
   ).run(
     id,
@@ -1700,6 +1733,8 @@ export function upsertPreviewComment(db: SqliteDb, projectId: string, conversati
     'open',
     createdAt,
     now,
+    anchoredVersion,
+    authorMemberId,
   );
   return getPreviewComment(db, projectId, conversationId, id);
 }
@@ -1712,6 +1747,41 @@ export function updatePreviewCommentStatus(db: SqliteDb, projectId: string, conv
         SET status = ?, updated_at = ?
       WHERE id = ? AND project_id = ? AND conversation_id = ?`,
   ).run(status, now, id, projectId, conversationId);
+  return getPreviewComment(db, projectId, conversationId, id);
+}
+
+/**
+ * Team collaboration drift-ladder write-back: persist how a comment resolved this render.
+ * `lastGoodPosition`/`anchoredVersion` are COALESCEd so a `lost` resolve (which omits
+ * them) keeps the last known-good values instead of wiping them. Does not bump
+ * `updated_at` — anchor resolution is a derived read, not a content edit.
+ */
+export function updatePreviewCommentAnchor(
+  db: SqliteDb,
+  projectId: string,
+  conversationId: string,
+  id: string,
+  input: DbRow,
+) {
+  const anchorState = typeof input?.anchorState === 'string' ? input.anchorState : null;
+  const lastGoodPosition = input?.lastGoodPosition ? normalizePosition(input.lastGoodPosition) : null;
+  const anchoredVersion = Number.isFinite(input?.anchoredVersion)
+    ? Math.max(0, Math.round(input.anchoredVersion))
+    : null;
+  db.prepare(
+    `UPDATE preview_comments
+        SET anchor_state = ?,
+            last_good_position_json = COALESCE(?, last_good_position_json),
+            anchored_version = COALESCE(?, anchored_version)
+      WHERE id = ? AND project_id = ? AND conversation_id = ?`,
+  ).run(
+    anchorState,
+    lastGoodPosition ? JSON.stringify(lastGoodPosition) : null,
+    anchoredVersion,
+    id,
+    projectId,
+    conversationId,
+  );
   return getPreviewComment(db, projectId, conversationId, id);
 }
 
@@ -1735,6 +1805,8 @@ function getPreviewComment(db: SqliteDb, projectId: string, conversationId: stri
               pod_members_json AS podMembersJson, style_json AS styleJson,
               attachments_json AS attachmentsJson,
               slide_index AS slideIndex,
+              anchor_state AS anchorState, anchored_version AS anchoredVersion,
+              author_member_id AS authorMemberId, last_good_position_json AS lastGoodPositionJson,
               note, status, created_at AS createdAt, updated_at AS updatedAt
          FROM preview_comments
         WHERE id = ? AND project_id = ? AND conversation_id = ?`,
@@ -1772,6 +1844,10 @@ function normalizePreviewComment(row: DbRow) {
     status: row.status,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+    anchorState: typeof row.anchorState === 'string' ? row.anchorState : undefined,
+    anchoredVersion: Number.isFinite(row.anchoredVersion) ? row.anchoredVersion : undefined,
+    authorMemberId: typeof row.authorMemberId === 'string' ? row.authorMemberId : undefined,
+    lastGoodPosition: parseJsonOrUndef(row.lastGoodPositionJson),
   };
 }
 
