@@ -1,9 +1,33 @@
 import type { ChatMessage } from '../types';
+import type { RunFailureCategory, RunFailureDetail } from '@open-design/contracts';
+
+export interface RunFailureClassificationFields {
+  failureCategory?: RunFailureCategory | null;
+  failureDetail?: RunFailureDetail | null;
+}
+
+/** Read the daemon failure classification the streaming layer stamped onto a
+ *  surfaced run error (see markErrorRunFailure in providers/daemon.ts). Returns
+ *  undefined when neither field is present so callers pass nothing through. */
+export function runFailureFieldsFromError(
+  err: unknown,
+): RunFailureClassificationFields | undefined {
+  const e = err as {
+    failureCategory?: RunFailureCategory | null;
+    failureDetail?: RunFailureDetail | null;
+  } | null;
+  if (!e || (!e.failureCategory && !e.failureDetail)) return undefined;
+  return {
+    ...(e.failureCategory ? { failureCategory: e.failureCategory } : {}),
+    ...(e.failureDetail ? { failureDetail: e.failureDetail } : {}),
+  };
+}
 
 export function appendErrorStatusEvent(
   message: ChatMessage,
   detail: string,
   code?: string,
+  failure?: RunFailureClassificationFields,
 ): ChatMessage {
   if (!detail) return message;
   const events = message.events ?? [];
@@ -16,7 +40,17 @@ export function appendErrorStatusEvent(
   }
   return {
     ...message,
-    events: [...events, { kind: 'status', label: 'error', detail, ...(code ? { code } : {}) }],
+    events: [
+      ...events,
+      {
+        kind: 'status',
+        label: 'error',
+        detail,
+        ...(code ? { code } : {}),
+        ...(failure?.failureCategory ? { failureCategory: failure.failureCategory } : {}),
+        ...(failure?.failureDetail ? { failureDetail: failure.failureDetail } : {}),
+      },
+    ],
   };
 }
 
