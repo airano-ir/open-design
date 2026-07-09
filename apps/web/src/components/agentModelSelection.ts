@@ -24,6 +24,7 @@ export function normalizeAgentModelChoice(
   const configuredModel =
     typeof choice?.model === 'string' && choice.model ? choice.model : null;
   if (agent?.id !== 'amr' || !configuredModel) return null;
+  if (configuredModel === 'default') return null;
 
   const matchingModel = agent.models?.find((model) => model.id === configuredModel) ?? null;
   if (!matchingModel && (agent.models?.length ?? 0) === 0) {

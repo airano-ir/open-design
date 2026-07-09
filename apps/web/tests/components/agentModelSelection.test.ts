@@ -52,6 +52,16 @@ describe('agent model selection', () => {
     });
   });
 
+  it('preserves explicit AMR default choices instead of normalizing them to a concrete fallback', () => {
+    const choice = {
+      model: 'default',
+      reasoning: 'default',
+    };
+
+    expect(normalizeAgentModelChoice(amrAgent, choice)).toBeNull();
+    expect(effectiveAgentModelChoice(amrAgent, choice)).toEqual(choice);
+  });
+
   it('does not select a disabled model as the AMR default when every catalog row is locked', () => {
     const lockedAmrAgent: AgentInfo = {
       ...amrAgent,
