@@ -1433,10 +1433,6 @@ export function SettingsDialog({
   });
   const [amrCardStatus, setAmrCardStatus] = useState<VelaLoginStatus | null>(null);
   const [amrCardStatusReady, setAmrCardStatusReady] = useState(false);
-  // Classified sign-in failure reason lifted out of the AMR pill so it renders
-  // as a full-width row under the agent card instead of wrapping awkwardly next
-  // to the Authorize button in the header (issue #426).
-  const [amrCardError, setAmrCardError] = useState<string | null>(null);
   const [amrWalletSnapshot, setAmrWalletSnapshot] = useState<AmrWalletSnapshot | null>(null);
   const [amrWalletReady, setAmrWalletReady] = useState(false);
   const [hoveredAgentCardId, setHoveredAgentCardId] = useState<string | null>(null);
@@ -4532,12 +4528,10 @@ export function SettingsDialog({
                                         signInLabel={t('settings.amrAuthorize')}
                                         showConsoleAction={amrCardStatus?.loggedIn === true}
                                         iconOnlySignOut
-                                        hideInlineError
                                         amrEntrySourceDetail="settings_amr_authorize"
                                         metricsConsent={cfg.telemetry?.metrics === true}
                                         installationId={cfg.installationId}
                                         revealPendingCancelAction={amrRevealPendingCancelAction}
-                                        onErrorChange={setAmrCardError}
                                         onStatusChange={setAmrCardStatus}
                                       />
                                     </span>
@@ -4574,15 +4568,6 @@ export function SettingsDialog({
                                   </button>
                                 ) : null}
                               </div>
-                              {isAmrAgent && active && amrCardError ? (
-                                <p
-                                  className="agent-card-amr-error"
-                                  role="alert"
-                                  data-testid="settings-agent-card-amr-error"
-                                >
-                                  {amrCardError}
-                                </p>
-                              ) : null}
                               {(a.diagnostics ?? []).map((diagnostic, i) => (
                                 <AgentDiagnosticRow
                                   key={`${diagnostic.reason}-${i}`}

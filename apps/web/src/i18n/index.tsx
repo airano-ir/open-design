@@ -201,29 +201,25 @@ export function I18nProvider({ initial, children }: ProviderProps) {
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 
-// Stand-alone English translator used when no provider is mounted (e.g. an
-// isolated test). Hoisted to a module-level singleton so `useI18n()` returns a
-// STABLE reference in the no-provider path — a fresh object/`t` per render made
-// any component that (correctly) lists `t` in a hook dependency array re-run its
-// effects every render, which can spin an async-setState effect into an
-// unbounded render loop and OOM the test worker.
-const FALLBACK_I18N: I18nContextValue = {
-  locale: 'en',
-  setLocale: () => { },
-  t: (key, vars) => {
-    const raw = en[key] ?? key;
-    if (!vars) return raw;
-    return raw.replace(/\{(\w+)\}/g, (_, n: string) => {
-      const v = vars[n];
-      return v == null ? `{${n}}` : String(v);
-    });
-  },
-};
-
 export function useI18n(): I18nContextValue {
   const ctx = useContext(I18nContext);
-  // Keep the API safe to call without wrapping every callsite in a provider.
-  if (!ctx) return FALLBACK_I18N;
+  if (!ctx) {
+    // Fall back to a stand-alone English translator when no provider is
+    // mounted (e.g. an isolated test). This keeps the API safe to call
+    // without requiring every callsite to wrap in a provider.
+    return {
+      locale: 'en',
+      setLocale: () => { },
+      t: (key, vars) => {
+        const raw = en[key] ?? key;
+        if (!vars) return raw;
+        return raw.replace(/\{(\w+)\}/g, (_, n: string) => {
+          const v = vars[n];
+          return v == null ? `{${n}}` : String(v);
+        });
+      },
+    };
+  }
   return ctx;
 }
 

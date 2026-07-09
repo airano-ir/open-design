@@ -966,7 +966,7 @@ describe('InlineModelSwitcher AMR row', () => {
     });
     expect(fetchMock).toHaveBeenCalledWith('/api/integrations/vela/login/cancel', { method: 'POST' });
     expect(
-      within(popover).getByRole('radio', { name: /^Open Design\s+Sign-in timed out\./i }),
+      within(popover).getByRole('radio', { name: /^Open Design\s+Sign-in failed\./i }),
     ).toBeTruthy();
     expect(
       popover.querySelector('.inline-switcher__account-status.is-error'),

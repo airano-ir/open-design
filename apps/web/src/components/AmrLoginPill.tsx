@@ -29,11 +29,6 @@ import {
 } from './amrLoginPolling';
 import { Icon } from './Icon';
 import { amrConsoleUrlForProfile, amrProfileBadgeLabel } from '../runtime/amr-guidance';
-import {
-  amrLoginFailureForOutcome,
-  amrLoginFailureForSpawn,
-  amrLoginReasonText,
-} from '../runtime/amr-login-failure';
 
 interface AmrLoginPillProps {
   className?: string;
@@ -49,12 +44,6 @@ interface AmrLoginPillProps {
   revealPendingCancelAction?: boolean;
   showConsoleAction?: boolean;
   iconOnlySignOut?: boolean;
-  // Suppress the inline error text inside the compact control. The host lifts
-  // the reason (via `onErrorChange`) and renders it somewhere with room to
-  // breathe — e.g. a full-width row under the Settings agent card — so the
-  // classified reason no longer wraps awkwardly next to the Authorize button.
-  hideInlineError?: boolean;
-  onErrorChange?: (message: string | null) => void;
   onStatusChange?: (status: VelaLoginStatus | null) => void;
 }
 
@@ -86,9 +75,6 @@ export interface AmrAccountControlProps {
   showConsoleAction?: boolean;
   consoleUrl?: string;
   iconOnlySignOut?: boolean;
-  // When true, the error status still styles the control (Authorize button) but
-  // the inline reason text is not rendered; the host shows it elsewhere.
-  hideInlineError?: boolean;
   showCancelSignInAction?: boolean;
   // Activation URL surfaced while signing in, so the user can re-open the
   // sign-in page when the browser did not auto-open. The URL already carries
@@ -137,7 +123,6 @@ export function AmrAccountControl({
   showConsoleAction = false,
   consoleUrl,
   iconOnlySignOut = false,
-  hideInlineError = false,
   showCancelSignInAction = false,
   activationUrl,
   browserOpenFailed = false,
@@ -248,7 +233,7 @@ export function AmrAccountControl({
           {signInLabel ?? t('settings.amrSignIn')}
         </button>
       ) : null}
-      {hasError && !hideInlineError ? (
+      {hasError ? (
         <span className="amr-account-control__error" role="alert">
           {loginErrorText}
         </span>
@@ -293,8 +278,6 @@ export function AmrLoginPill({
   revealPendingCancelAction = false,
   showConsoleAction = false,
   iconOnlySignOut = false,
-  hideInlineError = false,
-  onErrorChange,
   onStatusChange,
 }: AmrLoginPillProps) {
   const { t } = useI18n();
@@ -319,23 +302,9 @@ export function AmrLoginPill({
     if (next) {
       setStatus(next);
       onStatusChange?.(next);
-      // Persist the daemon's classified failure across ordinary reads
-      // (mount/focus), so a reload after a failed sign-in keeps the specific
-      // reason instead of resetting to a plain signed-out pill (issue #426).
-      // Assign unconditionally in the terminal signed-out/not-signing-in state
-      // so a later clean read (daemon restart drops the in-memory
-      // lastVelaLoginExit) also CLEARS a previously shown reason. The poll-stop
-      // branch overrides with the definitive outcome text on the same tick.
-      if (!next.loggedIn && !next.loginInFlight) {
-        setErrorMessage(
-          next.lastLoginFailure
-            ? amrLoginReasonText(t, next.lastLoginFailure)
-            : null,
-        );
-      }
     }
     return next;
-  }, [onStatusChange, t]);
+  }, [onStatusChange]);
 
   useEffect(() => {
     if (!skipInitialRefresh) void refresh();
@@ -361,31 +330,7 @@ export function AmrLoginPill({
       setPending(null);
       setCanceledVisible(false);
     }
-    // NOTE: keep this effect's deps to `[initialStatus, stopPolling]` — no `t`.
-    // A per-render `t` identity would re-run `setStatus(initialStatus)` on every
-    // render and clobber a local post-cancel status (loginInFlight:false) back
-    // to the host's still-in-flight snapshot, bouncing the pill to "Signing in…"
-    // (#3158). The classified-reason mapping that needs `t` lives in its own
-    // effect below.
   }, [initialStatus, stopPolling]);
-
-  // The Settings card mounts this pill with `initialStatus` + `skipInitialRefresh`
-  // and refetches on window focus, so a host-pushed signed-out snapshot never
-  // flows through `refresh()`. Mirror refresh()'s terminal mapping here (unless
-  // the pill's own login is mid-flight) so the classified reason surfaces on
-  // that surface after reload/focus too — and clears when the daemon no longer
-  // reports `lastLoginFailure` (restart drops the in-memory exit) (issue #426).
-  // Split off the status-sync effect (and thus off `setStatus`) so re-running on
-  // a fresh `t` only ever calls the idempotent setErrorMessage (#3158).
-  useEffect(() => {
-    if (!initialStatus || initialStatus.loggedIn) return;
-    if (initialStatus.loginInFlight || loginPendingRef.current) return;
-    setErrorMessage(
-      initialStatus.lastLoginFailure
-        ? amrLoginReasonText(t, initialStatus.lastLoginFailure)
-        : null,
-    );
-  }, [initialStatus, t]);
 
   useEffect(() => {
     if (!canceledVisible) return;
@@ -398,12 +343,6 @@ export function AmrLoginPill({
   useEffect(() => {
     onStatusChange?.(status);
   }, [onStatusChange, status]);
-
-  // Lift the resolved reason so a host that hides the inline error (e.g. the
-  // Settings agent card) can render it with room to breathe.
-  useEffect(() => {
-    onErrorChange?.(errorMessage);
-  }, [onErrorChange, errorMessage]);
 
   const startPolling = useCallback((startedAt = Date.now()) => {
     stopPolling();
@@ -437,9 +376,7 @@ export function AmrLoginPill({
         loginStartedAtRef.current = null;
         loginPendingRef.current = false;
         setPending(null);
-        setErrorMessage(
-          amrLoginReasonText(t, amrLoginFailureForOutcome(outcome, next)),
-        );
+        setErrorMessage(t('settings.amrLoginErrorCompact'));
       }
     };
     pollRef.current = window.setInterval(() => {
@@ -539,7 +476,7 @@ export function AmrLoginPill({
         loginStartedAtRef.current = null;
         loginPendingRef.current = false;
         setPending(null);
-        setErrorMessage(amrLoginReasonText(t, amrLoginFailureForSpawn(result)));
+        setErrorMessage(result.error || t('settings.amrLoginErrorCompact'));
         return;
       }
       notifyAmrLoginStatusChanged('login-started');
@@ -666,7 +603,6 @@ export function AmrLoginPill({
         signInLabel={signInLabel}
         showConsoleAction={showConsoleAction}
         iconOnlySignOut={iconOnlySignOut}
-        hideInlineError={hideInlineError}
         signInDisabled={loginInFlight}
         signOutDisabled={logoutInFlight}
         showCancelSignInAction={revealPendingCancelAction && loginInFlight}

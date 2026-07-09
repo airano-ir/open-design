@@ -460,10 +460,7 @@ describe('AmrLoginPill', () => {
       ) {
         return jsonResponse({
           status: 500,
-          body: {
-            error: 'connect ECONNREFUSED amr-api.open-design.ai:443',
-            failure: { code: 'AMR_LOGIN_NETWORK', recovery: 'retry' },
-          },
+          body: { error: 'profile "prod" api URL: is not configured' },
         });
       }
       throw new Error(`unexpected fetch: ${url}`);
@@ -476,10 +473,8 @@ describe('AmrLoginPill', () => {
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeTruthy();
     });
-    // The daemon-classified failure drives a specific reason, not the raw
-    // error string and not the generic "Sign-in failed." (issue #426).
     expect(screen.getByRole('alert').textContent).toBe(
-      'Network problem — couldn’t reach the sign-in service. Check your connection and retry.',
+      'profile "prod" api URL: is not configured',
     );
     expect(screen.queryByText('Sign-in failed.')).toBeNull();
     expect(screen.queryByText('Signing in…')).toBeNull();
@@ -720,8 +715,7 @@ describe('AmrLoginPill', () => {
           (init as RequestInit | undefined)?.method === 'POST',
       ),
     ).toBe(true);
-    // A poll timeout now reads as a specific, actionable reason.
-    expect(screen.getByText('Sign-in timed out. Start sign-in again.')).toBeTruthy();
+    expect(screen.getByText('Sign-in failed.')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Sign in' })).toBeTruthy();
     expect(screen.queryByText('Signing in…')).toBeNull();
   });
@@ -790,93 +784,6 @@ describe('AmrLoginPill', () => {
       expect(screen.getByRole('button', { name: 'Sign in' })).toBeTruthy();
     });
     expect(screen.queryByRole('button', { name: 'Sign out' })).toBeNull();
-  });
-
-  it('clears a previously shown login failure when a later read returns a clean signed-out status', async () => {
-    // The daemon only reports lastLoginFailure while it still holds the
-    // in-memory lastVelaLoginExit; after a restart (or any later clean read)
-    // the field disappears and the pill must drop the stale reason (issue #426).
-    let readCount = 0;
-    globalThis.fetch = vi.fn(async () => {
-      readCount += 1;
-      return jsonResponse({
-        body:
-          readCount === 1
-            ? {
-                loggedIn: false,
-                loginInFlight: false,
-                profile: 'local',
-                user: null,
-                configPath: '/x',
-                lastLoginFailure: { code: 'AMR_LOGIN_NETWORK', recovery: 'retry' },
-              }
-            : {
-                loggedIn: false,
-                loginInFlight: false,
-                profile: 'local',
-                user: null,
-                configPath: '/x',
-              },
-      });
-    }) as typeof fetch;
-
-    const first = renderPill();
-    await waitFor(() => {
-      expect(screen.getByRole('alert').textContent).toBe(
-        'Network problem — couldn’t reach the sign-in service. Check your connection and retry.',
-      );
-    });
-    first.unmount();
-
-    renderPill();
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Sign in' })).toBeTruthy();
-    });
-    expect(screen.queryByRole('alert')).toBeNull();
-  });
-
-  it('surfaces (and later clears) the classified reason from a host-pushed signed-out initialStatus', () => {
-    // The Settings card mounts the pill with `initialStatus` + `skipInitialRefresh`
-    // and refetches on focus, so a signed-out snapshot carrying `lastLoginFailure`
-    // must render the reason through the `initialStatus` effect — not only through
-    // the pill's own `refresh()` — and clear when a later snapshot drops it
-    // (daemon restart loses the in-memory exit) (issue #426).
-    const withFailure: VelaLoginStatus = {
-      loggedIn: false,
-      loginInFlight: false,
-      profile: 'prod',
-      user: null,
-      configPath: '/x',
-      lastLoginFailure: { code: 'AMR_LOGIN_PROXY_BLOCKED', recovery: 'retry' },
-    };
-
-    const { rerender } = render(
-      <I18nProvider initial="en">
-        <AmrLoginPill initialStatus={withFailure} skipInitialRefresh />
-      </I18nProvider>,
-    );
-
-    expect(screen.getByRole('alert').textContent).toBe(
-      'A proxy or VPN blocked sign-in. Turn it off and retry.',
-    );
-
-    rerender(
-      <I18nProvider initial="en">
-        <AmrLoginPill
-          initialStatus={{
-            loggedIn: false,
-            loginInFlight: false,
-            profile: 'prod',
-            user: null,
-            configPath: '/x',
-          }}
-          skipInitialRefresh
-        />
-      </I18nProvider>,
-    );
-
-    expect(screen.queryByRole('alert')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Sign in' })).toBeTruthy();
   });
 
   it('does not silently auto-recover to signed-in after a local logout completes', async () => {

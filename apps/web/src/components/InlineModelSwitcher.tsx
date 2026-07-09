@@ -32,11 +32,6 @@ import {
   type AmrEntryAttribution,
 } from '../analytics/amr-attribution';
 import { amrPlansUrlForProfile } from '../runtime/amr-guidance';
-import {
-  amrLoginFailureForOutcome,
-  amrLoginFailureForSpawn,
-  amrLoginReasonText,
-} from '../runtime/amr-login-failure';
 import { getResolvedDeviceId } from '../analytics/client';
 import { trackExecutionSettingsPopoverClick } from '../analytics/events';
 import {
@@ -182,12 +177,6 @@ export function InlineModelSwitcher({
     useState(false);
   const amrPollRef = useRef<number | null>(null);
   const amrLoginStartedAtRef = useRef<number | null>(null);
-  // A frontend-owned login failure (timeout / spawn-failed / interrupted) that
-  // the daemon never reports back as `lastLoginFailure`. Kept sticky so the
-  // clean-read clear below can't clobber a reason we just set — a timeout, for
-  // example, triggers a cancel whose status refresh returns a clean signed-out
-  // snapshot on the same tick and would otherwise wipe the message (issue #426).
-  const amrLocalFailureRef = useRef(false);
 
   const stopAmrPolling = useCallback(() => {
     if (amrPollRef.current !== null) {
@@ -205,32 +194,16 @@ export function InlineModelSwitcher({
         Date.now() - amrLoginStartedAtRef.current < AMR_LOGIN_STARTUP_SETTLE_MS;
       if (next.loggedIn) {
         amrLoginStartedAtRef.current = null;
-        amrLocalFailureRef.current = false;
         setAmrLoginPending(false);
-        setAmrLoginError(null);
       } else if (next.loginInFlight) {
         setAmrLoginPending(true);
       } else if (!pendingStartup) {
         amrLoginStartedAtRef.current = null;
         setAmrLoginPending(false);
-        // Surface the daemon's persisted classified failure on ordinary reads
-        // (mount/focus) so a reload after a failed sign-in keeps the specific
-        // reason instead of resetting to a plain signed-out entry (issue #426).
-        if (next.lastLoginFailure) {
-          // The daemon owns the reason now; drop the frontend sticky flag so a
-          // later clean read (daemon restart drops the in-memory exit) CLEARS it.
-          amrLocalFailureRef.current = false;
-          setAmrLoginError(amrLoginReasonText(t, next.lastLoginFailure));
-        } else if (!amrLocalFailureRef.current) {
-          // Clean signed-out read with no daemon failure clears a previously
-          // shown reason — unless we just set a frontend-owned failure the
-          // daemon can't know about (e.g. a timeout), which must survive.
-          setAmrLoginError(null);
-        }
       }
     }
     return next;
-  }, [t]);
+  }, []);
 
   const startAmrPolling = useCallback((startedAt = Date.now()) => {
     stopAmrPolling();
@@ -259,11 +232,8 @@ export function InlineModelSwitcher({
           resolveAmrAuthTracking(analytics.track, 'failed', 'login_stopped');
         }
         amrLoginStartedAtRef.current = null;
-        amrLocalFailureRef.current = true;
         setAmrLoginPending(false);
-        setAmrLoginError(
-          amrLoginReasonText(t, amrLoginFailureForOutcome(outcome, next)),
-        );
+        setAmrLoginError(t('settings.amrLoginErrorCompact'));
       }
     };
     amrPollRef.current = window.setInterval(() => {
@@ -276,7 +246,6 @@ export function InlineModelSwitcher({
   ) => {
     const startedAt = Date.now();
     amrLoginStartedAtRef.current = startedAt;
-    amrLocalFailureRef.current = false;
     setAmrLoginError(null);
     setAmrLoginPending(true);
     beginAmrAuthTracking(attribution, startedAt);
@@ -289,9 +258,8 @@ export function InlineModelSwitcher({
     if (!result.ok && !result.alreadyRunning) {
       resolveAmrAuthTracking(analytics.track, 'failed', 'spawn_failed');
       amrLoginStartedAtRef.current = null;
-      amrLocalFailureRef.current = true;
       setAmrLoginPending(false);
-      setAmrLoginError(amrLoginReasonText(t, amrLoginFailureForSpawn(result)));
+      setAmrLoginError(result.error || t('settings.amrLoginErrorCompact'));
       return;
     }
     notifyAmrLoginStatusChanged('login-started');
@@ -392,7 +360,6 @@ export function InlineModelSwitcher({
       if (reason === 'login-started') {
         const startedAt = Date.now();
         amrLoginStartedAtRef.current = startedAt;
-        amrLocalFailureRef.current = false;
         setAmrLoginError(null);
         setAmrLoginPending(true);
         startAmrPolling(startedAt);

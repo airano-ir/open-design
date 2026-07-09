@@ -1716,10 +1716,7 @@
   cursor: default;
   opacity: 0.62;
 }
-/* Only reflow the header pill for an inline error when the reason span is
-   actually rendered. When the host lifts the reason out (`hideInlineError`),
-   the pill keeps its compact, centered Authorize button. */
-.agent-card-amr-auth .amr-account-control--error:has(.amr-account-control__error) {
+.agent-card-amr-auth .amr-account-control--error {
   width: 100%;
   flex-wrap: wrap;
   justify-content: flex-start;
@@ -1735,22 +1732,6 @@
   line-height: 1.25;
   overflow-wrap: anywhere;
   text-align: left;
-}
-/* Classified sign-in failure reason lifted out of the header pill so it reads
-   as a full-width row under the AMR card instead of wrapping next to the
-   Authorize button. Sits between the card header (`.agent-card-main`) and the
-   model config, spanning the whole card width. */
-.agent-card-amr-error {
-  margin: 0 18px 12px;
-  padding: 8px 12px;
-  border: 1px solid color-mix(in srgb, var(--danger-text, #991b1b) 24%, var(--border-soft));
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--danger-text, #991b1b) 8%, var(--bg-panel));
-  color: var(--danger-text, #991b1b);
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.35;
-  overflow-wrap: anywhere;
 }
 /* Device-authorization fallback shown while signing in to AMR. Surfaced from
    vela login's stdout so the user can finish even when the browser did not
