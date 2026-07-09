@@ -39,6 +39,7 @@ import {
 import { readProcessStamp } from "@open-design/platform";
 
 import { createDesktopRuntime, type DesktopRuntime } from "./runtime.js";
+import { setUpDesktopCrashReporter, writeDesktopGpuInfo } from "./crash-diagnostics.js";
 import { attachDesktopProcessErrorFilter } from "./uncaught-exception.js";
 import { createDesktopUpdater, createDesktopUpdaterScheduler, type DesktopUpdaterScheduler } from "./updater.js";
 import {
@@ -677,6 +678,13 @@ export async function runDesktopMain(
     runtimeRoot: namespaceRoot,
   });
   const rendererLogPath = join(dirname(desktopLogPath), "renderer.log");
+
+  // Start local crash-dump collection before the main window (and its renderer)
+  // is created, directing minidumps into the desktop log tree the diagnostics
+  // export bundles, and snapshot GPU info. Together these make a "Save logs…"
+  // bundle enough to root-cause a native renderer crash (e.g. 0x80000003).
+  setUpDesktopCrashReporter(join(dirname(desktopLogPath), "crashes"));
+  void writeDesktopGpuInfo(join(dirname(desktopLogPath), "gpu-info.json"));
 
   let desktop: DesktopRuntime | null = null;
   let disposeMenu: () => void = () => undefined;
