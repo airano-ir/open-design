@@ -4,7 +4,7 @@
  * backdrop, elevation, and pop-in. */
 
 .panel {
-  width: 420px;
+  width: min(384px, calc(100vw - 32px));
   align-items: center;
   text-align: center;
   padding: 32px 28px 18px;
