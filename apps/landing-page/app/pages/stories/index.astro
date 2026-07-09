@@ -44,9 +44,9 @@ const stuartCard = STUART_CARD[locale] ?? STUART_CARD.en!;
 const vp = STORY_VP[locale] ?? STORY_VP.en!;
 
 // Story registry. Add a row when a new `/stories/<slug>` page ships (newest
-// first). `coverPosition` sets the card image's object-position — Stuart's cover
-// is a 1.91:1 share card with the logo + headline on the left, so it anchors
-// left to survive the card's side-crop; ikigai's cover is composed centered.
+// first). Both covers are the 1.91:1 social share cards (logo + headline on the
+// left), so `coverPosition: 'left'` keeps those from being clipped by the card's
+// side-crop and keeps the two cards visually consistent.
 const stories = [
   {
     slug: 'stuart-gardoll',
@@ -59,8 +59,8 @@ const stories = [
   {
     slug: 'ikigai-one',
     company: 'Ikigai One',
-    cover: '/stories/ikigai-one-cover.webp',
-    coverPosition: 'center',
+    cover: '/stories/ikigai-one-og.jpg',
+    coverPosition: 'left',
     title: ikigaiCard.title,
     blurb: ikigaiCard.blurb,
   },
