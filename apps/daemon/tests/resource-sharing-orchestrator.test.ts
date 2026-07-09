@@ -310,7 +310,7 @@ describe('resource-sharing orchestrator', () => {
       expect.objectContaining({ teamId: 'team_1' }),
       'hub-acme',
       undefined,
-      { ref: 'latest' },
+      { ref: 'latest', cache: expect.anything() },
     );
     expect(pushTree).toHaveBeenNthCalledWith(
       2,
@@ -318,7 +318,7 @@ describe('resource-sharing orchestrator', () => {
       expect.objectContaining({ teamId: 'team_1' }),
       'hub-acme',
       undefined,
-      { ref: 'latest' },
+      { ref: 'latest', cache: expect.anything() },
     );
   });
 
@@ -361,7 +361,7 @@ describe('resource-sharing orchestrator', () => {
       expect.objectContaining({ teamId: 'team_1' }),
       'hub-retry',
       undefined,
-      { ref: 'latest' },
+      { ref: 'latest', cache: expect.anything() },
     );
     expect(pushTree).toHaveBeenNthCalledWith(
       2,
@@ -369,7 +369,7 @@ describe('resource-sharing orchestrator', () => {
       expect.objectContaining({ teamId: 'team_1' }),
       'hub-retry',
       undefined,
-      { ref: 'latest' },
+      { ref: 'latest', cache: expect.anything() },
     );
   });
 
@@ -485,7 +485,7 @@ describe('resource-sharing orchestrator', () => {
       expect.objectContaining({ teamId: 'team_1' }),
       'hub-team-1',
       undefined,
-      { ref: 'latest' },
+      { ref: 'latest', cache: expect.anything() },
     );
     expect(pushTree).toHaveBeenNthCalledWith(
       2,
@@ -493,7 +493,7 @@ describe('resource-sharing orchestrator', () => {
       expect.objectContaining({ teamId: 'team_2' }),
       'hub-team-2',
       undefined,
-      { ref: 'latest' },
+      { ref: 'latest', cache: expect.anything() },
     );
   });
 
@@ -531,7 +531,7 @@ describe('resource-sharing orchestrator', () => {
       expect.objectContaining({ teamId: 'team_1' }),
       'hub-single',
       undefined,
-      { ref: 'latest' },
+      { ref: 'latest', cache: expect.anything() },
     );
     expect(pushTree).toHaveBeenNthCalledWith(
       2,
@@ -539,7 +539,7 @@ describe('resource-sharing orchestrator', () => {
       expect.objectContaining({ teamId: 'team_1' }),
       'hub-single',
       undefined,
-      { ref: 'latest' },
+      { ref: 'latest', cache: expect.anything() },
     );
   });
 

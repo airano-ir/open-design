@@ -13,6 +13,7 @@ import {
   readResourceHubPrincipal,
 } from '../integrations/resource-hub.js';
 import { materializeRef, packTree, pushTree } from '../resource-drive.js';
+import { createBlobCache } from '../resource-cache.js';
 import { findSkillById, listSkills } from '../skills.js';
 import {
   ResourceAdapterError,
@@ -79,6 +80,11 @@ export function createSharingOrchestrator(deps: SharingDeps) {
       getInstalledPlugin(deps.db, localId)?.fsPath ?? null,
   });
   const client = createResourceHubClient();
+  // Local content-addressed blob cache: push seeds it, pull reads through it, so
+  // materializing a tree whose blobs are already on disk stays offline.
+  const cache = createBlobCache(
+    path.join(deps.paths.RUNTIME_DATA_DIR, 'resource-cache'),
+  );
   const shareLocks = new Map<string, Promise<void>>();
 
   function principalOrThrow(): ResourceHubPrincipal {
@@ -148,6 +154,7 @@ export function createSharingOrchestrator(deps: SharingDeps) {
         }
         const version = await pushTree(client, principal, hubResourceId, packed, {
           ref: 'latest',
+          cache,
         });
         upsertShared(deps.db, {
           kind,
@@ -251,6 +258,7 @@ export function createSharingOrchestrator(deps: SharingDeps) {
         hubResourceId,
         'latest',
         tempDir,
+        { cache },
       );
       try {
         await fsp.rename(dir, backupDir);

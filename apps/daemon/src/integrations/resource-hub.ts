@@ -356,6 +356,26 @@ export function createResourceHubClient(options: ResourceHubClientOptions = {}) 
       });
     },
 
+    // PUT one blob's bytes straight to a presigned target. No hub round-trip —
+    // exposed so the drive can prepare a whole batch once, then fan out the byte
+    // uploads concurrently before a single batched commit.
+    async uploadBytes(
+      upload: Pick<PreparedUpload, 'url' | 'method'>,
+      bytes: Uint8Array,
+    ): Promise<void> {
+      const response = await fetchImpl(upload.url, {
+        method: upload.method,
+        body: bytes,
+      });
+      if (!response.ok) {
+        throw new ResourceHubError(
+          response.status,
+          'blob_upload_failed',
+          `PUT to object store failed (${response.status})`,
+        );
+      }
+    },
+
     // Push one blob: prepare (skips if the store already has it), PUT the bytes
     // straight to the presigned URL, then commit so the hub verifies + indexes.
     async pushBlob(
@@ -370,19 +390,7 @@ export function createResourceHubClient(options: ResourceHubClientOptions = {}) 
       const upload = prepared.uploads.find(
         (candidate) => candidate.digest === input.digest,
       );
-      if (upload) {
-        const response = await fetchImpl(upload.url, {
-          method: upload.method,
-          body: input.bytes,
-        });
-        if (!response.ok) {
-          throw new ResourceHubError(
-            response.status,
-            'blob_upload_failed',
-            `PUT to object store failed (${response.status})`,
-          );
-        }
-      }
+      if (upload) await this.uploadBytes(upload, input.bytes);
       await this.commitUpload(principal, [descriptor]);
     },
 

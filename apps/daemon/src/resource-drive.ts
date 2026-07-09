@@ -8,6 +8,7 @@ import type {
   ResourceHubPrincipal,
   VersionRecord,
 } from './integrations/resource-hub.js';
+import { type BlobCache, noopBlobCache } from './resource-cache.js';
 
 // Neutral cloud-drive SDK over the resource hub. Kind-agnostic: it moves
 // directory trees to/from the hub as content-addressed manifests + blobs, and
@@ -57,6 +58,40 @@ function byPath(a: { path: string }, b: { path: string }): number {
   return 0;
 }
 
+// Blob byte transfer is the bottleneck for multi-file trees: each PUT/GET is an
+// independent network round-trip to the object store, so they parallelize
+// cleanly. Bound the fan-out so a large tree doesn't open hundreds of sockets
+// at once (git-LFS / rclone use the same bounded-pool shape).
+const DEFAULT_TRANSFER_CONCURRENCY = 8;
+
+export interface TransferOptions {
+  // Max concurrent blob PUT/GET in flight. Defaults to DEFAULT_TRANSFER_CONCURRENCY.
+  concurrency?: number;
+  // Local content-addressed cache; materialize reads through it and push
+  // populates it, so re-pulling a known blob never hits the network.
+  cache?: BlobCache;
+}
+
+// Run `fn` over `items` with at most `limit` invocations in flight. A fixed pool
+// of workers drains a shared cursor — the daemon's house pattern for bounded
+// concurrency (see inline-assets runWithConcurrency).
+async function forEachLimit<T>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<void>,
+): Promise<void> {
+  let next = 0;
+  async function worker(): Promise<void> {
+    while (true) {
+      const idx = next++;
+      if (idx >= items.length) return;
+      await fn(items[idx]!);
+    }
+  }
+  const workers = Math.max(1, Math.min(limit, items.length));
+  await Promise.all(Array.from({ length: workers }, () => worker()));
+}
+
 // Walk a directory into a content-addressed tree. Paths are stored relative to
 // rootDir with forward slashes (canonical). Directories are recorded explicitly
 // so empty dirs survive; symlinks are stored by target without following.
@@ -100,21 +135,53 @@ export async function packTree(rootDir: string): Promise<PackedTree> {
 
 // Push a packed tree as a new version: upload only the blobs the store is
 // missing, then publish. Optionally move a ref (with optimistic concurrency).
+//
+// The store already dedupes globally, so find-missing IS the delta: only blobs
+// absent store-wide travel. Those upload as one batched prepare -> concurrent
+// PUTs -> one batched commit (instead of a prepare/PUT/commit round-trip per
+// blob, serially), the Bazel BatchUpdateBlobs / OCI-parallel-push shape.
 export async function pushTree(
   client: ResourceHubClient,
   principal: ResourceHubPrincipal,
   resourceId: string,
   packed: PackedTree,
-  options: { ref?: string; expectedVersionId?: string | null } = {},
+  options: {
+    ref?: string;
+    expectedVersionId?: string | null;
+  } & TransferOptions = {},
 ): Promise<VersionRecord> {
+  const cache = options.cache ?? noopBlobCache;
+  const concurrency = options.concurrency ?? DEFAULT_TRANSFER_CONCURRENCY;
+
   const missing = await client.findMissingBlobs(principal, [
     ...packed.blobs.keys(),
   ]);
-  for (const digest of missing) {
-    const bytes = packed.blobs.get(digest);
-    if (!bytes) continue;
-    await client.pushBlob(principal, { digest, bytes });
+  const descriptors = missing
+    .map((digest) => {
+      const bytes = packed.blobs.get(digest);
+      return bytes ? { digest, size: bytes.byteLength } : null;
+    })
+    .filter((d): d is { digest: string; size: number } => d !== null);
+
+  if (descriptors.length > 0) {
+    // One prepare for the whole batch: the store re-checks and only signs the
+    // blobs it is still missing (present[] we skip).
+    const prepared = await client.prepareUpload(principal, descriptors);
+    await forEachLimit(prepared.uploads, concurrency, async (upload) => {
+      const bytes = packed.blobs.get(upload.digest);
+      if (!bytes) return;
+      await client.uploadBytes(upload, bytes);
+    });
+    // One commit for the whole batch (the hub HEAD-verifies each object).
+    await client.commitUpload(principal, descriptors);
+    // Seed the local cache with what we just pushed so an immediate
+    // materialize of this tree stays local.
+    await forEachLimit(descriptors, concurrency, async ({ digest }) => {
+      const bytes = packed.blobs.get(digest);
+      if (bytes) await cache.put(digest, bytes);
+    });
   }
+
   return client.publishVersion(principal, resourceId, {
     manifestDigest: packed.manifestDigest,
     entries: packed.entries,
@@ -128,14 +195,24 @@ export async function pushTree(
 // Materialize a manifest's tree into destDir. Pulls only file blobs. Uses a
 // hardened join so a hostile path or symlink target cannot escape destDir
 // (Spec E §2.7 safe landing).
+//
+// Structure (dirs + symlinks) lands first, in path order, so every parent
+// exists before its children. File blobs then fetch concurrently, read through
+// the local cache — a blob already on disk (from a prior pull or the push that
+// created it) never touches the network.
 export async function materializeTree(
   client: ResourceHubClient,
   principal: ResourceHubPrincipal,
   manifestDigest: string,
   destDir: string,
+  options: TransferOptions = {},
 ): Promise<void> {
+  const cache = options.cache ?? noopBlobCache;
+  const concurrency = options.concurrency ?? DEFAULT_TRANSFER_CONCURRENCY;
   const manifest = await client.getManifest(principal, manifestDigest);
   const root = path.resolve(destDir);
+
+  const files: { target: string; digest: string; executable: boolean }[] = [];
   // Sort by path so parent directories are created before their children.
   for (const entry of [...manifest.entries].sort(byPath)) {
     const target = safeJoin(root, entry.path);
@@ -149,14 +226,24 @@ export async function materializeTree(
       );
       await fsp.symlink(entry.symlinkTarget ?? '', target);
     } else if (entry.type === 'file' && entry.blobDigest) {
-      await fsp.mkdir(path.dirname(target), { recursive: true });
-      await fsp.writeFile(
+      files.push({
         target,
-        await client.pullBlob(principal, entry.blobDigest),
-      );
-      if (entry.executable) await fsp.chmod(target, 0o755);
+        digest: entry.blobDigest,
+        executable: entry.executable,
+      });
     }
   }
+
+  await forEachLimit(files, concurrency, async (file) => {
+    let bytes = await cache.get(file.digest);
+    if (!bytes) {
+      bytes = await client.pullBlob(principal, file.digest);
+      await cache.put(file.digest, bytes);
+    }
+    await fsp.mkdir(path.dirname(file.target), { recursive: true });
+    await fsp.writeFile(file.target, bytes);
+    if (file.executable) await fsp.chmod(file.target, 0o755);
+  });
 }
 
 // Resolve a ref to its version's manifest and materialize it. Convenience over
@@ -167,6 +254,7 @@ export async function materializeRef(
   resourceId: string,
   ref: string,
   destDir: string,
+  options: TransferOptions = {},
 ): Promise<VersionRecord> {
   const refRecord = await client.getRef(principal, resourceId, ref);
   const versions = await client.listVersions(principal, resourceId);
@@ -174,7 +262,7 @@ export async function materializeRef(
   if (!version) {
     throw new Error(`ref ${ref} points at unknown version ${refRecord.versionId}`);
   }
-  await materializeTree(client, principal, version.manifestDigest, destDir);
+  await materializeTree(client, principal, version.manifestDigest, destDir, options);
   return version;
 }
 
