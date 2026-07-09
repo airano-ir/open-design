@@ -1398,12 +1398,28 @@ export function registerProjectRoutes(app: Express, ctx: RegisterProjectRoutesDe
       updatedAt: project.updatedAt,
     });
   }
-  function workspaceProjectRowsForIds(projectIds: string[], ctx: WorkspaceProjectContext) {
+  function workspaceProjectRowVisibleForLocations(
+    row: any,
+    locations: Array<{ id: string; path: string; builtIn?: boolean }>,
+  ): boolean {
+    let metadata: unknown;
+    try {
+      metadata = row.metadataJson ? JSON.parse(row.metadataJson) : undefined;
+    } catch {
+      metadata = undefined;
+    }
+    return projectVisibleForLocations({ metadata }, locations);
+  }
+  function workspaceProjectRowsForIds(
+    projectIds: string[],
+    ctx: WorkspaceProjectContext,
+    locations: Array<{ id: string; path: string; builtIn?: boolean }>,
+  ) {
     for (const id of projectIds) {
       const project = getProject(db, id);
-      if (project) ensureWorkspaceProjection(project, ctx, 'personal');
+      if (project && projectVisibleForLocations(project, locations)) ensureWorkspaceProjection(project, ctx, 'personal');
     }
-    return listWorkspaceProjects(db, ctx.workspaceId);
+    return listWorkspaceProjects(db, ctx.workspaceId).filter((row: any) => workspaceProjectRowVisibleForLocations(row, locations));
   }
   async function loadPluginRegistryView() {
     const [skills, designSystems] = await Promise.all([
@@ -1697,7 +1713,8 @@ export function registerProjectRoutes(app: Express, ctx: RegisterProjectRoutesDe
         const body = { projects: [] };
         return res.json(body);
       }
-      for (const project of listProjects(db)) {
+      const locations = await configuredProjectLocations();
+      for (const project of listProjects(db).filter((item: any) => projectVisibleForLocations(item, locations))) {
         ensureWorkspaceProjection(project, ctx, 'personal');
       }
       const view = typeof req.query.view === 'string' ? req.query.view : 'all';
@@ -1706,10 +1723,12 @@ export function registerProjectRoutes(app: Express, ctx: RegisterProjectRoutesDe
       }
       const owner = typeof req.query.owner === 'string' ? req.query.owner : 'all';
       const visibility = typeof req.query.visibility === 'string' ? req.query.visibility : 'all';
-      const rows = listWorkspaceProjects(db, ctx.workspaceId);
+      const rows = listWorkspaceProjects(db, ctx.workspaceId).filter((row: any) => workspaceProjectRowVisibleForLocations(row, locations));
       const needsRemoteTeamProjects =
         view === 'team' ||
         visibility === 'team' ||
+        owner === 'mine' ||
+        owner === 'others' ||
         (view === 'all' && visibility === 'all' && owner === 'all');
       const mergedProjects = [
         ...rows.map((row: any) => normalizeWorkspaceProjectRow(row, ctx)),
@@ -1758,7 +1777,8 @@ export function registerProjectRoutes(app: Express, ctx: RegisterProjectRoutesDe
       const ctx = workspaceProjectContext(req, req.params.workspaceId);
       if (!ctx) return sendMissingWorkspaceContext(res);
       const project = getProject(db, req.params.projectId);
-      if (!project) return sendApiError(res, 404, 'PROJECT_NOT_FOUND', 'not found');
+      const locations = await configuredProjectLocations();
+      if (!project || !projectVisibleForLocations(project, locations)) return sendApiError(res, 404, 'PROJECT_NOT_FOUND', 'not found');
       const visibility = req.body?.visibility;
       if (!validVisibility(visibility)) {
         return sendApiError(res, 400, 'BAD_REQUEST', 'visibility must be personal or team');
@@ -1800,7 +1820,8 @@ export function registerProjectRoutes(app: Express, ctx: RegisterProjectRoutesDe
       if (visibility === 'personal') {
         return sendApiError(res, 403, 'PROJECT_UNSHARE_UNSUPPORTED', 'moving team projects back to personal is not supported yet');
       }
-      const rows = workspaceProjectRowsForIds(projectIds, ctx);
+      const locations = await configuredProjectLocations();
+      const rows = workspaceProjectRowsForIds(projectIds, ctx, locations);
       const summaries = projectIds.map((id: string) => {
         const row = rows.find((item: any) => item.id === id);
         return row ? normalizeWorkspaceProjectRow(row, ctx) : null;
@@ -1837,7 +1858,8 @@ export function registerProjectRoutes(app: Express, ctx: RegisterProjectRoutesDe
       if (!ctx) return sendMissingWorkspaceContext(res);
       const projectIds = Array.isArray(req.body?.projectIds) ? req.body.projectIds.filter((id: unknown) => typeof id === 'string') : [];
       if (projectIds.length === 0) return sendApiError(res, 400, 'BAD_REQUEST', 'projectIds are required');
-      const rows = workspaceProjectRowsForIds(projectIds, ctx);
+      const locations = await configuredProjectLocations();
+      const rows = workspaceProjectRowsForIds(projectIds, ctx, locations);
       const summaries = projectIds.map((id: string) => {
         const row = rows.find((item: any) => item.id === id);
         return row ? normalizeWorkspaceProjectRow(row, ctx) : null;

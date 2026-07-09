@@ -1,5 +1,8 @@
 import express from 'express';
 import type http from 'node:http';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { startServer } from '../../src/server.js';
@@ -117,6 +120,56 @@ describe('workspace project routes', () => {
 
     const stillExists = await fetch(`${baseUrl}/api/projects/${projectId}`);
     expect(stillExists.status).toBe(200);
+  });
+
+  it('does not expose removed-location projects through workspace project routes', async () => {
+    const locationId = `workspace-hidden-location-${Date.now()}`;
+    const projectId = `workspace-hidden-project-${Date.now()}`;
+    const extDir = await mkdtemp(path.join(tmpdir(), 'od-workspace-hidden-'));
+    try {
+      const putLocation = await fetch(`${baseUrl}/api/project-locations`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ locations: [{ id: locationId, name: 'Hidden workspace location', path: extDir }] }),
+      });
+      expect(putLocation.status).toBe(200);
+
+      const createResp = await fetch(`${baseUrl}/api/projects`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          id: projectId,
+          name: 'Hidden workspace project',
+          skillId: null,
+          designSystemId: null,
+          projectLocationId: locationId,
+        }),
+      });
+      expect(createResp.status).toBe(200);
+
+      const removeLocation = await fetch(`${baseUrl}/api/project-locations`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ locations: [] }),
+      });
+      expect(removeLocation.status).toBe(200);
+
+      const listResp = await fetch(`${baseUrl}/api/workspaces/${workspaceId}/projects?view=all`, {
+        headers: headers('member-hidden-location'),
+      });
+      expect(listResp.status).toBe(200);
+      const listBody = await listResp.json() as { projects: Array<any> };
+      expect(listBody.projects.some((item: any) => item.id === projectId)).toBe(false);
+
+      const deleteResp = await fetch(`${baseUrl}/api/workspaces/${workspaceId}/projects/batch-delete`, {
+        method: 'POST',
+        headers: headers('member-hidden-location', { 'x-od-workspace-role': 'admin' }),
+        body: JSON.stringify({ projectIds: [projectId] }),
+      });
+      expect(deleteResp.status).toBe(404);
+    } finally {
+      await rm(extDir, { recursive: true, force: true });
+    }
   });
 
   it('rejects workspace project mutations without workspace identity', async () => {
@@ -430,6 +483,55 @@ describe('workspace project routes', () => {
     }
   });
 
+  it('includes remote team-project catalog entries in owner-scoped lists', async () => {
+    const localProjectId = `workspace-local-owner-${Date.now()}`;
+    const remoteProjectId = `workspace-remote-owner-${Date.now()}`;
+    const teamProjectCatalog = {
+      list: vi.fn(async () => [
+        {
+          id: `catalog-${remoteProjectId}`,
+          workspaceId,
+          projectId: remoteProjectId,
+          resourceId: `project-${remoteProjectId}`,
+          ownerMemberId: 'member-owner',
+          displayName: 'Remote owned project',
+          syncState: 'synced',
+          lastSyncedVersionId: 'version-1',
+          createdAt: new Date(10).toISOString(),
+          updatedAt: new Date(20).toISOString(),
+          access: {
+            canView: true,
+            canComment: true,
+            canEdit: true,
+            frozen: false,
+          },
+        },
+      ]),
+      upsert: vi.fn(),
+    };
+    const app = express();
+    app.use(express.json());
+    registerProjectRoutes(app, workspaceProjectRouteDeps({
+      workspaceId,
+      projectId: localProjectId,
+      dbDeleteProject: vi.fn(),
+      removeProjectDir: vi.fn(),
+      teamProjectCatalog,
+    }));
+    const routeServer = await listen(app);
+    try {
+      const resp = await fetch(`${routeServer.url}/api/workspaces/${workspaceId}/projects?owner=others`, {
+        headers: headers('member-viewer'),
+      });
+      expect(resp.status).toBe(200);
+      const body = await resp.json() as { projects: Array<any> };
+      expect(teamProjectCatalog.list).toHaveBeenCalled();
+      expect(body.projects.some((item: any) => item.id === remoteProjectId)).toBe(true);
+    } finally {
+      await close(routeServer.server);
+    }
+  });
+
   it('fails workspace project listing when the remote team catalog is unavailable', async () => {
     const projectId = `workspace-catalog-fails-${Date.now()}`;
     const teamProjectCatalog = {
@@ -698,7 +800,7 @@ function workspaceProjectRouteDeps({
     },
     ids: { randomId: () => 'id' },
     telemetry: { reportFinalizedMessage: noop },
-    appConfig: { readAppConfig: noop, writeAppConfig: noop },
+    appConfig: { readAppConfig: vi.fn(async () => ({})), writeAppConfig: noop },
     agents: {},
     validation: {
       validateProjectDesignSystemId: async () => ({ ok: true, id: null }),
