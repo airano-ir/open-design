@@ -766,10 +766,6 @@ export async function runDesktopMain(
   async function shutdown(): Promise<void> {
     if (shuttingDown) return;
     shuttingDown = true;
-    // Mark this run's session marker clean so the next launch doesn't report it
-    // as an abnormal exit. Synchronous + best-effort so it lands even if the
-    // rest of shutdown is interrupted.
-    endDesktopSessionCleanly({ stateFilePath: sessionStatePath });
     await options.beforeShutdown?.().catch((error: unknown) => {
       console.error("desktop beforeShutdown failed", error);
     });
@@ -778,6 +774,11 @@ export async function runDesktopMain(
     removeDiagnosticsIpc();
     await ipcServer?.close().catch(() => undefined);
     await desktop?.close().catch(() => undefined);
+    // Mark the session clean only AFTER teardown actually completed, right
+    // before app.quit(). Doing it at the start of shutdown would flag a quit as
+    // clean even if a later await hangs and the process is then force-quit or
+    // OS-killed — which is itself an abnormal exit worth reporting.
+    endDesktopSessionCleanly({ stateFilePath: sessionStatePath });
     app.quit();
   }
 
