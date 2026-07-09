@@ -260,6 +260,20 @@ describe('extractSidecarErrorLines', () => {
     expect(out).not.toContain('DATABASE_URL');
   });
 
+  it('excludes UPPER_CASE=… config assignments even when the key contains a failure word', () => {
+    const log = [
+      'ERROR_REPORT_EMAIL=alice@example.com',
+      'SOME_ERROR_TOKEN=s3cr3tvalue',
+      'DATABASE_URL=postgres://od:pw@db/x',
+      "TypeError: boom",
+    ].join('\n');
+    const out = extractSidecarErrorLines(log);
+    expect(out).toBe('TypeError: boom');
+    expect(out).not.toContain('ERROR_REPORT_EMAIL');
+    expect(out).not.toContain('alice@example.com');
+    expect(out).not.toContain('s3cr3tvalue');
+  });
+
   it('returns an empty string when nothing looks like an error', () => {
     expect(extractSidecarErrorLines('booting\nlistening on 8080\nready')).toBe('');
   });

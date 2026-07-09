@@ -228,10 +228,19 @@ const ERROR_LINE_RE =
 // and connection lines where secrets live, since they don't match an error
 // shape. scrubUserPaths + scrubSecrets still run on what remains as defense in
 // depth (a token could appear inside an error message).
+// An `UPPER_CASE_ENV=value` assignment at line start — the shape of a config /
+// env dump. Excluded even when it matches ERROR_LINE_RE, because a config KEY or
+// value can contain a broad failure substring (`ERROR_REPORT_EMAIL=…`,
+// `SOME_ERROR_TOKEN=…`) and would otherwise re-admit the very secret-bearing
+// lines the whitelist exists to keep out. Real error/stack/exit lines are not
+// `UPPER=…` assignments (`code=1` is lowercase; `TypeError:`/`at …` have no
+// leading `KEY=`).
+const CONFIG_ASSIGNMENT_RE = /^\s*[A-Z][A-Z0-9_]{2,}\s*=/;
+
 export function extractSidecarErrorLines(logText: string): string {
   return logText
     .split(/\r?\n/)
-    .filter((line) => ERROR_LINE_RE.test(line))
+    .filter((line) => ERROR_LINE_RE.test(line) && !CONFIG_ASSIGNMENT_RE.test(line))
     .join("\n");
 }
 
