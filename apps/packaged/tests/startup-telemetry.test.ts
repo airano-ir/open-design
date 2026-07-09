@@ -214,6 +214,16 @@ describe('scrubSecrets', () => {
     expect(scrubSecrets('api_key: "abc def"')).toBe('api_key: <redacted>');
   });
 
+  it('redacts secrets embedded in a serialized object inside an error message', () => {
+    expect(scrubSecrets('error parsing config: {"x-api-key":"secret-value-123"}')).toBe(
+      'error parsing config: <redacted-object>',
+    );
+    expect(scrubSecrets('error parsing config: {"access_token":"tok-123"}')).not.toContain('tok-123');
+    expect(scrubSecrets('boot failed with {"a":{"client_secret":"hunter2"}}')).not.toContain('hunter2');
+    // Log prefixes like [daemon] are left intact.
+    expect(scrubSecrets('[daemon] starting up')).toBe('[daemon] starting up');
+  });
+
   it('leaves ordinary diagnostic text (stack frames, module paths) intact', () => {
     const stack = "TypeError: Cannot read properties of undefined (reading 'port')\n    at resolveListenPort (server.mjs:1201:14)";
     expect(scrubSecrets(stack)).toBe(stack);

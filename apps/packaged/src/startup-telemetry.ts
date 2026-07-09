@@ -184,6 +184,13 @@ export function scrubUserPaths(value: string): string {
 // (denylist, never complete), applied ON TOP of scrubUserPaths.
 export function scrubSecrets(value: string): string {
   return value
+    // Serialized object literals embedded in a message ("error parsing config:
+    // {…}") — a common carrier of config/secret values inside an otherwise-legit
+    // error line, and one the key=value/URL rules below can't reach through JSON
+    // quoting. Redact the whole `{…}` (greedy within a line, so nested objects
+    // go too). `[…]` is deliberately left alone — it's the shape of log prefixes
+    // like `[daemon]`, not where secrets hide.
+    .replace(/\{[^\r\n]*\}/g, "<redacted-object>")
     // Credentials embedded in a URL / connection string: scheme://user:pass@host.
     // The password may itself contain '@' (e.g. `user:p@ss@host`), so match the
     // whole userinfo greedily up to the LAST '@' before the host rather than
