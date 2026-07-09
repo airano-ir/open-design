@@ -421,6 +421,7 @@ export function InlineModelSwitcher({
   const currentModelId =
     currentAgent?.id === 'amr' &&
     configuredModelId &&
+    configuredModelId !== 'default' &&
     !currentAgentModelIds.includes(configuredModelId)
       ? defaultAgentModelId(currentAgent)
       : configuredModelId ?? defaultAgentModelId(currentAgent);

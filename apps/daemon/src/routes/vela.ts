@@ -216,8 +216,7 @@ export function registerVelaRoutes(app: Express, deps: RegisterVelaRoutesDeps): 
       const account = await fetchVelaBillingSummary(probe.launchPath, probe.env);
       if (
         inFlightVelaAccountInvalidations.has(accountCacheKey) &&
-        previousAccount &&
-        previousAccount.plan !== account.plan
+        (!previousAccount || previousAccount.plan !== account.plan)
       ) {
         amrModelLoadingCache.invalidate(probe.cacheKey);
       }

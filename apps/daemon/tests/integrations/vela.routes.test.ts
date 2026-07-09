@@ -399,6 +399,47 @@ describe('GET /api/integrations/vela/wallet', () => {
     expect(afterPlanChange.body.refreshing).toBe(true);
   });
 
+  it('invalidates the AMR model catalog cache on forced status refresh without a prior account snapshot', async () => {
+    process.env.FAKE_VELA_BILLING_TIER = 'pro';
+    process.env.FAKE_VELA_BILLING_BALANCE_USD = '1.00';
+    process.env.FAKE_VELA_MODEL_LIST_JSON = JSON.stringify({
+      source: 'remote',
+      data: [
+        { id: 'public_model_deepseek_v4_flash', enabled: false },
+      ],
+    });
+    seedLogin('local', {
+      controlKey: 'ck-status-refresh-cold-account',
+      runtimeKey: 'rt-status-refresh-cold-account',
+      user: {
+        id: 'status-cold-account-user',
+        email: 'status-cold-account@example.com',
+        plan: 'pro',
+      },
+    });
+
+    const warmed = await waitForAmrModels('remote');
+    expect(warmed.body.models).toEqual([
+      { id: 'deepseek-v4-flash', label: 'deepseek-v4-flash', enabled: false },
+    ]);
+
+    clearAllVelaLiveAccounts();
+    const refreshedStatus = await getJson<{ account?: { plan?: string } }>(
+      `${baseUrl}/api/integrations/vela/status?refresh=1`,
+    );
+    expect(refreshedStatus.status).toBe(200);
+    expect(refreshedStatus.body.account?.plan).toBe('pro');
+
+    const afterRefresh = await getJson<{
+      source: 'preset' | 'remote';
+      refreshing?: boolean;
+      models: Array<{ id: string }>;
+    }>(`${baseUrl}/api/amr/models`);
+    expect(afterRefresh.status).toBe(200);
+    expect(afterRefresh.body.source).toBe('preset');
+    expect(afterRefresh.body.refreshing).toBe(true);
+  });
+
   it('preserves model-cache invalidation when forced status refresh joins an in-flight probe', async () => {
     clearAllVelaLiveAccounts();
     process.env.FAKE_VELA_BILLING_TIER = 'free';
