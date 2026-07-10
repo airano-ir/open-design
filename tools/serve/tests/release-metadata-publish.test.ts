@@ -43,21 +43,7 @@ describe("shared release metadata publisher", () => {
       ] as const) {
         const manifestDir = join(root, channel, "manifests");
         const metadataDir = join(root, channel, "metadata");
-        const whatsNewPath = join(root, channel, "release-notes.md");
         await mkdir(manifestDir, { recursive: true });
-        if (channel === "beta") {
-          await writeFile(
-            whatsNewPath,
-            [
-              "# Faster packaged updates",
-              "",
-              "- Payload updates can apply on startup when allowed.",
-              "- The home screen shows a lightweight What's New card after restart.",
-              "",
-            ].join("\n"),
-            "utf8",
-          );
-        }
         const base = {
           channel,
           enabled: true,
@@ -130,7 +116,6 @@ describe("shared release metadata publisher", () => {
           STATE_SOURCE: "local-tools-serve",
           WIN_X64_RESULT: "success",
           ...(channel === "beta" ? { RELEASE_LATEST_CAS_REQUIRED: "true" } : {}),
-          ...(channel === "beta" ? { RELEASE_WHATS_NEW_PATH: whatsNewPath } : {}),
         };
         await runNode(["--experimental-strip-types", "tools/release/src/storage/publish-metadata.ts"], {
           cwd: repoRoot,
@@ -148,7 +133,6 @@ describe("shared release metadata publisher", () => {
           signed?: boolean;
           stableVersion?: string;
           github?: { commit?: string };
-          whatsNew?: { title?: string; body?: string };
         };
         expect(metadata.channel).toBe(channel);
         expect(metadata.releaseState).toBe("complete");
@@ -161,14 +145,6 @@ describe("shared release metadata publisher", () => {
         expect(metadata.github?.commit).toBe("abc123");
         if (channel === "stable") {
           expect(metadata.stableVersion).toBe("1.2.3");
-        }
-        if (channel === "beta") {
-          expect(metadata.whatsNew).toEqual({
-            title: "Faster packaged updates",
-            body: "Payload updates can apply on startup when allowed. The home screen shows a lightweight What's New card after restart.",
-          });
-        } else {
-          expect(metadata.whatsNew).toBeUndefined();
         }
         expect(server.getObject(`${channel}/latest/metadata.json`)).not.toBeNull();
       }

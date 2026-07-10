@@ -3518,8 +3518,6 @@ export const fa: Dict = {
   'updater.readyGeneric': 'نسخه جدید آماده است. Open Design بسته می‌شود و نصب‌کننده را باز می‌کند.',
   'updater.readyVersion': 'Open Design {version} آماده است. Open Design بسته می‌شود و نصب‌کننده را باز می‌کند.',
   'updater.upToDate': 'شما هم‌اکنون آخرین نسخه را دارید.',
-  'whatsNew.updatedTitle': 'تازه‌های Open Design {version}',
-  'whatsNew.genericBody': 'Open Design با بهبودها و رفع اشکال‌ها به‌روزرسانی شد. برای جزئیات، یادداشت‌های انتشار را ببینید.',
   'whatsNew.cta': 'تازه‌ها را ببینید',
   'whatsNew.dismissAria': 'بستن تازه‌ها',
   'newsletter.label': 'Newsletter (optional)',

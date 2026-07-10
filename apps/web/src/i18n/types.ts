@@ -970,8 +970,6 @@ export interface Dict {
   // Post-update "what's new" card on the home surface. Release-configured
   // copy comes from the release feed; these keys cover the card chrome and
   // the generic fallback when a version ships without highlights.
-  'whatsNew.updatedTitle': string;
-  'whatsNew.genericBody': string;
   'whatsNew.cta': string;
   'whatsNew.dismissAria': string;
 

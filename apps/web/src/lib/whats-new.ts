@@ -1,35 +1,29 @@
 import type { WhatsNewContent, WhatsNewResponse } from '../types';
 
 // Decides when the post-update "what's new" card shows on the home surface.
-// The card shows at most once per version: the last version the user saw is
-// persisted locally, and only a version change after that baseline opens the
-// card. A fresh profile records a baseline silently so new installs are not
-// greeted with an update card for a version they just installed.
+// The card is driven by content identity, not the app version: the hosted
+// highlights document carries an `id`, the client remembers the last id it
+// showed, and the card opens whenever the current id differs from it. Showing
+// on the very first sight (no stored id yet) is intentional — the document is
+// hand-curated by operators, so a fresh profile that has never seen the current
+// highlight should still see it once, then never again until the id changes.
 
-export const WHATS_NEW_LAST_SEEN_STORAGE_KEY = 'od-whats-new-last-seen-version';
+export const WHATS_NEW_LAST_SEEN_STORAGE_KEY = 'od-whats-new-last-seen-id';
 
-const RELEASE_CHANNELS = new Set(['beta', 'prerelease', 'preview', 'stable']);
-const VERSION_FALLBACK = '0.0.0';
-
-export type WhatsNewPromptDecision = 'show' | 'baseline' | 'none';
+export type WhatsNewPromptDecision = 'show' | 'none';
 
 export function resolveWhatsNewPrompt(
-  info: Pick<WhatsNewResponse, 'version' | 'channel' | 'content'>,
-  lastSeenVersion: string | null,
+  info: Pick<WhatsNewResponse, 'id' | 'content'>,
+  lastSeenId: string | null,
 ): WhatsNewPromptDecision {
-  // A daemon that could not resolve its own version must not spend the
-  // one-shot prompt (and must not move the baseline) on '0.0.0'.
-  if (info.version === VERSION_FALLBACK) return 'none';
-  if (lastSeenVersion == null) return 'baseline';
-  if (lastSeenVersion === info.version) return 'none';
-  // Development builds bump versions constantly; only prompt there when the
-  // feed actually carries highlights (e.g. pointing OD_UPDATE_METADATA_URL at
-  // a fixture), so contributors are not nagged on every package.json bump.
-  if (!RELEASE_CHANNELS.has(info.channel) && info.content == null) return 'baseline';
+  // No valid highlight to show (empty, unreachable, or malformed document).
+  if (info.id == null || info.content == null) return 'none';
+  // Already shown for this highlight.
+  if (info.id === lastSeenId) return 'none';
   return 'show';
 }
 
-export function readLastSeenWhatsNewVersion(storage: Pick<Storage, 'getItem'> = window.localStorage): string | null {
+export function readLastSeenWhatsNewId(storage: Pick<Storage, 'getItem'> = window.localStorage): string | null {
   try {
     const value = storage.getItem(WHATS_NEW_LAST_SEEN_STORAGE_KEY);
     return value != null && value.length > 0 ? value : null;
@@ -39,11 +33,11 @@ export function readLastSeenWhatsNewVersion(storage: Pick<Storage, 'getItem'> = 
 }
 
 export function markWhatsNewSeen(
-  version: string,
+  id: string,
   storage: Pick<Storage, 'setItem'> = window.localStorage,
 ): void {
   try {
-    storage.setItem(WHATS_NEW_LAST_SEEN_STORAGE_KEY, version);
+    storage.setItem(WHATS_NEW_LAST_SEEN_STORAGE_KEY, id);
   } catch {
     // Private-mode storage failures just mean the card may show again.
   }

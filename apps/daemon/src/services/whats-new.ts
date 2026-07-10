@@ -1,20 +1,16 @@
 import type { WhatsNewContent, WhatsNewLocaleContent } from '@open-design/contracts';
 
-// Reads the release feed metadata.json for the running channel and surfaces
-// its optional `whatsNew` block. The block is only exposed when the feed
-// describes the version that is currently running — after an update the
-// `<channel>/latest` feed and the app agree, which is exactly the moment the
-// home surface wants to show a one-time highlights card. When the feed is
-// ahead (update not applied yet), behind, unreachable, or has no highlights,
-// the service resolves to `content: null` and the UI falls back to generic
-// copy; this endpoint must never fail the home surface.
-
-export interface WhatsNewReadInput {
-  version: string;
-  channel: string;
-}
+// Fetches the post-update "what's new" highlight from a single hosted document
+// on a dedicated R2 bucket. Operators edit that one file after a release; the
+// document carries an `id` that drives the home card's once-per-highlight
+// behavior (see apps/web/src/lib/whats-new.ts). This service does not know
+// about release channels or the running version — content identity is the
+// only thing that matters. A missing, unreachable, or malformed document
+// resolves to `{ id: null, content: null }`; this endpoint must never fail the
+// home surface.
 
 export interface WhatsNewReadResult {
+  id: string | null;
   content: WhatsNewContent | null;
   fetchedAt: number;
   stale: boolean;
@@ -27,28 +23,24 @@ export interface WhatsNewServiceOptions {
 }
 
 export interface WhatsNewService {
-  readWhatsNew(input: WhatsNewReadInput): Promise<WhatsNewReadResult>;
+  readWhatsNew(): Promise<WhatsNewReadResult>;
 }
 
-const WHATS_NEW_RELEASE_CHANNELS = new Set(['beta', 'prerelease', 'preview', 'stable']);
-const WHATS_NEW_CACHE_TTL_MS = 60 * 60 * 1000;
+/** The dedicated, hardcoded highlights document. Operators update this file. */
+export const DEFAULT_WHATS_NEW_URL = 'https://whatsnew.open-design.ai/whats-new.json';
+
+// Short enough that an operator's edit reaches users on their next Home visit
+// without a long stale window, long enough that Home activations do not hammer
+// the origin.
+const WHATS_NEW_CACHE_TTL_MS = 10 * 60 * 1000;
 const WHATS_NEW_TIMEOUT_MS = 4_000;
 
-export const OPEN_DESIGN_RELEASES_INDEX_URL = 'https://github.com/nexu-io/open-design/releases';
-
-/** Mirrors the `open-design-v<version>` tag naming used by stable releases. */
-export function whatsNewReleaseUrl(input: WhatsNewReadInput): string {
-  if (input.channel === 'stable') {
-    return `${OPEN_DESIGN_RELEASES_INDEX_URL}/tag/open-design-v${encodeURIComponent(input.version)}`;
-  }
-  return OPEN_DESIGN_RELEASES_INDEX_URL;
-}
-
-export function whatsNewMetadataUrl(input: WhatsNewReadInput, env: NodeJS.ProcessEnv): string | null {
-  const override = env.OD_UPDATE_METADATA_URL?.trim();
-  if (override) return override;
-  if (!WHATS_NEW_RELEASE_CHANNELS.has(input.channel)) return null;
-  return `https://releases.open-design.ai/${input.channel}/latest/metadata.json`;
+/**
+ * The document URL. `OD_WHATS_NEW_URL` overrides it for local fixtures and
+ * tests (e.g. a tools-serve endpoint), otherwise the dedicated R2 object.
+ */
+export function whatsNewSourceUrl(env: NodeJS.ProcessEnv): string {
+  return env.OD_WHATS_NEW_URL?.trim() || DEFAULT_WHATS_NEW_URL;
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -87,31 +79,30 @@ function parseLocaleOverrides(value: unknown): Record<string, WhatsNewLocaleCont
 }
 
 /**
- * Parses the `whatsNew` block out of a release feed metadata payload,
- * requiring the feed to describe `input.version` (either the exact
- * releaseVersion or its stable base version). Any malformed block resolves to
- * null rather than propagating a shape error into the UI.
+ * Parses the hosted highlights document. A valid highlight needs a non-empty
+ * `id` (the once-per-highlight key) plus `title` and `body`. Anything missing
+ * or malformed resolves to `{ id: null, content: null }` rather than
+ * propagating a shape error into the UI.
  */
-export function parseWhatsNewFromMetadata(payload: unknown, input: WhatsNewReadInput): WhatsNewContent | null {
-  if (!isObject(payload)) return null;
-  const feedVersion = readNonEmptyString(payload.releaseVersion) ?? readNonEmptyString(payload.version);
-  const feedBaseVersion = readNonEmptyString(payload.baseVersion);
-  if (feedVersion !== input.version && feedBaseVersion !== input.version) return null;
+export function parseWhatsNewDocument(payload: unknown): { id: string | null; content: WhatsNewContent | null } {
+  if (!isObject(payload)) return { id: null, content: null };
+  const id = readNonEmptyString(payload.id);
+  const title = readNonEmptyString(payload.title);
+  const body = readNonEmptyString(payload.body);
+  if (id == null || title == null || body == null) return { id: null, content: null };
 
-  if (!isObject(payload.whatsNew)) return null;
-  const title = readNonEmptyString(payload.whatsNew.title);
-  const body = readNonEmptyString(payload.whatsNew.body);
-  if (title == null || body == null) return null;
-
-  const imageUrl = readHttpsUrl(payload.whatsNew.imageUrl);
-  const linkUrl = readHttpsUrl(payload.whatsNew.linkUrl);
-  const locales = parseLocaleOverrides(payload.whatsNew.locales);
+  const imageUrl = readHttpsUrl(payload.imageUrl);
+  const linkUrl = readHttpsUrl(payload.linkUrl);
+  const locales = parseLocaleOverrides(payload.locales);
   return {
-    title,
-    body,
-    ...(imageUrl != null ? { imageUrl } : {}),
-    ...(linkUrl != null ? { linkUrl } : {}),
-    ...(locales != null ? { locales } : {}),
+    id,
+    content: {
+      title,
+      body,
+      ...(imageUrl != null ? { imageUrl } : {}),
+      ...(linkUrl != null ? { linkUrl } : {}),
+      ...(locales != null ? { locales } : {}),
+    },
   };
 }
 
@@ -123,13 +114,9 @@ export function createWhatsNewService({
   let cache: { key: string; result: WhatsNewReadResult } | null = null;
   let inflight: Promise<WhatsNewReadResult> | null = null;
 
-  async function readWhatsNew(input: WhatsNewReadInput): Promise<WhatsNewReadResult> {
-    const metadataUrl = whatsNewMetadataUrl(input, env);
-    if (metadataUrl == null) {
-      return { content: null, fetchedAt: now(), stale: false };
-    }
-
-    const cacheKey = `${metadataUrl}::${input.version}`;
+  async function readWhatsNew(): Promise<WhatsNewReadResult> {
+    const sourceUrl = whatsNewSourceUrl(env);
+    const cacheKey = sourceUrl;
     const currentTime = now();
     if (
       cache?.key === cacheKey &&
@@ -143,16 +130,18 @@ export function createWhatsNewService({
       const ctrl = new AbortController();
       const timeout = setTimeout(() => ctrl.abort(), WHATS_NEW_TIMEOUT_MS);
       try {
-        const response = await fetchImpl(metadataUrl, {
+        const response = await fetchImpl(sourceUrl, {
           headers: { accept: 'application/json' },
           signal: ctrl.signal,
         });
         if (!response.ok) {
-          throw new Error(`release feed metadata request failed with HTTP ${response.status}`);
+          throw new Error(`whats-new document request failed with HTTP ${response.status}`);
         }
         const payload = (await response.json()) as unknown;
+        const parsed = parseWhatsNewDocument(payload);
         const result: WhatsNewReadResult = {
-          content: parseWhatsNewFromMetadata(payload, input),
+          id: parsed.id,
+          content: parsed.content,
           fetchedAt: now(),
           stale: false,
         };
@@ -160,8 +149,8 @@ export function createWhatsNewService({
         return result;
       } catch {
         if (cache?.key === cacheKey) return { ...cache.result, stale: true };
-        // The card is best-effort chrome; a broken feed must not break home.
-        return { content: null, fetchedAt: now(), stale: true };
+        // The card is best-effort chrome; a broken document must not break home.
+        return { id: null, content: null, fetchedAt: now(), stale: true };
       } finally {
         clearTimeout(timeout);
         inflight = null;

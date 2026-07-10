@@ -1241,14 +1241,13 @@ export async function fetchWhatsNew(): Promise<WhatsNewResponse | null> {
     const resp = await fetch('/api/whats-new');
     if (!resp.ok) return null;
     const json = (await resp.json()) as Partial<WhatsNewResponse>;
-    if (typeof json.version !== 'string' || typeof json.channel !== 'string' || typeof json.releaseUrl !== 'string') {
+    if (typeof json.version !== 'string') {
       return null;
     }
     return {
       version: json.version,
-      channel: json.channel,
+      id: typeof json.id === 'string' ? json.id : null,
       content: json.content ?? null,
-      releaseUrl: json.releaseUrl,
     };
   } catch {
     return null;

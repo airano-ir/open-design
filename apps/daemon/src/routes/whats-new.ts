@@ -1,7 +1,7 @@
 import type { Express } from 'express';
 import type { WhatsNewResponse } from '@open-design/contracts';
 import { readCurrentAppVersionInfo } from '../app-version.js';
-import { whatsNewReleaseUrl, type WhatsNewService } from '../services/whats-new.js';
+import { type WhatsNewService } from '../services/whats-new.js';
 
 export interface RegisterWhatsNewRoutesDeps {
   whatsNew: WhatsNewService;
@@ -12,13 +12,11 @@ export function registerWhatsNewRoutes(app: Express, ctx: RegisterWhatsNewRoutes
 
   app.get('/api/whats-new', async (_req, res) => {
     const versionInfo = await readCurrentAppVersionInfo();
-    const input = { version: versionInfo.version, channel: versionInfo.channel };
-    const result = await whatsNew.readWhatsNew(input);
+    const result = await whatsNew.readWhatsNew();
     const payload: WhatsNewResponse = {
-      version: input.version,
-      channel: input.channel,
+      version: versionInfo.version,
+      id: result.id,
       content: result.content,
-      releaseUrl: whatsNewReleaseUrl(input),
     };
     res.json(payload);
   });

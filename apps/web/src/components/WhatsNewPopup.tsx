@@ -9,18 +9,21 @@ import { fetchWhatsNew, openExternalUrl } from '../providers/registry';
 import {
   localizedWhatsNewContent,
   markWhatsNewSeen,
-  readLastSeenWhatsNewVersion,
+  readLastSeenWhatsNewId,
   resolveWhatsNewPrompt,
 } from '../lib/whats-new';
 import { useAnalytics } from '../analytics/provider';
 import { trackWhatsNewPopupClick, trackWhatsNewPopupSurfaceView } from '../analytics/events';
 import styles from './WhatsNewPopup.module.css';
 
-// Post-update highlights card, shown once per version on the home surface
+// Post-update highlights card, shown once per highlight on the home surface
 // after the app comes back on a new version (desktop update or web reload).
-// Copy/image/link come from the release feed's optional `whatsNew` block via
-// /api/whats-new; without one the card falls back to generic i18n copy that
-// points at the release notes.
+// Copy/image/link come from a hand-curated highlights document via
+// /api/whats-new; the card shows only when that document has content, and at
+// most once per its `id` (see ../lib/whats-new).
+
+// Fallback for the CTA when the highlight document omits an explicit link.
+const RELEASES_INDEX_URL = 'https://github.com/nexu-io/open-design/releases';
 
 const cardIn: Variants = {
   hidden: { opacity: 0, scale: 0.96, y: 12 },
@@ -39,12 +42,14 @@ const cardIn: Variants = {
 };
 
 type CardModel = {
-  version: string;
+  /** Highlight identity — recorded as "seen" so the card shows once per id. */
+  id: string;
+  /** Running app version, for analytics only. */
+  appVersion: string;
   title: string;
   body: string;
   imageUrl: string | null;
   linkUrl: string;
-  hasReleaseNotes: boolean;
 };
 
 // `active` reports whether Home is the active entry view. EntryShell keeps
@@ -71,32 +76,17 @@ export function WhatsNewPopup({ active }: { active: boolean }) {
       // and the surviving one records the decision.
       if (cancelled || info == null) return;
       decisionMadeRef.current = true;
-      const decision = resolveWhatsNewPrompt(info, readLastSeenWhatsNewVersion());
-      if (decision === 'baseline') {
-        markWhatsNewSeen(info.version);
-        return;
-      }
-      if (decision !== 'show') return;
-      if (info.content != null) {
-        const localized = localizedWhatsNewContent(info.content, locale);
-        setCard({
-          version: info.version,
-          title: localized.title,
-          body: localized.body,
-          imageUrl: info.content.imageUrl ?? null,
-          linkUrl: localized.linkUrl ?? info.releaseUrl,
-          hasReleaseNotes: true,
-        });
-      } else {
-        setCard({
-          version: info.version,
-          title: t('whatsNew.updatedTitle', { version: info.version }),
-          body: t('whatsNew.genericBody'),
-          imageUrl: null,
-          linkUrl: info.releaseUrl,
-          hasReleaseNotes: false,
-        });
-      }
+      const decision = resolveWhatsNewPrompt(info, readLastSeenWhatsNewId());
+      if (decision !== 'show' || info.id == null || info.content == null) return;
+      const localized = localizedWhatsNewContent(info.content, locale);
+      setCard({
+        id: info.id,
+        appVersion: info.version,
+        title: localized.title,
+        body: localized.body,
+        imageUrl: info.content.imageUrl ?? null,
+        linkUrl: localized.linkUrl ?? RELEASES_INDEX_URL,
+      });
     });
     return () => {
       cancelled = true;
@@ -112,27 +102,27 @@ export function WhatsNewPopup({ active }: { active: boolean }) {
     trackWhatsNewPopupSurfaceView(analytics.track, {
       page_name: 'home',
       area: 'whats_new_popup',
-      app_version: card.version,
-      has_release_notes: card.hasReleaseNotes,
+      app_version: card.appVersion,
+      has_release_notes: true,
     });
   }, [active, analytics.track, card]);
 
   const dismiss = useCallback(() => {
     if (card == null) return;
-    markWhatsNewSeen(card.version);
+    markWhatsNewSeen(card.id);
     trackWhatsNewPopupClick(analytics.track, {
       page_name: 'home',
       area: 'whats_new_popup',
       element: 'dismiss',
       action: 'dismiss',
-      app_version: card.version,
+      app_version: card.appVersion,
     });
     setCard(null);
   }, [analytics.track, card]);
 
-  // Escape hides the card without recording the version as seen and without
+  // Escape hides the card without recording the highlight as seen and without
   // the dismiss analytics event: the card is a non-modal toast, so a stray
-  // Escape aimed at other UI must not permanently spend the once-per-version
+  // Escape aimed at other UI must not permanently spend the once-per-highlight
   // card. Mark-seen stays reserved for the explicit ✕ button and the CTA.
   useEffect(() => {
     if (!active || card == null) return;
@@ -146,13 +136,13 @@ export function WhatsNewPopup({ active }: { active: boolean }) {
 
   const openLink = useCallback(() => {
     if (card == null) return;
-    markWhatsNewSeen(card.version);
+    markWhatsNewSeen(card.id);
     trackWhatsNewPopupClick(analytics.track, {
       page_name: 'home',
       area: 'whats_new_popup',
       element: 'see_whats_new',
       action: 'open_link',
-      app_version: card.version,
+      app_version: card.appVersion,
     });
     void openExternalUrl(card.linkUrl);
     setCard(null);

@@ -4,7 +4,7 @@ import {
   WHATS_NEW_LAST_SEEN_STORAGE_KEY,
   localizedWhatsNewContent,
   markWhatsNewSeen,
-  readLastSeenWhatsNewVersion,
+  readLastSeenWhatsNewId,
   resolveWhatsNewPrompt,
 } from '../../src/lib/whats-new';
 import type { WhatsNewContent } from '../../src/types';
@@ -18,31 +18,24 @@ const CONTENT: WhatsNewContent = {
   },
 };
 
-function info(overrides: Partial<{ version: string; channel: string; content: WhatsNewContent | null }> = {}) {
-  return { version: '0.13.0', channel: 'stable', content: CONTENT, ...overrides };
+function info(overrides: Partial<{ id: string | null; content: WhatsNewContent | null }> = {}) {
+  return { id: '0.13.0', content: CONTENT, ...overrides };
 }
 
 describe('resolveWhatsNewPrompt', () => {
-  it('records a silent baseline on a fresh profile instead of prompting', () => {
-    expect(resolveWhatsNewPrompt(info(), null)).toBe('baseline');
+  it('shows on a fresh profile (no stored id yet) — the highlight is hand-curated', () => {
+    expect(resolveWhatsNewPrompt(info(), null)).toBe('show');
   });
 
-  it('shows once after a version change and stays quiet on the same version', () => {
+  it('shows when the highlight id changed and stays quiet on the same id', () => {
     expect(resolveWhatsNewPrompt(info(), '0.12.1')).toBe('show');
     expect(resolveWhatsNewPrompt(info(), '0.13.0')).toBe('none');
   });
 
-  it('shows the generic fallback on release channels even without feed content', () => {
-    expect(resolveWhatsNewPrompt(info({ content: null }), '0.12.1')).toBe('show');
-  });
-
-  it('never spends the prompt on the daemon version fallback 0.0.0', () => {
-    expect(resolveWhatsNewPrompt(info({ version: '0.0.0' }), '0.12.1')).toBe('none');
-  });
-
-  it('re-baselines development builds silently unless the feed carries highlights', () => {
-    expect(resolveWhatsNewPrompt(info({ channel: 'development', content: null }), '0.12.1')).toBe('baseline');
-    expect(resolveWhatsNewPrompt(info({ channel: 'development' }), '0.12.1')).toBe('show');
+  it('shows nothing when there is no highlight to show', () => {
+    expect(resolveWhatsNewPrompt(info({ id: null, content: null }), '0.12.1')).toBe('none');
+    expect(resolveWhatsNewPrompt(info({ content: null }), '0.12.1')).toBe('none');
+    expect(resolveWhatsNewPrompt(info({ id: null }), null)).toBe('none');
   });
 });
 
@@ -53,16 +46,16 @@ describe('last-seen storage helpers', () => {
       getItem: (key: string) => store.get(key) ?? null,
       setItem: (key: string, value: string) => void store.set(key, value),
     };
-    expect(readLastSeenWhatsNewVersion(storage)).toBeNull();
+    expect(readLastSeenWhatsNewId(storage)).toBeNull();
     markWhatsNewSeen('0.13.0', storage);
     expect(store.get(WHATS_NEW_LAST_SEEN_STORAGE_KEY)).toBe('0.13.0');
-    expect(readLastSeenWhatsNewVersion(storage)).toBe('0.13.0');
+    expect(readLastSeenWhatsNewId(storage)).toBe('0.13.0');
 
     const throwing = {
       getItem: () => { throw new Error('denied'); },
       setItem: () => { throw new Error('denied'); },
     };
-    expect(readLastSeenWhatsNewVersion(throwing)).toBeNull();
+    expect(readLastSeenWhatsNewId(throwing)).toBeNull();
     expect(() => markWhatsNewSeen('0.13.0', throwing)).not.toThrow();
   });
 });

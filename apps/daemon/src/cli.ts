@@ -8063,14 +8063,14 @@ async function runVersion(args) {
 }
 
 // `od whats-new` — CLI mirror of the home-surface post-update highlights
-// card. Prints the release-configured "what's new" copy for the running
-// version (or a generic pointer at the release notes when none is
-// configured), from the same /api/whats-new endpoint the web UI reads.
+// card. Prints the current hand-curated "what's new" highlight (or a note
+// when there is none right now), from the same /api/whats-new endpoint the
+// web UI reads.
 async function runWhatsNew(args) {
   const flags = parseFlags(args, { string: LIBRARY_STRING_FLAGS, boolean: LIBRARY_BOOLEAN_FLAGS });
   if (flags.help || flags.h) {
     console.log(`Usage:
-  od whats-new [--json]   Print the release highlights for the running version.`);
+  od whats-new [--json]   Print the current release highlight, if any.`);
     process.exit(0);
   }
   const base = (await libraryDaemonUrl(flags)).replace(/\/$/, '');
@@ -8086,13 +8086,12 @@ async function runWhatsNew(args) {
   if (!resp.ok) return structuredHttpFailure(resp);
   const data = await resp.json();
   if (flags.json) return process.stdout.write(JSON.stringify(data, null, 2) + '\n');
-  console.log(`Open Design ${data?.version ?? 'unknown'} (${data?.channel ?? 'unknown'} channel)`);
+  console.log(`Open Design ${data?.version ?? 'unknown'}`);
   if (data?.content != null) {
     console.log(`\n${data.content.title}\n${data.content.body}`);
-    console.log(`\nDetails: ${data.content.linkUrl ?? data.releaseUrl}`);
+    if (data.content.linkUrl) console.log(`\nDetails: ${data.content.linkUrl}`);
   } else {
-    console.log(`\nNo release highlights configured for this version.`);
-    console.log(`Release notes: ${data?.releaseUrl ?? ''}`);
+    console.log(`\nNo release highlights right now.`);
   }
 }
 

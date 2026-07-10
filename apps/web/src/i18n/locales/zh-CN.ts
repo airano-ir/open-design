@@ -3875,8 +3875,6 @@ export const zhCN: Dict = {
     "Open Design {version} 已就绪。Open Design 会关闭并打开安装器。",
   "updater.upToDate": "您已经是最新版本啦",
 
-  "whatsNew.updatedTitle": "Open Design {version} 更新亮点",
-  "whatsNew.genericBody": "Open Design 已更新，带来多项改进与修复。查看发布说明了解详情。",
   "whatsNew.cta": "看看有什么新功能",
   "whatsNew.dismissAria": "关闭更新亮点",
 

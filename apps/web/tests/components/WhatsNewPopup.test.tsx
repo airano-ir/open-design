@@ -32,8 +32,7 @@ const mockedFetchWhatsNew = fetchWhatsNew as unknown as ReturnType<typeof vi.fn>
 
 const SHOW_PAYLOAD: WhatsNewResponse = {
   version: '0.12.1',
-  channel: 'stable',
-  releaseUrl: 'https://github.com/nexu-io/open-design/releases',
+  id: '0.12.1',
   content: {
     title: 'Design system sync',
     body: 'Import, edit and sync design systems.',
@@ -57,7 +56,7 @@ afterEach(() => {
 });
 
 beforeEach(() => {
-  // A version change the user has not seen yet → decision resolves to "show".
+  // A highlight id the user has not seen yet → decision resolves to "show".
   window.localStorage.setItem(WHATS_NEW_LAST_SEEN_STORAGE_KEY, '0.11.0');
 });
 

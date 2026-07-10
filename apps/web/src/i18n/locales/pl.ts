@@ -3590,8 +3590,6 @@ export const pl: Dict = {
   'updater.readyGeneric': 'Nowa wersja jest gotowa. Open Design zamknie się i otworzy instalator.',
   'updater.readyVersion': 'Open Design {version} jest gotowy. Open Design zamknie się i otworzy instalator.',
   'updater.upToDate': 'Masz już najnowszą wersję.',
-  'whatsNew.updatedTitle': 'Nowości w Open Design {version}',
-  'whatsNew.genericBody': 'Open Design został zaktualizowany o ulepszenia i poprawki. Szczegóły znajdziesz w informacjach o wydaniu.',
   'whatsNew.cta': 'Zobacz nowości',
   'whatsNew.dismissAria': 'Zamknij nowości',
   'newsletter.label': 'Newsletter (opcjonalnie)',

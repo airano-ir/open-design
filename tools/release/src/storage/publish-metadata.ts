@@ -87,138 +87,6 @@ const targetDefs: TargetDef[] = [
   { enableEnv: "ENABLE_LINUX_X64", label: "Linux x64", legacyKey: "linux", resultEnv: "LINUX_X64_RESULT", target: "linux_x64" },
 ];
 
-// Optional per-release "what's new" highlights forwarded into metadata.json so
-// the packaged app can show a post-update card. Content is keyed by the stable
-// base version at tools/release/whats-new/<base>.md, with the legacy JSON
-// shape still accepted for fixtures/manual overrides. A missing file is the
-// normal quiet case; a present-but-malformed file fails the publish loudly so
-// broken highlights never ship silently.
-// Publish-time mirror of the daemon's readHttpsUrl (apps/daemon/src/services/
-// whats-new.ts): the daemon trims, runs new URL(...), and requires https:,
-// silently dropping anything that fails. A value the daemon would drop must
-// therefore fail here loudly, not just carry an "https://" prefix.
-function assertHttpsUrl(value: unknown, label: string, path: string): void {
-  const message = `whats-new ${label} must be an HTTPS URL: ${path}`;
-  if (typeof value !== "string") throw new Error(message);
-  let parsed: URL;
-  try {
-    parsed = new URL(value.trim());
-  } catch {
-    throw new Error(message);
-  }
-  if (parsed.protocol !== "https:") throw new Error(message);
-}
-
-function findWhatsNewPath(baseVersion: string): string | null {
-  const override = optional("RELEASE_WHATS_NEW_PATH");
-  if (override.length > 0) return override;
-  for (const candidate of [
-    join(process.cwd(), "tools", "release", "whats-new", `${baseVersion}.md`),
-    join(process.cwd(), "tools", "release", "whats-new", `${baseVersion}.json`),
-  ]) {
-    if (existsSync(candidate)) return candidate;
-  }
-  return null;
-}
-
-function stripMarkdownInline(value: string): string {
-  return value
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-    .replace(/[`*_~]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function markdownHeadingText(line: string): string | null {
-  const match = /^#{1,6}\s+(.+?)\s*#*\s*$/.exec(line.trim());
-  return match?.[1] == null ? null : stripMarkdownInline(match[1]);
-}
-
-function summarizeMarkdownBody(lines: string[], titleLineIndex: number): string {
-  const bodyLines: string[] = [];
-  let started = false;
-  for (const line of lines.slice(titleLineIndex + 1)) {
-    const trimmed = line.trim();
-    if (trimmed.length === 0) {
-      if (started) break;
-      continue;
-    }
-    if (started && /^#{1,6}\s+/.test(trimmed)) break;
-    const withoutListMarker = trimmed.replace(/^[-*+]\s+/, "").replace(/^\d+\.\s+/, "");
-    bodyLines.push(stripMarkdownInline(withoutListMarker));
-    started = true;
-    if (bodyLines.length >= 3) break;
-  }
-  return bodyLines.join(" ").trim();
-}
-
-function parseMarkdownWhatsNew(path: string): Record<string, unknown> {
-  const raw = readFileSync(path, "utf8").replace(/^\uFEFF/u, "");
-  const lines = raw.replace(/\r\n?/g, "\n").split("\n");
-  const titleLineIndex = lines.findIndex((line) => line.trim().length > 0);
-  if (titleLineIndex < 0) {
-    throw new Error(`whats-new release note is empty: ${path}`);
-  }
-  const firstLine = lines[titleLineIndex] ?? "";
-  const title = markdownHeadingText(firstLine) ?? stripMarkdownInline(firstLine);
-  const body = summarizeMarkdownBody(lines, titleLineIndex) || title;
-  if (title.length === 0 || body.length === 0) {
-    throw new Error(`whats-new release note requires a title and body: ${path}`);
-  }
-  return { title, body };
-}
-
-function parseJsonWhatsNew(path: string): Record<string, unknown> {
-  const parsed = JSON.parse(readFileSync(path, "utf8")) as unknown;
-
-  if (typeof parsed !== "object" || parsed == null || Array.isArray(parsed)) {
-    throw new Error(`whats-new file must be a JSON object: ${path}`);
-  }
-  const block = parsed as Record<string, unknown>;
-  for (const field of ["title", "body"] as const) {
-    if (typeof block[field] !== "string" || (block[field] as string).trim().length === 0) {
-      throw new Error(`whats-new file requires a non-empty string "${field}": ${path}`);
-    }
-  }
-  for (const field of ["imageUrl", "linkUrl"] as const) {
-    if (block[field] != null) assertHttpsUrl(block[field], `"${field}"`, path);
-  }
-  // Locale overrides ship into metadata.json for the daemon's
-  // parseLocaleOverrides, which silently drops malformed values — so a bad
-  // entry must fail here, at publish time, where the author can fix it.
-  if (block.locales != null) {
-    if (typeof block.locales !== "object" || Array.isArray(block.locales)) {
-      throw new Error(`whats-new "locales" must be a JSON object: ${path}`);
-    }
-    for (const [locale, entry] of Object.entries(block.locales as Record<string, unknown>)) {
-      if (typeof entry !== "object" || entry == null || Array.isArray(entry)) {
-        throw new Error(`whats-new locale "${locale}" must be a JSON object: ${path}`);
-      }
-      const override = entry as Record<string, unknown>;
-      for (const field of ["title", "body"] as const) {
-        if (override[field] != null && (typeof override[field] !== "string" || (override[field] as string).trim().length === 0)) {
-          throw new Error(`whats-new locale "${locale}" requires a non-empty string "${field}": ${path}`);
-        }
-      }
-      if (override.linkUrl != null) {
-        assertHttpsUrl(override.linkUrl, `locale "${locale}" "linkUrl"`, path);
-      }
-    }
-  }
-  return block;
-}
-
-function readWhatsNewBlock(baseVersion: string): Record<string, unknown> | null {
-  const path = findWhatsNewPath(baseVersion);
-  if (path == null || !existsSync(path)) return null;
-
-  const block = path.endsWith(".json")
-    ? parseJsonWhatsNew(path)
-    : parseMarkdownWhatsNew(path);
-  console.log(`including whats-new highlights from ${path}`);
-  return block;
-}
-
 function releaseMetadataFields(): Record<string, unknown> {
   const fields = releaseMetadataVersionFields(releaseChannel, releaseVersion);
   const baseVersion = typeof fields.baseVersion === "string" ? fields.baseVersion : "";
@@ -427,14 +295,8 @@ const versionPrefix = optional("RELEASE_VERSION_PREFIX", `${releaseChannel}/vers
 
 const latestMetadataUpdated = releaseState === "complete";
 const releaseFields = releaseMetadataFields();
-const whatsNew = readWhatsNewBlock(
-  typeof releaseFields.baseVersion === "string" && releaseFields.baseVersion.length > 0
-    ? releaseFields.baseVersion
-    : releaseVersion,
-);
 const metadata = {
   ...releaseFields,
-  ...(whatsNew != null ? { whatsNew } : {}),
   channel: releaseChannel,
   expectedPlatforms: expectedTargets,
   expectedTargets,

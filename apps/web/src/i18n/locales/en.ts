@@ -3666,8 +3666,6 @@ export const en: Dict = {
   'updater.readyGeneric': 'A new version is ready. Open Design will close and open the installer.',
   'updater.readyVersion': 'Open Design {version} is ready. Open Design will close and open the installer.',
   'updater.upToDate': 'You\'re already on the latest version.',
-  'whatsNew.updatedTitle': 'What\'s new in Open Design {version}',
-  'whatsNew.genericBody': 'Open Design has been updated with improvements and fixes. See the release notes for the details.',
   'whatsNew.cta': 'See what\'s new',
   'whatsNew.dismissAria': 'Dismiss what\'s new',
   'newsletter.label': 'Newsletter (optional)',
