@@ -126,7 +126,14 @@ describe('collab sync routes', () => {
     runtime.scheduler.notifyChanged(projectId, 'save');
     runtime.scheduler.runBoundary(projectId);
 
-    for (let i = 0; i < 40 && publish.mock.calls.length < 2; i += 1) {
+    for (
+      let i = 0;
+      i < 40 &&
+      (publish.mock.calls.length < 2 ||
+        runtime.publishedVersion(projectId, workspaceA) === null ||
+        runtime.publishedVersion(projectId, workspaceB) === null);
+      i += 1
+    ) {
       await new Promise((resolve) => setTimeout(resolve, 10));
     }
     expect((publish.mock.calls as unknown as Array<[Record<string, unknown>]>).map((call) => call[0])).toEqual(
@@ -135,8 +142,73 @@ describe('collab sync routes', () => {
         expect.objectContaining({ projectId, reason: 'save', principal: workspaceB }),
       ]),
     );
+    expect(onPublished.mock.calls.map((call) => call[0]?.principal)).toEqual(
+      expect.arrayContaining([workspaceA, workspaceB]),
+    );
     expect(runtime.publishedVersion(projectId, workspaceA)).toBe(11);
     expect(runtime.publishedVersion(projectId, workspaceB)).toBe(22);
+  });
+
+  it('reports ordinary publish failures to every workspace sharing the same project', async () => {
+    let failPublish = false;
+    const onError = vi.fn();
+    const publish = vi.fn(async (input: { principal?: { memberId?: string } }) => {
+      if (failPublish) throw new Error('resource hub unavailable');
+      return { version: input.principal?.memberId === 'member-a' ? 11 : 22 };
+    });
+    runtime = createCollabRuntime({
+      adapter: { publish },
+      onError,
+    });
+    const projectId = 'shared-project';
+    const workspaceA = {
+      memberId: 'member-a',
+      teamId: 'workspace-a',
+      role: 'admin' as const,
+      lifecycleState: 'active' as const,
+    };
+    const workspaceB = {
+      memberId: 'member-b',
+      teamId: 'workspace-b',
+      role: 'admin' as const,
+      lifecycleState: 'active' as const,
+    };
+
+    runtime.requestTeamShare(projectId, workspaceA);
+    runtime.requestTeamShare(projectId, workspaceB);
+
+    for (
+      let i = 0;
+      i < 40 &&
+      (publish.mock.calls.length < 2 ||
+        runtime.publishedVersion(projectId, workspaceA) === null ||
+        runtime.publishedVersion(projectId, workspaceB) === null);
+      i += 1
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+    publish.mockClear();
+    onError.mockClear();
+
+    failPublish = true;
+    runtime.scheduler.notifyChanged(projectId, 'change');
+    runtime.scheduler.runBoundary(projectId);
+
+    for (
+      let i = 0;
+      i < 40 &&
+      (onError.mock.calls.length < 2 ||
+        runtime.projectSyncState(projectId, workspaceA) !== 'sync_failed' ||
+        runtime.projectSyncState(projectId, workspaceB) !== 'sync_failed');
+      i += 1
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+    expect(onError.mock.calls.map((call) => call[0]?.principal)).toEqual(
+      expect.arrayContaining([workspaceA, workspaceB]),
+    );
+    expect(runtime.projectSyncState(projectId, workspaceA)).toBe('sync_failed');
+    expect(runtime.projectSyncState(projectId, workspaceB)).toBe('sync_failed');
   });
 
   it('publishes on request and advances the published version monotonically', async () => {

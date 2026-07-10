@@ -246,28 +246,48 @@ export function createCollabRuntime(options: CreateCollabRuntimeOptions = {}): C
       if (principal) {
         published.set(scopedProjectKey(projectId, principal), result.version);
         syncStates.set(scopedProjectKey(projectId, principal), 'synced');
+        markTeamProjectSoon(projectId, 'synced', principal);
+        options.onPublished?.({ ...result, projectId, principal });
       } else {
         const versions = barePublishResults.get(projectId);
         if (versions) {
           for (const scopedPrincipal of principalsForProject(projectId)) {
             const version = versions.get(scopedPrincipal.teamId);
-            if (version !== undefined) published.set(scopedProjectKey(projectId, scopedPrincipal), version);
+            if (version === undefined) continue;
+            published.set(scopedProjectKey(projectId, scopedPrincipal), version);
             syncStates.set(scopedProjectKey(projectId, scopedPrincipal), 'synced');
+            markTeamProjectSoon(projectId, 'synced', scopedPrincipal);
+            options.onPublished?.({
+              projectId,
+              version,
+              reason: result.reason,
+              principal: scopedPrincipal,
+            });
           }
           barePublishResults.delete(projectId);
+        } else {
+          markTeamProjectSoon(projectId, 'synced', null);
+          options.onPublished?.({ ...result, projectId, principal: null });
         }
       }
-      markTeamProjectSoon(projectId, 'synced', principal);
-      options.onPublished?.({ ...result, projectId, principal });
     },
     onError: (result) => {
       // A failed publish leaves the prior head standing; surface it as a
       // recoverable sync state rather than wedging the project.
       const { projectId, principal } = parseScopedProjectKey(result.projectId);
       syncStates.set(projectId, 'sync_failed');
-      if (principal) syncStates.set(scopedProjectKey(projectId, principal), 'sync_failed');
+      const principals = principal ? [principal] : principalsForProject(projectId);
+      for (const scopedPrincipal of principals) {
+        syncStates.set(scopedProjectKey(projectId, scopedPrincipal), 'sync_failed');
+      }
       markTeamProjectSoon(projectId, 'failed', principal);
-      options.onError?.({ ...result, projectId, principal });
+      if (principals.length > 0) {
+        for (const scopedPrincipal of principals) {
+          options.onError?.({ ...result, projectId, principal: scopedPrincipal });
+        }
+      } else {
+        options.onError?.({ ...result, projectId, principal: null });
+      }
     },
   };
   const scheduler = new CollabPublishScheduler(schedulerOptions);
