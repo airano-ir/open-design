@@ -3071,6 +3071,7 @@ export const th: Dict = {
   'questions.generating': 'กำลังสร้างคำถาม…',
   'questions.skipAll': 'ข้ามทั้งหมด',
   'questions.autoSkipHint': 'ดำเนินการต่อโดยอัตโนมัติเมื่อหมดเวลา',
+  'questions.submitting': 'กำลังส่ง…',
   'sketch.toolSelect': 'จิ้มเลือกตัวสิ่งของ',
   'sketch.toolPen': 'ปากกาวาดลาย',
   'sketch.toolText': 'ข้อความอักษร',

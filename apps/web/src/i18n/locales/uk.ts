@@ -3071,6 +3071,7 @@ export const uk: Dict = {
   'questions.generating': 'Генерація запитань…',
   'questions.skipAll': 'Пропустити все',
   'questions.autoSkipHint': 'Автоматично продовжується після завершення таймера',
+  'questions.submitting': 'Надсилання…',
   'sketch.toolSelect': 'Виділення (без ефекту)',
   'sketch.toolPen': 'Ручка',
   'sketch.toolText': 'Текст',
