@@ -3948,9 +3948,13 @@ export async function startServer({
       freeformDeckSignal,
       mediaHintSignal,
       platformHintSignal,
-      // Rollout switch for the rewritten single-document core charter.
-      // Default stays on the classic layered stack; flip per-daemon to A/B.
-      promptCoreVariant: process.env.OD_PROMPT_CORE === 'slim' ? 'slim' : undefined,
+      // VALIDATION DEFAULT — feat/system-prompt integration branch only.
+      // Slim is the default here so packaged beta builds exercise the
+      // rewritten charter without env plumbing (the packaged sidecar env
+      // allowlist does not forward OD_PROMPT_CORE); OD_PROMPT_CORE=classic
+      // restores the classic stack. main keeps classic as the default —
+      // do NOT carry this flip into a PR against main.
+      promptCoreVariant: process.env.OD_PROMPT_CORE === 'classic' ? undefined : 'slim',
     });
     // The chat handler also needs to know where the active skill lives
     // on disk so it can stage a per-project copy of its side files
