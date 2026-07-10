@@ -33,6 +33,7 @@ import {
   trackPresentPopoverClick,
   trackShareOptionPopoverClick,
 } from '../analytics/events';
+import { recordFirstLoopStep } from '../onboarding/first-loop';
 import { MarkdownRenderer, artifactRendererRegistry } from '../artifacts/renderer-registry';
 import { renderMarkdownToSafeHtml } from '../artifacts/markdown';
 import {
@@ -61,6 +62,7 @@ import {
   fetchProjectFilePreview,
   fetchProjectFiles,
   fetchProjectFileText,
+  fetchProjectFileTextPreview,
   uploadProjectFiles,
   liveArtifactPreviewUrl,
   projectFileUrl,
@@ -112,11 +114,19 @@ import { buildLazySrcdocTransport, buildSrcdoc, canActivateSrcDocTransport } fro
 import {
   hasUrlModeBridge,
   htmlNeedsFocusGuard,
+  htmlNeedsPoweredPreview,
   htmlNeedsSandboxShim,
   parseForceInline,
   shouldUrlLoadHtmlPreview,
   type UrlLoadDecision,
 } from './file-viewer-render-mode';
+import {
+  htmlHasRootRelativeProjectAssetRefs,
+  normalizeRootRelativeProjectAssetRefs,
+  rewriteInlinedCssAssetRefs,
+  rewriteInlinedScriptAssetRefs,
+} from './file-viewer-preview-assets';
+import { resolvePoweredPreviewUrl } from '../runtime/powered-preview';
 import { saveTemplate } from '../state/projects';
 import type {
   LiveArtifactEventItem,
@@ -242,6 +252,19 @@ type DeployResultCard = {
   message?: string;
 };
 const MAX_BRIDGE_COORDINATE = 1_000_000;
+// Powered-preview iframe attributes. `allow-same-origin` is what makes real
+// Workers / Web Storage / SharedArrayBuffer possible; it is safe here because
+// the powered iframe loads from the daemon's preview-only loopback host, which
+// is cross-origin to the app shell and barred from normal daemon APIs. The
+// `allow` list delegates the permissions a GPU/compute artifact typically
+// wants, including `cross-origin-isolated` so the isolated document keeps
+// SharedArrayBuffer.
+const POWERED_PREVIEW_SANDBOX =
+  'allow-scripts allow-same-origin allow-downloads allow-popups allow-forms allow-modals allow-pointer-lock';
+const POWERED_PREVIEW_ALLOW =
+  'accelerometer; autoplay; camera; cross-origin-isolated; fullscreen; gamepad; gyroscope; microphone; xr-spatial-tracking';
+const HTML_PASSIVE_PREVIEW_FULL_TEXT_LIMIT = 2 * 1024 * 1024;
+const HTML_ROUTING_TEXT_PREVIEW_LIMIT = 96 * 1024;
 const PREVIEW_VIEWPORT_PRESETS: PreviewViewportPreset[] = [
   {
     id: 'desktop',
@@ -5473,6 +5496,10 @@ function HtmlViewer({
         },
         { requestId },
       );
+      // Onboarding first-loop 交付 step (spec §8.3): only a SUCCESSFUL export
+      // closes the loop. Project-scoped — a no-op unless the project was
+      // started from the Home recommendation.
+      if (result === 'success') recordFirstLoopStep(analytics.track, 'delivered', projectId);
     };
     const toastFormats = new Set(['pdf', 'pptx', 'zip', 'html', 'image', 'markdown']);
     // Programmatic exports compute in-browser and can take a while (one render
@@ -5642,6 +5669,8 @@ function HtmlViewer({
   };
   const [mode, setMode] = useState<'preview' | 'source'>('preview');
   const [source, setSource] = useState<string | null>(liveHtml ?? null);
+  const [routingSource, setRoutingSource] = useState<string | null>(liveHtml ?? null);
+  const [serverPoweredPreviewRequired, setServerPoweredPreviewRequired] = useState(false);
   const [inlinedSource, setInlinedSource] = useState<string | null>(null);
   const [zoom, setZoom] = useState(100);
   const fileViewportKey = previewViewportStateKey(projectId, file);
@@ -6256,12 +6285,25 @@ function HtmlViewer({
     liveCommentTargetsRef.current = liveCommentTargets;
   }, [liveCommentTargets]);
 
+  const shouldDeferPassivePreviewSource =
+    liveHtml === undefined &&
+    file.size > HTML_PASSIVE_PREVIEW_FULL_TEXT_LIMIT &&
+    mode === 'preview' &&
+    !manualEditMode &&
+    !manualEditSrcDocActive &&
+    !boardMode &&
+    !inspectMode &&
+    !drawOverlayOpen &&
+    !isDeck;
+
   useEffect(() => {
     const sourceFileKey = `${projectId}\0${file.name}\0${liveHtml === undefined ? 'raw' : 'live'}`;
     if (liveHtml !== undefined) {
       sourceFileKeyRef.current = sourceFileKey;
       sourceEverLoadedRef.current = true;
       setSource(liveHtml);
+      setRoutingSource(liveHtml);
+      setServerPoweredPreviewRequired(false);
       sourceRef.current = liveHtml;
       return;
     }
@@ -6269,6 +6311,8 @@ function HtmlViewer({
     sourceFileKeyRef.current = sourceFileKey;
     if (fileChanged) {
       setSource(null);
+      setRoutingSource(null);
+      setServerPoweredPreviewRequired(false);
       sourceRef.current = null;
       // Note: prevSourceBeforeReloadRef is cleared by the [projectId,
       // file.name] reset effect that runs on file/project switch.  The
@@ -6277,6 +6321,13 @@ function HtmlViewer({
       // switches but before the effect has run.
     }
     let cancelled = false;
+    if (shouldDeferPassivePreviewSource && sourceRef.current !== null) {
+      setRoutingSource(sourceRef.current);
+      sourceEverLoadedRef.current = true;
+      return () => {
+        cancelled = true;
+      };
+    }
     // Cache-bust the fetch on every mtime / reload / files-refresh bump.
     // Without this, an agent edit during Comment mode (srcDoc path) gets
     // stale HTML from the browser HTTP cache — the source state ends up
@@ -6284,14 +6335,32 @@ function HtmlViewer({
     // activated HTML, canActivateSrcDocTransport bails on the dedupe
     // check, and the preview only refreshes when Comment closes and the
     // url-load iframe takes over with its own ?v=mtime cache-bust.
-    void fetchProjectFileText(projectId, file.name, {
-      cacheBustKey: `${file.mtime}-${reloadKey}-${filesRefreshKey}`,
-    }).then((text) => {
+    const cacheBustKey = `${file.mtime}-${reloadKey}-${filesRefreshKey}`;
+    const loadText = shouldDeferPassivePreviewSource
+      ? fetchProjectFileTextPreview(projectId, file.name, {
+          limit: HTML_ROUTING_TEXT_PREVIEW_LIMIT,
+          cacheBustKey,
+        }).then((preview) => ({
+          text: preview?.text ?? null,
+          poweredPreviewRequired: preview?.poweredPreview.required === true,
+        }))
+      : fetchProjectFileText(projectId, file.name, { cacheBustKey }).then((text) => ({
+          text,
+          poweredPreviewRequired: false,
+        }));
+    void loadText.then(({ text, poweredPreviewRequired }) => {
       if (cancelled) return;
+      setServerPoweredPreviewRequired(poweredPreviewRequired);
       // Chokidar emits agent rewrites as unlink+add+change bursts; a
       // transient null mid-burst would blank source → srcDoc empty →
       // shell stays on prior frame. Keep the last good text instead.
       if (text == null) {
+        if (shouldDeferPassivePreviewSource) {
+          sourceEverLoadedRef.current = true;
+          setRoutingSource('');
+          setServerPoweredPreviewRequired(false);
+          return;
+        }
         // A srcDoc Reload may have cleared source to null just before this
         // fetch resolved.  If the fetch failed (non-2xx, network error),
         // restore the pre-reload source so the iframe doesn't go blank.
@@ -6310,6 +6379,7 @@ function HtmlViewer({
           snap.fileName === file.name
         ) {
           setSource(snap.source);
+          setRoutingSource(snap.source);
           sourceRef.current = snap.source;
           prevSourceBeforeReloadRef.current = null;
         } else if (snap != null) {
@@ -6324,13 +6394,26 @@ function HtmlViewer({
       prevSourceBeforeReloadRef.current = null;
       sourceEverLoadedRef.current = true;
       lastGoodSourceForRoutingRef.current = text;
-      setSource(text);
-      sourceRef.current = text;
+      setRoutingSource(text);
+      if (shouldDeferPassivePreviewSource) {
+        sourceRef.current = null;
+      } else {
+        setSource(text);
+        sourceRef.current = text;
+      }
     });
     return () => {
       cancelled = true;
     };
-  }, [projectId, file.name, file.mtime, liveHtml, reloadKey, filesRefreshKey]);
+  }, [
+    projectId,
+    file.name,
+    file.mtime,
+    liveHtml,
+    reloadKey,
+    filesRefreshKey,
+    shouldDeferPassivePreviewSource,
+  ]);
 
   useEffect(() => {
     let cancelled = false;
@@ -6351,16 +6434,18 @@ function HtmlViewer({
     };
   }, [projectId, file.name, deployProviderId]);
 
+  const routingHtmlSource = source ?? routingSource ?? lastGoodSourceForRoutingRef.current;
+  const passiveLargeHtmlPreview = shouldDeferPassivePreviewSource && source === null;
   // Detect deck-shaped HTML even when the project's skill didn't declare
   // `mode: deck`. Freeform projects often produce a deck because the user
   // asked for one in plain prose; without this, prev/next and Present
   // never surface and the deck becomes a static, unnavigable preview.
   const looksLikeDeck = useMemo(() => {
-    const s = source ?? lastGoodSourceForRoutingRef.current;
+    const s = routingHtmlSource;
     if (!s) return false;
     return /class\s*=\s*['"](?:[^'"]*\s)?slide(?:\s|['"])/i.test(s);
-  }, [source]);
-  const effectiveDeck = isDeck || looksLikeDeck;
+  }, [routingHtmlSource]);
+  const effectiveDeck = isDeck || (!passiveLargeHtmlPreview && looksLikeDeck);
   const showDeckNavigation = effectiveDeck && (slideState === null || slideState.count > 0);
   // Extra deck signal for EXPORT only. Runtime-managed decks (`<deck-stage>` /
   // `data-screen-label`) need deck capture even when the viewer's nav bridge
@@ -6401,7 +6486,7 @@ function HtmlViewer({
       ? annotationFrozenSource
       : livePreviewSource;
   const manualEditPageStylesEnabled = typeof source === 'string' && isManualEditFullHtmlDocument(source);
-  const urlModeBridge = hasUrlModeBridge(source);
+  const urlModeBridge = hasUrlModeBridge(routingHtmlSource);
   const manualEditRequiresSrcDoc = manualEditMode || manualEditSrcDocActive;
   // When we URL-load the iframe directly, skip every in-host inlining /
   // srcDoc-rebuilding step. The browser does the asset resolution itself,
@@ -6414,13 +6499,50 @@ function HtmlViewer({
   // Memoized on `source` so HtmlViewer's frequent re-renders (board/inspect/
   // edit mode toggles, slide nav) don't re-scan the HTML each time.
   const needsSandboxShim = useMemo(() => {
-    const s = source ?? lastGoodSourceForRoutingRef.current;
+    if (passiveLargeHtmlPreview) return false;
+    const s = routingHtmlSource;
     return s != null && htmlNeedsSandboxShim(s);
-  }, [source]);
+  }, [passiveLargeHtmlPreview, routingHtmlSource]);
   const needsFocusGuard = useMemo(() => {
-    const s = source ?? lastGoodSourceForRoutingRef.current;
+    if (passiveLargeHtmlPreview) return false;
+    const s = routingHtmlSource;
     return s != null && htmlNeedsFocusGuard(s);
-  }, [source]);
+  }, [passiveLargeHtmlPreview, routingHtmlSource]);
+  // Project file paths, for confirming root-relative asset refs
+  // (`/reference-assets/main.css`) against real files instead of guessing
+  // from path shape. `null` while the list is in flight — the detection memo
+  // below then runs in conservative candidate mode so a clone artifact never
+  // flashes through the (unstyled) URL-load path before the list lands.
+  const [projectFilePathSet, setProjectFilePathSet] = useState<ReadonlySet<string> | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    setProjectFilePathSet(null);
+    void fetchProjectFiles(projectId).then((files) => {
+      if (!cancelled) setProjectFilePathSet(new Set(files.map((entry) => entry.name)));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId, file.mtime, filesRefreshKey, reloadKey]);
+  const projectRootAssetRefs = useMemo(
+    () => source != null && htmlHasRootRelativeProjectAssetRefs(source, projectFilePathSet),
+    [source, projectFilePathSet],
+  );
+  // A real WebGL/Worker/WASM/SharedArrayBuffer artifact needs the "powered
+  // preview" path — a cross-origin-isolated iframe with allow-same-origin —
+  // which the opaque preview sandbox cannot provide (issue #724). Powered mode
+  // supersedes the shim/focus-guard srcDoc fallbacks below: those exist only to
+  // work around the opaque origin (localStorage SecurityError, focus theft),
+  // and powered mode fixes the root cause with a REAL same-origin document, so
+  // routing such an artifact to srcDoc would strip exactly the capabilities it
+  // needs. The interactive-bridge srcDoc modes (deck/inspect/edit/palette/
+  // tweaks/comment) still win — they require host-injected bridges powered mode
+  // can't carry.
+  const needsPowered = useMemo(() => {
+    if (serverPoweredPreviewRequired) return true;
+    const s = routingHtmlSource;
+    return s != null && htmlNeedsPoweredPreview(s);
+  }, [routingHtmlSource, serverPoweredPreviewRequired]);
   const [urlSelectionBridgeReady, setUrlSelectionBridgeReady] = useState(false);
   const urlLoadDecision: UrlLoadDecision = {
     mode,
@@ -6432,8 +6554,9 @@ function HtmlViewer({
     urlModeBridge,
     inspectMode,
     drawMode: drawOverlayOpen,
-    forceInline: forceInline || needsSandboxShim,
-    needsFocusGuard,
+    forceInline: (forceInline || needsSandboxShim) && !needsPowered,
+    needsFocusGuard: needsFocusGuard && !needsPowered,
+    projectRootAssetRefs,
   };
   const useUrlLoadPreview = shouldUrlLoadHtmlPreview(urlLoadDecision) && !manualEditRequiresSrcDoc;
   const basePreviewSrcUrl = useMemo(
@@ -6512,13 +6635,49 @@ function HtmlViewer({
     iframeRef.current = useUrlLoadPreview ? urlPreviewIframeRef.current : srcDocPreviewIframeRef.current;
   }, [useUrlLoadPreview]);
 
+  // Resolve the cross-origin powered-preview URL for artifacts that need it.
+  // `resolved:false` means the (cached) daemon isolation probe is still in
+  // flight — the URL iframe stays parked at about:blank until it settles so a
+  // large artifact is never loaded twice (once opaque, once powered). A null
+  // `url` after resolution means powered mode is unavailable (e.g. no
+  // cross-origin loopback base); the viewer then falls back to the normal
+  // opaque URL-load path, which still runs WebGL/blob-Workers/WASM.
+  const [powered, setPowered] = useState<{ resolved: boolean; url: string | null }>({
+    resolved: false,
+    url: null,
+  });
+  useEffect(() => {
+    if (!(needsPowered && useUrlLoadPreview)) {
+      setPowered({ resolved: false, url: null });
+      return;
+    }
+    let cancelled = false;
+    setPowered({ resolved: false, url: null });
+    void resolvePoweredPreviewUrl(projectId, file.name).then((base) => {
+      if (cancelled) return;
+      setPowered({
+        resolved: true,
+        url: base ? `${base}?v=${Math.round(file.mtime)}&r=${reloadKey}` : null,
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [needsPowered, useUrlLoadPreview, projectId, file.name, file.mtime, reloadKey]);
+  const usePoweredPreview = needsPowered && useUrlLoadPreview && powered.url != null;
+  const poweredResolving = needsPowered && useUrlLoadPreview && !powered.resolved;
+
   useEffect(() => {
     if (filesRefreshKey === 0) return;
     // Defer the file-watcher live-reload while annotating; the effect re-runs
     // when the mode closes (interactivePreviewModeActive flips) and applies
     // the now-current URL in one pass.
     if (interactivePreviewModeActive) return;
-    const nextSrc = `${effectiveBasePreviewSrcUrl}&fr=${filesRefreshKey}`;
+    if (needsPowered && useUrlLoadPreview && !powered.resolved) return;
+    const refreshBasePreviewSrcUrl = usePoweredPreview && powered.url
+      ? powered.url
+      : effectiveBasePreviewSrcUrl;
+    const nextSrc = `${refreshBasePreviewSrcUrl}&fr=${filesRefreshKey}`;
     const timeout = window.setTimeout(() => {
       if (useUrlLoadPreview && urlPreviewIframeRef.current?.contentWindow) {
         urlPreviewIframeRef.current.contentWindow.location.replace(nextSrc);
@@ -6527,20 +6686,43 @@ function HtmlViewer({
       }
     }, 180);
     return () => window.clearTimeout(timeout);
-  }, [effectiveBasePreviewSrcUrl, filesRefreshKey, useUrlLoadPreview, interactivePreviewModeActive]);
+  }, [
+    effectiveBasePreviewSrcUrl,
+    filesRefreshKey,
+    useUrlLoadPreview,
+    interactivePreviewModeActive,
+    needsPowered,
+    powered.resolved,
+    powered.url,
+    usePoweredPreview,
+  ]);
 
   useEffect(() => {
     setInlinedSource(null);
     if (useUrlLoadPreview) return;
-    if (!source || effectiveDeck || !hasRelativeAssetRefs(source)) return;
+    if (!source || effectiveDeck) return;
+    // Root-relative project asset refs need the confirmed file list before
+    // they can be normalized; wait for it rather than inlining a half-fixed
+    // document (the effect re-runs when the set lands).
+    if (projectRootAssetRefs && projectFilePathSet === null) return;
+    if (!hasRelativeAssetRefs(source) && !projectRootAssetRefs) return;
     let cancelled = false;
-    void inlineRelativeAssets(source, projectId, file.name).then((next) => {
+    void inlineRelativeAssets(source, projectId, file.name, projectFilePathSet).then((next) => {
       if (!cancelled) setInlinedSource(next);
     });
     return () => {
       cancelled = true;
     };
-  }, [source, effectiveDeck, projectId, file.name, reloadKey, useUrlLoadPreview]);
+  }, [
+    source,
+    effectiveDeck,
+    projectId,
+    file.name,
+    reloadKey,
+    useUrlLoadPreview,
+    projectRootAssetRefs,
+    projectFilePathSet,
+  ]);
 
   const srcDoc = useMemo(
     () => (previewSource ? buildSrcdoc(previewSource, {
@@ -6579,7 +6761,11 @@ function HtmlViewer({
   // visibility swap with no re-load. Reset on file/project change.
   const [srcDocMaterialized, setSrcDocMaterialized] = useState(false);
   const wasUrlLoadPreviewRef = useRef(useUrlLoadPreview);
-  const urlPreviewKeepAliveKey = previewIframeKeepAliveKey(projectId, file.name);
+  // Segregate the pooled-iframe cache by powered-ness: a powered frame carries
+  // a different origin + sandbox, so reusing a plain frame's DOM node for it
+  // (or vice-versa) would leave a stale sandbox attribute on a live iframe.
+  const urlPreviewKeepAliveKey =
+    previewIframeKeepAliveKey(projectId, file.name) + (usePoweredPreview ? ':powered' : '');
   // Reset the shell-ready latch whenever the srcDoc iframe re-mounts. The
   // next shell will post `od:srcdoc-transport-ready` (or fire onLoad) and
   // flip this back to true. See #2253.
@@ -6650,6 +6836,19 @@ function HtmlViewer({
     shouldUrlLoadHtmlPreview({ ...urlLoadDecision, drawMode: false });
   const urlTransportSrc =
     useUrlLoadPreview || srcDocForcedOnlyByDraw ? activePreviewSrcUrl : 'about:blank';
+  // Powered preview: swap the URL-load iframe to the cross-origin isolated
+  // daemon origin + `allow-same-origin` so Workers/Storage/WASM/SAB work.
+  // While the isolation probe resolves, park at about:blank instead of loading
+  // the opaque URL, so a large artifact isn't fetched twice.
+  const urlFrameSrc = usePoweredPreview
+    ? (powered.url as string)
+    : poweredResolving
+      ? 'about:blank'
+      : urlTransportSrc;
+  const urlFrameSandbox = usePoweredPreview
+    ? POWERED_PREVIEW_SANDBOX
+    : 'allow-scripts allow-downloads';
+  const urlFrameAllow = usePoweredPreview ? POWERED_PREVIEW_ALLOW : undefined;
   const activateSrcDocTransport = useCallback((target: HTMLIFrameElement | null = srcDocPreviewIframeRef.current) => {
     if (!canActivateSrcDocTransport({
       srcDoc,
@@ -8227,6 +8426,9 @@ function HtmlViewer({
       },
       { requestId },
     );
+    // Onboarding first-loop 交付 step (spec §8.3): only a SUCCESSFUL template
+    // export closes the loop. Project-scoped no-op unless started from Home.
+    if (result === 'success') recordFirstLoopStep(analytics.track, 'delivered', projectId);
   };
 
   async function handleSaveAsTemplate() {
@@ -9207,6 +9409,9 @@ function HtmlViewer({
       },
       { requestId },
     );
+    // Onboarding first-loop 交付 step (spec §8.3): only a SUCCESSFUL image
+    // export closes the loop. Project-scoped no-op unless started from Home.
+    if (result === 'success') recordFirstLoopStep(analytics.track, 'delivered', projectId);
   };
 
   async function handleImageExportSave() {
@@ -9544,6 +9749,8 @@ function HtmlViewer({
     if (state === 'failed') return t('fileViewer.deployLinkFailed');
     return t('fileViewer.deployLinkPreparingLabel');
   };
+  const initialPreviewLoading = source === null && !sourceEverLoadedRef.current;
+  const sourceModeLoading = mode === 'source' && source === null;
   const boardAvailable = mode === 'preview' && source !== null;
   const showPreviewToolbarControls = mode === 'preview';
   const versioningAvailable = isHtmlVersionableFile(file);
@@ -10617,7 +10824,7 @@ function HtmlViewer({
           ) : null}
         </>)}
       <div className="viewer-body" ref={previewBodyRef}>
-        {source === null && !sourceEverLoadedRef.current ? (
+        {initialPreviewLoading || sourceModeLoading ? (
           <div className="viewer-empty">{t('fileViewer.loading')}</div>
         ) : mode === 'preview' ? (
           <div
@@ -10662,8 +10869,10 @@ function HtmlViewer({
                           aria-hidden={useUrlLoadPreview ? undefined : true}
                           tabIndex={useUrlLoadPreview ? 0 : -1}
                           title={file.name}
-                          sandbox="allow-scripts allow-downloads"
-                          src={urlTransportSrc}
+                          data-od-powered={usePoweredPreview ? 'true' : undefined}
+                          sandbox={urlFrameSandbox}
+                          allow={urlFrameAllow}
+                          src={urlFrameSrc}
                           onLoad={() => {
                             const frame = urlPreviewIframeRef.current;
                             if (useUrlLoadPreview) iframeRef.current = frame;
@@ -10687,8 +10896,10 @@ function HtmlViewer({
                           aria-hidden={useUrlLoadPreview ? undefined : true}
                           tabIndex={useUrlLoadPreview ? 0 : -1}
                           title={file.name}
-                          sandbox="allow-scripts allow-downloads"
-                          src={urlTransportSrc}
+                          data-od-powered={usePoweredPreview ? 'true' : undefined}
+                          sandbox={urlFrameSandbox}
+                          allow={urlFrameAllow}
+                          src={urlFrameSrc}
                           onLoad={() => {
                             const frame = urlPreviewIframeRef.current;
                             if (useUrlLoadPreview) iframeRef.current = frame;
@@ -11650,34 +11861,47 @@ async function inlineRelativeAssets(
   html: string,
   projectId: string,
   fileName: string,
+  projectFilePaths: ReadonlySet<string> | null = null,
 ): Promise<string> {
+  const toRawUrl = (projectPath: string) => projectRawUrl(projectId, projectPath);
+  // Root-relative project asset refs (confirmed against the real file list)
+  // become owner-relative first, so the stylesheet/script inlining below and
+  // the srcDoc <base href> rebasing treat them like any other relative ref.
+  const normalized = projectFilePaths
+    ? normalizeRootRelativeProjectAssetRefs(html, fileName, projectFilePaths)
+    : html;
+
   const replacements: Array<Promise<{ from: string; to: string } | null>> = [];
-  const links = html.match(/<link\b[^>]*>/gi) ?? [];
+  const links = normalized.match(/<link\b[^>]*>/gi) ?? [];
   for (const tag of links) {
     const rel = readHtmlAttr(tag, 'rel');
     const href = readHtmlAttr(tag, 'href');
     if (!rel || !/\bstylesheet\b/i.test(rel) || !href) continue;
     replacements.push(
-      fetchProjectRelativeText(projectId, fileName, href).then((css) =>
-        css == null
+      fetchProjectRelativeText(projectId, fileName, href).then((asset) =>
+        asset == null
           ? null
           : {
               from: tag,
               to:
                 `<style data-od-inline-asset="${escapeHtmlAttr(href)}">\n` +
-                `${css.replace(/<\/style/gi, '<\\/style')}\n</style>`,
+                `${rewriteInlinedCssAssetRefs(asset.text, asset.filePath, projectFilePaths, toRawUrl)
+                  .replace(/<\/style/gi, '<\\/style')}\n</style>`,
             },
       ),
     );
   }
 
-  const scripts = html.match(/<script\b[^>]*\bsrc\s*=\s*["'][^"']+["'][^>]*>\s*<\/script>/gi) ?? [];
+  const scripts = normalized.match(/<script\b[^>]*\bsrc\s*=\s*["'][^"']+["'][^>]*>\s*<\/script>/gi) ?? [];
   for (const tag of scripts) {
     const src = readHtmlAttr(tag, 'src');
     if (!src) continue;
     replacements.push(
-      fetchProjectRelativeText(projectId, fileName, src).then((js) => {
-        if (js == null) return null;
+      fetchProjectRelativeText(projectId, fileName, src).then((asset) => {
+        if (asset == null) return null;
+        const js = projectFilePaths
+          ? rewriteInlinedScriptAssetRefs(asset.text, asset.filePath, projectFilePaths, toRawUrl)
+          : asset.text;
         const open = tag.match(/^<script\b[^>]*>/i)?.[0] ?? '<script>';
         const attrs = open
           .replace(/^<script/i, '')
@@ -11694,20 +11918,20 @@ async function inlineRelativeAssets(
   const resolved = (await Promise.all(replacements)).filter(
     (item): item is { from: string; to: string } => item !== null,
   );
-  return resolved.reduce((next, { from, to }) => next.replace(from, () => to), html);
+  return resolved.reduce((next, { from, to }) => next.replace(from, () => to), normalized);
 }
 
 async function fetchProjectRelativeText(
   projectId: string,
   ownerFileName: string,
   assetRef: string,
-): Promise<string | null> {
+): Promise<{ filePath: string; text: string } | null> {
   const filePath = resolveProjectRelativePath(ownerFileName, assetRef);
   if (!filePath) return null;
   try {
     const resp = await fetch(projectRawUrl(projectId, filePath));
     if (!resp.ok) return null;
-    return await resp.text();
+    return { filePath, text: await resp.text() };
   } catch {
     return null;
   }

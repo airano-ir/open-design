@@ -8,6 +8,10 @@ export type RuntimeEnv = NodeJS.ProcessEnv | Record<string, string>;
 export type RuntimeModelOption = {
   id: string;
   label: string;
+  enabled?: boolean;
+  default?: boolean;
+  inputPriceUsdPerMillion?: number;
+  outputPriceUsdPerMillion?: number;
 };
 
 export type RuntimeModelSource = 'live' | 'fallback';
