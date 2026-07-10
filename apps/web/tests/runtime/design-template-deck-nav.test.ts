@@ -204,4 +204,23 @@ describe('design template deck navigation', () => {
     expect(labels).toEqual(['1', '5', '25']);
     expect(heights).toEqual(['4%', '20%', '100%']);
   });
+
+  it('keeps weekly-report review chips and shipped metadata on one line', () => {
+    const dom = setupWeeklyReportDeck();
+    const { window: win } = dom;
+    const targetPill = win.document.querySelector<HTMLElement>('.chart .pill');
+    const kpiDelta = win.document.querySelector<HTMLElement>('.kpi .delta');
+    const shippedTag = win.document.querySelector<HTMLElement>('.ship-item .tag');
+    const shippedOwner = win.document.querySelector<HTMLElement>('.ship-item .owner');
+
+    expect(targetPill).toBeTruthy();
+    expect(kpiDelta).toBeTruthy();
+    expect(shippedTag).toBeTruthy();
+    expect(shippedOwner).toBeTruthy();
+    expect(win.getComputedStyle(targetPill!).whiteSpace).toBe('nowrap');
+    expect(win.getComputedStyle(kpiDelta!).whiteSpace).toBe('nowrap');
+    expect(win.getComputedStyle(shippedTag!).whiteSpace).toBe('nowrap');
+    expect(win.getComputedStyle(shippedOwner!).whiteSpace).toBe('nowrap');
+    expect(win.getComputedStyle(shippedOwner!).flexShrink).toBe('0');
+  });
 });
