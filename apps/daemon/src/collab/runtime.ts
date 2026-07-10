@@ -44,9 +44,9 @@ export interface CollabRuntime {
   /** Team-resource state provider — the E-resource-hub seam (share/freeze state). */
   teamResources: TeamResourceStateProvider;
   /** Last published version for a project (members poll this to know what to pull). */
-  publishedVersion(projectId: string): number | null;
+  publishedVersion(projectId: string, principal?: ResourceHubPrincipal | null): number | null;
   /**  sync state for a project (`local_only` until a share is requested). */
-  projectSyncState(projectId: string): ProjectSyncState;
+  projectSyncState(projectId: string, principal?: ResourceHubPrincipal | null): ProjectSyncState;
   /**
    * visibility-to-sync sync-intent seam: mark a project as awaiting upload and flush a publish.
    * D calls this (through the route) when a project flips to team-visible; C
@@ -56,13 +56,13 @@ export interface CollabRuntime {
    */
   requestTeamShare(projectId: string, share?: string | ResourceHubPrincipal): void;
   /** The member who shared this project, or null if not shared here. */
-  projectOwnerMemberId(projectId: string): string | null;
+  projectOwnerMemberId(projectId: string, principal?: ResourceHubPrincipal | null): string | null;
   /**
    * Member pull trigger (the sync trigger owns *when* to pull). Reads the published head via
    * the adapter (E's `syncLatest`); E's client also fetches + extracts the
    * bytes locally. Returns the head version, or null if nothing is published.
    */
-  pullLatest(projectId: string): Promise<{ version: number | null }>;
+  pullLatest(projectId: string, principal?: ResourceHubPrincipal | null): Promise<{ version: number | null }>;
   dispose(): void;
 }
 
@@ -183,6 +183,7 @@ export function createCollabRuntime(options: CreateCollabRuntimeOptions = {}): C
   // projectId → the member who shared it (the single writer). Members compare
   // this to their own id to know whether they view the project read-only.
   const owners = new Map<string, string>();
+  const scopedOwners = new Map<string, string>();
   async function markTeamProject(
     projectId: string,
     syncState: 'pending_upload' | 'synced' | 'failed',
@@ -224,6 +225,7 @@ export function createCollabRuntime(options: CreateCollabRuntimeOptions = {}): C
     onPublished: (result) => {
       const { projectId, principal } = parseScopedProjectKey(result.projectId);
       published.set(projectId, result.version);
+      if (principal) published.set(scopedProjectKey(projectId, principal), result.version);
       syncStates.set(projectId, 'synced');
       if (principal) syncStates.set(scopedProjectKey(projectId, principal), 'synced');
       markTeamProjectSoon(projectId, 'synced', principal);
@@ -249,8 +251,12 @@ export function createCollabRuntime(options: CreateCollabRuntimeOptions = {}): C
     scheduler,
     workspaceContext,
     teamResources,
-    publishedVersion: (projectId) => published.get(projectId) ?? null,
-    projectSyncState: (projectId) => {
+    publishedVersion: (projectId, principal) => {
+      if (principal) return published.get(scopedProjectKey(projectId, principal)) ?? null;
+      return published.get(projectId) ?? null;
+    },
+    projectSyncState: (projectId, principal) => {
+      if (principal) return syncStates.get(scopedProjectKey(projectId, principal)) ?? syncStates.get(projectId) ?? 'local_only';
       const states = principalsForProject(projectId)
         .map((principal) => syncStates.get(scopedProjectKey(projectId, principal)))
         .filter((state): state is ProjectSyncState => Boolean(state));
@@ -259,7 +265,10 @@ export function createCollabRuntime(options: CreateCollabRuntimeOptions = {}): C
       if (states.includes('synced')) return 'synced';
       return syncStates.get(projectId) ?? 'local_only';
     },
-    projectOwnerMemberId: (projectId) => owners.get(projectId) ?? null,
+    projectOwnerMemberId: (projectId, principal) => {
+      if (principal) return scopedOwners.get(scopedProjectKey(projectId, principal)) ?? owners.get(projectId) ?? null;
+      return owners.get(projectId) ?? null;
+    },
     requestTeamShare(projectId, share) {
       // Record the sharer as the project's single writer so members can tell
       // apart their own project from one shared to them.
@@ -267,6 +276,7 @@ export function createCollabRuntime(options: CreateCollabRuntimeOptions = {}): C
         owners.set(projectId, share);
       } else if (share) {
         owners.set(projectId, share.memberId);
+        scopedOwners.set(scopedProjectKey(projectId, share), share.memberId);
         let principals = sharePrincipals.get(projectId);
         if (!principals) {
           principals = new Map();
@@ -289,13 +299,13 @@ export function createCollabRuntime(options: CreateCollabRuntimeOptions = {}): C
         scheduler.runBoundary(projectId);
       }
     },
-    async pullLatest(projectId) {
+    async pullLatest(projectId, principal) {
       // The real hub adapter materializes the published tree locally; the stub
       // has no bytes. Either way, report the head version.
-      if (baseAdapter.pull) await baseAdapter.pull({ projectId });
+      if (baseAdapter.pull) await baseAdapter.pull({ projectId, ...(principal ? { principal } : {}) });
       const head = baseAdapter.syncLatest
-        ? await baseAdapter.syncLatest({ projectId })
-        : { version: published.get(projectId) ?? null };
+        ? await baseAdapter.syncLatest({ projectId, ...(principal ? { principal } : {}) })
+        : { version: principal ? published.get(scopedProjectKey(projectId, principal)) ?? null : published.get(projectId) ?? null };
       return { version: head?.version ?? null };
     },
     dispose() {

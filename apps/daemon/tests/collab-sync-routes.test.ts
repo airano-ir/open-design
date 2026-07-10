@@ -80,7 +80,9 @@ async function startSyncServer(workspaceContext?: WorkspaceContextProvider) {
 describe('collab sync routes', () => {
   it('keeps publish callbacks scoped to every workspace sharing the same project', async () => {
     const onPublished = vi.fn();
-    const publish = vi.fn(async () => ({ version: publish.mock.calls.length + 1 }));
+    const publish = vi.fn(async (input: { principal?: { memberId?: string } }) => ({
+      version: input.principal?.memberId === 'member-a' ? 11 : 22,
+    }));
     runtime = createCollabRuntime({
       adapter: { publish },
       onPublished,
@@ -114,6 +116,10 @@ describe('collab sync routes', () => {
     expect(onPublished.mock.calls.map((call) => call[0]?.principal)).toEqual(
       expect.arrayContaining([workspaceA, workspaceB]),
     );
+    expect(runtime.publishedVersion(projectId, workspaceA)).toBe(11);
+    expect(runtime.publishedVersion(projectId, workspaceB)).toBe(22);
+    expect(runtime.projectOwnerMemberId(projectId, workspaceA)).toBe('member-a');
+    expect(runtime.projectOwnerMemberId(projectId, workspaceB)).toBe('member-b');
   });
 
   it('publishes on request and advances the published version monotonically', async () => {
