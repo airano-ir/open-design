@@ -58,6 +58,7 @@ import {
   fetchDesignTemplates,
   fetchPromptTemplates,
   fetchSkills,
+  openExternalUrl,
   uploadProjectFiles,
   replaceProjectWorkingDir,
 } from './providers/registry';
@@ -381,6 +382,20 @@ function AppInner() {
   const iframeKeepAlivePool = useIframeKeepAlivePool();
   const clientType = useMemo(() => detectClientType(), []);
   useModalWindowDragGuard();
+  useEffect(() => {
+    const onFirstPartyExternalLink = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const anchor = event.target instanceof Element ? event.target.closest('a[href]') : null;
+      if (!(anchor instanceof HTMLAnchorElement)) return;
+      let url: URL;
+      try { url = new URL(anchor.href); } catch { return; }
+      if (!['open-design.ai', 'www.open-design.ai', 'staging.open-design.ai'].includes(url.hostname)) return;
+      event.preventDefault();
+      void openExternalUrl(url.toString());
+    };
+    document.addEventListener('click', onFirstPartyExternalLink, true);
+    return () => document.removeEventListener('click', onFirstPartyExternalLink, true);
+  }, []);
   // Observability marker. `apps/web/src/observability/white-screen.ts`
   // keys its "app actually mounted" success condition on this attribute
   // because the dynamic-import loading shell (`<div class="od-loading-shell">
