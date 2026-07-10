@@ -130,7 +130,7 @@ export const uk: Dict = {
   'designBrowser.status.pageSnapshotFailed': 'Page snapshot save failed.',
   'designBrowser.status.pageSnapshotSaved': 'Saved page snapshot (HTML + CSS).',
   'designBrowser.status.viewDesignFiles': 'View Design Files',
-  'designBrowser.status.downloadAssistHint': 'Step 2: click Download Page here, wait for the saved snapshot success, then return to the left Next Step card and click Continue extraction.',
+  'designBrowser.status.downloadAssistHint': 'When the page is ready, click Download Page. Return to chat after it is saved.',
   'designBrowser.status.desktopDataUnavailable': 'Desktop browser data is unavailable here.',
   'designBrowser.status.browserDataCleared': 'Browser data cleared.',
   'designBrowser.status.browserDataClearFailed': 'Browser data clear failed.',

@@ -3795,7 +3795,7 @@ export const zhCN: Dict = {
   'designBrowser.status.pageSnapshotFailed': '页面快照保存失败。',
   'designBrowser.status.pageSnapshotSaved': '已保存页面快照（HTML + CSS）。',
   'designBrowser.status.viewDesignFiles': '查看设计文件',
-  'designBrowser.status.downloadAssistHint': '第 2 步：在这里点击“下载页面”，等待页面快照保存成功，然后回到左侧“下一步”卡片点击“继续提取”。',
+  'designBrowser.status.downloadAssistHint': '页面加载完成后，点击“下载页面”。保存成功后，返回左侧继续提取。',
   'settings.amrBalance': '余额',
   'settings.amrPlan': '套餐',
   'settings.amrUpgrade': '升级',

@@ -3801,7 +3801,7 @@ export const zhTW: Dict = {
   'designBrowser.status.pageSnapshotFailed': '頁面快照儲存失敗。',
   'designBrowser.status.pageSnapshotSaved': '已儲存頁面快照（HTML + CSS）。',
   'designBrowser.status.viewDesignFiles': '查看設計檔案',
-  'designBrowser.status.downloadAssistHint': '第 2 步：在這裡點擊「下載頁面」，等待頁面快照儲存成功，然後回到左側「下一步」卡片點擊「繼續擷取」。',
+  'designBrowser.status.downloadAssistHint': '頁面載入完成後，點擊「下載頁面」。儲存成功後，返回左側繼續擷取。',
   'settings.amrBalance': '餘額',
   'settings.amrPlan': '方案',
   'settings.amrUpgrade': '升級',
