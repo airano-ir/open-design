@@ -196,6 +196,7 @@ jobs:
           workingDirectory: apps/landing-page
           packageManager: npm
           command: >
+            --config wrangler.staging.toml
             pages deploy out
             --project-name=open-design-landing-staging
             --branch=main
