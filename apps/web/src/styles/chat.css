@@ -1248,6 +1248,16 @@
 .composer.composer-active-file-mode .composer-input-editor .composer-editable {
   min-height: clamp(150px, 20vh, 210px);
 }
+/* Read-only viewer of a team-shared project: the editor is non-editable
+   (Lexical sets contenteditable=false), so give it a muted, not-allowed feel. */
+.composer-input-editor.composer-input--readonly {
+  opacity: 0.6;
+}
+.composer-input-editor.composer-input--readonly .composer-editable,
+.composer-input-editor.composer-input--readonly [contenteditable='false'] {
+  cursor: not-allowed;
+  caret-color: transparent;
+}
 /* Lexical placeholder — absolutely positioned over the empty editor. The
    editor adds/removes its sibling automatically; we style by class. */
 .composer-input-placeholder {

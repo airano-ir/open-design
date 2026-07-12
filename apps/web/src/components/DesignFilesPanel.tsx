@@ -656,12 +656,15 @@ export function DesignFilesPanel({
           className="df-row-check"
           onClick={(e) => {
             e.stopPropagation();
+            if (viewerOnly) return; // read-only viewer cannot batch-select files
             toggleSelect(f.name);
           }}
-          role="checkbox"
-          aria-checked={isSelected}
-          tabIndex={0}
+          role={viewerOnly ? undefined : 'checkbox'}
+          aria-checked={viewerOnly ? undefined : isSelected}
+          aria-disabled={viewerOnly ? 'true' : undefined}
+          tabIndex={viewerOnly ? -1 : 0}
           onKeyDown={(e) => {
+            if (viewerOnly) return;
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
               e.stopPropagation();
@@ -670,7 +673,7 @@ export function DesignFilesPanel({
           }}
         >
           <span className="df-row-check-box" aria-hidden>
-            {isSelected ? <Icon name="check" size={12} /> : null}
+            {viewerOnly ? null : isSelected ? <Icon name="check" size={12} /> : null}
           </span>
         </span>
         <span

@@ -479,7 +479,9 @@ import {
   getConversation,
   getDeployment,
   getDeploymentById,
+  getLatestConversationIdForProject,
   getMessageTelemetryFinalizationState,
+  getPreviewComment,
   getProject,
   countWorkspaceProjectRefs,
   getWorkspaceProject,
@@ -508,6 +510,7 @@ import {
   listTemplates,
   getLatestRoutineRun,
   getRoutine,
+  mergeSyncedPreviewComment,
   normalizeConversationSessionMode,
   deleteRoutine as dbDeleteRoutine,
   openDatabase,
@@ -583,10 +586,18 @@ import { registerCollabContextRoutes } from './routes/collab-context.js';
 import { registerTeamResourceRoutes } from './routes/team-resources.js';
 import { registerTeamResourceShareRoutes } from './routes/team-resource-share.js';
 import { createCollabRuntime } from './collab/runtime.js';
+import { createCollabPublishWatcher } from './collab/collab-publish-watcher.js';
 import { resolveProjectShareDir } from './collab/project-share-dir.js';
+import { createTeamProjectsLister } from './collab/team-projects.js';
 import { createTeamResourceShareService } from './collab/team-resource-share.js';
 import { contextToResourceHubPrincipal } from './collab/resource-hub-publish-adapter.js';
-import { velaTeamProjectCatalogClient } from './integrations/vela-team-projects.js';
+import { createCollabCloudClientFromEnv } from './integrations/collab-cloud.js';
+import { createCollabCloudService } from './collab/collab-cloud-service.js';
+import { createVelaCliCollabClientFromEnv } from './collab/vela-cli-collab-client.js';
+import {
+  createVelaCliTeamProjectCatalogClientFromEnv,
+  createVelaCliTeamProjectCatalogFromEnv,
+} from './collab/vela-cli-team-projects.js';
 import { registerTelemetryRoutes } from './routes/telemetry.js';
 import {
   assembleExample,
@@ -3815,6 +3826,21 @@ export async function startServer({
   // The scheduler publishes/pulls through the resource-hub adapter — the real
   // hub when OD_RESOURCE_HUB_URL + workspace member env are set, else a local
   // stub. resolveProjectDir lets the hub adapter pack/land managed projects.
+  const describeCollabProject = (projectId: string) => {
+    const project = getProject(db, projectId);
+    if (!project) return null;
+    return {
+      name: project.name,
+      skillId: project.skillId ?? null,
+      designSystemId: project.designSystemId ?? null,
+      createdAt: project.createdAt,
+      updatedAt: project.updatedAt,
+      ...(project.metadata ? { metadata: project.metadata } : {}),
+    };
+  };
+  const velaCliCollabClient = createVelaCliCollabClientFromEnv();
+  const velaCliTeamProjectCatalog = createVelaCliTeamProjectCatalogFromEnv();
+  const velaCliWorkspaceTeamProjectCatalog = createVelaCliTeamProjectCatalogClientFromEnv();
   function persistWorkspaceProjectSyncState(
     projectId: string,
     workspaceId: string | null | undefined,
@@ -3826,7 +3852,8 @@ export async function startServer({
   const collab = createCollabRuntime({
     resolveProjectDir: (projectId) =>
       resolveProjectShareDir(PROJECTS_DIR, projectId, getProject(db, projectId), resolveProjectDir),
-    teamProjectCatalog: velaTeamProjectCatalogClient,
+    describeProject: describeCollabProject,
+    ...(velaCliTeamProjectCatalog ? { teamProjectCatalog: velaCliTeamProjectCatalog } : {}),
     onPublished: ({ projectId, principal }) => {
       persistWorkspaceProjectSyncState(projectId, principal?.teamId, 'synced');
     },
@@ -3850,9 +3877,120 @@ export async function startServer({
         : 'pending_upload',
     );
   }
-  registerCollabPresenceRoutes(app, { collab });
-  registerCollabSyncRoutes(app, { collab });
-  registerCollabContextRoutes(app, { workspaceContext: collab.workspaceContext });
+  const collabCloudClient = velaCliCollabClient ?? createCollabCloudClientFromEnv();
+  registerCollabPresenceRoutes(app, { collab, cloud: velaCliCollabClient });
+
+  // Collab cloud (C-lane §D2.5/§D4): cross-daemon comment sync + member
+  // directory. The client is null (all calls degrade to no-op) unless
+  // OD_COLLAB_CLOUD_URL is set. The service ties it to the one workspace context
+  // so a single identity drives member registration, comment push, and the
+  // pull+merge poller. Kept out of collab/runtime.ts to avoid colliding with the
+  // team-project-catalog work also editing that file.
+  const collabCloud = collabCloudClient
+    ? createCollabCloudService({
+        client: collabCloudClient,
+        workspaceContext: collab.workspaceContext,
+        listProjectIds: () => listProjects(db).map((project: { id: string }) => project.id),
+        resolveLocalConversationId: (projectId) =>
+          getLatestConversationIdForProject(db, projectId),
+        mergeComment: ({ projectId, conversationId, comment }) =>
+          mergeSyncedPreviewComment(db, projectId, conversationId, comment),
+        onError: (error) => console.warn('[od] collab cloud poll error:', error),
+      })
+    : null;
+  // Register this member in the directory now, then keep the poller refreshing it
+  // every cycle (so a context set after startup still surfaces a name).
+  collabCloud?.registerSelf().catch(() => {});
+  collabCloud?.start();
+  // Server-authoritative owner lookup for register-on-pull: read the shared
+  // project's owner from the team hub (the same list the discovery endpoint
+  // serves) rather than trusting a client-supplied id, so a pulled project is
+  // recorded read-only under its true single writer.
+  const teamProjectsLister = createTeamProjectsLister({
+    workspaceContext: collab.workspaceContext,
+    ...(velaCliTeamProjectCatalog ? { teamProjectCatalog: velaCliTeamProjectCatalog } : {}),
+  });
+  const resolveSharedProject = async (projectId: string) => {
+    const list = await teamProjectsLister();
+    return list.find((entry) => entry.projectId === projectId) ?? null;
+  };
+  const resolveSharedProjectOwner = async (projectId: string): Promise<string | null> => {
+    return (await resolveSharedProject(projectId))?.ownerMemberId ?? null;
+  };
+  // Author-side publish TRIGGER (C spec §D1): watch the projects THIS daemon's
+  // member owns + has shared, and coalesce every file edit into a debounced
+  // publish. The read-only gate (team-shared AND owner === me) means a member's
+  // pulled copy is never watched, so an inbound pull can't loop into a publish and
+  // a member can't publish edits to someone else's project.
+  const collabPublishWatcher = createCollabPublishWatcher({
+    notifyChanged: (projectId) => collab.scheduler.notifyChanged(projectId, 'file-change'),
+    listProjectIds: () => listProjects(db).map((project: { id: string }) => project.id),
+    shouldPublish: async (projectId) => {
+      const owner = await resolveSharedProjectOwner(projectId);
+      if (!owner) return false;
+      const ctx = await collab.workspaceContext.current({});
+      return ctx?.workspaceMemberId != null && owner === ctx.workspaceMemberId;
+    },
+    subscribeFiles: (projectId, onChange) => {
+      const sub = subscribeFileEvents(PROJECTS_DIR, projectId, (evt) => {
+        if (evt.type === 'file-changed') onChange();
+      });
+      return { unsubscribe: () => sub.unsubscribe() };
+    },
+    onError: (error) => console.warn('[od] collab publish watcher error:', error),
+  });
+  collabPublishWatcher.start();
+  registerCollabSyncRoutes(app, {
+    collab,
+    // Register-on-pull: after a member pulls a shared project, insert a local
+    // project record so it appears in /api/projects and opens read-only (the
+    // member is not the owner). Idempotent — an already-local project is a no-op.
+    projectStore: {
+      get: (projectId) => getProject(db, projectId),
+      has: (projectId) => getProject(db, projectId) != null,
+      register: (input) => {
+        insertProject(db, {
+          id: input.id,
+          name: input.name,
+          skillId: input.skillId,
+          designSystemId: input.designSystemId,
+          metadata: input.metadata,
+          createdAt: input.createdAt,
+          updatedAt: input.updatedAt,
+        });
+      },
+      update: (input) => {
+        updateProject(db, input.id, {
+          name: input.name,
+          skillId: input.skillId,
+          designSystemId: input.designSystemId,
+          metadata: input.metadata,
+          updatedAt: input.updatedAt,
+        });
+      },
+    },
+    resolvePullDir: (projectId) => resolveProjectDir(PROJECTS_DIR, projectId),
+    resolveSharedProject,
+    resolveSharedProjectOwner,
+    describeProject: describeCollabProject,
+    ...(velaCliTeamProjectCatalog ? { teamProjectCatalog: velaCliTeamProjectCatalog } : {}),
+    // Resolve the owner's display name + role from the collab-cloud directory so
+    // /collab/status can hand the client a named "shared project" banner.
+    ...(collabCloud
+      ? {
+          resolveOwnerDisplayName: async (memberId: string) => {
+            const entry = await collabCloud.resolveMember(memberId);
+            return entry ? { displayName: entry.displayName, role: entry.role } : null;
+          },
+        }
+      : {}),
+  });
+  registerCollabContextRoutes(app, {
+    workspaceContext: collab.workspaceContext,
+    // Expose the collab-cloud member directory so the web client can resolve
+    // comment authors + owner names to a name + role.
+    ...(collabCloud ? { listMembers: () => collabCloud.listMembers() } : {}),
+  });
   registerTeamResourceRoutes(app, { teamResources: collab.teamResources });
 
   // Team resource sharing: promote a personal design system, plugin, or skill
@@ -4160,6 +4298,7 @@ export async function startServer({
     upsertMessage,
     listPreviewComments,
     upsertPreviewComment,
+    getPreviewComment,
     updatePreviewCommentStatus,
     updatePreviewCommentAnchor,
     deletePreviewComment,
@@ -4392,7 +4531,27 @@ export async function startServer({
     // C-lane sync seam for D's project-visibility routes: a personal→team move
     // calls requestTeamShare on success to publish the project for the team.
     collabSync: { requestTeamShare: (projectId, ownerMemberId) => collab.requestTeamShare(projectId, ownerMemberId) },
-    teamProjectCatalog: velaTeamProjectCatalogClient,
+    ...(velaCliWorkspaceTeamProjectCatalog ? { teamProjectCatalog: velaCliWorkspaceTeamProjectCatalog } : {}),
+    // Collab-cloud comment seams (no-op off-team / when unconfigured): stamp the
+    // server-authoritative author, gate status/delete on the caller vs the
+    // comment author / project owner, and push the comment lifecycle (create/edit,
+    // status change, tombstone) to the cross-daemon relay.
+    resolveAuthorMemberId: async (authorization) =>
+      (await collab.workspaceContext.current({ authorization }))?.workspaceMemberId,
+    resolveProjectOwnerMemberId: resolveSharedProjectOwner,
+    ...(collabCloud
+      ? {
+          onCommentCreated: (comment) => {
+            void collabCloud.pushComment(comment).catch(() => {});
+          },
+          onCommentUpdated: (comment) => {
+            void collabCloud.pushComment(comment).catch(() => {});
+          },
+          onCommentDeleted: (comment) => {
+            void collabCloud.pushCommentDeletion(comment).catch(() => {});
+          },
+        }
+      : {}),
   });
   registerTerminalRoutes(app, {
     db,

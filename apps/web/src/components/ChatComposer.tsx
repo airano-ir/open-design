@@ -213,6 +213,10 @@ interface Props {
   sessionMode?: ChatSessionMode;
   onSessionModeChange?: (mode: ChatSessionMode) => void;
   sendDisabled?: boolean;
+  // Read-only viewer of a team-shared project: makes the Lexical editor
+  // non-editable (in addition to `sendDisabled` blocking the send action) so
+  // the user cannot type into the composer at all.
+  inputDisabled?: boolean;
   initialDraft?: string;
   composerPlaceholder?: string;
   placeholderScenarios?: ReadonlyArray<PlaceholderScenario>;
@@ -392,6 +396,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
       sessionMode = 'design',
       onSessionModeChange,
       sendDisabled = false,
+      inputDisabled = false,
       initialDraft,
       composerPlaceholder,
       placeholderScenarios = [],
@@ -2690,6 +2695,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
             <LexicalComposerInput
               ref={editorRef}
               draft={draft}
+              inputDisabled={inputDisabled}
               placeholder={
                 activeFileDisplayName
                   ? t('chat.activeFilePlaceholder', { file: activeFileDisplayName })

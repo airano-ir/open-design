@@ -10,9 +10,30 @@
 }
 .recent-projects__head {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
+}
+.recent-projects__title-block {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  flex: 1 1 220px;
+}
+.recent-projects__heading {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-strong);
+}
+.recent-projects__description {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.35;
 }
 .recent-projects__title {
   margin: 0;
@@ -52,6 +73,151 @@
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 12px;
 }
+.recent-projects__controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  flex: 1 1 560px;
+  min-width: min(100%, 420px);
+}
+.recent-projects__invite,
+.recent-projects__select-toggle,
+.recent-projects__filter,
+.recent-projects__view-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  border: 1px solid var(--border);
+  background: var(--bg-panel);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 120ms var(--ease-out), border-color 120ms var(--ease-out), background-color 120ms var(--ease-out), filter 120ms var(--ease-out);
+}
+.recent-projects__invite {
+  gap: 6px;
+  padding: 0 14px;
+  border-color: transparent;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--accent-contrast, #fff);
+  font-weight: 600;
+}
+.recent-projects__invite:hover {
+  filter: brightness(1.05);
+}
+.recent-projects__select-toggle,
+.recent-projects__filter {
+  gap: 5px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+}
+.recent-projects__select-toggle:hover,
+.recent-projects__filter:hover,
+.recent-projects__view-btn:hover {
+  border-color: var(--border-strong);
+}
+.recent-projects__select-toggle.is-active,
+.recent-projects__view-btn.is-active {
+  border-color: var(--accent-soft);
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+.recent-projects__filter-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.recent-projects__filter svg {
+  color: var(--text-soft);
+}
+.recent-projects__filter-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 80;
+  display: grid;
+  gap: 2px;
+  min-width: 148px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-panel);
+  box-shadow: var(--shadow-md);
+}
+.recent-projects__filter-menu button {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 30px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.recent-projects__filter-menu button:hover,
+.recent-projects__filter-menu button.is-active {
+  background: var(--bg-subtle);
+  color: var(--accent);
+}
+.recent-projects__view {
+  display: flex;
+  gap: 4px;
+}
+.recent-projects__view-btn {
+  width: 32px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+}
+.recent-projects__bulkbar {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-panel);
+  box-shadow: var(--shadow-xs);
+}
+.recent-projects__bulkbar-count {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.recent-projects__row--list {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+.recent-projects__row--list .recent-projects__card-main {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+}
+.recent-projects__row--list .recent-projects__card-thumb {
+  width: 96px;
+  flex: 0 0 96px;
+  aspect-ratio: 16 / 10;
+  border-radius: var(--radius-sm);
+  margin: 8px 0 8px 8px;
+}
+.recent-projects__row--list .recent-projects__card-meta {
+  padding: 8px 14px 8px 0;
+  flex: 1;
+}
+.recent-projects__row--list .recent-projects__card-glyph {
+  font-size: 20px;
+}
 .recent-projects__card {
   position: relative;
   display: flex;
@@ -86,6 +252,29 @@
   border-color: var(--border-strong);
   box-shadow: var(--shadow-sm);
   transform: translateY(-1px);
+}
+.recent-projects__card.is-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-tint), var(--shadow-sm);
+}
+.recent-projects__card.is-shared {
+  border-color: color-mix(in srgb, var(--border-strong) 72%, var(--accent) 28%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+.recent-projects__card.is-shared:hover {
+  border-color: color-mix(in srgb, var(--border-strong) 52%, var(--accent) 48%);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 24%, transparent),
+    var(--shadow-sm);
+}
+.recent-projects__card.is-readonly-shared .recent-projects__card-thumb {
+  filter: saturate(0.82);
+}
+.recent-projects__row.is-selecting .recent-projects__card-main {
+  cursor: default;
+}
+.recent-projects__row.is-selecting .recent-projects__card:hover {
+  transform: none;
 }
 .recent-projects__card.is-design-system-project {
   border-color: color-mix(in srgb, var(--red) 62%, var(--border));
@@ -197,6 +386,19 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* Bottom row: owner·time on the left, kind tag (原型/幻灯片…) pushed to the
+   bottom-right corner. */
+.recent-projects__card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+.recent-projects__card-footer .design-card-tag-row {
+  flex: 0 0 auto;
+  margin: 0;
+}
 .recent-projects__card-time {
   font-size: 11.5px;
   color: var(--text-muted);
@@ -204,6 +406,9 @@
   align-items: center;
   gap: 4px;
   min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  white-space: nowrap;
 }
 .recent-projects__card-sep {
   color: var(--text-muted);
@@ -244,6 +449,37 @@
 .recent-projects__card-status-running .recent-projects__card-status-dot {
   animation: recent-projects-pulse 1.4s ease-in-out infinite;
 }
+/* Shared badge on the thumbnail + creator avatar in the meta row. Private projects stay unbadged. */
+.recent-projects__card-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+}
+.recent-projects__card-owner {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-pill);
+  background: #1a1917;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  flex: 0 0 16px;
+}
+.recent-projects__card-owner img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
 .recent-projects__card-menu-anchor {
   position: absolute;
   top: 8px;
@@ -321,8 +557,47 @@
   background: var(--bg-subtle);
   color: var(--text-strong);
 }
+.recent-projects__card-menu button:disabled {
+  cursor: not-allowed;
+  background: transparent;
+  color: var(--text-faint);
+}
 .recent-projects__card-menu button.danger {
   color: var(--red);
+}
+.recent-projects__card-menu-error {
+  max-width: 190px;
+  padding: 6px 10px 8px;
+  color: var(--red);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.recent-projects__select-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 5;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--bg-panel);
+  color: var(--bg-panel);
+  box-shadow: var(--shadow-xs);
+  cursor: pointer;
+}
+.recent-projects__select-check[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-contrast, #fff);
+}
+.recent-projects__select-check span {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
 }
 @media (hover: none) {
   .recent-projects__card-more {

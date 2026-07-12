@@ -136,6 +136,11 @@ function clickAgentTool(testId: string) {
   fireEvent.click(screen.getByTestId(testId));
 }
 
+async function openUnifiedExportTab() {
+  fireEvent.click(screen.getByRole('button', { name: /share/i }));
+  fireEvent.click(await screen.findByRole('tab', { name: /export/i }));
+}
+
 function manualEditTarget(id: string, label: string, x: number) {
   return {
     id,
@@ -925,7 +930,7 @@ describe('FileViewer SVG artifacts', () => {
     expect(reloadedFrame.getAttribute('data-od-render-mode')).toBe('srcdoc');
   });
 
-  it('offers image export for URL-loaded HTML previews', () => {
+  it('offers image export for URL-loaded HTML previews', async () => {
     const file = baseFile({
       name: 'workspace.html',
       path: 'workspace.html',
@@ -952,7 +957,7 @@ describe('FileViewer SVG artifacts', () => {
 
     expect((screen.getByTestId('artifact-preview-frame') as HTMLIFrameElement).getAttribute('data-od-render-mode')).toBe('url-load');
 
-    fireEvent.click(screen.getByRole('button', { name: /download/i }));
+    await openUnifiedExportTab();
 
     expect(screen.getByRole('menuitem', { name: /export as image/i })).toBeTruthy();
   });
@@ -1574,6 +1579,39 @@ describe('FileViewer SVG artifacts', () => {
     expect(frame.getAttribute('sandbox')).toBe('allow-scripts allow-downloads');
   });
 
+  it('disables React component sharing controls for viewer-only shared projects', async () => {
+    const file = baseFile({
+      name: 'Card.jsx',
+      path: 'Card.jsx',
+      mime: 'text/jsx',
+      kind: 'code',
+      artifactManifest: {
+        version: 1,
+        kind: 'react-component',
+        title: 'Card',
+        entry: 'Card.jsx',
+        renderer: 'react-component',
+        exports: ['jsx', 'html', 'zip'],
+      },
+    });
+    vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request) => {
+      const url = typeof input === 'string' ? input : input instanceof Request ? input.url : String(input);
+      if (url === '/api/projects/project-1/raw/Card.jsx') {
+        return new Response('export default function Card() { return <button>Readonly</button>; }');
+      }
+      return new Response('', { status: 404 });
+    }));
+
+    render(<FileViewer projectId="project-1" projectKind="prototype" file={file} viewerOnly />);
+
+    const shareButton = await screen.findByRole('button', { name: 'Share' });
+    expect(shareButton).toBeDisabled();
+    expect(shareButton).toHaveAttribute(
+      'title',
+      'Shared project is read-only: you can comment, but cannot edit or export.',
+    );
+  });
+
   it('points a .jsx module loaded by a sibling HTML to that entry, not the React error (issue #2744)', async () => {
     const file = baseFile({
       name: 'icons.jsx',
@@ -1766,7 +1804,7 @@ describe('FileViewer SVG artifacts', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /share/i }));
+    await openUnifiedExportTab();
 
     expect(screen.getByRole('menuitem', { name: /Deploy to Vercel/i })).toBeTruthy();
     fireEvent.click(screen.getByRole('menuitem', { name: /Deploy to Cloudflare Pages/i }));
@@ -1833,7 +1871,7 @@ describe('FileViewer SVG artifacts', () => {
     );
 
     const openDeployModal = async () => {
-      fireEvent.click(screen.getByRole('button', { name: /share/i }));
+      await openUnifiedExportTab();
       fireEvent.click(await screen.findByRole('menuitem', { name: /Deploy to Vercel/i }));
       return screen.findByRole('dialog');
     };
@@ -1877,7 +1915,7 @@ describe('FileViewer SVG artifacts', () => {
       />,
     );
 
-    const exportButton = screen.getByRole('button', { name: /download/i });
+    const exportButton = screen.getByRole('button', { name: /share/i });
     await waitFor(() => {
       expect(exportButton.classList.contains('export-ready-nudge')).toBe(true);
     });
@@ -1926,7 +1964,7 @@ describe('FileViewer SVG artifacts', () => {
       />,
     );
 
-    const firstExportButton = screen.getByRole('button', { name: /download/i });
+    const firstExportButton = screen.getByRole('button', { name: /share/i });
     await waitFor(() => {
       expect(firstExportButton.classList.contains('export-ready-nudge')).toBe(true);
     });
@@ -1942,7 +1980,7 @@ describe('FileViewer SVG artifacts', () => {
       />,
     );
 
-    const secondExportButton = screen.getByRole('button', { name: /download/i });
+    const secondExportButton = screen.getByRole('button', { name: /share/i });
     await waitFor(() => {
       expect(secondExportButton.classList.contains('export-ready-nudge')).toBe(true);
     });
@@ -2008,7 +2046,7 @@ describe('FileViewer SVG artifacts', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /share/i }));
+    await openUnifiedExportTab();
     fireEvent.click(await screen.findByRole('menuitem', { name: /Deploy to Cloudflare Pages/i }));
 
     const providerSelect = await screen.findByRole('combobox', { name: /Provider/i });
@@ -2070,7 +2108,7 @@ describe('FileViewer SVG artifacts', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /share/i }));
+    await openUnifiedExportTab();
     fireEvent.click(await screen.findByRole('menuitem', { name: /Deploy to Cloudflare Pages/i }));
 
     const providerSelect = await screen.findByRole('combobox', { name: /Provider/i });
@@ -2196,7 +2234,7 @@ describe('FileViewer SVG artifacts', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /share/i }));
+    await openUnifiedExportTab();
     fireEvent.click(await screen.findByRole('menuitem', { name: /Deploy to Cloudflare Pages/i }));
 
     const zoneSelect = await screen.findByRole('combobox', { name: /Domain/i });
@@ -2296,7 +2334,7 @@ describe('FileViewer SVG artifacts', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /share/i }));
+    await openUnifiedExportTab();
 
     const copyShareLink = await screen.findByRole('menuitem', { name: /Copy share link/i });
     expect(screen.queryByRole('menuitem', { name: /Copy Vercel link/i })).toBeNull();
@@ -2365,7 +2403,7 @@ describe('FileViewer SVG artifacts', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /share/i }));
+    await openUnifiedExportTab();
 
     const copyShareLink = await screen.findByRole('menuitem', { name: /Copy share link/i });
     fireEvent.click(copyShareLink);
@@ -2416,7 +2454,7 @@ describe('FileViewer SVG artifacts', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /share/i }));
+    await openUnifiedExportTab();
 
     const copyShareLink = await screen.findByRole('menuitem', { name: /Copy share link/i });
     const openSharePage = screen.getByRole('menuitem', { name: /Open share page/i }) as HTMLButtonElement;
@@ -2472,7 +2510,7 @@ describe('FileViewer SVG artifacts', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /share/i }));
+    await openUnifiedExportTab();
 
     const copyShareLink = await screen.findByRole('menuitem', { name: /Copy share link/i });
     const openSharePage = screen.getByRole('menuitem', { name: /Open share page/i }) as HTMLButtonElement;
@@ -2527,7 +2565,7 @@ describe('FileViewer SVG artifacts', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /share/i }));
+    await openUnifiedExportTab();
 
     const copyShareLink = await screen.findByRole('menuitem', { name: /Copy share link/i });
     fireEvent.click(copyShareLink);
@@ -2562,40 +2600,36 @@ describe('FileViewer SVG artifacts', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /share/i }));
 
-    expect(screen.getByText('SHARE')).toBeTruthy();
-    expect(screen.getByText('PUBLISH ONLINE')).toBeTruthy();
-    const menuItems = screen.getAllByRole('menuitem').map((item) => item.textContent ?? '');
-    expect(menuItems.slice(0, 1)).toEqual([
-      'Publish online above to enable share ↑',
-    ]);
-    expect(menuItems.slice(1, 3)).toEqual([
-      'Deploy to Vercel',
-      'Deploy to Cloudflare Pages',
-    ]);
-    expect(screen.getByText('Publish online above to enable share ↑')).toBeTruthy();
+    expect(await screen.findByRole('tab', { name: /share/i })).toBeTruthy();
+    expect(screen.getByText('Share project in workspace')).toBeTruthy();
+    expect(screen.getByText('Publish this file for everyone')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Publish file/i })).toBeTruthy();
+    expect(screen.queryByRole('menuitem', { name: /Deploy to Vercel/i })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: /Deploy to Cloudflare Pages/i })).toBeNull();
     expect(screen.queryByRole('menuitem', { name: /Copy share link/i })).toBeNull();
     expect(screen.queryByRole('menuitem', { name: /Open share page/i })).toBeNull();
-    expect(menuItems).not.toContain('Export as PDF');
-    expect(menuItems).not.toContain('Export as image');
-    expect(menuItems).not.toContain('Download as .zip');
-    expect(menuItems).not.toContain('Export as standalone HTML');
+    expect(screen.queryByRole('menuitem', { name: /Export as PDF/i })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: /Export as image/i })).toBeNull();
+
+    fireEvent.click(screen.getByRole('tab', { name: /export/i }));
+
+    expect(screen.getByText('PUBLISH ONLINE')).toBeTruthy();
+    const menuItems = screen.getAllByRole('menuitem').map((item) => item.textContent ?? '');
+    expect(menuItems).toContain('Export as PDF');
+    expect(menuItems).toContain('Export as image');
+    expect(menuItems).toContain('Download as .zip');
+    expect(menuItems).toContain('Export as standalone HTML');
+    expect(menuItems).toContain('Publish online above to enable share ↑');
+    expect(menuItems).toContain('Deploy to Vercel');
+    expect(menuItems).toContain('Deploy to Cloudflare Pages');
 
     fireEvent.click(screen.getByRole('menuitem', { name: /Publish online above to enable share/i }));
     expect(await screen.findByText('Publish online first to get a link')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: /download/i }));
-
-    const downloadItems = screen.getAllByRole('menuitem').map((item) => item.textContent ?? '');
-    expect(downloadItems).toContain('Export as PDF');
-    expect(downloadItems).toContain('Export as image');
-    expect(downloadItems).toContain('Download as .zip');
-    expect(downloadItems).toContain('Export as standalone HTML');
-    expect(downloadItems).not.toContain('Copy share link');
-    expect(downloadItems).not.toContain('Deploy to Vercel');
-    expect(downloadItems).not.toContain('Export as PPTX');
-    expect(downloadItems).not.toContain('Export as PPTX (images)');
-    expect(downloadItems).not.toContain('Export as PPTX (editable)');
-    expect(downloadItems).not.toContain('Export as Markdown');
+    expect(menuItems).not.toContain('Export as PPTX');
+    expect(menuItems).not.toContain('Export as PPTX (images)');
+    expect(menuItems).not.toContain('Export as PPTX (editable)');
+    expect(menuItems).not.toContain('Export as Markdown');
   });
 
   it('keeps plain .slide pages on page-mode export routing', async () => {
@@ -2639,7 +2673,7 @@ describe('FileViewer SVG artifacts', () => {
         />,
       );
 
-      fireEvent.click(screen.getByRole('button', { name: /download/i }));
+      await openUnifiedExportTab();
 
       const downloadItems = screen.getAllByRole('menuitem').map((item) => item.textContent ?? '');
       expect(downloadItems).not.toContain('Export as PPTX');
@@ -2697,7 +2731,7 @@ describe('FileViewer SVG artifacts', () => {
         />,
       );
 
-      fireEvent.click(screen.getByRole('button', { name: /download/i }));
+      await openUnifiedExportTab();
 
       const downloadItems = screen.getAllByRole('menuitem').map((item) => item.textContent ?? '');
       expect(downloadItems).not.toContain('Export as PPTX');
@@ -2761,7 +2795,7 @@ describe('FileViewer SVG artifacts', () => {
         />,
       );
 
-      fireEvent.click(screen.getByRole('button', { name: /download/i }));
+      await openUnifiedExportTab();
       fireEvent.click(screen.getByRole('menuitem', { name: /Export as PPTX/i }));
 
       const dialog = await screen.findByRole('dialog', { name: /Export as PPTX/i });
@@ -3039,7 +3073,7 @@ describe('FileViewer SVG artifacts', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /download/i }));
+    await openUnifiedExportTab();
     fireEvent.click(await screen.findByRole('menuitem', { name: /Export as PDF/i }));
 
     await waitFor(() => {
@@ -3094,7 +3128,7 @@ describe('FileViewer SVG artifacts', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /share/i }));
+    await openUnifiedExportTab();
 
     const copyShareLink = await screen.findByRole('menuitem', { name: /Copy share link/i }) as HTMLButtonElement;
     const openSharePage = screen.getByRole('menuitem', { name: /Open share page/i }) as HTMLButtonElement;
@@ -3303,7 +3337,7 @@ describe('FileViewer SVG artifacts', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /share/i }));
+    await openUnifiedExportTab();
     const copyShareLink = await screen.findByRole('menuitem', { name: /Copy share link/i });
     expect((copyShareLink as HTMLButtonElement).disabled).toBe(false);
     fireEvent.click(copyShareLink);
@@ -3367,7 +3401,7 @@ describe('FileViewer SVG artifacts', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /share/i }));
+    await openUnifiedExportTab();
     const socialShareItem = await screen.findByRole('menuitem', { name: /social share/i });
     expect(document.querySelector('.share-menu-social-grid')).toBeNull();
     fireEvent.click(socialShareItem);
@@ -3434,7 +3468,7 @@ describe('FileViewer SVG artifacts', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /share/i }));
+    await openUnifiedExportTab();
     fireEvent.click(await screen.findByRole('menuitem', { name: /deploy then share/i }));
 
     const dialog = await screen.findByRole('dialog');
@@ -3502,7 +3536,7 @@ describe('FileViewer SVG artifacts', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /share/i }));
+    await openUnifiedExportTab();
     const socialShareItem = await screen.findByRole('menuitem', { name: /social share/i });
     fireEvent.click(socialShareItem);
 
@@ -3571,7 +3605,7 @@ describe('FileViewer SVG artifacts', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /download/i }));
+    await openUnifiedExportTab();
     fireEvent.click(screen.getByRole('menuitem', { name: /save as template/i }));
 
     expect(screen.getByRole('dialog')).toBeTruthy();

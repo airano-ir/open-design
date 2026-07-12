@@ -94,13 +94,14 @@ import { DesignSystemsTab } from './DesignSystemsTab';
 import { BrandsTab } from './BrandsTab';
 import { EntryNavRail, type EntryView as EntryViewKind } from './EntryNavRail';
 import { LibrarySection } from './LibrarySection';
-import { UpdaterPopup } from './UpdaterPopup';
 import { GithubStarBadge } from './GithubStarBadge';
 import {
   formatDiscordPresenceCount,
   useDiscordPresence,
 } from './useDiscordPresence';
 import { HomeView, seedHomeComposerPrompt } from './HomeView';
+import { EntryBlankState } from './EntryBlankState';
+import { RecentProjectsStrip } from './RecentProjectsStrip';
 import {
   createPluginAuthoringHandoff,
   createPluginUseHandoff,
@@ -113,7 +114,7 @@ import { Icon } from './Icon';
 import { AgentIcon } from './AgentIcon';
 import { CommunityView } from './CommunityView';
 import { TeamSlotPlaceholder } from './TeamSlotPlaceholder';
-import { useWorkspaceContext } from '../collab/useWorkspaceContext';
+import { useWorkspaceContext, useWorkspaceBilling, useTeamProjects } from '../collab/useWorkspaceContext';
 import { LanguageMenu } from './LanguageMenu';
 import { IntegrationsView, type IntegrationTab } from './IntegrationsView';
 import { InlineModelSwitcher } from './InlineModelSwitcher';
@@ -123,7 +124,7 @@ import {
   type EntrySettingsSection,
 } from './EntrySettingsMenu';
 import { NewProjectModal } from './NewProjectModal';
-import { PluginsView } from './PluginsView';
+import { ExtensionsMarketplace } from './PluginsView';
 import type { CreateInput, CreateTab, ImportClaudeDesignOutcome } from './NewProjectPanel';
 import type { PluginLoopSubmit } from './PluginLoopHome';
 import {
@@ -188,6 +189,8 @@ function writeStoredRailOpen(open: boolean): void {
 
 const DISCORD_URL = 'https://discord.gg/mHAjSMV6gz';
 const X_URL = 'https://x.com/OpenDesignHQ';
+const CONTACT_EMAIL = 'contact@open.design';
+const CONTACT_EMAIL_URL = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Open Design 反馈')}&body=${encodeURIComponent('你好 Open Design 团队，\n\n我想反馈：\n\n')}`;
 const ONBOARDING_DROPDOWN_OPEN_EVENT = 'open-design:onboarding-dropdown-open';
 
 // The topbar chips (GitHub star, model switcher, Use everywhere)
@@ -510,8 +513,87 @@ export function EntryShell({
   // (context non-null && workspaceType === 'team') vs. local rail. Every team
   // surface reads THIS read; the rail never re-derives role/permission gates.
   const { context: workspaceContext, loading: workspaceLoading } = useWorkspaceContext();
+  const workspaceBilling = useWorkspaceBilling();
+  // Team-wide shared-project discovery for the "全部项目" view. The member's own
+  // `projects` prop is only their LOCAL list; team-shared projects come from the
+  // resource hub through the daemon. Empty off-team / when the hub is unconfigured.
+  const teamProjects = useTeamProjects();
   const isTeamWorkspace =
     Boolean(workspaceContext) && workspaceContext!.workspaceType === 'team';
+  // The "全部项目" grid is the SAME project-card grid used everywhere: it merges
+  // the member's own local projects with the projects teammates shared to the
+  // team (from the resource hub), deduped by id. A shared project the member has
+  // not pulled yet is not in `projects`, so we synthesize a normal `Project` card
+  // for it — placeholder name until it is opened (the pull registers it under its
+  // real name), timestamps from when it was shared. No custom section: these flow
+  // through `RecentProjectsStrip` like any other card.
+  const localProjectIds = new Set(projects.map((project) => project.id));
+  const teamSharedProjectIds = new Set(
+    teamProjects.projects.map((teamProject) => teamProject.projectId),
+  );
+  const sharedProjectCards: Project[] = teamProjects.projects
+    .filter((teamProject) => !localProjectIds.has(teamProject.projectId))
+    .map((teamProject) => {
+      const sharedAtMs = Date.parse(teamProject.sharedAt);
+      const fallbackTimestamp = Number.isFinite(sharedAtMs) ? sharedAtMs : Date.now();
+      const createdAt = typeof teamProject.createdAt === 'number'
+        ? teamProject.createdAt
+        : fallbackTimestamp;
+      const updatedAt = typeof teamProject.updatedAt === 'number'
+        ? teamProject.updatedAt
+        : fallbackTimestamp;
+      return {
+        id: teamProject.projectId,
+        name: teamProject.name?.trim() || t('recentProjects.sharedProjectFallbackName'),
+        skillId: teamProject.skillId ?? null,
+        designSystemId: teamProject.designSystemId ?? null,
+        createdAt,
+        updatedAt,
+        ...(teamProject.metadata ? { metadata: teamProject.metadata } : {}),
+      } satisfies Project;
+    });
+  const allProjectsList: Project[] = [
+    ...projects.filter((project) => teamSharedProjectIds.has(project.id)),
+    ...sharedProjectCards,
+  ];
+  // Persistent set of project ids the team hub already lists as shared. Passed to
+  // every project strip so a card that has been moved into the team space keeps
+  // its "已在团队空间" badge after a refresh — the strip's own optimistic set only
+  // covers the current session, and would otherwise reset on reload.
+  // projectId → sharing member id, so a card in the 全部项目 / 草稿 grids can
+  // resolve "{creator}创建" against the member directory. A project absent here
+  // is the member's own local project → "我创建".
+  const teamProjectOwnerMemberIds = new Map(
+    teamProjects.projects.map((teamProject) => [teamProject.projectId, teamProject.ownerMemberId]),
+  );
+  // Open handler for the "全部项目" grid. A project already in the member's local
+  // list opens directly; a team-shared project the member has not pulled yet is
+  // first pulled + registered on the daemon (materialize content + insert a local
+  // project record) so it can open read-only — the member is not the owner, so
+  // the useProjectCollab single-writer path keeps it read-only.
+  async function handleOpenAllProjects(id: string): Promise<void> {
+    if (localProjectIds.has(id)) {
+      await Promise.resolve(onOpenProject(id));
+      return;
+    }
+    try {
+      const response = await fetch(`/api/projects/${encodeURIComponent(id)}/collab/pull`, { method: 'POST' });
+      if (!response.ok) return;
+      await Promise.resolve(onProjectsRefresh?.());
+    } catch {
+      return;
+    }
+    await Promise.resolve(onOpenProject(id));
+  }
+  // Resolve the effective light/dark theme so the rail's account-menu theme toggle
+  // flips to the opposite of what's actually shown (system → resolved).
+  const activeTheme: AppTheme = config.theme ?? 'system';
+  const resolvedDark =
+    activeTheme === 'dark' ||
+    (activeTheme === 'system' &&
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches);
   // Team-only destinations. In the local state the rail never links to these; a
   // deep link to one (or losing team access) falls back to home once the context
   // has resolved. `community` is allowed in both states, so it is not guarded.
@@ -738,19 +820,67 @@ export function EntryShell({
     changeView('home');
   }
 
-  const avatarMenu = (
-    <EntrySettingsMenu
-      config={config}
-      onThemeChange={onThemeChange}
-      onOpenSettings={onOpenSettings}
-      onTrackTriggerClick={() => {
-        trackHomeToolbarClick(analytics.track, {
-          page_name: 'home',
-          area: 'toolbar',
-          element: 'settings',
-        });
-      }}
-    />
+  const railFooterActions = (
+    <>
+      <GithubStarBadge />
+      <a
+        className="entry-discord-badge od-tooltip"
+        href={DISCORD_URL}
+        aria-label={discordAriaLabel}
+        data-tooltip={discordAriaLabel}
+        data-tooltip-placement="right"
+        data-testid="entry-discord-badge"
+      >
+        <Icon name="discord" size={14} className="entry-discord-badge__icon" />
+        <span className="entry-discord-badge__label">{t('entry.discordLabel')}</span>
+        {discordOnlineLabel ? (
+          <>
+            <span className="entry-discord-badge__sep" aria-hidden>·</span>
+            <span className="entry-discord-badge__online">{discordOnlineLabel}</span>
+          </>
+        ) : null}
+      </a>
+      <a
+        className="entry-x-badge od-tooltip"
+        href={X_URL}
+        target="_blank"
+        rel="noreferrer noopener"
+        aria-label="在 X 上关注 Open Design"
+        data-tooltip="在 X 上关注 Open Design"
+        data-tooltip-placement="right"
+        data-testid="entry-x-badge"
+      >
+        <span className="entry-x-badge__icon" aria-hidden>X</span>
+        <span className="entry-x-badge__label">@OpenDesignHQ</span>
+      </a>
+      <a
+        className="entry-mail-badge od-tooltip"
+        href={CONTACT_EMAIL_URL}
+        aria-label="给 Open Design 发邮件"
+        data-tooltip="给 Open Design 发邮件"
+        data-tooltip-placement="right"
+        data-testid="entry-mail-badge"
+      >
+        <span className="entry-mail-badge__icon" aria-hidden>
+          <Icon name="comment" size={13} />
+        </span>
+        <span className="entry-mail-badge__label">邮件</span>
+      </a>
+      <button
+        type="button"
+        className="entry-settings-chip od-tooltip"
+        onClick={() => onOpenSettings()}
+        data-tooltip={t('entry.openSettingsTitle')}
+        data-tooltip-placement="right"
+        aria-label={t('entry.openSettingsAria')}
+        data-testid="entry-settings-button"
+      >
+        <span className="entry-settings-chip__icon" aria-hidden>
+          <Icon name="settings" size={13} />
+        </span>
+        <span className="entry-settings-chip__label">{t('settings.title')}</span>
+      </button>
+    </>
   );
 
 
@@ -785,21 +915,6 @@ export function EntryShell({
     );
   }
 
-  const executionSwitcher = (
-    <InlineModelSwitcher
-      config={config}
-      agents={agents}
-      providerModelsCache={activeProviderModelsCache}
-      onProviderModelsCacheChange={activeSetProviderModelsCache}
-      daemonLive={daemonLive}
-      onModeChange={onModeChange}
-      onAgentChange={onAgentChange}
-      onAgentModelChange={onAgentModelChange}
-      onApiProtocolChange={onApiProtocolChange}
-      onApiModelChange={onApiModelChange}
-      onOpenSettings={onOpenSettings}
-    />
-  );
   const homeExecutionSwitcher = (
     <InlineModelSwitcher
       compact
@@ -839,12 +954,20 @@ export function EntryShell({
           open={railOpen}
           onClose={() => setRailOpen(false)}
           context={workspaceContext}
+          billing={workspaceBilling}
           onOpenSettings={onOpenSettings}
+          onToggleTheme={() => onThemeChange(resolvedDark ? 'light' : 'dark')}
           onInvite={() => changeView('members')}
           onSignInCloud={() => navigate({ kind: 'home', view: 'onboarding' })}
+          footerExtra={railFooterActions}
         />
         <main className="entry-main entry-main--scroll" ref={entryMainScrollRef}>
-          <div className="entry-main__topbar">
+          <div
+            className={[
+              'entry-main__topbar',
+              view === 'home' && railOpen ? 'entry-main__topbar--home-clean' : '',
+            ].filter(Boolean).join(' ')}
+          >
             <button
               type="button"
               className="entry-rail-toggle"
@@ -855,88 +978,12 @@ export function EntryShell({
             >
               <Icon name="panel-left" size={20} />
             </button>
-            <div className="entry-main__topbar-chips entry-main__topbar-chips--icon-only">
-              {/* The workspace switcher moved into the nav rail's team state. */}
-              <GithubStarBadge />
-              <a
-                className="entry-workspace-chip od-tooltip"
-                href={enterpriseUrl(uiLocale)}
-                target="_blank"
-                rel="noreferrer noopener"
-                onClick={() => {
-                  trackHomeToolbarClick(analytics.track, {
-                    page_name: 'home',
-                    area: 'toolbar',
-                    element: 'workspace_teams',
-                  });
-                }}
-                data-tooltip={t('entry.workspaceTeamsTitle')}
-                data-tooltip-placement="bottom"
-                aria-label={t('entry.workspaceTeamsAria')}
-                data-testid="entry-workspace-teams"
-              >
-                <Icon
-                  name="sparkles"
-                  size={14}
-                  className="entry-workspace-chip__icon"
-                />
-                <span className="entry-workspace-chip__label">
-                  {t('entry.workspaceTeamsLabel')}
-                </span>
-              </a>
-              <a
-                className="entry-discord-badge od-tooltip"
-                href={DISCORD_URL}
-                aria-label={discordAriaLabel}
-                data-tooltip={discordAriaLabel}
-                data-tooltip-placement="bottom"
-                data-testid="entry-discord-badge"
-              >
-                <Icon name="discord" size={14} className="entry-discord-badge__icon" />
-                <span className="entry-discord-badge__label">{t('entry.discordLabel')}</span>
-                {discordOnlineLabel ? (
-                  <>
-                    <span className="entry-discord-badge__sep" aria-hidden>
-                      ·
-                    </span>
-                    <span className="entry-discord-badge__online">
-                      {discordOnlineLabel}
-                    </span>
-                  </>
-                ) : null}
-              </a>
-              {view === 'home' ? null : executionSwitcher}
-              <button
-                type="button"
-                className="use-everywhere-chip od-tooltip"
-                onClick={() => {
-                  trackHomeToolbarClick(analytics.track, {
-                    page_name: 'home',
-                    area: 'toolbar',
-                    element: 'use_everywhere',
-                  });
-                  openIntegrationTab('use-everywhere');
-                }}
-                data-tooltip={t('entry.useEverywhereTitle')}
-                data-tooltip-placement="bottom"
-                aria-label={t('entry.useEverywhereAria')}
-                data-testid="entry-use-everywhere-button"
-              >
-                <span className="use-everywhere-chip__icon" aria-hidden>
-                  <Icon name="hammer" size={13} />
-                </span>
-                <span className="use-everywhere-chip__label">
-                  {t('entry.useEverywhereTitle')}
-                </span>
-              </button>
-            </div>
-            <UpdaterPopup />
-            {avatarMenu}
           </div>
           <div
-            className={`entry-main__inner${
-              view === 'home' ? '' : ' entry-main__inner--wide'
-            }`}
+            className={[
+              'entry-main__inner',
+              view === 'home' ? '' : 'entry-main__inner--wide',
+            ].filter(Boolean).join(' ')}
           >
             <div data-testid="entry-view-home" data-active={view === 'home' ? 'true' : 'false'} {...inactiveViewProps(view === 'home')}>
               <HomeView
@@ -1001,10 +1048,9 @@ export function EntryShell({
               />
             </div>
             <div data-testid="entry-view-plugins" data-active={view === 'plugins' ? 'true' : 'false'} {...inactiveViewProps(view === 'plugins')}>
-              <PluginsView
+              <ExtensionsMarketplace
                 onCreatePlugin={startPluginAuthoring}
                 onUsePlugin={usePluginFromLibrary}
-                onCreatePluginShareProject={onCreatePluginShareProject}
               />
             </div>
             <div data-testid="entry-view-design-systems" data-active={view === 'design-systems' ? 'true' : 'false'} {...inactiveViewProps(view === 'design-systems')}>
@@ -1085,10 +1131,70 @@ export function EntryShell({
                 project spaces / workspace settings), rendered as a placeholder
                 until those land. */}
             {view === 'drafts' ? (
-              <TeamSlotPlaceholder icon="file" title={t('entry.navDrafts')} />
+              projectsLoading ? (
+                <div className="entry-section">
+                  <CenteredLoader label={t('common.loading')} />
+                </div>
+              ) : projects.length === 0 ? (
+                <EntryBlankState
+                  heading={t('entry.navDrafts')}
+                  title={t('entry.blankDraftsTitle')}
+                  description={t('entry.blankDraftsDescription')}
+                  actionLabel={t('entry.blankCreate')}
+                  onCreate={() => startBlankProjectFromRail()}
+                />
+              ) : (
+                <div className="entry-section">
+                  <RecentProjectsStrip
+                    projects={projects}
+                    designSystems={designSystems}
+                    limit={1000}
+                    heading={t('entry.navDrafts')}
+                    description={t('entry.draftsDescription')}
+                    space="drafts"
+                    sharedProjectIds={teamSharedProjectIds}
+                    projectOwnerMemberIds={teamProjectOwnerMemberIds}
+                    onOpen={(id) => onOpenProject(id)}
+                    onViewAll={() => {}}
+                    onDelete={onDeleteProject}
+                    onRename={onRenameProject}
+                  />
+                </div>
+              )
             ) : null}
             {view === 'all-projects' ? (
-              <TeamSlotPlaceholder icon="folder" title={t('entry.navAllProjects')} />
+              projectsLoading ? (
+                <div className="entry-section">
+                  <CenteredLoader label={t('common.loading')} />
+                </div>
+              ) : allProjectsList.length === 0 ? (
+                <EntryBlankState
+                  heading={t('entry.navAllProjects')}
+                  title={t('entry.blankAllProjectsTitle')}
+                  description={t('entry.blankAllProjectsDescription')}
+                  actionLabel={t('entry.blankCreate')}
+                  onCreate={() => startBlankProjectFromRail()}
+                />
+              ) : (
+                <div className="entry-section">
+                  <RecentProjectsStrip
+                    projects={allProjectsList}
+                    designSystems={designSystems}
+                    limit={1000}
+                    heading={t('entry.navAllProjects')}
+                    description={t('entry.allProjectsDescription')}
+                    space="team"
+                    sharedProjectIds={teamSharedProjectIds}
+                    projectOwnerMemberIds={teamProjectOwnerMemberIds}
+                    onOpen={(id) => void handleOpenAllProjects(id)}
+                    onViewAll={() => {}}
+                    onDelete={onDeleteProject}
+                    onRename={onRenameProject}
+                    canAssignInviteRoles={workspaceContext?.permissions.canInviteMembers === true}
+                    canManageProjectCollection={workspaceContext?.permissions.canShareProjects === true}
+                  />
+                </div>
+              )
             ) : null}
             {view === 'members' ? (
               <TeamSlotPlaceholder icon="users" title={t('entry.navMembers')} />

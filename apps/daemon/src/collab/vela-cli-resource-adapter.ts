@@ -25,6 +25,8 @@ export type RunVelaResource = (args: string[]) => Promise<string>;
 export interface VelaCliResourceAdapterOptions {
   /** The project's source directory to publish (managed-project root). */
   resolveProjectDir: (projectId: string) => string | Promise<string>;
+  /** Optional resource-index metadata for team project discovery/cards. */
+  describeProject?: (projectId: string) => Record<string, unknown> | null | Promise<Record<string, unknown> | null>;
   /** Where a member materializes pulled content. Defaults to the project dir. */
   resolvePullDir?: (projectId: string) => string | Promise<string>;
   /** (projectId, principal) → hub resourceId. Colon-free (routed as a path param). */
@@ -58,11 +60,23 @@ export function createVelaCliResourceAdapter(
     return (await options.hasTeamIdentity()) ? fn() : fallback;
   }
 
+  function resourceIdsFor(projectId: string, principal?: ResourceHubPrincipal | null): string[] {
+    const primary = resourceIdFor(projectId, principal);
+    if (!principal) return [primary];
+    const legacy = resourceIdFor(projectId, null);
+    return legacy === primary ? [primary] : [primary, legacy];
+  }
+
   return {
     publish({ projectId, principal }) {
       return gated(async () => {
         const dir = await options.resolveProjectDir(projectId);
-        const out = await run(['push', kind, resourceIdFor(projectId, principal), dir, '--ref', PUBLISHED_REF, '--json']);
+        const args = ['push', kind, resourceIdFor(projectId, principal), dir, '--ref', PUBLISHED_REF, '--json'];
+        const metadata = await options.describeProject?.(projectId);
+        if (metadata && Object.keys(metadata).length > 0) {
+          args.push('--metadata-json', JSON.stringify(metadata));
+        }
+        const out = await run(args);
         const version = parseVersion(out);
         return version == null ? null : { version };
       }, null);
@@ -72,16 +86,34 @@ export function createVelaCliResourceAdapter(
       return gated(async () => {
         // `head` reports the published version without downloading — a null
         // version means nothing is published yet.
-        const out = await run(['head', resourceIdFor(projectId, principal), '--ref', PUBLISHED_REF, '--json']);
-        const version = parseVersion(out);
-        return version == null ? null : { version };
+        for (const resourceId of resourceIdsFor(projectId, principal)) {
+          const out = await run(['head', resourceId, '--ref', PUBLISHED_REF, '--json']);
+          const version = parseVersion(out);
+          if (version != null) return { version };
+        }
+        return null;
       }, null);
     },
 
     async pull({ projectId, principal }) {
       await gated(async () => {
         const dir = await resolvePullDir(projectId);
-        await run(['pull', kind, resourceIdFor(projectId, principal), dir, '--ref', PUBLISHED_REF, '--json']);
+        let lastError: unknown;
+        for (const resourceId of resourceIdsFor(projectId, principal)) {
+          try {
+            await run(['pull', kind, resourceId, dir, '--ref', PUBLISHED_REF, '--json']);
+            return;
+          } catch (error) {
+            lastError = error;
+          }
+        }
+        throw lastError;
+      }, undefined);
+    },
+
+    async unpublish({ projectId, principal }) {
+      await gated(async () => {
+        await run(['remove', resourceIdFor(projectId, principal), '--json']);
       }, undefined);
     },
   };
@@ -109,7 +141,7 @@ const defaultRunVelaResource: RunVelaResource = (args) =>
       ['resource', ...args],
       // Inherit the AMR profile so the CLI reads the same ~/.amr session the
       // daemon's AMR runtime uses — one login drives agent runs and resources.
-      { env: { ...process.env, ...amrVelaProfileEnv() }, maxBuffer: 16 * 1024 * 1024 },
+      { env: buildVelaResourceEnv(), maxBuffer: 16 * 1024 * 1024 },
       (error, stdout) => {
         if (error) reject(error);
         else resolve(stdout);
@@ -117,13 +149,27 @@ const defaultRunVelaResource: RunVelaResource = (args) =>
     );
   });
 
+export function buildVelaResourceEnv(
+  env: NodeJS.ProcessEnv = process.env,
+): NodeJS.ProcessEnv {
+  // OPEN_DESIGN_AMR_PROFILE remains the daemon-level default, but an explicit
+  // VELA_PROFILE/AMR_HOME/VELA_API_URL on the daemon process must win so local
+  // multi-user tools-dev runs can point each daemon at a different CLI profile.
+  return { ...amrVelaProfileEnv(env), ...env };
+}
+
 /**
  * Whether this run should drive resource sharing through the `vela resource` CLI
- * transport instead of the in-process SDK. Opt-in (`OD_RESOURCE_TRANSPORT=vela-cli`)
- * so the收口 rolls out only where the CLI is present; the default stays the SDK.
+ * transport instead of the in-process SDK. An explicit `OD_RESOURCE_TRANSPORT`
+ * wins; otherwise the Vela-backed team/collab modes imply the same CLI identity
+ * for bytes so the daemon does not publish catalog rows through Vela while
+ * leaving project content on the local stub.
  */
 export function shouldUseVelaCliResourceTransport(env: NodeJS.ProcessEnv = process.env): boolean {
-  return env.OD_RESOURCE_TRANSPORT?.trim() === 'vela-cli';
+  const explicitTransport = env.OD_RESOURCE_TRANSPORT?.trim();
+  if (explicitTransport) return explicitTransport === 'vela-cli';
+  return env.OD_TEAM_PROJECTS_TRANSPORT?.trim() === 'vela-cli' ||
+    env.OD_COLLAB_TRANSPORT?.trim() === 'vela-cli';
 }
 
 /** Derive the team-identity gate from the one workspace context (team + live). */

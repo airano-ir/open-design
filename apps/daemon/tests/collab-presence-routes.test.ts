@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import express from 'express';
 import http from 'node:http';
 import { createCollabRuntime } from '../src/collab/runtime.js';
+import type { CollabPresenceCloudClient } from '../src/routes/collab-presence.js';
 import { registerCollabPresenceRoutes } from '../src/routes/collab-presence.js';
 
 let server: http.Server | null = null;
@@ -14,10 +15,13 @@ afterEach(async () => {
   }
 });
 
-async function startPresenceServer() {
+async function startPresenceServer(cloud?: CollabPresenceCloudClient) {
   const app = express();
   app.use(express.json());
-  registerCollabPresenceRoutes(app, { collab: createCollabRuntime() });
+  registerCollabPresenceRoutes(app, {
+    collab: createCollabRuntime(),
+    ...(cloud ? { cloud } : {}),
+  });
   server = http.createServer(app);
   await new Promise<void>((resolve) => server!.listen(0, resolve));
   const address = server.address();
@@ -75,5 +79,61 @@ describe('collab presence routes', () => {
     await api.json('/api/projects/p1/presence/heartbeat', { method: 'POST', body: { memberId: 'm1' } });
     const other = await api.json('/api/projects/p2/presence');
     expect(other.body.present).toEqual([]);
+  });
+
+  it('proxies presence through a cloud client when configured', async () => {
+    const calls: Array<{ op: string; projectId: string; input?: unknown }> = [];
+    const cloud: CollabPresenceCloudClient = {
+      async heartbeatPresence(projectId, input) {
+        calls.push({ op: 'heartbeat', projectId, input });
+        return [{ memberId: 'm1', name: 'Ada', role: 'owner', filePath: 'Typography' }];
+      },
+      async listPresence(projectId) {
+        calls.push({ op: 'list', projectId });
+        return [{ memberId: 'm1', name: 'Ada', role: 'owner' }];
+      },
+      async leavePresence(projectId, input) {
+        calls.push({ op: 'leave', projectId, input });
+        return [];
+      },
+    };
+    const api = await startPresenceServer(cloud);
+
+    const hb = await api.json('/api/projects/p1/presence/heartbeat', {
+      method: 'POST',
+      body: {
+        memberId: 'm1',
+        name: 'Ada',
+        role: 'owner',
+        clientId: 'client-1',
+        filePath: 'Typography',
+        activity: { label: '正在评论 Typography' },
+      },
+    });
+    expect(hb.status).toBe(200);
+    expect(hb.body.present).toEqual([
+      { memberId: 'm1', name: 'Ada', role: 'owner', filePath: 'Typography' },
+    ]);
+
+    await api.json('/api/projects/p1/presence');
+    await api.json('/api/projects/p1/presence/leave', {
+      method: 'POST',
+      body: { memberId: 'm1', clientId: 'client-1' },
+    });
+
+    expect(calls).toMatchObject([
+      {
+        op: 'heartbeat',
+        projectId: 'p1',
+        input: {
+          member: { memberId: 'm1', name: 'Ada', role: 'owner', filePath: 'Typography', activity: { label: '正在评论 Typography' } },
+          clientId: 'client-1',
+          filePath: 'Typography',
+          activity: { label: '正在评论 Typography' },
+        },
+      },
+      { op: 'list', projectId: 'p1' },
+      { op: 'leave', projectId: 'p1', input: { memberId: 'm1', clientId: 'client-1' } },
+    ]);
   });
 });

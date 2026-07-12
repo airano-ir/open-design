@@ -13,8 +13,17 @@ import { useT } from '../i18n';
 import { fetchProjectFiles, fetchProjectFileText, projectFileUrl } from '../providers/registry';
 import type { DesignSystemSummary, Project, ProjectDisplayStatus, ProjectFile } from '../types';
 import { Icon } from './Icon';
+import { InviteDialog } from './InviteDialog';
 import { STATUS_LABEL_KEYS } from './DesignsTab';
 import { isDesignSystemProject, isPublishedDesignSystemProject } from './design-system-project';
+import { useTeamMembers } from '../collab/useTeamMembers';
+import { notifyTeamProjectsChanged, useWorkspaceContext } from '../collab/useWorkspaceContext';
+
+/** Which project space this strip renders. Drives the per-card 共享 badge
+ *  (hidden in the all-shared team space) and the "{creator}创建" line: 'recent'
+ *  = home's mixed private/shared, 'drafts' = the member's own private list,
+ *  'team' = the全部项目 grid where every card is a team-shared project. */
+export type SpaceKind = 'recent' | 'drafts' | 'team';
 
 interface Props {
   projects: Project[];
@@ -24,15 +33,60 @@ interface Props {
   /** Retained for call-site compatibility; the strip skips rendering
    *  while the list is loading so we never need a loading state. */
   loading?: boolean;
+  /** Full-page project grids render their own title + controls. The Home strip
+   *  omits this and keeps the compact "最近项目 / 查看全部" header. */
+  heading?: string;
+  description?: string;
   onOpen: (id: string) => void;
-  onViewAll: () => void;
+  onViewAll?: () => void;
   onDelete?: (id: string) => Promise<boolean | void> | boolean | void;
   onDuplicate?: (id: string) => Promise<void> | void;
   onRename?: (id: string, name: string) => void;
   limit?: number;
+  /** Ids of projects already shared to the team (persistent, from the hub). A
+   *  project in this set shows the 共享 badge + "已在团队空间" and cannot be
+   *  re-shared — so the state survives a refresh, not just the in-session share. */
+  sharedProjectIds?: ReadonlySet<string>;
+  /** Which space this strip renders (see {@link SpaceKind}). Defaults to
+   *  'recent' (home). 'team' hides the per-card 共享 badge since every card
+   *  there is already a team-shared project. */
+  space?: SpaceKind;
+  /** projectId → the sharing member's workspaceMemberId, for team-shared
+   *  projects (from the team hub). Used to resolve the creator name against the
+   *  member directory; a project absent from this map is a local project owned
+   *  by the current member ("我创建"). */
+  projectOwnerMemberIds?: ReadonlyMap<string, string>;
+  collaborationEnabled?: boolean;
+  canAssignInviteRoles?: boolean;
+  canManageProjectCollection?: boolean;
 }
 
 const EMPTY_DESIGN_SYSTEMS: DesignSystemSummary[] = [];
+
+type OwnerFilter = 'all' | 'mine' | 'others';
+type ProjectKindFilter = 'all' | 'prototype' | 'deck' | 'media' | 'other';
+type ProjectSort = 'updatedDesc' | 'updatedAsc' | 'nameAsc';
+
+const OWNER_FILTER_OPTIONS: Array<{ id: OwnerFilter; labelKey: Parameters<ReturnType<typeof useT>>[0] }> = [
+  { id: 'all', labelKey: 'recentProjects.ownerAll' },
+  { id: 'mine', labelKey: 'recentProjects.ownerMine' },
+  { id: 'others', labelKey: 'recentProjects.ownerOthers' },
+];
+
+const KIND_FILTER_OPTIONS: Array<{ id: ProjectKindFilter; labelKey: Parameters<ReturnType<typeof useT>>[0] }> = [
+  { id: 'all', labelKey: 'recentProjects.kindAll' },
+  { id: 'prototype', labelKey: 'recentProjects.kindPrototype' },
+  { id: 'deck', labelKey: 'recentProjects.kindSlides' },
+  { id: 'media', labelKey: 'recentProjects.kindMedia' },
+  { id: 'other', labelKey: 'recentProjects.kindOther' },
+];
+
+const SORT_OPTIONS: Array<{ id: ProjectSort; labelKey: Parameters<ReturnType<typeof useT>>[0] }> = [
+  { id: 'updatedDesc', labelKey: 'recentProjects.sortNewest' },
+  { id: 'updatedAsc', labelKey: 'recentProjects.sortOldest' },
+  { id: 'nameAsc', labelKey: 'recentProjects.sortName' },
+];
+
 
 const DECK_PREVIEW_WIDTH = 1280;
 const DECK_PREVIEW_HEIGHT = 720;
@@ -46,18 +100,51 @@ const deckCoverInflight = new Map<string, Promise<string>>();
 export function RecentProjectsStrip({
   projects,
   designSystems = EMPTY_DESIGN_SYSTEMS,
+  heading,
+  description,
   onOpen,
   onViewAll,
   onDelete,
   onDuplicate,
   onRename,
   limit,
+  sharedProjectIds,
+  space = 'recent',
+  projectOwnerMemberIds,
+  collaborationEnabled,
+  canAssignInviteRoles,
+  canManageProjectCollection,
 }: Props) {
   const t = useT();
   const rowRef = useRef<HTMLDivElement | null>(null);
+  // Real creator resolution (replaces the demo's mock 李娜/张伟 roster): the
+  // member directory turns an ownerMemberId into a display name, and the
+  // workspace context tells us which member is "me" so the owner's own cards
+  // read "我创建" instead of their display name. Both hooks degrade to
+  // empty/null off-team, so every card safely falls back to "我创建".
+  const { resolve: resolveMember } = useTeamMembers();
+  const { context: workspaceContext } = useWorkspaceContext();
+  const selfMemberId = workspaceContext?.workspaceMemberId ?? null;
+  const collaborationAvailable =
+    collaborationEnabled ?? workspaceContext?.workspaceType === 'team';
+  const canInvite =
+    canAssignInviteRoles ?? workspaceContext?.permissions.canInviteMembers === true;
+  const canManageCollection =
+    canManageProjectCollection ??
+    (workspaceContext?.permissions.canManageSharedResources === true ||
+      workspaceContext?.permissions.canShareProjects === true);
   const [responsiveLimit, setResponsiveLimit] = useState(DEFAULT_RECENT_PROJECT_LIMIT);
   const resolvedLimit = limit ?? responsiveLimit;
   const hasRecentProjects = projects.length > 0;
+  const fullPageGrid = heading !== undefined || description !== undefined || space !== 'recent';
+  const [view, setView] = useState<'grid' | 'list'>('grid');
+  const [ownerFilter, setOwnerFilter] = useState<OwnerFilter>('all');
+  const [kindFilter, setKindFilter] = useState<ProjectKindFilter>('all');
+  const [sort, setSort] = useState<ProjectSort>('updatedDesc');
+  const [openHeaderMenu, setOpenHeaderMenu] = useState<'owner' | 'kind' | 'sort' | null>(null);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedProjectIds, setSelectedProjectIds] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     if (limit !== undefined) return;
@@ -89,11 +176,13 @@ export function RecentProjectsStrip({
     return () => window.removeEventListener('resize', update);
   }, [hasRecentProjects, limit]);
 
-  const recent = useMemo(
-    () => [...projects]
-      .sort((a, b) => b.updatedAt - a.updatedAt)
-      .slice(0, resolvedLimit),
-    [projects, resolvedLimit],
+  const sortedProjects = useMemo(
+    () => [...projects].sort((a, b) => {
+      if (sort === 'updatedAsc') return a.updatedAt - b.updatedAt;
+      if (sort === 'nameAsc') return a.name.localeCompare(b.name);
+      return b.updatedAt - a.updatedAt;
+    }),
+    [projects, sort],
   );
   const [coverByProject, setCoverByProject] = useState<
     Record<string, { kind: 'html' | 'image' | 'video' | 'logo'; name: string } | null>
@@ -102,10 +191,62 @@ export function RecentProjectsStrip({
   const [renameTarget, setRenameTarget] = useState<{ id: string; original: string } | null>(null);
   const [renameInput, setRenameInput] = useState('');
   const [confirmTarget, setConfirmTarget] = useState<Project | null>(null);
+  // Project → team-space sharing (the project card entry). The daemon gates on
+  // `canShareProjects` (403 off-team / no rights), so we only badge on success.
+  const [sharingId, setSharingId] = useState<string | null>(null);
+  const [unsharingId, setUnsharingId] = useState<string | null>(null);
+  const [sharedIds, setSharedIds] = useState<ReadonlySet<string>>(() => new Set<string>());
+  const [unsharedIds, setUnsharedIds] = useState<ReadonlySet<string>>(() => new Set<string>());
+  const [shareErrorProjectId, setShareErrorProjectId] = useState<string | null>(null);
+  const [shareErrorKind, setShareErrorKind] = useState<'share' | 'unshare'>('share');
+  // A project counts as team-shared if the hub already lists it (persistent —
+  // survives refresh) OR we shared it in this session (optimistic, before the
+  // team-projects poll catches up). The union is what makes the badge stick.
+  const isShared = (id: string) =>
+    !unsharedIds.has(id) && (sharedProjectIds?.has(id) === true || sharedIds.has(id));
+  // The card's "{creator}创建" line. A project the team hub attributes to another
+  // member resolves through the directory to that member's display name; my own
+  // shares and every local (non-shared) project read "我创建". Falls back to a
+  // generic "团队成员" when a shared project's owner is not yet in the directory
+  // (off-team, or a member the daemon has not seen register), never an opaque id.
+  const resolveCreator = (projectId: string): { name: string; initial: string; ownedBySelf: boolean } => {
+    const ownerMemberId = projectOwnerMemberIds?.get(projectId) ?? null;
+    if (!ownerMemberId || ownerMemberId === selfMemberId) {
+      const name = t('recentProjects.selfCreator');
+      const initial = Array.from(name.trim())[0]?.toUpperCase() ?? 'M';
+      return { name, initial, ownedBySelf: true };
+    }
+    const name = resolveMember(ownerMemberId)?.displayName ?? t('recentProjects.teamMemberCreator');
+    const initial = (Array.from(name.trim())[0] ?? 'T').toUpperCase();
+    return { name, initial, ownedBySelf: false };
+  };
+  const visibleProjects = useMemo(
+    () => sortedProjects
+      .map((project) => ({ project, creator: resolveCreator(project.id) }))
+      .filter(({ project, creator }) => {
+        const ownerMatches =
+          ownerFilter === 'all' ||
+          (ownerFilter === 'mine' && creator.ownedBySelf) ||
+          (ownerFilter === 'others' && !creator.ownedBySelf);
+        const kindMatches = kindFilter === 'all' || filterKindForProject(project) === kindFilter;
+        return ownerMatches && kindMatches;
+      })
+      .slice(0, resolvedLimit),
+    [kindFilter, ownerFilter, resolvedLimit, sortedProjects, projectOwnerMemberIds, selfMemberId],
+  );
   const menuContainerRef = useRef<HTMLDivElement | null>(null);
   const renameTitleId = useId();
   const confirmTitleId = useId();
-  const actionsAvailable = Boolean(onDelete || onDuplicate || onRename);
+  const actionsAvailable = Boolean(onDelete || onDuplicate || onRename || collaborationAvailable);
+
+  useEffect(() => {
+    setSelectedProjectIds((current) => {
+      if (current.size === 0) return current;
+      const visibleIds = new Set(visibleProjects.map(({ project }) => project.id));
+      const next = new Set([...current].filter((id) => visibleIds.has(id)));
+      return next.size === current.size ? current : next;
+    });
+  }, [visibleProjects]);
 
   useEffect(() => {
     if (!menuOpenId) return;
@@ -120,13 +261,13 @@ export function RecentProjectsStrip({
 
   useEffect(() => {
     let cancelled = false;
-    if (recent.length === 0) {
+    if (visibleProjects.length === 0) {
       setCoverByProject({});
       return;
     }
 
     void Promise.all(
-      recent.map(async (project) => {
+      visibleProjects.map(async ({ project }) => {
         const designSystemProject = isDesignSystemProject(project);
         if (project.metadata?.entryFile && !designSystemProject) return [project.id, null] as const;
         let files: Awaited<ReturnType<typeof fetchProjectFiles>>;
@@ -184,18 +325,20 @@ export function RecentProjectsStrip({
     return () => {
       cancelled = true;
     };
-  }, [recent]);
+  }, [visibleProjects]);
 
   // First-run home shouldn't reserve space for an empty "Recent
   // projects" rail — the dashed empty box just adds visual noise
   // above the plugin gallery. We also skip rendering during the
   // load window so the section doesn't pop in and then collapse;
   // the prompt hero is enough chrome on its own.
-  if (recent.length === 0) {
+  if (visibleProjects.length === 0) {
     return null;
   }
 
   function startRename(project: Project) {
+    const creator = resolveCreator(project.id);
+    if (!creator.ownedBySelf) return;
     setMenuOpenId(null);
     setRenameTarget({ id: project.id, original: project.name });
     setRenameInput(project.name);
@@ -216,8 +359,75 @@ export function RecentProjectsStrip({
   }
 
   function requestDelete(project: Project) {
+    const creator = resolveCreator(project.id);
+    if (!creator.ownedBySelf) return;
     setMenuOpenId(null);
     setConfirmTarget(project);
+  }
+
+  // Promote a project into the team space: fire the sync-intent the daemon uses
+  // to publish it for teammates. Server-side gated on `canShareProjects`, so a
+  // non-team / unpermitted caller gets a 403 and the project stays un-badged.
+  async function handleShareToTeam(project: Project) {
+    setShareErrorProjectId(null);
+    setMenuOpenId(project.id);
+    setSharingId(project.id);
+    try {
+      const res = await fetch(`/api/projects/${encodeURIComponent(project.id)}/collab/sync-intent`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ event: 'project_team_share_requested', projectId: project.id }),
+      });
+      if (!res.ok) {
+        throw new Error(`share failed with status ${res.status}`);
+      }
+      setSharedIds((prev) => new Set(prev).add(project.id));
+      setUnsharedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(project.id);
+        return next;
+      });
+      notifyTeamProjectsChanged();
+      setMenuOpenId(null);
+    } catch (err) {
+      console.warn('[RecentProjectsStrip] share project to team failed:', err);
+      setShareErrorProjectId(project.id);
+      setShareErrorKind('share');
+      setMenuOpenId(project.id);
+    } finally {
+      setSharingId(null);
+    }
+  }
+
+  async function handleUnshareFromTeam(project: Project) {
+    setShareErrorProjectId(null);
+    setMenuOpenId(project.id);
+    setUnsharingId(project.id);
+    try {
+      const res = await fetch(`/api/projects/${encodeURIComponent(project.id)}/collab/sync-intent`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ event: 'project_team_unshare_requested', projectId: project.id }),
+      });
+      if (!res.ok) {
+        throw new Error(`unshare failed with status ${res.status}`);
+      }
+      setUnsharedIds((prev) => new Set(prev).add(project.id));
+      setSharedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(project.id);
+        return next;
+      });
+      notifyTeamProjectsChanged();
+      setMenuOpenId(null);
+    } catch (err) {
+      console.warn('[RecentProjectsStrip] unshare project from team failed:', err);
+      setShareErrorProjectId(project.id);
+      setShareErrorKind('unshare');
+      setMenuOpenId(project.id);
+    } finally {
+      setUnsharingId(null);
+    }
   }
 
   function requestDuplicate(project: Project) {
@@ -235,26 +445,193 @@ export function RecentProjectsStrip({
     await onDelete(target.id);
   }
 
+  function toggleSelection(projectId: string) {
+    setSelectedProjectIds((current) => {
+      const next = new Set(current);
+      if (next.has(projectId)) {
+        next.delete(projectId);
+      } else {
+        next.add(projectId);
+      }
+      return next;
+    });
+  }
+
+  const selectedCount = selectedProjectIds.size;
+
   return (
     <section className="recent-projects" data-testid="recent-projects-strip">
-      <header className="recent-projects__head">
-        <h2 className="recent-projects__title">{t('recentProjects.title')}</h2>
-        <button
-          type="button"
-          className="recent-projects__view-all"
-          onClick={onViewAll}
-          data-testid="recent-projects-view-all"
-        >
-          <span>{t('recentProjects.viewAll')}</span>
-          <Icon name="chevron-right" size={12} />
-        </button>
-      </header>
+      {fullPageGrid ? (
+        <header className="recent-projects__head">
+          <div className="recent-projects__title-block">
+            <h2 className="recent-projects__heading">{heading ?? t('recentProjects.title')}</h2>
+            {description ? (
+              <p className="recent-projects__description">{description}</p>
+            ) : null}
+          </div>
+          <div className="recent-projects__controls">
+            {collaborationAvailable && space === 'team' && canInvite ? (
+              <button
+                type="button"
+                className="recent-projects__invite"
+                onClick={() => setInviteOpen(true)}
+              >
+                <Icon name="share" size={15} /> {t('recentProjects.inviteTeammates')}
+              </button>
+            ) : null}
+            {canManageCollection ? (
+              <button
+                type="button"
+                className={`recent-projects__select-toggle${selectionMode ? ' is-active' : ''}`}
+                aria-pressed={selectionMode}
+                onClick={() => {
+                  setSelectionMode((current) => !current);
+                  setSelectedProjectIds(new Set());
+                  setMenuOpenId(null);
+                }}
+              >
+                {t('recentProjects.multiSelect')}
+              </button>
+            ) : null}
+            <div className="recent-projects__filter-wrap">
+              <button
+                type="button"
+                className="recent-projects__filter"
+                aria-expanded={openHeaderMenu === 'owner'}
+                onClick={() => setOpenHeaderMenu((current) => current === 'owner' ? null : 'owner')}
+              >
+                {t(OWNER_FILTER_OPTIONS.find((option) => option.id === ownerFilter)?.labelKey ?? 'recentProjects.ownerAll')}
+                <Icon name="chevron-down" size={13} />
+              </button>
+              {openHeaderMenu === 'owner' ? (
+                <div className="recent-projects__filter-menu" role="menu">
+                  {OWNER_FILTER_OPTIONS.map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      className={ownerFilter === option.id ? 'is-active' : undefined}
+                      onClick={() => {
+                        setOwnerFilter(option.id);
+                        setOpenHeaderMenu(null);
+                      }}
+                    >
+                      {t(option.labelKey)}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            <div className="recent-projects__filter-wrap">
+              <button
+                type="button"
+                className="recent-projects__filter"
+                aria-expanded={openHeaderMenu === 'kind'}
+                onClick={() => setOpenHeaderMenu((current) => current === 'kind' ? null : 'kind')}
+              >
+                {t(KIND_FILTER_OPTIONS.find((option) => option.id === kindFilter)?.labelKey ?? 'recentProjects.kindAll')}
+                <Icon name="chevron-down" size={13} />
+              </button>
+              {openHeaderMenu === 'kind' ? (
+                <div className="recent-projects__filter-menu" role="menu">
+                  {KIND_FILTER_OPTIONS.map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      className={kindFilter === option.id ? 'is-active' : undefined}
+                      onClick={() => {
+                        setKindFilter(option.id);
+                        setOpenHeaderMenu(null);
+                      }}
+                    >
+                      {t(option.labelKey)}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            <div className="recent-projects__filter-wrap">
+              <button
+                type="button"
+                className="recent-projects__view-btn"
+                aria-label={t('recentProjects.sortAria')}
+                aria-expanded={openHeaderMenu === 'sort'}
+                onClick={() => setOpenHeaderMenu((current) => current === 'sort' ? null : 'sort')}
+              >
+                <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 7h6M3 12h10M3 17h14M17 4v8m0 0 3-3m-3 3-3-3" />
+                </svg>
+              </button>
+              {openHeaderMenu === 'sort' ? (
+                <div className="recent-projects__filter-menu" role="menu">
+                  {SORT_OPTIONS.map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      className={sort === option.id ? 'is-active' : undefined}
+                      onClick={() => {
+                        setSort(option.id);
+                        setOpenHeaderMenu(null);
+                      }}
+                    >
+                      {t(option.labelKey)}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            <div className="recent-projects__view" role="group" aria-label={t('designs.viewToggleAria')}>
+              <button
+                type="button"
+                className={`recent-projects__view-btn${view === 'grid' ? ' is-active' : ''}`}
+                aria-pressed={view === 'grid'}
+                aria-label={t('designs.viewGrid')}
+                onClick={() => setView('grid')}
+              >
+                <Icon name="grid" size={15} />
+              </button>
+              <button
+                type="button"
+                className={`recent-projects__view-btn${view === 'list' ? ' is-active' : ''}`}
+                aria-pressed={view === 'list'}
+                aria-label={t('recentProjects.viewList')}
+                onClick={() => setView('list')}
+              >
+                <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+                  <path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </header>
+      ) : (
+        <header className="recent-projects__head">
+          <h2 className="recent-projects__title">{t('recentProjects.title')}</h2>
+          {onViewAll ? (
+            <button
+              type="button"
+              className="recent-projects__view-all"
+              onClick={onViewAll}
+              data-testid="recent-projects-view-all"
+            >
+              <span>{t('recentProjects.viewAll')}</span>
+              <Icon name="chevron-right" size={12} />
+            </button>
+          ) : null}
+        </header>
+      )}
+      {selectionMode ? (
+        <div className="recent-projects__bulkbar" role="status">
+          <span className="recent-projects__bulkbar-count">
+            {t('designs.selectedCount', { n: selectedCount })}
+          </span>
+        </div>
+      ) : null}
       <div
         ref={rowRef}
-        className={`recent-projects__row${menuOpenId ? ' recent-projects__row--menu-open' : ''}`}
+        className={`recent-projects__row${fullPageGrid ? ` recent-projects__row--${view}` : ''}${menuOpenId ? ' recent-projects__row--menu-open' : ''}${selectionMode ? ' is-selecting' : ''}`}
         role="list"
       >
-        {recent.map((project) => {
+        {visibleProjects.map(({ project, creator }) => {
           const cover = projectCover(project, coverByProject[project.id] ?? null);
           const designSystemProject = isDesignSystemProject(project);
           const status: ProjectDisplayStatus = project.status?.value ?? 'not_started';
@@ -262,17 +639,40 @@ export function RecentProjectsStrip({
           const isActive =
             !publishedDesignSystem &&
             (status === 'running' || status === 'queued' || status === 'awaiting_input');
+          const shared = isShared(project.id);
+          const selected = selectedProjectIds.has(project.id);
+          const readonlyShared = shared && !creator.ownedBySelf;
           return (
             <div
               key={project.id}
               role="listitem"
-              className={`recent-projects__card${designSystemProject ? ' is-design-system-project' : ''}${menuOpenId === project.id ? ' is-menu-open' : ''}`}
+              className={`recent-projects__card${designSystemProject ? ' is-design-system-project' : ''}${shared ? ' is-shared' : ''}${menuOpenId === project.id ? ' is-menu-open' : ''}${selected ? ' is-selected' : ''}${readonlyShared ? ' is-readonly-shared' : ''}`}
               data-project-id={project.id}
             >
+              {selectionMode ? (
+                <button
+                  type="button"
+                  className="recent-projects__select-check"
+                  aria-pressed={selected}
+                  aria-label={project.name}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    toggleSelection(project.id);
+                  }}
+                >
+                  <span aria-hidden>{selected ? '✓' : ''}</span>
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="recent-projects__card-main"
-                onClick={() => onOpen(project.id)}
+                onClick={() => {
+                  if (selectionMode) {
+                    toggleSelection(project.id);
+                    return;
+                  }
+                  onOpen(project.id);
+                }}
                 title={project.name}
               >
                 <div
@@ -303,31 +703,53 @@ export function RecentProjectsStrip({
                   ) : (
                     <span className="recent-projects__card-glyph">{cover.initial}</span>
                   )}
+                  {sharingId === project.id ? (
+                    <span
+                      aria-hidden
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: 'rgba(255,255,255,0.55)',
+                        borderRadius: 'inherit',
+                      }}
+                    >
+                      <Icon name="spinner" size={18} />
+                    </span>
+                  ) : shared ? (
+                    <span className="recent-projects__card-badge recent-projects__card-badge--shared">
+                      <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="9" cy="8" r="3" />
+                        <path d="M3 20a6 6 0 0 1 12 0M16 11a3 3 0 1 0-1-5.8M21 20a6 6 0 0 0-5-5.9" />
+                      </svg>
+                      {t('recentProjects.sharedBadge')}
+                    </span>
+                  ) : null}
                 </div>
                 <div className="recent-projects__card-meta">
-                  <div className="design-card-tag-row">
-                    {designSystemProject ? (
-                      <DesignSystemProjectTag />
-                    ) : (
-                      <ProjectTag category={projectCategory(project)} />
-                    )}
-                  </div>
                   <div className="recent-projects__card-name">{project.name}</div>
-                  <div className="recent-projects__card-time">
-                    <span
-                      className={`recent-projects__card-status recent-projects__card-status-${publishedDesignSystem ? 'published' : status}`}
-                    >
-                      {isActive ? (
-                        <span className="recent-projects__card-status-dot" aria-hidden />
-                      ) : null}
-                      {publishedDesignSystem ? t('designs.status.published') : statusLabel(status, t)}
-                    </span>
-                    <span className="recent-projects__card-sep" aria-hidden>·</span>
-                    {relativeTime(project.updatedAt, t)}
+                  <div className="recent-projects__card-footer">
+                    <div className="recent-projects__card-time">
+                      <span className="recent-projects__card-owner" aria-hidden>
+                        {creator.initial}
+                      </span>
+                      <span>{t('recentProjects.creatorLine', { name: creator.name })}</span>
+                      <span className="recent-projects__card-sep" aria-hidden>·</span>
+                      {relativeTime(project.updatedAt, t)}
+                    </div>
+                    <div className="design-card-tag-row">
+                      {designSystemProject ? (
+                        <DesignSystemProjectTag />
+                      ) : (
+                        <ProjectTag category={projectCategory(project)} />
+                      )}
+                    </div>
                   </div>
                 </div>
               </button>
-              {actionsAvailable ? (
+              {actionsAvailable && !selectionMode ? (
                 <div
                   className="recent-projects__card-menu-anchor"
                   ref={menuOpenId === project.id ? menuContainerRef : undefined}
@@ -340,6 +762,7 @@ export function RecentProjectsStrip({
                   aria-expanded={menuOpenId === project.id}
                     onClick={(event) => {
                       event.stopPropagation();
+                      setShareErrorProjectId(null);
                       setMenuOpenId((current) => current === project.id ? null : project.id);
                     }}
                   >
@@ -352,7 +775,13 @@ export function RecentProjectsStrip({
                       onClick={(event) => event.stopPropagation()}
                     >
                       {onRename ? (
-                        <button type="button" role="menuitem" onClick={() => startRename(project)}>
+                        <button
+                          type="button"
+                          role="menuitem"
+                          disabled={!creator.ownedBySelf}
+                          title={creator.ownedBySelf ? undefined : t('recentProjects.ownOnlyMutation')}
+                          onClick={() => startRename(project)}
+                        >
                           <Icon name="pencil" size={12} />
                           <span>{t('designs.menuRename')}</span>
                         </button>
@@ -363,11 +792,54 @@ export function RecentProjectsStrip({
                           <span>{t('designs.menuDuplicate')}</span>
                         </button>
                       ) : null}
+                      {shared && creator.ownedBySelf ? (
+                        <button
+                          type="button"
+                          role="menuitem"
+                          disabled={unsharingId === project.id}
+                          onClick={() => void handleUnshareFromTeam(project)}
+                        >
+                          <Icon name="close" size={12} />
+                          <span>
+                            {unsharingId === project.id
+                              ? t('recentProjects.unshareInProgress')
+                              : t('recentProjects.moveOutOfTeam')}
+                          </span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          role="menuitem"
+                          disabled={sharingId === project.id || shared || !creator.ownedBySelf}
+                          title={!creator.ownedBySelf ? t('recentProjects.ownOnlyMutation') : undefined}
+                          onClick={() => void handleShareToTeam(project)}
+                        >
+                          <Icon name="share" size={12} />
+                          <span>
+                            {sharingId === project.id
+                              ? t('recentProjects.shareInProgress')
+                              : shared
+                                ? t('recentProjects.sharedInTeam')
+                                : t('recentProjects.moveToTeam')}
+                          </span>
+                        </button>
+                      )}
+                      {shareErrorProjectId === project.id ? (
+                        <div className="recent-projects__card-menu-error" role="alert">
+                          {t(
+                            shareErrorKind === 'unshare'
+                              ? 'recentProjects.unshareFailed'
+                              : 'recentProjects.shareFailed',
+                          )}
+                        </div>
+                      ) : null}
                       {onDelete ? (
                         <button
                           type="button"
                           role="menuitem"
                           className="danger"
+                          disabled={!creator.ownedBySelf}
+                          title={creator.ownedBySelf ? undefined : t('recentProjects.ownOnlyMutation')}
                           onClick={() => requestDelete(project)}
                         >
                           <Icon name="close" size={12} />
@@ -439,6 +911,11 @@ export function RecentProjectsStrip({
           </DialogFooter>
         </Dialog>
       ) : null}
+      <InviteDialog
+        open={inviteOpen}
+        onClose={() => setInviteOpen(false)}
+        canAssignRoles={canInvite}
+      />
     </section>
   );
 }
@@ -682,6 +1159,14 @@ function projectCover(
     if (/\.html?$/i.test(entry)) return { kind: 'html', src, style, initial };
   }
   return { kind: 'fallback', style, initial };
+}
+
+function filterKindForProject(project: Project): ProjectKindFilter {
+  const kind = project.metadata?.kind;
+  if (kind === 'deck') return 'deck';
+  if (kind === 'image' || kind === 'video' || kind === 'audio') return 'media';
+  if (kind === 'prototype' || kind === 'template') return 'prototype';
+  return 'other';
 }
 
 type ProjectCategory = 'prototype' | 'live-artifact' | 'slide' | 'media' | 'brand';

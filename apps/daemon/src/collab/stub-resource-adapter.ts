@@ -22,5 +22,8 @@ export function createStubResourcePublishAdapter(): ResourcePublishAdapter {
       const current = versions.get(projectId);
       return current === undefined ? null : { version: current };
     },
+    async unpublish({ projectId }) {
+      versions.delete(projectId);
+    },
   };
 }

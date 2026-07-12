@@ -23,11 +23,22 @@ export interface UseCollabResult {
   publishedVersion: number | null;
   syncState: CollabSnapshot['syncState'];
   ownerMemberId: CollabSnapshot['ownerMemberId'];
+  ownerDisplayName: CollabSnapshot['ownerDisplayName'];
+  ownerRole: CollabSnapshot['ownerRole'];
   reportChange: () => void;
   requestPublish: () => void;
+  /** Member side — pull the published head into the local project directory. */
+  pull: () => Promise<void>;
 }
 
-const EMPTY: CollabSnapshot = { present: [], publishedVersion: null, syncState: null, ownerMemberId: null };
+const EMPTY: CollabSnapshot = {
+  present: [],
+  publishedVersion: null,
+  syncState: null,
+  ownerMemberId: null,
+  ownerDisplayName: null,
+  ownerRole: null,
+};
 
 /**
  * React seam over {@link CollabClient} (C lane). Starts a presence heartbeat +
@@ -42,7 +53,15 @@ export function useCollab(options: UseCollabOptions): UseCollabResult {
 
   const active = Boolean(enabled && projectId && member);
   // Restart only on identity changes, not on every render of a fresh member object.
-  const memberKey = member ? JSON.stringify([member.memberId, member.name ?? '', member.role ?? '']) : '';
+  const memberKey = member
+    ? JSON.stringify([
+        member.memberId,
+        member.name ?? '',
+        member.role ?? '',
+        member.filePath ?? '',
+        member.activity ?? null,
+      ])
+    : '';
 
   useEffect(() => {
     if (!active || !projectId || !member) {
@@ -79,13 +98,21 @@ export function useCollab(options: UseCollabOptions): UseCollabResult {
   const requestPublish = useCallback(() => {
     void clientRef.current?.requestPublish();
   }, []);
+  // Returns the promise (unlike reportChange/requestPublish) so the member
+  // auto-pull can await a successful pull before advancing its version cursor.
+  const pull = useCallback(async () => {
+    await clientRef.current?.pull();
+  }, []);
 
   return {
     present: snapshot.present,
     publishedVersion: snapshot.publishedVersion,
     syncState: snapshot.syncState,
     ownerMemberId: snapshot.ownerMemberId,
+    ownerDisplayName: snapshot.ownerDisplayName,
+    ownerRole: snapshot.ownerRole,
     reportChange,
     requestPublish,
+    pull,
   };
 }

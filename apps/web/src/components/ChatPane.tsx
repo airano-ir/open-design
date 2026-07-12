@@ -461,6 +461,11 @@ interface Props {
   hasActiveDesignSystem?: boolean;
   activeDesignSystem?: DesignSystemSummary | null;
   sendDisabled?: boolean;
+  // Read-only viewer of a team-shared project. Beyond `sendDisabled` (which only
+  // blocks the send action), this also disables the composer input itself and
+  // hides the empty-state starter cards, since a member cannot start a
+  // conversation on someone else's shared project.
+  viewerOnly?: boolean;
   queuedItems?: QueuedSendItem[];
   onRemoveQueuedSend?: (id: string) => void;
   onUpdateQueuedSend?: (id: string, update: QueuedSendUpdate) => void;
@@ -759,6 +764,7 @@ export function ChatPane({
   streaming,
   loading = false,
   sendDisabled = false,
+  viewerOnly = false,
   queuedItems = [],
   error,
   projectId,
@@ -1952,6 +1958,7 @@ export function ChatPane({
       skills={skills}
       streaming={streaming}
       sendDisabled={sendDisabled}
+      inputDisabled={viewerOnly}
       initialDraft={initialDraft}
       composerPlaceholder={composerPlaceholder}
       placeholderScenarios={composerPlaceholderScenarios}
@@ -2202,6 +2209,11 @@ export function ChatPane({
                     />
                   ) : (
                     <>
+                      {/* Read-only viewers of a team-shared project cannot start
+                          a conversation, so the empty-state title + starter
+                          cards are hidden for them. */}
+                      {!viewerOnly ? (
+                      <>
                       <div className="chat-empty">
                         <span className="chat-empty-title">
                           {t('chat.startTitle')}
@@ -2241,6 +2253,8 @@ export function ChatPane({
                           </button>
                         ))}
                       </div>
+                      </>
+                      ) : null}
                       {connectRepoNeeded ? (
                         <div className="chat-connect-repo" role="note">
                           <span className="chat-connect-repo-icon" aria-hidden>

@@ -5,7 +5,7 @@
 //
 // Polling-based by design (live cursors were cut; content is polled — the spec).
 
-import type { CollabPresenceMember, ProjectSyncState } from '@open-design/contracts';
+import type { CollabMemberRole, CollabPresenceMember, ProjectSyncState } from '@open-design/contracts';
 
 // Presence identity is the shared contract DTO; re-export so collab consumers
 // keep importing it from the client module.
@@ -18,6 +18,14 @@ export interface CollabSnapshot {
   syncState: ProjectSyncState | null;
   /** The member who shared this project (its single writer); null if unshared. */
   ownerMemberId: string | null;
+  /**
+   * The owner's display name, resolved server-side from the collab-cloud member
+   * directory, so the read-only banner can read "这是 麻薯 创建的共享项目" instead
+   * of an opaque id. Null when unshared or the owner is not in the directory.
+   */
+  ownerDisplayName: string | null;
+  /** The owner's team role (owner/admin/member), from the same directory entry. */
+  ownerRole: CollabMemberRole | null;
 }
 
 export interface CollabClientOptions {
@@ -46,7 +54,14 @@ export class CollabClient {
   private readonly onUpdate?: CollabClientOptions['onUpdate'];
   private readonly onError?: CollabClientOptions['onError'];
   private readonly timers: ReturnType<typeof setInterval>[] = [];
-  private snapshot: CollabSnapshot = { present: [], publishedVersion: null, syncState: null, ownerMemberId: null };
+  private snapshot: CollabSnapshot = {
+    present: [],
+    publishedVersion: null,
+    syncState: null,
+    ownerMemberId: null,
+    ownerDisplayName: null,
+    ownerRole: null,
+  };
   private running = false;
 
   constructor(options: CollabClientOptions) {
@@ -67,10 +82,9 @@ export class CollabClient {
   start(): void {
     if (this.running) return;
     this.running = true;
-    void this.heartbeat();
     void this.pollStatus();
-    this.timers.push(setInterval(() => void this.heartbeat(), this.heartbeatMs));
     this.timers.push(setInterval(() => void this.pollStatus(), this.statusPollMs));
+    this.timers.push(setInterval(() => void this.heartbeat(), this.heartbeatMs));
   }
 
   stop(): void {
@@ -91,7 +105,20 @@ export class CollabClient {
     await this.post('/collab/publish');
   }
 
+  /**
+   * Member side — pull the resource-hub head into the local project directory.
+   * The daemon materializes the new content and its file watcher then fires the
+   * existing live-reload SSE, so the FileViewer refreshes on its own.
+   */
+  async pull(): Promise<void> {
+    await this.post('/collab/pull');
+  }
+
   async heartbeat(): Promise<void> {
+    if (!this.isSharedProject()) {
+      if (this.snapshot.present.length > 0) this.update({ present: [] });
+      return;
+    }
     try {
       const body = await this.post('/presence/heartbeat', this.member);
       if (Array.isArray(body?.present)) this.update({ present: body.present as CollabPresenceMember[] });
@@ -102,11 +129,15 @@ export class CollabClient {
 
   async pollStatus(): Promise<void> {
     try {
+      const wasShared = this.isSharedProject();
       const body = await this.get('/collab/status');
       const version = typeof body?.publishedVersion === 'number' ? body.publishedVersion : null;
       const syncState = (body?.syncState as ProjectSyncState | undefined) ?? null;
       const ownerMemberId = typeof body?.ownerMemberId === 'string' ? body.ownerMemberId : null;
-      this.update({ publishedVersion: version, syncState, ownerMemberId });
+      const ownerDisplayName = typeof body?.ownerDisplayName === 'string' ? body.ownerDisplayName : null;
+      const ownerRole = isCollabMemberRole(body?.ownerRole) ? body.ownerRole : null;
+      this.update({ publishedVersion: version, syncState, ownerMemberId, ownerDisplayName, ownerRole });
+      if (!wasShared && this.isSharedProject()) void this.heartbeat();
     } catch (error) {
       this.onError?.(error);
     }
@@ -151,6 +182,10 @@ export class CollabClient {
     this.onUpdate?.(this.snapshot);
   }
 
+  private isSharedProject(): boolean {
+    return this.snapshot.syncState !== null && this.snapshot.syncState !== 'local_only';
+  }
+
   private async get(path: string): Promise<Record<string, unknown> | null> {
     const response = await this.fetchImpl(this.url(path));
     if (!response.ok) throw new Error(`collab GET ${path} failed: ${response.status}`);
@@ -171,4 +206,8 @@ export class CollabClient {
   private url(path: string): string {
     return `${this.baseUrl}/api/projects/${encodeURIComponent(this.projectId)}${path}`;
   }
+}
+
+function isCollabMemberRole(value: unknown): value is CollabMemberRole {
+  return value === 'owner' || value === 'admin' || value === 'member';
 }

@@ -46,6 +46,8 @@ interface Props {
   designSystems: DesignSystemSummary[];
   selectedId: string | null;
   loading?: boolean;
+  // Read-only viewer of a team-shared project cannot switch the design system.
+  disabled?: boolean;
   onChange: (id: string | null) => void;
   /**
    * Trigger styling only; the popover is identical across variants.
@@ -65,12 +67,14 @@ export function DesignSystemPicker({
   designSystems,
   selectedId,
   loading,
+  disabled = false,
   onChange,
   variant = 'project',
   label,
   showCreateAction = true,
 }: Props) {
   const { locale, t } = useI18n();
+  const triggerDisabled = Boolean(loading || disabled);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [anchor, setAnchor] = useState<PopoverAnchor | null>(null);
@@ -94,6 +98,10 @@ export function DesignSystemPicker({
   // design-system summary. Fetched lazily on first open; a non-brand system
   // (bundled / imported) is absent from the map and keeps the thin preview.
   const brandsByDesignSystem = useBrandsByDesignSystemId(open);
+
+  useEffect(() => {
+    if (disabled) setOpen(false);
+  }, [disabled]);
 
   useEffect(() => {
     if (!open) return;
@@ -443,7 +451,7 @@ export function DesignSystemPicker({
           data-testid="home-hero-design-system-trigger"
           aria-haspopup="listbox"
           aria-expanded={open}
-          disabled={loading}
+          disabled={triggerDisabled}
           title={selected?.title ?? t('designSystemPicker.noneTitle')}
           onClick={() => setOpen((v) => !v)}
         >
@@ -476,7 +484,7 @@ export function DesignSystemPicker({
           data-testid="home-hero-footer-option-designSystem"
           aria-haspopup="listbox"
           aria-expanded={open}
-          disabled={loading}
+          disabled={triggerDisabled}
           onClick={() => setOpen((v) => !v)}
         >
           {triggerSwatches}
@@ -507,7 +515,7 @@ export function DesignSystemPicker({
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        disabled={loading}
+        disabled={triggerDisabled}
         title={selected?.title ?? t('designSystemPicker.select')}
       >
         {triggerSwatches}

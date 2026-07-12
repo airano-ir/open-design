@@ -8,7 +8,11 @@ import Database from 'better-sqlite3';
 import path from 'node:path';
 import fs from 'node:fs';
 import { randomUUID } from 'node:crypto';
-import type { ProjectBrowserWorkspaceTab, ProjectTabsState } from '@open-design/contracts';
+import type {
+  CollabCloudComment,
+  ProjectBrowserWorkspaceTab,
+  ProjectTabsState,
+} from '@open-design/contracts';
 import { migrateCritique } from './critique/persistence.js';
 import { migrateMediaTasks } from './media/tasks.js';
 import { migrateLibrary } from './library-store.js';
@@ -181,7 +185,6 @@ function migrate(db: SqliteDb): void {
       anchored_version INTEGER,
       author_member_id TEXT,
       last_good_position_json TEXT,
-      UNIQUE(project_id, conversation_id, file_path, element_id, slide_key),
       FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
       FOREIGN KEY(conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
     );
@@ -377,6 +380,9 @@ function migrate(db: SqliteDb): void {
   if (!previewCommentAnchorCols.some((c: DbRow) => c.name === 'last_good_position_json')) {
     db.exec(`ALTER TABLE preview_comments ADD COLUMN last_good_position_json TEXT`);
   }
+  // Multiple comments per element: edit by explicit id; creating another note
+  // on the same element inserts a new row.
+  migratePreviewCommentsAllowMultiplePerElement(db);
   const deploymentCols = db.prepare(`PRAGMA table_info(deployments)`).all() as DbRow[];
   if (!deploymentCols.some((c: DbRow) => c.name === 'status')) {
     db.exec(`ALTER TABLE deployments ADD COLUMN status TEXT NOT NULL DEFAULT 'ready'`);
@@ -501,7 +507,6 @@ function migratePreviewCommentsSlideKey(db: SqliteDb): void {
       status TEXT NOT NULL,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL,
-      UNIQUE(project_id, conversation_id, file_path, element_id, slide_key),
       FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
       FOREIGN KEY(conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
     );
@@ -519,6 +524,72 @@ function migratePreviewCommentsSlideKey(db: SqliteDb): void {
     ALTER TABLE preview_comments_next RENAME TO preview_comments;
     CREATE INDEX IF NOT EXISTS idx_preview_comments_conversation
       ON preview_comments(project_id, conversation_id, updated_at DESC);
+  `);
+}
+
+/**
+ * Rebuild `preview_comments` so comments are keyed by `id` only.
+ *
+ * Older schemas had a natural unique key on project/conversation/file/element/
+ * slide/author. That prevented multiple notes by the same member on one
+ * element. Editing now requires the caller to send an explicit comment id.
+ */
+function migratePreviewCommentsAllowMultiplePerElement(db: SqliteDb): void {
+  const table = db
+    .prepare(`SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'preview_comments'`)
+    .get() as DbRow | undefined;
+  const tableSql = String(table?.sql ?? '');
+  const hasNaturalUnique = /UNIQUE\s*\([^)]*\bproject_id\b[^)]*\belement_id\b[^)]*\)/i.test(tableSql);
+  if (!hasNaturalUnique) return;
+
+  db.exec(`
+    CREATE TABLE preview_comments_multi_next (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL,
+      conversation_id TEXT NOT NULL,
+      file_path TEXT NOT NULL,
+      element_id TEXT NOT NULL,
+      selector TEXT NOT NULL,
+      label TEXT NOT NULL,
+      text TEXT NOT NULL,
+      position_json TEXT NOT NULL,
+      html_hint TEXT NOT NULL,
+      selection_kind TEXT,
+      member_count INTEGER,
+      pod_members_json TEXT,
+      style_json TEXT,
+      attachments_json TEXT,
+      slide_index INTEGER,
+      slide_key INTEGER NOT NULL DEFAULT -1,
+      note TEXT NOT NULL,
+      status TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      anchor_state TEXT,
+      anchored_version INTEGER,
+      author_member_id TEXT,
+      last_good_position_json TEXT,
+      FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE,
+      FOREIGN KEY(conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
+    );
+
+    INSERT INTO preview_comments_multi_next
+      (id, project_id, conversation_id, file_path, element_id, selector, label,
+       text, position_json, html_hint, selection_kind, member_count, pod_members_json,
+       style_json, attachments_json, slide_index, slide_key, note, status, created_at, updated_at,
+       anchor_state, anchored_version, author_member_id, last_good_position_json)
+    SELECT id, project_id, conversation_id, file_path, element_id, selector, label,
+       text, position_json, html_hint, selection_kind, member_count, pod_members_json,
+       style_json, attachments_json, slide_index, slide_key, note, status, created_at, updated_at,
+       anchor_state, anchored_version, author_member_id, last_good_position_json
+      FROM preview_comments;
+
+    DROP TABLE preview_comments;
+    ALTER TABLE preview_comments_multi_next RENAME TO preview_comments;
+    CREATE INDEX IF NOT EXISTS idx_preview_comments_conversation
+      ON preview_comments(project_id, conversation_id, updated_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_preview_comments_conversation_created
+      ON preview_comments(project_id, conversation_id, created_at ASC);
   `);
 }
 
@@ -1901,15 +1972,21 @@ export function upsertPreviewComment(db: SqliteDb, projectId: string, conversati
     typeof input?.authorMemberId === 'string' && input.authorMemberId.trim()
       ? input.authorMemberId.trim()
       : null;
+  const requestedId =
+    typeof input?.id === 'string' && input.id.trim()
+      ? input.id.trim()
+      : null;
   const now = Date.now();
-  const existing = db
-    .prepare(
-      `SELECT id, created_at AS createdAt, attachments_json AS attachmentsJson
-         FROM preview_comments
-        WHERE project_id = ? AND conversation_id = ? AND file_path = ? AND element_id = ? AND slide_key = ?`,
-    )
-    .get(projectId, conversationId, filePath, elementId, slideKey) as DbRow | undefined;
-  const id = existing?.id ?? randomCommentId();
+  const existing = requestedId
+    ? db
+        .prepare(
+          `SELECT id, created_at AS createdAt, attachments_json AS attachmentsJson
+             FROM preview_comments
+            WHERE id = ? AND project_id = ? AND conversation_id = ?`,
+        )
+        .get(requestedId, projectId, conversationId) as DbRow | undefined
+    : undefined;
+  const id = existing?.id ?? requestedId ?? randomCommentId();
   const createdAt = existing?.createdAt ?? now;
   const existingAttachments = normalizePreviewCommentAttachments(parseJsonOrUndef(existing?.attachmentsJson));
   const attachments = attachmentsProvided ? incomingAttachments : existingAttachments;
@@ -1922,7 +1999,7 @@ export function upsertPreviewComment(db: SqliteDb, projectId: string, conversati
         style_json, attachments_json, slide_index, slide_key, note, status, created_at, updated_at,
         anchored_version, author_member_id)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-     ON CONFLICT(project_id, conversation_id, file_path, element_id, slide_key) DO UPDATE SET
+     ON CONFLICT(id) DO UPDATE SET
        selector = excluded.selector,
        label = excluded.label,
        text = excluded.text,
@@ -1938,7 +2015,9 @@ export function upsertPreviewComment(db: SqliteDb, projectId: string, conversati
        status = 'open',
        anchored_version = excluded.anchored_version,
        author_member_id = excluded.author_member_id,
-       updated_at = excluded.updated_at`,
+       updated_at = excluded.updated_at
+     WHERE preview_comments.project_id = excluded.project_id
+       AND preview_comments.conversation_id = excluded.conversation_id`,
   ).run(
     id,
     projectId,
@@ -2023,7 +2102,174 @@ export function deletePreviewComment(db: SqliteDb, projectId: string, conversati
   return result.changes > 0;
 }
 
-function getPreviewComment(db: SqliteDb, projectId: string, conversationId: string, id: string) {
+/**
+ * Pick a local conversation to re-home cross-daemon synced comments onto.
+ * Conversation ids do not cross daemons and preview_comments carries a
+ * conversation FK, so a comment pulled from the collab cloud must land under one
+ * of THIS daemon's conversations for the project. Returns the most-recently
+ * updated conversation id, or null when the project has none yet.
+ */
+export function getLatestConversationIdForProject(
+  db: SqliteDb,
+  projectId: string,
+): string | null {
+  const row = db
+    .prepare(
+      `SELECT id FROM conversations
+        WHERE project_id = ?
+        ORDER BY updated_at DESC, rowid DESC
+        LIMIT 1`,
+    )
+    .get(projectId) as DbRow | undefined;
+  return row && typeof row.id === 'string' ? row.id : null;
+}
+
+/**
+ * Delete a synced comment by its global id (the author daemon's own id). Used to
+ * apply an inbound tombstone. Scoped by project so a stray id can't reach across
+ * projects. Returns true when a row was removed.
+ */
+export function deleteSyncedPreviewComment(
+  db: SqliteDb,
+  projectId: string,
+  id: string,
+): boolean {
+  const result = db
+    .prepare(`DELETE FROM preview_comments WHERE id = ? AND project_id = ?`)
+    .run(id, projectId);
+  return result.changes > 0;
+}
+
+/**
+ * Merge one collab-cloud comment into local `preview_comments`. The cloud
+ * comment's id is used verbatim as the local id (it is the author daemon's own
+ * id — a global dedup key), so a comment's whole lifecycle keys off that id:
+ *
+ * - Tombstone (`deleted: true`): delete the local row by id. Delete wins
+ *   unconditionally (it does not compare `updatedAt`).
+ * - Create/edit: UPSERT by id. A brand-new id inserts; an existing id updates
+ *   IN PLACE only when the incoming `updatedAt` is strictly newer
+ *   (last-writer-wins), so a re-pull of an unchanged comment is a no-op and a
+ *   stale edit never overwrites a fresher local one. Comments are keyed by id,
+ *   so multiple notes on the same element coexist, including from the same
+ *   member.
+ *
+ * `conversationId` is a LOCAL conversation (see getLatestConversationIdForProject);
+ * the cloud comment's own conversationId is not a valid FK here. It is only used
+ * when inserting a new row — an in-place update keeps the row's existing
+ * conversation. Returns true when local state changed (insert, update, or delete).
+ */
+export function mergeSyncedPreviewComment(
+  db: SqliteDb,
+  projectId: string,
+  conversationId: string,
+  comment: CollabCloudComment,
+): boolean {
+  if (comment.deleted) {
+    return deleteSyncedPreviewComment(db, projectId, comment.id);
+  }
+  const now = Date.now();
+  const slideIndex = Number.isFinite(comment.slideIndex)
+    ? Math.max(0, Math.round(comment.slideIndex as number))
+    : null;
+  const slideKey = slideIndex ?? -1;
+  const selectionKind = comment.selectionKind === 'pod' ? 'pod' : 'element';
+  const podMembers = selectionKind === 'pod' && Array.isArray(comment.podMembers)
+    ? comment.podMembers
+    : null;
+  const memberCount = selectionKind === 'pod'
+    ? (podMembers?.length ?? (Number.isFinite(comment.memberCount) ? comment.memberCount : 0))
+    : null;
+  const status = PREVIEW_COMMENT_STATUSES.has(comment.status) ? comment.status : 'open';
+  const attachments = Array.isArray(comment.attachments) && comment.attachments.length > 0
+    ? comment.attachments
+    : null;
+  const anchorState = typeof comment.anchorState === 'string' ? comment.anchorState : null;
+  const anchoredVersion = Number.isFinite(comment.anchoredVersion)
+    ? Math.max(0, Math.round(comment.anchoredVersion as number))
+    : null;
+  const updatedAt = Number.isFinite(comment.updatedAt) ? (comment.updatedAt as number) : now;
+  const existing = db
+    .prepare(`SELECT updated_at AS updatedAt FROM preview_comments WHERE id = ? AND project_id = ?`)
+    .get(comment.id, projectId) as DbRow | undefined;
+  if (existing) {
+    // Last-writer-wins: only apply a strictly-newer edit. Keeps the existing
+    // row's conversation/created_at/author identity; refreshes mutable content,
+    // status, and drift-ladder anchor state.
+    if (updatedAt <= Number(existing.updatedAt ?? 0)) return false;
+    db.prepare(
+      `UPDATE preview_comments SET
+         selector = ?, label = ?, text = ?, position_json = ?, html_hint = ?,
+         selection_kind = ?, member_count = ?, pod_members_json = ?, style_json = ?,
+         attachments_json = ?, slide_index = ?, slide_key = ?, note = ?, status = ?,
+         anchor_state = ?, anchored_version = ?, last_good_position_json = ?, updated_at = ?
+       WHERE id = ? AND project_id = ?`,
+    ).run(
+      comment.selector,
+      comment.label,
+      typeof comment.text === 'string' ? comment.text : '',
+      JSON.stringify(comment.position ?? { x: 0, y: 0, width: 0, height: 0 }),
+      typeof comment.htmlHint === 'string' ? comment.htmlHint : '',
+      selectionKind,
+      memberCount,
+      podMembers ? JSON.stringify(podMembers) : null,
+      comment.style ? JSON.stringify(comment.style) : null,
+      attachments ? JSON.stringify(attachments) : null,
+      slideIndex,
+      slideKey,
+      typeof comment.note === 'string' ? comment.note : '',
+      status,
+      anchorState,
+      anchoredVersion,
+      comment.lastGoodPosition ? JSON.stringify(comment.lastGoodPosition) : null,
+      updatedAt,
+      comment.id,
+      projectId,
+    );
+    return true;
+  }
+  // New comment. INSERT OR IGNORE guards against a rare id collision without
+  // throwing.
+  const result = db
+    .prepare(
+      `INSERT OR IGNORE INTO preview_comments
+         (id, project_id, conversation_id, file_path, element_id, selector, label,
+          text, position_json, html_hint, selection_kind, member_count, pod_members_json,
+          style_json, attachments_json, slide_index, slide_key, note, status, created_at, updated_at,
+          anchor_state, anchored_version, author_member_id, last_good_position_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .run(
+      comment.id,
+      projectId,
+      conversationId,
+      comment.filePath,
+      comment.elementId,
+      comment.selector,
+      comment.label,
+      typeof comment.text === 'string' ? comment.text : '',
+      JSON.stringify(comment.position ?? { x: 0, y: 0, width: 0, height: 0 }),
+      typeof comment.htmlHint === 'string' ? comment.htmlHint : '',
+      selectionKind,
+      memberCount,
+      podMembers ? JSON.stringify(podMembers) : null,
+      comment.style ? JSON.stringify(comment.style) : null,
+      attachments ? JSON.stringify(attachments) : null,
+      slideIndex,
+      slideKey,
+      typeof comment.note === 'string' ? comment.note : '',
+      status,
+      Number.isFinite(comment.createdAt) ? comment.createdAt : now,
+      updatedAt,
+      anchorState,
+      anchoredVersion,
+      typeof comment.memberId === 'string' ? comment.memberId : null,
+      comment.lastGoodPosition ? JSON.stringify(comment.lastGoodPosition) : null,
+    );
+  return result.changes > 0;
+}
+
+export function getPreviewComment(db: SqliteDb, projectId: string, conversationId: string, id: string) {
   const row = db
     .prepare(
       `SELECT id, project_id AS projectId, conversation_id AS conversationId,

@@ -198,7 +198,6 @@ import { historyWithApiAttachmentContext } from '../api-attachment-context';
 import { filterImplicitProducedFiles } from '../produced-files';
 import { AvatarMenu } from './AvatarMenu';
 import { EntrySettingsMenu } from './EntrySettingsMenu';
-import { HandoffButton } from './HandoffButton';
 import { Icon } from './Icon';
 import { localizePluginTitle } from './plugins-home/localization';
 import { DesignSystemPicker } from './DesignSystemPicker';
@@ -1322,7 +1321,17 @@ export function ProjectView({
   // Team collaboration: presence for a shared project. Dormant (no heartbeat,
   // renders nothing) unless the workspace context marks the viewer an active
   // team member — safe to mount unconditionally.
-  const projectCollab = useProjectCollab(project?.id ?? null);
+  const projectCollab = useProjectCollab(project?.id ?? null, {
+    presenceFilePath: project?.metadata?.entryFile ?? null,
+  });
+  // Read-only banner copy: when the collab cloud resolved who shared this project,
+  // name them ("这是 麻薯 创建的共享项目…"); otherwise fall back to the name-less
+  // notice. Only computed when the viewer is actually read-only.
+  const readonlyNoticeText = projectCollab.viewerOnly
+    ? projectCollab.ownerDisplayName
+      ? t('workspace.readonlyNoticeBy', { owner: projectCollab.ownerDisplayName })
+      : t('workspace.readonlyNotice')
+    : undefined;
   const handleThemeChange = onThemeChange ?? (() => {});
   const projectDetail = useProjectDetail(project.id);
   const detailedProject = projectDetail.project?.id === project.id ? projectDetail.project : null;
@@ -3381,8 +3390,37 @@ export function ProjectView({
     );
   }, [project.id, activeConversationId]);
 
+  // Cross-daemon comment sync: the daemon merges teammates' comments into the
+  // local store on a background poll, but the web panel only shows what it last
+  // fetched. Re-pull on a ~5s cadence (matching the daemon's collab poll) plus on
+  // tab re-focus so the owner sees a member's freshly-synced comment appear
+  // without a manual refresh. Gated on `projectCollab.enabled` so a personal /
+  // off-team project never polls. This only replaces the loaded comment LIST —
+  // the composer / create-form drafts are separate local state, so an in-flight
+  // comment the user is typing is never clobbered.
+  useEffect(() => {
+    if (!projectCollab.enabled || !activeConversationId) return undefined;
+    const interval = setInterval(() => {
+      void refreshPreviewComments();
+    }, 5_000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void refreshPreviewComments();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [projectCollab.enabled, activeConversationId, refreshPreviewComments]);
+
   const savePreviewComment = useCallback(
-    async (target: PreviewCommentTarget, note: string, attachAfterSave: boolean, images: File[] = []) => {
+    async (
+      target: PreviewCommentTarget,
+      note: string,
+      attachAfterSave: boolean,
+      images: File[] = [],
+      commentId?: string,
+    ) => {
       if (!activeConversationId) return null;
       // Upload any attached images first so the saved comment carries durable
       // file paths — this is what lets the comment list / re-opened popover
@@ -3393,11 +3431,12 @@ export function ProjectView({
         if (result.uploaded.length !== images.length) return null;
         uploadedAttachments = result.uploaded.map((file) => ({ path: file.path, name: file.name }));
       }
-      const existing = previewComments.find(
-        (comment) => comment.filePath === target.filePath && comment.elementId === target.elementId,
-      );
+      const existing = commentId
+        ? previewComments.find((comment) => comment.id === commentId)
+        : undefined;
       const attachments = mergePreviewCommentAttachments(existing?.attachments, uploadedAttachments);
       const saved = await upsertPreviewComment(project.id, activeConversationId, {
+        ...(commentId ? { id: commentId } : {}),
         target,
         note,
         ...(attachments.length > 0 ? { attachments } : {}),
@@ -8083,6 +8122,8 @@ export function ProjectView({
               // A read-only viewer of a team-shared project cannot drive artifact
               // changes through chat (comments go through the separate overlay).
               sendDisabled={currentConversationSendDisabled || projectCollab.viewerOnly}
+              viewerOnly={projectCollab.viewerOnly}
+              composerPlaceholder={projectCollab.viewerOnly ? t('workspace.readonlyNotice') : undefined}
               queuedItems={currentConversationQueuedItems}
               error={conversationLoadError ?? error}
               projectId={project.id}
@@ -8212,14 +8253,17 @@ export function ProjectView({
               projectHeader={(
                 <span className="chat-project-title-line">
                   <span
-                    className="title editable"
+                    className={`title${projectCollab.viewerOnly ? ' readonly' : ' editable'}`}
                     data-testid="project-title"
-                    title={project.name}
-                    tabIndex={0}
-                    role="textbox"
+                    title={projectCollab.viewerOnly ? t('workspace.readonlyNotice') : project.name}
+                    tabIndex={projectCollab.viewerOnly ? -1 : 0}
+                    role={projectCollab.viewerOnly ? undefined : 'textbox'}
                     suppressContentEditableWarning
-                    contentEditable
-                    onBlur={(e) => handleProjectRename(e.currentTarget.textContent ?? '')}
+                    contentEditable={!projectCollab.viewerOnly}
+                    onBlur={(e) => {
+                      if (projectCollab.viewerOnly) return;
+                      handleProjectRename(e.currentTarget.textContent ?? '');
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
@@ -8232,18 +8276,13 @@ export function ProjectView({
                   {projectTypeLabel ? (
                     <span className="meta" data-testid="project-meta">{projectTypeLabel}</span>
                   ) : null}
-                  {projectCollab.enabled ? (
-                    <PresenceBar
-                      members={projectCollab.present}
-                      {...(projectCollab.member ? { selfMemberId: projectCollab.member.memberId } : {})}
-                    />
-                  ) : null}
                 </span>
               )}
               designSystemPicker={(
                 <DesignSystemPicker
                   designSystems={designSystems}
                   selectedId={projectDesignSystemId ?? null}
+                  disabled={projectCollab.viewerOnly}
                   onChange={handleChangeDesignSystemId}
                 />
               )}
@@ -8276,7 +8315,9 @@ export function ProjectView({
         ) : null}
         <FileWorkspace
           projectId={project.id}
+          projectName={project.name}
           viewerOnly={projectCollab.viewerOnly}
+          readonlyNotice={readonlyNoticeText}
           projectKind={projectKindFromMetadataToTracking(currentProject.metadata) ?? 'prototype'}
           rootDirName={(() => {
             const baseDir = currentProject.metadata?.baseDir;
@@ -8340,8 +8381,20 @@ export function ProjectView({
           githubConnected={githubConnected}
           commentPortalId={commentInspectorPortalId}
           onCommentModeChange={setCommentInspectorActive}
+          fileActionsBefore={projectCollab.enabled ? (
+            <PresenceBar
+              members={projectCollab.present}
+              selfMember={projectCollab.member}
+              {...(projectCollab.member ? { selfMemberId: projectCollab.member.memberId } : {})}
+            />
+          ) : null}
           chatConfig={config}
           chatAgentsById={agentsById}
+          handoffAgents={agents}
+          handoffArtifactId={headerArtifact.artifact_id}
+          handoffArtifactKind={headerArtifact.artifact_kind}
+          metricsConsent={config.telemetry?.metrics === true}
+          installationId={config.installationId}
           chatLocale={locale}
           conversations={conversations}
           activeConversationId={activeConversationId}
@@ -8361,35 +8414,23 @@ export function ProjectView({
           onLaunchTerminalAuth={handleLaunchAntigravityOauth}
           conversationId={activeConversationId}
           headerActions={(
-            <>
-              <HandoffButton
-                projectId={project.id}
-                projectName={project.name}
-                projectDir={projectDetail.resolvedDir}
-                agents={agents}
-                artifactId={headerArtifact.artifact_id}
-                artifactKind={headerArtifact.artifact_kind}
-                metricsConsent={config.telemetry?.metrics === true}
-                installationId={config.installationId}
-              />
-              <EntrySettingsMenu
-                config={config}
-                onThemeChange={handleThemeChange}
-                onOpenSettings={onOpenSettings}
-                trackingPageName="artifact"
-                onTrackTriggerClick={() => {
-                  // Spec row 52: the settings gear in the artifact header.
-                  // Carry the active artifact so settings slices line up with
-                  // the rest of the artifact_header funnel.
-                  trackArtifactHeaderClick(analytics.track, {
-                    page_name: 'artifact',
-                    area: 'artifact_header',
-                    element: 'settings',
-                    ...headerArtifact,
-                  });
-                }}
-              />
-            </>
+            <EntrySettingsMenu
+              config={config}
+              onThemeChange={handleThemeChange}
+              onOpenSettings={onOpenSettings}
+              trackingPageName="artifact"
+              onTrackTriggerClick={() => {
+                // Spec row 52: the settings gear in the artifact header.
+                // Carry the active artifact so settings slices line up with
+                // the rest of the artifact_header funnel.
+                trackArtifactHeaderClick(analytics.track, {
+                  page_name: 'artifact',
+                  area: 'artifact_header',
+                  element: 'settings',
+                  ...headerArtifact,
+                });
+              }}
+            />
           )}
           questionForm={displayedQuestionForm}
           questionFormPreview={displayedQuestionFormPreview}

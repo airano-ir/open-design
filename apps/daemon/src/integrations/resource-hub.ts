@@ -39,6 +39,7 @@ export interface ResourceRecord {
   teamId: string;
   kind: string;
   ownerMemberId: string;
+  metadata?: Record<string, unknown>;
   createdAt: string;
   deletedAt: string | null;
 }
@@ -248,7 +249,7 @@ export function createResourceHubClient(options: ResourceHubClientOptions = {}) 
 
     async createResource(
       principal: ResourceHubPrincipal,
-      input: { kind: string; resourceId?: string },
+      input: { kind: string; resourceId?: string; metadata?: Record<string, unknown> },
     ): Promise<ResourceRecord> {
       return request<ResourceRecord>(
         principal,

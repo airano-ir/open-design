@@ -30,6 +30,17 @@ export interface PackedTree {
   blobs: Map<string, Uint8Array>;
 }
 
+export interface PackTreeOptions {
+  /**
+   * Skip an entry — and its whole subtree, if it is a directory — when the
+   * predicate returns true. Receives the entry basename and its rootDir-relative
+   * forward-slash path. `packTree` stays kind-agnostic: any exclusion policy
+   * (e.g. collab publish dropping author-only `.file-versions/`) lives with the
+   * consumer, not baked into this neutral cloud drive.
+   */
+  exclude?: (name: string, relPath: string) => boolean;
+}
+
 // Canonical manifest digest: sort entries by path and hash a stable
 // serialization. The hub trusts (does not recompute) this digest, so the only
 // requirement is that the daemon computes it deterministically.
@@ -60,7 +71,11 @@ function byPath(a: { path: string }, b: { path: string }): number {
 // Walk a directory into a content-addressed tree. Paths are stored relative to
 // rootDir with forward slashes (canonical). Directories are recorded explicitly
 // so empty dirs survive; symlinks are stored by target without following.
-export async function packTree(rootDir: string): Promise<PackedTree> {
+export async function packTree(
+  rootDir: string,
+  options: PackTreeOptions = {},
+): Promise<PackedTree> {
+  const { exclude } = options;
   const entries: ManifestEntryInput[] = [];
   const blobs = new Map<string, Uint8Array>();
 
@@ -69,6 +84,7 @@ export async function packTree(rootDir: string): Promise<PackedTree> {
     for (const dirent of dirents) {
       const abs = path.join(absDir, dirent.name);
       const rel = relDir ? `${relDir}/${dirent.name}` : dirent.name;
+      if (exclude?.(dirent.name, rel)) continue;
       if (dirent.isSymbolicLink()) {
         entries.push({
           path: rel,

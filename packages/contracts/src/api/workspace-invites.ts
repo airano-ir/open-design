@@ -105,6 +105,46 @@ export interface WorkspaceInviteAcceptResponse {
   currentWorkspaceContext: WorkspaceCollabContext;
 }
 
+// —— Invite creation (the inviter/host flow) ——————————————————————————————
+// The team switcher's "邀请同事" dialog collects one or more { email, role }
+// pairs and POSTs them to the daemon (`POST /api/workspace/invite`), which
+// creates each invite on B with the signed-in vela session. Roles narrow to the
+// assignable set (never owner), reusing {@link WorkspaceInviteRole}.
+
+/** One invited teammate: an email plus the role to grant (never owner). */
+export interface WorkspaceInviteCreateItem {
+  email: string;
+  role: WorkspaceInviteRole;
+}
+
+/**
+ * POST /api/workspace/invite request body. The dialog submits one or more
+ * teammates in a single call; the daemon creates each invite independently, so
+ * a partial success is possible.
+ */
+export interface WorkspaceInviteCreateRequest {
+  invites: WorkspaceInviteCreateItem[];
+}
+
+/** Per-invite outcome the daemon reports back for one submitted email. */
+export interface WorkspaceInviteCreateResult {
+  email: string;
+  ok: boolean;
+  /** B's created invite id, present when ok === true. */
+  inviteId?: string;
+  /**
+   * Stable failure code when ok === false — mirrors the daemon helper's typed
+   * outcomes (`create_<status>` for B's HTTP errors, `create_unreachable` for a
+   * transport failure). Never thrown into the client.
+   */
+  error?: string;
+}
+
+/** POST /api/workspace/invite success response — one result per submitted email. */
+export interface WorkspaceInviteCreateResponse {
+  results: WorkspaceInviteCreateResult[];
+}
+
 // —— Local (client-owned) storage shapes ————————————————————————————————
 // These live on the invitee's device, not on the wire. C persists a pending
 // continuation while the invite is accepted-but-not-yet-handed-off (signed out,

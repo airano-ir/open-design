@@ -15,7 +15,7 @@ function installFetchStub(present: Array<{ memberId: string; name?: string }>, p
     const pathname = new URL(url, 'http://daemon.local').pathname;
     let payload: unknown = { ok: true };
     if (pathname.endsWith('/presence/heartbeat')) payload = { present: state.present };
-    else if (pathname.endsWith('/collab/status')) payload = { publishedVersion: state.publishedVersion };
+    else if (pathname.endsWith('/collab/status')) payload = { publishedVersion: state.publishedVersion, syncState: 'synced' };
     return { ok: true, status: 200, json: async () => payload } as unknown as Response;
   }) as typeof fetch;
   vi.stubGlobal('fetch', fetchImpl);
@@ -47,13 +47,15 @@ describe('CollabDemoView', () => {
     expect(screen.getByPlaceholderText(/paste a project id/i)).toBeTruthy();
   });
 
-  it('renders present members (excluding self) and the published head once joined', async () => {
+  it('renders present members including self and the published head once joined', async () => {
     installFetchStub([{ memberId: 'demo-aaaaaaaa', name: 'Me' }, { memberId: 'other', name: 'Other One' }], 5);
     render(<CollabDemoView projectId="p1" />);
     await act(async () => {
       await vi.advanceTimersByTimeAsync(0);
     });
-    // Self is excluded; the other member's initials render.
+    // Presence now includes self so a newly-shared project still shows the
+    // current member even before teammates join.
+    expect(screen.getByText('DM')).toBeTruthy();
     expect(screen.getByText('OO')).toBeTruthy();
     expect(screen.getByText('5')).toBeTruthy();
   });

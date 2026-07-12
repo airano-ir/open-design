@@ -12,7 +12,7 @@ function makeFetch(present: Array<{ memberId: string; name?: string }>, publishe
     const pathname = new URL(url, 'http://daemon.local').pathname;
     let payload: unknown = { ok: true };
     if (pathname.endsWith('/presence/heartbeat')) payload = { present };
-    else if (pathname.endsWith('/collab/status')) payload = { publishedVersion };
+    else if (pathname.endsWith('/collab/status')) payload = { publishedVersion, syncState: 'synced' };
     return { ok: true, status: 200, json: async () => payload } as unknown as Response;
   }) as typeof fetch;
   return { fetchImpl, calls };

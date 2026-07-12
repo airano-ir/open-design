@@ -1,19 +1,73 @@
-import type { Express } from 'express';
+import type { Express, Response } from 'express';
+import type { CollabPresenceMember } from '@open-design/contracts';
 import type { CollabRuntime } from '../collab/runtime.js';
 import type { PresenceMember } from '../collab/presence-tracker.js';
+import type {
+  VelaCliPresenceHeartbeatInput,
+  VelaCliPresenceLeaveInput,
+} from '../collab/vela-cli-collab-client.js';
+
+type PresenceActivity = Exclude<PresenceMember['activity'], undefined>;
+
+export interface CollabPresenceCloudClient {
+  heartbeatPresence(
+    projectId: string,
+    input: VelaCliPresenceHeartbeatInput,
+  ): Promise<CollabPresenceMember[]>;
+  listPresence(projectId: string): Promise<CollabPresenceMember[]>;
+  leavePresence(
+    projectId: string,
+    input: VelaCliPresenceLeaveInput,
+  ): Promise<CollabPresenceMember[]>;
+}
 
 export interface RegisterCollabPresenceRoutesDeps {
   collab: Pick<CollabRuntime, 'presence'>;
+  cloud?: CollabPresenceCloudClient | null;
 }
 
-function readMember(body: unknown): PresenceMember | null {
+function readHeartbeat(body: unknown): {
+  member: PresenceMember;
+  clientId?: string;
+  filePath?: string | null;
+  activity?: PresenceMember['activity'];
+} | null {
   const raw = (body ?? {}) as Record<string, unknown>;
   const memberId = typeof raw.memberId === 'string' ? raw.memberId.trim() : '';
   if (!memberId) return null;
   const member: PresenceMember = { memberId };
   if (typeof raw.name === 'string' && raw.name.trim()) member.name = raw.name.trim();
   if (raw.role === 'owner' || raw.role === 'admin' || raw.role === 'member') member.role = raw.role;
-  return member;
+  if (typeof raw.avatarUrl === 'string' || raw.avatarUrl === null) member.avatarUrl = raw.avatarUrl;
+  if (typeof raw.filePath === 'string' || raw.filePath === null) member.filePath = raw.filePath;
+  if (raw.activity !== undefined) member.activity = raw.activity as PresenceActivity;
+  const clientId = typeof raw.clientId === 'string' && raw.clientId.trim()
+    ? raw.clientId.trim()
+    : memberId;
+  const filePath = typeof raw.filePath === 'string' || raw.filePath === null
+    ? raw.filePath
+    : undefined;
+  return {
+    member,
+    clientId,
+    ...(filePath !== undefined ? { filePath } : {}),
+    ...(member.activity !== undefined ? { activity: member.activity } : {}),
+  };
+}
+
+function readLeave(body: unknown): { memberId: string; clientId?: string } | null {
+  const raw = (body ?? {}) as Record<string, unknown>;
+  const memberId = typeof raw.memberId === 'string' ? raw.memberId.trim() : '';
+  if (!memberId) return null;
+  const clientId = typeof raw.clientId === 'string' && raw.clientId.trim()
+    ? raw.clientId.trim()
+    : memberId;
+  return { memberId, clientId };
+}
+
+function cloudError(res: Response, error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return res.status(502).json({ error: 'collab_presence_unavailable', message });
 }
 
 /**
@@ -23,24 +77,49 @@ function readMember(body: unknown): PresenceMember | null {
  */
 export function registerCollabPresenceRoutes(app: Express, deps: RegisterCollabPresenceRoutesDeps): void {
   const { presence } = deps.collab;
+  const cloud = deps.cloud ?? null;
 
-  app.get('/api/projects/:id/presence', (req, res) => {
+  app.get('/api/projects/:id/presence', async (req, res) => {
+    if (cloud) {
+      try {
+        return res.json({ present: await cloud.listPresence(req.params.id) });
+      } catch (error) {
+        return cloudError(res, error);
+      }
+    }
     res.json({ present: presence.present(req.params.id) });
   });
 
-  app.post('/api/projects/:id/presence/heartbeat', (req, res) => {
-    const member = readMember(req.body);
-    if (!member) return res.status(400).json({ error: 'memberId required' });
-    presence.heartbeat(req.params.id, member);
+  app.post('/api/projects/:id/presence/heartbeat', async (req, res) => {
+    const heartbeat = readHeartbeat(req.body);
+    if (!heartbeat) return res.status(400).json({ error: 'memberId required' });
+    if (cloud) {
+      try {
+        return res.json({
+          present: await cloud.heartbeatPresence(req.params.id, heartbeat),
+        });
+      } catch (error) {
+        return cloudError(res, error);
+      }
+    }
+    presence.heartbeat(req.params.id, heartbeat.member);
     res.json({ present: presence.present(req.params.id) });
   });
 
-  app.post('/api/projects/:id/presence/leave', (req, res) => {
-    const memberId = typeof (req.body as Record<string, unknown> | undefined)?.memberId === 'string'
-      ? ((req.body as Record<string, unknown>).memberId as string).trim()
-      : '';
-    if (!memberId) return res.status(400).json({ error: 'memberId required' });
-    presence.leave(req.params.id, memberId);
+  app.post('/api/projects/:id/presence/leave', async (req, res) => {
+    const leave = readLeave(req.body);
+    if (!leave) return res.status(400).json({ error: 'memberId required' });
+    if (cloud) {
+      try {
+        return res.json({
+          ok: true,
+          present: await cloud.leavePresence(req.params.id, leave),
+        });
+      } catch (error) {
+        return cloudError(res, error);
+      }
+    }
+    presence.leave(req.params.id, leave.memberId);
     res.json({ ok: true, present: presence.present(req.params.id) });
   });
 }

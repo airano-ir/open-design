@@ -82,6 +82,9 @@ export function CollabDemoView({ projectId }: { projectId: string | null }) {
     if (publishedVersion !== null && pulledVersion === null) setPulledVersion(publishedVersion);
   }, [publishedVersion, pulledVersion]);
   const behind = publishedVersion !== null && pulledVersion !== null && publishedVersion > pulledVersion;
+  const presentCount = activeProjectId
+    ? new Set([member.memberId, ...present.map((presentMember) => presentMember.memberId)]).size
+    : 0;
 
   return (
     <div className={styles.view}>
@@ -142,8 +145,8 @@ export function CollabDemoView({ projectId }: { projectId: string | null }) {
 
           <div className={styles.row}>
             <span className={styles.label}>Present</span>
-            <PresenceBar members={present} selfMemberId={member.memberId} />
-            <span className={styles.count}>{present.length} online</span>
+            <PresenceBar members={present} selfMember={member} selfMemberId={member.memberId} />
+            <span className={styles.count}>{presentCount} online</span>
           </div>
 
           <div className={styles.row}>

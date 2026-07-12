@@ -104,6 +104,27 @@ describe('useProjectCollab', () => {
     expect(result.current.enabled).toBe(false);
   });
 
+  it('fails closed while the workspace context request is still pending', async () => {
+    const fetchImpl = (async (input: RequestInfo | URL) => {
+      const pathname = new URL(String(input), 'http://d.local').pathname;
+      if (pathname.endsWith('/workspace/context')) {
+        return new Promise<Response>(() => {
+          /* keep the workspace context unresolved */
+        });
+      }
+      return { ok: true, status: 200, json: async () => ({ ok: true }) } as unknown as Response;
+    }) as typeof fetch;
+
+    const { result } = renderHook(() => useProjectCollab('p1', { fetch: fetchImpl }));
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+
+    expect(result.current.enabled).toBe(false);
+    expect(result.current.viewerOnly).toBe(true);
+  });
+
   it('fails closed: a non-owner admin is read-only on a shared project even before the owner id arrives', async () => {
     // An admin (canWriteSyncedFiles=true, so the workspace gate is open) opens
     // someone else's shared project. `installFetch`'s /collab/status omits
@@ -119,6 +140,33 @@ describe('useProjectCollab', () => {
       await vi.advanceTimersByTimeAsync(0);
     });
 
+    expect(result.current.viewerOnly).toBe(true);
+  });
+
+  it('fails closed before the first collab status response resolves', async () => {
+    const admin = makeContext({ role: 'admin', workspaceMemberId: 'wm-admin' });
+    const fetchImpl = (async (input: RequestInfo | URL) => {
+      const pathname = new URL(String(input), 'http://d.local').pathname;
+      let payload: unknown = { ok: true };
+      if (pathname.endsWith('/workspace/context')) payload = { context: admin };
+      else if (pathname.endsWith('/presence/heartbeat')) payload = { present: [{ memberId: 'wm-admin' }] };
+      else if (pathname.endsWith('/collab/status')) {
+        return new Promise<Response>(() => {
+          /* keep the initial status poll unresolved */
+        });
+      }
+      return { ok: true, status: 200, json: async () => payload } as unknown as Response;
+    }) as typeof fetch;
+
+    const { result } = renderHook(() => useProjectCollab('p1', { fetch: fetchImpl }));
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+      await vi.advanceTimersByTimeAsync(0);
+    });
+
+    expect(result.current.enabled).toBe(true);
+    expect(result.current.syncState).toBeNull();
     expect(result.current.viewerOnly).toBe(true);
   });
 
@@ -161,5 +209,31 @@ describe('useProjectCollab', () => {
     });
 
     expect(result.current.viewerOnly).toBe(true);
+  });
+
+  it('does not auto-pull for a locked workspace owner', async () => {
+    const calls: Array<{ pathname: string; method: string }> = [];
+    const owner = makeContext({ role: 'owner', lifecycleState: 'locked', workspaceMemberId: 'wm-owner' });
+    const fetchImpl = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const pathname = new URL(String(input), 'http://d.local').pathname;
+      calls.push({ pathname, method: init?.method ?? 'GET' });
+      let payload: unknown = { ok: true };
+      if (pathname.endsWith('/workspace/context')) payload = { context: owner };
+      else if (pathname.endsWith('/presence/heartbeat')) payload = { present: [{ memberId: 'wm-owner' }] };
+      else if (pathname.endsWith('/collab/status')) {
+        payload = { publishedVersion: 2, syncState: 'synced', ownerMemberId: 'wm-owner' };
+      }
+      return { ok: true, status: 200, json: async () => payload } as unknown as Response;
+    }) as typeof fetch;
+    const { result } = renderHook(() => useProjectCollab('p1', { fetch: fetchImpl }));
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+      await vi.advanceTimersByTimeAsync(0);
+      await vi.advanceTimersByTimeAsync(0);
+    });
+
+    expect(result.current.viewerOnly).toBe(true);
+    expect(calls.some((call) => call.method === 'POST' && call.pathname.endsWith('/collab/pull'))).toBe(false);
   });
 });

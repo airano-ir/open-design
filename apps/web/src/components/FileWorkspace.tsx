@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { Button } from '@open-design/components';
-import type { DesignSystemEditClickProps, TrackingProjectKind } from '@open-design/contracts/analytics';
+import type { DesignSystemEditClickProps, TrackingArtifactKind, TrackingProjectKind } from '@open-design/contracts/analytics';
 import { useAnalytics } from '../analytics/provider';
 import {
   trackFileManagerClick,
@@ -87,7 +87,11 @@ import {
   type ProjectFile,
   type ProjectFolder,
 } from '../types';
-import type { ChatSessionMode, WorkspaceContextItem } from '@open-design/contracts';
+import type { ChatSessionMode, WorkspaceContextItem, WorkspaceTeamProjectsResponse } from '@open-design/contracts';
+import {
+  notifyTeamProjectsChanged,
+  TEAM_PROJECTS_CHANGED_EVENT,
+} from '../collab/useWorkspaceContext';
 import { createTerminal, killTerminal } from '../state/projects';
 import type { QuestionForm } from '../artifacts/question-form';
 import { DesignFilesPanel, type DesignFilesNavState } from './DesignFilesPanel';
@@ -128,9 +132,31 @@ import type { ChatMessage } from '../types';
 
 type TranslateFn = (key: keyof Dict, vars?: Record<string, string | number>) => string;
 
+async function projectIsSharedWithWorkspace(projectId: string): Promise<boolean> {
+  try {
+    const response = await fetch(`/api/projects/${encodeURIComponent(projectId)}/collab/status`);
+    if (response.ok) {
+      const body = (await response.json()) as { syncState?: unknown; ownerMemberId?: unknown };
+      if (typeof body.ownerMemberId === 'string' && body.ownerMemberId.trim()) return true;
+      if (typeof body.syncState === 'string' && body.syncState !== 'local_only') return true;
+    }
+  } catch {
+    // Fall through to the team-project directory below.
+  }
+  try {
+    const response = await fetch('/api/workspace/projects/team');
+    if (!response.ok) return false;
+    const body = (await response.json()) as WorkspaceTeamProjectsResponse;
+    return body.projects.some((project) => project.projectId === projectId);
+  } catch {
+    return false;
+  }
+}
+
 interface Props {
   projectId: string;
   projectKind: TrackingProjectKind;
+  projectName?: string;
   // Basename of the project's chosen working directory (e.g. "openclaw").
   // Threaded to DesignFilesPanel as the breadcrumb root label. Undefined for
   // default-storage projects.
@@ -173,7 +199,7 @@ interface Props {
   tabsState: OpenTabsState;
   onTabsStateChange: (next: OpenTabsState) => void;
   previewComments?: PreviewComment[];
-  onSavePreviewComment?: (target: PreviewCommentTarget, note: string, attachAfterSave: boolean, images?: File[]) => Promise<PreviewComment | null>;
+  onSavePreviewComment?: (target: PreviewCommentTarget, note: string, attachAfterSave: boolean, images?: File[], commentId?: string) => Promise<PreviewComment | null>;
   onRemovePreviewComment?: (commentId: string) => Promise<void>;
   onSendBoardCommentAttachments?: (attachments: ChatCommentAttachment[], images?: File[]) => Promise<boolean | void> | boolean | void;
   onBrandExtractionStopRequest?: () => void;
@@ -227,6 +253,11 @@ interface Props {
   // are restored.
   chatConfig?: AppConfig;
   chatAgentsById?: Map<string, AgentInfo>;
+  handoffAgents?: AgentInfo[];
+  handoffArtifactId?: string;
+  handoffArtifactKind?: TrackingArtifactKind;
+  metricsConsent?: boolean;
+  installationId?: string | null;
   chatLocale?: string;
   conversations?: Conversation[];
   /** The primary chat's active conversation. */
@@ -254,6 +285,7 @@ interface Props {
   // right end of the Design Files tab row. The former standalone chrome header
   // row was removed; these moved here alongside the FileViewer present/Share
   // portal that targets the same actions container.
+  fileActionsBefore?: ReactNode;
   headerActions?: ReactNode;
   // Active discovery question form, surfaced in the right-hand Questions tab
   // instead of inline in the chat. Owned by ProjectView (derived from the
@@ -538,6 +570,7 @@ interface WorkspaceActionToast {
 export function FileWorkspace({
   projectId,
   projectKind,
+  projectName,
   rootDirName,
   reloading,
   resolvedDir,
@@ -594,6 +627,11 @@ export function FileWorkspace({
   onCommentModeChange,
   chatConfig,
   chatAgentsById,
+  handoffAgents,
+  handoffArtifactId,
+  handoffArtifactKind,
+  metricsConsent,
+  installationId,
   chatLocale,
   conversations = [],
   activeConversationId = null,
@@ -607,6 +645,7 @@ export function FileWorkspace({
   onWorkspaceContextsChange,
   messages = [],
   conversationId,
+  fileActionsBefore,
   headerActions,
   questionForm = null,
   questionFormPreview = null,
@@ -699,6 +738,10 @@ export function FileWorkspace({
   // "+" launcher (file search + registry-driven create-new actions:
   // Side Chat, Terminal, Browser).
   const [launcherOpen, setLauncherOpen] = useState(false);
+  const [projectShareMenuOpen, setProjectShareMenuOpen] = useState(false);
+  const [projectShareAccess, setProjectShareAccess] = useState<'private' | 'workspace'>('private');
+  const [projectShareAccessMenuOpen, setProjectShareAccessMenuOpen] = useState(false);
+  const [projectShareBusy, setProjectShareBusy] = useState(false);
   // Transient feedback when a launcher "create" action (e.g. New Terminal)
   // fails on the daemon side, so the click is never a silent no-op.
   const [launcherToast, setLauncherToast] = useState<string | null>(null);
@@ -711,6 +754,7 @@ export function FileWorkspace({
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const launcherBtnRef = useRef<HTMLButtonElement | null>(null);
+  const projectShareRef = useRef<HTMLDivElement | null>(null);
   const tabsBarRef = useRef<HTMLDivElement | null>(null);
   const draggedTabNameRef = useRef<string | null>(null);
   const browserTabSequenceRef = useRef(0);
@@ -2402,6 +2446,42 @@ export function FileWorkspace({
     };
   }, [browserTabs.length, designSystemProject, tabNames.length]);
 
+  useEffect(() => {
+    if (!projectShareMenuOpen) return;
+    const onDocClick = (event: MouseEvent) => {
+      if (!projectShareRef.current) return;
+      if (!projectShareRef.current.contains(event.target as Node)) {
+        setProjectShareMenuOpen(false);
+      }
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setProjectShareMenuOpen(false);
+    };
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [projectShareMenuOpen]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const refreshShareAccess = () => void projectIsSharedWithWorkspace(projectId).then((shared) => {
+      if (!cancelled) setProjectShareAccess(shared ? 'workspace' : 'private');
+    });
+    refreshShareAccess();
+    window.addEventListener(TEAM_PROJECTS_CHANGED_EVENT, refreshShareAccess);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(TEAM_PROJECTS_CHANGED_EVENT, refreshShareAccess);
+    };
+  }, [projectId, projectShareMenuOpen]);
+
+  useEffect(() => {
+    if (!projectShareMenuOpen) setProjectShareAccessMenuOpen(false);
+  }, [projectShareMenuOpen]);
+
   const isActiveSketch = activeFile?.kind === 'sketch' && isSketchName(activeFile.name);
   const activeSketch = activeFile && isActiveSketch ? sketches[activeFile.name] : null;
   // The "+" launcher's create-new actions come from the registry. `openTab`
@@ -2437,6 +2517,40 @@ export function FileWorkspace({
   };
   // A read-only viewer gets no launcher edit actions (new file, import, etc.).
   const launcherActions = viewerOnly ? [] : buildLauncherActions(launcherContext);
+
+  async function setProjectWorkspaceShareAccess(nextAccess: 'private' | 'workspace') {
+    setProjectShareAccessMenuOpen(false);
+    if (nextAccess === projectShareAccess || projectShareBusy || viewerOnly) return;
+    if (projectShareBusy) return;
+    setProjectShareBusy(true);
+    try {
+      const response = await fetch(`/api/projects/${encodeURIComponent(projectId)}/collab/sync-intent`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          event: nextAccess === 'workspace' ? 'project_team_share_requested' : 'project_team_unshare_requested',
+          projectId,
+        }),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      setProjectShareAccess(nextAccess);
+      notifyTeamProjectsChanged();
+      setLauncherToast(
+        nextAccess === 'workspace'
+          ? t('fileViewer.workspaceShareSuccess')
+          : t('fileViewer.workspaceUnshareSuccess'),
+      );
+    } catch (error) {
+      console.warn('[FileWorkspace] failed to update workspace project sharing', error);
+      setLauncherToast(
+        nextAccess === 'workspace'
+          ? t('fileViewer.workspaceShareFailed')
+          : t('fileViewer.workspaceUnshareFailed'),
+      );
+    } finally {
+      setProjectShareBusy(false);
+    }
+  }
 
   return (
     <div
@@ -2662,12 +2776,131 @@ export function FileWorkspace({
         {/* Pinned to the right for project/file actions; the tab launcher sits
             next to the file tabs so its spatial relationship stays clear. */}
         <div className="ws-tabs-actions">
+          {fileActionsBefore ? (
+            <div className="ws-tabs-file-actions-before">{fileActionsBefore}</div>
+          ) : null}
           <div
             id={APP_CHROME_FILE_ACTIONS_ID}
             className="ws-tabs-file-actions"
             data-app-chrome-file-actions="true"
-          />
-          {headerActions && !viewerOnly ? (
+          >
+            {!activeFile ? (
+              <>
+                {!viewerOnly ? (
+                  <button
+                    type="button"
+                    className="chrome-action chrome-action-secondary chrome-action-with-label chrome-action-text-only chrome-action-unified"
+                    disabled
+                    title={t('fileViewer.openFileForHistory')}
+                    aria-label={t('fileViewer.versions.entryFull')}
+                  >
+                    <Icon name="history" size={15} />
+                    <span>{t('fileViewer.versions.entryFull')}</span>
+                  </button>
+                ) : null}
+                <div
+                  ref={projectShareRef}
+                  className="share-menu chrome-share-menu chrome-share-menu--unified"
+                >
+                  <button
+                    type="button"
+                    className={
+                      'chrome-action chrome-action-secondary chrome-action-with-label chrome-action-text-only chrome-action-unified' +
+                      (projectShareMenuOpen ? ' is-active' : '')
+                    }
+                    aria-haspopup="menu"
+                    aria-expanded={projectShareMenuOpen}
+                    title={t('fileViewer.shareLabel')}
+                    aria-label={t('fileViewer.shareLabel')}
+                    onClick={() => setProjectShareMenuOpen((open) => !open)}
+                  >
+                    <Icon name="share" size={15} />
+                    <span>{t('fileViewer.shareLabel')}</span>
+                  </button>
+                  {projectShareMenuOpen ? (
+                    <div className="share-menu-popover chrome-unified-popover" role="menu">
+                      <div className="chrome-unified-tabs">
+                        <button type="button" className="is-active">{t('fileViewer.unifiedShareTab')}</button>
+                        <button type="button" disabled>{t('fileViewer.unifiedExportTab')}</button>
+                        <button type="button" disabled>{t('fileViewer.unifiedSendTab')}</button>
+                      </div>
+                      <div className="chrome-unified-panel chrome-unified-panel--share">
+                        <div className="chrome-share-card">
+                          <div className="chrome-share-card__header">
+                            <span className="share-menu-icon">
+                              <Icon name="users" size={16} />
+                            </span>
+                            <span className="share-menu-text">
+                              <span>{t('fileViewer.workspaceShareTitle')}</span>
+                              <small>
+                                {projectShareAccess === 'private'
+                                  ? t('fileViewer.workspaceSharePrivateDescription')
+                                  : t('fileViewer.workspaceShareWorkspaceDescription')}
+                              </small>
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            className="chrome-access-trigger"
+                            aria-haspopup="listbox"
+                            aria-expanded={projectShareAccessMenuOpen}
+                            disabled={projectShareBusy || viewerOnly}
+                            onClick={() => setProjectShareAccessMenuOpen((value) => !value)}
+                          >
+                            <span className="share-menu-icon">
+                              <Icon name={projectShareAccess === 'private' ? 'lock' : 'users'} size={16} />
+                            </span>
+                            <span>
+                              {projectShareBusy
+                                ? t('recentProjects.shareInProgress')
+                                : projectShareAccess === 'private'
+                                  ? t('fileViewer.workspaceAccessPrivate')
+                                  : t('fileViewer.workspaceAccessMembers')}
+                            </span>
+                            <Icon name="chevron-down" size={16} />
+                          </button>
+                          {projectShareAccessMenuOpen ? (
+                            <div className="chrome-access-options" role="listbox">
+                              {([
+                                ['private', 'lock', t('fileViewer.workspaceAccessPrivate')],
+                                ['workspace', 'users', t('fileViewer.workspaceAccessMembers')],
+                              ] as const).map(([value, icon, label]) => (
+                                <button
+                                  key={value}
+                                  type="button"
+                                  role="option"
+                                  aria-selected={projectShareAccess === value}
+                                  className={projectShareAccess === value ? 'is-active' : undefined}
+                                  disabled={projectShareBusy || viewerOnly}
+                                  onClick={() => void setProjectWorkspaceShareAccess(value)}
+                                >
+                                  <span className="share-menu-icon"><Icon name={icon} size={16} /></span>
+                                  <span>{label}</span>
+                                  {projectShareAccess === value ? <Icon name="check" size={15} /> : null}
+                                </button>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                        <div className="chrome-share-card">
+                          <div className="chrome-share-card__header">
+                            <span className="share-menu-icon">
+                              <Icon name="globe" size={16} />
+                            </span>
+                            <span className="share-menu-text">
+                              <span>{t('fileViewer.publishSingleFileTitle')}</span>
+                              <small>{t('fileViewer.openFileRequired')}</small>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              </>
+            ) : null}
+          </div>
+          {headerActions ? (
             <div className="ws-tabs-project-actions">{headerActions}</div>
           ) : null}
         </div>
@@ -2714,7 +2947,7 @@ export function FileWorkspace({
       ) : null}
       {viewerOnly ? (
         <div className="workspace-readonly-notice" role="status">
-          <Icon name="eye" size={14} />
+          <Icon name="lock" size={14} />
           <span>{readonlyNotice ?? t('workspace.readonlyNotice')}</span>
         </div>
       ) : null}
@@ -2977,20 +3210,28 @@ export function FileWorkspace({
             commentPortalId={commentPortalId}
             onCommentModeChange={onCommentModeChange}
             shareRequest={
-              shareRequest && shareRequest.name === activeFile.name
+              !viewerOnly && shareRequest && shareRequest.name === activeFile.name
                 ? { nonce: shareRequest.nonce }
                 : null
             }
             downloadRequest={
-              downloadRequest && downloadRequest.name === activeFile.name
+              !viewerOnly && downloadRequest && downloadRequest.name === activeFile.name
                 ? { nonce: downloadRequest.nonce }
                 : null
             }
+            viewerOnly={viewerOnly}
             slideNavRequest={deliverableSlideNavForActiveFile(
               slideNavRequest,
               activeFile.name,
               slideNavDeliverableNonce,
             )}
+            projectName={projectName}
+            projectDir={resolvedDir}
+            agents={handoffAgents}
+            artifactId={handoffArtifactId}
+            artifactKind={handoffArtifactKind}
+            metricsConsent={metricsConsent}
+            installationId={installationId}
           />
         ) : (
           <div className="viewer-empty">

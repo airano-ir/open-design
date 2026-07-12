@@ -2,7 +2,10 @@ import { afterEach, describe, expect, it } from 'vitest';
 import express from 'express';
 import http from 'node:http';
 import { buildWorkspacePermissions, buildWorkspaceSeatSummary } from '@open-design/contracts';
-import { registerCollabContextRoutes } from '../src/routes/collab-context.js';
+import {
+  registerCollabContextRoutes,
+  type RegisterCollabContextRoutesDeps,
+} from '../src/routes/collab-context.js';
 import {
   createDevWorkspaceContextProvider,
   parseWorkspaceCollabContext,
@@ -28,6 +31,11 @@ const TEAM_CONTEXT = {
   displayName: 'Ma Shu',
 };
 
+const ADMIN_CONTEXT = {
+  ...TEAM_CONTEXT,
+  role: 'admin',
+};
+
 /** What `parseWorkspaceCollabContext` returns: the minimal input enriched with the
  *  fields it derives — workspaceId fallback, provider/billing defaults, and the
  *  permissions + seat summary derived through B's shared helpers. */
@@ -46,10 +54,15 @@ const TEAM_CONTEXT_PARSED = {
   displayName: 'Ma Shu',
 };
 
-async function startContextServer() {
+async function startContextServer(
+  overrides: Partial<Omit<RegisterCollabContextRoutesDeps, 'workspaceContext'>> = {},
+) {
   const app = express();
   app.use(express.json());
-  registerCollabContextRoutes(app, { workspaceContext: createDevWorkspaceContextProvider() });
+  registerCollabContextRoutes(app, {
+    workspaceContext: createDevWorkspaceContextProvider(),
+    ...overrides,
+  });
   server = http.createServer(app);
   await new Promise<void>((resolve) => server!.listen(0, resolve));
   const address = server.address();
@@ -106,5 +119,164 @@ describe('collab context routes', () => {
     const api = await startContextServer();
     const res = await api.req('/api/workspace/context', { method: 'PUT', body: { workspaceType: 'team' } });
     expect(res.status).toBe(400);
+  });
+});
+
+describe('workspace billing routes', () => {
+  it('returns the real team billing catalog for the current workspace', async () => {
+    const calls: string[] = [];
+    const api = await startContextServer({
+      fetchBillingCatalog: async (workspaceId) => {
+        calls.push(workspaceId);
+        return {
+          workspaceId,
+          billingInterval: 'monthly',
+          plans: [
+            {
+              planId: 'team_plus',
+              seatUnitAmountCents: 3900,
+              currency: 'usd',
+              minSeats: 1,
+              status: 'active',
+            },
+          ],
+        };
+      },
+    });
+    await api.req('/api/workspace/context', { method: 'PUT', body: TEAM_CONTEXT });
+
+    const res = await api.req('/api/workspace/billing/catalog');
+
+    expect(res.status).toBe(200);
+    expect(calls).toEqual(['wm-1']);
+    expect(res.body).toEqual({
+      catalog: {
+        workspaceId: 'wm-1',
+        billingInterval: 'monthly',
+        plans: [
+          {
+            planId: 'team_plus',
+            seatUnitAmountCents: 3900,
+            currency: 'usd',
+            minSeats: 1,
+            status: 'active',
+          },
+        ],
+      },
+    });
+  });
+
+  it('starts checkout with workspace-derived id and selected team plan', async () => {
+    const calls: Array<{ workspaceId?: string; planId?: string; seats?: number }> = [];
+    const api = await startContextServer({
+      startCheckout: async (input) => {
+        calls.push(input);
+        return 'https://checkout.stripe.test/cs_team';
+      },
+    });
+    await api.req('/api/workspace/context', { method: 'PUT', body: TEAM_CONTEXT });
+
+    const res = await api.req('/api/workspace/billing/checkout', {
+      method: 'POST',
+      body: { workspaceId: 'spoofed', planId: 'team_pro', seats: 3 },
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ checkoutUrl: 'https://checkout.stripe.test/cs_team' });
+    expect(calls).toEqual([{ workspaceId: 'wm-1', planId: 'team_pro', seats: 3 }]);
+  });
+});
+
+describe('POST /api/workspace/invite', () => {
+  it('creates each invite against the current workspaceId and reports per-row results', async () => {
+    const calls: Array<{ email: string; role: string; workspaceId: string }> = [];
+    const api = await startContextServer({
+      createInvite: async (input) => {
+        calls.push(input);
+        return { ok: true, inviteId: `inv-${input.email}` };
+      },
+    });
+    // Derive workspaceId from the set context (parsed → workspaceId 'wm-1').
+    await api.req('/api/workspace/context', { method: 'PUT', body: ADMIN_CONTEXT });
+    const res = await api.req('/api/workspace/invite', {
+      method: 'POST',
+      body: { invites: [{ email: 'a@x.com', role: 'admin' }, { email: 'b@x.com', role: 'member' }] },
+    });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      results: [
+        { email: 'a@x.com', ok: true, inviteId: 'inv-a@x.com' },
+        { email: 'b@x.com', ok: true, inviteId: 'inv-b@x.com' },
+      ],
+    });
+    expect(calls).toEqual([
+      { email: 'a@x.com', role: 'admin', workspaceId: 'wm-1' },
+      { email: 'b@x.com', role: 'member', workspaceId: 'wm-1' },
+    ]);
+  });
+
+  it('400s an empty invite list', async () => {
+    const api = await startContextServer();
+    const res = await api.req('/api/workspace/invite', { method: 'POST', body: { invites: [] } });
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'missing_invites' });
+  });
+
+  it('409s with no_workspace when there is no current context', async () => {
+    const api = await startContextServer({
+      createInvite: async () => ({ ok: true, inviteId: 'inv-x' }),
+    });
+    const res = await api.req('/api/workspace/invite', {
+      method: 'POST',
+      body: { invites: [{ email: 'a@x.com', role: 'member' }] },
+    });
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: 'no_workspace' });
+  });
+
+  it('403s when the current team member cannot invite teammates', async () => {
+    let called = false;
+    const api = await startContextServer({
+      createInvite: async () => {
+        called = true;
+        return { ok: true, inviteId: 'inv-x' };
+      },
+    });
+    await api.req('/api/workspace/context', { method: 'PUT', body: TEAM_CONTEXT });
+
+    const res = await api.req('/api/workspace/invite', {
+      method: 'POST',
+      body: { invites: [{ email: 'a@x.com', role: 'member' }] },
+    });
+
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual({ error: 'forbidden' });
+    expect(called).toBe(false);
+  });
+
+  it('short-circuits to 401 no_session', async () => {
+    const api = await startContextServer({
+      createInvite: async () => ({ ok: false, status: 401, error: 'no_session' }),
+    });
+    await api.req('/api/workspace/context', { method: 'PUT', body: ADMIN_CONTEXT });
+    const res = await api.req('/api/workspace/invite', {
+      method: 'POST',
+      body: { invites: [{ email: 'a@x.com', role: 'member' }] },
+    });
+    expect(res.status).toBe(401);
+    expect(res.body).toEqual({ error: 'no_session' });
+  });
+
+  it("degrades a failed B create (e.g. 404) to an ok:false result, HTTP 200", async () => {
+    const api = await startContextServer({
+      createInvite: async () => ({ ok: false, status: 404, error: 'create_404' }),
+    });
+    await api.req('/api/workspace/context', { method: 'PUT', body: ADMIN_CONTEXT });
+    const res = await api.req('/api/workspace/invite', {
+      method: 'POST',
+      body: { invites: [{ email: 'a@x.com', role: 'member' }] },
+    });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ results: [{ email: 'a@x.com', ok: false, error: 'create_404' }] });
   });
 });

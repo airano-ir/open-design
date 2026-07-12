@@ -10,6 +10,7 @@ interface RecordedCall {
 interface FakeFetchOptions {
   present?: Array<{ memberId: string; name?: string }>;
   publishedVersion?: number | null;
+  syncState?: string | null;
   failPath?: string;
 }
 
@@ -18,6 +19,7 @@ function makeFetch(options: FakeFetchOptions = {}) {
   const state = {
     present: options.present ?? [{ memberId: 'm1', name: 'Author' }],
     publishedVersion: options.publishedVersion ?? null,
+    syncState: options.syncState ?? 'synced',
   };
   const fetchImpl = (async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
@@ -30,7 +32,9 @@ function makeFetch(options: FakeFetchOptions = {}) {
     }
     let payload: unknown = { ok: true };
     if (pathname.endsWith('/presence/heartbeat')) payload = { present: state.present };
-    else if (pathname.endsWith('/collab/status')) payload = { publishedVersion: state.publishedVersion };
+    else if (pathname.endsWith('/collab/status')) {
+      payload = { publishedVersion: state.publishedVersion, syncState: state.syncState };
+    }
     return { ok: true, status: 200, json: async () => payload } as unknown as Response;
   }) as typeof fetch;
   return { fetchImpl, calls, state };
@@ -45,7 +49,7 @@ afterEach(() => {
 });
 
 describe('CollabClient', () => {
-  it('sends an immediate heartbeat + status poll on start and updates the snapshot', async () => {
+  it('polls status on start, then heartbeats once the project is shared', async () => {
     const { fetchImpl, calls, state } = makeFetch({
       present: [{ memberId: 'm1', name: 'Author' }],
       publishedVersion: 4,
@@ -70,6 +74,24 @@ describe('CollabClient', () => {
     expect(snapshot.present).toEqual(state.present);
     expect(snapshot.publishedVersion).toBe(4);
     expect(updates.length).toBeGreaterThanOrEqual(2);
+
+    client.stop();
+  });
+
+  it('does not heartbeat for a local-only project', async () => {
+    const { fetchImpl, calls } = makeFetch({ syncState: 'local_only' });
+    const client = new CollabClient({
+      projectId: 'p1',
+      member: { memberId: 'm1', name: 'Author', role: 'owner' },
+      fetch: fetchImpl,
+    });
+
+    client.start();
+    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    expect(calls.some((c) => c.url.endsWith('/collab/status'))).toBe(true);
+    expect(calls.some((c) => c.url.endsWith('/presence/heartbeat'))).toBe(false);
 
     client.stop();
   });
@@ -164,7 +186,7 @@ describe('CollabClient', () => {
     vi.unstubAllGlobals();
   });
 
-  it('surfaces fetch failures through onError without wedging the client', async () => {
+  it('surfaces status failures through onError without starting presence', async () => {
     const { fetchImpl } = makeFetch({ failPath: '/collab/status' });
     const errors: unknown[] = [];
     const client = new CollabClient({
@@ -178,8 +200,8 @@ describe('CollabClient', () => {
     await vi.advanceTimersByTimeAsync(0);
 
     expect(errors.length).toBeGreaterThanOrEqual(1);
-    // Heartbeat still succeeded despite the status failure.
-    expect(client.getSnapshot().present.length).toBeGreaterThanOrEqual(1);
+    // Without an authoritative shared-project status, presence must stay off.
+    expect(client.getSnapshot().present).toEqual([]);
 
     client.stop();
   });

@@ -1,12 +1,16 @@
+import { useEffect, useId, useRef, useState } from 'react';
 import type { CollabPresenceMember } from './collab-client';
 import styles from './PresenceBar.module.css';
+import { useT } from '../i18n';
 
 export interface PresenceBarProps {
   members: CollabPresenceMember[];
   /** Max avatars before collapsing into a "+N" chip. */
   max?: number;
-  /** The viewer's own member id — excluded from the overlay. */
+  /** The viewer's own member id. Used to keep self first and add online state. */
   selfMemberId?: string;
+  /** Current viewer identity. Lets the bar render self before the first heartbeat returns. */
+  selfMember?: CollabPresenceMember | null;
 }
 
 function initials(member: CollabPresenceMember): string {
@@ -20,39 +24,159 @@ function initials(member: CollabPresenceMember): string {
   return source.slice(0, 2).toUpperCase();
 }
 
+function displayName(member: CollabPresenceMember): string {
+  return member.name?.trim() || member.memberId;
+}
+
+function roleLabel(member: CollabPresenceMember, t: ReturnType<typeof useT>): string {
+  switch (member.role) {
+    case 'owner':
+      return t('collabPresence.roleOwner');
+    case 'admin':
+      return t('collabPresence.roleAdmin');
+    default:
+      return t('collabPresence.roleMember');
+  }
+}
+
+function activityLabel(member: CollabPresenceMember, isSelf: boolean, t: ReturnType<typeof useT>): string {
+  const activity = member.activity;
+  if (typeof activity === 'string' && activity.trim()) return activity.trim();
+  if (
+    activity &&
+    typeof activity === 'object' &&
+    'label' in activity &&
+    typeof activity.label === 'string' &&
+    activity.label.trim()
+  ) {
+    return activity.label.trim();
+  }
+  if (member.filePath?.trim()) {
+    return t(isSelf ? 'collabPresence.viewingFileSelf' : 'collabPresence.viewingFileOther', {
+      file: member.filePath.trim(),
+    });
+  }
+  return t(isSelf ? 'collabPresence.viewingProjectSelf' : 'collabPresence.viewingProjectOther');
+}
+
 /**
  * Presence overlay (presence, the spec): a compact avatar stack of the members
  * currently viewing the shared project. Poll-driven — the set comes from
  * {@link useCollab}; there are no live cursors.
  */
-export function PresenceBar({ members, max = 5, selfMemberId }: PresenceBarProps) {
-  const others = members.filter((m) => m.memberId !== selfMemberId);
-  if (others.length === 0) return null;
+export function PresenceBar({
+  members,
+  max = 5,
+  selfMemberId,
+  selfMember = null,
+}: PresenceBarProps) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const popoverId = useId();
+  const resolvedSelf =
+    selfMember ??
+    (selfMemberId ? members.find((m) => m.memberId === selfMemberId) ?? { memberId: selfMemberId } : null);
+  const others = resolvedSelf
+    ? members.filter((m) => m.memberId !== resolvedSelf.memberId)
+    : members;
+  const ordered = resolvedSelf ? [resolvedSelf, ...others] : others;
 
-  const shown = others.slice(0, max);
-  const overflow = others.length - shown.length;
+  const shown = ordered.slice(0, max);
+  const overflow = ordered.length - shown.length;
+  const total = ordered.length;
+  const label = t(
+    total === 1
+      ? (resolvedSelf ? 'collabPresence.ariaWithSelfOne' : 'collabPresence.ariaOne')
+      : (resolvedSelf ? 'collabPresence.ariaWithSelf' : 'collabPresence.aria'),
+    { count: total },
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [open]);
+
+  if (ordered.length === 0) return null;
 
   return (
     <div
-      className={styles.bar}
+      ref={containerRef}
+      className={styles.container}
       role="group"
-      aria-label={`${others.length} collaborator${others.length === 1 ? '' : 's'} present`}
+      aria-label={label}
     >
-      {shown.map((member) => (
-        <span
-          key={member.memberId}
-          className={styles.avatar}
-          data-role={member.role ?? 'member'}
-          title={member.name ?? member.memberId}
-        >
-          {initials(member)}
-        </span>
-      ))}
-      {overflow > 0 && (
-        <span className={styles.overflow} title={`${overflow} more present`}>
-          +{overflow}
-        </span>
-      )}
+      <button
+        type="button"
+        className={styles.bar}
+        aria-label={label}
+        aria-expanded={open}
+        aria-controls={popoverId}
+        aria-haspopup="dialog"
+        onClick={() => setOpen((value) => !value)}
+      >
+        {shown.map((member) => (
+          <span
+            key={member.memberId}
+            className={styles.avatar}
+            data-role={member.role ?? 'member'}
+            data-self={resolvedSelf?.memberId === member.memberId ? 'true' : undefined}
+            title={displayName(member)}
+          >
+            {initials(member)}
+          </span>
+        ))}
+        {overflow > 0 && (
+          <span className={styles.overflow} title={t('collabPresence.moreOnline', { count: overflow })}>
+            +{overflow}
+          </span>
+        )}
+      </button>
+      {open ? (
+        <div id={popoverId} className={styles.popover} role="dialog" aria-label={t('collabPresence.dialogTitle')}>
+          <div className={styles.popoverHeader}>
+            <strong>{t('collabPresence.dialogTitle')}</strong>
+            <span>{t('collabPresence.onlineCount', { count: total })}</span>
+          </div>
+          <ul className={styles.memberList}>
+            {ordered.map((member) => {
+              const isSelf = resolvedSelf?.memberId === member.memberId;
+              return (
+                <li key={member.memberId} className={styles.memberRow}>
+                  <span
+                    className={styles.rowAvatar}
+                    data-role={member.role ?? 'member'}
+                    aria-hidden="true"
+                  >
+                    {initials(member)}
+                    <span className={styles.onlineDot} />
+                  </span>
+                  <span className={styles.memberText}>
+                    <span className={styles.memberName}>
+                      {displayName(member)}
+                      {isSelf ? <span className={styles.selfBadge}>{t('collabPresence.selfBadge')}</span> : null}
+                    </span>
+                    <span className={styles.memberMeta}>
+                      {roleLabel(member, t)} · {activityLabel(member, isSelf, t)}
+                    </span>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
 }

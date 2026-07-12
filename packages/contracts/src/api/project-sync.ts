@@ -21,8 +21,13 @@ export type ProjectSyncState = 'local_only' | 'pending_upload' | 'synced' | 'syn
  * - `project_visibility_changed`   — visibility flipped in either direction.
  * - `project_team_share_requested` — a project became team-visible; publish its
  *                                    content so members can pull it.
+ * - `project_team_unshare_requested` — a project left the team space; remove it
+ *                                      from the shared team index.
  */
-export type ProjectSyncIntentEvent = 'project_visibility_changed' | 'project_team_share_requested';
+export type ProjectSyncIntentEvent =
+  | 'project_visibility_changed'
+  | 'project_team_share_requested'
+  | 'project_team_unshare_requested';
 
 /**
  * Payload for a project sync-intent event. `workspaceId` is required: a

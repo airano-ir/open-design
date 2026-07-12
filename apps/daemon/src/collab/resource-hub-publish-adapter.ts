@@ -1,4 +1,6 @@
 import type { WorkspaceCollabContext } from '@open-design/contracts';
+import { mkdtemp, mkdir, rename, rm } from 'node:fs/promises';
+import { basename, dirname, join } from 'node:path';
 import {
   createResourceHubClient,
   readResourceHubConfig,
@@ -37,6 +39,8 @@ export interface ResourceHubPublishAdapterOptions {
   getPrincipal: (projectId?: string) => ResourceHubPrincipal | null | Promise<ResourceHubPrincipal | null>;
   /** The project's source directory to publish (managed-project root). */
   resolveProjectDir: (projectId: string) => string | Promise<string>;
+  /** Optional resource-index metadata for team project discovery/cards. */
+  describeProject?: (projectId: string) => Record<string, unknown> | null | Promise<Record<string, unknown> | null>;
   /** Where a member materializes pulled content. Defaults to the project dir. */
   resolvePullDir?: (projectId: string) => string | Promise<string>;
   /** (projectId, principal) → hub resourceId. Colon-free (the hub routes it as a path param). */
@@ -52,6 +56,25 @@ export interface ResourceHubPublishAdapterOptions {
 const PUBLISHED_REF = 'published';
 const PROJECT_KIND = 'project';
 
+// Author-only, daemon-internal directories that must never land in a member's
+// read-only mirror. `.file-versions` is the owner's version history — C spec
+// §779 requires the member mirror to carry only the latest content, with no
+// history to browse or restore; a member pulling it (observed on disk) is the
+// bug this excludes. `.live-artifacts` is the daemon's transient live-artifact
+// registry and `.od-skills` is a private per-run skill working copy — neither
+// is publishable project content. This mirrors the dotdir filtering the
+// "Download as .zip" archive already applies (projects.ts collectArchiveEntries),
+// keeping the member mirror to the visible project tree (index.html etc.).
+const MEMBER_MIRROR_EXCLUDED_DIRS: ReadonlySet<string> = new Set([
+  '.file-versions',
+  '.live-artifacts',
+  '.od-skills',
+]);
+
+function isMemberMirrorExcluded(name: string): boolean {
+  return MEMBER_MIRROR_EXCLUDED_DIRS.has(name);
+}
+
 export function createResourceHubPublishAdapter(
   options: ResourceHubPublishAdapterOptions,
 ): ResourcePublishAdapter {
@@ -63,13 +86,18 @@ export function createResourceHubPublishAdapter(
   // The resource must exist before a version is published. Get-or-create keeps
   // publish idempotent across the first and later shares of a project.
   async function ensureResourceId(principal: ResourceHubPrincipal, projectId: string): Promise<string> {
+    const metadata = await options.describeProject?.(projectId);
     const resourceId = resourceIdFor(projectId, principal);
     try {
       const existing = await client.getResource(principal, resourceId);
       return existing.id;
     } catch (error) {
       if (!(error instanceof ResourceHubError) || error.status !== 404) throw error;
-      const created = await client.createResource(principal, { kind, resourceId });
+      const created = await client.createResource(principal, {
+        kind,
+        resourceId,
+        ...(metadata && Object.keys(metadata).length > 0 ? { metadata } : {}),
+      });
       return created.id;
     }
   }
@@ -78,7 +106,9 @@ export function createResourceHubPublishAdapter(
     async publish({ projectId, principal: inputPrincipal }) {
       const principal = inputPrincipal ?? await getPrincipal(projectId);
       if (!principal) return null; // no team identity → nothing to publish
-      const packed = await packTree(await resolveProjectDir(projectId));
+      const packed = await packTree(await resolveProjectDir(projectId), {
+        exclude: (name) => isMemberMirrorExcluded(name),
+      });
       const resourceId = await ensureResourceId(principal, projectId);
       // pushTree uploads only missing blobs, publishes a version, and moves the
       // `published` ref atomically (content-first, pointer-last).
@@ -106,7 +136,18 @@ export function createResourceHubPublishAdapter(
     async pull({ projectId, principal: inputPrincipal }) {
       const principal = inputPrincipal ?? await getPrincipal(projectId);
       if (!principal) return; // no team identity → nothing to pull
-      await materializeRef(client, principal, resourceIdFor(projectId, principal), PUBLISHED_REF, await resolvePullDir(projectId));
+      const pullDir = await resolvePullDir(projectId);
+      const parentDir = dirname(pullDir);
+      await mkdir(parentDir, { recursive: true });
+      const tempDir = await mkdtemp(join(parentDir, `.${basename(pullDir)}-pull-`));
+      try {
+        await materializeRef(client, principal, resourceIdFor(projectId, principal), PUBLISHED_REF, tempDir);
+        await rm(pullDir, { recursive: true, force: true });
+        await rename(tempDir, pullDir);
+      } catch (error) {
+        await rm(tempDir, { recursive: true, force: true }).catch(() => undefined);
+        throw error;
+      }
     },
   };
 }
@@ -121,6 +162,7 @@ export function createResourceHubPublishAdapter(
 export function createResourceHubPublishAdapterFromEnv(
   resolveProjectDir: (projectId: string) => string | Promise<string>,
   getPrincipal?: (projectId?: string) => ResourceHubPrincipal | null | Promise<ResourceHubPrincipal | null>,
+  describeProject?: (projectId: string) => Record<string, unknown> | null | Promise<Record<string, unknown> | null>,
   env: NodeJS.ProcessEnv = process.env,
 ): ResourcePublishAdapter | null {
   if (!env.OD_RESOURCE_HUB_URL?.trim()) return null;
@@ -128,6 +170,7 @@ export function createResourceHubPublishAdapterFromEnv(
   return createResourceHubPublishAdapter({
     client,
     resolveProjectDir,
+    ...(describeProject ? { describeProject } : {}),
     getPrincipal: getPrincipal ?? (() => readResourceHubPrincipal(env)),
   });
 }

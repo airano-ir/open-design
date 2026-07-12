@@ -39,6 +39,12 @@ export interface ResourcePublishAdapter {
    * blobs and writes the files. The scheduler decides *when* to pull.
    */
   pull?(input: ResourcePublishInput): Promise<void>;
+  /**
+   * Remove the project from the shared team index. Existing immutable versions may
+   * remain in the hub, but team members should no longer discover/pull it from the
+   * team project list. Optional: older/local adapters can no-op.
+   */
+  unpublish?(input: ResourcePublishInput): Promise<void>;
 }
 
 export interface CollabPublishSchedulerOptions {

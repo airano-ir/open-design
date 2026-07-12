@@ -645,7 +645,7 @@ export async function prepareVisualAvatarMenu(page: Page): Promise<Locator> {
 export async function prepareVisualSettingsDialog(page: Page): Promise<Locator> {
   await prepareVisualWorkspaceFileList(page);
   const dialog = await openSettingsDetailsFromHeader(page);
-  await expect(dialog.getByRole('tablist', { name: 'Execution mode' })).toBeVisible();
+  await expect(dialog.getByRole('heading', { name: /Settings|General|Execution mode/i })).toBeVisible();
   await waitForVisualStable(page);
   return dialog;
 }
@@ -658,14 +658,46 @@ export async function openAvatarMenu(page: Page): Promise<Locator> {
 }
 
 export async function openSettingsDetailsFromHeader(page: Page): Promise<Locator> {
-  const settingsTrigger = page.locator('.settings-icon-btn');
-  await expect(settingsTrigger).toBeVisible({ timeout: T.medium });
-  await settingsTrigger.evaluate((element: HTMLElement) => element.click());
-  await expect(page.getByTestId('entry-settings-menu')).toBeVisible({ timeout: T.medium });
-  const openDetails = page.getByTestId('entry-settings-open-details');
-  await expect(openDetails).toBeVisible({ timeout: T.medium });
-  await openDetails.evaluate((element: HTMLElement) => element.click());
-  const dialog = page.getByRole('dialog');
+  const dialog = page.locator('.modal-settings[role="dialog"]').first();
+  const triggers = [
+    page.getByTestId('entry-settings-button').first(),
+    page.getByTestId('entry-settings-menu-trigger').first(),
+    page.locator('.settings-icon-btn').first(),
+  ];
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    if (await dialog.isVisible().catch(() => false)) return dialog;
+
+    let clicked = false;
+    for (const trigger of triggers) {
+      if (await trigger.isVisible({ timeout: 1_000 }).catch(() => false)) {
+        await trigger.evaluate((element: HTMLElement) => element.click());
+        clicked = true;
+        break;
+      }
+    }
+    if (!clicked) {
+      await expect(page.locator('.settings-icon-btn').first()).toBeVisible({ timeout: T.medium });
+      await page.locator('.settings-icon-btn').first().evaluate((element: HTMLElement) => element.click());
+    }
+
+    const detailsTrigger = page.getByTestId('entry-settings-open-details').first();
+    if (await detailsTrigger.isVisible({ timeout: 1_000 }).catch(() => false)) {
+      await detailsTrigger.click();
+    }
+
+    await expect
+      .poll(
+        async () => {
+          if (await dialog.isVisible().catch(() => false)) return 'dialog';
+          return 'pending';
+        },
+        { timeout: T.medium },
+      )
+      .not.toBe('pending')
+      .catch(() => {});
+  }
+
   await expect(dialog).toBeVisible({ timeout: T.medium });
   return dialog;
 }

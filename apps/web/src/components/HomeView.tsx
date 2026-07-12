@@ -83,6 +83,7 @@ import { consumePendingHomeChip, HOME_CHIP_INTENT_EVENT } from '../runtime/home-
 import { navigate } from '../router';
 import { setPendingDesignSystemCreateEntry } from '../analytics/ds-create-entry';
 import { workspaceContextLinkedDirs } from './workspace-context';
+import { useTeamProjects } from '../collab/useWorkspaceContext';
 import {
   buildHomeMediaComposer,
   homeMediaSurfaceForChipId,
@@ -99,8 +100,6 @@ import {
 } from './home-hero/plugin-authoring';
 import { PluginDetailsModal } from './PluginDetailsModal';
 import { SkillDetailsModal } from './SkillDetailsModal';
-import { HomeTemplatesReveal } from './HomeTemplatesReveal';
-import { PluginsHomeSection } from './PluginsHomeSection';
 import type { PluginLoopSubmit } from './PluginLoopHome';
 import { localizePluginTitle } from './plugins-home/localization';
 import type { PluginUseAction } from './plugins-home/useActions';
@@ -318,6 +317,27 @@ export function HomeView({
 }: Props) {
   const { locale, t } = useI18n();
   const analytics = useAnalytics();
+  // Persistent team-shared ids so the home strip's "已在团队空间" badge survives a
+  // refresh (the strip's own optimistic set is session-only). Team-wide, from the
+  // resource hub via the daemon; empty off-team / when the hub is unconfigured.
+  const homeTeamProjects = useTeamProjects();
+  const homeSharedProjectIds = useMemo(
+    () => new Set(homeTeamProjects.projects.map((teamProject) => teamProject.projectId)),
+    [homeTeamProjects.projects],
+  );
+  // projectId → sharing member id, so the strip can resolve "{creator}创建" for a
+  // teammate's shared project (a project absent here is the member's own local
+  // project → "我创建").
+  const homeProjectOwnerMemberIds = useMemo(
+    () =>
+      new Map(
+        homeTeamProjects.projects.map((teamProject) => [
+          teamProject.projectId,
+          teamProject.ownerMemberId,
+        ]),
+      ),
+    [homeTeamProjects.projects],
+  );
   // P0 page_view page_name=home — fire once on mount. ref-keyed to survive
   // re-renders that flip parent state without remounting HomeView.
   const homePageViewFiredRef = useRef(false);
@@ -2099,6 +2119,10 @@ export function HomeView({
       <RecentProjectsStrip
         projects={projects}
         designSystems={designSystems}
+        heading={t('recentProjects.title')}
+        sharedProjectIds={homeSharedProjectIds}
+        projectOwnerMemberIds={homeProjectOwnerMemberIds}
+        limit={7}
         {...(projectsLoading !== undefined ? { loading: projectsLoading } : {})}
         onOpen={(id) => {
           // P0 ui_click area=recent_projects element=project_card — emit
@@ -2127,24 +2151,6 @@ export function HomeView({
         {...(onDuplicateProject ? { onDuplicate: onDuplicateProject } : {})}
         {...(onRenameProject ? { onRename: onRenameProject } : {})}
       />
-
-      <HomeTemplatesReveal
-        enabled={!projectsLoading && projects.length === 0}
-      >
-        <PluginsHomeSection
-          plugins={plugins}
-          loading={pluginsLoading}
-          activePluginId={active?.record.id ?? null}
-          pendingApplyId={pendingApplyId}
-          pendingDuplicateId={pendingDuplicatePluginId}
-          onUse={(record, action) => void routePluginUse(record, action)}
-          onDuplicate={(record) => void duplicateExamplePlugin(record)}
-          onOpenDetails={handleCommunityOpenDetails}
-          onBrowseRegistry={onBrowseRegistry}
-          preferDefaultFacet={false}
-          cardLayout="gallery"
-        />
-      </HomeTemplatesReveal>
 
       <AnimatePresence>
         {detailsRecord ? (
