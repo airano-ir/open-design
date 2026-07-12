@@ -229,6 +229,9 @@
   font-size: 13.5px;
   font-weight: 650;
 }
+.od-toast.od-toast-browser-snapshot.tone-success .od-toast-icon {
+  display: none;
+}
 .od-toast-details {
   margin-top: 4px;
   font-size: 11.5px;
