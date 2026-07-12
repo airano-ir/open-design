@@ -22,6 +22,8 @@ import {
   trackAssistantFeedbackReasonSubmitClick,
   trackAssistantFeedbackReasonView,
   trackFeedbackSubmitResult,
+  trackQuestionsFormClick,
+  trackQuestionsFormSurfaceView,
 } from "../analytics/events";
 import {
   feedbackAgentProviderIdToTracking,
@@ -32,6 +34,7 @@ import {
   type TrackingFeedbackRatingWithNone,
   type TrackingProjectKind,
 } from "@open-design/contracts/analytics";
+import { questionsFormTrackingId } from "@open-design/contracts/analytics";
 import {
   formOptionLabelForValue,
   hasUnterminatedQuestionForm,
@@ -90,6 +93,7 @@ type TranslateFn = (
 ) => string;
 
 const DISCORD_INVITE_URL = "https://discord.gg/mHAjSMV6gz";
+const viewedInlineQuestionForms = new Set<string>();
 
 interface ActionNotice {
   message: string;
@@ -2554,6 +2558,7 @@ function ProseBlock({
             key={seg.key}
             form={seg.form}
             assistantMessageId={assistantMessageId}
+            projectId={projectId}
             nextUserContent={nextUserContent}
             interactive={isLastAssistant}
             onSubmit={onSubmitQuestionForm}
@@ -2583,6 +2588,7 @@ function isDirectionForm(form: QuestionForm): boolean {
 function FormBlock({
   form,
   assistantMessageId,
+  projectId,
   nextUserContent,
   interactive,
   onSubmit,
@@ -2591,6 +2597,7 @@ function FormBlock({
 }: {
   form: QuestionForm;
   assistantMessageId: string;
+  projectId?: string | null;
   nextUserContent?: string;
   interactive: boolean;
   onSubmit?: (text: string) => void;
@@ -2598,6 +2605,7 @@ function FormBlock({
   visualStyleContext?: VisualStyleContext;
 }) {
   const t = useT();
+  const analytics = useAnalytics();
   const submittedFromHistory = useMemo(
     () => (nextUserContent ? parseSubmittedAnswers(form, nextUserContent) : null),
     [form, nextUserContent],
@@ -2613,6 +2621,69 @@ function FormBlock({
       return labels.length > 0 ? [{ label: question.label, value: labels.join(", ") }] : [];
     });
   }, [form, submittedFromHistory]);
+  useEffect(() => {
+    if (submittedFromHistory || !projectId) return;
+    const occurrenceKey = `${projectId}:${assistantMessageId}:${form.id}`;
+    if (viewedInlineQuestionForms.has(occurrenceKey)) return;
+    viewedInlineQuestionForms.add(occurrenceKey);
+    trackQuestionsFormSurfaceView(analytics.track, {
+      page_name: "chat_panel",
+      area: "questions_form",
+      project_id: projectId,
+      form_id: questionsFormTrackingId(form.id),
+    });
+  }, [analytics.track, assistantMessageId, form.id, projectId, submittedFromHistory]);
+
+  const handleAnswerChange = useCallback(
+    (questionId: string, value: string | string[]) => {
+      if (!projectId || typeof value !== "string" || value.length === 0) return;
+      const element =
+        questionId === "taskType"
+          ? ("task_type_chip" as const)
+          : questionId === "brand"
+            ? ("brand_bg_chip" as const)
+            : null;
+      if (!element) return;
+      trackQuestionsFormClick(analytics.track, {
+        page_name: "chat_panel",
+        area: "questions_form",
+        element,
+        chip_id: questionsFormTrackingId(value),
+        form_id: questionsFormTrackingId(form.id),
+        project_id: projectId,
+      });
+    },
+    [analytics.track, form.id, projectId],
+  );
+
+  const handleSubmit = useCallback(
+    (
+      text: string,
+      answers: Record<string, string | string[]>,
+      source: "submit" | "skip",
+    ) => {
+      if (projectId) {
+        const answeredCount = form.questions.filter((question) => {
+          const value = answers[question.id];
+          return Array.isArray(value)
+            ? value.length > 0
+            : typeof value === "string" && value.trim().length > 0;
+        }).length;
+        trackQuestionsFormClick(analytics.track, {
+          page_name: "chat_panel",
+          area: "questions_form",
+          element: source,
+          ...(source === "skip" ? { skip_source: "button" as const } : {}),
+          answered_count: answeredCount,
+          skipped_count: form.questions.length - answeredCount,
+          form_id: questionsFormTrackingId(form.id),
+          project_id: projectId,
+        });
+      }
+      onSubmit?.(text);
+    },
+    [analytics.track, form, onSubmit, projectId],
+  );
 
   if (submittedFromHistory) {
     return (
@@ -2648,7 +2719,8 @@ function FormBlock({
     <QuestionFormView
       form={form}
       interactive={interactive}
-      onSubmit={onSubmit ? (text) => onSubmit(text) : undefined}
+      onAnswerChange={handleAnswerChange}
+      onSubmit={onSubmit ? handleSubmit : undefined}
       submitDisabled={submitDisabled}
       visualStyleContext={visualStyleContext}
     />
