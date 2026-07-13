@@ -67,7 +67,15 @@ const repoRoot = path.resolve(__dirname, '../../../..');
 // generation is wired up (or the generate call fails), the run falls back to
 // web search / web fetch to pull a real photo into the project instead of
 // shipping an empty slot or a schematic box.
-const SLIM_CORE_BYTE_BUDGET = 16_128;
+// Bumped from 16_128 for the host-owned "Other" escape hatch: the web
+// renderer injects a localized Other chip on finite-choice questions, so the
+// contract now bans model-authored catch-all options (and the example drops
+// "Other — I'll describe"); the form cap tightened from ≤7 to at most 5.
+// Bumped from 16_384 for the localization quality pass: native-phrasing rule
+// with the 快速确认/快速简报 wrong-vs-right anchor, the machine-readable
+// top-level `"lang"` tag that keys the host's in-card controls, and the
+// count-then-cut hard-cap wording that replaced "Ask at most 5".
+const SLIM_CORE_BYTE_BUDGET = 16_896;
 
 describe('renderSlimCoreCharter — byte budget', () => {
   it('stays under the byte budget in both execution profiles', () => {
@@ -101,7 +109,29 @@ describe('renderSlimCoreCharter — frozen protocol markers', () => {
     expect(charter).toContain('a `default` inferred from the brief');
     // The example form anchors the pattern with a concrete default.
     expect(charter).toContain('"default": "pick_direction"');
-    expect(charter).toContain('Prefilled with my read of the brief — adjust anything, then send.');
+    // Copy leads with "send as is works" — the benefit, not the mechanism.
+    expect(charter).toContain('Prefilled for you — send as is, or tweak anything first.');
+  });
+
+  it('localizes like a native and declares the form language', () => {
+    // Meaning-for-meaning translation (the 快速确认/快速简报 anchor keeps a
+    // concrete wrong-vs-right example in front of the model), plus a
+    // machine-readable `lang` tag so the host's own controls (Other chip,
+    // custom-answer field) render in the form's language, not the UI locale.
+    expect(charter).toContain('write what a native speaker would say, never word-for-word');
+    expect(charter).toContain('快速确认');
+    expect(charter).toContain('"lang": "en"');
+    expect(charter).toContain('Set top-level `"lang"`');
+  });
+
+  it('delegates the Other escape hatch to the host and caps forms at 5 questions', () => {
+    // The web renderer injects a localized "Other" chip (expanding into the
+    // type-in field) on every finite-choice question, so model-authored
+    // catch-all options would render as duplicates. And discovery forms stay
+    // short: a hard 5-question cap with an explicit count-then-cut step.
+    expect(charter).toContain('the host renders a localized "Other" escape hatch');
+    expect(charter).not.toContain("Other — I'll describe");
+    expect(charter).toContain('Hard cap: 5 questions');
   });
 
   it('keeps the imagery fallback chain intact', () => {

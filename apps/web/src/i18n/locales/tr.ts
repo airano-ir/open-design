@@ -3074,6 +3074,7 @@ export const tr: Dict = {
   'qf.choose': 'Se.…',
   'qf.customLabel': 'Custom answer',
   'qf.customPlaceholder': 'Type your own answer...',
+  'qf.otherOption': 'Diğer',
   'qf.required': 'gerekli',
   'qf.lockedSubmitted': 'Cevaplar gönderildi — ajan bunları oturum sonuna kadar kullanıyor.',
   'qf.lockedPrev': 'Bu form önceki bir çalışmadan.',

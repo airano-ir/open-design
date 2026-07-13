@@ -28,6 +28,7 @@ answers.
       "label": "What should I build?",
       "type": "radio",
       "required": true,
+      "allowCustom": false,
       "options": [
         "Prototype",
         "Live artifact",

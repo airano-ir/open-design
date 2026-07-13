@@ -13,6 +13,37 @@ const VALID_BODY = `{
   ]
 }`;
 
+describe('form content language (lang)', () => {
+  it('parses a top-level lang tag from the complete form body', () => {
+    const input = [
+      '<question-form id="discovery" title="快速确认 · 30秒">',
+      '{ "lang": "zh-CN", "questions": [',
+      '  { "id": "output", "label": "我们要做什么？", "type": "radio", "options": ["海报", "网页"] }',
+      '] }',
+      '</question-form>',
+    ].join('\n');
+
+    const segments = splitOnQuestionForms(input);
+    expect(segments[0]?.kind).toBe('form');
+    if (segments[0]?.kind !== 'form') return;
+    expect(segments[0].form.lang).toBe('zh-CN');
+  });
+
+  it('adopts a streaming lang only once its string literal terminates', () => {
+    // A half-streamed tag like "zh-C" must not resolve to a dictionary; the
+    // field appears once the closing quote lands (same churn rule as `id`).
+    const partial = parsePartialQuestionForm(
+      '<question-form id="discovery" title="快速确认">\n{ "lang": "zh-C',
+    );
+    expect(partial?.lang).toBeUndefined();
+
+    const complete = parsePartialQuestionForm(
+      '<question-form id="discovery" title="快速确认">\n{ "lang": "zh-CN", "questions": [',
+    );
+    expect(complete?.lang).toBe('zh-CN');
+  });
+});
+
 describe('splitOnQuestionForms', () => {
   it('normalizes string and object question options', () => {
     const input = [

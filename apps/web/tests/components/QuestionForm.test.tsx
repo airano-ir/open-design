@@ -201,6 +201,7 @@ describe('QuestionFormView', () => {
     const onSubmit = vi.fn();
     render(<QuestionFormView form={richForm} interactive onSubmit={onSubmit} />);
 
+    fireEvent.click(screen.getByLabelText('Other'));
     fireEvent.change(screen.getByLabelText('Custom answer'), {
       target: { value: 'Wearable kiosk' },
     });
@@ -212,11 +213,82 @@ describe('QuestionFormView', () => {
     );
   });
 
+  it('keeps the custom input collapsed behind the Other chip until clicked', () => {
+    const { container } = render(
+      <QuestionFormView form={richForm} interactive onSubmit={vi.fn()} />,
+    );
+
+    const collapsible = container.querySelector('.qf-custom-collapsible');
+    if (!collapsible) throw new Error('expected collapsible custom field');
+    expect(collapsible.classList.contains('open')).toBe(false);
+    expect((screen.getByLabelText('Custom answer') as HTMLInputElement).disabled).toBe(true);
+
+    fireEvent.click(screen.getByLabelText('Other'));
+
+    expect(collapsible.classList.contains('open')).toBe(true);
+    expect((screen.getByLabelText('Custom answer') as HTMLInputElement).disabled).toBe(false);
+  });
+
+  it('deselects fixed options when Other opens and collapses when one is picked', () => {
+    const { container } = render(
+      <QuestionFormView form={richForm} interactive onSubmit={vi.fn()} />,
+    );
+
+    fireEvent.click(screen.getByLabelText('Mobile (iOS/Android)'));
+    fireEvent.click(screen.getByLabelText('Other'));
+    // Opening "Other" on a single-choice question means "none of these".
+    expect(container.querySelectorAll('input[type="radio"]:checked')).toHaveLength(0);
+
+    fireEvent.click(screen.getByLabelText('Desktop web'));
+    // Picking a fixed option collapses the still-empty custom field.
+    expect(
+      container.querySelector('.qf-custom-collapsible')?.classList.contains('open'),
+    ).toBe(false);
+  });
+
+  it('shows the custom input expanded for a submitted custom answer', () => {
+    const { container } = render(
+      <QuestionFormView
+        form={richForm}
+        interactive={false}
+        submittedAnswers={{ platform: 'Wearable kiosk' }}
+        onSubmit={vi.fn()}
+      />,
+    );
+
+    expect(
+      container.querySelector('.qf-custom-collapsible')?.classList.contains('open'),
+    ).toBe(true);
+    expect((screen.getByLabelText('Custom answer') as HTMLInputElement).value).toBe(
+      'Wearable kiosk',
+    );
+  });
+
+  it('reveals the custom input from the select Other… entry', () => {
+    const { container } = render(
+      <QuestionFormView form={selectObjectForm} interactive onSubmit={vi.fn()} />,
+    );
+
+    const select = container.querySelector('select');
+    if (!select) throw new Error('expected select control');
+    expect(
+      container.querySelector('.qf-custom-collapsible')?.classList.contains('open'),
+    ).toBe(false);
+
+    fireEvent.change(select, { target: { value: '__od-other__' } });
+
+    expect(
+      container.querySelector('.qf-custom-collapsible')?.classList.contains('open'),
+    ).toBe(true);
+    expect(select.value).toBe('__od-other__');
+  });
+
   it('combines checkbox presets with custom user entries', () => {
     const onSubmit = vi.fn();
     render(<QuestionFormView form={checkboxObjectForm} interactive onSubmit={onSubmit} />);
 
     fireEvent.click(screen.getByLabelText('Editorial / magazine'));
+    fireEvent.click(screen.getByLabelText('Other'));
     fireEvent.change(screen.getByLabelText('Custom answer'), {
       target: { value: 'Neo-museum, Field notebook' },
     });
@@ -239,6 +311,7 @@ describe('QuestionFormView', () => {
     render(<QuestionFormView form={exactForm} interactive onSubmit={vi.fn()} />);
 
     expect(screen.queryByLabelText('Custom answer')).toBeNull();
+    expect(screen.queryByLabelText('Other')).toBeNull();
   });
 
   it('submits required checkbox object options with stable values', () => {
@@ -409,6 +482,22 @@ describe('QuestionFormView', () => {
     rerender(<QuestionFormView form={complete} interactive onSubmit={vi.fn()} />);
 
     expect(container.querySelectorAll('input[type="checkbox"]:checked')).toHaveLength(0);
+  });
+
+  it('renders host strings in the form language, not the UI locale', () => {
+    // A Chinese form in an English UI must not mix scripts: the model
+    // declares `lang` alongside its localized labels, and the host's own
+    // in-card strings (the Other chip, custom-answer copy) follow it.
+    const zhForm = {
+      ...richForm,
+      lang: 'zh-CN',
+    } as QuestionForm;
+
+    render(<QuestionFormView form={zhForm} interactive onSubmit={vi.fn()} />);
+
+    expect(screen.getByLabelText('其他')).toBeTruthy();
+    expect(screen.queryByLabelText('Other')).toBeNull();
+    expect(screen.getByLabelText('自定义填写')).toBeTruthy();
   });
 
   it('submits native defaults for required color and defaultless range controls', () => {

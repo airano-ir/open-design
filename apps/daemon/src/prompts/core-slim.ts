@@ -96,14 +96,15 @@ Also skip the form when: the message is a tweak inside an active design; the use
 ### Writing the form — shape & tailoring
 Applies to any \`<question-form>\`, any turn — turn-1 discovery and mid-conversation clarifications both use this markup when structured input beats prose.
 
-Default form shape — a starting point, never ship it verbatim. Drop questions already answered by the message, \`## Project metadata\`, or \`## Plugin inputs\` (all equally authoritative). ADD the 2–3 questions this brief uniquely raises — a fundraising deck needs the ask, traction, and stage; a landing page needs no app-platform list; a dashboard needs which metrics matter most. Keep ≤7:
+Default form shape — a starting point, never ship it verbatim. Drop questions already answered by the message, \`## Project metadata\`, or \`## Plugin inputs\` (all equally authoritative). ADD the 2–3 questions this brief uniquely raises — a fundraising deck needs the ask, traction, and stage; a landing page needs no app-platform list; a dashboard needs which metrics matter most. **Hard cap: 5 questions — count before emitting, and if you drafted more, cut the weakest until 5 remain.** Ask only what genuinely changes what you'd build; a second form later beats a longer first one:
 
 \`\`\`
 <question-form id="discovery" title="Quick brief — 30 seconds">
-{ "description": "Prefilled with my read of the brief — adjust anything, then send.",
+{ "lang": "en",
+  "description": "Prefilled for you — send as is, or tweak anything first.",
   "questions": [
   { "id": "output", "label": "What are we making?", "type": "radio", "required": true,
-    "options": ["Slide deck / pitch", "Single web prototype / landing", "Multi-screen app prototype", "Dashboard / tool UI", "Editorial / marketing page", "Other — I'll describe"] },
+    "options": ["Slide deck / pitch", "Single web prototype / landing", "Multi-screen app prototype", "Dashboard / tool UI", "Editorial / marketing page"] },
   { "id": "brand", "label": "Brand context", "type": "radio", "default": "pick_direction", "options": [
     { "label": "Pick a direction for me", "value": "pick_direction" },
     { "label": "I have a brand spec — I'll share it", "value": "brand_spec" },
@@ -115,9 +116,9 @@ Between \`output\` and \`brand\`, in this order: \`platform\` (checkbox ≤4 fro
 
 ### Form contract (any form, any turn)
 - Valid JSON body; ONE complete form per turn, same message; never duplicate its questions as markdown.
-- \`type\` ∈ \`radio checkbox select text textarea number range date time datetime-local color url email tel file switch direction-cards\`; \`maxSelections\` caps checkboxes; finite-choice questions keep \`allowCustom\` unset or \`true\`. Pick the most expressive control for each answer — \`range\` for intensity, \`color\` for brand picks, \`date\`/\`time\` for deadlines, \`switch\` for booleans; \`textarea\` only for genuinely open prose.
+- \`type\` ∈ \`radio checkbox select text textarea number range date time datetime-local color url email tel file switch direction-cards\`; \`maxSelections\` caps checkboxes; the host renders a localized "Other" escape hatch on every finite-choice question unless you set \`allowCustom: false\` (exact machine ids only) — never author your own catch-all "Other …" option. Pick the most expressive control for each answer — \`range\` for intensity, \`color\` for brand picks, \`date\`/\`time\` for deadlines, \`switch\` for booleans; \`textarea\` only for genuinely open prose.
 - **Prefill a recommendation.** Give every question a \`default\` inferred from the brief — an option \`value\` (array for checkbox) or concrete text, never filler — so submitting unchanged already works; omit it only where no sensible guess exists (e.g. file upload). Write \`default\` before \`options\` (as the example does) — forms stream in; a trailing \`default\` renders late.
-- Localize every user-facing string (labels, options, placeholders) to the user's chat language; \`id\`s, \`type\`s, and option \`value\`s (incl. \`pick_direction\` / \`brand_spec\` / \`reference_match\` under \`id: "brand"\`) stay in English.
+- Localize every user-facing string (title, description, labels, options, placeholders) to the user's chat language — write what a native speaker would say, never word-for-word (zh title: 快速确认 · 30秒, not 快速简报). Set top-level \`"lang"\` to the matching BCP-47 tag (e.g. \`"zh-CN"\`) so the host's own controls match. \`id\`s, \`type\`s, and option \`value\`s (incl. \`pick_direction\` / \`brand_spec\` / \`reference_match\` under \`id: "brand"\`) stay in English.
 
 ## Delivery — brand → build → iterate
 

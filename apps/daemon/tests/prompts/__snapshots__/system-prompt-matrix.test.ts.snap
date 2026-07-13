@@ -14,7 +14,7 @@ exports[`composeSystemPrompt — scenario × section golden matrix > keeps the s
       "clarifying-questions",
       "role-marker-guard",
     ],
-    "totalChars": 58372,
+    "totalChars": 58728,
   },
   "ask-mode-full-context": {
     "sections": [
@@ -70,7 +70,7 @@ exports[`composeSystemPrompt — scenario × section golden matrix > keeps the s
       "clarifying-questions",
       "role-marker-guard",
     ],
-    "totalChars": 56877,
+    "totalChars": 57233,
   },
   "deck-kind-no-skill": {
     "sections": [
@@ -85,7 +85,7 @@ exports[`composeSystemPrompt — scenario × section golden matrix > keeps the s
       "clarifying-questions",
       "role-marker-guard",
     ],
-    "totalChars": 75870,
+    "totalChars": 76226,
   },
   "deck-kind-with-skill-seed": {
     "sections": [
@@ -100,7 +100,7 @@ exports[`composeSystemPrompt — scenario × section golden matrix > keeps the s
       "clarifying-questions",
       "role-marker-guard",
     ],
-    "totalChars": 55952,
+    "totalChars": 56308,
   },
   "design-ds-fixture-fallback": {
     "sections": [
@@ -121,7 +121,7 @@ exports[`composeSystemPrompt — scenario × section golden matrix > keeps the s
       "clarifying-questions",
       "role-marker-guard",
     ],
-    "totalChars": 72078,
+    "totalChars": 72434,
   },
   "design-full-stack": {
     "sections": [
@@ -151,7 +151,7 @@ exports[`composeSystemPrompt — scenario × section golden matrix > keeps the s
       "clarifying-questions",
       "role-marker-guard",
     ],
-    "totalChars": 66544,
+    "totalChars": 66900,
   },
   "design-minimal": {
     "sections": [
@@ -166,7 +166,7 @@ exports[`composeSystemPrompt — scenario × section golden matrix > keeps the s
       "clarifying-questions",
       "role-marker-guard",
     ],
-    "totalChars": 75807,
+    "totalChars": 76163,
   },
   "design-no-ds-multitarget": {
     "sections": [
@@ -181,7 +181,7 @@ exports[`composeSystemPrompt — scenario × section golden matrix > keeps the s
       "clarifying-questions",
       "role-marker-guard",
     ],
-    "totalChars": 61426,
+    "totalChars": 61782,
   },
   "example-prompt": {
     "sections": [
@@ -196,7 +196,7 @@ exports[`composeSystemPrompt — scenario × section golden matrix > keeps the s
       "clarifying-questions",
       "role-marker-guard",
     ],
-    "totalChars": 59650,
+    "totalChars": 60006,
   },
   "freeform-other": {
     "sections": [
@@ -212,7 +212,7 @@ exports[`composeSystemPrompt — scenario × section golden matrix > keeps the s
       "clarifying-questions",
       "role-marker-guard",
     ],
-    "totalChars": 79425,
+    "totalChars": 79781,
   },
   "freeform-other-no-deck-signal": {
     "sections": [
@@ -226,7 +226,7 @@ exports[`composeSystemPrompt — scenario × section golden matrix > keeps the s
       "clarifying-questions",
       "role-marker-guard",
     ],
-    "totalChars": 58591,
+    "totalChars": 58947,
   },
   "media-image": {
     "sections": [
@@ -255,7 +255,7 @@ exports[`composeSystemPrompt — scenario × section golden matrix > keeps the s
       "clarifying-questions",
       "role-marker-guard",
     ],
-    "totalChars": 78035,
+    "totalChars": 78391,
   },
   "plan-mode": {
     "sections": [
@@ -270,7 +270,7 @@ exports[`composeSystemPrompt — scenario × section golden matrix > keeps the s
       "clarifying-questions",
       "role-marker-guard",
     ],
-    "totalChars": 62598,
+    "totalChars": 62954,
   },
   "plugin-stages": {
     "sections": [
@@ -287,7 +287,7 @@ exports[`composeSystemPrompt — scenario × section golden matrix > keeps the s
       "clarifying-questions",
       "role-marker-guard",
     ],
-    "totalChars": 75903,
+    "totalChars": 76259,
   },
   "skip-discovery-brief": {
     "sections": [
@@ -302,7 +302,7 @@ exports[`composeSystemPrompt — scenario × section golden matrix > keeps the s
       "clarifying-questions",
       "role-marker-guard",
     ],
-    "totalChars": 59196,
+    "totalChars": 59552,
   },
   "slim-design-full-stack": {
     "sections": [
@@ -329,7 +329,7 @@ exports[`composeSystemPrompt — scenario × section golden matrix > keeps the s
       "media-dispatch-hint",
       "role-marker-guard",
     ],
-    "totalChars": 29173,
+    "totalChars": 29700,
   },
   "slim-freeform-no-deck-signal": {
     "sections": [
@@ -339,7 +339,7 @@ exports[`composeSystemPrompt — scenario × section golden matrix > keeps the s
       "media-dispatch-hint",
       "role-marker-guard",
     ],
-    "totalChars": 19625,
+    "totalChars": 20152,
   },
 }
 `;

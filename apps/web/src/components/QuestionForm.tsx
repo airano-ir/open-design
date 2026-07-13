@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
-import { useT } from '../i18n';
+import type { ReactNode } from 'react';
+import { tForLanguageTag, useT } from '../i18n';
 import type { DirectionCard, FormOption, QuestionForm } from '../artifacts/question-form';
 import { formatFormAnswers, formOptionValueForLabel } from '../artifacts/question-form';
 
@@ -47,7 +48,12 @@ export const QuestionFormView = forwardRef<QuestionFormHandle, Props>(function Q
   },
   ref,
 ) {
-  const t = useT();
+  const uiT = useT();
+  // Host strings inside the card follow the form's declared content language
+  // (`form.lang`, set by the model alongside the localized labels) so a
+  // Chinese form in an English UI doesn't mix scripts; without a resolvable
+  // tag they follow the app UI locale as before.
+  const t = useMemo(() => tForLanguageTag(form.lang) ?? uiT, [form.lang, uiT]);
   const initial = useMemo(
     () => buildInitialState(form, submittedAnswers ?? draftAnswers),
     [form, submittedAnswers, draftAnswers],
@@ -60,8 +66,84 @@ export const QuestionFormView = forwardRef<QuestionFormHandle, Props>(function Q
   const [touched] = useState(
     () => new Set<string>(Object.keys(submittedAnswers ?? draftAnswers ?? {})),
   );
+  // Finite-choice questions keep their type-in field collapsed behind a
+  // host-rendered "Other" chip; this tracks which questions the user expanded
+  // this mount. A question whose current answer already carries a custom
+  // value (submitted history, restored draft) renders expanded without an
+  // entry here — see customChoiceExpanded.
+  const [otherOpen, setOtherOpen] = useState<Set<string>>(() => new Set());
   const locked = !interactive || !onSubmit || submittedAnswers !== undefined;
   const currentAnswers = submittedAnswers ?? answers;
+
+  function hasCustomAnswer(q: QuestionForm['questions'][number]): boolean {
+    const value = currentAnswers[q.id];
+    return q.type === 'checkbox'
+      ? customCheckboxValue(q, value).length > 0
+      : customSingleValue(q, value).length > 0;
+  }
+
+  // Whether a finite-choice question shows its custom type-in field. Locked
+  // forms only ever show it when the recorded answer is a custom value.
+  function customChoiceExpanded(q: QuestionForm['questions'][number]): boolean {
+    if (locked) return hasCustomAnswer(q);
+    return otherOpen.has(q.id) || hasCustomAnswer(q);
+  }
+
+  // Toggle the "Other" chip. Opening a single-choice question's field
+  // deselects the fixed options (the user is saying "none of these");
+  // collapsing discards any custom text and keeps only known option values.
+  function toggleOther(q: QuestionForm['questions'][number]) {
+    if (locked) return;
+    const expanded = customChoiceExpanded(q);
+    setOtherOpen((prev) => {
+      const next = new Set(prev);
+      if (expanded) next.delete(q.id);
+      else next.add(q.id);
+      return next;
+    });
+    if (expanded) {
+      if (q.type === 'checkbox') {
+        const current = Array.isArray(answers[q.id]) ? (answers[q.id] as string[]) : [];
+        update(q.id, current.filter((entry) => questionValueIsKnown(q, entry)));
+      } else {
+        const current = typeof answers[q.id] === 'string' ? (answers[q.id] as string) : '';
+        if (!questionValueIsKnown(q, current)) update(q.id, '');
+      }
+    } else if (q.type !== 'checkbox') {
+      update(q.id, '');
+    }
+  }
+
+  // Picking a fixed option collapses an open (and still empty) "Other" field
+  // on single-choice questions; checkbox questions keep it open since fixed
+  // and custom entries coexist.
+  function pickFixed(q: QuestionForm['questions'][number], value: string) {
+    setOtherOpen((prev) => {
+      if (!prev.has(q.id)) return prev;
+      const next = new Set(prev);
+      next.delete(q.id);
+      return next;
+    });
+    update(q.id, value);
+  }
+
+  function renderOtherChip(q: QuestionForm['questions'][number]) {
+    const on = customChoiceExpanded(q);
+    return (
+      <label className={`qf-chip qf-chip-other${on ? ' qf-chip-on' : ''}`}>
+        <input
+          type="checkbox"
+          checked={on}
+          disabled={locked}
+          aria-label={t('qf.otherOption')}
+          onChange={() => toggleOther(q)}
+        />
+        <span className="qf-chip-copy">
+          <span>{t('qf.otherOption')}</span>
+        </span>
+      </label>
+    );
+  }
 
   // When the form streams in question-by-question, backfill state for newly
   // revealed questions without disturbing answers the user already touched.
@@ -198,21 +280,24 @@ export const QuestionFormView = forwardRef<QuestionFormHandle, Props>(function Q
                         checked={value === opt.value}
                         disabled={locked}
                         aria-label={opt.label}
-                        onChange={() => update(q.id, opt.value)}
+                        onChange={() => pickFixed(q, opt.value)}
                       />
                       <OptionCopy option={opt} />
                     </label>
                   ))}
+                  {shouldRenderCustomChoice(q) ? renderOtherChip(q) : null}
                 </div>
               ) : null}
               {q.type === 'radio' && q.options && shouldRenderCustomChoice(q) ? (
-                <CustomChoiceInput
-                  label={q.customLabel ?? t('qf.customLabel')}
-                  value={customSingleValue(q, value)}
-                  placeholder={q.customPlaceholder ?? t('qf.customPlaceholder')}
-                  disabled={locked}
-                  onChange={(next) => update(q.id, next)}
-                />
+                <CollapsibleCustomChoice open={customChoiceExpanded(q)}>
+                  <CustomChoiceInput
+                    label={q.customLabel ?? t('qf.customLabel')}
+                    value={customSingleValue(q, value)}
+                    placeholder={q.customPlaceholder ?? t('qf.customPlaceholder')}
+                    disabled={locked || !customChoiceExpanded(q)}
+                    onChange={(next) => update(q.id, next)}
+                  />
+                </CollapsibleCustomChoice>
               ) : null}
               {q.type === 'checkbox' && q.options ? (
                 <div className="qf-options">
@@ -239,25 +324,38 @@ export const QuestionFormView = forwardRef<QuestionFormHandle, Props>(function Q
                       </label>
                     );
                   })}
+                  {shouldRenderCustomChoice(q) ? renderOtherChip(q) : null}
                 </div>
               ) : null}
               {q.type === 'checkbox' && q.options && shouldRenderCustomChoice(q) ? (
-                <CustomChoiceInput
-                  label={q.customLabel ?? t('qf.customLabel')}
-                  value={customCheckboxValue(q, value)}
-                  placeholder={q.customPlaceholder ?? t('qf.customPlaceholder')}
-                  disabled={locked}
-                  onChange={(next) => updateCheckboxCustom(q, next)}
-                />
+                <CollapsibleCustomChoice open={customChoiceExpanded(q)}>
+                  <CustomChoiceInput
+                    label={q.customLabel ?? t('qf.customLabel')}
+                    value={customCheckboxValue(q, value)}
+                    placeholder={q.customPlaceholder ?? t('qf.customPlaceholder')}
+                    disabled={locked || !customChoiceExpanded(q)}
+                    onChange={(next) => updateCheckboxCustom(q, next)}
+                  />
+                </CollapsibleCustomChoice>
               ) : null}
               {q.type === 'select' && q.options ? (
                 <select
                   className="qf-select"
                   value={
-                    typeof value === 'string' && questionValueIsKnown(q, value) ? value : ''
+                    typeof value === 'string' && value.length > 0 && questionValueIsKnown(q, value)
+                      ? value
+                      : customChoiceExpanded(q)
+                        ? OTHER_SELECT_VALUE
+                        : ''
                   }
                   disabled={locked}
-                  onChange={(e) => update(q.id, e.target.value)}
+                  onChange={(e) => {
+                    if (e.target.value === OTHER_SELECT_VALUE) {
+                      if (!customChoiceExpanded(q)) toggleOther(q);
+                      return;
+                    }
+                    pickFixed(q, e.target.value);
+                  }}
                 >
                   <option value="" disabled>
                     {q.placeholder ?? t('qf.choose')}
@@ -267,16 +365,21 @@ export const QuestionFormView = forwardRef<QuestionFormHandle, Props>(function Q
                       {opt.label}
                     </option>
                   ))}
+                  {shouldRenderCustomChoice(q) ? (
+                    <option value={OTHER_SELECT_VALUE}>{t('qf.otherOption')}…</option>
+                  ) : null}
                 </select>
               ) : null}
               {q.type === 'select' && q.options && shouldRenderCustomChoice(q) ? (
-                <CustomChoiceInput
-                  label={q.customLabel ?? t('qf.customLabel')}
-                  value={customSingleValue(q, value)}
-                  placeholder={q.customPlaceholder ?? t('qf.customPlaceholder')}
-                  disabled={locked}
-                  onChange={(next) => update(q.id, next)}
-                />
+                <CollapsibleCustomChoice open={customChoiceExpanded(q)}>
+                  <CustomChoiceInput
+                    label={q.customLabel ?? t('qf.customLabel')}
+                    value={customSingleValue(q, value)}
+                    placeholder={q.customPlaceholder ?? t('qf.customPlaceholder')}
+                    disabled={locked || !customChoiceExpanded(q)}
+                    onChange={(next) => update(q.id, next)}
+                  />
+                </CollapsibleCustomChoice>
               ) : null}
               {q.type === 'text' ? (
                 <input
@@ -396,19 +499,25 @@ export const QuestionFormView = forwardRef<QuestionFormHandle, Props>(function Q
                       questionId={q.id}
                       selected={value === card.id || value === card.label}
                       disabled={locked}
-                      onSelect={() => update(q.id, card.id)}
+                      onSelect={() => pickFixed(q, card.id)}
+                      t={t}
                     />
                   ))}
                 </div>
               ) : null}
               {q.type === 'direction-cards' && q.cards && q.cards.length > 0 && shouldRenderCustomChoice(q) ? (
-                <CustomChoiceInput
-                  label={q.customLabel ?? t('qf.customLabel')}
-                  value={customSingleValue(q, value)}
-                  placeholder={q.customPlaceholder ?? t('qf.customPlaceholder')}
-                  disabled={locked}
-                  onChange={(next) => update(q.id, next)}
-                />
+                <>
+                  <div className="qf-options">{renderOtherChip(q)}</div>
+                  <CollapsibleCustomChoice open={customChoiceExpanded(q)}>
+                    <CustomChoiceInput
+                      label={q.customLabel ?? t('qf.customLabel')}
+                      value={customSingleValue(q, value)}
+                      placeholder={q.customPlaceholder ?? t('qf.customPlaceholder')}
+                      disabled={locked || !customChoiceExpanded(q)}
+                      onChange={(next) => update(q.id, next)}
+                    />
+                  </CollapsibleCustomChoice>
+                </>
               ) : null}
             </div>
           );
@@ -449,6 +558,20 @@ function OptionCopy({ option }: { option: FormOption }) {
   );
 }
 
+// Sentinel value for the host-injected "Other…" entry in a select control.
+// Never leaks into answers: choosing it only expands the type-in field.
+const OTHER_SELECT_VALUE = '__od-other__';
+
+// Accordion wrapper for the custom type-in field: stays mounted so the
+// collapse transition can play (see AGENTS.md → UI animation philosophy).
+function CollapsibleCustomChoice({ open, children }: { open: boolean; children: ReactNode }) {
+  return (
+    <div className={`accordion-collapsible qf-custom-collapsible${open ? ' open' : ''}`}>
+      <div className="accordion-collapsible-inner">{children}</div>
+    </div>
+  );
+}
+
 function CustomChoiceInput({
   label,
   value,
@@ -484,6 +607,7 @@ function DirectionCardView({
   selected,
   disabled,
   onSelect,
+  t,
 }: {
   card: DirectionCard;
   formId: string;
@@ -491,8 +615,9 @@ function DirectionCardView({
   selected: boolean;
   disabled: boolean;
   onSelect: () => void;
+  // Form-language-aware translator from the owning card (see QuestionFormView).
+  t: (key: Parameters<ReturnType<typeof useT>>[0]) => string;
 }) {
-  const t = useT();
   return (
     <label
       className={`qf-card${selected ? ' qf-card-on' : ''}${disabled ? ' qf-card-disabled' : ''}`}

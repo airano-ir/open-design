@@ -111,6 +111,13 @@ export interface QuestionForm {
   description?: string;
   questions: FormQuestion[];
   submitLabel?: string;
+  /**
+   * BCP-47 tag of the language the model localized the form into (e.g.
+   * "zh-CN"). Host-rendered strings inside the form card (the "Other" chip,
+   * custom input copy) follow this language so a Chinese form in an English
+   * UI doesn't mix scripts; absent → the app UI locale.
+   */
+  lang?: string;
 }
 
 export type FormSegment =
@@ -259,12 +266,14 @@ function tryParseForm(body: string, attrs: Record<string, string>): QuestionForm
     attrs.title ?? (typeof obj.title === 'string' ? obj.title : 'A few quick questions');
   const description = typeof obj.description === 'string' ? obj.description : undefined;
   const submitLabel = typeof obj.submitLabel === 'string' ? obj.submitLabel : undefined;
+  const lang = typeof obj.lang === 'string' && obj.lang.trim().length > 0 ? obj.lang.trim() : undefined;
   return {
     id,
     title,
     questions,
     ...(description ? { description } : {}),
     ...(submitLabel ? { submitLabel } : {}),
+    ...(lang ? { lang } : {}),
   };
 }
 
@@ -371,6 +380,10 @@ export function parsePartialQuestionForm(input: string): QuestionForm | null {
   // omitting it here makes a custom CTA flicker in only once the close tag
   // arrives.
   const submitLabel = typeof top.submitLabel === 'string' ? top.submitLabel : undefined;
+  // Adopt `lang` only once its string literal is fully terminated (same
+  // churn-avoidance as `id`): a partially streamed "zh-C" would briefly
+  // resolve to the wrong dictionary.
+  const lang = completeTopLevelString(body, 'lang');
   const questions = shapeStreamingQuestions(top.questions, countClosedQuestionObjects(body));
   return {
     id,
@@ -378,6 +391,7 @@ export function parsePartialQuestionForm(input: string): QuestionForm | null {
     questions,
     ...(description ? { description } : {}),
     ...(submitLabel ? { submitLabel } : {}),
+    ...(lang ? { lang } : {}),
   };
 }
 
