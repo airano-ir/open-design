@@ -944,7 +944,7 @@ describe('ProjectView daemon cleanup', () => {
     expect(window.sessionStorage.getItem('od:auto-send-first:brand-project')).toBeNull();
   });
 
-  it('anchors the brand browser-assist download guide between the transcript and composer', async () => {
+  it('opens browser assist without adding a global download-guide toast', async () => {
     listConversations.mockResolvedValue([{ id: 'conv-brand', title: 'Conversation' }]);
     listMessages.mockResolvedValue([]);
     fetchPreviewComments.mockResolvedValue([]);
@@ -1018,14 +1018,7 @@ describe('ProjectView daemon cleanup', () => {
       });
     });
 
-    const toast = await waitFor(() => {
-      const node = document.querySelector('.od-toast');
-      expect(node?.textContent).toContain('chat.brandBrowserAssistDownloadGuideTitle');
-      return node as HTMLElement;
-    });
-    expect(toast.closest('.project-actions-toast-anchor')).toBeTruthy();
-    expect(toast.closest('.split-chat-slot')).toBeTruthy();
-    expect(toast.closest('.chat-log-wrap')?.className).toContain('has-chat-log-tray');
+    expect(document.querySelector('.project-actions-toast-anchor .od-toast')).toBeNull();
   });
 
   it('waits for pendingPrompt hydration before consuming an auto-send flag', async () => {
