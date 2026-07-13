@@ -82,13 +82,15 @@ export function mapVelaWorkspaceContext(input: unknown): WorkspaceCollabContext 
   if (!ROLES.has(raw.role as CollabMemberRole)) return null;
   if (!MEMBER_STATUSES.has(raw.memberStatus as WorkspaceMemberStatus)) return null;
   if (!LIFECYCLE_STATES.has(raw.lifecycleState as WorkspaceLifecycleState)) return null;
-  if (!BILLING_STATES.has(raw.billingState as WorkspaceBillingState)) return null;
   if (!PROVIDER_MODES.has(raw.providerMode as WorkspaceProviderMode)) return null;
 
   const workspaceType = raw.workspaceType as WorkspaceType;
   const role = raw.role as CollabMemberRole;
   const memberStatus = raw.memberStatus as WorkspaceMemberStatus;
   const lifecycleState = raw.lifecycleState as WorkspaceLifecycleState;
+  const billingState = BILLING_STATES.has(raw.billingState as WorkspaceBillingState)
+    ? raw.billingState as WorkspaceBillingState
+    : billingStateFromLifecycle(lifecycleState);
 
   const context: WorkspaceCollabContext = {
     workspaceId,
@@ -97,7 +99,7 @@ export function mapVelaWorkspaceContext(input: unknown): WorkspaceCollabContext 
     role,
     memberStatus,
     lifecycleState,
-    billingState: raw.billingState as WorkspaceBillingState,
+    billingState,
     planId: str(raw.planId) || null,
     providerMode: raw.providerMode as WorkspaceProviderMode,
     seatSummary: parseSeatSummary(raw.seatSummary),
@@ -182,6 +184,17 @@ export function createWorkspaceContextProviderFromEnv(
 
 function str(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+function billingStateFromLifecycle(
+  lifecycleState: WorkspaceLifecycleState,
+): WorkspaceBillingState {
+  if (lifecycleState === 'billing_past_due') return 'past_due';
+  if (lifecycleState === 'locked') return 'locked';
+  if (lifecycleState === 'deleting' || lifecycleState === 'deleted') {
+    return 'inactive';
+  }
+  return 'active';
 }
 
 function parseSeatSummary(value: unknown): WorkspaceSeatSummary {

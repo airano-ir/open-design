@@ -72,6 +72,7 @@ import {
   liveArtifactPreviewUrl,
   projectFileUrl,
   projectRawUrl,
+  publishProjectFilePublic,
   LiveArtifactRefreshError,
   refreshLiveArtifact,
   restoreProjectFileVersion,
@@ -5297,8 +5298,10 @@ function ReactComponentViewer({
   const [shareAccess, setShareAccess] = useState<'private' | 'workspace'>('private');
   const [shareAccessMenuOpen, setShareAccessMenuOpen] = useState(false);
   const [shareAccessBusy, setShareAccessBusy] = useState(false);
-  const [filePublished, setFilePublished] = useState(false);
+  const [publishedFileUrl, setPublishedFileUrl] = useState('');
+  const [publishingPublicFile, setPublishingPublicFile] = useState(false);
   const [publishLinkFeedback, setPublishLinkFeedback] = useState<'copied' | 'failed' | null>(null);
+  const filePublished = publishedFileUrl.length > 0;
   const shareRef = useRef<HTMLDivElement | null>(null);
   // HTML entries that load this file as a Babel module. `null` = still
   // checking; `[]` = standalone artifact; non-empty = a module of a
@@ -5400,14 +5403,25 @@ function ReactComponentViewer({
     setShareAccessMenuOpen(false);
   }, [viewerOnly]);
 
-  // Published-file link. The demo mints a dedicated share URL; this viewer has
-  // no publish backend, so we fall back to the current page URL (no invented
-  // backend) and copy it to the clipboard with the same transient feedback.
-  const publishedFileUrl = typeof window !== 'undefined' ? window.location.href : '';
+  async function publishCurrentFilePublic() {
+    if (viewerOnly || publishingPublicFile) return;
+    setPublishingPublicFile(true);
+    setPublishLinkFeedback(null);
+    try {
+      const response = await publishProjectFilePublic(projectId, file.name);
+      setPublishedFileUrl(response.url);
+    } catch (error) {
+      console.warn('[FileViewer] failed to publish public file', error);
+      setPublishLinkFeedback('failed');
+    } finally {
+      setPublishingPublicFile(false);
+    }
+  }
+
   async function copyPublishedFileLink() {
     let ok = false;
     try {
-      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      if (publishedFileUrl && typeof navigator !== 'undefined' && navigator.clipboard) {
         await navigator.clipboard.writeText(publishedFileUrl);
         ok = true;
       }
@@ -5647,7 +5661,7 @@ function ReactComponentViewer({
                                 <button
                                   type="button"
                                   className="chrome-publish-button chrome-publish-button--ghost"
-                                  onClick={() => setFilePublished(false)}
+                                  onClick={() => setPublishedFileUrl('')}
                                 >
                                   {t('common.cancel')}
                                 </button>
@@ -5657,9 +5671,11 @@ function ReactComponentViewer({
                             <button
                               type="button"
                               className="chrome-publish-primary"
-                              disabled={viewerOnly}
+                              disabled={viewerOnly || publishingPublicFile}
                               title={viewerOnly ? viewerOnlyDisabledTitle : undefined}
-                              onClick={() => setFilePublished(true)}
+                              onClick={() => {
+                                void publishCurrentFilePublic();
+                              }}
                             >
                               <RemixIcon name="upload-cloud-2-line" size={15} />
                               {t('fileViewer.publishFile')}
@@ -6181,8 +6197,10 @@ function HtmlViewer({
   const [shareAccess, setShareAccess] = useState<'private' | 'workspace'>('private');
   const [shareAccessMenuOpen, setShareAccessMenuOpen] = useState(false);
   const [shareAccessBusy, setShareAccessBusy] = useState(false);
-  const [filePublished, setFilePublished] = useState(false);
+  const [publishedFileUrl, setPublishedFileUrl] = useState('');
+  const [publishingPublicFile, setPublishingPublicFile] = useState(false);
   const [publishLinkFeedback, setPublishLinkFeedback] = useState<'copied' | 'failed' | null>(null);
+  const filePublished = publishedFileUrl.length > 0;
   // False when closed; otherwise records which entry opened the modal so the
   // surface_view impression can carry entry_from.
   const [versionModalOpen, setVersionModalOpen] = useState<false | 'toolbar' | 'more_menu'>(false);
@@ -6268,14 +6286,25 @@ function HtmlViewer({
   useEffect(() => {
     if (!deployMenuOpen) setShareAccessMenuOpen(false);
   }, [deployMenuOpen]);
-  // Published-file link. The demo mints a dedicated share URL; this viewer has
-  // no publish backend, so we fall back to the current page URL (no invented
-  // backend) and copy it to the clipboard with the same transient feedback.
-  const publishedFileUrl = typeof window !== 'undefined' ? window.location.href : '';
+  async function publishCurrentFilePublic() {
+    if (viewerOnly || publishingPublicFile) return;
+    setPublishingPublicFile(true);
+    setPublishLinkFeedback(null);
+    try {
+      const response = await publishProjectFilePublic(projectId, file.name);
+      setPublishedFileUrl(response.url);
+    } catch (error) {
+      console.warn('[FileViewer] failed to publish public file', error);
+      setPublishLinkFeedback('failed');
+    } finally {
+      setPublishingPublicFile(false);
+    }
+  }
+
   async function copyPublishedFileLink() {
     let ok = false;
     try {
-      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      if (publishedFileUrl && typeof navigator !== 'undefined' && navigator.clipboard) {
         await navigator.clipboard.writeText(publishedFileUrl);
         ok = true;
       }
@@ -11095,7 +11124,7 @@ function HtmlViewer({
                               <button
                                 type="button"
                                 className="chrome-publish-button chrome-publish-button--ghost"
-                                onClick={() => setFilePublished(false)}
+                                onClick={() => setPublishedFileUrl('')}
                               >
                                 {t('fileViewer.unpublishFile')}
                               </button>
@@ -11105,9 +11134,11 @@ function HtmlViewer({
                           <button
                             type="button"
                             className="chrome-publish-primary"
-                            disabled={viewerOnly}
+                            disabled={viewerOnly || publishingPublicFile}
                             title={viewerOnly ? viewerOnlyDisabledTitle : undefined}
-                            onClick={() => setFilePublished(true)}
+                            onClick={() => {
+                              void publishCurrentFilePublic();
+                            }}
                           >
                             <RemixIcon name="upload-cloud-2-line" size={15} />
                             {t('fileViewer.publishFile')}

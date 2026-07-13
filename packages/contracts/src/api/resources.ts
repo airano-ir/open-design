@@ -63,6 +63,12 @@ export interface PublicSnapshotResponse {
   manifest: ResourceManifest | null;
 }
 
+export interface PublicProjectFileResponse {
+  url: string;
+  slug: string;
+  fileName: string;
+}
+
 export interface ResourceListResponse {
   resources: ResourceSummary[];
 }

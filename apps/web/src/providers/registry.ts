@@ -90,6 +90,12 @@ export type WebDeployProjectFileResponse = DeployProjectFileResponse;
 export type WebCloudflarePagesDeploySelection = CloudflarePagesDeploySelection;
 export type WebCloudflarePagesZonesResponse = CloudflarePagesZonesResponse;
 
+export interface WebPublicProjectFileResponse {
+  url: string;
+  slug: string;
+  fileName: string;
+}
+
 export function isDeployProviderId(value: unknown): value is WebDeployProviderId {
   return typeof value === 'string' && (DEPLOY_PROVIDER_IDS as readonly string[]).includes(value);
 }
@@ -1363,6 +1369,29 @@ export async function deployProjectFile(
     throw new Error(payload?.error?.message || payload?.message || `Deploy failed (${resp.status})`);
   }
   return (await resp.json()) as WebDeployProjectFileResponse;
+}
+
+export async function publishProjectFilePublic(
+  projectId: string,
+  fileName: string,
+): Promise<WebPublicProjectFileResponse> {
+  const resp = await fetch(
+    `/api/projects/${encodeURIComponent(projectId)}/files/${encodeURIComponent(fileName)}/publish-public`,
+    { method: 'POST' },
+  );
+  if (!resp.ok) {
+    const payload = (await resp.json().catch(() => null)) as
+      | { error?: { message?: string } | string; message?: string }
+      | null;
+    const errorMessage =
+      typeof payload?.error === 'object'
+        ? payload.error.message
+        : typeof payload?.error === 'string'
+          ? payload.error
+          : payload?.message;
+    throw new Error(errorMessage || `Publish failed (${resp.status})`);
+  }
+  return (await resp.json()) as WebPublicProjectFileResponse;
 }
 
 export async function checkDeploymentLink(

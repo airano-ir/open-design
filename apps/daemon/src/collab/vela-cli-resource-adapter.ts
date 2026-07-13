@@ -48,6 +48,14 @@ interface VelaVersionRecord {
   version?: number;
 }
 
+export interface VelaResourceSnapshotRecord {
+  slug: string;
+  name: string;
+  kind: string;
+  versionId: string;
+  createdAt: string;
+}
+
 export function createVelaCliResourceAdapter(
   options: VelaCliResourceAdapterOptions,
 ): ResourcePublishAdapter {
@@ -133,9 +141,28 @@ function parseVersion(stdout: string): number | null {
   }
 }
 
-const defaultRunVelaResource: RunVelaResource = (args) =>
+export function parseVelaResourceSnapshot(stdout: string): VelaResourceSnapshotRecord | null {
+  const trimmed = stdout.trim();
+  if (!trimmed) return null;
+  try {
+    const parsed = JSON.parse(trimmed) as Partial<VelaResourceSnapshotRecord>;
+    return typeof parsed.slug === 'string' && parsed.slug
+      ? {
+          slug: parsed.slug,
+          name: typeof parsed.name === 'string' ? parsed.name : '',
+          kind: typeof parsed.kind === 'string' ? parsed.kind : '',
+          versionId: typeof parsed.versionId === 'string' ? parsed.versionId : '',
+          createdAt: typeof parsed.createdAt === 'string' ? parsed.createdAt : '',
+        }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+export const runVelaResourceCommand: RunVelaResource = (args) =>
   new Promise<string>((resolve, reject) => {
-    const bin = process.env.OD_VELA_BIN?.trim() || 'vela';
+    const bin = process.env.OD_VELA_BIN?.trim() || process.env.VELA_BIN?.trim() || 'vela';
     execFile(
       bin,
       ['resource', ...args],
@@ -148,6 +175,8 @@ const defaultRunVelaResource: RunVelaResource = (args) =>
       },
     );
   });
+
+const defaultRunVelaResource: RunVelaResource = runVelaResourceCommand;
 
 export function buildVelaResourceEnv(
   env: NodeJS.ProcessEnv = process.env,

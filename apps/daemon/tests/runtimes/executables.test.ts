@@ -136,6 +136,36 @@ fsTest(
 );
 
 fsTest(
+  'resolveAgentExecutable honors inherited VELA_BIN before PATH fallback',
+  () => {
+    const root = mkdtempSync(join(tmpdir(), 'od-amr-env-bin-precedence-'));
+    try {
+      return withEnvSnapshot(['PATH', 'OD_AGENT_HOME', 'OD_RESOURCE_ROOT', 'VELA_BIN'], () => {
+        const pathBin = join(root, 'path-bin');
+        const pathVela = join(pathBin, 'vela');
+        const envVela = join(root, 'env', 'vela');
+        mkdirSync(pathBin, { recursive: true });
+        mkdirSync(join(root, 'env'), { recursive: true });
+        writeFileSync(pathVela, '#!/bin/sh\nexit 0\n');
+        writeFileSync(envVela, '#!/bin/sh\nexit 0\n');
+        chmodSync(pathVela, 0o755);
+        chmodSync(envVela, 0o755);
+        process.env.PATH = pathBin;
+        process.env.OD_AGENT_HOME = join(root, 'empty-home');
+        process.env.OD_RESOURCE_ROOT = '';
+        process.env.VELA_BIN = envVela;
+
+        const resolved = resolveAgentExecutable(minimalAgentDef({ id: 'amr', bin: 'vela' }));
+
+        assert.equal(resolved, envVela);
+      });
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  },
+);
+
+fsTest(
   'resolveAgentExecutable falls back to PATH Vela when packaged built-in Vela is absent',
   () => {
     const root = mkdtempSync(join(tmpdir(), 'od-amr-path-fallback-'));

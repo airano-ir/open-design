@@ -1,9 +1,11 @@
 import type { Express } from 'express';
-import { readdir, readFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import type { ProjectMetadata, ProjectSyncIntentEvent, TeamProject } from '@open-design/contracts';
 import { contextToResourceHubPrincipal } from '../collab/resource-hub-publish-adapter.js';
 import type { CollabRuntime } from '../collab/runtime.js';
+import { parseVelaResourceSnapshot, runVelaResourceCommand } from '../collab/vela-cli-resource-adapter.js';
 import type { ResourceHubPrincipal } from '../integrations/resource-hub.js';
 import { projectResourceIdFor } from '../integrations/vela-team-projects.js';
 import { readProjectManifest } from '../project-locations.js';
@@ -70,6 +72,7 @@ export interface RegisterCollabSyncRoutesDeps {
   teamProjectCatalog?: TeamProjectCatalogWriter;
   describeProject?: (projectId: string) => Promise<PulledProjectManifest | null> | PulledProjectManifest | null;
   projectStore?: PulledProjectStore;
+  resolveProjectDir?: (projectId: string) => string;
   resolvePullDir?: (projectId: string) => string;
   readManifest?: (projectDir: string) => Promise<PulledProjectManifest | null>;
 }
@@ -80,6 +83,8 @@ const SYNC_INTENT_EVENTS: ReadonlySet<ProjectSyncIntentEvent> = new Set([
   'project_team_unshare_requested',
 ]);
 const PULLED_PROJECT_PLACEHOLDER_NAME = '共享项目';
+const PUBLIC_FILE_RESOURCE_KIND = 'project';
+const PUBLIC_FILE_REF = 'published';
 
 function cleanPulledProjectName(value: unknown): string | null {
   if (typeof value !== 'string') return null;
@@ -170,6 +175,52 @@ function headerPrincipalForRequest(req: { get(name: string): string | undefined 
   };
 }
 
+function normalizePublicFilePath(raw: string): string | null {
+  let decoded: string;
+  try {
+    decoded = raw
+      .split('/')
+      .map((part) => decodeURIComponent(part))
+      .join('/');
+  } catch {
+    return null;
+  }
+  const normalized = decoded.replace(/^\/+/, '').replace(/\/+/g, '/');
+  if (
+    !normalized ||
+    normalized.includes('\0') ||
+    normalized.split('/').some((part) => part === '' || part === '.' || part === '..')
+  ) {
+    return null;
+  }
+  return normalized;
+}
+
+function publicFileResourceIdFor(
+  projectId: string,
+  filePath: string,
+  principal: ResourceHubPrincipal,
+): string {
+  const scoped = Buffer.from(
+    JSON.stringify([principal.teamId, principal.memberId, projectId, filePath]),
+    'utf8',
+  ).toString('base64url');
+  return `project-file-${scoped}`;
+}
+
+function encodePublicFileUrlPath(filePath: string): string {
+  return filePath.split('/').map((part) => encodeURIComponent(part)).join('/');
+}
+
+function publicResourceHubBaseUrl(): string {
+  return process.env.VELA_API_URL?.trim() || process.env.OD_RESOURCE_HUB_URL?.trim() || 'http://127.0.0.1:18080';
+}
+
+function publicSnapshotFileUrl(slug: string, filePath: string): string {
+  const relative = `/api/v1/public/snapshots/${encodeURIComponent(slug)}/files/${encodePublicFileUrlPath(filePath)}`;
+  return new URL(relative, publicResourceHubBaseUrl()).toString();
+}
+
 export function registerCollabSyncRoutes(app: Express, deps: RegisterCollabSyncRoutesDeps): void {
   const {
     scheduler,
@@ -184,6 +235,7 @@ export function registerCollabSyncRoutes(app: Express, deps: RegisterCollabSyncR
   } = deps.collab;
   const {
     projectStore,
+    resolveProjectDir,
     resolvePullDir,
     resolveSharedProjectOwner,
     resolveSharedProject,
@@ -295,6 +347,80 @@ export function registerCollabSyncRoutes(app: Express, deps: RegisterCollabSyncR
     scheduler.notifyChanged(req.params.id, 'run');
     scheduler.runBoundary(req.params.id);
     res.json({ ok: true });
+  });
+
+  app.post(/^\/api\/projects\/([^/]+)\/files\/(.+)\/publish-public$/u, async (req, res) => {
+    const params = req.params as unknown as { 0?: string; 1?: string };
+    const projectId = String(params[0] ?? '');
+    const filePath = normalizePublicFilePath(String(params[1] ?? ''));
+    if (!projectId || !filePath) {
+      return res.status(400).json({ error: 'invalid_file_path' });
+    }
+    const principal = await principalForRequest(req);
+    if (!principal) {
+      return res.status(409).json({ error: 'WORKSPACE_IDENTITY_REQUIRED' });
+    }
+    if (!resolveProjectDir) {
+      return res.status(500).json({ error: 'PROJECT_DIR_UNAVAILABLE' });
+    }
+
+    const projectDir = resolveProjectDir(projectId);
+    const sourceFile = path.join(projectDir, filePath);
+    let data: Buffer;
+    try {
+      data = await readFile(sourceFile);
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException)?.code;
+      return res.status(code === 'ENOENT' ? 404 : 400).json({
+        error: code === 'ENOENT' ? 'FILE_NOT_FOUND' : 'FILE_UNAVAILABLE',
+      });
+    }
+
+    const resourceId = publicFileResourceIdFor(projectId, filePath, principal);
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'od-public-file-'));
+    try {
+      const targetFile = path.join(tempDir, filePath);
+      await mkdir(path.dirname(targetFile), { recursive: true });
+      await writeFile(targetFile, data);
+      const metadata = {
+        source: 'open-design',
+        projectId,
+        fileName: filePath,
+      };
+      await runVelaResourceCommand([
+        'push',
+        PUBLIC_FILE_RESOURCE_KIND,
+        resourceId,
+        tempDir,
+        '--ref',
+        PUBLIC_FILE_REF,
+        '--metadata-json',
+        JSON.stringify(metadata),
+        '--json',
+      ]);
+      const snapshot = parseVelaResourceSnapshot(await runVelaResourceCommand([
+        'snapshot',
+        resourceId,
+        '--ref',
+        PUBLIC_FILE_REF,
+        '--name',
+        path.basename(filePath),
+        '--json',
+      ]));
+      if (!snapshot) {
+        return res.status(502).json({ error: 'PUBLIC_SNAPSHOT_UNAVAILABLE' });
+      }
+      return res.json({
+        url: publicSnapshotFileUrl(snapshot.slug, filePath),
+        slug: snapshot.slug,
+        fileName: filePath,
+      });
+    } catch (error) {
+      console.warn('[od] failed to publish public project file:', error);
+      return res.status(502).json({ error: 'PUBLIC_FILE_PUBLISH_UNAVAILABLE' });
+    } finally {
+      await rm(tempDir, { recursive: true, force: true }).catch(() => {});
+    }
   });
 
   app.post('/api/projects/:id/collab/sync-intent', async (req, res) => {
