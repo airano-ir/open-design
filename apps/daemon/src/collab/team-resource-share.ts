@@ -22,8 +22,8 @@ export class TeamResourceShareForbiddenError extends Error {
 export interface TeamResourceShareService {
   /** Share a resource to the team. Returns the published version, or null off-team. */
   share(resourceId: string): Promise<{ version: number } | null>;
-  /** Ids of resources shared to the team in this session. */
-  sharedIds(): string[];
+  /** Ids of resources shared to the team. */
+  sharedIds(): Promise<string[]>;
   /** True once a resource has been shared to the team. */
   isShared(resourceId: string): boolean;
   /** Whether the login-backed Vela transport is wired. */
@@ -60,7 +60,7 @@ export function createTeamResourceShareService(
   if (!shouldUseVelaCliResourceTransport(env)) {
     return {
       share: async () => null,
-      sharedIds: () => [],
+      sharedIds: async () => [],
       isShared: () => false,
       configured: false,
     };
@@ -96,8 +96,57 @@ export function createTeamResourceShareService(
       if (result) shared.add(resourceId);
       return result;
     },
-    sharedIds: () => [...shared],
+    async sharedIds() {
+      if (!(await options.getPrincipal())) return [];
+      try {
+        const out = await (options.run ?? defaultRun)(['shared', '--json']);
+        const ids = parseSharedResourceIds(out, options.kind, options.idPrefix);
+        for (const id of ids) shared.add(id);
+        return [...shared].sort();
+      } catch {
+        return [...shared].sort();
+      }
+    },
     isShared: (resourceId) => shared.has(resourceId),
     configured: true,
   };
+}
+
+async function defaultRun(args: string[]): Promise<string> {
+  const { runVelaResourceCommand } = await import('./vela-cli-resource-adapter.js');
+  return runVelaResourceCommand(args);
+}
+
+interface SharedResourceListPayload {
+  resources?: Array<{
+    id?: unknown;
+    kind?: unknown;
+    deletedAt?: unknown;
+  }>;
+}
+
+export function parseSharedResourceIds(
+  stdout: string,
+  kind: string,
+  idPrefix: string,
+): string[] {
+  const trimmed = stdout.trim();
+  if (!trimmed) return [];
+  let parsed: SharedResourceListPayload;
+  try {
+    parsed = JSON.parse(trimmed) as SharedResourceListPayload;
+  } catch {
+    return [];
+  }
+  const prefix = `${idPrefix}-`;
+  const ids = new Set<string>();
+  for (const resource of parsed.resources ?? []) {
+    if (resource.kind !== kind || resource.deletedAt != null) continue;
+    if (typeof resource.id !== 'string' || !resource.id.startsWith(prefix)) {
+      continue;
+    }
+    const localId = resource.id.slice(prefix.length);
+    if (localId) ids.add(localId);
+  }
+  return [...ids].sort();
 }

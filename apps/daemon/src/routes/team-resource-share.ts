@@ -26,8 +26,8 @@ export function registerTeamResourceShareRoutes(
   const root = `/api/workspace/${basePath}`;
 
   // Ids shared to the team — drives the "team" collection for this kind.
-  app.get(`${root}/team`, (_req, res) => {
-    res.json({ ids: share.sharedIds() });
+  app.get(`${root}/team`, async (_req, res) => {
+    res.json({ ids: await share.sharedIds() });
   });
 
   // Share a personal resource to the team.

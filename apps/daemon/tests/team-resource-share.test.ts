@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   TeamResourceShareForbiddenError,
   createTeamResourceShareService,
+  parseSharedResourceIds,
 } from '../src/collab/team-resource-share.js';
 import type { ResourceHubPrincipal } from '../src/collab/resource-principal.js';
 
@@ -56,6 +57,48 @@ describe('team resource share permission gate', () => {
 
     expect(service.configured).toBe(false);
     expect(await service.share('ds-1')).toBeNull();
-    expect(service.sharedIds()).toEqual([]);
+    expect(await service.sharedIds()).toEqual([]);
+  });
+
+  it('lists resources already shared through another daemon via Vela CLI', async () => {
+    const run = async (args: string[]): Promise<string> => {
+      expect(args).toEqual(['shared', '--json']);
+      return JSON.stringify({
+        resources: [
+          { id: 'skill-mock-team-expert-kit', kind: 'skill', deletedAt: null },
+          { id: 'skill-deleted-kit', kind: 'skill', deletedAt: '2026-07-13T00:00:00Z' },
+          { id: 'project-p1', kind: 'project', deletedAt: null },
+        ],
+      });
+    };
+    const service = createTeamResourceShareService({
+      kind: 'skill',
+      idPrefix: 'skill',
+      resolveDir: () => '/tmp/skill',
+      getPrincipal: () => principal,
+      getCanShare: () => false,
+      run,
+      env: { OD_WORKSPACE_CONTEXT_SOURCE: 'vela' },
+    });
+
+    expect(await service.sharedIds()).toEqual(['mock-team-expert-kit']);
+    expect(service.isShared('mock-team-expert-kit')).toBe(true);
+  });
+
+  it('parses shared resource ids by kind and prefix', () => {
+    expect(
+      parseSharedResourceIds(
+        JSON.stringify({
+          resources: [
+            { id: 'plugin-alpha', kind: 'plugin' },
+            { id: 'skill-alpha', kind: 'skill' },
+            { id: 'skill-beta', kind: 'skill', deletedAt: null },
+            { id: 'skill-gamma', kind: 'skill', deletedAt: '2026-07-13T00:00:00Z' },
+          ],
+        }),
+        'skill',
+        'skill',
+      ),
+    ).toEqual(['alpha', 'beta']);
   });
 });
