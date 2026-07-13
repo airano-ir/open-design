@@ -230,6 +230,15 @@ interface DemoExtractionProject {
   designSystemId?: string | null;
 }
 
+export async function resolveDemoComposerDesignSystemId(
+  project: Pick<DemoExtractionProject, 'projectId' | 'designSystemId'>,
+  loadProject: typeof getProject = getProject,
+): Promise<string | null> {
+  if (project.designSystemId) return project.designSystemId;
+  const refreshedProject = await loadProject(project.projectId).catch(() => null);
+  return refreshedProject?.designSystemId ?? null;
+}
+
 const DEMO_HOME_HIDDEN_TEMPLATE_IDS = ['live-artifact', 'image', 'video', 'audio'];
 const DEMO_ARTIFACT_CHOICES = orderedCreateChips().filter(
   (artifact) => artifact.action.kind === 'apply-scenario'
@@ -457,17 +466,23 @@ export function DesignSystemCreationFlow({
     setDemoArtifactCreating(true);
     setError(null);
     try {
-      // Brand extraction registers its design system under this deterministic
-      // id. Do not block the demo transition on the catalogue refresh: the
-      // focused composer already supplies a local summary fallback while the
-      // daemon finishes publishing the entry.
-      const designSystemId = demoProject.designSystemId ?? `user:${demoProject.brandId}`;
+      // The kickoff response can arrive before the deterministic extraction
+      // writes its final design-system id back to the backing brand project.
+      // Re-read that project here instead of guessing `user:<brandId>`: the
+      // guessed id renders convincingly in the demo picker but the daemon
+      // correctly rejects it when artifact creation starts.
+      const designSystemId = await resolveDemoComposerDesignSystemId(demoProject);
+      if (!designSystemId) {
+        setError('The design system is still being prepared. Try again in a moment.');
+        return false;
+      }
+      setDemoProject((current) => current ? { ...current, designSystemId } : current);
       setDemoComposerDesignSystemId(designSystemId);
       try {
         await onSystemsRefresh?.();
       } catch {
-        // The focused composer carries a local summary fallback, so a failed
-        // catalogue refresh must not block artifact creation.
+        // The final id came from the backing project, so a failed catalogue
+        // refresh must not block artifact creation.
       }
       return true;
     } catch (err) {
