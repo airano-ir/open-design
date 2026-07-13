@@ -4057,8 +4057,37 @@ export async function startServer({
       await fs.promises.rm(stagedFolder, { recursive: true, force: true }).catch(() => undefined);
     }
   }
+  async function syncSharedTeamDesignSystem(resource): Promise<void> {
+    const dirId = stripPrefixAndValidateId(resource.id, 'user:');
+    if (!dirId) return;
+    const targetDir = path.join(USER_DESIGN_SYSTEMS_DIR, dirId);
+    if (fs.existsSync(targetDir)) return;
+    const stagedFolder = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'od-team-design-system-'));
+    try {
+      const { runVelaResourceCommand } = await import('./collab/vela-cli-resource-adapter.js');
+      await runVelaResourceCommand([
+        'pull',
+        'design_system',
+        `ds-${resource.id.replace(/[^a-zA-Z0-9_-]/g, '-')}`,
+        stagedFolder,
+        '--ref',
+        'published',
+        '--json',
+      ]);
+      await fs.promises.rm(targetDir, { recursive: true, force: true }).catch(() => undefined);
+      await fs.promises.mkdir(USER_DESIGN_SYSTEMS_DIR, { recursive: true });
+      await fs.promises.rename(stagedFolder, targetDir);
+    } catch (error) {
+      console.warn(
+        `[team-resources] failed to pull shared design system ${resource.id}:`,
+        error instanceof Error ? error.message : error,
+      );
+      await fs.promises.rm(stagedFolder, { recursive: true, force: true }).catch(() => undefined);
+    }
+  }
   registerTeamResourceShareRoutes(app, {
     basePath: 'design-systems',
+    syncSharedResource: syncSharedTeamDesignSystem,
     share: createTeamResourceShareService({
       kind: 'design_system',
       idPrefix: 'ds',

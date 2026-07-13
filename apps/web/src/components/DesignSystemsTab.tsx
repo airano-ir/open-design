@@ -324,6 +324,7 @@ export function DesignSystemsTab({
       const body = (await res.json()) as { ids?: unknown };
       if (Array.isArray(body.ids)) {
         setTeamSharedIds(new Set(body.ids.filter((id): id is string => typeof id === 'string')));
+        await onSystemsRefresh?.();
       }
     } catch {
       // Non-fatal: leave the team collection empty on a transient failure.
