@@ -166,15 +166,6 @@ export function createAttributionService(deps: Omit<RegisterAttributionRoutesDep
       await persistPendingIfNeeded(attribution, true);
       return response('pending_ledger', { found: true, pending: true });
     }
-    if (ledger.status === 'already_consumed_same') {
-      await writeInstallationFile(installationDir, {
-        attributionClaimResultAt: now().toISOString(),
-        pendingAttribution: null,
-      });
-      const result = response('already_claimed', { found: true });
-      await captureClaimResult(result, attribution.source, attribution.platform, installationId);
-      return result;
-    }
     await deps.analytics.mergeAnonymousPerson({
       anonymousDistinctId: ledger.webDistinctId,
       distinctId: installationId,
@@ -191,7 +182,7 @@ export function createAttributionService(deps: Omit<RegisterAttributionRoutesDep
       attributionClaimResultAt: now().toISOString(),
       pendingAttribution: null,
     });
-    const result = response('claimed', {
+    const result = response(ledger.status === 'already_consumed_same' ? 'already_claimed' : 'claimed', {
       found: true,
       merged: true,
     });

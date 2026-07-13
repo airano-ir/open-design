@@ -148,7 +148,7 @@ describe('download attribution service', () => {
     });
   });
 
-  it('does not merge the same consumed token twice and records each consented result', async () => {
+  it('replays an idempotent merge when the same-installation ledger retry carries the recovered browser identity', async () => {
     await withTempData(async (dataDir) => {
       const analytics = analyticsStub();
       const fetchImpl = vi.fn()
@@ -163,9 +163,36 @@ describe('download attribution service', () => {
       });
 
       await expect(service.claim({ token: 'odtoken_repeat', source: 'manual' })).resolves.toMatchObject({ status: 'claimed', merged: true });
-      await expect(service.claim({ token: 'odtoken_repeat', source: 'manual' })).resolves.toMatchObject({ status: 'already_claimed', merged: false });
-      expect(analytics.mergeAnonymousPerson).toHaveBeenCalledTimes(1);
+      await expect(service.claim({ token: 'odtoken_repeat', source: 'manual' })).resolves.toMatchObject({ status: 'already_claimed', merged: true });
+      expect(analytics.mergeAnonymousPerson).toHaveBeenCalledTimes(2);
       expect(analytics.captureSafety).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('merges a pending token when its first visible ledger response is already_consumed_same', async () => {
+    await withTempData(async (dataDir) => {
+      await writeInstallationFile(dataDir, {
+        installationId: 'install-recovered',
+        pendingAttribution: {
+          token: 'odtoken_recovered', source: 'mac_where_froms', capturedAt: '2026-07-10T00:00:00.000Z',
+        },
+      });
+      const analytics = analyticsStub();
+      const service = createAttributionService({
+        analytics,
+        appConfig: { readAppConfig: async () => ({ installationId: 'install-recovered', telemetry: { metrics: true } }) },
+        env: { OD_ATTRIBUTION_LEDGER_URL: 'https://ledger.test/api/attribution' },
+        fetchImpl: vi.fn(async () => new Response(JSON.stringify({
+          status: 'already_consumed_same', webDistinctId: 'web-recovered', properties: { od_utm_source: 'retry' },
+        }), { status: 200 })) as unknown as typeof fetch,
+        paths: { RUNTIME_DATA_DIR: dataDir },
+      });
+
+      await expect(service.processPending()).resolves.toMatchObject({ status: 'already_claimed', merged: true });
+      expect(analytics.mergeAnonymousPerson).toHaveBeenCalledWith(expect.objectContaining({
+        anonymousDistinctId: 'web-recovered', distinctId: 'install-recovered',
+      }));
+      expect((await readInstallationFile(dataDir)).pendingAttribution).toBeUndefined();
     });
   });
 });
