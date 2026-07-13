@@ -28,7 +28,7 @@ import { Icon } from './Icon';
 import { InviteDialog } from './InviteDialog';
 import { CreditsPanel } from './CreditsPanel';
 import { LOCALE_LABEL, LOCALES, useI18n } from '../i18n';
-import { notifyWorkspaceBillingRefresh } from '../collab/useWorkspaceContext';
+import { notifyWorkspaceBillingRefresh, notifyWorkspaceContextRefresh } from '../collab/useWorkspaceContext';
 import type { EntryHomeView } from '../router';
 
 const REPO_URL = 'https://github.com/nexu-io/open-design';
@@ -185,8 +185,8 @@ export function EntryNavRail({
     context?.billingRecovery?.recoveryUrl?.trim() ||
     (workspaceSettingsUrl ? teamConsoleUrl(workspaceSettingsUrl, 'billing') : null);
   // Product decision: plan selection / payment lives in Vela Web. The local
-  // client opens that billing surface, then refreshes `/api/workspace/billing`
-  // when focus returns so direct web upgrades sync back into the credits chip.
+  // client opens that billing surface, then refreshes billing + context when
+  // focus returns so direct web upgrades sync plan, credits, seats and gates.
   const canUpgrade = Boolean(billingUpgradeUrl && permissions?.canManageBilling);
   const currentLanguageLabel = LOCALE_LABEL[locale];
 
@@ -194,7 +194,10 @@ export function EntryNavRail({
     if (!billingUpgradeUrl) return;
     setCreditsOpen(false);
     window.open(billingUpgradeUrl, '_blank', 'noopener,noreferrer');
-    window.setTimeout(() => notifyWorkspaceBillingRefresh(), 3000);
+    window.setTimeout(() => {
+      notifyWorkspaceBillingRefresh();
+      notifyWorkspaceContextRefresh();
+    }, 3000);
   }
 
   const selectView = (next: EntryView) => {

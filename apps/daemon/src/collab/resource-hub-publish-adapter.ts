@@ -163,6 +163,7 @@ export function createResourceHubPublishAdapterFromEnv(
   resolveProjectDir: (projectId: string) => string | Promise<string>,
   getPrincipal?: (projectId?: string) => ResourceHubPrincipal | null | Promise<ResourceHubPrincipal | null>,
   describeProject?: (projectId: string) => Record<string, unknown> | null | Promise<Record<string, unknown> | null>,
+  resolvePullDir?: (projectId: string) => string | Promise<string>,
   env: NodeJS.ProcessEnv = process.env,
 ): ResourcePublishAdapter | null {
   if (!env.OD_RESOURCE_HUB_URL?.trim()) return null;
@@ -170,6 +171,7 @@ export function createResourceHubPublishAdapterFromEnv(
   return createResourceHubPublishAdapter({
     client,
     resolveProjectDir,
+    ...(resolvePullDir ? { resolvePullDir } : {}),
     ...(describeProject ? { describeProject } : {}),
     getPrincipal: getPrincipal ?? (() => readResourceHubPrincipal(env)),
   });

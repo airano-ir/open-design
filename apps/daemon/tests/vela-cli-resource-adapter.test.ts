@@ -50,6 +50,12 @@ describe('createVelaCliResourceAdapter', () => {
       '--ref',
       'published',
       '--json',
+      '--exclude',
+      '.file-versions',
+      '--exclude',
+      '.live-artifacts',
+      '--exclude',
+      '.od-skills',
     ]);
   });
 
@@ -69,6 +75,12 @@ describe('createVelaCliResourceAdapter', () => {
       '--ref',
       'published',
       '--json',
+      '--exclude',
+      '.file-versions',
+      '--exclude',
+      '.live-artifacts',
+      '--exclude',
+      '.od-skills',
       '--metadata-json',
       JSON.stringify({ name: 'Launch Deck', metadata: { kind: 'deck' } }),
     ]);

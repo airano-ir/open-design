@@ -21,29 +21,80 @@ export interface WorkspaceContextState {
 
 export function useWorkspaceContext(): WorkspaceContextState {
   const [state, setState] = useState<WorkspaceContextState>({ context: null, loading: true });
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      try {
-        const res = await fetch('/api/workspace/context');
-        if (!res.ok) {
-          if (!cancelled) setState({ context: null, loading: false });
-          return;
-        }
-        const body = (await res.json()) as WorkspaceContextResponse;
-        if (!cancelled) setState({ context: body.context ?? null, loading: false });
-      } catch {
-        // Personal / offline / daemon without the B proxy: stay in the local state.
-        if (!cancelled) setState({ context: null, loading: false });
-      }
-    })();
+    mountedRef.current = true;
     return () => {
-      cancelled = true;
+      mountedRef.current = false;
     };
   }, []);
 
+  const loadContext = useCallback(async (clearOnFailure: boolean) => {
+    try {
+      const res = await fetch('/api/workspace/context', { cache: 'no-store' });
+      if (!res.ok) {
+        if (clearOnFailure && mountedRef.current) setState({ context: null, loading: false });
+        return;
+      }
+      const body = (await res.json()) as WorkspaceContextResponse;
+      if (mountedRef.current) setState({ context: body.context ?? null, loading: false });
+    } catch {
+      // Personal / offline / daemon without the B proxy: stay in the local state.
+      if (clearOnFailure && mountedRef.current) setState({ context: null, loading: false });
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadContext(true);
+  }, [loadContext]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') void loadContext(false);
+    }, WORKSPACE_CONTEXT_POLL_MS);
+    return () => clearInterval(interval);
+  }, [loadContext]);
+
+  useEffect(() => {
+    const refresh = () => {
+      void loadContext(true);
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') refresh();
+    };
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === WORKSPACE_CONTEXT_REFRESH_STORAGE_KEY) refresh();
+    };
+    window.addEventListener('focus', refresh);
+    window.addEventListener('pageshow', refresh);
+    window.addEventListener(WORKSPACE_CONTEXT_REFRESH_EVENT, refresh);
+    window.addEventListener('storage', onStorage);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      window.removeEventListener('focus', refresh);
+      window.removeEventListener('pageshow', refresh);
+      window.removeEventListener(WORKSPACE_CONTEXT_REFRESH_EVENT, refresh);
+      window.removeEventListener('storage', onStorage);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [loadContext]);
+
   return state;
+}
+
+const WORKSPACE_CONTEXT_POLL_MS = 30_000;
+export const WORKSPACE_CONTEXT_REFRESH_EVENT = 'od:workspace-context-refresh';
+const WORKSPACE_CONTEXT_REFRESH_STORAGE_KEY = 'od.workspaceContext.refreshAt';
+
+export function notifyWorkspaceContextRefresh(): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new Event(WORKSPACE_CONTEXT_REFRESH_EVENT));
+  try {
+    window.localStorage.setItem(WORKSPACE_CONTEXT_REFRESH_STORAGE_KEY, String(Date.now()));
+  } catch {
+    // The in-window event is enough when localStorage is unavailable.
+  }
 }
 
 /**

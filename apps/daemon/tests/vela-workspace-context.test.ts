@@ -68,6 +68,20 @@ describe('mapVelaWorkspaceContext', () => {
     expect(mapped?.seatSummary).toEqual({ seatLimit: 5, usedSeats: 5, availableSeats: 0, isSeatFull: true });
   });
 
+  it('accepts member contexts that hide billing-only fields', () => {
+    const mapped = mapVelaWorkspaceContext({
+      ...B_TEAM_CONTEXT,
+      billingState: undefined,
+      planId: undefined,
+      seatSummary: undefined,
+    });
+    expect(mapped).not.toBeNull();
+    expect(mapped?.billingState).toBe('active');
+    expect(mapped?.planId).toBeNull();
+    expect(mapped?.seatSummary).toEqual({ seatLimit: 0, usedSeats: 0, availableSeats: 0, isSeatFull: true });
+    expect(mapped?.permissions.canShareProjects).toBe(true);
+  });
+
   it('returns null on a bad enum or a missing id', () => {
     expect(mapVelaWorkspaceContext({ ...B_TEAM_CONTEXT, role: 'viewer' })).toBeNull();
     expect(mapVelaWorkspaceContext({ ...B_TEAM_CONTEXT, lifecycleState: 'frozen' })).toBeNull();

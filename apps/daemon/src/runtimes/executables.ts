@@ -180,7 +180,7 @@ function configuredExecutableOverride(
 ): string | null {
   const envKey = AGENT_BIN_ENV_KEYS.get(def?.id);
   if (!envKey) return null;
-  return executableFilePath(configuredEnv?.[envKey]);
+  return executableFilePath(configuredEnv?.[envKey] ?? process.env[envKey]);
 }
 
 export function resolveAmrOpenCodeExecutable(

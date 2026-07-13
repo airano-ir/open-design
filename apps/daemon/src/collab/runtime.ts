@@ -91,6 +91,8 @@ export interface CreateCollabRuntimeOptions {
   adapter?: ResourcePublishAdapter;
   /** Managed-project directory resolver, so the real hub adapter can pack/land. */
   resolveProjectDir?: (projectId: string) => string;
+  /** Directory resolver for materializing pulled shared projects before a local row exists. */
+  resolvePullDir?: (projectId: string) => string;
   /** Resource-index metadata for team project discovery/cards. */
   describeProject?: (projectId: string) => Record<string, unknown> | null | Promise<Record<string, unknown> | null>;
   /** Workspace-context provider. Defaults to a dev provider until wired to an identity source. */
@@ -113,6 +115,7 @@ export interface CreateCollabRuntimeOptions {
 
 function selectResourcePublishAdapter(
   resolveProjectDir: ((projectId: string) => string | Promise<string>) | undefined,
+  resolvePullDir: ((projectId: string) => string | Promise<string>) | undefined,
   workspaceContext: WorkspaceContextProvider,
   getProjectPrincipal: (projectId?: string) => ResourceHubPrincipal | null | Promise<ResourceHubPrincipal | null>,
   describeProject: ((projectId: string) => Record<string, unknown> | null | Promise<Record<string, unknown> | null>) | undefined,
@@ -121,11 +124,12 @@ function selectResourcePublishAdapter(
   if (shouldUseVelaCliResourceTransport()) {
     return createVelaCliResourceAdapter({
       resolveProjectDir,
+      ...(resolvePullDir ? { resolvePullDir } : {}),
       ...(describeProject ? { describeProject } : {}),
       hasTeamIdentity: async () => contextHasTeamIdentity(await workspaceContext.current({})),
     });
   }
-  return createResourceHubPublishAdapterFromEnv(resolveProjectDir, getProjectPrincipal, describeProject);
+  return createResourceHubPublishAdapterFromEnv(resolveProjectDir, getProjectPrincipal, describeProject, resolvePullDir);
 }
 
 export function createCollabRuntime(options: CreateCollabRuntimeOptions = {}): CollabRuntime {
@@ -166,6 +170,7 @@ export function createCollabRuntime(options: CreateCollabRuntimeOptions = {}): C
     options.adapter ??
     selectResourcePublishAdapter(
       options.resolveProjectDir,
+      options.resolvePullDir,
       workspaceContext,
       getProjectPrincipal,
       options.describeProject,
@@ -175,7 +180,7 @@ export function createCollabRuntime(options: CreateCollabRuntimeOptions = {}): C
   function rememberTeamShare(
     projectId: string,
     share: ResourceHubPrincipal,
-    syncState: ProjectSyncState = 'pending_upload',
+    syncState?: ProjectSyncState,
   ) {
     owners.set(projectId, share.memberId);
     scopedOwners.set(scopedProjectKey(projectId, share), share.memberId);
@@ -185,8 +190,10 @@ export function createCollabRuntime(options: CreateCollabRuntimeOptions = {}): C
       sharePrincipals.set(projectId, principals);
     }
     principals.set(share.teamId, share);
-    syncStates.set(projectId, syncState);
-    syncStates.set(scopedProjectKey(projectId, share), syncState);
+    if (syncState) {
+      syncStates.set(projectId, syncState);
+      syncStates.set(scopedProjectKey(projectId, share), syncState);
+    }
   }
 
   async function markTeamProject(

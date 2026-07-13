@@ -3852,6 +3852,7 @@ export async function startServer({
   const collab = createCollabRuntime({
     resolveProjectDir: (projectId) =>
       resolveProjectShareDir(PROJECTS_DIR, projectId, getProject(db, projectId), resolveProjectDir),
+    resolvePullDir: (projectId) => resolveProjectDir(PROJECTS_DIR, projectId),
     describeProject: describeCollabProject,
     ...(velaCliTeamProjectCatalog ? { teamProjectCatalog: velaCliTeamProjectCatalog } : {}),
     onPublished: ({ projectId, principal }) => {
@@ -3929,12 +3930,16 @@ export async function startServer({
       const owner = await resolveSharedProjectOwner(projectId);
       if (!owner) return false;
       const ctx = await collab.workspaceContext.current({});
-      return ctx?.workspaceMemberId != null && owner === ctx.workspaceMemberId;
+      const principal = contextToResourceHubPrincipal(ctx);
+      if (!principal || owner !== principal.memberId) return false;
+      collab.rememberTeamShare(projectId, principal);
+      return true;
     },
     subscribeFiles: (projectId, onChange) => {
+      const watchProject = getProject(db, projectId);
       const sub = subscribeFileEvents(PROJECTS_DIR, projectId, (evt) => {
         if (evt.type === 'file-changed') onChange();
-      });
+      }, { metadata: watchProject?.metadata });
       return { unsubscribe: () => sub.unsubscribe() };
     },
     onError: (error) => console.warn('[od] collab publish watcher error:', error),
@@ -3969,6 +3974,8 @@ export async function startServer({
         });
       },
     },
+    resolveProjectDir: (projectId) =>
+      resolveProjectShareDir(PROJECTS_DIR, projectId, getProject(db, projectId), resolveProjectDir),
     resolvePullDir: (projectId) => resolveProjectDir(PROJECTS_DIR, projectId),
     resolveSharedProject,
     resolveSharedProjectOwner,
