@@ -7,7 +7,7 @@ import {
   type AttributionEnv,
   type AttributionRecord,
   type PagesFunction,
-} from '../../../../_lib/attribution';
+} from '../../../_lib/attribution';
 
 export const onRequest: PagesFunction<AttributionEnv, {
   os: string;
