@@ -35,8 +35,10 @@ function configuredAmrEnv(
   }
   const inheritedVelaBin = env.VELA_BIN?.trim();
   return {
-    ...stored,
     ...(inheritedVelaBin ? { VELA_BIN: inheritedVelaBin } : {}),
+    // Settings-backed agent CLI configuration follows the same precedence as
+    // login and AMR launches: it overrides the inherited shell environment.
+    ...stored,
     ...explicit,
   };
 }

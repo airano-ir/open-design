@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { execFileMock } = vi.hoisted(() => ({ execFileMock: vi.fn() }));
@@ -41,7 +44,31 @@ describe('runVelaCommand', () => {
     expect(options.env.AMR_CLIENT_SOURCE).toBe('open_design');
   });
 
-  it('lets explicit stored CLI configuration override inherited resolution', async () => {
+  it('keeps the Settings-backed AMR binary authoritative over inherited VELA_BIN', async () => {
+    const dataDir = mkdtempSync(path.join(tmpdir(), 'od-vela-command-'));
+    try {
+      writeFileSync(
+        path.join(dataDir, 'app-config.json'),
+        JSON.stringify({
+          agentCliEnv: { amr: { VELA_BIN: process.execPath } },
+        }),
+      );
+
+      await runVelaCommand(['team-projects', 'list'], {
+        env: {
+          ...process.env,
+          VELA_BIN: '/missing/inherited/vela',
+          OD_DATA_DIR: dataDir,
+        },
+      });
+
+      expect(execFileMock.mock.calls[0]?.[0]).toBe(process.execPath);
+    } finally {
+      rmSync(dataDir, { recursive: true, force: true });
+    }
+  });
+
+  it('lets explicit per-command configuration override inherited resolution', async () => {
     await runVelaCommand(['billing', 'summary'], {
       env: {
         ...process.env,
