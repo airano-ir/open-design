@@ -1,0 +1,43 @@
+{
+  "name": "open-design",
+  "version": "1.1.0",
+  "description": "Open Design plugin for generating decks, prototypes, posters, and brand pages from Codex, with browser-visible previews served by the local od daemon.",
+  "author": {
+    "name": "Open Design",
+    "url": "https://open-design.ai"
+  },
+  "homepage": "https://open-design.ai/agent-plugin/",
+  "repository": "https://github.com/nexu-io/open-design.git",
+  "license": "Apache-2.0",
+  "keywords": [
+    "open-design",
+    "design",
+    "deck",
+    "slides",
+    "prototype",
+    "poster",
+    "design-system",
+    "brand",
+    "local-first",
+    "codex",
+    "mcp"
+  ],
+  "mcpServers": "./.mcp.json",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Open Design",
+    "shortDescription": "Generate decks, prototypes, and brand-true design artifacts from your agent",
+    "longDescription": "Workflow skills and MCP server configuration for routing design work to a local Open Design daemon: creating projects, running generation with 139 design skills and 150 DESIGN.md systems, previewing raw HTML artifacts in your agent's browser, verifying results visually, iterating, and exporting to PDF/PPTX/image. Local-first: files, generation, and previews stay on your machine.",
+    "developerName": "Open Design",
+    "category": "Design",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://open-design.ai",
+    "defaultPrompt": [
+      "Make a launch deck in Open Design and show me the preview",
+      "Turn this folder into a polished landing page with Open Design",
+      "Extract a brand from a URL and redesign my page to match it",
+      "Export my Open Design project as PPTX"
+    ],
+    "brandColor": "#63fe13"
+  }
+}

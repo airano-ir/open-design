@@ -26,6 +26,19 @@ import {
   applyJsonInstall,
   removeJsonInstall,
 } from './mcp-agent-install.js';
+import {
+  AGENT_PLUGIN_HOSTS,
+  AGENT_PLUGIN_HOST_SLUGS,
+  AGENT_PLUGIN_NAME,
+  describeAgentPluginPlan,
+  isAgentPluginHostSlug,
+  planAgentPluginInstall,
+} from './agent-plugin-install.js';
+import {
+  agentPluginBinDetected,
+  executeAgentPluginPlan,
+  resolveAgentPluginBundle,
+} from './agent-plugin-bundle.js';
 
 const argv = process.argv.slice(2);
 
@@ -104,6 +117,23 @@ const MCP_INSTALL_BOOLEAN_FLAGS = new Set([
   'help',
   'h',
   MCP_INSTALL_CLI_PROBE_FLAG,
+  'json',
+  'print',
+  'dry-run',
+  'uninstall',
+  'remove',
+]);
+
+// Hoisted for the same TDZ reason as the MCP install flags above:
+// `od agent-plugin …` dispatches through SUBCOMMAND_MAP during top-level
+// module evaluation.
+const AGENT_PLUGIN_STRING_FLAGS = new Set([
+  'daemon-url',
+  'source',
+]);
+const AGENT_PLUGIN_BOOLEAN_FLAGS = new Set([
+  'help',
+  'h',
   'json',
   'print',
   'dry-run',
@@ -316,6 +346,7 @@ const SUBCOMMAND_MAP = {
   artifacts: runArtifacts,
   media: runMedia,
   mcp: runMcp,
+  'agent-plugin': runAgentPlugin,
   amr: runAmr,
   research: runResearch,
   plugin: runPlugin,
@@ -1470,6 +1501,142 @@ The launch command is resolved from the running daemon's
 /api/mcp/install-info, so the installed entry matches the Settings → MCP
 panel snippet byte-for-byte. Start the daemon first for an exact match;
 otherwise a minimal \`od mcp --daemon-url <url>\` command is used.`);
+}
+
+// ---------------------------------------------------------------------------
+// Subcommand: od agent-plugin …
+//
+// Installs the Open Design agent plugin — the workflow-skills bundle under
+// plugins/open-design/ plus the stdio MCP server — into an external coding
+// agent (codex / claude / cursor), so that agent can drive design
+// generation through the local daemon and verify results in its own
+// browser surface. Pure planner in agent-plugin-install.ts, shared
+// executor in agent-plugin-bundle.ts; the web twin is the Integrations →
+// Agent plugin panel calling /api/agent-plugin/*.
+//
+// Not to be confused with `od plugin …`, which manages Open Design's OWN
+// plugin marketplace (packaged design workflows the internal agent runs).
+// ---------------------------------------------------------------------------
+
+async function runAgentPlugin(args) {
+  let flags;
+  try {
+    flags = parseFlags(args, {
+      string: AGENT_PLUGIN_STRING_FLAGS,
+      boolean: AGENT_PLUGIN_BOOLEAN_FLAGS,
+    });
+  } catch (err) {
+    console.error(err.message);
+    printAgentPluginHelp();
+    process.exit(2);
+  }
+  const positionals = positionalArgs(args, AGENT_PLUGIN_STRING_FLAGS);
+  const sub = positionals[0];
+  if (flags.help || flags.h || !sub || sub === 'help') {
+    printAgentPluginHelp();
+    process.exit(sub || flags.help || flags.h ? 0 : 2);
+  }
+  const useJson = Boolean(flags.json);
+
+  const os = await import('node:os');
+  const source = flags.source === 'local' ? 'local' : 'github';
+  const spec = await resolveMcpLaunchSpec(flags);
+  const bundle = resolveAgentPluginBundle();
+  const planContext = {
+    home: os.homedir(),
+    platform: process.platform,
+    source,
+    bundle,
+    mcpSpec: spec,
+  };
+
+  if (sub === 'list' || sub === 'status') {
+    const hosts = AGENT_PLUGIN_HOSTS.map((def) => {
+      const plan = planAgentPluginInstall(def.slug, planContext);
+      return {
+        slug: def.slug,
+        label: def.label,
+        bin: def.bin,
+        binDetected: agentPluginBinDetected(def.bin),
+        strategy: plan.kind,
+        browser: def.browser,
+        installPreview: describeAgentPluginPlan(plan),
+      };
+    });
+    const payload = {
+      bundle: {
+        name: AGENT_PLUGIN_NAME,
+        version: bundle.version,
+        skills: bundle.skillNames,
+        resolvedLocally: bundle.bundleDir != null,
+      },
+      hosts,
+    };
+    if (useJson) return process.stdout.write(JSON.stringify(payload, null, 2) + '\n');
+    console.log(`Open Design agent plugin ${bundle.version ?? '(bundle not resolved locally)'}`);
+    console.log(`skills: ${bundle.skillNames.join(', ') || '-'}`);
+    for (const host of hosts) {
+      console.log(`\n${host.label} (${host.slug}) — ${host.strategy}, bin ${host.binDetected ? 'found' : 'missing'}: ${host.bin}`);
+      for (const line of host.installPreview) console.log(`  ${line}`);
+    }
+    return;
+  }
+
+  if (sub !== 'install' && sub !== 'uninstall') {
+    console.error(`unknown subcommand: od agent-plugin ${sub}`);
+    printAgentPluginHelp();
+    process.exit(2);
+  }
+
+  const host = positionals[1];
+  if (!host || !isAgentPluginHostSlug(host)) {
+    const msg = `unknown host: ${host ?? '(missing)'} (expected one of: ${AGENT_PLUGIN_HOST_SLUGS.join(' ')})`;
+    if (useJson) console.log(JSON.stringify({ ok: false, host: host ?? null, message: msg }));
+    else console.error(msg);
+    process.exit(2);
+  }
+
+  const uninstall = sub === 'uninstall' || Boolean(flags.uninstall || flags.remove);
+  const dryRun = Boolean(flags.print || flags['dry-run']);
+  const plan = planAgentPluginInstall(host, planContext);
+  const exec = await executeAgentPluginPlan(plan, { uninstall, dryRun });
+  const result = {
+    ok: exec.ok,
+    host,
+    strategy: plan.kind,
+    message: exec.message,
+    performed: exec.performed,
+  };
+  if (useJson) {
+    console.log(JSON.stringify(result));
+  } else {
+    for (const line of exec.performed) console.log(`  ${line}`);
+    if (exec.ok) console.log(`✓ ${exec.message}`);
+    else console.error(`✗ ${exec.message}`);
+  }
+  if (!exec.ok) process.exit(1);
+}
+
+function printAgentPluginHelp() {
+  console.log(`Usage:
+  od agent-plugin list                       Bundle info + per-host install preview.
+  od agent-plugin install <host> [options]   Install skills + MCP into a coding agent.
+  od agent-plugin uninstall <host> [options]
+
+Hosts:
+  ${AGENT_PLUGIN_HOST_SLUGS.join(' ')}
+
+Options:
+  --source github|local   Marketplace source for codex/claude (default: github
+                          → ${'nexu-io/open-design'}; local uses this checkout).
+  --print, --dry-run      Show what would run/change; write nothing.
+  --json                  Machine-readable result.
+  --daemon-url <url>      Daemon URL used to resolve the bundled MCP command.
+
+codex/claude install through the host's own plugin system (skills + MCP in
+one step). cursor gets the SKILL.md folders copied into ~/.cursor/skills
+plus an entry in ~/.cursor/mcp.json. To register ONLY the MCP server into
+one of 15 agents, use \`od mcp install <agent>\` instead.`);
 }
 
 // ---------------------------------------------------------------------------

@@ -111,6 +111,29 @@ Inside a project's Studio, the same design system streams out multiple artifact 
 
 > Open Design ships as **skills, a CLI, and an MCP server** that mainstream coding agents consume natively. Once OD is installed, a single `od mcp install <agent>` wires the MCP server into that agent's config, and you call the same tools from inside any agent.
 
+**Agent plugin (skills + MCP in one install).** Codex and Claude Code can install the full Open Design agent plugin — six workflow skills (brief → generate → browser-verified preview → export) plus the MCP server — through their own plugin systems; Cursor gets the same skills via `od agent-plugin install cursor`:
+
+```bash
+# Codex
+codex plugin marketplace add nexu-io/open-design
+codex plugin add open-design@open-design
+
+# Claude Code
+claude plugin marketplace add nexu-io/open-design
+claude plugin install open-design@open-design
+
+# Cursor (skills → ~/.cursor/skills + MCP → ~/.cursor/mcp.json)
+od agent-plugin install cursor
+```
+
+Zero-config path — paste one line into your agent and it installs everything itself (od check → daemon → plugin → first browser-rendered preview):
+
+```text
+Read https://open-design.ai/chatgpt to install the Open Design plugin and set up a new design task for me.
+```
+
+The runbook behind that URL is [`plugins/open-design/INSTALL.md`](plugins/open-design/INSTALL.md) (also served raw at `open-design.ai/chatgpt.md`); the human-facing page is [open-design.ai/agent-plugin](https://open-design.ai/agent-plugin/). The MCP-only path below still covers 15 agents.
+
 | Coding agent / platform &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Status &nbsp;&nbsp; | One-line MCP server install &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; |
 |---|:---:|---|
 | [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | ✅ Supported | `od mcp install claude` |

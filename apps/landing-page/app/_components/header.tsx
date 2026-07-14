@@ -326,6 +326,14 @@ export function Header({
                 className='nav-dropdown nav-dropdown-solution'
                 aria-label={productMenuCopy.agent}
               >
+                {/* Pinned first row: the installable agent plugin page.
+                    Product noun, deliberately untranslated like the agent
+                    names below it. */}
+                <li key='agent-plugin'>
+                  <a href={href('/agent-plugin/')}>
+                    <span className='dropdown-name'>Agent Plugin — install Open Design</span>
+                  </a>
+                </li>
                 {AGENTS.map((agent) => (
                   <li key={agent.route}>
                     <a href={href(`/agents/${agent.route}/`)}>

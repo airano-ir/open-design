@@ -672,7 +672,7 @@ export interface DesignSystemEditClickProps {
 export interface IntegrationsTabClickProps {
   page_name: 'integrations';
   area: 'integrations_tab';
-  element: 'mcp' | 'connectors' | 'skills' | 'use_everywhere';
+  element: 'agent_plugin' | 'mcp' | 'connectors' | 'skills' | 'use_everywhere';
 }
 
 // Shared element vocabulary for the External MCP panel. McpClientSection

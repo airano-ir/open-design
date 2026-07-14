@@ -2,6 +2,7 @@ export * from './common.js';
 export * from './errors.js';
 export * from './tasks.js';
 export * from './api/app-config.js';
+export * from './api/agent-plugin.js';
 export * from './api/agent-sessions.js';
 export * from './api/amrWallet.js';
 export * from './api/automations.js';

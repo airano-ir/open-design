@@ -1,0 +1,156 @@
+---
+/*
+ * /agent-plugin/ — the ChatCut-style plugin landing page.
+ *
+ * Captures "open design plugin", "codex design plugin", "claude code
+ * design plugin", "cursor design skills" intent AND doubles as the
+ * machine-readable install target: the one-line prompt users paste into
+ * an agent points here, and the agent executes the per-host commands
+ * verbatim. Copy lives in `app/agent-plugin-i18n.ts` (en + zh, others
+ * fall back) — never fabricate commands in this template.
+ */
+import Layout from '../../_components/sub-page-layout.astro';
+import { getAgentPluginCopy } from '../../agent-plugin-i18n';
+import { localeFromPath, localizedHref } from '../../i18n';
+
+const SITE = Astro.site?.toString() ?? 'https://open-design.ai/';
+const REPO = 'https://github.com/nexu-io/open-design';
+const locale = localeFromPath(Astro.url.pathname);
+const href = (path: string) => localizedHref(path, locale);
+const page = getAgentPluginCopy(locale);
+
+const homeUrl = new URL(href('/'), SITE).toString();
+const pageUrl = new URL(Astro.url.pathname, SITE).toString();
+
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Open Design', item: homeUrl },
+      { '@type': 'ListItem', position: 2, name: page.breadcrumb, item: pageUrl },
+    ],
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: page.title,
+    description: page.description,
+    url: pageUrl,
+    isPartOf: { '@id': `${SITE}#website` },
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: page.faq.map(({ name, text }) => ({
+      '@type': 'Question',
+      name,
+      acceptedAnswer: { '@type': 'Answer', text },
+    })),
+  },
+];
+---
+
+<Layout title={page.title} description={page.description} active="agent" jsonLd={jsonLd}>
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href={href('/')}>Open Design</a>
+    <span>/</span>
+    <span aria-current="page">{page.breadcrumb}</span>
+  </nav>
+
+  <article class="info-page solution-page agent-rich">
+    <header class="catalog-head agent-rich-head">
+      <h1 class="display">{page.heading}</h1>
+      <p class="lead">{page.lead}</p>
+    </header>
+
+    <section class="info-section" id="install-prompt">
+      <p><strong>{page.installPromptLabel}</strong></p>
+      <pre class="agent-code" data-agent-plugin-install-prompt><code>{page.installPrompt}</code></pre>
+      <p>{page.installPromptHint}</p>
+    </section>
+
+    <nav class="info-toc" aria-label={page.tocLabel}>
+      <span>{page.tocLabel}</span>
+      {page.toc.map((t) => (<a href={`#${t.id}`}>{t.label}</a>))}
+    </nav>
+
+    <section class="info-section" id="why">
+      <h2>{page.whyTitle}</h2>
+      <ul class="agent-steps">
+        {page.why.map((item) => (
+          <li><strong>{item.title}:</strong> {item.body}</li>
+        ))}
+      </ul>
+    </section>
+
+    <section class="info-section" id="make">
+      <h2>{page.makeTitle}</h2>
+      <p>{page.makeLead}</p>
+      <ul>
+        {page.makeItems.map((item) => (
+          <li><strong>{item.title}</strong> — {item.body}</li>
+        ))}
+      </ul>
+    </section>
+
+    <section class="info-section" id="how">
+      <h2>{page.howTitle}</h2>
+      <ol>
+        {page.howSteps.map((step) => (
+          <li><strong>{step.label}:</strong> {step.body}</li>
+        ))}
+      </ol>
+    </section>
+
+    <section class="info-section" id="install">
+      <h2>{page.hostsTitle}</h2>
+      <p>{page.hostsLead}</p>
+      {page.hosts.map((host) => (
+        <div data-agent-plugin-host={host.name.toLowerCase().replace(/\s+/g, '-')}>
+          <h3>{host.name} · {host.browser}</h3>
+          <pre class="agent-code"><code>{host.commands.join('\n')}</code></pre>
+          <p>{host.note}</p>
+        </div>
+      ))}
+    </section>
+
+    <section class="info-section" id="for-agents">
+      <h2>{page.agentSectionTitle}</h2>
+      {page.agentSectionBody.map((p) => (<p>{p}</p>))}
+    </section>
+
+    <section class="info-section" id="faq">
+      <h2>{page.faqTitle}</h2>
+      <ol class="faq-list">
+        {page.faq.map(({ name, text }, idx) => (
+          <li class="faq-item">
+            <details>
+              <summary>
+                <span class="faq-index">{String(idx + 1).padStart(2, '0')}</span>
+                <span class="faq-q">{name}</span>
+                <span class="faq-toggle" aria-hidden="true">+</span>
+              </summary>
+              <p class="faq-a">{text}</p>
+            </details>
+          </li>
+        ))}
+      </ol>
+    </section>
+
+    <section class="info-cta" aria-label={page.ctaTitle}>
+      <div>
+        <h2>{page.ctaTitle}</h2>
+        <p>{page.ctaBody}</p>
+      </div>
+      <div class="info-cta-actions">
+        <a class="btn btn-primary" href={href('/download/')}>{page.ctaPrimary}</a>
+        <a class="btn btn-ghost" href={REPO} target="_blank" rel="noreferrer noopener">{page.ctaSecondary}</a>
+      </div>
+      <div class="info-cta-meta">
+        <span class="stamp">● Apache-2.0</span>
+        <span><a class="inline-link" href={href('/agents/')}>/agents/</a></span>
+      </div>
+    </section>
+  </article>
+</Layout>

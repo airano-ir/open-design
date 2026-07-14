@@ -8,6 +8,7 @@ import {
   trackPageView,
   trackSettingsConnectorAuthResult,
 } from '../analytics/events';
+import { AgentPluginSection } from './AgentPluginSection';
 import { ConnectorSection } from './SettingsDialog';
 import { Icon } from './Icon';
 import { McpClientSection } from './McpClientSection';
@@ -15,7 +16,7 @@ import { SkillsSection } from './SkillsSection';
 import { UseEverywhereGuidePanel } from './UseEverywhereModal';
 import { useT } from '../i18n';
 
-export type IntegrationTab = 'mcp' | 'connectors' | 'skills' | 'use-everywhere';
+export type IntegrationTab = 'agent-plugin' | 'mcp' | 'connectors' | 'skills' | 'use-everywhere';
 
 interface Props {
   config: AppConfig;
@@ -30,6 +31,7 @@ interface Props {
 const INTEGRATION_TABS: ReadonlyArray<{
   id: IntegrationTab;
 }> = [
+  { id: 'agent-plugin' },
   { id: 'mcp' },
   { id: 'connectors' },
   { id: 'skills' },
@@ -38,8 +40,9 @@ const INTEGRATION_TABS: ReadonlyArray<{
 
 function integrationTabToTrackingElement(
   id: IntegrationTab,
-): 'mcp' | 'connectors' | 'skills' | 'use_everywhere' {
+): 'agent_plugin' | 'mcp' | 'connectors' | 'skills' | 'use_everywhere' {
   if (id === 'use-everywhere') return 'use_everywhere';
+  if (id === 'agent-plugin') return 'agent_plugin';
   return id;
 }
 
@@ -140,6 +143,8 @@ export function IntegrationsView({
       </nav>
 
       <div className="integrations-view__panel">
+        {activeTab === 'agent-plugin' ? <AgentPluginSection /> : null}
+
         {activeTab === 'mcp' ? <McpClientSection /> : null}
 
         {activeTab === 'connectors' ? (
@@ -192,6 +197,7 @@ export function IntegrationsView({
 
 function integrationTabLabel(id: IntegrationTab, t: ReturnType<typeof useT>): string {
   switch (id) {
+    case 'agent-plugin': return t('integrations.tabLabel.agentPlugin');
     case 'mcp': return t('integrations.tabLabel.mcp');
     case 'connectors': return t('entry.tabConnectors');
     case 'skills': return t('integrations.tabLabel.skills');
@@ -201,6 +207,7 @@ function integrationTabLabel(id: IntegrationTab, t: ReturnType<typeof useT>): st
 
 function integrationTabHint(id: IntegrationTab, t: ReturnType<typeof useT>): string {
   switch (id) {
+    case 'agent-plugin': return t('integrations.tabHint.agentPlugin');
     case 'mcp': return t('integrations.tabHint.mcp');
     case 'connectors': return t('integrations.tabHint.connectors');
     case 'skills': return t('settings.skillsHint');

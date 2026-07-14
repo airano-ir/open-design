@@ -5,12 +5,12 @@
     "name": "nexu-io",
     "url": "https://github.com/nexu-io/open-design"
   },
-  "description": "Open Design — local-first design app exposed to coding agents over MCP. Install once with your agent's plugin command and projects/files/skills are reachable through stdio.",
+  "description": "Open Design — local-first design app exposed to coding agents as workflow skills + MCP. Install once with your agent's plugin command and design generation, projects/files/previews are reachable through the local `od` daemon.",
   "plugins": [
     {
       "name": "open-design",
       "source": "./plugins/open-design",
-      "description": "Open Design MCP server (stdio). 139 skills + projects/files/preview tools, served by your local `od` daemon. Requires `od` on PATH (brew / npm / DMG)."
+      "description": "Open Design agent plugin: workflow skills (create → preview → verify → export) plus the stdio MCP server. 139 design skills + 150 DESIGN.md systems served by your local `od` daemon. Requires `od` on PATH (brew / npm / DMG)."
     }
   ]
 }

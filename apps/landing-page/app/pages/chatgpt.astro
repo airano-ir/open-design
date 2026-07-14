@@ -1,0 +1,67 @@
+---
+/*
+ * /chatgpt — the machine entry point for the agent plugin (the ChatCut
+ * `chatcut.io/chatgpt` analog). Users paste one line into their agent:
+ *
+ *   Read https://open-design.ai/chatgpt to install the Open Design plugin
+ *   and set up a new design task for me.
+ *
+ * The agent fetches THIS page and executes the runbook. Content is the
+ * canonical `plugins/open-design/INSTALL.md` inlined at build time (same
+ * repo-root-as-source philosophy as the content collections), rendered as
+ * monospace text so what the agent reads is byte-identical to the repo
+ * file. `/chatgpt.md` serves the raw markdown for agents that prefer it.
+ * The human-facing marketing twin is /agent-plugin/.
+ */
+import installMd from '../../../../plugins/open-design/INSTALL.md?raw';
+
+const title = 'Install the Open Design plugin — agent runbook';
+const description =
+  'Machine-readable install runbook for the Open Design agent plugin. Paste "Read https://open-design.ai/chatgpt to install the Open Design plugin and set up a new design task for me." into Codex, Claude Code, or Cursor.';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href="https://open-design.ai/chatgpt" />
+    <meta name="robots" content="index,follow" />
+    <style>
+      :root { color-scheme: light dark; }
+      body {
+        margin: 0 auto;
+        padding: 32px 20px 64px;
+        max-width: 84ch;
+        font: 14px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+        background: #fff;
+        color: #111;
+      }
+      @media (prefers-color-scheme: dark) {
+        body { background: #0d1117; color: #e6edf3; }
+        a { color: #7ee787; }
+      }
+      pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+      .human-note {
+        border: 1px solid currentColor;
+        border-radius: 8px;
+        padding: 10px 14px;
+        opacity: 0.75;
+        margin-bottom: 28px;
+      }
+    </style>
+  </head>
+  <body>
+    <p class="human-note">
+      This page is written for coding agents. If you are a human: paste
+      <strong>“Read https://open-design.ai/chatgpt to install the Open Design
+      plugin and set up a new design task for me.”</strong> into Codex, Claude
+      Code, or Cursor — or read the friendly version at
+      <a href="/agent-plugin/">/agent-plugin/</a>. Raw markdown:
+      <a href="/chatgpt.md">/chatgpt.md</a>.
+    </p>
+    <pre>{installMd}</pre>
+  </body>
+</html>

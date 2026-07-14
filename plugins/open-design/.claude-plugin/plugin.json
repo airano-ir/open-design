@@ -1,7 +1,7 @@
 {
   "name": "open-design",
   "displayName": "Open Design",
-  "version": "1.0.0",
-  "description": "Local-first design app · 139 skills + 150 DESIGN.md systems · exposes projects/files/preview tools to your coding agent over stdio MCP. Requires the `od` daemon on PATH.",
+  "version": "1.1.0",
+  "description": "Local-first design app · workflow skills (create → preview → verify → export) + stdio MCP tools · 139 design skills + 150 DESIGN.md systems served by the local `od` daemon. Requires `od` on PATH.",
   "mcpServers": "./.mcp.json"
 }
