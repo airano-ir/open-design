@@ -427,8 +427,9 @@ async function renderEditablePptx(
 // cannot return a stale composited frame of the previous slide — the
 // duplicate-page race `capturePage` exhibits); falls back to `capturePage` when
 // the debugger isn't attached. `scale: 1` because the window's device-pixel
-// ratio already provides the pixel scale (avoids double-scaling).
-async function captureDeckSlide(
+// ratio already provides the pixel scale (avoids double-scaling). Exported so
+// focused tests can exercise the real selection/restack/capture orchestration.
+export async function captureDeckSlide(
   window: BrowserWindow,
   dbg: Electron.Debugger | null,
   i: number,

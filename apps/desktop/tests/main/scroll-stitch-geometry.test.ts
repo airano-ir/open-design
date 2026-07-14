@@ -8,11 +8,11 @@ import { gzip } from 'node:zlib';
 import {
   HIDE_CHROME_SELECTOR,
   activeSlideCaptureOffsetTransform,
+  captureDeckSlide,
   measureAuthoredSlideBox,
   paginateViewportBand,
   readDomToPptxBundleFile,
   requestedRenderSize,
-  restackActiveSlide,
   restoreActiveSlideCapture,
   runDomToPptx,
   scrollStitchGeometry,
@@ -112,7 +112,7 @@ describe('deck capture DOM prep', () => {
     );
   });
 
-  test('off-stage slide fallback preserves live content across a multi-slide restore cycle', () => {
+  test('off-stage slide capture preserves live content across consecutive exported pages', async () => {
     class FakeStyle {
       cssText = '';
       private readonly values = new Map<string, { priority: string; value: string }>();
@@ -127,6 +127,30 @@ describe('deck capture DOM prep', () => {
 
       getPropertyValue(name: string): string {
         return this.values.get(name)?.value ?? '';
+      }
+
+      set animation(value: string) {
+        this.setProperty('animation', value);
+      }
+
+      set opacity(value: string) {
+        this.setProperty('opacity', value);
+      }
+
+      set pointerEvents(value: string) {
+        this.setProperty('pointer-events', value);
+      }
+
+      set transition(value: string) {
+        this.setProperty('transition', value);
+      }
+
+      set visibility(value: string) {
+        this.setProperty('visibility', value);
+      }
+
+      set zIndex(value: string) {
+        this.setProperty('z-index', value);
       }
 
       removeProperty(name: string): void {
@@ -149,6 +173,7 @@ describe('deck capture DOM prep', () => {
       parentElement: FakeElement | null = null;
       runtimeFrame: symbol | undefined;
       style = new FakeStyle();
+      classList = { toggle: () => true };
 
       constructor(
         private rect: { x: number; y: number } = { x: 32, y: 24 },
@@ -192,7 +217,7 @@ describe('deck capture DOM prep', () => {
       }
 
       getBoundingClientRect(): DOMRect {
-        return this.rect as DOMRect;
+        return { ...this.rect, height: 540, width: 960 } as DOMRect;
       }
 
       remove(): void {
@@ -255,14 +280,40 @@ describe('deck capture DOM prep', () => {
       getElementById: (id: string) => findById(body, id),
       querySelectorAll: () => slidesInDocumentOrder(body),
     };
+    const capturedSlides: FakeElement[] = [];
+    const captureWindow = {
+      webContents: {
+        async executeJavaScript(script: string) {
+          const evaluate = new Function('document', 'requestAnimationFrame', `return ${script};`);
+          const requestAnimationFrame = (callback: (timestamp: number) => void): number => {
+            callback(0);
+            return 0;
+          };
+          return await evaluate(fakeDocument, requestAnimationFrame) as unknown;
+        },
+        async capturePage() {
+          const layer = findById(body, '__od_export_active_slide_capture');
+          const capturedSlide = layer?.children[0]?.children[0];
+          if (!capturedSlide) throw new Error('capture layer has no active slide');
+          capturedSlides.push(capturedSlide);
+          return { runtimeFrame: capturedSlide.children[0]?.runtimeFrame };
+        },
+      },
+    };
+    const browserWindow = captureWindow as unknown as Parameters<typeof captureDeckSlide>[0];
     const previousDocument = globalThis.document;
     Object.assign(globalThis, { document: fakeDocument });
     try {
-      restackActiveSlide('.slide', 0, 960, 540);
+      const firstImage = await captureDeckSlide(
+        browserWindow,
+        null,
+        0,
+        { h: 540, w: 960 },
+      );
 
       const layer = findById(body, '__od_export_active_slide_capture');
       const offset = layer?.children[0];
-      const capturedSlide = offset?.children[0];
+      const capturedSlide = capturedSlides[0];
 
       // cloneNode(true) would produce a blank canvas. The live slide must be the
       // sole paintable capture subtree so its current canvas/WebGL/media state is
@@ -270,34 +321,41 @@ describe('deck capture DOM prep', () => {
       expect(capturedSlide).toBe(firstSlide);
       expect(capturedSlide?.children[0]).toBe(firstCanvas);
       expect(capturedSlide?.children[0]?.runtimeFrame).toBe(firstRuntimeFrame);
+      expect((firstImage as unknown as { runtimeFrame?: symbol }).runtimeFrame).toBe(
+        firstRuntimeFrame,
+      );
       // Align from the moved slide's live rect. Reusing the source rect would
       // apply the translated parent's offset a second time and move it off-screen.
       expect(offset?.style.getPropertyValue('transform')).toBe('translate(0px, 0px)');
       expect(offset?.style.getPropertyPriority('transform')).toBe('important');
 
-      restoreActiveSlideCapture();
-      expect(findById(body, '__od_export_active_slide_capture')).toBeNull();
-      expect(firstSlide.children[0]).toBe(firstCanvas);
-      expect(firstSlide.style.getPropertyValue('opacity')).toBe('1');
-      expect(firstSlide.style.getPropertyPriority('opacity')).toBe('');
-
-      restackActiveSlide('.slide', 1, 960, 540);
+      const laterImage = await captureDeckSlide(
+        browserWindow,
+        null,
+        1,
+        { h: 540, w: 960 },
+      );
       const laterLayer = findById(body, '__od_export_active_slide_capture');
       const laterOffset = laterLayer?.children[0];
-      const laterCapturedSlide = laterOffset?.children[0];
+      const laterCapturedSlide = capturedSlides[1];
 
-      // Restoring the first slide must preserve selector order before the next
-      // off-stage capture. Otherwise index 1 can select the first slide again,
-      // leaving the later exported page blank or duplicated.
+      // captureDeckSlide() selects through showDeckSlide(), which restores the
+      // first off-stage slide before querying and restacking the second. A lost
+      // runtime frame or wrong selector order makes this later export blank or
+      // duplicate the first page instead of returning populated slide content.
       expect(laterCapturedSlide).toBe(laterSlide);
       expect(laterCapturedSlide?.children[0]).toBe(laterCanvas);
       expect(laterCapturedSlide?.children[0]?.runtimeFrame).toBe(laterRuntimeFrame);
+      expect((laterImage as unknown as { runtimeFrame?: symbol }).runtimeFrame).toBe(
+        laterRuntimeFrame,
+      );
       expect(laterOffset?.style.getPropertyValue('transform')).toBe('translate(0px, 0px)');
 
       restoreActiveSlideCapture();
       expect(body.children).toEqual([firstSlide, laterSlide]);
+      expect(firstSlide.children[0]?.runtimeFrame).toBe(firstRuntimeFrame);
       expect(laterSlide.children[0]?.runtimeFrame).toBe(laterRuntimeFrame);
-      expect(laterSlide.style.getPropertyValue('opacity')).toBe('0');
+      expect(capturedSlides).toEqual([firstSlide, laterSlide]);
     } finally {
       restoreActiveSlideCapture();
       Object.assign(globalThis, { document: previousDocument });
