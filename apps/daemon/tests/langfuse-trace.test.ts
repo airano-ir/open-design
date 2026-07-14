@@ -436,20 +436,23 @@ describe('resolveFeedbackTraceId', () => {
     expect(resolveFeedbackTraceId({ runId: 'run-a' })).toBe('run-a');
   });
 
-  it('derives the terminal_fallback body id for failed/canceled non-finalized runs', () => {
+  it('keeps the canonical id when failed/canceled but no accepted fallback anchor exists', () => {
+    // Immediate thumbs-up/down after a failed run must not invent runId:tf
+    // before terminal_fallback is accepted (or while late finalization may
+    // still cancel the fallback and publish only the canonical trace).
     expect(
       resolveFeedbackTraceId({
         runId: 'run-failed',
         runStatus: 'failed',
         telemetryFinalized: false,
       }),
-    ).toBe(scopedTelemetryBodyId('run-failed', 'final', 'terminal_fallback'));
+    ).toBe('run-failed');
     expect(
       resolveFeedbackTraceId({
         runId: 'run-canceled',
         runStatus: 'canceled',
       }),
-    ).toBe('run-canceled:tf');
+    ).toBe('run-canceled');
   });
 
   it('keeps the canonical id when the message was telemetry-finalized', () => {
@@ -460,6 +463,28 @@ describe('resolveFeedbackTraceId', () => {
         telemetryFinalized: true,
       }),
     ).toBe('run-finalized');
+  });
+
+  it('uses a remembered terminal_fallback body id only after acceptance', () => {
+    expect(
+      resolveFeedbackTraceId({
+        runId: 'run-tf-accept',
+        runStatus: 'failed',
+        telemetryFinalized: false,
+      }),
+    ).toBe('run-tf-accept');
+    rememberAcceptedFinalTraceBodyId(
+      'run-tf-accept',
+      'run-tf-accept:tf',
+      'terminal_fallback',
+    );
+    expect(
+      resolveFeedbackTraceId({
+        runId: 'run-tf-accept',
+        runStatus: 'failed',
+        telemetryFinalized: false,
+      }),
+    ).toBe('run-tf-accept:tf');
   });
 
   it('prefers the accepted final_message body id over a prior terminal_fallback memory', () => {
@@ -3299,7 +3324,7 @@ describe('buildFeedbackPayload', () => {
     expect(batch[2]!.body.value).toBe('weak_visual');
   });
 
-  it('attaches scores to the terminal_fallback body id for fallback-only runs', () => {
+  it('keeps scores on the canonical id for failed runs without an accepted fallback anchor', () => {
     const batch = buildFeedbackPayload(
       makeFeedbackCtx({
         runId: 'run-fallback-only',
@@ -3307,13 +3332,9 @@ describe('buildFeedbackPayload', () => {
         telemetryFinalized: false,
       }),
     ) as Array<Record<string, any>>;
-    const expectedTraceId = scopedTelemetryBodyId(
-      'run-fallback-only',
-      'final',
-      'terminal_fallback',
-    );
-    expect(batch[0]!.body.traceId).toBe(expectedTraceId);
-    expect(batch[0]!.body.id).toBe(`${expectedTraceId}-rating`);
+    // Status alone must not invent :tf; only accepted delivery memory does.
+    expect(batch[0]!.body.traceId).toBe('run-fallback-only');
+    expect(batch[0]!.body.id).toBe('run-fallback-only-rating');
   });
 
   it('uses the remembered accepted body id when present', () => {

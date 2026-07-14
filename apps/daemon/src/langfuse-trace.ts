@@ -194,20 +194,28 @@ export function resetAcceptedFinalTraceBodyIdsForTests(): void {
  * 1. Explicit override (`traceId`)
  * 2. Process-local accepted final delivery body id
  * 3. Persisted accepted final-purpose body id (survives daemon restart)
- * 4. Derive from run status + message finalization (mirrors terminal_fallback rules)
- * 5. Canonical runId
+ * 4. Canonical runId
  *
- * Prefer accepted delivery memory/persistence over raw `telemetry_finalized_at`:
- * a failed/canceled run may accept `terminal_fallback`, later finalize a
- * message, then fail `final_message` delivery. Feedback must still target the
- * accepted `:tf` body rather than a never-accepted canonical id.
+ * Never invent a `:tf` body id from run status alone. Immediate feedback after
+ * a failed/canceled run can arrive before `terminal_fallback` is accepted (or
+ * while a late `final_message` still cancels the fallback timer). Scoring onto
+ * a not-yet-accepted `:tf` id permanently detaches feedback from the real
+ * trace. Prefer accepted delivery memory/persistence so feedback attaches only
+ * to a body that was actually accepted.
+ *
+ * `runStatus` / `telemetryFinalized` remain accepted inputs for callers that
+ * already load them from the DB anchor, but they do not rewrite the body id.
  */
 export function resolveFeedbackTraceId(input: {
   runId: string;
   /** Explicit override (e.g. caller already resolved the anchor). */
   traceId?: string | null;
+  /** Terminal run status from the feedback anchor (informational; not used to invent `:tf`). */
   runStatus?: string | null;
-  /** True when the assistant message was telemetry-finalized (final_message path). */
+  /**
+   * True when the assistant message was telemetry-finalized (final_message path).
+   * Informational for callers; not used to invent a body id.
+   */
   telemetryFinalized?: boolean;
   /**
    * Accepted final-purpose body id persisted on the message row. Used when
@@ -226,14 +234,10 @@ export function resolveFeedbackTraceId(input: {
       ? input.acceptedTraceBodyId.trim()
       : '';
   if (accepted) return accepted;
-  // Failed/canceled runs that never reach a telemetry-finalized final_message
-  // only have the terminal_fallback body namespace in Langfuse/Vela.
-  if (
-    input.telemetryFinalized !== true &&
-    (input.runStatus === 'failed' || input.runStatus === 'canceled')
-  ) {
-    return scopedTelemetryBodyId(runId, 'final', 'terminal_fallback');
-  }
+  // Keep the canonical id until an accepted final-purpose body is known.
+  // Status-based `:tf` rewrite would attach scores to a nonexistent trace when
+  // feedback arrives before terminal_fallback acceptance (or when late
+  // finalization cancels the fallback and only publishes runId).
   return runId;
 }
 
@@ -529,18 +533,19 @@ export interface ReportRunOpts {
  * Payload sent to Langfuse when a user thumbs-up/down's an assistant turn.
  *
  * Scores attach to the accepted final-purpose body id for the run (canonical
- * `runId` after final_message, or `${runId}:tf` for terminal_fallback-only
- * completions). Callers may pass an explicit `traceId`, or supply run status +
- * finalization so resolveFeedbackTraceId can derive the anchor.
+ * `runId` after final_message, or `${runId}:tf` after an accepted
+ * terminal_fallback). Callers may pass an explicit `traceId`, or rely on
+ * resolveFeedbackTraceId accepted-delivery memory / persisted anchor.
  */
 export interface FeedbackReportContext {
   runId: string;
   /**
    * Langfuse body id the score should attach to. When omitted, derived via
-   * resolveFeedbackTraceId from accepted-delivery memory and/or run status.
+   * resolveFeedbackTraceId from accepted-delivery memory (process-local or
+   * persisted). Without an accepted anchor, defaults to the canonical runId.
    */
   traceId?: string;
-  /** Terminal run status; used to derive the fallback `:tf` body id. */
+  /** Terminal run status from the feedback anchor (optional context). */
   runStatus?: string | null;
   /** True when the assistant message was telemetry-finalized. */
   telemetryFinalized?: boolean;

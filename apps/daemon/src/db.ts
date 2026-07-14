@@ -1701,7 +1701,7 @@ export function setRunTelemetryAcceptedAnchor(
  * An explicit `assistantMessageId` is only trusted when it is the terminal
  * assistant row for the URL `runId`. Stale or foreign ids (user messages,
  * other runs, non-terminal placeholders) fall through to the run lookup so
- * their null/foreign `run_status` cannot steer `resolveFeedbackTraceId`.
+ * their null/foreign accepted body id cannot mis-anchor feedback.
  */
 export function getRunFeedbackTelemetryAnchor(
   db: SqliteDb,
