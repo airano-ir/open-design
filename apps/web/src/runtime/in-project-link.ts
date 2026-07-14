@@ -120,9 +120,11 @@ export function resolveChatFileLink(
  * Classify an absolute disk href against the current project's daemon-
  * resolved working directory. See `resolveChatFileLink` for the ownership
  * rules; this helper only ever answers from positive prefix proof and
- * returns `null` whenever the href is not provably owned. POSIX paths only —
- * `resolvedDir` comparison is textual, so a Windows daemon path simply never
- * matches and the caller falls through to the known-file fallback.
+ * returns `null` whenever the href is not provably owned. Comparison is
+ * textual over `normalizeDiskPath` output, so POSIX and Windows
+ * drive-letter shapes both work (a Windows daemon returns
+ * `C:\…\projects\<id>` as `resolvedDir` and the agent links files the
+ * same way).
  */
 function resolveAgainstResolvedDir(
   href: string,
@@ -130,18 +132,22 @@ function resolveAgainstResolvedDir(
   projectResolvedDir: string | null | undefined,
 ): ChatFileLinkTarget | null {
   if (!projectResolvedDir) return null;
-  if (!href.startsWith('/') || href.startsWith('//')) return null;
+  // Protocol-relative URLs (`//host/…`) are external network URLs, never
+  // local disk paths.
+  if (href.startsWith('//')) return null;
   const withoutHash = href.split('#')[0] ?? href;
   const withoutQuery = withoutHash.split('?')[0] ?? withoutHash;
-  let decoded: string;
+  let rawTarget: string;
   try {
-    decoded = decodeURIComponent(withoutQuery);
+    rawTarget = decodeURIComponent(withoutQuery);
   } catch {
     return null;
   }
+  const decoded = normalizeDiskPath(rawTarget);
+  if (!decoded) return null;
   if (decoded.split('/').some((segment) => segment === '..')) return null;
-  const resolvedDir = projectResolvedDir.replace(/\/+$/, '');
-  if (!resolvedDir.startsWith('/')) return null;
+  const resolvedDir = normalizeDiskPath(projectResolvedDir.replace(/[\\/]+$/, ''));
+  if (!resolvedDir) return null;
   if (decoded.startsWith(`${resolvedDir}/`)) {
     const filePath = decoded.slice(resolvedDir.length + 1);
     if (!filePath) return null;
@@ -178,9 +184,10 @@ function resolveAgainstResolvedDir(
  * (`/automations`, `/projects/<id>`, `/design-systems/<id>`, …) keep their
  * default behavior, while filesystem-style paths — with or without a file
  * extension (`/Users/…/bar.ts`, `/tmp/README`, `../Makefile`) — are inert.
- * Relative hrefs can only reach this check when they are unresolvable as
- * project files (traversals, malformed encodings), so they are always
- * treated as file-like.
+ * Windows drive-letter paths (`C:\…\README.md`) are filesystem paths too,
+ * even though they match the URI scheme grammar. Relative hrefs can only
+ * reach this check when they are unresolvable as project files (traversals,
+ * malformed encodings), so they are always treated as file-like.
  */
 export function isPathLikeChatHref(href: string | null | undefined): boolean {
   if (typeof href !== 'string') return false;
@@ -188,6 +195,11 @@ export function isPathLikeChatHref(href: string | null | undefined): boolean {
   if (!trimmed || trimmed.startsWith('#')) return false;
   // Protocol-relative URLs (`//host/…`) are external network URLs.
   if (trimmed.startsWith('//')) return false;
+  // Windows drive-letter paths (`C:\…`, `C:/…`) match the RFC scheme
+  // grammar below (single-letter scheme), so classify them first: they are
+  // filesystem paths the SPA router can never serve — an unresolved one is
+  // always inert.
+  if (isWindowsDrivePath(trimmed)) return true;
   const normalizedHref = normalizeSameOriginHref(trimmed);
   if (/^[a-z][a-z0-9+.-]*:/i.test(normalizedHref)) return false;
   // Daemon-served prefixes return real content (downloads, exports, baked
@@ -219,6 +231,25 @@ function isDaemonServedPath(path: string): boolean {
   return (
     path.startsWith('/api/') || path.startsWith('/artifacts/') || path.startsWith('/frames/')
   );
+}
+
+// `C:\…` / `C:/…` — a Windows drive-letter absolute path. Matches the RFC
+// 3986 single-letter-scheme grammar, so callers must classify it BEFORE any
+// generic scheme check.
+function isWindowsDrivePath(path: string): boolean {
+  return /^[a-z]:[\\/]/i.test(path);
+}
+
+// Unify a decoded disk path for textual prefix comparison: POSIX absolute
+// paths pass through; Windows drive-letter paths normalize `\` to `/` and
+// upper-case the drive letter (the filesystem treats drives
+// case-insensitively). Anything else (relative paths, URLs) is not a disk
+// path.
+function normalizeDiskPath(path: string): string | null {
+  if (path.startsWith('/')) return path;
+  if (!isWindowsDrivePath(path)) return null;
+  const unified = path.replace(/\\/g, '/');
+  return `${unified[0]!.toUpperCase()}${unified.slice(1)}`;
 }
 
 function normalizeSameOriginHref(href: string): string {

@@ -401,6 +401,56 @@ describe('resolveChatFileLink (issue: chatpane file links opening a home-page wi
     });
   });
 
+  describe('Windows drive-letter disk paths (resolvedDir proof works cross-platform)', () => {
+    it('keeps a stale current-project file under a backslash resolvedDir on the CURRENT project', () => {
+      expect(
+        resolveChatFileLink(
+          'C:\\Users\\me\\.open-design\\data\\projects\\project-1\\new-file.md',
+          new Set(['other.html']),
+          'project-1',
+          'C:\\Users\\me\\.open-design\\data\\projects\\project-1',
+        ),
+      ).toEqual({ kind: 'workspace-file', filePath: 'new-file.md' });
+    });
+
+    it('navigates a managed sibling directory to its owning project', () => {
+      expect(
+        resolveChatFileLink(
+          'C:\\Users\\me\\.open-design\\data\\projects\\other-project\\deck-outline.md',
+          new Set(['unrelated.html']),
+          'project-1',
+          'C:\\Users\\me\\.open-design\\data\\projects\\project-1',
+        ),
+      ).toEqual({
+        kind: 'project-file',
+        projectId: 'other-project',
+        filePath: 'deck-outline.md',
+      });
+    });
+
+    it('matches across mixed separators (forward-slash href, backslash resolvedDir)', () => {
+      expect(
+        resolveChatFileLink(
+          'C:/Users/me/.open-design/data/projects/project-1/sub/hero.html',
+          undefined,
+          'project-1',
+          'C:\\Users\\me\\.open-design\\data\\projects\\project-1',
+        ),
+      ).toEqual({ kind: 'workspace-file', filePath: 'sub/hero.html' });
+    });
+
+    it('refuses traversal segments in drive-letter paths', () => {
+      expect(
+        resolveChatFileLink(
+          'C:\\Users\\me\\.open-design\\data\\projects\\project-1\\..\\secret.md',
+          undefined,
+          'project-1',
+          'C:\\Users\\me\\.open-design\\data\\projects\\project-1',
+        ),
+      ).toBeNull();
+    });
+  });
+
   describe('imported-folder current projects (resolvedDir is the baseDir)', () => {
     it('keeps just-written files under an imported baseDir containing a projects/ segment on the CURRENT project', () => {
       // The reviewer scenario on #5611: the imported workspace itself lives
@@ -519,6 +569,16 @@ describe('isPathLikeChatHref (suppresses the detached home-window fallback)', ()
 
   it('true for extensionless traversal-relative paths', () => {
     expect(isPathLikeChatHref('../Makefile')).toBe(true);
+  });
+
+  it('true for Windows drive-letter file paths despite matching the URI scheme grammar', () => {
+    // `C:` parses as a single-letter scheme under RFC 3986, but `C:\…` /
+    // `C:/…` are filesystem paths the SPA router can never serve — leaving
+    // them to the default `_blank` open reproduces the detached home window
+    // on Windows (#5611 review round 7).
+    expect(isPathLikeChatHref('C:\\Users\\me\\repo\\Dockerfile')).toBe(true);
+    expect(isPathLikeChatHref('C:/Users/me/repo/README.md')).toBe(true);
+    expect(isPathLikeChatHref('c:\\temp\\deck-outline.md')).toBe(true);
   });
 
   it('true (and non-throwing) for app-route shapes with malformed percent-encoding', () => {

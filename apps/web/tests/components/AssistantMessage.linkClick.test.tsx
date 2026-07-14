@@ -241,6 +241,31 @@ describe('AssistantMessage — chat file-link routing (#1239)', () => {
     expect(window.location.pathname).toBe('/');
   });
 
+  it('suppresses unresolvable Windows drive-letter file links instead of treating them as URLs', () => {
+    // `C:` matches the single-letter URI scheme grammar, so without the
+    // drive-letter special case these links skipped the swallow entirely
+    // and reopened the detached home window on Windows (#5611 round 7).
+    const onRequestOpenFile = vi.fn();
+    const { container } = render(
+      <AssistantMessage
+        message={messageWithText('构建配置见 [Dockerfile](C:/Users/me/code/Dockerfile)。')}
+        streaming={false}
+        projectId="project-1"
+        onRequestOpenFile={onRequestOpenFile}
+      />,
+    );
+
+    const anchor = container.querySelector('a.md-link');
+    expect(anchor).not.toBeNull();
+
+    const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
+    anchor!.dispatchEvent(clickEvent);
+
+    expect(onRequestOpenFile).not.toHaveBeenCalled();
+    expect(clickEvent.defaultPrevented).toBe(true);
+    expect(window.location.pathname).toBe('/');
+  });
+
   it('suppresses extensionless unresolvable file links too (Dockerfile-style names)', () => {
     // #5611 review round 5: extensionless file names (Dockerfile, Makefile,
     // README) must get the same inert treatment — the SPA router has no
