@@ -29,6 +29,7 @@ import {
   reportRunFeedback,
   resolveFeedbackTraceId,
   scopedTelemetryBodyId,
+  shouldDeferRunFeedback,
   type AgentEventSummary,
   type ArtifactManifestEntry,
   type ArtifactSummary,
@@ -1261,17 +1262,23 @@ export async function reportRunFeedbackFromDaemon(
       );
     }
   }
-  const traceId = resolveFeedbackTraceId({
+  const resolveInput = {
     runId: opts.runId,
     ...(runStatus !== undefined ? { runStatus } : {}),
     ...(telemetryFinalized !== undefined ? { telemetryFinalized } : {}),
     ...(acceptedTraceBodyId !== undefined
       ? { acceptedTraceBodyId }
       : {}),
-  });
+  };
+  // Do not pin a provisional canonical runId while terminal_fallback may still
+  // become the only accepted body — reportRunFeedback will defer until
+  // rememberAcceptedFinalTraceBodyId flushes onto the accepted id.
+  const deferFeedback = shouldDeferRunFeedback(resolveInput);
   const ctx: FeedbackReportContext = {
     runId: opts.runId,
-    traceId,
+    ...(deferFeedback
+      ? {}
+      : { traceId: resolveFeedbackTraceId(resolveInput) }),
     ...(runStatus !== undefined ? { runStatus } : {}),
     ...(telemetryFinalized !== undefined ? { telemetryFinalized } : {}),
     installationId,
@@ -1285,7 +1292,9 @@ export async function reportRunFeedbackFromDaemon(
   // Fire-and-forget the actual network send so the route can respond
   // immediately. The handler's response already encodes the consent +
   // sink-presence outcome above; failures inside the send are operational
-  // telemetry, not a client-facing signal.
+  // telemetry, not a client-facing signal. Deferred feedback is still
+  // `accepted` from the caller's perspective — it ships when the run's
+  // final-purpose body is accepted.
   void reportRunFeedback(ctx, {
     configuredEnv,
     ...(opts.fetchImpl ? { fetchImpl: opts.fetchImpl } : {}),

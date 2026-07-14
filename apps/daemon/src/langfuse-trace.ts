@@ -176,15 +176,96 @@ export function rememberAcceptedFinalTraceBodyId(
   if (existing?.reportTrigger === 'final_message' && reportTrigger === 'terminal_fallback') {
     return;
   }
+  const acceptedBodyId = bodyId.trim();
   acceptedFinalTraceBodyIds.set(key, {
-    bodyId: bodyId.trim(),
+    bodyId: acceptedBodyId,
     reportTrigger,
   });
+  // Replay any feedback that arrived during the terminal_fallback delay (or
+  // before final_message acceptance) onto the body that was actually accepted.
+  flushPendingRunFeedback(key, acceptedBodyId);
 }
 
 /** Test-only: clear the accepted-final-trace registry between cases. */
 export function resetAcceptedFinalTraceBodyIdsForTests(): void {
   acceptedFinalTraceBodyIds.clear();
+}
+
+type PendingRunFeedbackEntry = {
+  ctx: FeedbackReportContext;
+  opts: ReportRunOpts;
+};
+
+/**
+ * Process-local queue of feedback submitted before any final-purpose body was
+ * accepted. Failed/canceled runs often sit in the terminal_fallback delay with
+ * no accepted body yet; scoring onto the canonical runId then permanently
+ * detaches the score from the only body that eventually exists (`runId:tf`).
+ */
+const pendingRunFeedbackByRunId = new Map<string, PendingRunFeedbackEntry>();
+
+/**
+ * True when feedback should wait for an accepted final-purpose body id.
+ *
+ * Defer only for failed/canceled runs that are not yet telemetry-finalized and
+ * have no accepted body (process-local or persisted). Once final_message owns
+ * the delivery (telemetryFinalized) or any body has been accepted, send now.
+ */
+export function shouldDeferRunFeedback(input: {
+  runId: string;
+  /** Explicit body override — never defer when the caller already pinned a target. */
+  traceId?: string | null;
+  runStatus?: string | null;
+  telemetryFinalized?: boolean;
+  acceptedTraceBodyId?: string | null;
+}): boolean {
+  if (typeof input.traceId === 'string' && input.traceId.trim()) return false;
+  const runId = typeof input.runId === 'string' ? input.runId.trim() : '';
+  if (!runId) return false;
+  if (acceptedFinalTraceBodyIds.has(runId)) return false;
+  const accepted =
+    typeof input.acceptedTraceBodyId === 'string'
+      ? input.acceptedTraceBodyId.trim()
+      : '';
+  if (accepted) return false;
+  if (input.telemetryFinalized === true) return false;
+  return input.runStatus === 'failed' || input.runStatus === 'canceled';
+}
+
+export function queuePendingRunFeedback(
+  ctx: FeedbackReportContext,
+  opts: ReportRunOpts = {},
+): void {
+  const key = typeof ctx.runId === 'string' ? ctx.runId.trim() : '';
+  if (!key) return;
+  // Keep the latest submission only; thumbs can flip during the delay window.
+  pendingRunFeedbackByRunId.set(key, { ctx, opts });
+}
+
+function flushPendingRunFeedback(runId: string, acceptedBodyId: string): void {
+  const key = runId.trim();
+  const bodyId = acceptedBodyId.trim();
+  if (!key || !bodyId) return;
+  const pending = pendingRunFeedbackByRunId.get(key);
+  if (!pending) return;
+  pendingRunFeedbackByRunId.delete(key);
+  void reportRunFeedback(
+    {
+      ...pending.ctx,
+      traceId: bodyId,
+    },
+    pending.opts,
+  ).catch((err) => {
+    console.warn(
+      '[langfuse-trace] deferred feedback flush failed:',
+      String(err),
+    );
+  });
+}
+
+/** Test-only: clear deferred feedback between cases. */
+export function resetPendingRunFeedbackForTests(): void {
+  pendingRunFeedbackByRunId.clear();
 }
 
 /**
@@ -1198,6 +1279,7 @@ function buildToolPerformanceDiagnostics(
 
 function buildArtifactWriteDiagnostics(
   ctx: ReportContext,
+  opts: { includeArtifactFilenames?: boolean } = {},
 ): Record<string, unknown> {
   const writeTools = (ctx.tools ?? []).filter((tool) => tool.name === 'Write');
   const totalArtifactSizeBytes = ctx.artifacts.reduce(
@@ -1208,6 +1290,7 @@ function buildArtifactWriteDiagnostics(
     (sum, tool) => sum + durationMs(tool.startedAt, tool.endedAt),
     0,
   );
+  const includeArtifactFilenames = opts.includeArtifactFilenames !== false;
   return {
     artifact_count: ctx.artifacts.length,
     total_artifact_size_bytes: totalArtifactSizeBytes,
@@ -1225,11 +1308,16 @@ function buildArtifactWriteDiagnostics(
       ctx.artifacts.length > 0 && writeTools.length > 0
         ? undefined
         : 'artifact files are not yet linked to individual Write tool ids',
-    artifacts: ctx.artifacts.map((artifact) => ({
-      slug: artifact.slug,
-      type: artifact.type,
-      size_bytes: artifact.sizeBytes,
-    })),
+    // Filename/slug lists can encode user content; omit on non-final deliveries.
+    ...(includeArtifactFilenames
+      ? {
+          artifacts: ctx.artifacts.map((artifact) => ({
+            slug: artifact.slug,
+            type: artifact.type,
+            size_bytes: artifact.sizeBytes,
+          })),
+        }
+      : {}),
   };
 }
 
@@ -1279,11 +1367,14 @@ function buildSemanticPhaseDiagnostics(ctx: ReportContext): Record<string, unkno
   };
 }
 
-function buildPerformanceDiagnostics(ctx: ReportContext): Record<string, unknown> {
+function buildPerformanceDiagnostics(
+  ctx: ReportContext,
+  opts: { includeArtifactFilenames?: boolean } = {},
+): Record<string, unknown> {
   return {
     timings: ctx.run.timings,
     tool_performance: buildToolPerformanceDiagnostics(ctx.tools),
-    artifact_write: buildArtifactWriteDiagnostics(ctx),
+    artifact_write: buildArtifactWriteDiagnostics(ctx, opts),
     preview_verify: {
       status: 'not_instrumented',
       screenshot_check: 'not_reported',
@@ -1603,12 +1694,16 @@ export function buildTracePayload(
   // strings (`error` / span `statusMessage`) are additionally stripped for
   // object-registration so the anonymous relay never receives turn/error text
   // before final Vela delivery.
-  // `wantsArtifacts` gates object manifests used by the worker object-scope
-  // registry.
+  // `wantsManifests` gates object manifests used by the worker object-scope
+  // registry (kept on registration). `wantsArtifactSummaries` gates
+  // filename/slug-bearing artifact lists and diagnostic filename arrays —
+  // final delivery only, so the anonymous registration relay cannot leak
+  // content-derived names before authenticated Vela delivery.
   const consentOn =
     ctx.prefs.metrics === true && ctx.prefs.content === true;
   const wantsTextContent = deliveryPurpose === 'final' && consentOn;
-  const wantsArtifacts = consentOn;
+  const wantsManifests = consentOn;
+  const wantsArtifactSummaries = deliveryPurpose === 'final' && consentOn;
   // Keep free-text error strings on final deliveries (including content-
   // consent-off) so Langfuse still classifies failures; omit them only from
   // the object-registration anonymous relay pass.
@@ -1635,29 +1730,29 @@ export function buildTracePayload(
     ? truncate(redactArtifactBlocks(ctx.message.output), OUTPUT_MAX_BYTES)
     : undefined;
 
-  const artifactsList = wantsArtifacts
+  const artifactsList = wantsArtifactSummaries
     ? ctx.artifacts.slice(0, ARTIFACTS_MAX_ITEMS)
     : undefined;
   const artifactsTruncated =
-    wantsArtifacts && ctx.artifacts.length > ARTIFACTS_MAX_ITEMS
+    wantsArtifactSummaries && ctx.artifacts.length > ARTIFACTS_MAX_ITEMS
       ? true
       : undefined;
-  const attachmentManifest = wantsArtifacts
+  const attachmentManifest = wantsManifests
     ? cappedManifestEntries(ctx.attachmentManifest)
     : undefined;
-  const attachmentManifestTruncated = wantsArtifacts
+  const attachmentManifestTruncated = wantsManifests
     ? manifestTruncated(ctx.attachmentManifest)
     : undefined;
-  const artifactManifest = wantsArtifacts
+  const artifactManifest = wantsManifests
     ? cappedManifestEntries(ctx.artifactManifest)
     : undefined;
-  const artifactManifestTruncated = wantsArtifacts
+  const artifactManifestTruncated = wantsManifests
     ? manifestTruncated(ctx.artifactManifest)
     : undefined;
-  const inputTextSnapshotManifest = wantsArtifacts
+  const inputTextSnapshotManifest = wantsManifests
     ? cappedManifestEntries(ctx.inputTextSnapshotManifest)
     : undefined;
-  const inputTextSnapshotManifestTruncated = wantsArtifacts
+  const inputTextSnapshotManifestTruncated = wantsManifests
     ? manifestTruncated(ctx.inputTextSnapshotManifest)
     : undefined;
 
@@ -1686,7 +1781,9 @@ export function buildTracePayload(
       }
     : undefined;
   const costBreakdown = buildCostBreakdown(ctx);
-  const performanceDiagnostics = buildPerformanceDiagnostics(ctx);
+  const performanceDiagnostics = buildPerformanceDiagnostics(ctx, {
+    includeArtifactFilenames: wantsArtifactSummaries,
+  });
 
   const success = ctx.run.status === 'succeeded';
   // Canonical run id stays in metadata for correlation; Langfuse entity body
@@ -1763,7 +1860,7 @@ export function buildTracePayload(
     input_text_snapshot_manifest: inputTextSnapshotManifest,
     input_text_snapshot_manifest_truncated: inputTextSnapshotManifestTruncated,
     trace_object_summary: ctx.traceObjectSummary,
-    manifest_completeness: wantsArtifacts
+    manifest_completeness: wantsManifests
       ? (ctx.manifestCompleteness ?? 'unavailable')
       : undefined,
     projectId: ctx.projectId || undefined,
@@ -2037,12 +2134,12 @@ export function buildTracePayload(
         input: {
           source: 'agent_generated_artifacts',
           artifact_count: artifactsList.length,
-          artifact_manifest_enabled: wantsArtifacts,
+          artifact_manifest_enabled: wantsManifests,
         },
         output: {
           artifacts: artifactsList,
           artifactsTruncated,
-          manifest_completeness: wantsArtifacts
+          manifest_completeness: wantsManifests
             ? (ctx.manifestCompleteness ?? 'unavailable')
             : 'off',
         },
@@ -2866,6 +2963,22 @@ export async function reportRunFeedback(
   // Same eligibility as reportRunFeedbackFromDaemon preflight: Vela without
   // installationId only ships when an anonymous sink is available.
   if (!canDeliverRunFeedback(config, ctx.installationId)) return;
+
+  // Failed/canceled runs may still be waiting on terminal_fallback acceptance.
+  // Queue until rememberAcceptedFinalTraceBodyId flushes onto the accepted body.
+  if (
+    shouldDeferRunFeedback({
+      runId: ctx.runId,
+      ...(ctx.traceId !== undefined ? { traceId: ctx.traceId } : {}),
+      ...(ctx.runStatus !== undefined ? { runStatus: ctx.runStatus } : {}),
+      ...(ctx.telemetryFinalized !== undefined
+        ? { telemetryFinalized: ctx.telemetryFinalized }
+        : {}),
+    })
+  ) {
+    queuePendingRunFeedback(ctx, opts);
+    return;
+  }
 
   let batch: unknown[];
   try {

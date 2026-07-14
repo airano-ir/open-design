@@ -18,8 +18,10 @@ import {
   reportRunCompleted,
   reportRunFeedback,
   resetAcceptedFinalTraceBodyIdsForTests,
+  resetPendingRunFeedbackForTests,
   resolveFeedbackTraceId,
   scopedTelemetryBodyId,
+  shouldDeferRunFeedback,
   stableIngestionEventId,
   toVelaTelemetryEnvelope,
   type FeedbackReportContext,
@@ -430,6 +432,7 @@ describe('deriveLangfuseDeliveryState', () => {
 describe('resolveFeedbackTraceId', () => {
   afterEach(() => {
     resetAcceptedFinalTraceBodyIdsForTests();
+    resetPendingRunFeedbackForTests();
   });
 
   it('defaults to the canonical runId', () => {
@@ -1955,6 +1958,110 @@ describe('buildTracePayload', () => {
     ).toBe('provider failed');
   });
 
+  it('keeps authority manifests on object-registration but omits artifact filename summaries', () => {
+    const artifactSlug = 'prompt-derived-landing-page.html';
+    const ctx = makeCtx({
+      prefs: { metrics: true, content: true, artifactManifest: true },
+      artifacts: [
+        { slug: artifactSlug, type: 'html', sizeBytes: 2048 },
+      ],
+      artifactManifest: [
+        {
+          artifact_id: 'art-1',
+          object_class: 'artifact',
+          type: 'html',
+          storage_ref:
+            'od://objects/workspaces/unknown/projects/proj-1/runs/run-1/artifact/art-1',
+          status: 'ok',
+          project_id: 'proj-1',
+          run_id: 'run-1',
+          workspace_id: null,
+          build_status: 'complete',
+          preview_status: 'unavailable',
+          export_status: 'available',
+          redacted: false,
+          truncated: false,
+          stored_in_open_design: true,
+          retention_policy: 'project_lifetime',
+          access_scope: 'project',
+          sensitivity: 'private',
+          source: 'agent_generated',
+          expires_at: null,
+        },
+      ],
+      attachmentManifest: [
+        {
+          attachment_id: 'att-1',
+          object_class: 'attachment',
+          storage_ref:
+            'od://objects/workspaces/unknown/projects/proj-1/runs/run-1/attachment/att-1',
+          status: 'ok',
+          project_id: 'proj-1',
+          run_id: 'run-1',
+          workspace_id: null,
+          size_bytes: 128,
+          sha256: 'sha256:abc',
+          mime_type: 'application/pdf',
+          extension: 'pdf',
+          redacted: false,
+          truncated: false,
+          stored_in_open_design: true,
+          retention_policy: 'project_lifetime',
+          access_scope: 'project',
+          sensitivity: 'private',
+          source: 'user_upload',
+          expires_at: null,
+          approved_by: null,
+        },
+      ],
+      manifestCompleteness: 'complete',
+    });
+    const regBatch = buildTracePayload(ctx, 'object-registration') as Array<{
+      type: string;
+      body: Record<string, any>;
+    }>;
+    const finalBatch = buildTracePayload(ctx, 'final') as Array<{
+      type: string;
+      body: Record<string, any>;
+    }>;
+    const regTrace = regBatch.find((e) => e.type === 'trace-create')!.body;
+    const finalTrace = finalBatch.find((e) => e.type === 'trace-create')!.body;
+
+    // Authority manifests stay on registration for object-scope upload.
+    expect(regTrace.metadata.artifact_manifest).toEqual(
+      finalTrace.metadata.artifact_manifest,
+    );
+    expect(regTrace.metadata.attachment_manifest).toEqual(
+      finalTrace.metadata.attachment_manifest,
+    );
+    expect(regTrace.metadata.manifest_completeness).toBe('complete');
+
+    // Filename/slug summaries must not leak on the anonymous registration pass.
+    expect(regTrace.metadata.artifacts).toBeUndefined();
+    expect(
+      regTrace.metadata.performance_diagnostics?.artifact_write?.artifacts,
+    ).toBeUndefined();
+    expect(
+      regTrace.metadata.performance_diagnostics?.artifact_write?.artifact_count,
+    ).toBe(1);
+    expect(
+      regBatch.find((e) => e.body?.name === 'artifact-summary'),
+    ).toBeUndefined();
+
+    // Final delivery still carries the content-bearing summaries.
+    expect(finalTrace.metadata.artifacts).toEqual([
+      { slug: artifactSlug, type: 'html', sizeBytes: 2048 },
+    ]);
+    expect(
+      finalTrace.metadata.performance_diagnostics?.artifact_write?.artifacts,
+    ).toEqual([
+      { slug: artifactSlug, type: 'html', size_bytes: 2048 },
+    ]);
+    expect(
+      finalBatch.find((e) => e.body?.name === 'artifact-summary'),
+    ).toBeDefined();
+  });
+
   it('uses distinct body and event ids for terminal_fallback vs final_message', () => {
     const ctx = makeCtx({
       prefs: { metrics: true, content: true, artifactManifest: false },
@@ -3462,6 +3569,7 @@ describe('reportRunFeedback', () => {
 
   it('attaches feedback to the terminal_fallback :tf body after a fallback-only completion', async () => {
     resetAcceptedFinalTraceBodyIdsForTests();
+    resetPendingRunFeedbackForTests();
     const runId = 'run-fallback-feedback-e2e';
     const expectedTraceId = scopedTelemetryBodyId(runId, 'final', 'terminal_fallback');
     const fetchSpy = vi.fn().mockResolvedValue(
@@ -3505,6 +3613,74 @@ describe('reportRunFeedback', () => {
       { config: TEST_CONFIG, fetchImpl: fetchSpy as any },
     );
     expect(fetchSpy).toHaveBeenCalledTimes(2);
+    const feedbackBody = JSON.parse(fetchSpy.mock.calls[1]![1].body as string);
+    expect(feedbackBody.batch).toHaveLength(1);
+    expect(feedbackBody.batch[0].type).toBe('score-create');
+    expect(feedbackBody.batch[0].body.traceId).toBe(expectedTraceId);
+    expect(feedbackBody.batch[0].body.id).toBe(`${expectedTraceId}-rating`);
+    expect(feedbackBody.batch[0].body.traceId).not.toBe(runId);
+  });
+
+  it('defers feedback submitted before terminal_fallback acceptance onto runId:tf', async () => {
+    resetAcceptedFinalTraceBodyIdsForTests();
+    resetPendingRunFeedbackForTests();
+    const runId = 'run-feedback-before-tf';
+    const expectedTraceId = scopedTelemetryBodyId(runId, 'final', 'terminal_fallback');
+    const fetchSpy = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ successes: [], errors: [] }), { status: 207 }),
+    );
+
+    // User rates during the fallback delay: no accepted body yet.
+    expect(
+      shouldDeferRunFeedback({
+        runId,
+        runStatus: 'failed',
+        telemetryFinalized: false,
+      }),
+    ).toBe(true);
+    await reportRunFeedback(
+      makeFeedbackCtx({
+        runId,
+        runStatus: 'failed',
+        telemetryFinalized: false,
+        reasonCodes: [],
+      }),
+      { config: TEST_CONFIG, fetchImpl: fetchSpy as any },
+    );
+    // Deferred — nothing shipped onto the provisional canonical runId.
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    // Later terminal_fallback is accepted; deferred score must land on :tf.
+    const completed = await reportRunCompleted(
+      makeCtx({
+        prefs: { metrics: true, content: true, artifactManifest: false },
+        run: {
+          runId,
+          status: 'failed',
+          startedAt: 1_700_000_000_000,
+          endedAt: 1_700_000_001_000,
+        },
+      }),
+      {
+        config: TEST_CONFIG,
+        fetchImpl: fetchSpy as any,
+        reportTrigger: 'terminal_fallback',
+      },
+    );
+    expect(completed).toEqual({
+      langfuse_expected: true,
+      langfuse_delivery_status: 'accepted',
+    });
+
+    await vi.waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalledTimes(2);
+    });
+    const completionBody = JSON.parse(fetchSpy.mock.calls[0]![1].body as string);
+    const completionTrace = completionBody.batch.find(
+      (item: { type: string }) => item.type === 'trace-create',
+    );
+    expect(completionTrace?.body?.id).toBe(expectedTraceId);
+
     const feedbackBody = JSON.parse(fetchSpy.mock.calls[1]![1].body as string);
     expect(feedbackBody.batch).toHaveLength(1);
     expect(feedbackBody.batch[0].type).toBe('score-create');
