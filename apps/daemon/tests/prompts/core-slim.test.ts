@@ -75,7 +75,12 @@ const repoRoot = path.resolve(__dirname, '../../../..');
 // with the 快速确认/快速简报 wrong-vs-right anchor, the machine-readable
 // top-level `"lang"` tag that keys the host's in-card controls, and the
 // count-then-cut hard-cap wording that replaced "Ask at most 5".
-const SLIM_CORE_BYTE_BUDGET = 16_896;
+// Bumped from 16_896 for the photo-overlay placement rule: real-imagery
+// production value kept shipping badges/caption cards that straddle the
+// image edge or sit on the photo's subject (2026-07-14 beta feedback,
+// campus-open-day hero); overlays now pin inside one corner on a legible
+// surface or move beside the image.
+const SLIM_CORE_BYTE_BUDGET = 17_408;
 
 describe('renderSlimCoreCharter — byte budget', () => {
   it('stays under the byte budget in both execution profiles', () => {
@@ -189,6 +194,16 @@ describe('renderSlimCoreCharter — frozen protocol markers', () => {
 
   it('keeps the seed-copy rule the tool-economy rewrite must not drop', () => {
     expect(charter).toContain("Copy the seed and paste its layouts — don't write CSS from scratch");
+  });
+
+  it('pins the photo-overlay placement discipline', () => {
+    // Real-imagery production value without this rule shipped badges that
+    // straddle the image edge or cover the photo's subject.
+    expect(charter).toContain('**Overlays on photos are placements, not decoration.**');
+    expect(charter).toContain('pins to ONE corner with a consistent inset');
+    expect(charter).toContain('never straddling the edge or floating half-off');
+    expect(charter).toContain("stays clear of faces and the photo's focal subject");
+    expect(charter).toContain('No safe corner → put the label beside the image, not on it');
   });
 
   it('separates the optional preview budget from final delivery exports', () => {
