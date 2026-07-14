@@ -25,6 +25,14 @@ function extractDeckBridgeScript(srcdoc: string): string {
   return match[1];
 }
 
+// Tolerant on purpose: returns null when the hook is absent so the fixture
+// also runs against bridge builds that predate the registry hook (used for
+// red/green verification of the regression below).
+function extractDeckKeydownRegistryScript(srcdoc: string): string | null {
+  const match = srcdoc.match(/<script data-od-deck-keydown-registry>([\s\S]*?)<\/script>/);
+  return match && match[1] ? match[1] : null;
+}
+
 interface CustomDeckOptions {
   /** Where the artifact registers its keydown handler. */
   listenOn?: 'document' | 'window';
@@ -34,6 +42,12 @@ interface CustomDeckOptions {
    * instead of mutating synchronously inside the keydown listener.
    */
   deferUpdate?: boolean;
+  /**
+   * Register the artifact handler before the deck bridge evaluates — the
+   * external <script src> runtime shape, where only the head-start keydown
+   * registry hook can observe the registration.
+   */
+  registerBeforeBridge?: boolean;
 }
 
 function setupCustomCounterDeck(options: CustomDeckOptions = {}) {
@@ -78,16 +92,15 @@ function setupCustomCounterDeck(options: CustomDeckOptions = {}) {
     value: win.document.documentElement,
   });
 
-  const evaluate = new win.Function(script);
-  evaluate.call(win);
+  // Production order: the keydown registry hook runs at the start of <head>,
+  // before any artifact script and before the deck bridge at the end of
+  // <body>.
+  const hookScript = extractDeckKeydownRegistryScript(srcdoc);
+  if (hookScript) new win.Function(hookScript).call(win);
 
   // The artifact's own navigation runtime: internal index + self-rendered
   // page counter, driven by its own keydown handler — the shape agent
-  // decks author when they do not copy the framework skeleton. Registered
-  // after the bridge evaluates so the registration flows through the
-  // bridge's patched addEventListener (the late-initializing deck shape);
-  // decks whose inline scripts run before the bridge are covered by the
-  // build-time source scan, asserted separately below.
+  // decks author when they do not copy the framework skeleton.
   const slides = Array.from(win.document.querySelectorAll<HTMLElement>('.slide'));
   const track = win.document.getElementById('deck-track') as HTMLElement;
   const pagerCur = win.document.getElementById('pager-cur') as HTMLElement;
@@ -112,9 +125,23 @@ function setupCustomCounterDeck(options: CustomDeckOptions = {}) {
     if (options.deferUpdate) win.setTimeout(step, 0);
     else step();
   };
-  const listenTarget = options.listenOn === 'window' ? win : win.document;
-  listenTarget.addEventListener('keydown', onKeydown as EventListener);
-  apply(0);
+  const registerArtifactHandler = () => {
+    const listenTarget = options.listenOn === 'window' ? win : win.document;
+    listenTarget.addEventListener('keydown', onKeydown as EventListener);
+    apply(0);
+  };
+  const evaluateBridge = () => new win.Function(script).call(win);
+  if (options.registerBeforeBridge) {
+    // External-script deck shape: the keyboard runtime registers before the
+    // bridge executes, so only the head-start registry hook observes it.
+    registerArtifactHandler();
+    evaluateBridge();
+  } else {
+    // Late-initializing deck shape: the registration flows through the
+    // bridge's own patched addEventListener.
+    evaluateBridge();
+    registerArtifactHandler();
+  }
 
   return { win, parentPostMessage, track, pagerCur };
 }
@@ -186,6 +213,27 @@ describe('deck bridge - keyboard paging keeps page counters in sync', () => {
     }));
     await new Promise<void>((resolve) => win.setTimeout(resolve, 240));
 
+    expect(slideStatesOf(parentPostMessage).at(-1)).toMatchObject({ active: 1, count: 3 });
+  });
+
+  it('probes artifact keys when the keyboard runtime registered before the bridge (script-src deck shape)', async () => {
+    // Decks like design-templates/html-ppt load their keyboard runtime from
+    // an external <script src="../assets/runtime.js">: the inline html bytes
+    // carry no keydown token (so the build-time seed stays false) and the
+    // listener registers before the deck bridge executes (so the bridge's
+    // own addEventListener patches install too late). Only the head-start
+    // registry hook can classify these decks as keyboard-navigable.
+    const { win, parentPostMessage, track, pagerCur } = setupCustomCounterDeck({
+      registerBeforeBridge: true,
+    });
+
+    win.dispatchEvent(new win.MessageEvent('message', {
+      data: { type: 'od:slide', action: 'next' },
+    }));
+    await new Promise<void>((resolve) => win.setTimeout(resolve, 360));
+
+    expect(track.style.transform).toBe('translateX(-100vw)');
+    expect(pagerCur.textContent).toBe('2');
     expect(slideStatesOf(parentPostMessage).at(-1)).toMatchObject({ active: 1, count: 3 });
   });
 

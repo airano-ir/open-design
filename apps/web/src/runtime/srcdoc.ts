@@ -278,7 +278,10 @@ export function buildSrcdoc(
   const withSourcePaths = options.editBridge ? annotateManualEditSourcePaths(withOdIds) : withOdIds;
   const withBase = options.baseHref ? injectBaseHref(withSourcePaths, options.baseHref) : withSourcePaths;
   const withShim = injectSandboxShim(withBase);
-  const withFocusGuard = options.previewFocusGuard ? injectPreviewFocusGuard(withShim) : withShim;
+  const withKeydownRegistry = options.deck ? injectDeckKeydownRegistryHook(withShim) : withShim;
+  const withFocusGuard = options.previewFocusGuard
+    ? injectPreviewFocusGuard(withKeydownRegistry)
+    : withKeydownRegistry;
   const withMotionFreeze = options.freezeMotion ? injectMotionFreeze(withFocusGuard) : withFocusGuard;
   const withDeckStageFallback = options.deck
     ? injectDeckStageFallback(withMotionFreeze)
@@ -2162,14 +2165,67 @@ function injectDeckStageShadowChromeHiding(doc: string): string {
 })();</script>`);
 }
 
-// Whether the artifact ships its own keyboard slide navigation. Must be
-// evaluated against the artifact source BEFORE any od bridge is injected:
+// Screens keydown listeners for keyboard slide navigation by their source
+// text, the same way odMaybeHandlesSlideMessages screens message listeners:
+// od bridges and artifact shortcut helpers register keydown listeners of
+// their own, and counting those would put every deck on the key-probe path.
+// Shared between the head-start registry hook and the deck bridge's own
+// addEventListener patches.
+const NAV_KEYDOWN_LISTENER_PROBE = `function odLooksLikeNavKeydownListener(listener) {
+    try {
+      var source = '';
+      if (typeof listener === 'function') source = String(listener);
+      else if (listener && typeof listener.handleEvent === 'function') source = String(listener.handleEvent);
+      return /\\bArrow(?:Right|Left)\\b|\\bPage(?:Up|Down)\\b|\\bkeyCode\\b/.test(source);
+    } catch (_) {
+      return false;
+    }
+  }`;
+
+// Records artifact keydown registrations that happen BEFORE the deck bridge
+// executes at the end of <body>. Decks that load their keyboard runtime from
+// an external script (design-templates/html-ppt wires ../assets/runtime.js
+// via <script src>) register listeners too early for the bridge's own
+// addEventListener patches to see, and external script bytes are invisible
+// to the build-time source scan — so this hook must run before any artifact
+// script, at the start of <head>. The deck bridge marks its own top-of-file
+// keydown listeners via __odDeckBridgeOwnListenerInstall so they are not
+// mistaken for artifact navigation.
+function injectDeckKeydownRegistryHook(doc: string): string {
+  const hook = `<script data-od-deck-keydown-registry>(function(){
+  ${NAV_KEYDOWN_LISTENER_PROBE}
+  function wrap(target){
+    try {
+      var original = target.addEventListener;
+      target.addEventListener = function(type, listener, options){
+        if (
+          type === 'keydown' &&
+          window.__odDeckBridgeOwnListenerInstall !== true &&
+          odLooksLikeNavKeydownListener(listener)
+        ) {
+          window.__odArtifactKeydownNavigation = true;
+        }
+        return original.call(this, type, listener, options);
+      };
+    } catch (_) {}
+  }
+  wrap(window);
+  wrap(document);
+})();</script>`;
+  if (/<head[^>]*>/i.test(doc)) return doc.replace(/<head[^>]*>/i, (m) => `${m}${hook}`);
+  if (/<body[^>]*>/i.test(doc)) return doc.replace(/<body[^>]*>/i, (m) => `${m}${hook}`);
+  return hook + doc;
+}
+
+// Whether the artifact ships its own keyboard slide navigation, judged from
+// the artifact source. Must be evaluated BEFORE any od bridge is injected:
 // injected bridges (preview focus guard, edit bridge) register keydown
 // listeners of their own, and matching those would put every deck on the
 // key-probe path. Requiring a navigation-key token alongside the keydown
 // registration keeps unrelated keyboard handling (shortcuts, form helpers)
 // from triggering probes, mirroring how odMaybeHandlesSlideMessages screens
-// message listeners.
+// message listeners. This scan only sees inline bytes; keyboard runtimes in
+// external scripts are caught at runtime by injectDeckKeydownRegistryHook.
 function detectArtifactKeyboardNavigation(artifactHtml: string): boolean {
   const registersKeydown =
     /addEventListener\s*\(\s*['"]keydown['"]/i.test(artifactHtml) ||
@@ -2203,6 +2259,10 @@ function injectDeckBridge(
   const script = `<script data-od-deck-bridge>(function(){
   var initialSlideIndex = ${safeInitialSlideIndex};
   var didRestoreInitialSlide = initialSlideIndex <= 0;
+  // The framework branch's own listener source mentions navigation keys, so
+  // without this marker the head-start registry hook would classify every
+  // framework deck as artifact-keyboard-navigable.
+  window.__odDeckBridgeOwnListenerInstall = true;
   if (${JSON.stringify(isFrameworkDeck)}) {
     window.addEventListener('keydown', function(ev){
       var key = ev && ev.key;
@@ -2232,6 +2292,7 @@ function injectDeckBridge(
       }
     }, true);
   }
+  window.__odDeckBridgeOwnListenerInstall = false;
   function slides(){
     // Structured selectors first so decorative .slide markup in non-deck
     // pages (icons, badges, code samples) is not counted as deck slides;
@@ -2550,6 +2611,12 @@ function injectDeckBridge(
   // Decks with no keyboard handling at all skip the probe entirely, so their
   // direct-DOM fallback stays synchronous.
   var odHasArtifactKeydownListener = ${JSON.stringify(hasInlineKeydownListener)};
+  function artifactHasKeydownNavigation(){
+    if (odHasArtifactKeydownListener) return true;
+    // Set by the head-start registry hook, which sees registrations made
+    // before this bridge executes (external-script keyboard runtimes).
+    try { return window.__odArtifactKeydownNavigation === true; } catch (_) { return false; }
+  }
   function trackTransformSnapshot(){
     var track = transformTrack(slides());
     return track ? (track.style.transform || '') : '';
@@ -2589,7 +2656,7 @@ function injectDeckBridge(
     } catch (_) {}
   }
   function goViaArtifactKeys(key, onDone){
-    if (!key || !odHasArtifactKeydownListener) { onDone(false); return; }
+    if (!key || !artifactHasKeydownNavigation()) { onDone(false); return; }
     var beforeIndex = activeIndex(slides());
     var beforeTrack = trackTransformSnapshot();
     // Once a dispatch target has proven responsive, keep using it: probing
@@ -2759,21 +2826,7 @@ function injectDeckBridge(
       return false;
     }
   }
-  // Screens keydown registrations the same way odMaybeHandlesSlideMessages
-  // screens message listeners: only handlers that mention navigation keys
-  // mark the artifact as keyboard-navigable. Other od bridges and artifact
-  // shortcut helpers also register keydown listeners, and counting those
-  // would put every deck on the key-probe path.
-  function odLooksLikeNavKeydownListener(listener) {
-    try {
-      var source = '';
-      if (typeof listener === 'function') source = String(listener);
-      else if (listener && typeof listener.handleEvent === 'function') source = String(listener.handleEvent);
-      return /\\bArrow(?:Right|Left)\\b|\\bPage(?:Up|Down)\\b|\\bkeyCode\\b/.test(source);
-    } catch (_) {
-      return false;
-    }
-  }
+  ${NAV_KEYDOWN_LISTENER_PROBE}
   try {
     var odOriginalAddEventListener = window.addEventListener;
     window.addEventListener = function(type, listener, options) {
