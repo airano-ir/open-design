@@ -231,6 +231,7 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/landing-page
           packageManager: npm
+          wranglerVersion: "4.110.0"
           command: d1 migrations apply open-design-landing-staging-attribution --remote
 
       - name: Deploy PR preview to Cloudflare Pages

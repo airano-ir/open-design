@@ -190,6 +190,7 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/landing-page
           packageManager: npm
+          wranglerVersion: "4.110.0"
           command: d1 migrations apply open-design-landing-attribution --remote
 
       - name: Deploy to Cloudflare Pages (production)

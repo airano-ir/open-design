@@ -1506,9 +1506,11 @@ process.stdin.on("end", () => {
     for (const stagingDeployWorkflow of [ciWorkflow, stagingWorkflow]) {
       expect(stagingDeployWorkflow).toContain("Prepare staging Pages configuration");
       expect(stagingDeployWorkflow).toContain("cp apps/landing-page/wrangler.staging.toml apps/landing-page/wrangler.toml");
+      expect(stagingDeployWorkflow).toContain('wranglerVersion: "4.110.0"');
       expect(stagingDeployWorkflow).toContain("d1 migrations apply open-design-landing-staging-attribution --remote");
       expect(stagingDeployWorkflow).not.toContain("--config wrangler.staging.toml");
     }
+    expect(productionWorkflow).toContain('wranglerVersion: "4.110.0"');
     expect(productionWorkflow).toContain("d1 migrations apply open-design-landing-attribution --remote");
 
     expect(script).toContain('const STAGING_URL = "https://staging.open-design.ai"');
