@@ -760,7 +760,13 @@
   background: var(--bg);
   isolation: isolate;
 }
-.entry-main__topbar:has(.entry-settings-menu__popover) {
+/* The topbar is an isolated sticky stacking context at z-index 10, so a
+   child popover's own z-index cannot escape it. While a topbar popover or
+   the updater's "update ready" prompt is open, lift the whole topbar above
+   raised page surfaces (e.g. the home composer card at z-index 1700 when
+   its agent picker is open) so the prompt paints on top. */
+.entry-main__topbar:has(.entry-settings-menu__popover),
+.entry-main__topbar:has(.updater-popup) {
   z-index: 1900;
 }
 .entry-main__topbar::before {
