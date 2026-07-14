@@ -6,7 +6,6 @@ import type {
   FlowStatusResponse,
   UpdateFlowResearchModeRequest,
 } from '@open-design/contracts';
-import { applyFlowMarker } from '@open-design/contracts';
 
 import {
   getConversation,
@@ -16,7 +15,11 @@ import {
   setConversationFlow,
 } from '../db.js';
 import { materializeFlowArtifacts } from '../flow/artifacts.js';
-import { createFlowTracker, resolveFlowShape } from '../flow/engine.js';
+import {
+  createFlowTracker,
+  resolveFlowShape,
+  selectFlowShape,
+} from '../flow/engine.js';
 import { resolveProjectDir } from '../projects.js';
 
 export interface RegisterFlowRoutesDeps {
@@ -40,27 +43,6 @@ function persistedEventForFlow(event: unknown): unknown {
     : record;
 }
 
-function eventCompletesDeclaredWork(event: unknown): boolean {
-  if (!event || typeof event !== 'object') return false;
-  const record = event as Record<string, unknown>;
-  if (record.kind !== 'tool_use') return false;
-  const name = typeof record.name === 'string' ? record.name.toLowerCase() : '';
-  if (!['todowrite', 'todo_write', 'update_plan'].includes(name)) return false;
-  if (!record.input || typeof record.input !== 'object') return false;
-  const input = record.input as Record<string, unknown>;
-  const items = Array.isArray(input.todos)
-    ? input.todos
-    : Array.isArray(input.plan)
-      ? input.plan
-      : [];
-  return items.length > 0 && items.every(
-    (item) =>
-      item != null &&
-      typeof item === 'object' &&
-      (item as Record<string, unknown>).status === 'completed',
-  );
-}
-
 function recoverConversationFlow(
   db: Database.Database,
   conversation: NonNullable<ReturnType<typeof getConversation>>,
@@ -68,7 +50,7 @@ function recoverConversationFlow(
   now: () => number,
 ): FlowSnapshot | null {
   const project = getProject(db, conversation.projectId);
-  if (project?.metadata?.kind !== 'other') return null;
+  if (!project) return null;
   const messages = listMessages(db, conversation.id);
   const userMessages = messages.filter(
     (message) =>
@@ -76,42 +58,39 @@ function recoverConversationFlow(
       message.sessionMode !== 'chat' &&
       message.sessionMode !== 'plan',
   );
-  const shape =
-    initial?.shape ??
-    [...userMessages].reverse().reduce<FlowSnapshot['shape'] | null>(
-      (resolved, message) =>
-        resolved ??
-        resolveFlowShape({
-          sessionMode: message.sessionMode ?? null,
-          projectKind: project.metadata.kind,
-          projectPlatform: project.metadata.platform,
-          requestText: message.content,
-        }),
-      null,
-    );
+  const inferredShape = [...userMessages].reverse().reduce<
+    FlowSnapshot['shape'] | null
+  >(
+    (resolved, message) =>
+      resolved ??
+      resolveFlowShape({
+        sessionMode: message.sessionMode ?? null,
+        projectKind: project.metadata.kind,
+        projectPlatform: project.metadata.platform,
+        requestText: message.content,
+      }),
+    null,
+  );
+  const shape = selectFlowShape(initial, inferredShape);
   if (!shape) return null;
 
-  const tracker = createFlowTracker({ shape, initial, now });
-  let completedDeclaredWork = false;
+  const trackerInitial = initial?.shape === shape ? initial : null;
+  const tracker = createFlowTracker({
+    shape,
+    initial: trackerInitial,
+    ...(initial && !trackerInitial
+      ? { researchMode: initial.researchMode }
+      : {}),
+    now,
+  });
   for (const message of messages) {
     if (message.role === 'user') tracker.noteUserMessage(message.content);
     for (const event of message.events ?? []) {
       tracker.observeAgentEvent(persistedEventForFlow(event));
-      if (message.runStatus === 'succeeded' && eventCompletesDeclaredWork(event)) {
-        completedDeclaredWork = true;
-      }
     }
     if (message.role === 'assistant') tracker.noteRunEnd(message.runStatus);
   }
-  let snapshot = tracker.snapshot;
-  if (completedDeclaredWork) {
-    snapshot = applyFlowMarker(
-      snapshot,
-      { stage: 'generate', state: 'complete', detail: 'Generation completed' },
-      now(),
-    );
-    snapshot = applyFlowMarker(snapshot, { stage: 'deliver', state: 'active' }, now());
-  }
+  const snapshot = tracker.snapshot;
   if (snapshot !== initial) setConversationFlow(db, conversation.id, snapshot);
   return snapshot;
 }
@@ -177,16 +156,37 @@ export function registerFlowRoutes(app: Express, deps: RegisterFlowRoutesDeps): 
       res.status(400).json({ error: 'researchMode must be deep, basic, or off' });
       return;
     }
-    const flow = getConversationFlow(db, id);
+    let flow = getConversationFlow(db, id);
+    let flowCreated = false;
     if (!flow) {
-      res.status(409).json({ error: 'conversation flow is not initialized' });
-      return;
+      const project = getProject(db, conversation.projectId);
+      const latestRequest = [...listMessages(db, id)]
+        .reverse()
+        .find((message) => message.role === 'user')?.content;
+      const shape = project
+        ? resolveFlowShape({
+            sessionMode: conversation.sessionMode,
+            projectKind: project.metadata.kind,
+            projectPlatform: project.metadata.platform,
+            requestText: latestRequest,
+          })
+        : null;
+      if (!shape) {
+        res.status(409).json({ error: 'conversation flow is not initialized' });
+        return;
+      }
+      flow = createFlowTracker({
+        shape,
+        researchMode: request.researchMode,
+        now,
+      }).snapshot;
+      flowCreated = true;
     }
     const next =
       flow.researchMode === request.researchMode
         ? flow
         : { ...flow, researchMode: request.researchMode, updatedAt: now() };
-    if (next !== flow) setConversationFlow(db, id, next);
+    if (flowCreated || next !== flow) setConversationFlow(db, id, next);
     const body: FlowStatusResponse = {
       conversationId: id,
       flow: next,

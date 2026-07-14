@@ -25,6 +25,7 @@ import {
 } from '../artifacts/question-form';
 import { parseSubmittedAnswers } from './QuestionForm';
 import { useI18n } from '../i18n';
+import type { Dict } from '../i18n/types';
 import {
   fetchChatRunStatus,
   GENERIC_DAEMON_DISCONNECT_CODE,
@@ -60,6 +61,8 @@ import {
   type ByokMediaDefaults,
   type ByokChatProviderConfig,
   type ByokChatProtocol,
+  FLOW_SHAPES,
+  type FlowDeliverAction,
   type FlowSnapshot,
   type ResearchOptions,
 } from '@open-design/contracts';
@@ -81,11 +84,19 @@ import {
   trackComposerBarClick,
   trackDesignSystemApplyResult,
   trackDesignSystemEnrichClick,
+  trackFlowStageTransition,
+  trackHardDelivery,
+  trackInspireChoice,
   trackPageView,
   trackOnboardingPromptPrefilled,
   trackOnboardingFirstPromptSent,
   trackOnboardingFirstGenerationCompleted,
 } from '../analytics/events';
+import {
+  buildFlowStageTransitions,
+  firstUserInputAt,
+  msFromFirstInput,
+} from '../runtime/staged-flow-analytics';
 import {
   clearOnboardingSessionId,
   peekOnboardingSessionId,
@@ -247,10 +258,11 @@ import {
   type ResearchRound,
 } from './ResearchWorkspacePanel';
 import {
-  defaultDeckOutline,
-  parseDeckOutlineMarkdown,
-  serializeDeckOutlineMarkdown,
-} from '../runtime/deck-outline';
+  defaultFlowPlan,
+  parseFlowPlanMarkdown,
+  primaryFlowPlanArtifact,
+  serializeFlowPlanMarkdown,
+} from '../runtime/flow-plan';
 import {
   type PluginFolderAgentAction,
 } from './design-files/pluginFolderActions';
@@ -832,6 +844,10 @@ function autoSendContextKey(projectId: string): string {
   return `od:auto-send-context:${projectId}`;
 }
 
+function autoSendResearchKey(projectId: string): string {
+  return `od:auto-send-research:${projectId}`;
+}
+
 /** Set by the home create flow when its submit already ran the Open Design
  * Cloud balance gate — the first auto-send must not re-prompt the user. */
 function autoSendAmrGateOkKey(projectId: string): string {
@@ -867,12 +883,30 @@ function readAutoSendContext(projectId: string): RunContextSelection | null {
   }
 }
 
+function readAutoSendResearch(projectId: string): ResearchOptions | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.sessionStorage.getItem(autoSendResearchKey(projectId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<ResearchOptions>;
+    if (parsed.enabled !== true) return null;
+    const depth =
+      parsed.depth === 'medium' || parsed.depth === 'deep'
+        ? parsed.depth
+        : 'shallow';
+    return { enabled: true, depth };
+  } catch {
+    return null;
+  }
+}
+
 function clearAutoSendSession(projectId: string): void {
   if (typeof window === 'undefined') return;
   try {
     window.sessionStorage.removeItem(autoSendFirstMessageKey(projectId));
     window.sessionStorage.removeItem(autoSendAttachmentsKey(projectId));
     window.sessionStorage.removeItem(autoSendContextKey(projectId));
+    window.sessionStorage.removeItem(autoSendResearchKey(projectId));
     window.sessionStorage.removeItem(autoSendAmrGateOkKey(projectId));
   } catch {
     /* ignore */
@@ -1525,7 +1559,15 @@ export function ProjectView({
   // Staged-flow snapshot for the active conversation (spec §5.3): live
   // updates from `flow_stage` SSE events, seeded from GET /flow on load.
   const [flowSnapshot, setFlowSnapshot] = useState<FlowSnapshot | null>(null);
-  const [deepResearchEnabled, setDeepResearchEnabled] = useState(false);
+  const trackedFlowSnapshotRef = useRef<{
+    conversationId: string;
+    snapshot: FlowSnapshot | null;
+  } | null>(null);
+  const startedFlowAnalyticsRef = useRef<Set<string>>(new Set());
+  const [deepResearchEnabled, setDeepResearchEnabled] = useState(
+    () => readAutoSendResearch(project.id)?.depth === 'deep',
+  );
+  const [researchReportMarkdown, setResearchReportMarkdown] = useState('');
   const [outlinePages, setOutlinePages] = useState<OutlinePage[]>([]);
   const [inspireTemplates, setInspireTemplates] = useState<RankedInspireTemplate[]>([]);
   const [inspireSelectedId, setInspireSelectedId] = useState<string | null>(null);
@@ -1834,6 +1876,61 @@ export function ProjectView({
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
+  const firstFlowInputAt = useMemo(() => firstUserInputAt(messages), [messages]);
+  const trackStagedFlowSnapshot = useCallback(
+    (snapshot: FlowSnapshot) => {
+      if (!activeConversationId) return;
+      const tracked = trackedFlowSnapshotRef.current;
+      const previous =
+        startedFlowAnalyticsRef.current.has(activeConversationId) &&
+        tracked?.conversationId === activeConversationId
+          ? tracked.snapshot
+          : null;
+      const firstInputAt = firstUserInputAt(messagesRef.current);
+      trackedFlowSnapshotRef.current = {
+        conversationId: activeConversationId,
+        snapshot,
+      };
+      if (firstInputAt === undefined) return;
+
+      const transitions = buildFlowStageTransitions({
+        previous,
+        next: snapshot,
+        context: {
+          projectId: project.id,
+          conversationId: activeConversationId,
+          firstInputAt,
+        },
+      });
+      for (const transition of transitions) {
+        trackFlowStageTransition(analytics.track, transition, {
+          insertId: [
+            'flow-stage',
+            activeConversationId,
+            transition.stage,
+            transition.state,
+            snapshot.updatedAt,
+          ].join(':'),
+        });
+      }
+      startedFlowAnalyticsRef.current.add(activeConversationId);
+    },
+    [activeConversationId, analytics.track, project.id],
+  );
+  useEffect(() => {
+    if (!flowSnapshot || firstFlowInputAt === undefined) return;
+    if (
+      startedFlowAnalyticsRef.current.has(activeConversationId ?? '')
+    ) {
+      return;
+    }
+    trackStagedFlowSnapshot(flowSnapshot);
+  }, [
+    activeConversationId,
+    firstFlowInputAt,
+    flowSnapshot,
+    trackStagedFlowSnapshot,
+  ]);
   useEffect(() => {
     setChatSeed(null);
     setAutoAuditRepairSeed(null);
@@ -2181,20 +2278,42 @@ export function ProjectView({
       messagesConversationIdRef.current = null;
     }
     setFlowSnapshot(null);
-    setDeepResearchEnabled(false);
+    trackedFlowSnapshotRef.current = {
+      conversationId: activeConversationId,
+      snapshot: null,
+    };
+    setDeepResearchEnabled(
+      readAutoSendResearch(project.id)?.depth === 'deep',
+    );
     (async () => {
       try {
         const [list, comments, flow] = await Promise.all([
           listMessages(project.id, activeConversationId),
           fetchPreviewComments(project.id, activeConversationId),
-          fetchConversationFlow(activeConversationId),
+          (async () => {
+            try {
+              return await fetchConversationFlow(activeConversationId);
+            } catch {
+              return null;
+            }
+          })(),
         ]);
         if (cancelled) return;
         setMessages(list);
         setMessagesInitialized(true);
         setPreviewComments(comments);
+        trackedFlowSnapshotRef.current = {
+          conversationId: activeConversationId,
+          snapshot: flow,
+        };
+        if (flow && firstUserInputAt(list) !== undefined) {
+          startedFlowAnalyticsRef.current.add(activeConversationId);
+        }
         setFlowSnapshot(flow);
-        setDeepResearchEnabled(flow?.researchMode === 'deep');
+        setDeepResearchEnabled(
+          flow?.researchMode === 'deep' ||
+            readAutoSendResearch(project.id)?.depth === 'deep',
+        );
         setAttachedComments([]);
         setArtifact(null);
         setError(null);
@@ -2224,7 +2343,7 @@ export function ProjectView({
   const handleDeepResearchChange = useCallback(
     (enabled: boolean) => {
       setDeepResearchEnabled(enabled);
-      if (!activeConversationId || !flowSnapshot) return;
+      if (!activeConversationId) return;
       const researchMode = enabled ? 'deep' : 'basic';
       setFlowSnapshot((current) =>
         current
@@ -2234,12 +2353,13 @@ export function ProjectView({
       void patchConversationFlowResearchMode(activeConversationId, researchMode).then(
         (persisted) => {
           if (!persisted) return;
+          trackStagedFlowSnapshot(persisted);
           setFlowSnapshot(persisted);
           setDeepResearchEnabled(persisted.researchMode === 'deep');
         },
       );
     },
-    [activeConversationId, flowSnapshot],
+    [activeConversationId, trackStagedFlowSnapshot],
   );
 
   const stagedFlowBrief = useMemo(
@@ -2253,21 +2373,27 @@ export function ProjectView({
         .slice(0, 4_000),
     [messages],
   );
+  const flowPlanArtifact = flowSnapshot
+    ? primaryFlowPlanArtifact(flowSnapshot.shape)
+    : null;
 
   useEffect(() => {
-    if (flowSnapshot?.shape !== 'deck' || flowSnapshot.activeStage !== 'plan') return;
+    if (!flowSnapshot || flowSnapshot.activeStage !== 'plan' || !flowPlanArtifact) {
+      return;
+    }
     let cancelled = false;
-    void fetchProjectFileText(project.id, 'generated/outline.md', {
+    void fetchProjectFileText(project.id, flowPlanArtifact, {
       cache: 'no-store',
       cacheBustKey: flowSnapshot.updatedAt,
     }).then((markdown) => {
       if (cancelled) return;
-      const parsed = parseDeckOutlineMarkdown(markdown ?? '');
-      const nextPages = parsed.map((page) => ({
-          id: page.id,
-          title: page.title,
-          bullets: page.points,
-        }));
+      const nextPages = parseFlowPlanMarkdown(markdown ?? '', flowSnapshot.shape).map(
+        (item) => ({
+          id: item.id,
+          title: item.title,
+          bullets: item.points,
+        }),
+      );
       outlinePagesRef.current = nextPages;
       setOutlinePages(nextPages);
     });
@@ -2278,26 +2404,27 @@ export function ProjectView({
     flowSnapshot?.activeStage,
     flowSnapshot?.shape,
     flowSnapshot?.updatedAt,
+    flowPlanArtifact,
     project.id,
   ]);
 
   useEffect(() => {
-    if (flowSnapshot?.shape !== 'deck' || flowSnapshot.activeStage !== 'inspire') return;
+    if (!flowSnapshot || flowSnapshot.activeStage !== 'inspire') return;
     let cancelled = false;
     setInspireLoading(true);
     const outlineTitles = (
       outlinePages.length > 0
         ? outlinePages
-        : defaultDeckOutline().map((page) => ({
-            id: page.id,
-            title: page.title,
-            bullets: page.points,
+        : defaultFlowPlan(flowSnapshot.shape).map((item) => ({
+            id: item.id,
+            title: item.title,
+            bullets: item.points,
           }))
     ).map((page) => page.title);
     void rankInspiration({
       brief: stagedFlowBrief || project.name,
       outlineTitles,
-      mode: 'deck',
+      mode: flowSnapshot.shape,
     })
       .then((result) => {
         if (cancelled) return;
@@ -2665,19 +2792,21 @@ export function ProjectView({
 
   const queueOutlineSave = useCallback(
     (pages: readonly OutlinePage[]): Promise<void> => {
-      const markdown = serializeDeckOutlineMarkdown(
+      if (!flowSnapshot || !flowPlanArtifact) return Promise.resolve();
+      const markdown = serializeFlowPlanMarkdown(
         pages.map((page) => ({
           id: page.id,
           title: page.title,
           points: page.bullets,
         })),
+        flowSnapshot.shape,
       );
       const operation = outlineSaveChainRef.current
         .catch(() => undefined)
         .then(async () => {
           const saved = await writeProjectTextFile(
             project.id,
-            'generated/outline.md',
+            flowPlanArtifact,
             markdown,
           );
           if (saved) await refreshProjectFiles();
@@ -2685,7 +2814,7 @@ export function ProjectView({
       outlineSaveChainRef.current = operation;
       return operation;
     },
-    [project.id, refreshProjectFiles],
+    [flowPlanArtifact, flowSnapshot?.shape, project.id, refreshProjectFiles],
   );
 
   const handleOutlineChange = useCallback(
@@ -5578,6 +5707,7 @@ export function ProjectView({
         // message content — mirror the conversation_title precedent above.
         // Refresh recovery reads GET /api/conversations/:id/flow on load.
         onFlowStage: (snapshot: FlowSnapshot) => {
+          trackStagedFlowSnapshot(snapshot);
           setFlowSnapshot(snapshot);
           setDeepResearchEnabled(snapshot.researchMode === 'deep');
         },
@@ -6295,6 +6425,7 @@ export function ProjectView({
       refreshLiveArtifacts,
       readProjectHtml,
       requestOpenFile,
+      trackStagedFlowSnapshot,
       persistMessage,
       persistMessageById,
       auditDesignSystemWorkspaceAfterRun,
@@ -7660,6 +7791,52 @@ export function ProjectView({
     },
     [requestOpenFile],
   );
+  const handleHardDelivery = useCallback(
+    (signal: {
+      kind: FlowDeliverAction;
+      source: 'artifact_export' | 'artifact_deploy' | 'social_share';
+      fileName: string;
+    }) => {
+      if (!flowSnapshot || !activeConversationId) return;
+      const deliverState = flowSnapshot.stages.find(
+        (stage) => stage.id === 'deliver',
+      )?.state;
+      if (deliverState !== 'active' && deliverState !== 'complete') return;
+      if (!FLOW_SHAPES[flowSnapshot.shape].deliverActions.includes(signal.kind)) {
+        return;
+      }
+      const file =
+        projectFiles.find((candidate) => candidate.name === signal.fileName) ??
+        null;
+      const elapsed = msFromFirstInput(firstFlowInputAt);
+      trackHardDelivery(analytics.track, {
+        page_name: 'artifact',
+        area: 'staged_flow_delivery',
+        project_id: project.id,
+        conversation_id: activeConversationId,
+        flow_shape: flowSnapshot.shape,
+        research_mode: flowSnapshot.researchMode,
+        kind: signal.kind,
+        artifact_id: anonymizeArtifactId({
+          projectId: project.id,
+          fileName: signal.fileName,
+        }),
+        artifact_kind: artifactKindToTracking({
+          fileKind: file?.kind ?? null,
+        }),
+        source: signal.source,
+        ...(elapsed === undefined ? {} : { ms_from_first_input: elapsed }),
+      });
+    },
+    [
+      activeConversationId,
+      analytics.track,
+      firstFlowInputAt,
+      flowSnapshot,
+      project.id,
+      projectFiles,
+    ],
+  );
 
   const handleBrowserUsePrompt = useCallback((text: string) => {
     setWorkspaceFocused(false);
@@ -7672,6 +7849,33 @@ export function ProjectView({
   const handleInspireChoice = useCallback(
     async (action: 'apply' | 'skip', templateId?: string) => {
       if (!activeConversationId) return;
+      const pickedTemplateId = action === 'apply' ? templateId ?? null : null;
+      const rankIndex =
+        pickedTemplateId === null
+          ? -1
+          : inspireTemplates.findIndex(
+              (template) => template.id === pickedTemplateId,
+            );
+      const rank =
+        pickedTemplateId === null || rankIndex < 0 ? null : rankIndex + 1;
+      const trackChoice = (result: 'success' | 'failed', errorCode?: string) => {
+        if (!flowSnapshot) return;
+        const elapsed = msFromFirstInput(firstFlowInputAt);
+        trackInspireChoice(analytics.track, {
+          page_name: 'chat_panel',
+          area: 'inspiration',
+          project_id: project.id,
+          conversation_id: activeConversationId,
+          flow_shape: flowSnapshot.shape,
+          research_mode: flowSnapshot.researchMode,
+          picked_template_id: pickedTemplateId,
+          rank,
+          skipped: action === 'skip',
+          result,
+          ...(elapsed === undefined ? {} : { ms_from_first_input: elapsed }),
+          ...(errorCode ? { error_code: errorCode } : {}),
+        });
+      };
       setInspireLoading(true);
       try {
         const result = await chooseConversationInspiration(
@@ -7680,6 +7884,8 @@ export function ProjectView({
             ? { action: 'skip' }
             : { action: 'apply', templateId: templateId ?? '' },
         );
+        trackChoice('success');
+        trackStagedFlowSnapshot(result.flow);
         setFlowSnapshot(result.flow);
         setInspireSelectedId(result.flow.inspireChoice?.templateId ?? null);
         if (action === 'apply') {
@@ -7696,6 +7902,10 @@ export function ProjectView({
           action === 'apply' && templateId ? { skillIds: [templateId] } : undefined,
         );
       } catch (choiceError) {
+        trackChoice(
+          'failed',
+          choiceError instanceof Error ? choiceError.name : 'unknown_error',
+        );
         setProjectActionsToast({
           message:
             choiceError instanceof Error
@@ -7711,11 +7921,16 @@ export function ProjectView({
     },
     [
       activeConversationId,
+      analytics.track,
+      firstFlowInputAt,
+      flowSnapshot,
       handleSend,
+      inspireTemplates,
       onProjectChange,
       project,
       refreshWorkspaceItems,
       requestOpenFile,
+      trackStagedFlowSnapshot,
     ],
   );
 
@@ -7772,6 +7987,25 @@ export function ProjectView({
     },
     [projectFiles],
   );
+  const researchReportMtime = researchReportPath
+    ? projectFiles.find((file) => file.name === researchReportPath)?.mtime
+    : undefined;
+  useEffect(() => {
+    if (!researchReportPath) {
+      setResearchReportMarkdown('');
+      return;
+    }
+    let cancelled = false;
+    void fetchProjectFileText(project.id, researchReportPath, {
+      cache: 'no-store',
+      cacheBustKey: researchReportMtime,
+    }).then((markdown) => {
+      if (!cancelled) setResearchReportMarkdown(markdown ?? '');
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [project.id, researchReportMtime, researchReportPath]);
   const inspireCategories = useMemo(
     () =>
       Array.from(
@@ -7793,8 +8027,25 @@ export function ProjectView({
         .some((value) => value?.toLocaleLowerCase().includes(query));
     });
   }, [inspireCategory, inspireSearch, inspireTemplates]);
+  useEffect(() => {
+    if (flowSnapshot?.activeStage !== 'inspire') return;
+    if (visibleInspireTemplates.length === 0) {
+      setInspireSelectedId(null);
+      return;
+    }
+    if (
+      !inspireSelectedId ||
+      !visibleInspireTemplates.some((template) => template.id === inspireSelectedId)
+    ) {
+      setInspireSelectedId(visibleInspireTemplates[0]?.id ?? null);
+    }
+  }, [
+    flowSnapshot?.activeStage,
+    inspireSelectedId,
+    visibleInspireTemplates,
+  ]);
   const flowWorkspace = useMemo(() => {
-    if (!isDeck || !flowSnapshot?.activeStage) return null;
+    if (!flowSnapshot?.activeStage) return null;
     if (
       flowSnapshot.activeStage === 'research' &&
       flowSnapshot.researchMode === 'deep'
@@ -7808,12 +8059,21 @@ export function ProjectView({
             rounds={researchRounds}
             activeDetail={researchStage?.detail}
             reportPath={researchReportPath}
+            reportMarkdown={researchReportMarkdown}
             onOpenReport={requestOpenFile}
+            copy={{
+              title: t('flow.stage.research'),
+              activeStatus: t('flow.state.active'),
+              completeStatus: t('flow.state.complete'),
+              errorStatus: t('flow.state.error'),
+            }}
           />
         ),
       };
     }
     if (flowSnapshot.activeStage === 'plan') {
+      const shape = FLOW_SHAPES[flowSnapshot.shape];
+      const planUnit = t(shape.plan.itemLabelKey as keyof Dict);
       return {
         label: t('flow.stage.plan'),
         nonce: flowSnapshot.updatedAt,
@@ -7821,6 +8081,20 @@ export function ProjectView({
           <OutlinePanel
             pages={outlinePages}
             onChange={handleOutlineChange}
+            copy={{
+              title: t('flow.stage.plan'),
+              pageLabel: planUnit,
+              titleLabel: t('flow.plan.titleLabel', { unit: planUnit }),
+              bulletsLabel: t('flow.plan.pointsLabel'),
+              bulletsHint: t('flow.plan.pointsHint'),
+              untitledPage: t('flow.plan.untitled', { unit: planUnit }),
+              addPage: t('flow.plan.add', { unit: planUnit }),
+              insertPage: t('flow.plan.insert', { unit: planUnit }),
+              moveUp: t('flow.plan.moveUp'),
+              moveDown: t('flow.plan.moveDown'),
+              emptyState: t('flow.plan.empty', { unit: planUnit }),
+              deletePage: t('common.delete'),
+            }}
           />
         ),
       };
@@ -7846,6 +8120,20 @@ export function ProjectView({
             }}
             onSearch={setInspireSearch}
             onCategory={setInspireCategory}
+            copy={{
+              title: t('flow.stage.inspire'),
+              searchLabel: t('common.search'),
+              searchPlaceholder: t('flow.inspire.searchPlaceholder'),
+              categoriesLabel: t('flow.inspire.categoriesLabel'),
+              allCategories: t('common.all'),
+              loading: t('common.loading'),
+              empty: t('flow.inspire.empty'),
+              rankLabel: t('flow.inspire.rank'),
+              selectTemplate: t('flow.inspire.select'),
+              selectedTemplate: t('common.selected'),
+              apply: t('flow.inspire.apply'),
+              skip: t('flow.inspire.skip'),
+            }}
           />
         ),
       };
@@ -7860,10 +8148,10 @@ export function ProjectView({
     inspireLoading,
     inspireSearch,
     inspireSelectedId,
-    isDeck,
     outlinePages,
     requestOpenFile,
     researchReportPath,
+    researchReportMarkdown,
     researchRounds,
     t,
     visibleInspireTemplates,
@@ -8080,6 +8368,7 @@ export function ProjectView({
   const autoSendSeedRef = useRef<string | null>(null);
   const autoSendAttachmentsRef = useRef<ChatAttachment[] | null>(null);
   const autoSendContextRef = useRef<RunContextSelection | null>(null);
+  const autoSendResearchRef = useRef<ResearchOptions | null>(null);
   const autoSendFirstMessageRef = useRef(false);
   const autoSendAmrGateOkRef = useRef(false);
   if (autoSendSeedRef.current === null) {
@@ -8100,6 +8389,7 @@ export function ProjectView({
     autoSendSeedRef.current = isAutoSend ? (project.pendingPrompt ?? '') : '';
     autoSendAttachmentsRef.current = isAutoSend ? readAutoSendAttachments(project.id) : [];
     autoSendContextRef.current = isAutoSend ? readAutoSendContext(project.id) : null;
+    autoSendResearchRef.current = isAutoSend ? readAutoSendResearch(project.id) : null;
   }
   const initialWorkspaceContexts = autoSendContextRef.current?.workspaceItems ?? [];
   const brandEnrichmentEligibleForProject =
@@ -8736,6 +9026,8 @@ export function ProjectView({
     ).trim();
     const attachments = autoSendAttachmentsRef.current ?? [];
     const context = autoSendContextRef.current ?? readAutoSendContext(project.id);
+    const autoSendResearch =
+      autoSendResearchRef.current ?? readAutoSendResearch(project.id);
     if (!seed && attachments.length === 0) {
       return;
     }
@@ -8747,6 +9039,7 @@ export function ProjectView({
     autoSendAttachmentsRef.current = [];
     void handleSend(seed, attachments, [], {
       ...(context ? { context } : {}),
+      ...(autoSendResearch ? { research: autoSendResearch } : {}),
       // The home submit already gated this exact task (and the user answered
       // any soft warning there); asking again would double-prompt.
       ...(autoSendAmrGateOkRef.current ? { amrGatePrechecked: true } : {}),
@@ -9091,6 +9384,7 @@ export function ProjectView({
           pinnedBrowserTabId={projectIsProgrammaticBrandExtraction ? BRAND_BROWSER_TAB_ID : null}
           shareRequest={shareRequest}
           downloadRequest={downloadRequest}
+          onHardDelivery={handleHardDelivery}
           slideNavRequest={slideNavRequest}
           liveArtifactEvents={liveArtifactEvents}
           designSystemActivityEvents={designSystemActivityEvents}
@@ -9188,6 +9482,19 @@ export function ProjectView({
           questionFormSubmitDisabled={currentConversationActionDisabled}
           questionFormSubmittedAnswers={displayedQuestionFormSubmittedAnswers}
           questionsGenerating={displayedQuestionsGenerating}
+          flowTrackingContext={
+            flowSnapshot && activeConversationId
+              ? {
+                  conversationId: activeConversationId,
+                  shape: flowSnapshot.shape,
+                  researchMode: flowSnapshot.researchMode,
+                  activeStage: flowSnapshot.activeStage,
+                  ...(firstFlowInputAt === undefined
+                    ? {}
+                    : { firstInputAt: firstFlowInputAt }),
+                }
+              : null
+          }
           focusQuestionsRequest={focusQuestionsRequest}
           onSubmitQuestionForm={(text, attachments = [], context) => {
             if (currentConversationActionDisabled) return;
@@ -9199,7 +9506,7 @@ export function ProjectView({
                   await flushOutlineSave();
                 } catch {
                   setProjectActionsToast({
-                    message: 'Could not save the edited outline',
+                    message: t('flow.plan.saveError'),
                     details: null,
                     tone: 'error',
                     ttlMs: 3_000,

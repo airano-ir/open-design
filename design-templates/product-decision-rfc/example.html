@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RFC — Collaborative Approvals</title>
+  <style>
+    :root { --bg:#f5f7fa; --paper:#fff; --ink:#1b2430; --muted:#667387; --line:#dfe5ec; --accent:#4d5ed6; --soft:#eef0ff; --good:#17845b; --warn:#b66b18; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font:14px/1.62 Inter, ui-sans-serif, system-ui, sans-serif; }
+    .shell { display:grid; grid-template-columns:220px minmax(0,760px); gap:48px; width:min(1080px,calc(100% - 40px)); margin:32px auto; padding:52px; background:var(--paper); border:1px solid var(--line); border-radius:16px; }
+    aside { color:var(--muted); font-size:12px; }
+    aside strong { display:block; color:var(--ink); margin:0 0 3px; }
+    aside dl { margin:28px 0; }
+    aside dt { margin-top:18px; text-transform:uppercase; letter-spacing:.08em; font-size:10px; }
+    aside dd { margin:4px 0 0; }
+    .status { display:inline-block; padding:4px 9px; border-radius:99px; background:#fff2d9; color:#8b5a0b; font-weight:800; }
+    h1 { margin:0; font-size:42px; line-height:1.05; letter-spacing:-.035em; }
+    .summary { margin:20px 0 30px; font-size:19px; color:var(--muted); }
+    .decision { padding:20px 22px; background:var(--soft); border:1px solid #cfd4ff; border-radius:10px; }
+    .decision b { display:block; color:var(--accent); font-size:11px; text-transform:uppercase; letter-spacing:.08em; margin-bottom:6px; }
+    h2 { margin:42px 0 12px; font-size:23px; letter-spacing:-.02em; }
+    p { max-width:70ch; }
+    .evidence { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+    .evidence article { padding:16px; border:1px solid var(--line); border-radius:9px; }
+    .evidence strong { display:block; font-size:24px; }
+    .evidence span { color:var(--muted); font-size:12px; }
+    table { width:100%; border-collapse:separate; border-spacing:0; overflow:hidden; border:1px solid var(--line); border-radius:10px; }
+    th,td { padding:12px; border-bottom:1px solid var(--line); text-align:start; }
+    th { background:#f8fafc; color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.07em; }
+    tr:last-child td { border-bottom:0; }
+    .winner { color:var(--good); font-weight:800; }
+    .flow { display:flex; align-items:center; gap:8px; overflow:auto; padding:18px; border:1px solid var(--line); border-radius:10px; background:#fbfcfe; }
+    .node { min-width:130px; padding:14px; border:1px solid var(--line); border-radius:8px; background:white; text-align:center; }
+    .arrow { color:var(--accent); font-weight:900; }
+    .gates { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; counter-reset:gate; }
+    .gate { padding:18px; border-top:3px solid var(--accent); background:#f8f9ff; }
+    .gate::before { counter-increment:gate; content:"Gate " counter(gate); color:var(--accent); font-size:10px; font-weight:800; text-transform:uppercase; }
+    .gate b { display:block; margin:7px 0; }
+    @media(max-width:780px){.shell{grid-template-columns:1fr;padding:28px}.evidence,.gates{grid-template-columns:1fr}aside{border-bottom:1px solid var(--line);padding-bottom:20px}}
+    @media print{body{background:white}.shell{display:block;width:auto;margin:0;border:0;padding:12mm}aside{page-break-after:avoid}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <aside data-od-id="metadata">
+      <span class="status">Review</span>
+      <dl>
+        <dt>Owner</dt><dd><strong>Maya Chen</strong>Principal PM</dd>
+        <dt>Engineering</dt><dd><strong>Jon Bell</strong>Staff Engineer</dd>
+        <dt>Decision by</dt><dd><strong>29 July 2026</strong></dd>
+        <dt>Reviewers</dt><dd>Design · Security · CS · Finance</dd>
+      </dl>
+    </aside>
+
+    <article>
+      <header data-od-id="summary">
+        <h1>Collaborative approvals should begin as a reversible workflow layer</h1>
+        <p class="summary">Enterprise teams need accountable sign-off without turning Open Design into a heavyweight governance suite.</p>
+        <div class="decision"><b>Recommendation</b>Build a native two-step approval layer behind a workspace flag; defer policy engines and external approval integrations until usage proves the need.</div>
+      </header>
+
+      <section data-od-id="problem">
+        <h2>The current handoff loses accountability at the exact moment risk rises</h2>
+        <p>Teams export work for review in chat or email. The artifact, feedback, and final decision then live in different systems, leaving creators unable to prove who approved what.</p>
+        <div class="evidence">
+          <article><strong>31%</strong><span>of enterprise trials mention approval or sign-off</span></article>
+          <article><strong>2.4 days</strong><span>median delay between final edit and acceptance</span></article>
+          <article><strong>18%</strong><span>of review comments repeat resolved feedback</span></article>
+        </div>
+      </section>
+
+      <section data-od-id="options">
+        <h2>A small native layer beats both an integration-only path and a full policy engine</h2>
+        <table>
+          <thead><tr><th>Option</th><th>User value</th><th>Time</th><th>Risk</th><th>Reversibility</th></tr></thead>
+          <tbody>
+            <tr><td class="winner">Native two-step approval</td><td>High</td><td>6 weeks</td><td>Medium</td><td>High</td></tr>
+            <tr><td>Integrate existing task tools</td><td>Medium</td><td>4 weeks</td><td>Low</td><td>High</td></tr>
+            <tr><td>Full policy engine</td><td>Very high</td><td>16+ weeks</td><td>High</td><td>Low</td></tr>
+            <tr><td>Defer</td><td>None</td><td>0</td><td>Revenue risk</td><td>High</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section data-od-id="experience">
+        <h2>The first version adds one explicit decision to the existing review loop</h2>
+        <div class="flow">
+          <div class="node">Creator requests review</div><span class="arrow">→</span>
+          <div class="node">Reviewer comments</div><span class="arrow">→</span>
+          <div class="node">Creator resolves</div><span class="arrow">→</span>
+          <div class="node">Approver accepts or returns</div>
+        </div>
+      </section>
+
+      <section data-od-id="rollout">
+        <h2>Expansion is gated by proof of adoption, speed, and safety</h2>
+        <div class="gates">
+          <div class="gate"><b>Internal dogfood</b><span>90% event integrity; no permission leaks.</span></div>
+          <div class="gate"><b>Five design partners</b><span>40% weekly approval use; review time improves.</span></div>
+          <div class="gate"><b>Enterprise beta</b><span>Retention lift without support burden.</span></div>
+        </div>
+      </section>
+    </article>
+  </main>
+</body>
+</html>

@@ -27,6 +27,7 @@ import {
   type ChatSessionMode,
   type ConnectorDetail,
   type InstalledPluginRecord,
+  type ResearchOptions,
   type RunContextSelection,
   type UpsertMemoryRequest,
 } from '@open-design/contracts';
@@ -260,6 +261,7 @@ type EntryCreateProjectInput = Omit<CreateInput, 'metadata'> & {
   appliedPluginSnapshotId?: string;
   pluginInputs?: Record<string, unknown>;
   initialRunContext?: RunContextSelection | null;
+  research?: ResearchOptions;
   conversationMode?: ChatSessionMode;
   autoSendFirstMessage?: boolean;
   /** The home submit already ran the Open Design Cloud balance gate; the
@@ -807,6 +809,7 @@ export function EntryShell({
         : {}),
       ...(payload.pluginInputs ? { pluginInputs: payload.pluginInputs } : {}),
       ...(payload.initialRunContext ? { initialRunContext: payload.initialRunContext } : {}),
+      ...(payload.research ? { research: payload.research } : {}),
       ...(payload.conversationMode ? { conversationMode: payload.conversationMode } : {}),
       ...(payload.attachments && payload.attachments.length > 0
         ? { pendingFiles: payload.attachments }

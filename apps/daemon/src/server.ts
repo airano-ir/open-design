@@ -27,7 +27,11 @@ import {
 } from './prompts/system.js';
 import { emittedRenderableQuestionForm } from './question-form-detect.js';
 import { materializeFlowArtifacts } from './flow/artifacts.js';
-import { createFlowTracker, resolveFlowShape } from './flow/engine.js';
+import {
+  createFlowTracker,
+  resolveFlowShape,
+  selectFlowShape,
+} from './flow/engine.js';
 import { resolveProjectRoot } from './project-root.js';
 import {
   resolveDaemonCliPath,
@@ -3436,6 +3440,7 @@ export async function startServer({
         description: template.description,
         mode: template.mode,
         platform: template.platform,
+        tags: template.tags,
         triggers: template.triggers.filter(
           (trigger): trigger is string => typeof trigger === 'string',
         ),
@@ -4763,16 +4768,43 @@ export async function startServer({
       extraAllowedDirs,
       mediaExecution: run?.mediaExecution,
     });
-    const persistedResearchMode =
+    const persistedFlowForResearch =
       typeof conversationId === 'string' && conversationId
-        ? getConversationFlow(db, conversationId)?.researchMode
+        ? getConversationFlow(db, conversationId)
         : null;
+    const inferredFlowShape =
+      persistedFlowForResearch?.shape ??
+      resolveFlowShape({
+        sessionMode: normalizeConversationSessionMode(sessionMode),
+        taskKind: (() => {
+          if (typeof appliedPluginSnapshotId !== 'string' || !appliedPluginSnapshotId) {
+            return 'new-generation';
+          }
+          try {
+            return getSnapshot(db, appliedPluginSnapshotId)?.taskKind ?? 'new-generation';
+          } catch {
+            return 'new-generation';
+          }
+        })(),
+        projectKind: projectRecord?.metadata?.kind ?? null,
+        projectPlatform: projectRecord?.metadata?.platform ?? null,
+        requestText:
+          typeof message === 'string'
+            ? message
+            : typeof currentPrompt === 'string'
+              ? currentPrompt
+              : null,
+      });
     const effectiveResearch =
       research != null
         ? research
-        : persistedResearchMode === 'deep'
+        : persistedFlowForResearch?.researchMode === 'deep'
           ? { enabled: true, depth: 'deep' as const }
-          : research;
+          : persistedFlowForResearch?.researchMode === 'off'
+            ? undefined
+            : inferredFlowShape
+              ? { enabled: true, depth: 'shallow' as const }
+              : undefined;
     const researchCommandContract = resolveResearchCommandContract(
       effectiveResearch,
       message,
@@ -5144,7 +5176,7 @@ export async function startServer({
     const persistedFlow = run.conversationId
       ? getConversationFlow(db, run.conversationId)
       : null;
-    const flowShape = persistedFlow?.shape ?? resolveFlowShape({
+    const runFlowShape = resolveFlowShape({
       sessionMode: runSessionMode,
       taskKind: (() => {
         if (typeof run?.appliedPluginSnapshotId !== 'string' || !run.appliedPluginSnapshotId) {
@@ -5165,10 +5197,13 @@ export async function startServer({
             ? currentPrompt
             : null,
     });
+    const flowShape = selectFlowShape(persistedFlow, runFlowShape);
+    const trackerInitial =
+      persistedFlow?.shape === flowShape ? persistedFlow : null;
     const flowTracker = flowShape
       ? createFlowTracker({
           shape: flowShape,
-          initial: persistedFlow,
+          initial: trackerInitial,
           ...(research
             ? {
                 researchMode: research.enabled
@@ -5177,7 +5212,9 @@ export async function startServer({
                     : 'basic'
                   : 'off',
               }
-            : {}),
+            : persistedFlow && !trackerInitial
+              ? { researchMode: persistedFlow.researchMode }
+              : {}),
         })
       : null;
     const emitFlowSnapshot = (snapshot) => {

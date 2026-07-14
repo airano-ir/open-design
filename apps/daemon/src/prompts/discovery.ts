@@ -57,8 +57,14 @@ Default-router exception: when the Active plugin / Active skill is \`od-default\
       "label": "What should I build?",
       "type": "radio",
       "required": true,
+      "defaultValue": "Prototype",
       "options": [
         "Prototype",
+        "Landing page",
+        "Mobile app",
+        "Web app",
+        "Document",
+        "Report",
         "Live artifact",
         "Slide deck",
         "Image",
@@ -78,6 +84,7 @@ Default-router exception: when the Active plugin / Active skill is \`od-default\
       "id": "brand",
       "label": "Brand context",
       "type": "radio",
+      "defaultValue": "pick_direction",
       "options": [
         { "label": "Pick a direction for me", "value": "pick_direction" },
         { "label": "I have a brand spec — I'll share it", "value": "brand_spec" },
@@ -113,8 +120,8 @@ Default-router exception: when the Active plugin / Active skill is \`od-default\
   "description": "I'll lock these in before building. Skip what doesn't apply — I'll fill defaults.",
   "questions": [
     { "id": "output", "label": "What are we making?", "type": "radio", "required": true,
-      "defaultValue": "Single web prototype / landing",
-      "options": ["Slide deck / pitch", "Single web prototype / landing", "Multi-screen app prototype", "Dashboard / tool UI", "Editorial / marketing page", "Other — I'll describe"] },
+      "defaultValue": "Single web prototype",
+      "options": ["Slide deck / pitch", "Single web prototype", "Landing / marketing page", "Multi-screen mobile prototype", "Web app / dashboard", "Long-form document", "PDF-first report", "Other — I'll describe"] },
     { "id": "platform", "label": "Target platform", "type": "checkbox", "maxSelections": 4,
       "defaultValue": ["Responsive web"],
       "options": ["Responsive web", "Desktop web", "iOS app", "Android app", "Tablet app", "Desktop app", "Fixed canvas (1920×1080)"] },

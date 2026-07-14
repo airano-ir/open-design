@@ -33,6 +33,7 @@ import type {
   McpServerConfig,
   WorkspaceContextItem,
 } from '@open-design/contracts';
+import { Button } from '@open-design/components';
 import { DesignSystemPicker } from './DesignSystemPicker';
 import type { SkillSummary } from '../types';
 import { Icon, type IconName } from './Icon';
@@ -151,6 +152,8 @@ interface Props {
   // showing: the host seeds the prompt with `scenario.text`, binds the
   // scenario's template, and creates the project -- one-click "just start".
   onSubmitScenario?: (scenario: PlaceholderScenario) => void;
+  deepResearchEnabled?: boolean;
+  onDeepResearchChange?: (enabled: boolean) => void;
   sessionMode?: ChatSessionMode;
   onSessionModeChange?: (mode: ChatSessionMode) => void;
   activePluginTitle: string | null;
@@ -297,6 +300,8 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
     onPromptChange,
     onSubmit,
     onSubmitScenario = () => undefined,
+    deepResearchEnabled = false,
+    onDeepResearchChange,
     sessionMode = 'design',
     onSessionModeChange,
     firstRunGuide,
@@ -1751,6 +1756,8 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
                   resource_kind: PLUS_SUBMENU_RESOURCE_KIND[submenu],
                 });
               }}
+              deepResearchEnabled={deepResearchEnabled}
+              onDeepResearchChange={onDeepResearchChange}
               connectors={connectorOptions}
               onPickConnector={(connector) => {
                 trackHomeChatComposerClick(analytics.track, {
@@ -1891,6 +1898,18 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
                 openDesignSystemPicker();
               } : undefined}
             />
+            {deepResearchEnabled && onDeepResearchChange ? (
+              <Button
+                variant={'subtle'}
+                className={'home-hero__research-pill'}
+                onClick={() => onDeepResearchChange(false)}
+                aria-label={`${t('chat.plus.deepResearch')} ×`}
+              >
+                <Icon name={'search'} size={13} aria-hidden={true} />
+                <span>{t('chat.plus.deepResearch')}</span>
+                <span aria-hidden={true}>×</span>
+              </Button>
+            ) : null}
             {libraryPickerOpen ? (
               <LibraryPicker
                 onClose={() => setLibraryPickerOpen(false)}

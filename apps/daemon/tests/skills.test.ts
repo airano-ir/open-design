@@ -266,6 +266,51 @@ describe('listSkills', () => {
     expect(skill.body).toContain('`OD_TOOL_TOKEN`');
   });
 
+  it('exposes document and report tags for staged-flow template filtering', async () => {
+    const skills = await listSkills(designTemplatesRoot);
+    const expected = {
+      'b2b-renewal-business-case': 'document-template',
+      'board-decision-memo': 'document-template',
+      'product-decision-rfc': 'document-template',
+      'executive-operating-review': 'report-template',
+      'market-diligence-report': 'report-template',
+      'policy-impact-brief': 'report-template',
+    };
+
+    for (const [id, tag] of Object.entries(expected)) {
+      expect(skills.find((entry) => entry.id === id)).toMatchObject({
+        mode: 'template',
+        tags: expect.arrayContaining([tag]),
+      });
+    }
+  });
+
+  it('exposes prototype-family tags and platforms for staged-flow filtering', async () => {
+    const skills = await listSkills(designTemplatesRoot);
+    const expected = [
+      ['wireframe-greybox', 'prototype-template', 'desktop'],
+      ['wireframe-annotated', 'prototype-template', 'desktop'],
+      ['wireframe-sketch', 'prototype-template', 'desktop'],
+      ['saas-landing', 'landing-template', 'desktop'],
+      ['pricing-page', 'landing-template', 'desktop'],
+      ['waitlist-page', 'landing-template', 'desktop'],
+      ['mobile-app', 'mobile-template', 'mobile'],
+      ['mobile-onboarding', 'mobile-template', 'mobile'],
+      ['wireframe-mobile-flow', 'mobile-template', 'mobile'],
+      ['dashboard', 'webapp-template', 'desktop'],
+      ['kanban-board', 'webapp-template', 'desktop'],
+      ['live-dashboard', 'webapp-template', 'desktop'],
+    ] as const;
+
+    for (const [id, tag, platform] of expected) {
+      expect(skills.find((entry) => entry.id === id)).toMatchObject({
+        mode: 'prototype',
+        platform,
+        tags: expect.arrayContaining([tag]),
+      });
+    }
+  });
+
   it('includes the agent-browser skill as an external CLI integration', async () => {
     const skills = await listSkills(skillsRoot);
     const skill = skills.find((entry: { id: string }) => entry.id === 'agent-browser');

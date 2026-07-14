@@ -9,6 +9,10 @@ description: |
   whiteboard before any pixels are committed. Use when the brief asks for
   "mobile wireframe", "app flow", "user flow wireframe", "lo-fi mobile",
   "low fidelity", "线框图", "移动端线框", or "App 流程".
+tags:
+  - "mobile-template"
+  - "wireframe"
+  - "user-flow"
 triggers:
   - "mobile wireframe"
   - "app flow"
@@ -20,7 +24,7 @@ triggers:
   - "App 流程图"
 od:
   mode: prototype
-  platform: auto
+  platform: mobile
   scenario: design
   fidelity: wireframe
   preview:

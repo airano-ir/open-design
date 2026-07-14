@@ -202,10 +202,13 @@ describe('flow routes', () => {
     expect(retry.body.flow?.updatedAt).toBe(50);
   });
 
-  it('rejects research-mode updates before flow initialization', async () => {
+  it('initializes a deck flow when research mode changes before the first run', async () => {
     const response = await patchFlow('conv-1', { researchMode: 'off' });
-    expect(response.status).toBe(409);
-    expect(response.body.error).toBe('conversation flow is not initialized');
+    expect(response.status).toBe(200);
+    expect(response.body.flow?.shape).toBe('deck');
+    expect(response.body.flow?.researchMode).toBe('off');
+    expect(response.body.flow?.activeStage).toBe('clarify');
+    expect(getConversationFlow(db, 'conv-1')).toEqual(response.body.flow);
   });
 
   it('validates research-mode updates', async () => {
@@ -261,7 +264,42 @@ describe('flow routes', () => {
 
     expect(status).toBe(200);
     expect(body.flow?.shape).toBe('deck');
-    expect(body.flow?.activeStage).toBe('deliver');
+    expect(body.flow?.activeStage).toBe('clarify');
+    expect(body.flow?.stages.find((stage) => stage.id === 'generate')?.state).toBe(
+      'pending',
+    );
     expect(getConversationFlow(db, 'conv-generic')).toEqual(body.flow);
+  });
+
+  it('recovers a missing prototype-family flow from request semantics', async () => {
+    insertProject(db, {
+      id: 'project-landing',
+      name: 'Landing Project',
+      skillId: null,
+      designSystemId: null,
+      createdAt: 1,
+      updatedAt: 1,
+      metadata: { kind: 'prototype', platform: 'desktop' },
+    });
+    insertConversation(db, {
+      id: 'conv-landing',
+      projectId: 'project-landing',
+      title: 'SaaS landing',
+      createdAt: 1,
+      updatedAt: 1,
+    });
+    upsertMessage(db, 'conv-landing', {
+      id: 'user-landing',
+      role: 'user',
+      content: 'Create a conversion-focused SaaS landing page',
+      sessionMode: 'design',
+    });
+
+    const { status, body } = await getFlow('conv-landing');
+
+    expect(status).toBe(200);
+    expect(body.flow?.shape).toBe('landing');
+    expect(body.flow?.activeStage).toBe('clarify');
+    expect(getConversationFlow(db, 'conv-landing')).toEqual(body.flow);
   });
 });

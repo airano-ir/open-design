@@ -40,6 +40,7 @@ interface SkillFrontmatter extends JsonRecord {
   zh_description?: unknown;
   en_description?: unknown;
   triggers?: unknown;
+  tags?: unknown;
   od?: JsonRecord & {
     example_prompt?: unknown;
     example_prompt_i18n?: unknown;
@@ -64,6 +65,7 @@ export interface SkillInfo {
   description: string;
   descriptionI18n?: Record<string, string>;
   triggers: unknown[];
+  tags?: string[];
   mode: SkillMode;
   surface: SkillSurface;
   source: SkillSource;
@@ -229,6 +231,7 @@ export async function listSkills(
           description,
           ...(descriptionI18n ? { descriptionI18n } : {}),
           triggers: Array.isArray(data.triggers) ? data.triggers : [],
+          tags: normalizeStringList(data.tags),
           mode,
           surface,
           source,
@@ -275,6 +278,7 @@ export async function listSkills(
             description,
             ...(descriptionI18n ? { descriptionI18n } : {}),
             triggers: Array.isArray(data.triggers) ? data.triggers : [],
+            tags: normalizeStringList(data.tags),
             mode,
             surface,
             source,
@@ -480,6 +484,18 @@ async function dirHasAttachments(dir: string): Promise<boolean> {
 // daemon-side allowlist to keep in sync. The compose path checks the
 // file actually exists before injecting; missing files fall through
 // silently. The frontend can render the requested list verbatim.
+function normalizeStringList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return Array.from(
+    new Set(
+      value
+        .filter((item): item is string => typeof item === 'string')
+        .map((item) => item.trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  );
+}
+
 function normalizeCraftRequires(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   const seen = new Set<string>();

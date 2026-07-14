@@ -28,6 +28,7 @@ describe('ResearchWorkspacePanel', () => {
     render(
       <ResearchWorkspacePanel
         reportPath={'research/robotics-market.md'}
+        reportMarkdown={'# Robotics market\n\nEvidence is arriving continuously.'}
         onOpenReport={onOpenReport}
         copy={{
           title: 'Live evidence',
@@ -38,6 +39,9 @@ describe('ResearchWorkspacePanel', () => {
 
     expect(screen.getByRole('region', { name: 'Live evidence' })).toBeTruthy();
     expect(screen.getByText('research/robotics-market.md')).toBeTruthy();
+    expect(screen.getByTestId('research-report-preview').textContent).toContain(
+      'Evidence is arriving continuously.',
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Review findings' }));
     expect(onOpenReport).toHaveBeenCalledWith('research/robotics-market.md');
   });

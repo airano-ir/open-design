@@ -611,6 +611,37 @@ test('[P1] project detail composer plus menu exposes attachment, connector, plug
   await expect(page.getByRole('menuitem', { name: /Design Docs MCP/i })).toBeVisible();
 });
 
+test('[P1] deck Deep Research selection persists before the first run', async ({ page }) => {
+  await page.goto('/');
+  await createDeckProject(page, 'Deck Deep Research');
+  await expectWorkspaceReady(page);
+
+  const composer = page.getByTestId('chat-composer');
+  await composer.getByTestId('chat-plus-trigger').click();
+  const deepResearch = page.getByTestId('composer-plus-deep-research');
+  await expect(deepResearch).toHaveAttribute('aria-checked', 'false');
+
+  const updateRequest = page.waitForRequest((request) =>
+    request.method() === 'PATCH' &&
+    /\/api\/conversations\/[^/]+\/flow$/u.test(new URL(request.url()).pathname),
+  );
+  await deepResearch.click();
+  const request = await updateRequest;
+  expect(request.postDataJSON()).toEqual({ researchMode: 'deep' });
+
+  await expect(composer.locator('.staged-context--research')).toBeVisible();
+  await expect(page.getByTestId('flow-progress-card')).toContainText(
+    'Step 1 of 6',
+  );
+
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expectWorkspaceReady(page);
+  await expect(page.getByTestId('chat-composer').locator('.staged-context--research')).toBeVisible();
+  await expect(page.getByTestId('flow-progress-card')).toContainText(
+    'Step 1 of 6',
+  );
+});
+
 test('[P1] project detail composer plus menu opens project, local code, Figma help, and design system context actions', async ({ page }) => {
   const referenceProject = {
     id: 'ref-project-context',
@@ -2823,6 +2854,29 @@ async function createProject(
     conversationId: string;
   };
   await page.goto(`/projects/${body.project.id}/conversations/${body.conversationId}`);
+}
+
+async function createDeckProject(page: Page, projectName: string): Promise<void> {
+  const response = await page.request.post('/api/projects', {
+    data: {
+      id: `deck-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      name: projectName,
+      skillId: null,
+      designSystemId: null,
+      metadata: {
+        kind: 'deck',
+        nameSource: 'user',
+      },
+    },
+  });
+  expect(response.ok()).toBe(true);
+  const body = (await response.json()) as {
+    project: { id: string };
+    conversationId: string;
+  };
+  await page.goto(
+    `/projects/${body.project.id}/conversations/${body.conversationId}`,
+  );
 }
 
 async function routeSuccessfulRuns(

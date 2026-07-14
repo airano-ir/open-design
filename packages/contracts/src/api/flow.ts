@@ -56,6 +56,7 @@ export interface FlowInspireChoice {
 
 export type FlowShapeId =
   | 'deck'
+  | 'prototype'
   | 'landing'
   | 'mobile'
   | 'webapp'
@@ -75,14 +76,37 @@ export type FlowDeliverAction =
 
 export interface FlowShapeSpec {
   id: FlowShapeId;
+  /** Phrases used when a default-router conversation has no bound template. */
+  routingHints: readonly string[];
   /** Stages that exist for this shape, in ladder order. */
   stages: readonly FlowStageId[];
+  /** Shape-specific defaults the clarify form should confirm or safely infer. */
+  clarifyDefaults: readonly string[];
   /** Plan-stage artifacts the agent must write before asking to confirm. */
   planArtifacts: readonly string[];
+  /** Shared editable-plan grammar consumed by prompts and the web plan panel. */
+  plan: {
+    title: string;
+    itemLabel: string;
+    itemLabelKey: string;
+    pointsLabel: string;
+    instructions: string;
+    defaultItems: readonly {
+      title: string;
+      points: readonly string[];
+    }[];
+  };
+  /** Final-artifact file extensions that activate generation heuristics. */
+  generateExtensions: readonly string[];
   /** i18n key for the generate-stage progress unit (页/区块/屏幕/章节/素材). */
   progressUnitKey: string;
   /** Inspiration catalogue subset for this shape (design-template od.mode / platform). */
-  inspireFilter: { modes: readonly string[]; platform?: string };
+  inspireFilter: {
+    modes: readonly string[];
+    platform?: string;
+    /** Keep entries carrying at least one of these catalogue tags. */
+    tags?: readonly string[];
+  };
   /** Delivery CTA actions rendered when the deliver stage activates. */
   deliverActions: readonly FlowDeliverAction[];
 }
@@ -92,56 +116,361 @@ const ALL_STAGES = FLOW_STAGE_ORDER;
 export const FLOW_SHAPES: Record<FlowShapeId, FlowShapeSpec> = {
   deck: {
     id: 'deck',
+    routingHints: [
+      'slide deck',
+      'slides',
+      'presentation',
+      'powerpoint',
+      'ppt',
+      'pptx',
+      'keynote',
+      'pitch deck',
+      '幻灯片',
+      '投影片',
+      '演示文稿',
+      '簡報',
+    ],
     stages: ALL_STAGES,
+    clarifyDefaults: [
+      'slide count',
+      'aspect ratio',
+      'audience',
+      'visual direction',
+      'speaker notes',
+    ],
     planArtifacts: ['generated/brief.md', 'generated/outline.md'],
+    plan: {
+      title: 'Deck outline',
+      itemLabel: 'Slide',
+      itemLabelKey: 'flow.plan.unit.slide',
+      pointsLabel: 'Key message and evidence',
+      instructions:
+        'Use one numbered heading per slide. Each heading is the slide answer; bullets capture evidence, visual intent, and speaker-note intent.',
+      defaultItems: [
+        { title: 'Opening', points: ['Introduce the topic and intended outcome'] },
+        { title: 'Core idea', points: ['Explain the main insight with evidence'] },
+        { title: 'Next step', points: ['Close with one clear action'] },
+      ],
+    },
+    generateExtensions: ['.html', '.htm'],
     progressUnitKey: 'flow.unit.slides',
     inspireFilter: { modes: ['deck'] },
     deliverActions: ['pptx', 'pdf', 'social'],
   },
+  prototype: {
+    id: 'prototype',
+    routingHints: [
+      'prototype',
+      'mockup',
+      'wireframe',
+      'interactive concept',
+      '交互原型',
+      '产品原型',
+      '线框图',
+    ],
+    stages: ALL_STAGES,
+    clarifyDefaults: [
+      'target platform',
+      'fidelity',
+      'primary user flow',
+      'view count',
+      'interaction depth',
+    ],
+    planArtifacts: ['generated/prototype-plan.md'],
+    plan: {
+      title: 'Prototype plan',
+      itemLabel: 'View',
+      itemLabelKey: 'flow.plan.unit.view',
+      pointsLabel: 'Purpose, state, and interaction',
+      instructions:
+        'Use one numbered heading per prototype view or state. Bullets define the user goal, key content, interaction, and transition.',
+      defaultItems: [
+        { title: 'Entry state', points: ['Establish context and the primary action'] },
+        { title: 'Core interaction', points: ['Show the main state change'] },
+        { title: 'Outcome state', points: ['Confirm completion and the next action'] },
+      ],
+    },
+    generateExtensions: ['.html', '.htm'],
+    progressUnitKey: 'flow.unit.screens',
+    inspireFilter: {
+      modes: ['prototype'],
+      platform: 'desktop',
+      tags: ['prototype-template'],
+    },
+    deliverActions: ['preview', 'zip', 'social'],
+  },
   landing: {
     id: 'landing',
+    routingHints: [
+      'landing page',
+      'marketing page',
+      'homepage',
+      'waitlist page',
+      'pricing page',
+      '落地页',
+      '营销页',
+      '官网首页',
+      '定价页',
+    ],
     stages: ALL_STAGES,
+    clarifyDefaults: [
+      'conversion goal',
+      'section count',
+      'audience',
+      'brand direction',
+      'responsive targets',
+    ],
     planArtifacts: ['generated/structure.md'],
+    plan: {
+      title: 'Landing-page structure',
+      itemLabel: 'Section',
+      itemLabelKey: 'flow.plan.unit.section',
+      pointsLabel: 'Message, proof, and CTA',
+      instructions:
+        'Use one numbered heading per page section. Bullets define the message, proof, visual role, and conversion action.',
+      defaultItems: [
+        { title: 'Hero promise', points: ['State the outcome and primary CTA'] },
+        { title: 'Proof', points: ['Demonstrate why the promise is credible'] },
+        { title: 'Conversion close', points: ['Resolve objections and repeat the CTA'] },
+      ],
+    },
+    generateExtensions: ['.html', '.htm'],
     progressUnitKey: 'flow.unit.sections',
-    inspireFilter: { modes: ['prototype', 'template'], platform: 'web' },
+    inspireFilter: {
+      modes: ['prototype'],
+      platform: 'desktop',
+      tags: ['landing-template'],
+    },
     deliverActions: ['deploy', 'html', 'zip'],
   },
   mobile: {
     id: 'mobile',
+    routingHints: [
+      'mobile app',
+      'mobile prototype',
+      'ios app',
+      'android app',
+      'phone app',
+      '移动应用',
+      '移动端',
+      '手机应用',
+      '手机 app',
+    ],
     stages: ALL_STAGES,
+    clarifyDefaults: [
+      'screen count',
+      'iOS or Android',
+      'core task',
+      'navigation model',
+      'fidelity',
+    ],
     planArtifacts: ['generated/flows.md'],
+    plan: {
+      title: 'Mobile flow',
+      itemLabel: 'Screen',
+      itemLabelKey: 'flow.plan.unit.screen',
+      pointsLabel: 'Content, action, and transition',
+      instructions:
+        'Use one numbered heading per screen. Bullets define the user goal, primary action, required states, and next-screen transition.',
+      defaultItems: [
+        { title: 'Start', points: ['Orient the user and expose the primary action'] },
+        { title: 'Complete the task', points: ['Make the core action thumb-friendly'] },
+        { title: 'Success', points: ['Confirm the result and offer the next step'] },
+      ],
+    },
+    generateExtensions: ['.html', '.htm'],
     progressUnitKey: 'flow.unit.screens',
-    inspireFilter: { modes: ['prototype'], platform: 'mobile' },
-    deliverActions: ['preview', 'zip'],
+    inspireFilter: {
+      modes: ['prototype'],
+      platform: 'mobile',
+      tags: ['mobile-template'],
+    },
+    deliverActions: ['preview', 'zip', 'social'],
   },
   webapp: {
     id: 'webapp',
+    routingHints: [
+      'web app',
+      'webapp',
+      'dashboard',
+      'admin panel',
+      'portal',
+      'desktop app',
+      '网页应用',
+      '管理后台',
+      '数据看板',
+      '工作台',
+    ],
     stages: ALL_STAGES,
+    clarifyDefaults: [
+      'page count',
+      'information architecture',
+      'primary workflow',
+      'desktop or responsive target',
+      'fidelity',
+    ],
     planArtifacts: ['generated/plan.md'],
+    plan: {
+      title: 'Web-app plan',
+      itemLabel: 'Page',
+      itemLabelKey: 'flow.plan.unit.page',
+      pointsLabel: 'Job, content, states, and navigation',
+      instructions:
+        'Use one numbered heading per page or major workspace. Bullets define the page job, information hierarchy, states, and navigation.',
+      defaultItems: [
+        { title: 'Overview', points: ['Summarize status and expose the primary task'] },
+        { title: 'Core workspace', points: ['Support the main workflow and its states'] },
+        { title: 'Detail and follow-up', points: ['Resolve one item and continue work'] },
+      ],
+    },
+    generateExtensions: ['.html', '.htm'],
     progressUnitKey: 'flow.unit.pages',
-    inspireFilter: { modes: ['prototype'], platform: 'web' },
+    inspireFilter: {
+      modes: ['prototype'],
+      platform: 'desktop',
+      tags: ['webapp-template'],
+    },
     deliverActions: ['deploy', 'zip'],
   },
   document: {
     id: 'document',
+    routingHints: [
+      'document',
+      'memo',
+      'brief',
+      'prd',
+      'spec',
+      'rfc',
+      'proposal',
+      'guide',
+      'whitepaper',
+      '文档',
+      '备忘录',
+      '方案',
+      '白皮书',
+      '需求文档',
+    ],
     stages: ALL_STAGES,
+    clarifyDefaults: [
+      'chapter count',
+      'audience',
+      'tone',
+      'source requirements',
+      'Markdown or PDF output',
+    ],
     planArtifacts: ['generated/toc.md'],
+    plan: {
+      title: 'Document table of contents',
+      itemLabel: 'Chapter',
+      itemLabelKey: 'flow.plan.unit.chapter',
+      pointsLabel: 'Argument, evidence, and reader outcome',
+      instructions:
+        'Use one numbered heading per chapter. Bullets define the chapter argument, required evidence, examples, and reader takeaway.',
+      defaultItems: [
+        { title: 'Executive context', points: ['State the reader need and core answer'] },
+        { title: 'Main argument', points: ['Develop the answer with evidence'] },
+        { title: 'Action and appendix', points: ['Close with decisions and source notes'] },
+      ],
+    },
+    generateExtensions: ['.md', '.markdown', '.html', '.htm'],
     progressUnitKey: 'flow.unit.chapters',
-    inspireFilter: { modes: ['template'] },
+    inspireFilter: { modes: ['template'], tags: ['document-template'] },
     deliverActions: ['md', 'pdf', 'social'],
   },
   report: {
     id: 'report',
+    routingHints: [
+      'report',
+      'analysis report',
+      'research report',
+      'industry report',
+      'operating review',
+      'business review',
+      'qbr',
+      'pdf report',
+      '报告',
+      '研究报告',
+      '行业报告',
+      '分析报告',
+      '经营复盘',
+    ],
     stages: ALL_STAGES,
+    clarifyDefaults: [
+      'page or chapter count',
+      'decision audience',
+      'chart density',
+      'source and citation depth',
+      'PDF-first output',
+    ],
     planArtifacts: ['generated/outline.md'],
+    plan: {
+      title: 'Report outline',
+      itemLabel: 'Chapter',
+      itemLabelKey: 'flow.plan.unit.chapter',
+      pointsLabel: 'Finding, evidence, chart, and implication',
+      instructions:
+        'Use one numbered heading per report chapter. Bullets define the finding, evidence, chart or table, implication, and source requirement.',
+      defaultItems: [
+        { title: 'Executive findings', points: ['Lead with the answer and decision implications'] },
+        { title: 'Evidence and analysis', points: ['Show the drivers, comparisons, and charts'] },
+        { title: 'Recommendation', points: ['Name actions, risks, owners, and sources'] },
+      ],
+    },
+    generateExtensions: ['.html', '.htm', '.pdf'],
     progressUnitKey: 'flow.unit.chapters',
-    inspireFilter: { modes: ['template'] },
+    inspireFilter: { modes: ['template'], tags: ['report-template'] },
     deliverActions: ['pdf', 'social'],
   },
   media: {
     id: 'media',
+    routingHints: [
+      'image',
+      'video',
+      'audio',
+      'poster',
+      'illustration',
+      '图片',
+      '图像',
+      '视频',
+      '音频',
+      '海报',
+    ],
     stages: ALL_STAGES,
+    clarifyDefaults: [
+      'media type',
+      'quantity',
+      'aspect ratio',
+      'style',
+      'duration when applicable',
+    ],
     planArtifacts: ['generated/shots.md'],
+    plan: {
+      title: 'Media shot plan',
+      itemLabel: 'Asset',
+      itemLabelKey: 'flow.plan.unit.asset',
+      pointsLabel: 'Subject, composition, style, and output',
+      instructions:
+        'Use one numbered heading per asset or shot. Bullets define subject, composition, movement when applicable, style, and output constraints.',
+      defaultItems: [
+        { title: 'Primary asset', points: ['Define the subject and visual hierarchy'] },
+        { title: 'Supporting variation', points: ['Change one meaningful dimension'] },
+        { title: 'Delivery variant', points: ['Adapt for the final channel and format'] },
+      ],
+    },
+    generateExtensions: [
+      '.png',
+      '.jpg',
+      '.jpeg',
+      '.webp',
+      '.gif',
+      '.svg',
+      '.mp4',
+      '.webm',
+      '.mov',
+      '.mp3',
+      '.wav',
+      '.m4a',
+    ],
     progressUnitKey: 'flow.unit.assets',
     inspireFilter: { modes: ['image', 'video', 'audio'] },
     deliverActions: ['zip', 'social'],
@@ -180,7 +509,9 @@ export function flowShapeFromModePlatform(
     case 'deck':
       return 'deck';
     case 'prototype':
-      return platform === 'mobile' ? 'mobile' : 'webapp';
+      if (platform === 'mobile') return 'mobile';
+      if (platform === 'desktop' || platform === 'web') return 'webapp';
+      return 'prototype';
     case 'image':
     case 'video':
     case 'audio':
@@ -190,6 +521,44 @@ export function flowShapeFromModePlatform(
     default:
       return null;
   }
+}
+
+const FLOW_TEXT_ROUTE_ORDER: readonly FlowShapeId[] = [
+  'deck',
+  'report',
+  'document',
+  'landing',
+  'mobile',
+  'webapp',
+  'prototype',
+  'media',
+];
+
+function routeHintMatches(text: string, hint: string): boolean {
+  const normalizedHint = hint.toLowerCase();
+  if (/[\u3400-\u9fff\u3040-\u30ff\uac00-\ud7af]/u.test(normalizedHint)) {
+    return text.includes(normalizedHint);
+  }
+  const escaped = normalizedHint.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+  return new RegExp(`\\b${escaped.replace(/\s+/gu, '\\s+')}\\b`, 'u').test(text);
+}
+
+/** Resolve an unbound/default-router request into a staged-flow shape. */
+export function flowShapeFromRequestText(
+  text: string | null | undefined,
+): FlowShapeId | null {
+  if (!text?.trim()) return null;
+  const normalized = text.normalize('NFKC').toLowerCase();
+  for (const shape of FLOW_TEXT_ROUTE_ORDER) {
+    if (
+      FLOW_SHAPES[shape].routingHints.some((hint) =>
+        routeHintMatches(normalized, hint),
+      )
+    ) {
+      return shape;
+    }
+  }
+  return null;
 }
 
 export function createFlowSnapshot(

@@ -44,10 +44,49 @@ describe('inspiration keyword ranking', () => {
       mode: 'deck',
     },
     {
-      id: 'web-prototype',
-      name: 'Web Prototype',
+      id: 'saas-landing',
+      name: 'SaaS Landing',
       mode: 'prototype',
-      platform: 'web',
+      platform: 'desktop',
+      tags: ['landing-template'],
+    },
+    {
+      id: 'wireframe-greybox',
+      name: 'Wireframe Greybox',
+      mode: 'prototype',
+      platform: 'desktop',
+      tags: ['prototype-template'],
+    },
+    {
+      id: 'mobile-app',
+      name: 'Mobile App',
+      mode: 'prototype',
+      platform: 'mobile',
+      tags: ['mobile-template'],
+    },
+    {
+      id: 'dashboard',
+      name: 'Dashboard',
+      mode: 'prototype',
+      platform: 'desktop',
+      tags: ['webapp-template'],
+    },
+    {
+      id: 'board-decision-memo',
+      name: 'Board Decision Memo',
+      mode: 'template',
+      tags: ['document-template', 'corporate-strategy'],
+    },
+    {
+      id: 'executive-operating-review',
+      name: 'Executive Operating Review',
+      mode: 'template',
+      tags: ['report-template', 'corporate-strategy'],
+    },
+    {
+      id: 'generic-template',
+      name: 'Generic Template',
+      mode: 'template',
     },
   ] as const;
 
@@ -77,12 +116,37 @@ describe('inspiration keyword ranking', () => {
   it('honors platform filters declared by other flow shapes', () => {
     expect(filterInspireCatalogue('landing', catalogue)).toEqual([
       {
-        id: 'web-prototype',
-        name: 'Web Prototype',
+        id: 'saas-landing',
+        name: 'SaaS Landing',
         mode: 'prototype',
-        platform: 'web',
+        platform: 'desktop',
+        tags: ['landing-template'],
       },
     ]);
+  });
+
+  it('isolates each prototype-family catalogue by platform and shape tag', () => {
+    expect(
+      filterInspireCatalogue('prototype', catalogue).map((entry) => entry.id),
+    ).toEqual(['wireframe-greybox']);
+    expect(
+      filterInspireCatalogue('landing', catalogue).map((entry) => entry.id),
+    ).toEqual(['saas-landing']);
+    expect(
+      filterInspireCatalogue('mobile', catalogue).map((entry) => entry.id),
+    ).toEqual(['mobile-app']);
+    expect(
+      filterInspireCatalogue('webapp', catalogue).map((entry) => entry.id),
+    ).toEqual(['dashboard']);
+  });
+
+  it('separates document and report catalogues by declared tags', () => {
+    expect(
+      filterInspireCatalogue('document', catalogue).map((entry) => entry.id),
+    ).toEqual(['board-decision-memo']);
+    expect(
+      filterInspireCatalogue('report', catalogue).map((entry) => entry.id),
+    ).toEqual(['executive-operating-review']);
   });
 });
 

@@ -271,6 +271,7 @@ const EMPTY_PROMPT_TEMPLATES: PromptTemplateSummary[] = [];
 // desktop auth token that cannot round-trip through JSON safely.
 const HOME_COMPOSER_PROMPT_KEY = 'open-design:home-composer:prompt';
 const HOME_COMPOSER_DESIGN_SYSTEM_KEY = 'open-design:home-composer:design-system';
+const HOME_COMPOSER_RESEARCH_KEY = 'open-design:home-composer:deep-research';
 
 function readHomeComposerDraft(key: string): string | null {
   if (typeof window === 'undefined') return null;
@@ -297,6 +298,7 @@ function writeHomeComposerDraft(key: string, value: string | null): void {
 function clearHomeComposerDraft(): void {
   writeHomeComposerDraft(HOME_COMPOSER_PROMPT_KEY, null);
   writeHomeComposerDraft(HOME_COMPOSER_DESIGN_SYSTEM_KEY, null);
+  writeHomeComposerDraft(HOME_COMPOSER_RESEARCH_KEY, null);
 }
 
 export function HomeView({
@@ -390,11 +392,13 @@ export function HomeView({
   const restoredDraftRef = useRef<{
     prompt: string;
     designSystemId: string | null;
+    deepResearchEnabled: boolean;
   } | null>(null);
   if (restoredDraftRef.current === null) {
     restoredDraftRef.current = {
       prompt: readHomeComposerDraft(HOME_COMPOSER_PROMPT_KEY) ?? '',
       designSystemId: readHomeComposerDraft(HOME_COMPOSER_DESIGN_SYSTEM_KEY),
+      deepResearchEnabled: readHomeComposerDraft(HOME_COMPOSER_RESEARCH_KEY) === '1',
     };
   }
   const restoredDraft = restoredDraftRef.current;
@@ -428,6 +432,9 @@ export function HomeView({
   const [mcpServers, setMcpServers] = useState<McpServerConfig[]>([]);
   const [mcpLoading, setMcpLoading] = useState(true);
   const [prompt, setPrompt] = useState(() => restoredDraft.prompt);
+  const [deepResearchEnabled, setDeepResearchEnabled] = useState(
+    () => restoredDraft.deepResearchEnabled,
+  );
   // Treat a restored non-empty prompt as user-edited so the plugin/skill
   // replacement guard still asks before clobbering it.
   const [promptEditedByUser, setPromptEditedByUser] = useState(
@@ -442,6 +449,12 @@ export function HomeView({
   useEffect(() => {
     writeHomeComposerDraft(HOME_COMPOSER_DESIGN_SYSTEM_KEY, designSystemId);
   }, [designSystemId]);
+  useEffect(() => {
+    writeHomeComposerDraft(
+      HOME_COMPOSER_RESEARCH_KEY,
+      deepResearchEnabled ? '1' : null,
+    );
+  }, [deepResearchEnabled]);
   const [figmaModalOpen, setFigmaModalOpen] = useState(false);
   const examplePromptInfoRef = useRef<ExamplePromptInfo | null>(null);
   const handleExamplePromptStatusChange = useCallback((info: ExamplePromptInfo | null) => {
@@ -2018,6 +2031,9 @@ export function HomeView({
         ...(contextWorkspaceItems.length > 0
           ? { initialRunContext: { workspaceItems: contextWorkspaceItems } }
           : {}),
+        ...(deepResearchEnabled
+          ? { research: { enabled: true, depth: 'deep' as const } }
+          : {}),
         attachments: stagedFiles,
         ...(workingDir ? { workingDir } : {}),
         ...(workingDirToken ? { workingDirToken } : {}),
@@ -2064,6 +2080,8 @@ export function HomeView({
         onPromptChange={handlePromptChange}
         onSubmit={submit}
         onSubmitScenario={submitScenario}
+        deepResearchEnabled={deepResearchEnabled}
+        onDeepResearchChange={setDeepResearchEnabled}
         sessionMode={sessionMode}
         onSessionModeChange={setSessionMode}
         submitting={sending}

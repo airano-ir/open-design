@@ -1,4 +1,5 @@
 import { Button } from '@open-design/components';
+import { renderMarkdown } from '../runtime/markdown';
 import styles from './ResearchWorkspacePanel.module.css';
 
 export type ResearchRoundStatus = 'pending' | 'active' | 'complete' | 'error';
@@ -27,6 +28,7 @@ export interface ResearchWorkspacePanelProps {
   rounds?: readonly ResearchRound[];
   activeDetail?: string;
   reportPath?: string;
+  reportMarkdown?: string;
   onOpenReport?: (path: string) => void;
   copy?: Partial<ResearchWorkspacePanelCopy>;
 }
@@ -65,6 +67,7 @@ export function ResearchWorkspacePanel({
   rounds,
   activeDetail,
   reportPath,
+  reportMarkdown,
   onOpenReport,
   copy: copyOverrides,
 }: ResearchWorkspacePanelProps) {
@@ -125,6 +128,16 @@ export function ResearchWorkspacePanel({
           );
         })}
       </ol>
+
+      {reportMarkdown ? (
+        <div
+          className={styles.reportPreview}
+          aria-live={'polite'}
+          data-testid={'research-report-preview'}
+        >
+          {renderMarkdown(reportMarkdown)}
+        </div>
+      ) : null}
 
       <footer className={styles.report}>
         <div className={styles.reportCopy}>

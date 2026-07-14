@@ -37,6 +37,7 @@ import { stripArtifact } from '../artifacts/strip';
 import { flowStageArtifactPaths } from '../runtime/flow-artifacts';
 import type { TodoItem } from '../runtime/todos';
 import type { AppliedPluginSnapshot, ChatSessionMode, FlowSnapshot, WorkspaceContextItem } from '@open-design/contracts';
+import { FlowDeliveryActions } from './FlowDeliveryActions';
 import { FlowProgressCard } from './FlowProgressCard';
 import type { TrackingProjectKind } from '@open-design/contracts/analytics';
 import {
@@ -926,11 +927,11 @@ export function ChatPane({
   const composerSlotRef = useRef<HTMLDivElement | null>(null);
   const composerLayerRef = useRef<HTMLDivElement | null>(null);
   const queuedSendStripRef = useRef<HTMLDivElement | null>(null);
-  const flowCardRef = useRef<HTMLDivElement | null>(null);
   const stageArtifactPaths = useMemo(
     () => (flowSnapshot ? flowStageArtifactPaths(flowSnapshot, projectFiles) : {}),
     [flowSnapshot, projectFiles],
   );
+  const flowDeliveryArtifactName = stageArtifactPaths.generate?.[0] ?? null;
   const didInitialScrollRef = useRef(false);
   const runFailedToastSurfaceKeysRef = useRef<Set<string>>(new Set());
   // Tracks whether the user is glued close enough to the bottom that
@@ -1808,35 +1809,14 @@ export function ChatPane({
       }
     };
 
-    // Like QueuedSendStrip, the FlowProgressCard sits outside the chat-log
-    // subtree (a sibling above .chat-log-wrap), so auto-follow must observe it
-    // explicitly or its mount/resize would mismeasure the scroll math.
-    let observedFlowCard: Element | null = null;
-    const syncFlowCard = () => {
-      if (!resizeObserver) return;
-      const flowEl = flowCardRef.current;
-      if (flowEl && observedFlowCard !== flowEl) {
-        if (observedFlowCard) {
-          resizeObserver.unobserve(observedFlowCard);
-        }
-        resizeObserver.observe(flowEl);
-        observedFlowCard = flowEl;
-      } else if (!flowEl && observedFlowCard) {
-        resizeObserver.unobserve(observedFlowCard);
-        observedFlowCard = null;
-      }
-    };
-
     syncObservedChildren();
     syncQueuedSendStrip();
-    syncFlowCard();
 
     const mutationObserver =
       typeof MutationObserver !== 'undefined'
         ? new MutationObserver(() => {
             syncObservedChildren();
             syncQueuedSendStrip();
-            syncFlowCard();
             followLatestIfPinned();
           })
         : null;
@@ -2264,14 +2244,6 @@ export function ChatPane({
       </div>
       {tab === 'chat' ? (
         <>
-          {flowSnapshot ? (
-            <FlowProgressCard
-              flow={flowSnapshot}
-              containerRef={flowCardRef}
-              stageArtifactPaths={stageArtifactPaths}
-              onOpenArtifact={onRequestOpenFile}
-            />
-          ) : null}
           <div className={`chat-log-wrap${chatLogTray ? ' has-chat-log-tray' : ''}`}>
             <div
               className={[
@@ -2435,6 +2407,21 @@ export function ChatPane({
                 onOpenQuestions={onOpenQuestions}
                 scrollContainerRef={logRef}
               />
+              {flowSnapshot ? (
+                <div data-testid="chat-flow-status">
+                  <FlowProgressCard
+                    flow={flowSnapshot}
+                    stageArtifactPaths={stageArtifactPaths}
+                    onOpenArtifact={onRequestOpenFile}
+                  />
+                  <FlowDeliveryActions
+                    flow={flowSnapshot}
+                    fileName={flowDeliveryArtifactName}
+                    onDownload={onArtifactDownload}
+                    onShare={onArtifactShare}
+                  />
+                </div>
+              ) : null}
               {displayError ? (
                 <div className="run-error" data-tone={runErrorTone}>
                   {/* ① type title + ② detail */}

@@ -3292,6 +3292,7 @@ describe('FileViewer SVG artifacts', () => {
         exports: ['html'],
       },
     });
+    const onHardDelivery = vi.fn();
 
     try {
       render(
@@ -3300,6 +3301,7 @@ describe('FileViewer SVG artifacts', () => {
           projectKind="prototype"
           file={file}
           liveHtml='<html><body><section data-screen-label="One">One</section><section data-screen-label="Two">Two</section></body></html>'
+          onHardDelivery={onHardDelivery}
         />,
       );
 
@@ -3329,6 +3331,13 @@ describe('FileViewer SVG artifacts', () => {
             }),
           }),
         );
+      });
+      await waitFor(() => {
+        expect(onHardDelivery).toHaveBeenCalledWith({
+          kind: 'pptx',
+          source: 'artifact_export',
+          fileName: 'slides.html',
+        });
       });
     } finally {
       if (originalCreateObjectUrl) {

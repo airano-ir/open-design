@@ -4,6 +4,7 @@ import { createFlowSnapshot } from '@open-design/contracts';
 import {
   flowStageArtifactPaths,
   isFlowStageArtifactPath,
+  renderableStreamingDeckHtml,
 } from '../../src/runtime/flow-artifacts';
 import type { ProjectFile } from '../../src/types';
 
@@ -48,5 +49,38 @@ describe('flowStageArtifactPaths', () => {
       generate: ['index.html', 'alternate.html'],
       deliver: ['deck.pdf'],
     });
+  });
+
+  it.each([
+    ['prototype', 'generated/prototype-plan.md', 'concept.html', 'html'],
+    ['landing', 'generated/structure.md', 'index.html', 'html'],
+    ['mobile', 'generated/flows.md', 'mobile.html', 'html'],
+    ['webapp', 'generated/plan.md', 'dashboard.html', 'html'],
+    ['document', 'generated/toc.md', 'decision-memo.md', 'text'],
+    ['report', 'generated/outline.md', 'operating-review.html', 'html'],
+  ] as const)(
+    'maps %s plan and generation artifacts from the shared registry',
+    (shape, planPath, artifactPath, kind) => {
+      const result = flowStageArtifactPaths(createFlowSnapshot(shape), [
+        file(planPath, 'text', 1),
+        file(artifactPath, kind, 2),
+      ]);
+
+      expect(result.plan).toEqual([planPath]);
+      expect(result.generate).toEqual([artifactPath]);
+    },
+  );
+
+  it('keeps the template shell visible until streamed deck HTML has body content', () => {
+    expect(
+      renderableStreamingDeckHtml('<html><head><style>body{color:red}</style>'),
+    ).toBeUndefined();
+    expect(
+      renderableStreamingDeckHtml('<html><head></head><body><script>boot()</script>'),
+    ).toBeUndefined();
+
+    const visible =
+      '<html><head></head><body><section class="slide">Opening</section>';
+    expect(renderableStreamingDeckHtml(visible)).toBe(visible);
   });
 });

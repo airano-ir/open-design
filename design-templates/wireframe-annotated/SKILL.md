@@ -9,6 +9,10 @@ description: |
   hand-drawn. Use when the brief asks for "annotated wireframe", "redline
   wireframe", "wireframe with spec", "lo-fi landing wireframe", "low fidelity",
   "线框图", "标注线框", or "redline".
+tags:
+  - "prototype-template"
+  - "wireframe"
+  - "handoff"
 triggers:
   - "annotated wireframe"
   - "redline"

@@ -1,9 +1,26 @@
 import { describe, expect, it } from 'vitest';
 
-import { createFlowTracker, resolveFlowShape } from '../src/flow/engine.js';
+import {
+  createFlowTracker,
+  resolveFlowShape,
+  selectFlowShape,
+} from '../src/flow/engine.js';
 
 function stageState(tracker: ReturnType<typeof createFlowTracker>, id: string) {
   return tracker.snapshot.stages.find((s) => s.id === id)?.state;
+}
+
+function prepareGeneration(tracker: ReturnType<typeof createFlowTracker>): void {
+  tracker.observeAgentEvent({
+    type: 'tool_use',
+    id: 'outline',
+    name: 'Write',
+    input: { file_path: 'generated/outline.md', content: '# Outline' },
+  });
+  tracker.noteUserMessage(
+    '[form answers — plan-confirm]\n- Next step: Confirm and generate',
+  );
+  tracker.noteUserMessage('[inspiration — skip]');
 }
 
 describe('resolveFlowShape', () => {
@@ -30,10 +47,31 @@ describe('resolveFlowShape', () => {
     ).toBe('mobile');
     expect(
       resolveFlowShape({ sessionMode: 'design', projectKind: 'prototype', projectPlatform: 'responsive' }),
-    ).toBe('webapp');
+    ).toBe('prototype');
     expect(resolveFlowShape({ sessionMode: 'design', projectKind: 'video' })).toBe('media');
     expect(resolveFlowShape({ sessionMode: 'design', projectKind: 'template' })).toBe('document');
   });
+
+  it.each([
+    ['prototype', 'Create a SaaS landing page', 'landing'],
+    ['prototype', 'Design a mobile app checkout flow', 'mobile'],
+    ['prototype', 'Build an analytics dashboard', 'webapp'],
+    ['prototype', 'Create a clickable product prototype', 'prototype'],
+    ['template', 'Write a board decision memo', 'document'],
+    ['template', 'Produce a quarterly operating report', 'report'],
+    ['other', 'Create a PDF-first market report', 'report'],
+  ] as const)(
+    'routes %s request "%s" to %s',
+    (projectKind, requestText, shape) => {
+      expect(
+        resolveFlowShape({
+          sessionMode: 'design',
+          projectKind,
+          requestText,
+        }),
+      ).toBe(shape);
+    },
+  );
 
   it('infers a deck flow for an untyped project with an explicit PPT request', () => {
     expect(
@@ -61,6 +99,24 @@ describe('resolveFlowShape', () => {
 });
 
 describe('createFlowTracker', () => {
+  it('refines a provisional prototype while clarify is still active', () => {
+    const provisional = createFlowTracker({
+      shape: 'prototype',
+      now: () => 1,
+    }).snapshot;
+    expect(selectFlowShape(provisional, 'mobile')).toBe('mobile');
+
+    const planning = createFlowTracker({
+      shape: 'prototype',
+      now: () => 1,
+    });
+    planning.observeAgentEvent({
+      type: 'text_delta',
+      delta: '<od-flow stage="plan" state="active"/>',
+    });
+    expect(selectFlowShape(planning.snapshot, 'mobile')).toBe('prototype');
+  });
+
   it('starts a fresh conversation at clarify', () => {
     const tracker = createFlowTracker({ shape: 'deck', now: () => 1 });
     expect(tracker.snapshot.shape).toBe('deck');
@@ -123,7 +179,7 @@ describe('createFlowTracker', () => {
     expect(stageState(tracker, 'research')).toBe('complete');
   });
 
-  it('advances plan on a plan-artifact write and generate on an html write', () => {
+  it('blocks html generation until the outline and inspiration are confirmed', () => {
     const tracker = createFlowTracker({ shape: 'deck', now: () => 1 });
     tracker.observeAgentEvent({
       type: 'tool_use',
@@ -138,11 +194,54 @@ describe('createFlowTracker', () => {
       name: 'Write',
       input: { file_path: 'deck.html', content: '<html>' },
     });
+    expect(tracker.snapshot.activeStage).toBe('plan');
+    expect(stageState(tracker, 'generate')).toBe('pending');
+
+    tracker.noteUserMessage(
+      '[form answers — plan-confirm]\n- Next step: Confirm and generate',
+    );
+    tracker.noteUserMessage('[inspiration — skip]');
+    tracker.observeAgentEvent({
+      type: 'tool_use',
+      id: 't3',
+      name: 'Write',
+      input: { file_path: 'deck.html', content: '<html>' },
+    });
     expect(tracker.snapshot.activeStage).toBe('generate');
-    // plan was auto-completed, research auto-skipped by monotonic advancement
     expect(stageState(tracker, 'plan')).toBe('complete');
     expect(stageState(tracker, 'research')).toBe('skipped');
   });
+
+  it.each([
+    ['document', 'generated/toc.md', 'decision-memo.md'],
+    ['report', 'generated/outline.md', 'operating-review.html'],
+    ['landing', 'generated/structure.md', 'index.html'],
+    ['mobile', 'generated/flows.md', 'mobile-prototype.html'],
+    ['webapp', 'generated/plan.md', 'dashboard.html'],
+    ['prototype', 'generated/prototype-plan.md', 'concept.html'],
+  ] as const)(
+    'activates %s generation for its configured artifact type',
+    (shape, planPath, artifactPath) => {
+      const tracker = createFlowTracker({ shape, now: () => 1 });
+      tracker.observeAgentEvent({
+        type: 'tool_use',
+        name: 'Write',
+        input: { file_path: planPath, content: '# Plan' },
+      });
+      tracker.noteUserMessage(
+        '[form answers — plan-confirm]\n- Next step: Confirm and generate',
+      );
+      tracker.noteUserMessage('[inspiration — skip]');
+
+      tracker.observeAgentEvent({
+        type: 'tool_use',
+        name: 'Write',
+        input: { file_path: artifactPath, content: 'artifact' },
+      });
+
+      expect(tracker.snapshot.activeStage).toBe('generate');
+    },
+  );
 
   it('completes clarify from the [form answers] echo in the next user message', () => {
     const tracker = createFlowTracker({ shape: 'deck', now: () => 1 });
@@ -191,6 +290,7 @@ describe('createFlowTracker', () => {
 
   it('promotes generate → deliver on a clean run end', () => {
     const tracker = createFlowTracker({ shape: 'deck', now: () => 1 });
+    prepareGeneration(tracker);
     tracker.observeAgentEvent({
       type: 'text_delta',
       delta: '<od-flow stage="generate" state="active" done="12" total="12"/>',
@@ -203,6 +303,7 @@ describe('createFlowTracker', () => {
 
   it('does not touch the ladder when a run fails mid-generate', () => {
     const tracker = createFlowTracker({ shape: 'deck', now: () => 1 });
+    prepareGeneration(tracker);
     tracker.observeAgentEvent({
       type: 'text_delta',
       delta: '<od-flow stage="generate" state="active"/>',

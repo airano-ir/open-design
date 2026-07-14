@@ -17,6 +17,7 @@ export * from './events/page-view.js';
 export * from './events/ui-click.js';
 export * from './events/surface-view.js';
 export * from './events/result-events.js';
+export * from './events/staged-flow.js';
 export * from './events/event-payload.js';
 export * from './events/mappers.js';
 export * from './events/design-system-helpers.js';

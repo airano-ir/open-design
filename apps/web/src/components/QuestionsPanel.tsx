@@ -1,9 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { questionsFormTrackingId } from '@open-design/contracts/analytics';
-import type { RunContextSelection, WorkspaceContextItem } from '@open-design/contracts';
+import type {
+  FlowResearchMode,
+  FlowShapeId,
+  FlowStageId,
+  RunContextSelection,
+  WorkspaceContextItem,
+} from '@open-design/contracts';
 import { useT } from '../i18n';
 import { useAnalytics } from '../analytics/provider';
-import { trackQuestionsFormClick, trackQuestionsFormSurfaceView } from '../analytics/events';
+import {
+  trackFlowDefaultsUsed,
+  trackQuestionsFormClick,
+  trackQuestionsFormSurfaceView,
+} from '../analytics/events';
+import { msFromFirstInput } from '../runtime/staged-flow-analytics';
 import type { QuestionForm } from '../artifacts/question-form';
 import { uploadProjectFiles } from '../providers/registry';
 import type { ChatAttachment } from '../types';
@@ -65,6 +76,13 @@ interface Props {
   // The assistant turn is still streaming the form — keep Continue disabled
   // and show the generating hint.
   generating: boolean;
+  flowTrackingContext?: {
+    conversationId: string;
+    shape: FlowShapeId;
+    researchMode: FlowResearchMode;
+    activeStage: FlowStageId | null;
+    firstInputAt?: number;
+  } | null;
   onSubmit: (text: string, payload?: QuestionFormSubmitPayload) => void;
 }
 
@@ -76,6 +94,7 @@ export function QuestionsPanel({
   submitDisabled = false,
   submittedAnswers,
   generating,
+  flowTrackingContext = null,
   onSubmit,
 }: Props) {
   const t = useT();
@@ -264,6 +283,30 @@ export function QuestionsPanel({
           form_id: questionsFormTrackingId(form.id),
           project_id: projectId,
         });
+        if (flowTrackingContext?.activeStage === 'clarify') {
+          const elapsed = msFromFirstInput(flowTrackingContext.firstInputAt);
+          trackFlowDefaultsUsed(analytics.track, {
+            page_name: 'chat_panel',
+            area: 'questions_form',
+            project_id: projectId,
+            conversation_id: flowTrackingContext.conversationId,
+            flow_shape: flowTrackingContext.shape,
+            research_mode: flowTrackingContext.researchMode,
+            form_id: questionsFormTrackingId(form.id),
+            used_defaults: source === 'recommended',
+            submission_mode:
+              source === 'recommended'
+                ? 'recommended'
+                : source === 'continue'
+                  ? 'adjusted'
+                  : source === 'countdown'
+                    ? 'countdown'
+                    : 'skipped',
+            answered_count: answeredCount,
+            skipped_count: total - answeredCount,
+            ...(elapsed === undefined ? {} : { ms_from_first_input: elapsed }),
+          });
+        }
       }
       clearQuestionFormDraft(formKey);
       setDraftAnswers(undefined);
@@ -277,7 +320,16 @@ export function QuestionsPanel({
         onSubmit(submittedText);
       }
     },
-    [analytics.track, form, formKey, onSubmit, projectId, releaseSubmitLock, t],
+    [
+      analytics.track,
+      flowTrackingContext,
+      form,
+      formKey,
+      onSubmit,
+      projectId,
+      releaseSubmitLock,
+      t,
+    ],
   );
   // If this occurrence already finished its reveal in a prior mount, show it in
   // full immediately rather than replaying the animation on remount.

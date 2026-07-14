@@ -5,8 +5,8 @@
 > 把 Open Design 的「输入 → 澄清 → 生成 → 交付」重塑为一条**全程可见、
 > 默认可点、硬交付收尾**的北极星链路。
 >
-> 链路对**所有产出形态统一**:deck、landing page、mobile 原型、web
-> 原型/应用、长文档(docs)、PDF 报告、图像/视频/音频,全部走同一条
+> 链路对**所有产出形态统一**:deck、通用 prototype、landing page、
+> mobile 原型、web 原型/应用、长文档(docs)、PDF 报告、图像/视频/音频,全部走同一条
 > 五步链路;形态差异(问什么、plan 长什么样、灵感目录取哪个子集、
 > 进度按什么计数、交付给什么按钮)**全部收敛进形态矩阵(§5.0)**,
 > 新形态接入 = 改配置,不加机制。
@@ -137,10 +137,11 @@ draft → rendering → ready,可断点续渲);research 是 toggle 默认关 +
 | 形态 `shape` | 判定来源 | clarify 固定题骨架(全部带默认值) | plan 工件 | inspire 目录子集 | 进度单位 | deliver CTA |
 |---|---|---|---|---|---|---|
 | `deck` 演示 | `od.mode: deck` / task-type 答案 | 页数·比例·风格方向·speakerNotes·内容重点 | `brief.md` + `outline.md`(逐页) | deck 模板 + 社区风格 | 页 N/M | 下载 PPTX·下载 PDF·分享·继续调整 |
-| `landing` 落地页 | `mode: prototype` + `platform: web` + 单页营销语义 | 区块数·风格·品牌·转化目标 | `structure.md`(区块 + 文案骨架) | landing/marketing 类模板 | 区块 N/M | 部署分享·下载 HTML/ZIP·继续调整 |
+| `prototype` 通用原型 | `mode: prototype` + 未命中更具体语义 | 平台·保真度·核心流程·视图数·交互深度 | `prototype-plan.md`(视图/状态 + 交互) | `prototype-template` 通用线框/概念模板 | 屏幕 N/M | 预览·下载 ZIP·分享·继续调整 |
+| `landing` 落地页 | `mode: prototype` + `platform: desktop` + 单页营销语义 | 区块数·风格·品牌·转化目标 | `structure.md`(区块 + 文案骨架) | `landing-template` 营销/转化模板 | 区块 N/M | 部署分享·下载 HTML/ZIP·继续调整 |
 | `mobile` 移动原型 | `mode: prototype` + `platform: mobile` | 屏幕数·iOS/Android·风格·核心流程 | `flows.md`(屏幕清单 + 导航图) | mobile 类模板(含 `plugins/_official/examples`) | 屏幕 N/M | 预览分享·下载 ZIP·继续调整 |
-| `webapp` web 原型/应用 | `mode: prototype` + `platform: web` | 页面数·信息架构·风格 | `plan.md`(IA + 页面清单) | prototype 类模板 | 页面 N/M | 部署分享·下载 ZIP·继续调整 |
-| `document` 长文档/docs | 长文语义 / 文档类模板 | 章节数·受众·语气·输出格式 | `toc.md`(章节大纲) | document 主题(目录缺口,见 §9.7) | 章节 N/M | 下载 MD/PDF·分享·继续调整 |
+| `webapp` web 原型/应用 | `mode: prototype` + `platform: desktop` + 应用/工作台语义 | 页面数·信息架构·风格 | `plan.md`(IA + 页面清单) | `webapp-template` dashboard/workflow 模板 | 页面 N/M | 部署分享·下载 ZIP·继续调整 |
+| `document` 长文档/docs | 长文语义 / 文档类模板 | 章节数·受众·语气·输出格式 | `toc.md`(章节大纲) | `document-template` 决策文档主题 | 章节 N/M | 下载 MD/PDF·分享·继续调整 |
 | `report` PDF 报告 | document 变体,PDF-first | 页数·图表密度·受众 | `outline.md`(章节 + 图表清单) | 报告类模板 | 章节 N/M | 下载 PDF·分享·继续调整 |
 | `media` 图像/视频/音频 | `mode: image/video/audio` | 数量·比例·风格·时长 | `shots.md`(分镜/画面描述) | image/video 模板(已有类目) | 素材 N/M | 下载素材·分享·继续调整 |
 
@@ -340,8 +341,8 @@ UI 侧(`QuestionForm.tsx` / `QuestionsPanel.tsx`):
   实现同 codex-slides `inspire.ts`:目录(`/api/design-templates` +
   社区风格,先按 §5.0 的 `inspireFilter`(od.mode/platform)取形态子集)
   拼进一次模型调用排序,**关键词打分离线兜底**(秒出,不阻塞流程);
-  排序结果必须包含子集全量、id 校验去重。document/report 形态目前目录
-  几乎为空(§9.7),首发时该形态降级为 design-systems 主题选择。
+  排序结果必须包含子集全量、id 校验去重。document/report 形态通过
+  `document-template` / `report-template` tags 分开候选集,避免互相串场。
 - **UI 面**(参考截图 4):灵感面板(右侧 tab 或浮层)——顶部搜索 +
   分类 chips(由 `od.mode`/tags 派生),卡片带预览图(baked
   `example.html` 截图/poster)与一行理由;**Top-1 默认选中**,底部主 CTA
@@ -505,10 +506,14 @@ contracts;新端点三件套(HTTP+UI+CLI)同 PR;`src/` 下不加测试,测试进
 
 ### M2 Plan 工件 + 确认条
 
-- [ ] flow 协议:clarify 后必须落 `planArtifacts`(按形态)再停下
-- [ ] plan-confirm 表单(默认「✓ 确认生成 N <单位>」)
-- [ ] 自然语言改大纲回路 + Design Files 直接编辑回路
-- [ ] 测试:确认前零渲染;改大纲后按新大纲生成
+- [x] flow 协议:clarify 后必须落 `planArtifacts`(按形态)再停下
+      — 2026-07-13
+- [x] plan-confirm 表单(默认「✓ 确认生成 N <单位>」),daemon 同时阻止
+      未确认 plan/灵感时提前进入 generate — 2026-07-13
+- [x] 自然语言改大纲回路 + Design Files 卡片式增删改排/直接编辑回路
+      — 2026-07-13
+- [ ] 测试:确认前零渲染单测 ✅;改大纲后按新大纲生成的 Playwright
+      彩排待补
 
 *验收*:确认前无任何渲染发生;改一处大纲重新确认后按新大纲生成。
 
@@ -516,46 +521,57 @@ contracts;新端点三件套(HTTP+UI+CLI)同 PR;`src/` 下不加测试,测试进
 
 - [ ] contracts + daemon:`POST /api/inspire/rank`(形态子集过滤 +
       模型排序 + 关键词离线兜底)
-- [ ] web:灵感面板(搜索/分类 chips/预览卡/Top-1 默认选中/明确跳过)
-- [ ] daemon:apply/skip 落进 FlowSnapshot;建项目已选模板自动 complete
-- [ ] CLI:`od inspire rank/apply/skip`
-- [ ] 测试:离线兜底秒出;skip 显示「已跳过 · 使用默认风格」;选中模板
-      真实影响渲染
+- [x] web:灵感面板(搜索/分类 chips/预览卡/Top-1 默认选中/明确跳过)
+      — 2026-07-13
+- [x] daemon:apply/skip 落进 FlowSnapshot;apply 物化模板框架并推进状态
+      — 2026-07-13
+- [x] CLI:`od inspire rank/apply/skip` — 2026-07-13
+- [ ] 测试:离线排序/apply/skip 幂等/模板物化单测 ✅;模型渐进 rerank 与
+      选中模板真实影响最终渲染的端到端彩排待补
 
 *验收*:断网(离线兜底)时面板仍秒出;skip 后进度卡显示「已跳过 ·
 使用默认风格」;选中的模板真实影响渲染风格。
 
 ### M4 搜索整合
 
-- [ ] web:＋菜单「Deep research」开关(会话持久 + composer pill)
-- [ ] daemon:basic 自动搜索判定(clarify 后意图含事实需求 → 一轮
-      shallow;纯创意 → skipped)
-- [ ] daemon:medium/deep 多轮研究循环(`research/` 落实 depth)
-- [ ] web:research 阶段过程展示 v1(detail 滚动 + 报告落 Design Files)
-- [ ] 测试:开关刷新不丢;deep 产出多轮报告且大纲引用其事实
+- [x] web:首页与项目内＋菜单「Deep research」开关(会话持久 +
+      composer pill + 首条自动发送透传) — 2026-07-13
+- [x] daemon:basic 自动搜索契约(事实需求时一轮 shallow;纯创意由 agent
+      标记 skipped) — 2026-07-13
+- [x] daemon:medium/deep 深度参数 + deep 默认两轮「广搜→查缺补漏」
+      研究协议(`research/` 报告落盘) — 2026-07-13
+- [x] web:research 阶段过程展示 v1(两轮状态/detail + 面板内增量报告 +
+      Design Files 入口) — 2026-07-13
+- [ ] 测试:开关/深度/研究面板单测 ✅;deep 真实多轮报告且大纲引用事实的
+      provider mock E2E 待补
 
 *验收*:开关状态刷新不丢;deep 模式产出多轮 `research/*.md` 且大纲
 引用其中事实;纯创意任务 research 步显示 skipped。
 
 ### M5 交付 CTA + 埋点
 
-- [ ] web:NextStepActions 升级,deliver 阶段本地渲染 CTA 行
-      (动作集取 `FLOW_SHAPES[shape].deliverActions`)
-- [ ] 埋点:`flow_stage_transition` / `flow_defaults_used` /
-      `inspire_choice` / `hard_delivery`(带 msFromFirstInput)
+- [x] web:NextStepActions 升级,generate 阶段提前预告、deliver 阶段本地启用
+      CTA 行(动作集取 `FLOW_SHAPES[shape].deliverActions`)— 2026-07-14
+- [x] 埋点:`flow_stage_transition` / `flow_defaults_used` /
+      `inspire_choice` / `hard_delivery`(带 `ms_from_first_input`;硬交付只在
+      导出/部署成功或社交分享动作发生时上报)— 2026-07-14
 - [ ] 漏斗看板(PostHog)
-- [ ] 测试:每次成功生成 100% 出现 CTA 行;点击后事件可查
+- [ ] 测试:CTA/事件 contracts/默认路径/阶段 diff/真实 PPTX 成功回调单测
+      ✅;PostHog 网络请求动态验收待补
 
 *验收*:每次成功生成 100% 出现 CTA 行;点击下载后 PostHog 收到
 `hard_delivery` 且带 msFromFirstInput。
 
-### M6 形态铺开(landing/mobile/webapp/document/report/media)
+### M6 形态铺开(prototype/landing/mobile/webapp/document/report/media)
 
-- [ ] 每形态:FLOW_SHAPES 注册行 + clarify 题骨架 + plan 工件 prompt
-      片段 + 灵感目录标签映射 + deliver 动作映射
-- [ ] document/report 灵感目录补齐或降级策略落地(§9.7)
+- [x] 每形态:FLOW_SHAPES 注册行 + clarify 默认骨架 + 通用可编辑 plan grammar
+      + 灵感目录标签映射 + 流式生成工件类型 + deliver 动作映射 — 2026-07-14
+- [x] prototype/landing/mobile/webapp 灵感目录补齐:各 3 个高价值现有模板
+      完成 tags + platform 级独立过滤 — 2026-07-14
+- [x] document/report 灵感目录补齐:首批 6 个高价值决策场景模板 +
+      tags 级独立过滤 — 2026-07-14
 - [ ] 每形态一次北极星彩排(≤ 8 分钟、三次默认点击)
-- [ ] e2e:形态矩阵回归(至少 deck + landing + document 三形态)
+- [ ] e2e:六形态资源闭包矩阵已覆盖;真实 agent 的完整默认点击链路彩排待补
 
 *验收*:新形态接入证明为「只改注册表 + prompt 片段 + 目录标签」,
 零新组件;landing 与 document 各通过一次完整彩排。
@@ -580,8 +596,8 @@ contracts;新端点三件套(HTTP+UI+CLI)同 PR;`src/` 下不加测试,测试进
    `FlowSnapshot` 缺省 null,UI 全部保持现状——灰度开关按任务形态放量。
 6. **分享的定义**:v1 硬交付=下载/部署/社交分享任一;只读 share link
    (无部署)是否要做一等公民,待定(codex-slides 也在 roadmap)。
-7. **document/report 形态的灵感目录缺口**:`design-templates/` 现有
-   类目集中在 deck/prototype/image/video,长文档与 PDF 报告模板几乎
-   为空。M6 前需补一批 document 类模板(新 `od.mode` 或 tags 类目),
-   或首发时该形态的 inspire 步降级为 design-systems 主题选择并在进度
-   卡如实标注。
+7. **document/report 形态的灵感目录**:首批已补 board decision memo、
+   product RFC、B2B renewal business case、executive operating review、
+   market diligence、policy impact 六个高价值场景。统一使用
+   `od.mode: template`,再以 `document-template` / `report-template`
+   tags 做形态级隔离;后续按硬交付与复用数据扩充。

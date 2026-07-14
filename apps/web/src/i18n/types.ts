@@ -3950,6 +3950,30 @@ export interface Dict {
   'flow.unit.pages': string;
   'flow.unit.chapters': string;
   'flow.unit.assets': string;
+  'flow.plan.unit.slide': string;
+  'flow.plan.unit.view': string;
+  'flow.plan.unit.section': string;
+  'flow.plan.unit.screen': string;
+  'flow.plan.unit.page': string;
+  'flow.plan.unit.chapter': string;
+  'flow.plan.unit.asset': string;
+  'flow.plan.titleLabel': string;
+  'flow.plan.pointsLabel': string;
+  'flow.plan.pointsHint': string;
+  'flow.plan.untitled': string;
+  'flow.plan.add': string;
+  'flow.plan.insert': string;
+  'flow.plan.moveUp': string;
+  'flow.plan.moveDown': string;
+  'flow.plan.empty': string;
+  'flow.plan.saveError': string;
+  'flow.inspire.searchPlaceholder': string;
+  'flow.inspire.categoriesLabel': string;
+  'flow.inspire.empty': string;
+  'flow.inspire.rank': string;
+  'flow.inspire.select': string;
+  'flow.inspire.apply': string;
+  'flow.inspire.skip': string;
 
   // Inline <od-card> memory cards (display-only siblings of question-form)
   'artifact.odCardTaskBriefChip': string;

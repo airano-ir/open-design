@@ -7,6 +7,10 @@ description: |
   Composio connector catalog. Refreshes on demand and when the artifact
   is opened. Falls back to seeded mock data when no connector is bound,
   so it works offline / in screenshots / in the picker preview.
+tags:
+  - "webapp-template"
+  - "dashboard"
+  - "live-data"
 triggers:
   - "team dashboard"
   - "notion dashboard"

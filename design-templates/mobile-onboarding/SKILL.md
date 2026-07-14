@@ -5,6 +5,10 @@ description: |
   side by side — splash, value-prop, sign-in. Status bar, swipe dots,
   primary CTA. Use when the brief mentions "mobile onboarding", "iOS
   onboarding", "phone signup", or "移动端引导".
+tags:
+  - "mobile-template"
+  - "onboarding"
+  - "multi-screen"
 triggers:
   - "mobile onboarding"
   - "ios onboarding"

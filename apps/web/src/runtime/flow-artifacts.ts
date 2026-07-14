@@ -19,6 +19,27 @@ export function isFlowStageArtifactPath(filePath: string): boolean {
 }
 
 /**
+ * Keep the materialized template shell visible until a streamed deck has a
+ * real body to replace it. Early deltas such as `<html><head>…` otherwise
+ * navigate the preview iframe to an effectively blank document.
+ */
+export function renderableStreamingDeckHtml(
+  html: string | null | undefined,
+): string | undefined {
+  if (!html) return undefined;
+  const bodyStart = html.search(/<body\b[^>]*>/iu);
+  if (bodyStart < 0) return undefined;
+  const body = html.slice(bodyStart).replace(/^<body\b[^>]*>/iu, '');
+  const hasVisibleElement =
+    /<(?!script\b|style\b|link\b|meta\b|title\b)[a-z][^>]*>/iu.test(body);
+  const text = body
+    .replace(/<(?:script|style)\b[^>]*>[\s\S]*?(?:<\/(?:script|style)>|$)/giu, '')
+    .replace(/<[^>]*>/gu, '')
+    .trim();
+  return hasVisibleElement || text ? html : undefined;
+}
+
+/**
  * Projects durable flow files back onto progress-card stages. The files remain
  * ordinary Design Files; this mapping only provides a stable chat-side entry.
  */
@@ -75,22 +96,13 @@ function addExisting(
 }
 
 function generationCandidates(flow: FlowSnapshot, files: ProjectFile[]): string[] {
+  const extensions = FLOW_SHAPES[flow.shape].generateExtensions;
   const matching = files.filter((file) => {
     if (file.name.startsWith('generated/') || file.name.startsWith('research/')) {
       return false;
     }
-    switch (flow.shape) {
-      case 'deck':
-      case 'landing':
-      case 'mobile':
-      case 'webapp':
-        return file.kind === 'html';
-      case 'document':
-      case 'report':
-        return file.kind === 'text' && /\.(?:md|markdown)$/iu.test(file.name);
-      case 'media':
-        return file.kind === 'image' || file.kind === 'video' || file.kind === 'audio';
-    }
+    const lower = file.name.toLowerCase();
+    return extensions.some((extension) => lower.endsWith(extension));
   });
   return matching
     .sort((left, right) => {

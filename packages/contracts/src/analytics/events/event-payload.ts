@@ -8,6 +8,7 @@ import type { OnboardingCompletedProps, OnboardingCompleteResultProps, Onboardin
 import type { PageViewProps } from './page-view.js';
 import type { ArtifactDeployResultProps, ArtifactExportResultProps, AssistantFeedbackClickProps, AssistantFeedbackReasonClickProps, AssistantFeedbackReasonSubmitProps, AssistantFeedbackReasonViewProps, ContextLinkResultProps, FeedbackSubmitResultProps, FileUploadResultProps, FileVersionRestoreResultProps, LangfuseReportResultProps, PackagedRuntimeFailedProps, PluginImportResultProps, PluginReplacementResultProps, ProjectCreateResultProps, RunCreatedProps, RunFinishedProps, RunRetryAttemptedProps, RunRetryFinishedProps, SettingsByokModelsFetchResultProps, SettingsByokTestResultProps, SettingsCliTestResultProps, SettingsConnectorAuthResultProps, SettingsViewProps, SketchExportResultProps, SketchSaveResultProps, SpeakerNotesSaveResultProps, UpdateApplyObservedProps, UpdateInstallResultProps } from './result-events.js';
 import type { SurfaceViewProps } from './surface-view.js';
+import type { FlowDefaultsUsedProps, FlowStageTransitionProps, HardDeliveryProps, InspireChoiceProps } from './staged-flow.js';
 import type { AmrAuthResultProps, UiClickProps } from './ui-click.js';
 // ---- Discriminated union of all event payloads ---------------------------
 
@@ -24,6 +25,10 @@ export type AnalyticsEventPayload =
   | { event: 'langfuse_report_result'; props: LangfuseReportResultProps }
   | { event: 'run_retry_attempted'; props: RunRetryAttemptedProps }
   | { event: 'run_retry_finished'; props: RunRetryFinishedProps }
+  | { event: 'flow_stage_transition'; props: FlowStageTransitionProps }
+  | { event: 'flow_defaults_used'; props: FlowDefaultsUsedProps }
+  | { event: 'inspire_choice'; props: InspireChoiceProps }
+  | { event: 'hard_delivery'; props: HardDeliveryProps }
   | { event: 'update_install_result'; props: UpdateInstallResultProps }
   | { event: 'update_apply_observed'; props: UpdateApplyObservedProps }
   | { event: 'file_upload_result'; props: FileUploadResultProps }

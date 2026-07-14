@@ -576,7 +576,7 @@ function printRootHelp() {
       plan → inspire → generate → deliver).
 
   od inspire <rank|apply|skip> [options]
-      Rank deck templates or finalize a conversation's inspiration choice.
+      Rank shape-compatible templates or finalize a conversation's inspiration choice.
 
   od plugin <list|info|install|uninstall|apply|doctor|replay|trust> [args]
       Discover, install, and apply plugins through the local daemon.
@@ -803,8 +803,8 @@ Flags:
 async function runInspire(args) {
   if (args.length === 0 || args[0] === 'help' || args.includes('--help') || args.includes('-h')) {
     console.log(`Usage:
-  od inspire rank --brief <text> [--outline "Title 1|Title 2"] [--mode deck] [--json]
-  od inspire rank --prompt-file <path|-> [--outline "Title 1|Title 2"] [--mode deck] [--json]
+  od inspire rank --brief <text> [--outline "Title 1|Title 2"] [--mode <shape>] [--json]
+  od inspire rank --prompt-file <path|-> [--outline "Title 1|Title 2"] [--mode <shape>] [--json]
   od inspire apply --conversation <id> --template <templateId> [--json]
   od inspire skip --conversation <id> [--json]
 
@@ -812,6 +812,7 @@ Ranks the design-template catalogue for a staged flow, or finalizes the
 conversation's inspiration choice. Long briefs may be read from a file or stdin.
 
 Common options:
+  --mode <shape>        deck | prototype | landing | mobile | webapp | document | report | media
   --daemon-url <url>   Open Design daemon HTTP base.
   --json               Emit raw JSON.`);
     process.exit(args.length === 0 ? 2 : 0);

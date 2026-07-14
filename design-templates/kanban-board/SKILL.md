@@ -5,6 +5,10 @@ description: |
   draggable-looking cards, assignee avatars, swimlanes, and a top filter
   bar. Use when the brief mentions "kanban", "task board", "sprint board",
   "trello", "看板".
+tags:
+  - "webapp-template"
+  - "kanban"
+  - "workflow"
 triggers:
   - "kanban"
   - "task board"

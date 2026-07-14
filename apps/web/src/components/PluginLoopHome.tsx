@@ -5,6 +5,7 @@ import type {
   InstalledPluginRecord,
   ProjectKind,
   ProjectMetadata,
+  ResearchOptions,
   RunContextSelection,
 } from '@open-design/contracts';
 import {
@@ -40,6 +41,7 @@ export interface PluginLoopSubmit {
   contextMcpServers?: Array<{ id: string; label?: string; transport?: string; url?: string; command?: string }> | null;
   contextConnectors?: Array<{ id: string; name: string; provider?: string; category?: string; status?: string; accountLabel?: string }> | null;
   initialRunContext?: RunContextSelection | null;
+  research?: ResearchOptions;
   designSystemId?: string | null;
   // Stage B of plugin-driven-flow-plan: when the user picked a Home
   // chip the rail tells the submit handler which `ProjectKind` to

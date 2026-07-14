@@ -18,7 +18,12 @@ import {
   projectKindFromMetadataToTracking,
   fidelityToTracking,
 } from '@open-design/contracts/analytics';
-import type { AmrModelsResponse, ChatSessionMode, RunContextSelection } from '@open-design/contracts';
+import type {
+  AmrModelsResponse,
+  ChatSessionMode,
+  ResearchOptions,
+  RunContextSelection,
+} from '@open-design/contracts';
 import { DEFAULT_UNSELECTED_SCENARIO_PLUGIN_ID } from '@open-design/contracts';
 import { EntryView } from './components/EntryView';
 import type { IntegrationTab } from './components/IntegrationsView';
@@ -134,6 +139,7 @@ type AppCreateProjectInput = Omit<CreateInput, 'metadata'> & {
   appliedPluginSnapshotId?: string;
   pluginInputs?: Record<string, unknown>;
   initialRunContext?: RunContextSelection | null;
+  research?: ResearchOptions;
   conversationMode?: ChatSessionMode;
   autoSendFirstMessage?: boolean;
   /** The home submit already ran the Open Design Cloud balance gate (and the
@@ -1632,6 +1638,16 @@ function AppInner() {
           } else {
             window.sessionStorage.removeItem(
               `od:auto-send-context:${result.project.id}`,
+            );
+          }
+          if (input.research?.enabled) {
+            window.sessionStorage.setItem(
+              `od:auto-send-research:${result.project.id}`,
+              JSON.stringify(input.research),
+            );
+          } else {
+            window.sessionStorage.removeItem(
+              `od:auto-send-research:${result.project.id}`,
             );
           }
         } catch {

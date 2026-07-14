@@ -6,9 +6,11 @@ import {
   applyFlowMarker,
   createFlowSnapshot,
   flowShapeFromModePlatform,
+  flowShapeFromRequestText,
   parseOdFlowMarkers,
   stripOdFlowMarkers,
 } from '../src/api/flow';
+import { renderFlowProtocol } from '../src/prompts/flow-protocol';
 
 describe('flow shape registry', () => {
   it('declares every stage in ladder order for every shape', () => {
@@ -16,6 +18,10 @@ describe('flow shape registry', () => {
       const order = spec.stages.map((s) => FLOW_STAGE_ORDER.indexOf(s));
       expect([...order].sort((a, b) => a - b)).toEqual(order);
       expect(spec.planArtifacts.length).toBeGreaterThan(0);
+      expect(spec.plan.defaultItems.length).toBeGreaterThan(0);
+      expect(spec.plan.itemLabelKey).toMatch(/^flow\.plan\.unit\./u);
+      expect(spec.clarifyDefaults.length).toBeGreaterThan(0);
+      expect(spec.generateExtensions.length).toBeGreaterThan(0);
       expect(spec.deliverActions.length).toBeGreaterThan(0);
     }
   });
@@ -24,8 +30,22 @@ describe('flow shape registry', () => {
     expect(flowShapeFromModePlatform('deck')).toBe('deck');
     expect(flowShapeFromModePlatform('prototype', 'mobile')).toBe('mobile');
     expect(flowShapeFromModePlatform('prototype', 'web')).toBe('webapp');
+    expect(flowShapeFromModePlatform('prototype')).toBe('prototype');
     expect(flowShapeFromModePlatform('image')).toBe('media');
     expect(flowShapeFromModePlatform('nonsense')).toBeNull();
+  });
+
+  it.each([
+    ['Build an interactive product prototype', 'prototype'],
+    ['Create a SaaS landing page', 'landing'],
+    ['Design a four-screen iOS app', 'mobile'],
+    ['Build an analytics dashboard web app', 'webapp'],
+    ['Write a product decision RFC', 'document'],
+    ['Produce a PDF-first market analysis report', 'report'],
+    ['做一个手机应用原型', 'mobile'],
+    ['写一份行业研究报告', 'report'],
+  ] as const)('routes "%s" to %s', (request, shape) => {
+    expect(flowShapeFromRequestText(request)).toBe(shape);
   });
 
   it('keeps the deck inspiration filter and choice in the shared contract', () => {
@@ -36,6 +56,22 @@ describe('flow shape registry', () => {
       ...snapshot,
       inspireChoice: { templateId: 'editorial-deck', skipped: false },
     }.inspireChoice).toEqual({ templateId: 'editorial-deck', skipped: false });
+  });
+
+  it.each([
+    'prototype',
+    'landing',
+    'mobile',
+    'webapp',
+    'document',
+    'report',
+  ] as const)('renders shape-aware clarify, plan, generation, and delivery guidance for %s', (shape) => {
+    const protocol = renderFlowProtocol(shape);
+    const spec = FLOW_SHAPES[shape];
+    expect(protocol).toContain(`Task shape: ${shape}`);
+    expect(protocol).toContain(spec.plan.title);
+    expect(protocol).toContain(spec.clarifyDefaults[0]);
+    expect(protocol).toContain(spec.deliverActions.join(', '));
   });
 });
 

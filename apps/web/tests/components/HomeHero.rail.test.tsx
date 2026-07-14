@@ -565,4 +565,18 @@ describe('HomeHero intent rail', () => {
       },
     });
   });
+
+  it('shows a removable Deep Research pill on the home composer', () => {
+    const onDeepResearchChange = vi.fn();
+    renderHero({
+      deepResearchEnabled: true,
+      onDeepResearchChange,
+    });
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Deep research ×' }),
+    );
+
+    expect(onDeepResearchChange).toHaveBeenCalledWith(false);
+  });
 });

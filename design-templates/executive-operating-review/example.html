@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Q2 Executive Operating Review</title>
+  <style>
+    :root { --ink:#101828; --muted:#667085; --line:#e4e7ec; --accent:#175cd3; --soft:#eff4ff; --good:#067647; --bad:#b42318; --warn:#b54708; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:#f2f4f7; color:var(--ink); font:14px/1.5 Inter, ui-sans-serif, system-ui, sans-serif; }
+    .report { width:min(1120px,calc(100% - 32px)); margin:24px auto; background:white; padding:42px 48px 60px; border-radius:12px; }
+    header { display:flex; justify-content:space-between; align-items:flex-start; gap:30px; padding-bottom:24px; border-bottom:1px solid var(--line); }
+    h1 { margin:0; font-size:35px; letter-spacing:-.035em; }
+    .meta { color:var(--muted); text-align:end; font-size:12px; }
+    .answer { margin:24px 0; padding:20px 24px; background:var(--ink); color:white; border-radius:9px; display:grid; grid-template-columns:1fr auto; gap:24px; align-items:center; }
+    .answer strong { font-size:20px; }
+    .answer span { color:#cbd5e1; }
+    .decision-count { font-size:40px; font-weight:800; color:#84adff; text-align:center; }
+    .decision-count small { display:block; color:#cbd5e1; font-size:9px; text-transform:uppercase; letter-spacing:.1em; }
+    h2 { margin:34px 0 12px; font-size:21px; letter-spacing:-.02em; }
+    .scorecard { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; }
+    .kpi { padding:16px; border:1px solid var(--line); border-radius:9px; }
+    .kpi small { display:block; color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.07em; }
+    .kpi b { display:block; margin:7px 0; font-size:25px; }
+    .up { color:var(--good); } .down { color:var(--bad); } .watch { color:var(--warn); }
+    .body-grid { display:grid; grid-template-columns:1.55fr 1fr; gap:14px; }
+    .panel { padding:20px; border:1px solid var(--line); border-radius:10px; }
+    .panel h3 { margin:0; font-size:16px; }
+    .panel p { margin:5px 0 18px; color:var(--muted); font-size:12px; }
+    svg { width:100%; height:220px; display:block; }
+    .drivers { display:grid; gap:10px; }
+    .driver { display:grid; grid-template-columns:1fr 70px; gap:10px; padding:12px; background:#f9fafb; border-radius:7px; }
+    .driver b { text-align:end; }
+    table { width:100%; border-collapse:collapse; }
+    th,td { padding:11px 9px; border-bottom:1px solid var(--line); text-align:start; }
+    th { color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.06em; }
+    .risk-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-inline-end:7px; }
+    .risk-dot.high { background:var(--bad); } .risk-dot.med { background:var(--warn); }
+    .decisions { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+    .decision { padding:18px; background:var(--soft); border-top:3px solid var(--accent); }
+    .decision small { color:var(--accent); font-weight:800; text-transform:uppercase; }
+    .decision b { display:block; margin:7px 0; }
+    @media(max-width:820px){.report{width:100%;margin:0;padding:28px 22px}.scorecard{grid-template-columns:1fr 1fr}.body-grid,.decisions{grid-template-columns:1fr}}
+    @media print{body{background:white}.report{width:auto;margin:0;padding:10mm}.panel{break-inside:avoid}}
+  </style>
+</head>
+<body>
+  <main class="report">
+    <header data-od-id="report-header">
+      <div><h1>Q2 Executive Operating Review</h1><span>Northstar Systems · FY26</span></div>
+      <div class="meta">Prepared 12 July 2026<br>Source close: 8 July · Confidential</div>
+    </header>
+
+    <section class="answer" data-od-id="executive-answer">
+      <div><strong>ARR growth held, but expansion weakness moves the year-end plan from execution risk to decision risk.</strong><br><span>New logo velocity is ahead; enterprise expansion and EMEA hiring explain 82% of the forecast gap.</span></div>
+      <div class="decision-count">3<small>decisions today</small></div>
+    </section>
+
+    <section data-od-id="scorecard">
+      <h2>Growth remains healthy while retention and cash efficiency diverge from plan</h2>
+      <div class="scorecard">
+        <div class="kpi"><small>ARR</small><b>$24.8M</b><span class="up">+2% vs plan</span></div>
+        <div class="kpi"><small>Net retention</small><b>108%</b><span class="down">−5 pp vs plan</span></div>
+        <div class="kpi"><small>New ARR</small><b>$2.1M</b><span class="up">+12% QoQ</span></div>
+        <div class="kpi"><small>Gross margin</small><b>81%</b><span class="up">+1 pp vs plan</span></div>
+        <div class="kpi"><small>Runway</small><b>23 mo.</b><span class="watch">−2 mo. vs plan</span></div>
+      </div>
+    </section>
+
+    <section class="body-grid" data-od-id="drivers">
+      <div class="panel">
+        <h3>New-logo momentum offsets a widening expansion gap</h3>
+        <p>Quarterly net-new ARR and expansion contribution · $M</p>
+        <svg viewBox="0 0 520 220" role="img" aria-label="ARR growth chart">
+          <line x1="42" y1="182" x2="500" y2="182" stroke="#d0d5dd"/>
+          <polyline points="42,151 145,132 248,112 352,78 500,48" fill="none" stroke="#175cd3" stroke-width="4"/>
+          <polyline points="42,162 145,148 248,139 352,142 500,151" fill="none" stroke="#b42318" stroke-width="3" stroke-dasharray="7 6"/>
+          <g fill="#175cd3"><circle cx="42" cy="151" r="5"/><circle cx="145" cy="132" r="5"/><circle cx="248" cy="112" r="5"/><circle cx="352" cy="78" r="5"/><circle cx="500" cy="48" r="5"/></g>
+          <g fill="#667085" font-size="11"><text x="37" y="202">Q2'25</text><text x="140" y="202">Q3</text><text x="243" y="202">Q4</text><text x="347" y="202">Q1</text><text x="485" y="202">Q2'26</text></g>
+        </svg>
+      </div>
+      <div class="panel">
+        <h3>Three drivers explain most variance</h3>
+        <p>Impact on FY26 ARR forecast</p>
+        <div class="drivers">
+          <div class="driver"><span>Enterprise expansion slippage</span><b class="down">−$0.9M</b></div>
+          <div class="driver"><span>EMEA hiring delay</span><b class="down">−$0.5M</b></div>
+          <div class="driver"><span>Partner pipeline upside</span><b class="up">+$0.4M</b></div>
+          <div class="driver"><span>SMB new-logo outperformance</span><b class="up">+$0.3M</b></div>
+        </div>
+      </div>
+    </section>
+
+    <section data-od-id="risks">
+      <h2>The forecast is recoverable if owners act before September</h2>
+      <table>
+        <thead><tr><th>Risk</th><th>Forecast impact</th><th>Early signal</th><th>Owner</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td><span class="risk-dot high"></span>Expansion conversion</td><td>−$1.2M</td><td>Stage-3 aging &gt; 30 days</td><td>CRO</td><td>Executive close plans</td></tr>
+          <tr><td><span class="risk-dot med"></span>EMEA capacity</td><td>−$0.6M</td><td>Two roles unfilled by Aug 15</td><td>CPO</td><td>Interim partner coverage</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section data-od-id="decisions">
+      <h2>Leadership decisions required</h2>
+      <div class="decisions">
+        <div class="decision"><small>01 · Revenue</small><b>Reassign two AEs to expansion through Q3</b><span>Owner: CRO · Decide today</span></div>
+        <div class="decision"><small>02 · Hiring</small><b>Approve EMEA agency bridge budget</b><span>Owner: CFO · $180k cap</span></div>
+        <div class="decision"><small>03 · Product</small><b>Move enterprise controls ahead of SMB polish</b><span>Owner: CPO · August plan</span></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

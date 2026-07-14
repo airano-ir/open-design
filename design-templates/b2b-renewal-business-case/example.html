@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Renewal Business Case — Atlas Retail</title>
+  <style>
+    :root { --ink:#18211f; --muted:#69736f; --line:#dce3df; --accent:#087f68; --soft:#e8f5f1; --warm:#fff5df; --paper:#fff; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:#f1f4f2; color:var(--ink); font:15px/1.55 Inter, ui-sans-serif, system-ui, sans-serif; }
+    .page { width:min(980px,calc(100% - 32px)); margin:28px auto; padding:54px 64px; background:var(--paper); border-radius:14px; box-shadow:0 20px 60px rgba(24,33,31,.08); }
+    .top { display:flex; justify-content:space-between; gap:20px; align-items:center; color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.08em; }
+    .logo { color:var(--accent); font-weight:900; font-size:14px; }
+    h1 { max-width:17ch; margin:44px 0 14px; font-size:48px; line-height:1.04; letter-spacing:-.04em; }
+    .lede { max-width:68ch; color:var(--muted); font-size:18px; }
+    .value { display:grid; grid-template-columns:1.25fr 1fr; gap:14px; margin:34px 0; }
+    .hero { padding:28px; color:white; background:var(--accent); border-radius:12px; }
+    .hero b { display:block; font-size:54px; line-height:1; letter-spacing:-.04em; }
+    .hero span { display:block; margin-top:10px; max-width:34ch; }
+    .proof { display:grid; gap:10px; }
+    .proof div { padding:16px 18px; border:1px solid var(--line); border-radius:10px; }
+    .proof b { font-size:22px; }
+    .proof small { display:block; color:var(--muted); }
+    h2 { margin:42px 0 14px; font-size:25px; letter-spacing:-.02em; }
+    table { width:100%; border-collapse:collapse; }
+    th,td { padding:12px 10px; border-bottom:1px solid var(--line); text-align:start; }
+    th { color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.08em; }
+    td.num { text-align:end; font-variant-numeric:tabular-nums; }
+    tr.total td { font-weight:800; border-top:2px solid var(--ink); }
+    .assumption { display:inline-block; margin-inline-start:6px; padding:2px 6px; border-radius:99px; background:var(--warm); color:#8a6214; font-size:9px; text-transform:uppercase; }
+    .package { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+    .package article { position:relative; padding:20px; border:1px solid var(--line); border-radius:10px; }
+    .package article.recommended { border:2px solid var(--accent); background:var(--soft); }
+    .package h3 { margin:0 0 5px; }
+    .price { margin:18px 0; font-size:28px; font-weight:800; }
+    .package ul { padding-inline-start:18px; color:var(--muted); }
+    .map { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+    .map div { padding:15px; background:#f7f9f8; border-top:3px solid var(--line); }
+    .map div:first-child { border-color:var(--accent); }
+    .map b,.map small { display:block; }
+    .map small { color:var(--muted); margin-top:5px; }
+    .next { margin-top:38px; padding:22px; background:var(--ink); color:white; border-radius:10px; display:flex; justify-content:space-between; gap:20px; }
+    @media(max-width:720px){.page{width:100%;margin:0;padding:34px 24px}.value,.package,.map{grid-template-columns:1fr}.next{display:block}}
+    @media print{body{background:white}.page{width:auto;margin:0;box-shadow:none;padding:14mm}}
+  </style>
+</head>
+<body>
+  <article class="page">
+    <header data-od-id="header">
+      <div class="top"><span class="logo">Open Design × Atlas Retail</span><span>Renewal business case · FY27</span></div>
+      <h1>Renew now to turn proven speed into a global operating advantage</h1>
+      <p class="lede">Atlas has already removed 9,400 production hours from regional campaign work. The next contract should standardize that workflow across 11 markets and make brand compliance measurable.</p>
+    </header>
+
+    <section class="value" data-od-id="realized-value">
+      <div class="hero"><b>4.1×</b><span>audited first-year return based on loaded labor cost and campaigns shipped.</span></div>
+      <div class="proof">
+        <div><b>42% faster</b><small>campaign production cycle · observed</small></div>
+        <div><b>9,400 hrs</b><small>annual work removed · calculated</small></div>
+        <div><b>94%</b><small>brand review pass rate · observed</small></div>
+      </div>
+    </section>
+
+    <section data-od-id="roi-model">
+      <h2>The expansion case remains positive under conservative adoption</h2>
+      <table>
+        <thead><tr><th>Value driver</th><th>Basis</th><th class="num">Annual value</th></tr></thead>
+        <tbody>
+          <tr><td>Production capacity</td><td>14,800 hours × $72 loaded cost <span class="assumption">estimated</span></td><td class="num">$1.07M</td></tr>
+          <tr><td>Agency spend avoided</td><td>Six regional adaptations per quarter</td><td class="num">$420k</td></tr>
+          <tr><td>Faster campaign launch</td><td>Excluded from base case</td><td class="num">$0</td></tr>
+          <tr class="total"><td>Quantified annual value</td><td>Conservative base case</td><td class="num">$1.49M</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section data-od-id="commercial-options">
+      <h2>A three-year global plan matches the rollout and lowers execution risk</h2>
+      <div class="package">
+        <article><h3>Regional renewal</h3><small>Current scope</small><div class="price">$210k</div><ul><li>3 markets</li><li>Existing workflows</li><li>No global governance</li></ul></article>
+        <article class="recommended"><h3>Global · recommended</h3><small>11-market rollout</small><div class="price">$360k</div><ul><li>Global templates</li><li>Approval analytics</li><li>Named success plan</li></ul></article>
+        <article><h3>Build internally</h3><small>Status quo alternative</small><div class="price">$640k+</div><ul><li>12–18 months</li><li>Maintenance retained</li><li>Delivery risk</li></ul></article>
+      </div>
+    </section>
+
+    <section data-od-id="buying-committee">
+      <h2>Each reviewer gets the proof required for approval</h2>
+      <div class="map">
+        <div><b>CMO</b><small>Brand speed and consistency</small></div>
+        <div><b>CFO</b><small>Auditable return and terms</small></div>
+        <div><b>Security</b><small>Data controls and review</small></div>
+        <div><b>Procurement</b><small>Benchmark and signature path</small></div>
+      </div>
+    </section>
+
+    <section class="next" data-od-id="next-step">
+      <div><b>Decision requested</b><br>Approve the global three-year renewal at $360k ARR.</div>
+      <div><b>Next meeting</b><br>Commercial review · 30 July</div>
+    </section>
+  </article>
+</body>
+</html>

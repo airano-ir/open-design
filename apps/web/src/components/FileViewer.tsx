@@ -5,6 +5,7 @@ import { APP_CHROME_FILE_ACTIONS_ID, APP_CHROME_FILE_ACTIONS_SELECTOR } from './
 import {
   buildSocialSharePayload,
   OPEN_DESIGN_GITHUB_REPO_URL,
+  type FlowDeliverAction,
   type ProjectFileVersion,
   type SocialShareRequest,
   type SocialShareResponse,
@@ -1230,6 +1231,13 @@ interface Props {
   // Bumped nonce asking a deck preview to flip to `slideIndex` (a queued chat
   // send for this file just started processing).
   slideNavRequest?: { slideIndex: number; nonce: number } | null;
+  onHardDelivery?: (signal: HardDeliverySignal) => void;
+}
+
+export interface HardDeliverySignal {
+  kind: FlowDeliverAction;
+  source: 'artifact_export' | 'artifact_deploy' | 'social_share';
+  fileName: string;
 }
 
 // Memoized so FileWorkspace-local state churn (tab drag hover, closing a
@@ -1259,6 +1267,7 @@ export const FileViewer = memo(function FileViewer({
   shareRequest,
   downloadRequest,
   slideNavRequest,
+  onHardDelivery,
 }: Props) {
   const rendererMatch = artifactRendererRegistry.resolve({
     file,
@@ -1303,6 +1312,7 @@ export const FileViewer = memo(function FileViewer({
         shareRequest={shareRequest}
         downloadRequest={downloadRequest}
         slideNavRequest={slideNavRequest}
+        onHardDelivery={onHardDelivery}
       />
     );
   }
@@ -5823,6 +5833,14 @@ function DocumentPreviewViewer({
   );
 }
 
+function hardDeliveryKindForExport(
+  format: 'pdf' | 'pptx' | 'zip' | 'html' | 'markdown' | 'share_link' | 'share_page',
+): FlowDeliverAction {
+  if (format === 'markdown') return 'md';
+  if (format === 'share_link' || format === 'share_page') return 'social';
+  return format;
+}
+
 function HtmlViewer({
   projectId,
   projectKind,
@@ -5844,6 +5862,7 @@ function HtmlViewer({
   shareRequest,
   downloadRequest,
   slideNavRequest,
+  onHardDelivery,
 }: {
   projectId: string;
   projectKind: TrackingProjectKind;
@@ -5865,6 +5884,7 @@ function HtmlViewer({
   shareRequest?: { nonce: number } | null;
   downloadRequest?: { nonce: number } | null;
   slideNavRequest?: { slideIndex: number; nonce: number } | null;
+  onHardDelivery?: (signal: HardDeliverySignal) => void;
 }) {
   const { locale, t } = useI18n();
   const analytics = useAnalytics();
@@ -5927,7 +5947,16 @@ function HtmlViewer({
       // Onboarding first-loop 交付 step (spec §8.3): only a SUCCESSFUL export
       // closes the loop. Project-scoped — a no-op unless the project was
       // started from the Home recommendation.
-      if (result === 'success') recordFirstLoopStep(analytics.track, 'delivered', projectId);
+      if (result === 'success') {
+        recordFirstLoopStep(analytics.track, 'delivered', projectId);
+        if (format !== 'image' && format !== 'template') {
+          onHardDelivery?.({
+            kind: hardDeliveryKindForExport(format),
+            source: 'artifact_export',
+            fileName: file.name,
+          });
+        }
+      }
     };
     const toastFormats = new Set(['pdf', 'pptx', 'zip', 'html', 'image', 'markdown']);
     // Programmatic exports compute in-browser and can take a while (one render
@@ -9499,6 +9528,13 @@ function HtmlViewer({
         project_id: projectId,
         project_kind: projectKind,
       });
+      if (result === 'success') {
+        onHardDelivery?.({
+          kind: 'deploy',
+          source: 'artifact_deploy',
+          fileName: file.name,
+        });
+      }
     };
     try {
       const cloudflarePagesSelection = buildCloudflarePagesDeploySelection();
@@ -12599,6 +12635,13 @@ function HtmlViewer({
                   {activeProjectSocialShare ? (
                     <SocialShareGrid
                       share={activeProjectSocialShare}
+                      onShare={() =>
+                        onHardDelivery?.({
+                          kind: 'social',
+                          source: 'social_share',
+                          fileName: file.name,
+                        })
+                      }
                       onAfterShare={closeDeployModal}
                     />
                   ) : null}

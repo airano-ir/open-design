@@ -64,6 +64,7 @@ import {
 import { latestTodosFromEvents, type TodoItem } from '../runtime/todos';
 import { deliverableSlideNavForActiveFile, isSlideNavDeliverableNow } from '../runtime/slide-nav';
 import { buildSrcdoc } from '../runtime/srcdoc';
+import { renderableStreamingDeckHtml } from '../runtime/flow-artifacts';
 import { removeSpeakerNotesFromHtml } from '../runtime/speaker-notes';
 import { useDesignKit, hostnameOf, type KitColor } from '../runtime/design-kit';
 import { useKitModuleUpload } from '../runtime/kit-upload';
@@ -100,6 +101,9 @@ import {
 import {
   resolveLocalizedText,
   type ChatSessionMode,
+  type FlowResearchMode,
+  type FlowShapeId,
+  type FlowStageId,
   type InstalledPluginRecord,
   type LocalizedText,
   type RunContextSelection,
@@ -118,7 +122,11 @@ import {
 import type { PluginFolderAgentAction } from './design-files/pluginFolderActions';
 import { designSystemGithubEvidenceState, repoConnectCopy } from './design-system-github-evidence';
 import { APP_CHROME_FILE_ACTIONS_ID } from './AppChromeHeader';
-import { FileViewer, LiveArtifactViewer } from './FileViewer';
+import {
+  FileViewer,
+  LiveArtifactViewer,
+  type HardDeliverySignal,
+} from './FileViewer';
 import { Icon, type IconName } from './Icon';
 import { Toast } from './Toast';
 import { TabLauncherMenu } from './workspace/TabLauncherMenu';
@@ -192,6 +200,7 @@ interface Props {
   // Open the named file AND surface its Download/Export menu. Drives the
   // chat-side "Download" next-step action.
   downloadRequest?: { name: string; nonce: number } | null;
+  onHardDelivery?: (signal: HardDeliverySignal) => void;
   // Flip a deck preview to a given slide when a queued chat send starts. Mirrors
   // `shareRequest`: the named file is activated (if open) and the matching
   // FileViewer consumes the nonce to navigate.
@@ -306,6 +315,13 @@ interface Props {
   questionFormSubmitDisabled?: boolean;
   questionFormSubmittedAnswers?: Record<string, string | string[]>;
   questionsGenerating?: boolean;
+  flowTrackingContext?: {
+    conversationId: string;
+    shape: FlowShapeId;
+    researchMode: FlowResearchMode;
+    activeStage: FlowStageId | null;
+    firstInputAt?: number;
+  } | null;
   onSubmitQuestionForm?: (
     text: string,
     attachments?: ChatAttachment[],
@@ -1235,6 +1251,7 @@ export function FileWorkspace({
   pinnedBrowserTabId,
   shareRequest,
   downloadRequest,
+  onHardDelivery,
   slideNavRequest,
   liveArtifactEvents = [],
   designSystemActivityEvents = [],
@@ -1298,6 +1315,7 @@ export function FileWorkspace({
   questionFormSubmitDisabled = false,
   questionFormSubmittedAnswers,
   questionsGenerating = false,
+  flowTrackingContext = null,
   onSubmitQuestionForm,
   focusQuestionsRequest = null,
 }: Props) {
@@ -3799,6 +3817,7 @@ export function FileWorkspace({
             submitDisabled={questionFormSubmitDisabled}
             submittedAnswers={questionFormSubmittedAnswers}
             generating={questionsGenerating}
+            flowTrackingContext={flowTrackingContext}
             onSubmit={(text, payload) =>
               onSubmitQuestionForm?.(text, payload?.attachments ?? [], payload?.context)
             }
@@ -4015,8 +4034,8 @@ export function FileWorkspace({
             projectKind={projectKind}
             file={activeFile}
             liveHtml={
-              isDeck && streaming && artifactHtml
-                ? artifactHtml
+              isDeck && streaming
+                ? renderableStreamingDeckHtml(artifactHtml)
                 : undefined
             }
             filesRefreshKey={filesRefreshKey}
@@ -4037,6 +4056,7 @@ export function FileWorkspace({
             onCommentModeChange={onCommentModeChange}
             shareRequest={activeFileShareRequest}
             downloadRequest={activeFileDownloadRequest}
+            onHardDelivery={onHardDelivery}
             slideNavRequest={activeFileSlideNavRequest}
           />
         ) : (

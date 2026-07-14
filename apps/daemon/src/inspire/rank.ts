@@ -122,6 +122,9 @@ export function filterInspireCatalogue(
   const filter = FLOW_SHAPES[mode].inspireFilter;
   const modes = new Set(filter.modes.map((value) => value.toLowerCase()));
   const platform = filter.platform?.toLowerCase();
+  const tags = new Set(
+    (filter.tags ?? []).map((value) => value.trim().toLowerCase()),
+  );
   const seen = new Set<string>();
   const filtered: InspireCatalogueEntry[] = [];
 
@@ -130,6 +133,12 @@ export function filterInspireCatalogue(
     if (!id || seen.has(id)) continue;
     if (!modes.has(entry.mode.trim().toLowerCase())) continue;
     if (platform && entry.platform?.trim().toLowerCase() !== platform) continue;
+    if (
+      tags.size > 0 &&
+      !(entry.tags ?? []).some((tag) => tags.has(tag.trim().toLowerCase()))
+    ) {
+      continue;
+    }
     seen.add(id);
     filtered.push(id === entry.id ? entry : { ...entry, id });
   }

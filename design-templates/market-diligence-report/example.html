@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Commercial Diligence — Warehouse Robotics</title>
+  <style>
+    :root { --paper:#fffdf8; --ink:#171714; --muted:#706f67; --line:#dedbd0; --accent:#bd4a2c; --soft:#f7e9e2; --navy:#27364a; --good:#2e7652; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:#eceae4; color:var(--ink); font:15px/1.58 Arial, ui-sans-serif, sans-serif; }
+    .page { width:min(1020px,calc(100% - 32px)); margin:26px auto; padding:56px 66px 68px; background:var(--paper); box-shadow:0 24px 70px rgba(23,23,20,.08); }
+    .mast { display:flex; justify-content:space-between; color:var(--muted); font-size:10px; letter-spacing:.1em; text-transform:uppercase; }
+    h1 { margin:42px 0 14px; max-width:18ch; font:700 52px/1.02 Georgia, serif; letter-spacing:-.035em; }
+    .thesis { max-width:72ch; font-size:19px; color:var(--muted); }
+    .recommendation { display:grid; grid-template-columns:120px 1fr 120px; gap:18px; align-items:center; margin:32px 0; padding:22px; border:1px solid var(--line); border-inline-start:5px solid var(--good); }
+    .recommendation .verdict { color:var(--good); font-size:24px; font-weight:900; text-align:center; }
+    .recommendation small { color:var(--muted); }
+    .confidence { padding:10px; border-radius:8px; background:#e9f4ee; color:var(--good); text-align:center; font-weight:800; }
+    h2 { margin:42px 0 14px; font:700 25px/1.2 Georgia, serif; }
+    .definition { display:grid; grid-template-columns:repeat(4,1fr); border:1px solid var(--line); }
+    .definition div { padding:15px; border-inline-end:1px solid var(--line); }
+    .definition div:last-child { border:0; }
+    .definition small { display:block; color:var(--accent); font-weight:800; text-transform:uppercase; letter-spacing:.06em; }
+    .market-grid { display:grid; grid-template-columns:1.1fr 1fr; gap:14px; }
+    .panel { padding:20px; border:1px solid var(--line); background:white; }
+    .panel h3 { margin:0 0 4px; }
+    .panel > small { color:var(--muted); }
+    .bridge { display:flex; align-items:flex-end; justify-content:space-between; height:190px; padding-top:24px; gap:10px; }
+    .bar { flex:1; background:var(--navy); color:white; text-align:center; padding:10px 5px; min-height:42px; }
+    .bar:nth-child(2) { background:#6f7f92; } .bar:nth-child(3) { background:var(--accent); }
+    .bar b,.bar small { display:block; }
+    .map { position:relative; height:220px; margin-top:18px; border-inline-start:1px solid var(--line); border-bottom:1px solid var(--line); background:linear-gradient(90deg,transparent 49.8%,var(--line) 50%,transparent 50.2%),linear-gradient(0deg,transparent 49.8%,var(--line) 50%,transparent 50.2%); }
+    .dot { position:absolute; width:58px; height:58px; display:grid; place-items:center; border-radius:50%; background:var(--navy); color:white; font-size:10px; text-align:center; }
+    .dot.target { width:70px; height:70px; background:var(--accent); box-shadow:0 0 0 8px var(--soft); }
+    table { width:100%; border-collapse:collapse; }
+    th,td { padding:11px 9px; border-bottom:1px solid var(--line); text-align:start; }
+    th { color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.06em; }
+    .scenarios { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+    .scenario { padding:18px; border-top:4px solid var(--line); background:white; }
+    .scenario.base { border-color:var(--accent); background:var(--soft); }
+    .scenario b { display:block; font:700 28px/1 Georgia,serif; margin:9px 0; }
+    .source { margin-top:38px; color:var(--muted); font-size:10px; }
+    @media(max-width:760px){.page{width:100%;margin:0;padding:32px 22px}.definition,.market-grid,.scenarios{grid-template-columns:1fr}.recommendation{grid-template-columns:1fr}.definition div{border:0;border-bottom:1px solid var(--line)}}
+    @media print{body{background:white}.page{width:auto;margin:0;box-shadow:none;padding:14mm}.panel,.scenario{break-inside:avoid}}
+  </style>
+</head>
+<body>
+  <article class="page">
+    <header data-od-id="header">
+      <div class="mast"><span>Commercial diligence · Investment committee</span><span>14 July 2026 · Confidential</span></div>
+      <h1>Warehouse robotics is investable where software controls the fleet</h1>
+      <p class="thesis">European demand is real and growing, but hardware-only economics compress quickly. The attractive segment combines brownfield deployment, multi-vendor orchestration, and recurring software revenue.</p>
+    </header>
+
+    <section class="recommendation" data-od-id="recommendation">
+      <div class="verdict">INVEST</div>
+      <div><b>Proceed to confirmatory diligence on the fleet-orchestration thesis.</b><br><small>Condition: validate 85%+ software gross margin and two multi-site expansion cohorts.</small></div>
+      <div class="confidence">Medium-high<br><small>confidence</small></div>
+    </section>
+
+    <section data-od-id="market-definition">
+      <h2>The relevant market is brownfield orchestration, not all warehouse automation</h2>
+      <div class="definition">
+        <div><small>Included</small>AMRs, fleet software, brownfield integration</div>
+        <div><small>Excluded</small>Greenfield AS/RS and conveyor-only systems</div>
+        <div><small>Customer</small>3PL, retail, and industrial operators</div>
+        <div><small>Geography</small>EU27 + UK, sites over 10k m²</div>
+      </div>
+    </section>
+
+    <section class="market-grid" data-od-id="market-sizing">
+      <div class="panel">
+        <h3>Two methods converge near €3.2B by 2030</h3><small>Bottom-up addressable spend · €B</small>
+        <div class="bridge">
+          <div class="bar" style="height:34%"><b>€1.1B</b><small>2026 software + services</small></div>
+          <div class="bar" style="height:62%"><b>€2.0B</b><small>Site adoption</small></div>
+          <div class="bar" style="height:100%"><b>€3.2B</b><small>2030 addressable</small></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Buyer value rewards integration depth</h3><small>Deployment speed → · Software differentiation ↑</small>
+        <div class="map">
+          <div class="dot" style="left:12%;top:68%">OEM A</div>
+          <div class="dot" style="left:57%;top:54%">Integrator B</div>
+          <div class="dot" style="left:34%;top:22%">Platform C</div>
+          <div class="dot target" style="left:70%;top:13%">Target</div>
+        </div>
+      </div>
+    </section>
+
+    <section data-od-id="evidence">
+      <h2>Expansion behavior is the strongest proof, while margins remain the key unknown</h2>
+      <table>
+        <thead><tr><th>Evidence</th><th>Observation</th><th>Confidence</th><th>Implication</th></tr></thead>
+        <tbody>
+          <tr><td>Customer interviews</td><td>14/18 prioritize mixed-fleet control</td><td>High</td><td>Orchestration is a buying criterion</td></tr>
+          <tr><td>Cohort data</td><td>62% add a second site in 12 months</td><td>Medium</td><td>Land-and-expand is plausible</td></tr>
+          <tr><td>Margin bridge</td><td>Implementation labor allocation unclear</td><td>Low</td><td>Confirm software gross margin</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section data-od-id="scenarios">
+      <h2>Returns depend more on expansion than market growth</h2>
+      <div class="scenarios">
+        <div class="scenario"><small>Downside</small><b>1.6×</b><span>Low expansion; services remain heavy</span></div>
+        <div class="scenario base"><small>Base</small><b>3.1×</b><span>Two-site expansion and 82% software margin</span></div>
+        <div class="scenario"><small>Upside</small><b>5.4×</b><span>Platform standardization across 3PL fleets</span></div>
+      </div>
+    </section>
+
+    <p class="source">Illustrative preview. Sources: operator interviews, Eurostat warehouse counts, company cohorts, and analyst estimates. Every final figure must carry a dated source or assumption label.</p>
+  </article>
+</body>
+</html>

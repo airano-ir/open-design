@@ -5,6 +5,10 @@ description: |
   on the page. Built by copying the seed `assets/template.html` and pasting
   one screen archetype from `references/layouts.md`. Use when the brief asks
   for "mobile app", "iOS app", "Android app", "phone screen", or "app UI".
+tags:
+  - "mobile-template"
+  - "mobile-app"
+  - "high-fidelity"
 triggers:
   - "mobile app"
   - "ios app"

@@ -97,6 +97,25 @@
   line-height: 1.5;
 }
 
+.reportPreview {
+  overflow: auto;
+  max-height: min(44vh, 460px);
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-subtle);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.reportPreview > :first-child {
+  margin-top: 0;
+}
+
+.reportPreview > :last-child {
+  margin-bottom: 0;
+}
+
 .report {
   display: flex;
   align-items: center;

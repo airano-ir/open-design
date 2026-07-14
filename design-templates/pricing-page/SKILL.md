@@ -4,6 +4,10 @@ description: |
   A standalone pricing page — header, plan tiers, feature comparison table,
   and an FAQ. Use when the brief asks for "pricing", "plans",
   "subscription tiers", or a "compare plans" page.
+tags:
+  - "landing-template"
+  - "pricing"
+  - "conversion"
 triggers:
   - "pricing"
   - "pricing page"

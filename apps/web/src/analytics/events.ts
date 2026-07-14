@@ -122,6 +122,10 @@ import type {
   PluginImportResultProps,
   RunCreatedProps,
   RunFinishedProps,
+  FlowStageTransitionProps,
+  FlowDefaultsUsedProps,
+  InspireChoiceProps,
+  HardDeliveryProps,
   FileUploadResultProps,
   ContextLinkResultProps,
   SpeakerNotesSaveResultProps,
@@ -984,6 +988,35 @@ export function trackRunFinished(
   options?: { requestId?: string },
 ): void {
   send(track, 'run_finished', props, options);
+}
+
+export function trackFlowStageTransition(
+  track: Track,
+  props: FlowStageTransitionProps,
+  options?: { insertId?: string },
+): void {
+  send(track, 'flow_stage_transition', props, options);
+}
+
+export function trackFlowDefaultsUsed(
+  track: Track,
+  props: FlowDefaultsUsedProps,
+): void {
+  send(track, 'flow_defaults_used', props);
+}
+
+export function trackInspireChoice(
+  track: Track,
+  props: InspireChoiceProps,
+): void {
+  send(track, 'inspire_choice', props);
+}
+
+export function trackHardDelivery(
+  track: Track,
+  props: HardDeliveryProps,
+): void {
+  send(track, 'hard_delivery', props);
 }
 
 export function trackFileUploadResult(

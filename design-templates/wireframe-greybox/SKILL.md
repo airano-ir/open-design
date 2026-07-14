@@ -8,6 +8,10 @@ description: |
   like a structural blueprint before any visual design is applied. Use
   when the brief asks for "greybox", "blueprint wireframe", "lo-fi
   dashboard", "low fidelity", "线框图", or "灰盒原型".
+tags:
+  - "prototype-template"
+  - "wireframe"
+  - "low-fidelity"
 triggers:
   - "greybox"
   - "grey box wireframe"

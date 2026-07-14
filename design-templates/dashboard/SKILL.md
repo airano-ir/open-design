@@ -5,6 +5,10 @@ description: |
   top bar with user/search, main grid of KPI cards and one or two charts.
   Use when the brief asks for a "dashboard", "admin", "analytics", or
   "control panel" screen.
+tags:
+  - "webapp-template"
+  - "dashboard"
+  - "operations"
 triggers:
   - "dashboard"
   - "admin panel"

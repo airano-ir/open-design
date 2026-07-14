@@ -50,6 +50,31 @@ describe('FlowProgressCard', () => {
     expect(screen.getByText('Skipped · default style')).toBeTruthy();
   });
 
+  it('localizes canonical engine details while preserving template names', () => {
+    let flow = createFlowSnapshot('mobile', { now: 1 });
+    flow = applyFlowMarker(
+      flow,
+      { stage: 'plan', state: 'complete', detail: 'Outline confirmed' },
+      2,
+    );
+    flow = applyFlowMarker(
+      flow,
+      {
+        stage: 'inspire',
+        state: 'complete',
+        detail: 'Using template wireframe-mobile-flow',
+      },
+      3,
+    );
+
+    render(<FlowProgressCard flow={flow} />);
+
+    expect(screen.queryByText('Outline confirmed')).toBeNull();
+    expect(screen.queryByText('Using template wireframe-mobile-flow')).toBeNull();
+    expect(screen.getAllByText('Done').length).toBeGreaterThan(0);
+    expect(screen.getByText('selected · wireframe-mobile-flow')).toBeTruthy();
+  });
+
   it('opens a durable stage artifact from the progress card', () => {
     const onOpenArtifact = vi.fn();
     render(

@@ -5,7 +5,6 @@
 // the whole journey is legible before it happens (problem P1 in the spec).
 // The card is a pure renderer: all advancement lives in the daemon tracker.
 
-import type { MutableRefObject } from 'react';
 import type { FlowSnapshot, FlowStageId, FlowStageState } from '@open-design/contracts';
 import { FLOW_SHAPES } from '@open-design/contracts';
 import { useT } from '../i18n';
@@ -46,14 +45,26 @@ const STAGE_GLYPH: Record<FlowStageState, string> = {
   error: '✕',
 };
 
+function localizedCanonicalDetail(
+  detail: string,
+  t: ReturnType<typeof useT>,
+): string {
+  if (detail === 'Waiting for outline changes') return t('flow.state.active');
+  if (detail === 'Outline confirmed') return t('flow.state.complete');
+  if (detail === 'Skipped · Using the default style') {
+    return `${t('flow.state.skipped')} · ${t('common.default')}`;
+  }
+  const template = /^Using template (.+)$/u.exec(detail)?.[1];
+  if (template) return `${t('common.selected')} · ${template}`;
+  return detail;
+}
+
 export function FlowProgressCard({
   flow,
-  containerRef,
   stageArtifactPaths,
   onOpenArtifact,
 }: {
   flow: FlowSnapshot;
-  containerRef?: MutableRefObject<HTMLDivElement | null>;
   stageArtifactPaths?: FlowStageArtifactPaths;
   onOpenArtifact?: (path: string) => void;
 }) {
@@ -75,7 +86,7 @@ export function FlowProgressCard({
   const unit = t(FLOW_SHAPES[flow.shape].progressUnitKey as keyof Dict);
 
   return (
-    <div className={styles.root} ref={containerRef} data-testid="flow-progress-card">
+    <div className={styles.root} data-testid="flow-progress-card">
       <div className={styles.head}>
         <span className={styles.title}>{t('flow.title')}</span>
         <span className={styles.stepOf}>{t('flow.stepOf', { current, total })}</span>
@@ -83,7 +94,7 @@ export function FlowProgressCard({
       <ol className={styles.steps}>
         {visibleStages.map((stage) => {
           const detail =
-            stage.detail ??
+            (stage.detail ? localizedCanonicalDetail(stage.detail, t) : undefined) ??
             (stage.state === 'pending'
               ? t(STAGE_HINT_KEY[stage.id])
               : t(STATE_KEY[stage.state]));

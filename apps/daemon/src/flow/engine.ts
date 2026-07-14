@@ -9,7 +9,7 @@
  *   2. Heuristic channel (fallback) — deterministic signals the daemon can
  *      observe regardless of whether the model emitted markers: a streamed
  *      `<question-form` (clarify), a research CLI invocation (research), a
- *      plan-artifact write (plan), an HTML artifact write (generate), the
+ *      plan-artifact write (plan), a shape-compatible artifact write (generate), the
  *      `[form answers …]` echo in the next user message (clarify complete),
  *      and a clean run end while generating (generate complete → deliver).
  *
@@ -22,6 +22,7 @@ import {
   applyFlowMarker,
   createFlowSnapshot,
   FLOW_SHAPES,
+  flowShapeFromRequestText,
   parseOdFlowMarkers,
   type FlowResearchMode,
   type FlowShapeId,
@@ -52,36 +53,48 @@ export function resolveFlowShape(input: ResolveFlowShapeInput): FlowShapeId | nu
   if ((input.sessionMode ?? 'design') !== 'design') return null;
   if ((input.taskKind ?? 'new-generation') !== 'new-generation') return null;
   const platform = input.projectPlatform ?? '';
+  const requestedShape = flowShapeFromRequestText(input.requestText);
   switch (input.projectKind) {
     case 'deck':
       return 'deck';
     case 'prototype':
-      return platform.startsWith('mobile') ? 'mobile' : 'webapp';
+      if (
+        requestedShape &&
+        ['prototype', 'landing', 'mobile', 'webapp'].includes(requestedShape)
+      ) {
+        return requestedShape;
+      }
+      return platform.startsWith('mobile') ? 'mobile' : 'prototype';
     case 'image':
     case 'video':
     case 'audio':
       return 'media';
     case 'template':
-      return 'document';
+      return requestedShape === 'report' ? 'report' : 'document';
     case 'other':
-      return flowShapeFromRequestText(input.requestText);
+      return requestedShape;
     default:
       return null;
   }
 }
 
-function flowShapeFromRequestText(text: string | null | undefined): FlowShapeId | null {
-  if (!text) return null;
-  const normalized = text.toLowerCase();
-  if (
-    /\b(?:pptx?|powerpoint|slide\s*deck|slides?|presentation|keynote|pitch\s*deck)\b/.test(
-      normalized,
-    ) ||
-    /幻灯片|投影片|演示文稿|簡報|简报/.test(normalized)
-  ) {
-    return 'deck';
-  }
-  return null;
+/**
+ * A provisional generic shape may become specific when clarify answers arrive.
+ * Once any later stage starts, the persisted shape is immutable.
+ */
+export function selectFlowShape(
+  initial: FlowSnapshot | null | undefined,
+  inferred: FlowShapeId | null,
+): FlowShapeId | null {
+  if (!initial) return inferred;
+  if (!inferred || inferred === initial.shape) return initial.shape;
+  const clarify = initial.stages.find((stage) => stage.id === 'clarify');
+  const laterStageStarted = initial.stages.some(
+    (stage) => stage.id !== 'clarify' && stage.state !== 'pending',
+  );
+  return clarify?.state === 'active' && !laterStageStarted
+    ? inferred
+    : initial.shape;
 }
 
 export interface FlowTracker {
@@ -127,13 +140,52 @@ export function createFlowTracker(options: CreateFlowTrackerOptions): FlowTracke
   /** Rolling window for `<question-form` detection across chunk boundaries. */
   let questionFormWindow = '';
   let questionFormSeen = false;
+  let planConfirmed =
+    snapshot.stages.find((stage) => stage.id === 'plan')?.state === 'complete';
+  let inspirationFinalized =
+    snapshot.inspireChoice !== undefined ||
+    ['complete', 'skipped'].includes(
+      snapshot.stages.find((stage) => stage.id === 'inspire')?.state ?? '',
+    );
 
   const planArtifactNames = FLOW_SHAPES[snapshot.shape].planArtifacts.map((p) => {
     const parts = p.split('/');
     return parts[parts.length - 1] ?? p;
   });
+  const generateExtensions = FLOW_SHAPES[snapshot.shape].generateExtensions;
+
+  function isGenerateArtifact(value: string): boolean {
+    const lower = value.toLowerCase().split(/[?#]/u, 1)[0] ?? '';
+    return generateExtensions.some((extension) => lower.endsWith(extension));
+  }
 
   function apply(marker: OdFlowMarker): boolean {
+    if (marker.stage === 'plan' && marker.state === 'complete' && !planConfirmed) {
+      return false;
+    }
+    if (
+      marker.stage === 'inspire' &&
+      (marker.state === 'complete' || marker.state === 'skipped') &&
+      !inspirationFinalized
+    ) {
+      return false;
+    }
+    if (marker.stage === 'generate') {
+      const planState = snapshot.stages.find((stage) => stage.id === 'plan')?.state;
+      const inspireState = snapshot.stages.find((stage) => stage.id === 'inspire')?.state;
+      if (
+        planState !== 'complete' ||
+        (inspireState !== 'complete' && inspireState !== 'skipped')
+      ) {
+        return false;
+      }
+    }
+    if (
+      marker.stage === 'deliver' &&
+      snapshot.stages.find((stage) => stage.id === 'generate')?.state !== 'complete'
+    ) {
+      return false;
+    }
     const next = applyFlowMarker(snapshot, marker, now());
     if (next === snapshot) return false;
     snapshot = next;
@@ -207,7 +259,7 @@ export function createFlowTracker(options: CreateFlowTrackerOptions): FlowTracke
       if (apply({ stage: 'plan', state: 'active' })) advanced = true;
       return advanced;
     }
-    if (lower.endsWith('.html') || lower.endsWith('.htm')) {
+    if (isGenerateArtifact(lower)) {
       if (apply({ stage: 'generate', state: 'active' })) advanced = true;
     }
     return advanced;
@@ -237,7 +289,7 @@ export function createFlowTracker(options: CreateFlowTrackerOptions): FlowTracke
             : typeof payload.name === 'string'
               ? payload.name
               : '';
-        if (!label.toLowerCase().endsWith('.md')) {
+        if (isGenerateArtifact(label)) {
           advanced = apply({ stage: 'generate', state: 'active' });
         }
       }
@@ -268,17 +320,21 @@ export function createFlowTracker(options: CreateFlowTrackerOptions): FlowTracke
           ) {
             advanced = true;
           }
-        } else if (
-          apply({
-            stage: 'plan',
-            state: 'complete',
-            detail: 'Outline confirmed',
-          })
-        ) {
-          advanced = true;
+        } else {
+          planConfirmed = true;
+          if (
+            apply({
+              stage: 'plan',
+              state: 'complete',
+              detail: 'Outline confirmed',
+            })
+          ) {
+            advanced = true;
+          }
         }
       }
       if (text.includes('[inspiration —') || text.includes('[inspiration -')) {
+        inspirationFinalized = true;
         if (apply({ stage: 'inspire', state: 'complete' })) advanced = true;
       }
       return advanced ? snapshot : null;

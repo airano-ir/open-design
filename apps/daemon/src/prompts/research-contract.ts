@@ -19,7 +19,7 @@ export function renderResearchCommandContract(
   const lines = [
     '## Research command contract',
     '',
-    'The user enabled Research for this run. Research is an agent-callable command, not hidden prompt context.',
+    'Research is available for this staged-flow run as an agent-callable command, not hidden prompt context.',
     `Selected research depth: ${depth}.`,
     '',
     ...renderDepthWorkflow(depth),

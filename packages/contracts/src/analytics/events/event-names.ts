@@ -19,6 +19,11 @@ export type AnalyticsEventName =
   | 'langfuse_report_result'
   | 'run_retry_attempted'
   | 'run_retry_finished'
+  // North-star staged-flow funnel and successful delivery completion.
+  | 'flow_stage_transition'
+  | 'flow_defaults_used'
+  | 'inspire_choice'
+  | 'hard_delivery'
   // Packaged updater lifecycle
   | 'update_install_result'
   | 'update_apply_observed'

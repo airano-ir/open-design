@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import type { ChatSessionMode } from '@open-design/contracts';
+import type { ChatSessionMode, FlowDeliverAction } from '@open-design/contracts';
 import { useI18n } from '../i18n';
 import { localizeSkillDescription, localizeSkillName } from '../i18n/content';
 import type { Dict } from '../i18n/types';
@@ -32,6 +32,7 @@ export type NextStepActionsVariant =
   | 'brand-extraction-incomplete'
   | 'brand-programmatic-incomplete'
   | 'brand-ai-incomplete'
+  | 'delivery'
   | 'plan';
 
 export const DESIGN_SYSTEM_NEXT_STEP_ACTIONS = [
@@ -226,6 +227,8 @@ interface Props {
   // Contribute the artifact to the Open Design community gallery.
   onShareToOpenDesign?: () => void;
   shareToOpenDesignBusy?: boolean;
+  deliverActions?: readonly FlowDeliverAction[];
+  deliveryReady?: boolean;
   variant?: NextStepActionsVariant;
 }
 
@@ -336,6 +339,8 @@ export function NextStepActions({
   toolboxSkillNames,
   onShareToOpenDesign,
   shareToOpenDesignBusy = false,
+  deliverActions = [],
+  deliveryReady = false,
   variant = 'default',
 }: Props) {
   const { t, locale } = useI18n();
@@ -619,11 +624,22 @@ export function NextStepActions({
   const canDownload = !!(fileName && onDownload);
   const canContribute = !!onShareToOpenDesign;
   const hasShareGroup = canShare || canDownload || canContribute;
+  const deliveryDownloadActions = deliverActions.filter((action) =>
+    ['pptx', 'pdf', 'html', 'zip', 'md'].includes(action),
+  );
+  const showDeliveryDownload =
+    variant === 'delivery' && deliveryDownloadActions.length > 0;
+  const showDeliveryShare =
+    variant === 'delivery' &&
+    deliverActions.some((action) => action === 'social' || action === 'deploy');
+  const showDeliveryRows = showDeliveryDownload || showDeliveryShare;
   const showCreateDesignSystem = (
     variant === 'default' ||
     variant === 'project-incomplete'
   ) && !!onCreateDesignSystem;
-  const hasMore = showCreateDesignSystem || !!onToolboxAction || hasShareGroup;
+  const hasMore =
+    variant !== 'delivery' &&
+    (showCreateDesignSystem || !!onToolboxAction || hasShareGroup);
   const showToolbox = !!onToolboxAction;
   const showPlanRows = variant === 'plan' && visiblePlanActions.length > 0 && !!onPromptAction;
   const showProjectIncompleteRows = variant === 'project-incomplete' && !!onPromptAction;
@@ -655,8 +671,52 @@ export function NextStepActions({
   return (
     <div className={styles.root} data-testid="next-step-actions">
       <div className={styles.label}>{t('nextStep.title')}</div>
-      {showBrandRows || showPlanRows || showProjectIncompleteRows || showDesignSystemRows || showToolbox || hasMore ? (
+      {showDeliveryRows || showBrandRows || showPlanRows || showProjectIncompleteRows || showDesignSystemRows || showToolbox || hasMore ? (
         <div className={styles.toolboxList} data-testid="next-step-toolbox">
+          {showDeliveryDownload ? (
+            <button
+              type="button"
+              className={styles.toolboxRow}
+              data-testid={'flow-delivery-download'}
+              disabled={!deliveryReady || !canDownload}
+              onClick={handleDownload}
+            >
+              <Icon name={'download'} size={14} className={styles.toolboxRowIcon} />
+              <span className={styles.toolboxRowText}>
+                <span className={styles.toolboxRowTitle}>
+                  {`${t('fileViewer.download')} ${deliveryDownloadActions
+                    .map((action) => action.toUpperCase())
+                    .join(' / ')}`}
+                </span>
+                <span className={styles.toolboxRowDescription}>
+                  {deliveryReady
+                    ? t('flow.hint.deliver')
+                    : `${t('flow.stage.generate')} · ${t('flow.state.active')}`}
+                </span>
+              </span>
+              <Icon name={'chevron-right'} size={13} className={styles.toolboxRowArrow} />
+            </button>
+          ) : null}
+          {showDeliveryShare ? (
+            <button
+              type="button"
+              className={styles.toolboxRow}
+              data-testid={'flow-delivery-share'}
+              disabled={!deliveryReady || !canShare}
+              onClick={handleShare}
+            >
+              <Icon name={'share'} size={14} className={styles.toolboxRowIcon} />
+              <span className={styles.toolboxRowText}>
+                <span className={styles.toolboxRowTitle}>{t('common.share')}</span>
+                <span className={styles.toolboxRowDescription}>
+                  {deliveryReady
+                    ? t('flow.hint.deliver')
+                    : `${t('flow.stage.generate')} · ${t('flow.state.active')}`}
+                </span>
+              </span>
+              <Icon name={'chevron-right'} size={13} className={styles.toolboxRowArrow} />
+            </button>
+          ) : null}
           {showPlanRows
             ? visiblePlanActions.map((action) => {
                 const title = t(action.titleKey);

@@ -1,13 +1,12 @@
 /* Staged-flow progress card (specs/current/staged-flow-north-star.zh-CN.md
-   §5.3). Pinned above the chat log for flow conversations: the whole ladder
-   is always visible so the user knows what happens next, not just what is
-   happening now. */
+   §5.3). Lives in the chat timeline after the latest message and updates in
+   place as the daemon advances the flow. */
 
 .root {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin: 8px 12px 0;
+  margin: 0;
   padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius);

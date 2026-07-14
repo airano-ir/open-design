@@ -7,6 +7,10 @@ description: |
   whiteboard before any pixels are committed. Use when the brief asks for
   "wireframe", "sketch wireframe", "hand-drawn", "lo-fi", "whiteboard",
   "草稿", or "手绘原型".
+tags:
+  - "prototype-template"
+  - "wireframe"
+  - "exploration"
 triggers:
   - "wireframe"
   - "sketch wireframe"

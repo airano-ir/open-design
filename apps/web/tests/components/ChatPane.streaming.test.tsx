@@ -3,6 +3,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { forwardRef, useImperativeHandle } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { applyFlowMarker, createFlowSnapshot } from '@open-design/contracts';
 
 import { ChatPane, buildRunErrorDiagnosticText, retryableAssistantMessage } from '../../src/components/ChatPane';
 import { DESIGN_SYSTEM_WORKSPACE_PROMPT_PREFIX } from '../../src/design-system-auto-prompt';
@@ -282,6 +283,56 @@ describe('ChatPane streaming state', () => {
     );
 
     expect(container.querySelector('.chat-log')?.className).not.toContain('is-balanced-transcript');
+  });
+
+  it('keeps the updating flow card in the message timeline', () => {
+    const messages: ChatMessage[] = [
+      { id: 'user-1', role: 'user', content: 'Make the landing page', createdAt: 1 },
+      { id: 'assistant-1', role: 'assistant', content: 'Starting now', createdAt: 2 },
+    ];
+    const baseProps = {
+      projectKindForTracking: 'prototype' as const,
+      messages,
+      streaming: false,
+      error: null,
+      projectId: 'project-1',
+      projectFiles: [],
+      onEnsureProject: async () => 'project-1',
+      onSend: vi.fn(),
+      onStop: vi.fn(),
+      conversations,
+      activeConversationId: 'conv-1',
+      onSelectConversation: vi.fn(),
+      onDeleteConversation: vi.fn(),
+      projectMetadata,
+    };
+    let flow = createFlowSnapshot('landing', { now: 1 });
+    flow = applyFlowMarker(
+      flow,
+      { stage: 'clarify', state: 'active', detail: 'Confirming the brief' },
+      2,
+    );
+    const { container, rerender } = render(
+      <ChatPane {...baseProps} flowSnapshot={flow} />,
+    );
+
+    const log = container.querySelector('.chat-log');
+    const card = screen.getByTestId('flow-progress-card');
+    const lastMessage = screen.getByTestId('assistant-streaming-assistant-1');
+    expect(log?.contains(card)).toBe(true);
+    expect(
+      lastMessage.compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
+
+    const updatedFlow = applyFlowMarker(
+      flow,
+      { stage: 'research', state: 'active', detail: 'Researching sources' },
+      3,
+    );
+    rerender(<ChatPane {...baseProps} flowSnapshot={updatedFlow} />);
+
+    expect(screen.getByTestId('flow-progress-card')).toBe(card);
+    expect(card.textContent).toContain('Researching sources');
   });
 
   it('keeps composer popovers above the chat jump button', () => {

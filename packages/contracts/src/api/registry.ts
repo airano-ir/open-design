@@ -162,6 +162,8 @@ export interface SkillSummary {
   description: string;
   descriptionI18n?: Record<string, string>;
   triggers: string[];
+  /** Search/ranking labels declared by the template or skill frontmatter. */
+  tags?: string[];
   mode:
     | 'prototype'
     | 'deck'
