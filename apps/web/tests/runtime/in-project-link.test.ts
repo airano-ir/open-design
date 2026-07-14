@@ -231,14 +231,26 @@ describe('resolveChatFileLink (issue: chatpane file links opening a home-page wi
       ).toEqual({ kind: 'workspace-file', filePath: 'mutuals-v2.html' });
     });
 
-    it('prefers the current project when a local absolute path matches a known project file', () => {
-      // Pre-existing behavior preserved: a disk path whose basename exists in
-      // the current project opens in the current workspace (covers legacy
-      // name-keyed project directories where the `/projects/<seg>/` segment
-      // is not the project id).
+    it('prefers the current project when a disk path names the current project', () => {
+      // The `/projects/<seg>/` segment IS the current project id, so the
+      // file opens in the current workspace — regardless of whether the
+      // basename also appears in `projectFileNames`.
       expect(
         resolveChatFileLink(
           '/Users/mac/open-design/data/projects/project-1/index.html',
+          new Set(['index.html']),
+          'project-1',
+        ),
+      ).toEqual({ kind: 'workspace-file', filePath: 'index.html' });
+    });
+
+    it('still matches non-managed absolute paths against known project files', () => {
+      // Absolute paths WITHOUT a `/projects/<seg>/` boundary keep the
+      // known-file basename fallback (imported-folder projects reference
+      // current-project files by external absolute path).
+      expect(
+        resolveChatFileLink(
+          '/Users/mac/my-workspace/site/index.html',
           new Set(['index.html']),
           'project-1',
         ),
@@ -257,6 +269,19 @@ describe('resolveChatFileLink (issue: chatpane file links opening a home-page wi
       expect(
         resolveChatFileLink('/api/projects/other-project/raw/deck-outline.md', undefined, 'project-1'),
       ).toEqual({ kind: 'project-file', projectId: 'other-project', filePath: 'deck-outline.md' });
+    });
+
+    it('routes a cross-project disk path to its owning project even when the basename collides with a current-project file', () => {
+      // `index.html` exists in BOTH projects. The disk path names its owning
+      // project explicitly, so the current-project basename fallback must
+      // not capture it — that would silently open the WRONG project's file.
+      expect(
+        resolveChatFileLink(
+          '/Users/mac/.open-design/data/projects/other-project/index.html',
+          new Set(['index.html']),
+          'project-1',
+        ),
+      ).toEqual({ kind: 'project-file', projectId: 'other-project', filePath: 'index.html' });
     });
 
     it('resolves an absolute managed-projects disk path to the owning project', () => {

@@ -60,11 +60,11 @@ export type ChatFileLinkTarget =
 /**
  * Resolve a chat markdown href to an in-app file target.
  *
- * Extends `asInProjectFilePath` (current-project resolution, kept intact so
- * known-file matches keep opening in the current workspace) with the two
- * cross-project shapes the assistant emits for @-referenced projects:
- * app file routes for another project, and absolute managed-projects disk
- * paths (`<data-root>/projects/<projectId>/<file>` — the daemon hands
+ * Extends `asInProjectFilePath` (current-project resolution for relative
+ * paths and known-file matches) with the two cross-project shapes the
+ * assistant emits for @-referenced projects: app file routes for another
+ * project, and absolute managed-projects disk paths
+ * (`<data-root>/projects/<projectId>/<file>` — the daemon hands
  * referenced projects to the agent as absolute paths, so its links come
  * back the same way). Without this, those links fell through to the default
  * `target="_blank"` behavior, and Electron's window-open handler produced a
@@ -79,30 +79,45 @@ export function resolveChatFileLink(
   projectFileNames?: ReadonlySet<string>,
   projectId?: string | null,
 ): ChatFileLinkTarget | null {
-  const currentProjectPath = asInProjectFilePath(href, projectFileNames, projectId);
-  if (currentProjectPath) return { kind: 'workspace-file', filePath: currentProjectPath };
   if (typeof href !== 'string') return null;
   const trimmed = href.trim();
   if (!trimmed || trimmed.startsWith('#')) return null;
   const normalizedHref = normalizeSameOriginHref(trimmed);
-  // App file routes for another project (asInProjectFilePath refuses these
-  // when the route's project differs from the current one).
+  // Hrefs that name their owning project explicitly (app file routes and
+  // managed-projects disk paths) are classified FIRST. They must never fall
+  // through to the current-project basename fallback below: a cross-project
+  // `/…/projects/other/index.html` would otherwise be captured by a
+  // same-named file in the current project — common names like `index.html`
+  // or `README.md` make that collision realistic — and silently open the
+  // WRONG project's file.
   const appRoute = extractAppProjectFileRoute(normalizedHref);
   if (appRoute) {
     const filePath = normalizeProjectFilePath(appRoute.filePath);
     if (!filePath) return null;
-    return { kind: 'project-file', projectId: appRoute.projectId, filePath };
+    if (projectId && appRoute.projectId !== projectId) {
+      return { kind: 'project-file', projectId: appRoute.projectId, filePath };
+    }
+    return { kind: 'workspace-file', filePath };
   }
-  if (/^[a-z][a-z0-9+.-]*:/i.test(normalizedHref)) return null;
-  const diskRoute = extractManagedProjectsDiskRoute(normalizedHref);
-  if (!diskRoute) return null;
-  if (projectId && diskRoute.projectId === projectId) {
-    // Same project but the file didn't suffix-match `projectFileNames`
-    // (stale file list, or a file the agent just wrote): still open it in
-    // the current workspace rather than re-navigating to our own project.
-    return { kind: 'workspace-file', filePath: diskRoute.filePath };
+  if (!/^[a-z][a-z0-9+.-]*:/i.test(normalizedHref)) {
+    const diskRoute = extractManagedProjectsDiskRoute(normalizedHref);
+    if (diskRoute) {
+      if (projectId && diskRoute.projectId === projectId) {
+        // Same project even when the file doesn't appear in
+        // `projectFileNames` (stale file list, or a file the agent just
+        // wrote): still open it in the current workspace rather than
+        // re-navigating to our own project.
+        return { kind: 'workspace-file', filePath: diskRoute.filePath };
+      }
+      return { kind: 'project-file', projectId: diskRoute.projectId, filePath: diskRoute.filePath };
+    }
   }
-  return { kind: 'project-file', projectId: diskRoute.projectId, filePath: diskRoute.filePath };
+  // Everything else — relative paths, known-file basename matches, absolute
+  // paths outside the managed projects root — resolves against the current
+  // project only.
+  const currentProjectPath = asInProjectFilePath(href, projectFileNames, projectId);
+  if (currentProjectPath) return { kind: 'workspace-file', filePath: currentProjectPath };
+  return null;
 }
 
 /**

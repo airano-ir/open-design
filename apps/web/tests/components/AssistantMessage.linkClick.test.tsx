@@ -207,7 +207,40 @@ describe('AssistantMessage — chat file-link routing (#1239)', () => {
     expect(clickEvent.defaultPrevented).toBe(true);
   });
 
-  it('routes local absolute paths that match project files through onRequestOpenFile', () => {
+  it('routes local absolute paths without a projects boundary through onRequestOpenFile', () => {
+    const onRequestOpenFile = vi.fn();
+    const { container } = render(
+      <AssistantMessage
+        message={messageWithText(
+          '已完成单文件原型：[index.html](/Users/mac/sites/web-prototype/index.html)。',
+        )}
+        streaming={false}
+        projectId="project-1"
+        projectFileNames={new Set(['index.html'])}
+        onRequestOpenFile={onRequestOpenFile}
+      />,
+    );
+
+    const anchor = container.querySelector('a.md-link');
+    expect(anchor).not.toBeNull();
+
+    const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
+    anchor!.dispatchEvent(clickEvent);
+
+    expect(onRequestOpenFile).toHaveBeenCalledTimes(1);
+    expect(onRequestOpenFile).toHaveBeenCalledWith('index.html');
+    expect(clickEvent.defaultPrevented).toBe(true);
+  });
+
+  it('navigates managed-looking disk paths to their named project even when the basename matches a current-project file', () => {
+    // A `/projects/<segment>/` boundary claims an owning project, and that
+    // claim outranks the current-project basename fallback: `index.html`
+    // existing in the current project must not capture ANOTHER project's
+    // `index.html` (silently previewing the wrong file). The cost is that a
+    // legacy name-keyed directory (`projects/Web Prototype/` from 0.10.x
+    // previews) now navigates to that name instead of basename-matching —
+    // an in-window project-missing bounce at worst, never the detached
+    // home window.
     const onRequestOpenFile = vi.fn();
     const { container } = render(
       <AssistantMessage
@@ -227,9 +260,11 @@ describe('AssistantMessage — chat file-link routing (#1239)', () => {
     const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
     anchor!.dispatchEvent(clickEvent);
 
-    expect(onRequestOpenFile).toHaveBeenCalledTimes(1);
-    expect(onRequestOpenFile).toHaveBeenCalledWith('index.html');
+    expect(onRequestOpenFile).not.toHaveBeenCalled();
     expect(clickEvent.defaultPrevented).toBe(true);
+    expect(decodeURIComponent(window.location.pathname)).toBe(
+      '/projects/Web Prototype/files/index.html',
+    );
   });
 
   it('does not intercept external https:// URLs — preserves default target="_blank" behavior', () => {
@@ -269,10 +304,12 @@ describe('AssistantMessage — chat file-link routing (#1239)', () => {
     expect(onRequestOpenFile).not.toHaveBeenCalled();
   });
 
-  it('keeps default link behavior when the host did not pass onRequestOpenFile', () => {
-    // Some surfaces (e.g. read-only history view) intentionally do not
-    // pass `onRequestOpenFile`. The fix must not throw and the link must
-    // still render with its default target="_blank" behavior.
+  it('swallows current-project file links when the host did not pass onRequestOpenFile', () => {
+    // Some surfaces (e.g. the design-system chat in DesignSystemFlow)
+    // intentionally do not pass `onRequestOpenFile`. There is no workspace
+    // pane to open the file in, and the default target="_blank" fallback
+    // would only produce the detached home-page window — so the click must
+    // be swallowed, not left to the default behavior.
     const { container } = render(
       <AssistantMessage
         message={messageWithText('Open [template.html](template.html) to preview.')}
@@ -283,9 +320,91 @@ describe('AssistantMessage — chat file-link routing (#1239)', () => {
 
     const anchor = container.querySelector('a.md-link');
     expect(anchor).not.toBeNull();
-    expect(anchor?.getAttribute('target')).toBe('_blank');
+    const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
+    anchor!.dispatchEvent(clickEvent);
+    expect(clickEvent.defaultPrevented).toBe(true);
+    expect(window.location.pathname).toBe('/');
+  });
+
+  it('still navigates cross-project file routes when the host did not pass onRequestOpenFile', () => {
+    // The cross-project navigation path must not be gated on the workspace
+    // opener: a surface without one (design-system chat) can still show the
+    // other project's file by navigating in the same window.
+    const { container } = render(
+      <AssistantMessage
+        message={messageWithText(
+          'See [index.html](/projects/other-project/files/index.html) in the reference project.',
+        )}
+        streaming={false}
+        projectId="project-1"
+      />,
+    );
+
+    const anchor = container.querySelector('a.md-link');
+    expect(anchor).not.toBeNull();
+    const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
+    anchor!.dispatchEvent(clickEvent);
+    expect(clickEvent.defaultPrevented).toBe(true);
+    expect(window.location.pathname).toBe('/projects/other-project/files/index.html');
+  });
+
+  it('still suppresses unresolvable path-like links when the host did not pass onRequestOpenFile', () => {
+    const { container } = render(
+      <AssistantMessage
+        message={messageWithText('参考实现：[bar.ts](/Users/mac/code/foo/bar.ts)。')}
+        streaming={false}
+        projectId="project-1"
+      />,
+    );
+
+    const anchor = container.querySelector('a.md-link');
+    expect(anchor).not.toBeNull();
+    const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
+    anchor!.dispatchEvent(clickEvent);
+    expect(clickEvent.defaultPrevented).toBe(true);
+    expect(window.location.pathname).toBe('/');
+  });
+
+  it('keeps default behavior for external URLs when the host did not pass onRequestOpenFile', () => {
+    const { container } = render(
+      <AssistantMessage
+        message={messageWithText('See [docs](https://example.com/docs) for context.')}
+        streaming={false}
+        projectId="project-1"
+      />,
+    );
+
+    const anchor = container.querySelector('a.md-link');
+    expect(anchor).not.toBeNull();
     const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
     anchor!.dispatchEvent(clickEvent);
     expect(clickEvent.defaultPrevented).toBe(false);
+  });
+
+  it('routes a cross-project disk path away from a same-named current-project file', () => {
+    // `index.html` exists in BOTH the current project and the linked
+    // @-referenced project. The managed-projects disk path names its owning
+    // project, so the click must navigate there — not open the current
+    // project's same-named file through the workspace opener.
+    const onRequestOpenFile = vi.fn();
+    const { container } = render(
+      <AssistantMessage
+        message={messageWithText(
+          '成稿在 [index.html](/Users/mac/.open-design/data/projects/other-project/index.html)。',
+        )}
+        streaming={false}
+        projectId="project-1"
+        projectFileNames={new Set(['index.html'])}
+        onRequestOpenFile={onRequestOpenFile}
+      />,
+    );
+
+    const anchor = container.querySelector('a.md-link');
+    expect(anchor).not.toBeNull();
+    const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
+    anchor!.dispatchEvent(clickEvent);
+    expect(onRequestOpenFile).not.toHaveBeenCalled();
+    expect(clickEvent.defaultPrevented).toBe(true);
+    expect(window.location.pathname).toBe('/projects/other-project/files/index.html');
   });
 });

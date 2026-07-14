@@ -2347,19 +2347,28 @@ function hasPluginFinalActionHint(content: string): boolean {
  * window; any remaining path-like href is swallowed, because its only
  * default outcome is a detached Electron window rendering the home screen
  * (0.14.1 acceptance bug: chatpane file links opened a home-page window). External URLs keep their default behavior.
+ *
+ * The handler is ALWAYS installed: only the workspace-file open action needs
+ * `onRequestOpenFile`. Surfaces that mount the chat without a workspace
+ * opener (e.g. the design-system chat in `DesignSystemFlow`) still must
+ * navigate cross-project targets and swallow unresolvable path-like hrefs —
+ * returning no handler there would reintroduce the detached home window for
+ * every file link.
  */
 function chatFileLinkClickHandler(
   onRequestOpenFile: ((name: string) => void) | undefined,
   projectFileNames: ReadonlySet<string> | undefined,
   projectId: string | null | undefined,
-): MarkdownLinkClickHandler | undefined {
-  if (!onRequestOpenFile) return undefined;
+): MarkdownLinkClickHandler {
   return (href, event) => {
     const target = resolveChatFileLink(href, projectFileNames, projectId);
     if (target) {
       event.preventDefault();
       if (target.kind === "workspace-file") {
-        onRequestOpenFile(target.filePath);
+        // Without a workspace opener the click stays swallowed: there is no
+        // pane that can preview the current project's file on this surface,
+        // and the default fallback would only open the home-page window.
+        onRequestOpenFile?.(target.filePath);
       } else {
         navigate({ kind: "project", projectId: target.projectId, fileName: target.filePath });
       }
@@ -2433,7 +2442,7 @@ function ProseBlock({
   // Without this, Electron's window-open handler creates a new app window
   // whose href can't resolve, and the user lands on the home screen — the
   // file is never previewed (issue #1239 and the 0.14.1 chatpane file-link acceptance bug).
-  const onLinkClick = useMemo<MarkdownLinkClickHandler | undefined>(
+  const onLinkClick = useMemo<MarkdownLinkClickHandler>(
     () => chatFileLinkClickHandler(onRequestOpenFile, projectFileNames, projectId),
     [onRequestOpenFile, projectFileNames, projectId],
   );
