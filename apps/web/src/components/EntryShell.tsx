@@ -2746,7 +2746,7 @@ function OnboardingView({
           ) : null}
 
           {step === 1 ? (
-            <div className="onboarding-view__panel">
+            <div className="onboarding-view__panel onboarding-view__panel--profile-question">
               <button
                 type="button"
                 className="onboarding-view__back-to-cloud"

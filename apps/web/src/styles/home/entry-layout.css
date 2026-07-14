@@ -2587,6 +2587,13 @@
   overflow: visible;
 }
 
+/* Keep the wayfinding action anchored near the top-left while bringing the
+   actual profile question closer to the pointer's natural post-login resting
+   area around the center of the viewport. */
+.onboarding-view__panel--profile-question .onboarding-view__panel-head {
+  margin-top: clamp(112px, 15vh, 168px);
+}
+
 .onboarding-view__design-system-create {
   width: min(760px, 100%);
   min-width: 0;
@@ -4442,6 +4449,10 @@
   .onboarding-view__panel {
     min-height: 0;
     padding: 18px;
+  }
+
+  .onboarding-view__panel--profile-question .onboarding-view__panel-head {
+    margin-top: 24px;
   }
 
   .onboarding-view__steps {
