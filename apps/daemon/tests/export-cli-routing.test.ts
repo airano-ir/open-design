@@ -100,6 +100,13 @@ describe('buildExportCliRequestBody', () => {
     });
   });
 
+  it('serializes explicit export width for responsive PDF/page exports', () => {
+    expect(buildExportCliRequestBody({ fileName: 'landing.html', format: 'pdf', width: 820 })).toEqual({
+      fileName: 'landing.html',
+      width: 820,
+    });
+  });
+
   it('rejects conflicting or impossible CLI deck/page modes', () => {
     expect(() => resolveExportCliDeckMode({ format: 'pdf', deck: true, page: true })).toThrow(
       /cannot be combined/,
