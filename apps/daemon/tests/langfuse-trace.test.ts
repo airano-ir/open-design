@@ -4071,4 +4071,86 @@ describe('reportRunFeedback', () => {
     expect(finalScoreBody.batch[0].body.traceId).not.toBe(fallbackTraceId);
     expect(resolveFeedbackTraceId({ runId })).toBe(runId);
   });
+
+  it('re-resolves a stale submit-time sink when deferred feedback flushes on a different channel', async () => {
+    // Queued while Vela was selected; final body accepted on relay (e.g. Vela
+    // 401/403 fallback). Flush must not keep the Vela opts.config — that would
+    // fail canDeliverRunFeedback and drop the score silently.
+    resetAcceptedFinalTraceBodyIdsForTests();
+    resetPendingRunFeedbackForTests();
+    const runId = 'run-deferred-channel-switch';
+    const previous = {
+      VELA_CONTROL_KEY: process.env.VELA_CONTROL_KEY,
+      VELA_API_URL: process.env.VELA_API_URL,
+      OPEN_DESIGN_TELEMETRY_RELAY_URL: process.env.OPEN_DESIGN_TELEMETRY_RELAY_URL,
+      LANGFUSE_PUBLIC_KEY: process.env.LANGFUSE_PUBLIC_KEY,
+      LANGFUSE_SECRET_KEY: process.env.LANGFUSE_SECRET_KEY,
+    };
+    process.env.OPEN_DESIGN_TELEMETRY_RELAY_URL =
+      'https://telemetry.open-design.ai/api/langfuse';
+    delete process.env.VELA_CONTROL_KEY;
+    delete process.env.VELA_API_URL;
+    delete process.env.LANGFUSE_PUBLIC_KEY;
+    delete process.env.LANGFUSE_SECRET_KEY;
+
+    const velaAtSubmit: TelemetrySinkConfig = {
+      kind: 'vela',
+      apiUrl: 'https://amr-api.example.com',
+      controlKey: 'ck_stale_submit',
+      timeoutMs: 20_000,
+      retries: 0,
+      profile: 'prod',
+      authSource: 'env',
+      clearLoginOnAuthFailure: false,
+    };
+    const fetchSpy = vi.fn().mockResolvedValue(new Response('{}', { status: 207 }));
+
+    try {
+      expect(
+        shouldDeferRunFeedback({
+          runId,
+          runStatus: 'failed',
+          telemetryFinalized: false,
+        }),
+      ).toBe(true);
+      await reportRunFeedback(
+        makeFeedbackCtx({
+          runId,
+          runStatus: 'failed',
+          telemetryFinalized: false,
+          reasonCodes: [],
+        }),
+        { config: velaAtSubmit, fetchImpl: fetchSpy as any },
+      );
+      expect(fetchSpy).not.toHaveBeenCalled();
+
+      // Accepted body landed on relay (not the Vela sink queued at submit).
+      rememberAcceptedFinalTraceBodyId(
+        runId,
+        scopedTelemetryBodyId(runId, 'final', 'terminal_fallback'),
+        'terminal_fallback',
+        'relay',
+      );
+
+      await vi.waitFor(() => {
+        expect(fetchSpy).toHaveBeenCalledTimes(1);
+      });
+      expect(String(fetchSpy.mock.calls[0]![0])).toBe(
+        'https://telemetry.open-design.ai/api/langfuse',
+      );
+      expect(String(fetchSpy.mock.calls[0]![0])).not.toContain(
+        '/api/v1/open-design/telemetry',
+      );
+      const feedbackBody = JSON.parse(fetchSpy.mock.calls[0]![1].body as string);
+      expect(feedbackBody.batch[0].type).toBe('score-create');
+      expect(feedbackBody.batch[0].body.traceId).toBe(
+        scopedTelemetryBodyId(runId, 'final', 'terminal_fallback'),
+      );
+    } finally {
+      for (const [key, value] of Object.entries(previous)) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
+    }
+  });
 });

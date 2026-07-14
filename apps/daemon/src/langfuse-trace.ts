@@ -318,6 +318,30 @@ export function queuePendingRunFeedback(
   pendingRunFeedbackByRunId.set(key, { ctx, opts });
 }
 
+/**
+ * Report opts for flushing deferred feedback onto an accepted final body.
+ *
+ * Feedback queued at submit time may carry `opts.config` from the live sink
+ * then (`reportRunFeedbackFromDaemon` passes `config: sink`). The body that
+ * is later accepted can land on a different channel (Vela 401/403 → relay, or
+ * login/logout during the delay). `resolveReportConfig` prefers explicit
+ * `opts.config` over sticky `acceptedDeliveryChannel`, so a stale sink would
+ * fail `canDeliverRunFeedback` and drop the score. Keep a matching explicit
+ * config; strip mismatch so sticky channel re-resolves from env.
+ */
+function flushReportOpts(
+  opts: ReportRunOpts,
+  deliveryChannel?: TelemetryDeliveryChannel,
+): ReportRunOpts {
+  if (!deliveryChannel) return opts;
+  if (opts.config === undefined || opts.config == null) return opts;
+  const pendingKind =
+    'kind' in opts.config ? opts.config.kind : ('langfuse' as const);
+  if (pendingKind === deliveryChannel) return opts;
+  const { config: _staleConfig, ...rest } = opts;
+  return rest;
+}
+
 function flushPendingRunFeedback(
   runId: string,
   acceptedBodyId: string,
@@ -346,7 +370,7 @@ function flushPendingRunFeedback(
         : {}),
       ...(velaIdentity ? { acceptedVelaIdentity: velaIdentity } : {}),
     },
-    pending.opts,
+    flushReportOpts(pending.opts, deliveryChannel),
   ).catch((err) => {
     console.warn(
       '[langfuse-trace] deferred feedback flush failed:',
