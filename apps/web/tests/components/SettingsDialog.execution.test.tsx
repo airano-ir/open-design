@@ -5063,4 +5063,67 @@ describe('SettingsDialog about interactions', () => {
     });
     expect(install).toHaveBeenCalledTimes(1);
   });
+
+  it('toggles allowSilentUpdates on the about page and autosaves without crashing', async () => {
+    const { onPersist } = renderSettingsDialog(
+      { mode: 'daemon', agentId: 'codex', allowSilentUpdates: false },
+      {
+        initialSection: 'about',
+        appVersionInfo: {
+          version: '0.14.1',
+          channel: 'beta',
+          packaged: true,
+          platform: 'darwin',
+          arch: 'arm64',
+        },
+      },
+    );
+
+    const checkbox = screen.getByTestId('settings-allow-silent-updates') as HTMLInputElement;
+    expect(checkbox.checked).toBe(false);
+
+    // Concurrent sibling updates (about-updater status subscription, autosave
+    // status) can defer the functional setCfg updater until after React has
+    // cleared event.currentTarget. Toggle twice to cover on → off.
+    fireEvent.click(checkbox);
+    expect(checkbox.checked).toBe(true);
+    expect(screen.getByTestId('settings-allow-silent-updates')).toBeTruthy();
+
+    await waitFor(() => {
+      expect(onPersist).toHaveBeenCalledWith(
+        expect.objectContaining({ allowSilentUpdates: true }),
+        expect.anything(),
+      );
+    });
+
+    fireEvent.click(checkbox);
+    expect(checkbox.checked).toBe(false);
+    expect(screen.getByTestId('settings-allow-silent-updates')).toBeTruthy();
+
+    await waitFor(() => {
+      expect(onPersist).toHaveBeenCalledWith(
+        expect.objectContaining({ allowSilentUpdates: false }),
+        expect.anything(),
+      );
+    });
+  });
+
+  it('does not read event.currentTarget inside the silent-updates setCfg updater', async () => {
+    // Source invariant: functional updaters must not close over event.currentTarget
+    // (null after the native/React event handler returns under pending lanes).
+    const { readFile } = await import('node:fs/promises');
+    const { join } = await import('node:path');
+    const source = await readFile(
+      join(process.cwd(), 'src/components/SettingsDialog.tsx'),
+      'utf8',
+    );
+    const silentToggleBlock = source.match(
+      /data-testid="settings-allow-silent-updates"[\s\S]*?<\/label>/,
+    )?.[0];
+    expect(silentToggleBlock).toBeTruthy();
+    expect(silentToggleBlock).not.toMatch(
+      /setCfg\(\s*\(\s*current\s*\)\s*=>\s*\(\{[\s\S]*?event\.currentTarget\.checked/,
+    );
+    expect(silentToggleBlock).toMatch(/const allowSilentUpdates = event\.currentTarget\.checked/);
+  });
 });
