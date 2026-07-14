@@ -235,6 +235,7 @@ import { useIframeKeepAlivePool } from './IframeKeepAlivePool';
 import {
   decideAutoOpenAfterWrite,
   selectAutoOpenProducedArtifact,
+  selectAutoOpenTurnArtifact,
 } from './auto-open-file';
 import { buildRepoImportPrompt, designSystemNeedsRepoConnect } from './design-system-github-evidence';
 import { isDesignSystemProject, resolveProjectDesignSystemId } from './design-system-project';
@@ -3923,7 +3924,10 @@ export function ProjectView({
               ) ?? [],
               recoveredExistingArtifact,
             );
-            const producedArtifactToOpen = selectAutoOpenProducedArtifact(produced, autoOpenArtifactOptions);
+            const producedArtifactToOpen = selectAutoOpenTurnArtifact(produced, nextFiles, {
+              ...autoOpenArtifactOptions,
+              turnStartedAt: status.createdAt || message.startedAt || message.createdAt || null,
+            });
             if (producedArtifactToOpen) requestOpenFile(producedArtifactToOpen);
             const deliveryOutcome = resolveDesignDeliveryOutcome({
               sessionMode: message.sessionMode,
@@ -4227,7 +4231,10 @@ export function ProjectView({
                   ) ?? [],
                   recoveredExistingArtifact,
                 );
-                const producedArtifactToOpen = selectAutoOpenProducedArtifact(produced, autoOpenArtifactOptions);
+                const producedArtifactToOpen = selectAutoOpenTurnArtifact(produced, nextFiles, {
+                  ...autoOpenArtifactOptions,
+                  turnStartedAt: status.createdAt || message.startedAt || message.createdAt || null,
+                });
                 if (producedArtifactToOpen) requestOpenFile(producedArtifactToOpen);
                 const deliveryContent = needsFullReplay ? replayedContent : message.content;
                 const deliveryEvents = needsFullReplay ? replayedEvents : message.events;
@@ -5627,7 +5634,10 @@ export function ProjectView({
                 nextFiles,
                 traceTouchedFilePaths,
               ) ?? [];
-              const producedArtifactToOpen = selectAutoOpenProducedArtifact(produced, autoOpenArtifactOptions);
+              const producedArtifactToOpen = selectAutoOpenTurnArtifact(produced, nextFiles, {
+                ...autoOpenArtifactOptions,
+                turnStartedAt: startedAt,
+              });
               if (producedArtifactToOpen) requestOpenFile(producedArtifactToOpen);
               const deliveryCandidate: ChatMessage = {
                 ...latestAssistantMsg,

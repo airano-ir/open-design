@@ -21,6 +21,7 @@ interface CandidateFile {
   readonly path?: string;
   readonly kind?: string;
   readonly mtime?: number;
+  readonly type?: string;
 }
 
 interface AutoOpenOptions {
@@ -141,6 +142,54 @@ export interface SelectAutoOpenOptions {
   // (ties to newest mtime); turns that produce no index.html keep the
   // standard rank/mtime behavior.
   readonly preferSiteEntry?: boolean;
+}
+
+export interface SelectAutoOpenTurnOptions extends SelectAutoOpenOptions {
+  // Epoch ms when the turn started. When set, files whose mtime lands at or
+  // after this instant (minus a filesystem-precision grace) count as touched
+  // by the turn even though their NAME already existed before it. A
+  // regeneration that rewrites index.html in place produces no new file name,
+  // so a pure pre/post name diff misses it — the Plan-mode
+  // plan → generate → edit plan → regenerate loop hits this on every second
+  // generation. Timing attribution mirrors AssistantMessage's
+  // inferProducedFilesFromTurn.
+  readonly turnStartedAt?: number | null;
+}
+
+const TURN_MTIME_GRACE_MS = 1_000;
+
+// Mirrors isImplicitProducedFileCandidate in src/produced-files.ts: sketches
+// change during a run because the USER draws, not because the agent wrote.
+function isUserSketchFile(file: CandidateFile): boolean {
+  return (file.path ?? file.name).toLowerCase().endsWith('.sketch.json');
+}
+
+// Turn-end auto-open selection: the produced (newly created) files plus any
+// pre-existing project file the turn rewrote in place, ranked by the same
+// preview priority as selectAutoOpenProducedArtifact. Without turnStartedAt
+// (legacy messages with no start stamp) this degrades to the produced-only
+// behavior rather than guessing from unrelated mtimes.
+export function selectAutoOpenTurnArtifact(
+  producedFiles: ReadonlyArray<CandidateFile>,
+  allFiles: ReadonlyArray<CandidateFile>,
+  options: SelectAutoOpenTurnOptions = {},
+): string | null {
+  const startedAt = options.turnStartedAt;
+  if (typeof startedAt !== 'number' || !Number.isFinite(startedAt) || startedAt <= 0) {
+    return selectAutoOpenProducedArtifact(producedFiles, options);
+  }
+  const seen = new Set(producedFiles.map((f) => f.name));
+  const candidates = [...producedFiles];
+  for (const file of allFiles) {
+    if (!file.name || seen.has(file.name)) continue;
+    if (file.type === 'dir') continue;
+    if (file.name.startsWith('.') || file.name.includes('/.')) continue;
+    if (isUserSketchFile(file)) continue;
+    const mtime = typeof file.mtime === 'number' && Number.isFinite(file.mtime) ? file.mtime : null;
+    if (mtime === null || mtime < startedAt - TURN_MTIME_GRACE_MS) continue;
+    candidates.push(file);
+  }
+  return selectAutoOpenProducedArtifact(candidates, options);
 }
 
 // Pick which of a turn's produced files to auto-open in the viewer. Among

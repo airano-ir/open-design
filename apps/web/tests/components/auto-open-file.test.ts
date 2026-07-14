@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   decideAutoOpenAfterWrite,
   selectAutoOpenProducedArtifact,
+  selectAutoOpenTurnArtifact,
 } from '../../src/components/auto-open-file';
 
 describe('decideAutoOpenAfterWrite', () => {
@@ -258,5 +259,110 @@ describe('selectAutoOpenProducedArtifact', () => {
 
       expect(result).toBe('about.html');
     });
+  });
+});
+
+describe('selectAutoOpenTurnArtifact', () => {
+  const TURN_START = 1_000_000;
+
+  it('opens a pre-existing HTML file the turn rewrote in place (plan regeneration)', () => {
+    // Plan-mode loop: plan → generate → edit plan → regenerate. The second
+    // generation rewrites index.html, so the name diff (produced) is empty.
+    const result = selectAutoOpenTurnArtifact(
+      [],
+      [
+        { name: 'plan.md', path: 'plan.md', kind: 'text', mtime: TURN_START - 60_000 },
+        { name: 'index.html', path: 'index.html', kind: 'html', mtime: TURN_START + 5_000 },
+      ],
+      { turnStartedAt: TURN_START },
+    );
+
+    expect(result).toBe('index.html');
+  });
+
+  it('still prefers rewritten HTML over a markdown plan touched in the same turn', () => {
+    const result = selectAutoOpenTurnArtifact(
+      [],
+      [
+        { name: 'plan.md', path: 'plan.md', kind: 'text', mtime: TURN_START + 9_000 },
+        { name: 'index.html', path: 'index.html', kind: 'html', mtime: TURN_START + 5_000 },
+      ],
+      { turnStartedAt: TURN_START },
+    );
+
+    expect(result).toBe('index.html');
+  });
+
+  it('keeps preferring newly produced files and merges rewritten ones by rank', () => {
+    const result = selectAutoOpenTurnArtifact(
+      [{ name: 'report.md', path: 'report.md', kind: 'text', mtime: TURN_START + 8_000 }],
+      [
+        { name: 'report.md', path: 'report.md', kind: 'text', mtime: TURN_START + 8_000 },
+        { name: 'index.html', path: 'index.html', kind: 'html', mtime: TURN_START + 5_000 },
+      ],
+      { turnStartedAt: TURN_START },
+    );
+
+    expect(result).toBe('index.html');
+  });
+
+  it('ignores files untouched since the turn started', () => {
+    const result = selectAutoOpenTurnArtifact(
+      [],
+      [
+        { name: 'index.html', path: 'index.html', kind: 'html', mtime: TURN_START - 90_000 },
+        { name: 'notes.txt', path: 'notes.txt', kind: 'text', mtime: TURN_START + 5_000 },
+      ],
+      { turnStartedAt: TURN_START },
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it('tolerates filesystem mtime precision right at the turn boundary', () => {
+    const result = selectAutoOpenTurnArtifact(
+      [],
+      [{ name: 'index.html', path: 'index.html', kind: 'html', mtime: TURN_START - 900 }],
+      { turnStartedAt: TURN_START },
+    );
+
+    expect(result).toBe('index.html');
+  });
+
+  it('excludes user sketches, dotfiles, and directories from turn attribution', () => {
+    const result = selectAutoOpenTurnArtifact(
+      [],
+      [
+        { name: 'page.sketch.json', path: 'page.sketch.json', kind: 'text', mtime: TURN_START + 5_000 },
+        { name: '.cache/index.html', path: '.cache/index.html', kind: 'html', mtime: TURN_START + 5_000 },
+        { name: 'assets', path: 'assets', type: 'dir', mtime: TURN_START + 5_000 },
+      ],
+      { turnStartedAt: TURN_START },
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it('falls back to produced-only selection without a turn start stamp', () => {
+    const result = selectAutoOpenTurnArtifact(
+      [],
+      [{ name: 'index.html', path: 'index.html', kind: 'html', mtime: TURN_START + 5_000 }],
+      {},
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it('honors preferSiteEntry across rewritten site files', () => {
+    const result = selectAutoOpenTurnArtifact(
+      [],
+      [
+        { name: 'about.html', path: 'about.html', kind: 'html', mtime: TURN_START + 9_000 },
+        { name: 'index.html', path: 'index.html', kind: 'html', mtime: TURN_START + 5_000 },
+      ],
+      { turnStartedAt: TURN_START, preferSiteEntry: true },
+    );
+
+    expect(result).toBe('index.html');
   });
 });
