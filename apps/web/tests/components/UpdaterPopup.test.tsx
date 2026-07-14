@@ -58,6 +58,25 @@ function payloadDownloadedStatus(overrides: Partial<OpenDesignHostUpdaterStatusS
   });
 }
 
+function autoReplaceDmgDownloadedStatus(overrides: Partial<OpenDesignHostUpdaterStatusSnapshot> = {}): OpenDesignHostUpdaterStatusSnapshot {
+  return downloadedStatus({
+    artifact: {
+      name: 'Open Design Beta.dmg',
+      platformKey: 'mac',
+      size: 1024,
+      type: 'dmg',
+      url: 'https://example.test/Open Design Beta.dmg',
+    },
+    capabilities: {
+      canApplyInPlace: true,
+      canDownload: true,
+      canOpenInstaller: false,
+      requiresManualInstall: false,
+    },
+    ...overrides,
+  });
+}
+
 describe('UpdaterPopup', () => {
   let restoreHost: (() => void) | null = null;
 
@@ -161,6 +180,30 @@ describe('UpdaterPopup', () => {
       host: {
         updater: {
           status: vi.fn(async () => payloadDownloadedStatus()),
+        },
+      },
+    });
+
+    render(
+      <I18nProvider initial="zh-CN">
+        <UpdaterPopup />
+      </I18nProvider>,
+    );
+
+    const button = await screen.findByTestId('entry-nav-updater');
+    expect(button.getAttribute('data-tooltip')).toBe('安装并重启');
+    fireEvent.click(button);
+
+    expect(await screen.findByRole('dialog', { name: '更新已就绪' })).toBeTruthy();
+    expect(screen.getByTestId('updater-install-button').textContent).toBe('安装并重启');
+    expect(screen.getByText('Open Design 1.2.3-beta.4 已就绪。Open Design 会关闭并自动重启。')).toBeTruthy();
+  });
+
+  it('uses install-and-restart copy for auto-replace DMG updates', async () => {
+    restoreHost = installMockOpenDesignHost({
+      host: {
+        updater: {
+          status: vi.fn(async () => autoReplaceDmgDownloadedStatus()),
         },
       },
     });

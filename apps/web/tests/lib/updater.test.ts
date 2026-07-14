@@ -96,6 +96,27 @@ describe('web updater model', () => {
     expect(model.shouldShowControl).toBe(true);
   });
 
+  it('keeps auto-replace DMG updates installable without manual installer capability', () => {
+    const model = deriveUpdaterModel(
+      downloadedStatus({
+        capabilities: {
+          canApplyInPlace: true,
+          canDownload: true,
+          canOpenInstaller: false,
+          requiresManualInstall: false,
+        },
+      }),
+      { hostAvailable: true },
+    );
+    expect(model.environment).toBe('desktop');
+    expect(model.updateKind).toBe('installer');
+    expect(model.canApplyInPlace).toBe(true);
+    expect(model.canOpenInstaller).toBe(false);
+    expect(model.requiresManualInstall).toBe(false);
+    expect(model.shouldPrompt).toBe(true);
+    expect(model.shouldShowControl).toBe(true);
+  });
+
   it('keeps downloading progress internal without showing the updater control', () => {
     const model = deriveUpdaterModel(
       downloadedStatus({

@@ -33,14 +33,14 @@ type UpdaterPopupProps = {
 
 function versionText(t: Translator, model: UpdaterModel): string {
   const version = model.availableVersion;
-  if (model.updateKind === 'payload') {
+  if (model.canApplyInPlace) {
     return version == null ? t('updater.payloadReadyGeneric') : t('updater.payloadReadyVersion', { version });
   }
   return version == null ? t('updater.readyGeneric') : t('updater.readyVersion', { version });
 }
 
 function installActionText(t: Translator, model: UpdaterModel, installBusy: boolean): string {
-  if (model.updateKind === 'payload') {
+  if (model.canApplyInPlace) {
     return installBusy ? t('updater.installingRestart') : t('updater.installRestart');
   }
   return installBusy ? t('updater.opening') : t('updater.openInstaller');
@@ -137,7 +137,7 @@ export function UpdaterPopup({
   const installBusy = installState === 'opening' || installState === 'handoff';
   const canStartInstall = ready || installState === 'recoverable';
   const showControl = ready || installState !== 'idle';
-  const controlLabel = model.updateKind === 'payload' ? t('updater.installRestart') : t('updater.openInstaller');
+  const controlLabel = model.canApplyInPlace ? t('updater.installRestart') : t('updater.openInstaller');
   const channelLabel = channelLabelFor(model.status?.channel);
   const analytics = useAnalytics();
   const appVersionBefore = useAppVersion();

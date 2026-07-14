@@ -323,7 +323,7 @@ export function deriveAboutUpdateControl(
       return {
         primaryAction: canInstallUpdate ? 'install' : null,
         primaryLabelKey: canInstallUpdate
-          ? model.updateKind === 'payload'
+          ? model.canApplyInPlace
             ? 'updater.installRestart'
             : 'settings.updateNow'
           : null,

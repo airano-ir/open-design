@@ -14,7 +14,7 @@ import {
   stat,
   writeFile,
 } from "node:fs/promises";
-import { dirname, extname, isAbsolute, join, relative, resolve } from "node:path";
+import { basename, dirname, extname, isAbsolute, join, relative, resolve } from "node:path";
 import { pipeline } from "node:stream/promises";
 import { promisify } from "node:util";
 
@@ -187,6 +187,10 @@ type SpawnInstallerHelper = (
 export type DeferredInstallerLaunchInput = {
   appPid: number;
   installerPath: string;
+  macAutoReplace?: {
+    expectedAppName: string;
+    targetBundlePath: string;
+  };
   root: string;
   timeoutMs: number;
 };
@@ -474,19 +478,42 @@ function isSupportedPackageLauncherPlatform(platform: string): boolean {
   return platform === "darwin" || platform === "win32";
 }
 
-function capabilitiesFor(status: { artifactType?: string; mode: DesktopUpdateMode; platform: string; supported: boolean }) {
+function capabilitiesFor(status: {
+  artifactType?: string;
+  canAutoReplaceMacDmg?: boolean;
+  mode: DesktopUpdateMode;
+  platform: string;
+  supported: boolean;
+}) {
   const packageLauncher =
     status.mode === DESKTOP_UPDATE_MODES.PACKAGE_LAUNCHER &&
     isSupportedPackageLauncherPlatform(status.platform) &&
     status.supported;
   const payloadUpdate = status.artifactType === "payload";
+  const autoReplaceMacDmg = status.artifactType === "dmg" && status.canAutoReplaceMacDmg === true;
   const hasSelectedArtifact = status.artifactType != null && status.artifactType.length > 0;
-  const manualInstaller = packageLauncher && (!hasSelectedArtifact || !payloadUpdate);
+  const manualInstaller = packageLauncher && (!hasSelectedArtifact || (!payloadUpdate && !autoReplaceMacDmg));
   return {
-    canApplyInPlace: packageLauncher && payloadUpdate,
+    canApplyInPlace: packageLauncher && (payloadUpdate || autoReplaceMacDmg),
     canDownload: packageLauncher,
     canOpenInstaller: manualInstaller,
     requiresManualInstall: manualInstaller,
+  };
+}
+
+function macAutoReplaceTarget(input: { launcherLaunchPath?: string; platform: string }): DeferredInstallerLaunchInput["macAutoReplace"] | undefined {
+  if (input.platform !== "darwin") return undefined;
+  const targetBundlePath = input.launcherLaunchPath;
+  if (targetBundlePath == null || targetBundlePath.length === 0) return undefined;
+  if (!isAbsolute(targetBundlePath) || !targetBundlePath.endsWith(".app")) return undefined;
+  if (targetBundlePath.includes("\0")) return undefined;
+  if (targetBundlePath.startsWith("/Volumes/")) return undefined;
+  if (targetBundlePath.includes("/AppTranslocation/")) return undefined;
+  const expectedAppName = basename(targetBundlePath, ".app");
+  if (expectedAppName.length === 0 || expectedAppName.includes("/")) return undefined;
+  return {
+    expectedAppName,
+    targetBundlePath,
   };
 }
 
@@ -1452,6 +1479,152 @@ exit 0
 `;
 }
 
+function macDeferredDmgReplaceScript(): string {
+  return `#!/bin/sh
+set -eu
+target_pid="$1"
+installer_path="$2"
+timeout_seconds="$3"
+target_bundle_path="$4"
+expected_app_name="$5"
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+owned_mount="$script_dir/dmg-mount-$$"
+plist_path="$script_dir/hdiutil-attach-$$.plist"
+mounted_path=""
+
+cleanup() {
+  if [ -n "$mounted_path" ]; then
+    hdiutil detach "$mounted_path" >/dev/null 2>&1 || true
+  fi
+  rmdir "$owned_mount" >/dev/null 2>&1 || true
+  rm -f "$plist_path"
+  rm -f "$0"
+}
+trap cleanup EXIT
+
+fallback_open_installer() {
+  if [ -n "$mounted_path" ]; then
+    hdiutil detach "$mounted_path" >/dev/null 2>&1 || true
+    mounted_path=""
+  fi
+  open "$installer_path" >/dev/null 2>&1 &
+  exit 0
+}
+
+plist_value() {
+  /usr/libexec/PlistBuddy -c "Print :$2" "$1/Contents/Info.plist" 2>/dev/null || true
+}
+
+deadline=$(($(date +%s) + timeout_seconds))
+while kill -0 "$target_pid" 2>/dev/null; do
+  if [ "$(date +%s)" -ge "$deadline" ]; then
+    fallback_open_installer
+  fi
+  sleep 1
+done
+
+case "$target_bundle_path" in
+  /*.app) ;;
+  *) fallback_open_installer ;;
+esac
+case "$target_bundle_path" in
+  /Volumes/*|*/AppTranslocation/*) fallback_open_installer ;;
+esac
+if [ ! -d "$target_bundle_path" ] || [ -L "$target_bundle_path" ]; then
+  fallback_open_installer
+fi
+target_parent=$(dirname -- "$target_bundle_path")
+target_base=$(basename -- "$target_bundle_path")
+if [ ! -w "$target_parent" ]; then
+  fallback_open_installer
+fi
+
+mkdir -p "$owned_mount" || fallback_open_installer
+if hdiutil attach -nobrowse -noverify -readonly -mountpoint "$owned_mount" "$installer_path" >/dev/null 2>&1; then
+  mounted_path="$owned_mount"
+else
+  rmdir "$owned_mount" >/dev/null 2>&1 || true
+  if hdiutil attach -nobrowse -noverify -readonly -plist "$installer_path" >"$plist_path" 2>/dev/null; then
+    index=0
+    while [ "$index" -lt 20 ]; do
+      candidate_mount=$(/usr/libexec/PlistBuddy -c "Print :system-entities:$index:mount-point" "$plist_path" 2>/dev/null || true)
+      if [ -n "$candidate_mount" ]; then
+        mounted_path="$candidate_mount"
+        break
+      fi
+      index=$((index + 1))
+    done
+  fi
+fi
+if [ -z "$mounted_path" ] || [ ! -d "$mounted_path" ]; then
+  fallback_open_installer
+fi
+
+set -- "$mounted_path"/*.app
+if [ "$#" -ne 1 ] || [ ! -e "$1" ]; then
+  fallback_open_installer
+fi
+source_app="$1"
+if [ ! -d "$source_app" ] || [ -L "$source_app" ]; then
+  fallback_open_installer
+fi
+
+source_id=$(plist_value "$source_app" "CFBundleIdentifier")
+target_id=$(plist_value "$target_bundle_path" "CFBundleIdentifier")
+if [ -n "$source_id" ] && [ -n "$target_id" ]; then
+  if [ "$source_id" != "$target_id" ]; then
+    fallback_open_installer
+  fi
+else
+  source_name=$(plist_value "$source_app" "CFBundleName")
+  target_name=$(plist_value "$target_bundle_path" "CFBundleName")
+  if [ -z "$source_name" ]; then
+    source_name=$(basename -- "$source_app" .app)
+  fi
+  if [ -z "$target_name" ]; then
+    target_name=$(basename -- "$target_bundle_path" .app)
+  fi
+  if [ "$source_name" != "$expected_app_name" ] || [ "$target_name" != "$expected_app_name" ]; then
+    fallback_open_installer
+  fi
+fi
+
+tmp_root="$target_parent/.od-update-tmp"
+backup_root="$target_parent/.od-update-back"
+tmp_bundle="$tmp_root/$target_base"
+backup_bundle="$backup_root/$target_base"
+rm -rf "$tmp_root" "$backup_root"
+mkdir -p "$tmp_root" "$backup_root" || fallback_open_installer
+if ! ditto "$source_app" "$tmp_bundle"; then
+  rm -rf "$tmp_root" "$backup_root"
+  fallback_open_installer
+fi
+for attribute in com.apple.quarantine com.apple.provenance com.apple.macl; do
+  xattr -dr "$attribute" "$tmp_bundle" >/dev/null 2>&1 || true
+done
+
+if ! mv "$target_bundle_path" "$backup_bundle"; then
+  rm -rf "$tmp_root" "$backup_root"
+  fallback_open_installer
+fi
+if ! mv "$tmp_bundle" "$target_bundle_path"; then
+  if [ -d "$backup_bundle" ] && [ ! -e "$target_bundle_path" ]; then
+    mv "$backup_bundle" "$target_bundle_path" >/dev/null 2>&1 || true
+  fi
+  rm -rf "$tmp_root" "$backup_root"
+  fallback_open_installer
+fi
+
+if [ -n "$mounted_path" ]; then
+  hdiutil detach "$mounted_path" >/dev/null 2>&1 || true
+  mounted_path=""
+fi
+rm -rf "$tmp_root" "$backup_root"
+open -n "$target_bundle_path" >/dev/null 2>&1 &
+exit 0
+`;
+}
+
 function windowsDeferredInstallerScript(): string {
   return `param(
   [Parameter(Mandatory = $true)]
@@ -1579,13 +1752,24 @@ async function launchMacInstallerAfterQuit(
   try {
     const helpersRoot = await ensureOwnedSubdir(input.root, HELPERS_DIR);
     const suffix = `${deps.now().getTime().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-    const scriptPath = join(helpersRoot, `open-installer-after-quit-${suffix}.sh`);
-    await writeFile(scriptPath, macDeferredInstallerScript(), { encoding: "utf8", mode: 0o700 });
+    const autoReplace = input.macAutoReplace;
+    const scriptPath = join(
+      helpersRoot,
+      autoReplace == null ? `open-installer-after-quit-${suffix}.sh` : `replace-dmg-after-quit-${suffix}.sh`,
+    );
+    await writeFile(scriptPath, autoReplace == null ? macDeferredInstallerScript() : macDeferredDmgReplaceScript(), { encoding: "utf8", mode: 0o700 });
     await chmod(scriptPath, 0o700);
     const timeoutSeconds = Math.max(1, Math.ceil(input.timeoutMs / 1000)).toString();
+    const args = [
+      scriptPath,
+      input.appPid.toString(),
+      input.installerPath,
+      timeoutSeconds,
+      ...(autoReplace == null ? [] : [autoReplace.targetBundlePath, autoReplace.expectedAppName]),
+    ];
     const child = deps.spawnDetached(
       "/bin/sh",
-      [scriptPath, input.appPid.toString(), input.installerPath, timeoutSeconds],
+      args,
       { detached: true, stdio: "ignore", windowsHide: true },
     );
     child.unref();
@@ -2482,6 +2666,7 @@ export function createDesktopUpdater(
       ...(lifecycleSummary == null ? {} : { cache: { lifecycle: lifecycleSummary } }),
       capabilities: capabilitiesFor({
         artifactType: capabilityArtifactType,
+        canAutoReplaceMacDmg: capabilityArtifactType === "dmg" && macAutoReplaceTarget(config) != null,
         mode: config.mode,
         platform: config.platform,
         supported: statusSupported,
@@ -2962,9 +3147,11 @@ export function createDesktopUpdater(
 
   async function requestInstallerOpen(resolvedDownload: string, updateRoot: string): Promise<string> {
     if (config.platform !== "darwin" && config.platform !== "win32") return await openPath(resolvedDownload);
+    const macAutoReplace = activeRelease?.ref.artifact.type === "dmg" ? macAutoReplaceTarget(config) : undefined;
     return await launchInstallerAfterQuit({
       appPid: processPid,
       installerPath: resolvedDownload,
+      ...(macAutoReplace == null ? {} : { macAutoReplace }),
       root: updateRoot,
       timeoutMs: config.platform === "win32" ? WINDOWS_DEFERRED_INSTALLER_TIMEOUT_MS : MAC_DEFERRED_INSTALLER_TIMEOUT_MS,
     });

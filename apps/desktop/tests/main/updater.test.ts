@@ -1628,6 +1628,65 @@ describe("desktop updater", () => {
     }
   });
 
+  it("writes a mac DMG replacement helper when the installed app bundle path is trusted", async () => {
+    const root = makeRoot();
+    const fixture = await createUpdaterFixture();
+    const targetBundlePath = "/Applications/Open Design.app";
+    const spawned: Array<{ args: string[]; command: string }> = [];
+    try {
+      const updater = createDesktopUpdater(
+        {
+          arch: "arm64",
+          downloadRoot: root,
+          env: {
+            ...updaterEnv(fixture.metadataUrl),
+            [DESKTOP_UPDATE_ENV.OPEN_DRY_RUN]: "0",
+          },
+          launcherLaunchPath: targetBundlePath,
+          source: SIDECAR_SOURCES.TOOLS_PACK,
+        },
+        {
+          processPid: 4242,
+          spawnDetached: (command, args) => {
+            spawned.push({ args, command });
+            return { unref: vi.fn() };
+          },
+        },
+      );
+
+      const checked = await updater.checkForUpdates();
+      const installed = await updater.installUpdate();
+
+      expect(checked.artifact?.type).toBe("dmg");
+      expect(checked.capabilities.canApplyInPlace).toBe(true);
+      expect(checked.capabilities.canOpenInstaller).toBe(false);
+      expect(checked.capabilities.requiresManualInstall).toBe(false);
+      expect(installed.installResult?.path).toBe(checked.downloadPath);
+      expect(spawned).toHaveLength(1);
+      expect(spawned[0]?.command).toBe("/bin/sh");
+      const [scriptPath, pidArg, installerArg, timeoutArg, targetArg, expectedAppNameArg] = spawned[0]?.args ?? [];
+      expect(scriptPath).toEqual(expect.stringContaining(join(root, "helpers", "replace-dmg-after-quit-")));
+      expect(pidArg).toBe("4242");
+      expect(installerArg).toBe(checked.downloadPath);
+      expect(timeoutArg).toBe("600");
+      expect(targetArg).toBe(targetBundlePath);
+      expect(expectedAppNameArg).toBe("Open Design");
+      const script = await readFile(scriptPath ?? "", "utf8");
+      expect(script).toContain('while kill -0 "$target_pid"');
+      expect(script).toContain("hdiutil attach");
+      expect(script).toContain("ditto");
+      expect(script).toContain("hdiutil detach");
+      expect(script).toContain('open -n "$target_bundle_path"');
+      expect(script).toContain('open "$installer_path"');
+      expect(script).toContain('target_bundle_path="$4"');
+      expect(script).toContain('expected_app_name="$5"');
+      expect(script).not.toContain(targetBundlePath);
+    } finally {
+      await fixture.close();
+      rmSync(root, { force: true, recursive: true });
+    }
+  });
+
   it("writes and starts the Windows helper script that opens the installer after quit", async () => {
     const root = makeRoot();
     const fixture = await createUpdaterFixture({ platform: "win" });
