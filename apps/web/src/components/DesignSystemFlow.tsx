@@ -89,7 +89,7 @@ import { notifyConnectorsChanged } from './connectors-events';
 import { connectorAuthSnapshotChanged } from './connectors-state';
 import { FileWorkspace } from './FileWorkspace';
 import { Icon, type IconName } from './Icon';
-import { Spinner } from './Loading';
+import { Spinner, WaveLoader } from './Loading';
 import { useAnalytics } from '../analytics/provider';
 import {
   trackDesignSystemCreateResult,
@@ -1726,38 +1726,14 @@ function DesignSystemExtractionDemo({
   const [creationStep, setCreationStep] = useState<'summary' | 'artifact' | 'compose'>('summary');
   const showSummary = stage === 'system-review' && creationStep === 'summary';
   const showArtifactFlow = stage === 'system-review' && creationStep !== 'summary';
-  const loadingSteps = [
-    {
-      label: 'Logo',
-      state: stage === 'extracting-logo' ? 'active' : 'complete',
-    },
-    {
-      label: 'Typography',
-      state: stage === 'extracting-system' ? 'active' : 'waiting',
-    },
-    {
-      label: 'Palette',
-      state: stage === 'extracting-system' ? 'active' : 'waiting',
-    },
-  ] as const;
-
   return (
     <main
-      className={`ds-extraction-demo${showSummary ? ' ds-extraction-demo--result' : ''}${showArtifactFlow ? ' ds-extraction-demo--artifact-flow' : ''}${isLoading || stage === 'logo-review' ? ' ds-extraction-demo--focused-step' : ''}`}
+      className={`ds-extraction-demo${showSummary ? ' ds-extraction-demo--result' : ''}${showArtifactFlow ? ' ds-extraction-demo--artifact-flow' : ''}${stage === 'logo-review' ? ' ds-extraction-demo--focused-step' : ''}`}
       aria-live="polite"
     >
       {isLoading ? (
         <section className="ds-extraction-demo__loading">
-          <h1>{stage === 'extracting-logo' ? 'Extracting your logo' : 'Building your design system'}</h1>
-          <p>Reading <strong>{label}</strong> and preparing a first pass.</p>
-          <div className="ds-extraction-demo__scan" aria-label="Extraction progress">
-            {loadingSteps.map((item) => (
-              <div className={`is-${item.state}`} key={item.label}>
-                <span>{item.label}</span>
-                <b>{item.state === 'complete' ? 'Found' : item.state === 'active' ? 'Extracting' : 'Queued'}</b>
-              </div>
-            ))}
-          </div>
+          <WaveLoader label={stage === 'extracting-logo' ? 'Extracting logo' : 'Building design system'} />
         </section>
       ) : null}
 

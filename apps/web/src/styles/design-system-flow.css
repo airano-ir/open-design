@@ -144,12 +144,13 @@
   align-items: start;
   padding-top: clamp(96px, 14vh, 140px);
 }
-.ds-extraction-demo__loading,
 .ds-extraction-demo__card {
   width: min(100%, 440px);
 }
 .ds-extraction-demo__loading {
   display: grid;
+  min-height: min(520px, calc(100vh - 128px));
+  place-items: center;
   justify-items: center;
 }
 .ds-extraction-demo h1 {
@@ -174,53 +175,6 @@
   border-radius: 20px;
   background: var(--bg-panel);
   box-shadow: 0 20px 56px color-mix(in srgb, var(--shadow-color, #000) 10%, transparent);
-}
-.ds-extraction-demo__scan {
-  display: grid;
-  width: min(100%, 360px);
-  gap: 8px;
-  margin-top: 28px;
-  text-align: left;
-}
-.ds-extraction-demo__scan > div {
-  position: relative;
-  display: flex;
-  min-height: 48px;
-  align-items: center;
-  justify-content: space-between;
-  overflow: hidden;
-  padding: 0 14px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--bg-panel);
-}
-.ds-extraction-demo__scan span {
-  position: relative;
-  z-index: 1;
-  color: var(--text-strong);
-  font-size: 13px;
-  font-weight: 600;
-}
-.ds-extraction-demo__scan b {
-  position: relative;
-  z-index: 1;
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 500;
-}
-.ds-extraction-demo__scan .is-active {
-  border-color: color-mix(in srgb, var(--accent) 44%, var(--border));
-}
-.ds-extraction-demo__scan .is-active::after {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 10%, transparent), transparent);
-  content: "";
-  transform: translateX(-100%);
-  animation: ds-extraction-scan 1.1s cubic-bezier(0.23, 1, 0.32, 1) infinite;
-}
-.ds-extraction-demo__scan .is-complete b {
-  color: var(--accent-strong);
 }
 .ds-extraction-demo__logo-tile {
   position: relative;
@@ -642,16 +596,6 @@
   line-height: 1.05;
 }
 
-@keyframes ds-extraction-scan {
-  to { transform: translateX(100%); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ds-extraction-demo__scan .is-active::after {
-    animation: none;
-    transform: none;
-  }
-}
 .ds-artifact-picker header p {
   margin: 12px 0 0;
   color: var(--text-muted);
