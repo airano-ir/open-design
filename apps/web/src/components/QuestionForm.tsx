@@ -46,6 +46,10 @@ export interface QuestionFormFileSubmission {
 // Lets a parent (the Questions tab Continue button) trigger submission.
 export interface QuestionFormHandle {
   submit: () => void;
+  // Submit the current seeded defaults even when open-ended required fields
+  // are blank. Staged flows use this for their explicit one-click recommended
+  // path; ordinary forms continue to enforce required-field readiness.
+  submitRecommended: () => void;
   // Submit with no answers — backs the "skip all" affordance. Every question
   // is optional, so this just records each as "(skipped)" and moves on.
   skipAll: () => void;
@@ -156,6 +160,16 @@ export const QuestionFormView = forwardRef<QuestionFormHandle, Props>(function Q
     }
   }
 
+  function handleSubmitRecommended() {
+    if (locked || !onSubmit) return;
+    const files = collectFileSubmissions(form, fileAnswers);
+    if (files.length > 0) {
+      onSubmit(formatFormAnswers(form, answers), answers, files);
+    } else {
+      onSubmit(formatFormAnswers(form, answers), answers);
+    }
+  }
+
   function handleSkipAll() {
     if (locked || !onSubmit) return;
     const empty: Record<string, string | string[]> = {};
@@ -182,7 +196,11 @@ export const QuestionFormView = forwardRef<QuestionFormHandle, Props>(function Q
   });
   const ready = withinSelectionLimits && requiredAnswered;
 
-  useImperativeHandle(ref, () => ({ submit: handleSubmit, skipAll: handleSkipAll }));
+  useImperativeHandle(ref, () => ({
+    submit: handleSubmit,
+    submitRecommended: handleSubmitRecommended,
+    skipAll: handleSkipAll,
+  }));
   useEffect(() => {
     onReadyChange?.(!locked && ready);
   }, [onReadyChange, locked, ready]);

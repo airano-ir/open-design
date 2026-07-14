@@ -1,30 +1,28 @@
 ---
 name: simple-deck
-en_name: "Write an Operating Review like a Disciplined COO"
-zh_name: "像克制的 COO 一样写经营复盘"
+en_name: "Slide Deck Starter"
+zh_name: "幻灯片起步模板"
 description: |
-  Open Design's operating review: growth, burn, and the concrete path to sustainability without losing the open ethos. Built as a decision-grade corporate strategy deck for leadership team.
+  General-purpose slide-deck framework with a proven 1920×1080 canvas,
+  reusable layouts, navigation, print behavior, and overflow checks.
 en_description: |
-  Open Design's operating review: growth, burn, and the concrete path to sustainability without losing the open ethos. Built as a decision-grade corporate strategy deck for leadership team.
+  General-purpose slide-deck framework with a proven 1920×1080 canvas,
+  reusable layouts, navigation, print behavior, and overflow checks.
 zh_description: |
-  像克制的 COO 一样写经营复盘——一份可商业交付的企业战略 Deck，围绕真实主题、证据链与决策目标组织。
+  通用幻灯片框架，内置经过验证的 1920×1080 画布、可复用版式、导航、打印行为与溢出检查。
 tags:
-  - "corporate-strategy"
-  - "board-pre-read-deck"
-  - "strategy"
-  - "board"
-  - "business-review"
-  - "decision-deck"
-  - "commercial-slide-agent"
+  - "deck"
+  - "slides"
+  - "presentation"
+  - "deck-starter"
+  - "deck-framework"
   - "simple-deck"
 triggers:
-  - "board-pre-read-deck"
-  - "corporate-strategy"
-  - "Write an Operating Review like a Disciplined COO"
-  - "像克制的 COO 一样写经营复盘"
-  - "board"
-  - "strategy"
-  - "business-review"
+  - "slide deck"
+  - "presentation"
+  - "pitch deck"
+  - "幻灯片"
+  - "演示文稿"
   - "html deck"
   - "html slides"
 od:
@@ -35,9 +33,9 @@ od:
   design_system:
     requires: true
     sections: [color, typography, layout, components]
-  category: "corporate-strategy"
-  scenario: "strategy"
-  example_prompt: "Create \"Write an Operating Review like a Disciplined COO\" as a decision-grade Corporate strategy deck in this template's own visual system. Subject: Open Design's operating review: growth, burn, and the concrete path to sustainability without losing the open ethos. Audience: leadership team. First ask only for missing essentials: audience, decision target, source-of-truth materials, deadline, and must-keep numbers. Then produce the slide plan, written slides, visual direction, speaker-ready structure, and a critic pass against this rubric: would a board member know what to approve and why before page five."
+  category: "slides"
+  scenario: "design"
+  example_prompt: "Create a polished slide deck from the user's brief. Confirm only the missing audience, decision target, source materials, deadline, and must-keep facts; then produce the plan, written slides, visual direction, speaker-ready structure, and an overflow-safe critic pass."
 ---
 
 # Simple Deck Skill

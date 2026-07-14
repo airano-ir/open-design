@@ -1380,6 +1380,7 @@ describe('HomeView prompt handoff', () => {
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
       pluginId: 'example-simple-deck',
+      pluginTitle: null,
       projectKind: 'deck',
       projectMetadata: expect.objectContaining({
         kind: 'deck',

@@ -372,7 +372,12 @@ export function QuestionsPanel({
   // `ready` (from QuestionForm) and gates Continue via `canContinue`.
   const canSubmit =
     !!form && interactive && !building && !submitDisabled && !uploadingFiles && !submitting;
-  const canContinue = canSubmit && ready;
+  // A staged flow's pristine CTA is an explicit "use the recommendations"
+  // action. Keep it available when the model asks for optional facts as
+  // required free text without a default: seeded choices still submit and the
+  // unanswered facts are serialized as skipped for the agent to infer.
+  const canUseStagedRecommendations = Boolean(flowTrackingContext && pristineDefaults);
+  const canContinue = canSubmit && (ready || canUseStagedRecommendations);
   const canSkip = canSubmit;
 
   // Release the optimistic lock once the world catches up: either the turn is
@@ -411,9 +416,10 @@ export function QuestionsPanel({
       // Honour the user's picks when the form is submittable; otherwise fall
       // back to skipping so a stray selection-cap can't stall generation.
       if (ready) formRef.current?.submit();
+      else if (canUseStagedRecommendations) formRef.current?.submitRecommended();
       else formRef.current?.skipAll();
     }
-  }, [canSubmit, ready, remaining]);
+  }, [canSubmit, canUseStagedRecommendations, ready, remaining]);
 
   const countdown = `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}`;
 
@@ -480,7 +486,8 @@ export function QuestionsPanel({
           data-testid={pristineDefaults ? 'questions-recommended-start' : 'questions-continue'}
           onClick={() => {
             submitSourceRef.current = pristineDefaults ? 'recommended' : 'continue';
-            formRef.current?.submit();
+            if (canUseStagedRecommendations) formRef.current?.submitRecommended();
+            else formRef.current?.submit();
           }}
         >
           {submitting ? (

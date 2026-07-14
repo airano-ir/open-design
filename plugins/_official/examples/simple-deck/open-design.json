@@ -2,18 +2,18 @@
   "$schema": "https://open-design.ai/schemas/plugin.v1.json",
   "specVersion": "1.0.0",
   "name": "example-simple-deck",
-  "title": "Write an Operating Review like a Disciplined COO",
+  "title": "Slide Deck Starter",
   "title_i18n": {
-    "en": "Write an Operating Review like a Disciplined COO",
-    "zh-CN": "像克制的 COO 一样写经营复盘",
-    "zh-TW": "像克制的 COO 一样写经营复盘"
+    "en": "Slide Deck Starter",
+    "zh-CN": "幻灯片起步模板",
+    "zh-TW": "投影片起步範本"
   },
   "version": "0.1.1",
-  "description": "Open Design's operating review: growth, burn, and the concrete path to sustainability without losing the open ethos. Built as a decision-grade corporate strategy deck for leadership team.",
+  "description": "General-purpose slide-deck framework with a proven 1920×1080 canvas, reusable layouts, navigation, print behavior, and overflow checks.",
   "description_i18n": {
-    "en": "Open Design's operating review: growth, burn, and the concrete path to sustainability without losing the open ethos. Built as a decision-grade corporate strategy deck for leadership team.",
-    "zh-CN": "像克制的 COO 一样写经营复盘——一份可商业交付的企业战略 Deck，围绕真实主题、证据链与决策目标组织。",
-    "zh-TW": "像克制的 COO 一样写经营复盘——一份可商业交付的企业战略 Deck，围绕真实主题、证据链与决策目标组织。"
+    "en": "General-purpose slide-deck framework with a proven 1920×1080 canvas, reusable layouts, navigation, print behavior, and overflow checks.",
+    "zh-CN": "通用幻灯片框架，内置经过验证的 1920×1080 画布、可复用版式、导航、打印行为与溢出检查。",
+    "zh-TW": "通用投影片框架，內建經過驗證的 1920×1080 畫布、可重用版式、導覽、列印行為與溢出檢查。"
   },
   "license": "MIT",
   "author": {
@@ -30,18 +30,9 @@
     "slides",
     "ppt",
     "presentation",
-    "untitled",
-    "roadmap",
-    "architecture",
     "simple-deck",
-    "product-and-technical-management",
-    "corporate-strategy",
-    "board-pre-read-deck",
-    "strategy",
-    "board",
-    "business-review",
-    "decision-deck",
-    "commercial-slide-agent"
+    "deck-starter",
+    "deck-framework"
   ],
   "compat": {
     "agentSkills": [
@@ -54,7 +45,7 @@
     "kind": "scenario",
     "taskKind": "new-generation",
     "mode": "deck",
-    "scenario": "strategy",
+    "scenario": "design",
     "surface": "web",
     "preview": {
       "type": "html",
@@ -62,17 +53,17 @@
     },
     "useCase": {
       "query": {
-        "en": "Create \"Write an Operating Review like a Disciplined COO\" as a decision-grade Corporate strategy deck in this template's own visual system. Subject: Open Design's operating review: growth, burn, and the concrete path to sustainability without losing the open ethos. Audience: leadership team. First ask only for missing essentials: audience, decision target, source-of-truth materials, deadline, and must-keep numbers. Then produce the slide plan, written slides, visual direction, speaker-ready structure, and a critic pass against this rubric: would a board member know what to approve and why before page five.",
-        "zh-CN": "像克制的 COO 一样写经营复盘。像克制的 COO 一样写经营复盘——一份可商业交付的企业战略 Deck，围绕真实主题、证据链与决策目标组织。 主题：Open Design's operating review: growth, burn, and the concrete path to sustainability without losing the open ethos. 先确认受众、决策目标、素材来源、截止时间和必须保留的数据，再输出叙事主线、页面规划、逐页文案、视觉方向和按评审标准自检的版本。"
+        "en": "Create a polished {{deckType}} for {{audience}} about {{topic}} with {{slideCount}}. Speaker notes: {{speakerNotes}}. Use {{designSystem}} and treat the user's brief as the source of truth. Ask only for missing essentials: audience, decision target, source materials, deadline, and must-keep facts. Then produce the slide plan, written slides, visual direction, speaker-ready structure, and an overflow-safe critic pass. Build from `assets/template.html` and the layouts in `references/layouts.md`.",
+        "zh-CN": "围绕 {{topic}}，为 {{audience}} 制作一份精致的 {{deckType}}，共 {{slideCount}}。演讲者备注：{{speakerNotes}}。使用 {{designSystem}}，并以用户需求为唯一事实来源。只补问缺失的受众、决策目标、素材、截止时间和必须保留的事实；然后输出页面规划、逐页文案、视觉方向、可演讲结构与防溢出自检。基于 `assets/template.html` 和 `references/layouts.md` 中的版式生成。"
       },
       "exampleOutputs": [
         {
           "path": "./example.html",
-          "title": "Write an Operating Review like a Disciplined COO",
+          "title": "Slide Deck Layout Reference",
           "title_i18n": {
-            "en": "Write an Operating Review like a Disciplined COO",
-            "zh-CN": "像克制的 COO 一样写经营复盘",
-            "zh-TW": "像克制的 COO 一样写经营复盘"
+            "en": "Slide Deck Layout Reference",
+            "zh-CN": "幻灯片版式参考",
+            "zh-TW": "投影片版式參考"
           }
         }
       ]
@@ -177,6 +168,6 @@
       "prompt:inject",
       "fs:write"
     ],
-    "category": "corporate-strategy"
+    "category": "slides"
   }
 }

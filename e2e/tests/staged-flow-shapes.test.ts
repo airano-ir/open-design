@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  DEFAULT_SCENARIO_PLUGIN_BY_KIND,
   FLOW_SHAPES,
   type FlowShapeId,
 } from '@open-design/contracts';
@@ -17,6 +18,7 @@ interface TemplateMetadata {
 
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 const templatesRoot = path.join(repoRoot, 'design-templates');
+const pluginsRoot = path.join(repoRoot, 'plugins', '_official', 'examples');
 const REQUESTED_SHAPES: readonly FlowShapeId[] = [
   'prototype',
   'landing',
@@ -67,6 +69,26 @@ async function readTemplateMetadata(): Promise<TemplateMetadata[]> {
 }
 
 describe('staged-flow shape resource closure', () => {
+  it('[P0] keeps the default deck scenario generic until inspiration is chosen', async () => {
+    const pluginId = DEFAULT_SCENARIO_PLUGIN_BY_KIND.deck;
+    expect(pluginId).toBe('example-simple-deck');
+    const manifest = JSON.parse(
+      await readFile(
+        path.join(pluginsRoot, pluginId.replace(/^example-/u, ''), 'open-design.json'),
+        'utf8',
+      ),
+    ) as {
+      title?: string;
+      description?: string;
+      od?: { useCase?: { query?: { en?: string } } };
+    };
+
+    expect(manifest.title).toBe('Slide Deck Starter');
+    expect(manifest.description).toContain('General-purpose');
+    expect(manifest.od?.useCase?.query?.en).toContain('{{topic}}');
+    expect(manifest.od?.useCase?.query?.en).not.toContain("Open Design's operating review");
+  });
+
   it('[P1] keeps valuable inspiration choices available for every requested shape', async () => {
     const templates = await readTemplateMetadata();
 

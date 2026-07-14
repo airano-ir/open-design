@@ -78,4 +78,62 @@ describe('QuestionsPanel staged-flow analytics', () => {
       undefined,
     );
   });
+
+  it('keeps the staged-flow recommended path actionable when optional facts have no default', () => {
+    vi.useFakeTimers();
+    const onSubmit = vi.fn();
+    const stagedForm: QuestionForm = {
+      ...form,
+      questions: [
+        {
+          id: 'product',
+          label: 'Product name',
+          type: 'text',
+          required: true,
+        },
+        ...form.questions,
+      ],
+    };
+    render(
+      <QuestionsPanel
+        projectId={'project-1'}
+        form={stagedForm}
+        formKey={'conversation-1:message-2:deck-brief'}
+        interactive={true}
+        generating={false}
+        flowTrackingContext={{
+          conversationId: 'conversation-1',
+          shape: 'deck',
+          researchMode: 'basic',
+          activeStage: 'clarify',
+        }}
+        onSubmit={onSubmit}
+      />,
+    );
+    act(() => {
+      vi.advanceTimersByTime(280);
+    });
+    act(() => {
+      vi.advanceTimersByTime(280);
+    });
+
+    const start = screen.getByTestId('questions-recommended-start') as HTMLButtonElement;
+    expect(start.disabled).toBe(false);
+    fireEvent.click(start);
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.stringContaining('- Audience: Executives [value: executives]'),
+    );
+    expect(onSubmit.mock.calls[0]?.[0]).toContain('- Product name: (skipped)');
+    expect(track).toHaveBeenCalledWith(
+      'flow_defaults_used',
+      expect.objectContaining({
+        used_defaults: true,
+        submission_mode: 'recommended',
+        answered_count: 1,
+        skipped_count: 1,
+      }),
+      undefined,
+    );
+  });
 });
