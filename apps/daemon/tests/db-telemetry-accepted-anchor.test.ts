@@ -5,6 +5,7 @@ import path from 'node:path';
 
 import {
   closeDatabase,
+  getMessageTelemetryFinalizationState,
   getRunFeedbackTelemetryAnchor,
   insertConversation,
   insertProject,
@@ -316,13 +317,18 @@ describe('persisted telemetry accepted anchor', () => {
       telemetryFinalized: false,
     });
 
-    // Old run row is gone; new run must not inherit the previous :tf anchor.
+    // Old run row is gone; new run must not inherit the previous :tf anchor
+    // or the previous finalization gate (fallback skip checks finalizedAt).
     expect(getRunFeedbackTelemetryAnchor(db, oldRunId, 'assistant-1')).toBeNull();
     expect(getRunFeedbackTelemetryAnchor(db, newRunId, 'assistant-1')).toEqual({
       runStatus: null,
-      telemetryFinalized: true,
+      telemetryFinalized: false,
       acceptedTraceBodyId: null,
       acceptedReportTrigger: null,
+    });
+    expect(getMessageTelemetryFinalizationState(db, 'assistant-1')).toEqual({
+      exists: true,
+      finalizedAt: null,
     });
     expect(
       resolveFeedbackTraceId({
@@ -381,7 +387,8 @@ describe('persisted telemetry accepted anchor', () => {
     });
 
     // Run creation pins existing assistant rows through a raw UPDATE, not
-    // upsertMessage — that path must also drop the previous :tf anchor.
+    // upsertMessage — that path must also drop the previous :tf anchor and
+    // finalization gate.
     pinAssistantMessageOnRunCreate(db, {
       id: newRunId,
       conversationId: 'conv-1',
@@ -394,9 +401,13 @@ describe('persisted telemetry accepted anchor', () => {
     expect(getRunFeedbackTelemetryAnchor(db, newRunId, 'assistant-1')).toEqual({
       // Terminal run_status is preserved by the pin CASE expression.
       runStatus: 'failed',
-      telemetryFinalized: true,
+      telemetryFinalized: false,
       acceptedTraceBodyId: null,
       acceptedReportTrigger: null,
+    });
+    expect(getMessageTelemetryFinalizationState(db, 'assistant-1')).toEqual({
+      exists: true,
+      finalizedAt: null,
     });
     expect(
       resolveFeedbackTraceId({
@@ -407,7 +418,8 @@ describe('persisted telemetry accepted anchor', () => {
       }),
     ).toBe(newRunId);
 
-    // Same run_id pin keeps an accepted anchor (idempotent re-pin).
+    // Same run_id pin keeps an accepted anchor (idempotent re-pin) without
+    // re-opening the finalization gate (anchor write does not finalize).
     expect(
       setRunTelemetryAcceptedAnchor(db, {
         runId: newRunId,
@@ -425,9 +437,65 @@ describe('persisted telemetry accepted anchor', () => {
     });
     expect(getRunFeedbackTelemetryAnchor(db, newRunId, 'assistant-1')).toEqual({
       runStatus: 'failed',
-      telemetryFinalized: true,
+      telemetryFinalized: false,
       acceptedTraceBodyId: newRunId,
       acceptedReportTrigger: 'final_message',
+    });
+  });
+
+  it('reused assistant row after failed retry keeps finalization gate open for terminal fallback', () => {
+    // Mirrors reportRunCompletionTelemetryFallback: it skips the send when
+    // getMessageTelemetryFinalizationState(...).finalizedAt !== null. A side-
+    // chat retry that reuses the assistant message id must not inherit the
+    // previous run's finalized_at, or a failed/canceled retry drops telemetry.
+    const oldRunId = 'run-failed-then-retry';
+    const retryRunId = 'run-retry-then-fail';
+    const oldBodyId = scopedTelemetryBodyId(oldRunId, 'final', 'terminal_fallback');
+    const db = openDatabase(tempDir, { dataDir: tempDir });
+    seedFailedAssistant(db, oldRunId);
+    expect(
+      setRunTelemetryAcceptedAnchor(db, {
+        runId: oldRunId,
+        assistantMessageId: 'assistant-1',
+        bodyId: oldBodyId,
+        reportTrigger: 'terminal_fallback',
+      }),
+    ).toBe(true);
+    expect(getMessageTelemetryFinalizationState(db, 'assistant-1').finalizedAt).not.toBeNull();
+
+    // Pin path used on run create, then upsert path used when the retry fails.
+    pinAssistantMessageOnRunCreate(db, {
+      id: retryRunId,
+      conversationId: 'conv-1',
+      assistantMessageId: 'assistant-1',
+      status: 'running',
+      createdAt: Date.now(),
+    });
+    expect(getMessageTelemetryFinalizationState(db, 'assistant-1')).toEqual({
+      exists: true,
+      finalizedAt: null,
+    });
+
+    upsertMessage(db, 'conv-1', {
+      id: 'assistant-1',
+      role: 'assistant',
+      content: 'retry partial',
+      runId: retryRunId,
+      runStatus: 'failed',
+      telemetryFinalized: false,
+      endedAt: Date.now(),
+    });
+
+    // Gate still open → terminal-fallback would not skip on finalizedAt.
+    expect(getMessageTelemetryFinalizationState(db, 'assistant-1')).toEqual({
+      exists: true,
+      finalizedAt: null,
+    });
+    expect(getRunFeedbackTelemetryAnchor(db, retryRunId, 'assistant-1')).toEqual({
+      runStatus: 'failed',
+      telemetryFinalized: false,
+      acceptedTraceBodyId: null,
+      acceptedReportTrigger: null,
     });
   });
 

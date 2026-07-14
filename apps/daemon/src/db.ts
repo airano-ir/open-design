@@ -1431,8 +1431,11 @@ export function upsertMessage(db: SqliteDb, conversationId: string, m: DbRow) {
   const now = Date.now();
   if (existing) {
     // Side-chat retry reuses the failed assistant message id with a new
-    // run_id. Drop accepted-telemetry anchors from the previous run so
-    // early feedback cannot score the old `${oldRunId}:tf` body.
+    // run_id. Drop accepted-telemetry anchors and the finalization gate from
+    // the previous run so early feedback cannot score the old
+    // `${oldRunId}:tf` body and terminal-fallback telemetry is not skipped
+    // for the new run (reportRunCompletionTelemetryFallback checks
+    // finalizedAt !== null).
     const prevRunId =
       typeof existing.runId === 'string' && existing.runId.trim()
         ? existing.runId.trim()
@@ -1449,6 +1452,7 @@ export function upsertMessage(db: SqliteDb, conversationId: string, m: DbRow) {
               pre_turn_file_names_json = ?,
               session_mode = ?, run_context_json = ?, applied_plugin_snapshot_json = ?,
               telemetry_finalized_at = CASE
+                WHEN ? THEN ?
                 WHEN ? THEN COALESCE(telemetry_finalized_at, ?)
                 ELSE telemetry_finalized_at
               END,
@@ -1481,6 +1485,10 @@ export function upsertMessage(db: SqliteDb, conversationId: string, m: DbRow) {
       normalizeMessageSessionModeForStorage(m.sessionMode),
       m.runContext ? JSON.stringify(m.runContext) : null,
       m.appliedPluginSnapshot ? JSON.stringify(m.appliedPluginSnapshot) : null,
+      // New run_id: start with a clean finalization gate (or stamp now if this
+      // write itself finalizes). Same run_id: preserve / coalesce as before.
+      clearAcceptedTelemetryAnchor ? 1 : 0,
+      m.telemetryFinalized === true ? now : null,
       m.telemetryFinalized === true ? 1 : 0,
       now,
       clearAcceptedTelemetryAnchor ? 1 : 0,

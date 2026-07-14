@@ -286,8 +286,9 @@ export function pinAssistantMessageOnRunCreate(db: SqliteDb, run: ChatRunMessage
   if (existing) {
     // Side-chat retry reuses the failed assistant message id with a new
     // run_id via this raw pin path (not upsertMessage). Drop accepted-
-    // telemetry anchors from the previous run so early feedback cannot
-    // score the old `${oldRunId}:tf` body.
+    // telemetry anchors and the finalization gate from the previous run so
+    // early feedback cannot score the old `${oldRunId}:tf` body and
+    // terminal-fallback telemetry is not skipped for the new run.
     const prevRunId =
       typeof existing.runId === 'string' && existing.runId.trim()
         ? existing.runId.trim()
@@ -305,6 +306,10 @@ export function pinAssistantMessageOnRunCreate(db: SqliteDb, run: ChatRunMessage
               session_mode = ?,
               run_context_json = ?,
               started_at = COALESCE(started_at, ?),
+              telemetry_finalized_at = CASE
+                WHEN ? THEN NULL
+                ELSE telemetry_finalized_at
+              END,
               telemetry_accepted_body_id = CASE
                 WHEN ? THEN NULL
                 ELSE telemetry_accepted_body_id
@@ -320,6 +325,7 @@ export function pinAssistantMessageOnRunCreate(db: SqliteDb, run: ChatRunMessage
       run.sessionMode ?? null,
       run.context ? JSON.stringify(run.context) : null,
       run.createdAt,
+      clearAcceptedTelemetryAnchor ? 1 : 0,
       clearAcceptedTelemetryAnchor ? 1 : 0,
       clearAcceptedTelemetryAnchor ? 1 : 0,
       run.assistantMessageId,
