@@ -112,6 +112,18 @@ describe('discovery.ts form prefill contract', () => {
     );
   });
 
+  it('exempts the verbatim task-type router form from the 5-question cap', () => {
+    // Reviewer finding on #5603: the hard cap said "never more than 5" while
+    // the locked router form above it carries six fields — two frozen
+    // instructions the model could not satisfy at once. The cap now names the
+    // router form as its one sanctioned exception; both must stay present.
+    expect(DISCOVERY_AND_PHILOSOPHY).toContain('**Hard cap: 5 questions per form — never more.**');
+    expect(DISCOVERY_AND_PHILOSOPHY).toContain(
+      'The one sanctioned exception is the verbatim `<question-form id="task-type">` router form',
+    );
+    expect(DISCOVERY_AND_PHILOSOPHY).toContain('never a reason to trim the router form');
+  });
+
   it('anchors the pattern with a concrete default in the example forms', () => {
     expect(DISCOVERY_AND_PHILOSOPHY).toContain('"default": "pick_direction"');
   });

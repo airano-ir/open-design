@@ -160,11 +160,22 @@ function renderFragment(html: string, resolve: BindingResolver, readArray: Array
     }
 
     const directiveIndex = cursor + directive.index;
+    // A directive is only real when the match sits inside an element's open
+    // tag: the nearest `<` to its left starts a named tag that has not closed
+    // yet. Literal `data-od-repeat="..."` text — prose, code samples,
+    // comments — is content per the html_template_v1 contract; emit it
+    // (scalar-interpolated) and keep scanning instead of repeating or
+    // throwing on authored copy.
     const openTagStart = html.lastIndexOf('<', directiveIndex);
-    if (openTagStart < 0) throw new Error('data-od-repeat found outside of an element');
-    const nameMatch = /^<([A-Za-z][A-Za-z0-9_-]*)/.exec(html.slice(openTagStart));
-    if (!nameMatch?.[1]) throw new Error('data-od-repeat found outside of an element');
-    const tagName = nameMatch[1];
+    const nameMatch =
+      openTagStart >= 0 ? /^<([A-Za-z][A-Za-z0-9_-]*)/.exec(html.slice(openTagStart)) : null;
+    const tagName = nameMatch?.[1];
+    if (!tagName || html.slice(openTagStart, directiveIndex).includes('>')) {
+      const literalEnd = directiveIndex + directive[0].length;
+      out += interpolateScalars(html.slice(cursor, literalEnd), resolve);
+      cursor = literalEnd;
+      continue;
+    }
 
     const spec = REPEAT_DIRECTIVE_SPEC.exec(directive[1] ?? '');
     if (!spec?.[1] || !spec[2]) throw new Error(`invalid data-od-repeat directive: "${directive[1]}" (expected "item in data.path")`);

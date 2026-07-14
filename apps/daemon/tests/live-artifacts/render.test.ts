@@ -144,6 +144,39 @@ describe('renderHtmlTemplateV1', () => {
     );
   });
 
+  it('treats literal data-od-repeat text in content and comments as inert copy', () => {
+    // Reviewer-reported bug (#5603): the directive scan matched anywhere in
+    // the fragment, so authored prose like `Example: data-od-repeat="row in
+    // data.rows"` repeated the paragraph, and the same string inside an HTML
+    // comment threw "outside of an element". Both are content per the
+    // html_template_v1 contract: the directive is an ATTRIBUTE on the
+    // repeated element, nothing else.
+    const prose = renderHtmlTemplateV1({
+      templateHtml: '<p>Example: data-od-repeat="row in data.rows" repeats a row. {{ data.note }}</p>',
+      dataJson: { note: 'ok' },
+    });
+    expect(prose.html).toBe(
+      '<p>Example: data-od-repeat="row in data.rows" repeats a row. ok</p>',
+    );
+
+    const comment = renderHtmlTemplateV1({
+      templateHtml: '<div><!-- use data-od-repeat="item in data.list" here --><span>{{ data.note }}</span></div>',
+      dataJson: { note: 'ok' },
+    });
+    expect(comment.html).toBe(
+      '<div><!-- use data-od-repeat="item in data.list" here --><span>ok</span></div>',
+    );
+
+    // A real directive after a literal mention still expands.
+    const mixed = renderHtmlTemplateV1({
+      templateHtml: '<p>docs: data-od-repeat="x in data.y"</p><ul><li data-od-repeat="t in data.tags">{{ t }}</li></ul>',
+      dataJson: { tags: ['a', 'b'] },
+    });
+    expect(mixed.html).toBe(
+      '<p>docs: data-od-repeat="x in data.y"</p><ul><li>a</li><li>b</li></ul>',
+    );
+  });
+
   it('lets a bare {{item}} binding render each scalar array entry', () => {
     const result = renderHtmlTemplateV1({
       templateHtml: '<ul><li data-od-repeat="tag in data.tags">{{ tag }}</li></ul>',

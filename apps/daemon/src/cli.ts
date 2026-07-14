@@ -544,11 +544,31 @@ async function runDirectionsToolCli(args) {
   const { DESIGN_DIRECTIONS, formatDirectionSpecText } = await import(
     './prompts/directions.js'
   );
-  const idIdx = args.indexOf('--id');
-  const labelIdx = args.indexOf('--label');
   const wantJson = args.includes('--json');
-  const needle =
-    idIdx !== -1 ? args[idIdx + 1] : labelIdx !== -1 ? args[labelIdx + 1] : null;
+  // Agents call this command straight from the prompt contract, so malformed
+  // invocations must fail fast instead of falling through to the full list
+  // or swallowing the next flag as the value.
+  const readFlagValue = (flag: string): string | null => {
+    const idx = args.indexOf(flag);
+    if (idx === -1) return null;
+    if (args.indexOf(flag, idx + 1) !== -1) {
+      console.error(`duplicate ${flag} flag`);
+      process.exit(1);
+    }
+    const value = args[idx + 1];
+    if (value === undefined || value.startsWith('--')) {
+      console.error(`missing value for ${flag}`);
+      process.exit(1);
+    }
+    return value;
+  };
+  const idValue = readFlagValue('--id');
+  const labelValue = readFlagValue('--label');
+  if (idValue !== null && labelValue !== null) {
+    console.error('pass either --id or --label, not both');
+    process.exit(1);
+  }
+  const needle = idValue ?? labelValue;
   if (needle) {
     if (wantJson) {
       const match = DESIGN_DIRECTIONS.find(
