@@ -31,6 +31,53 @@
   text-align: center;
 }
 
+.loading {
+  display: flex;
+  min-height: 240px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 18px;
+  padding: 28px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-subtle);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.loadingLines {
+  display: flex;
+  width: min(100%, 440px);
+  flex-direction: column;
+  gap: 10px;
+}
+
+.loadingLines span {
+  height: 42px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--bg-panel) 82%, var(--border)) 20%,
+    color-mix(in srgb, var(--bg-panel) 42%, var(--border)) 50%,
+    color-mix(in srgb, var(--bg-panel) 82%, var(--border)) 80%
+  );
+  background-size: 200% 100%;
+  animation: outline-loading 1.35s linear infinite;
+}
+
+.loadingLines span:nth-child(2) {
+  width: 88%;
+}
+
+.loadingLines span:nth-child(3) {
+  width: 72%;
+}
+
+.loadingDetail {
+  font-size: 12px;
+}
+
 .pages {
   display: flex;
   flex-direction: column;
@@ -52,6 +99,19 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--bg-subtle);
+  animation: outline-card-in 200ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.page:nth-child(2) .pageCard {
+  animation-delay: 35ms;
+}
+
+.page:nth-child(3) .pageCard {
+  animation-delay: 70ms;
+}
+
+.page:nth-child(n + 4) .pageCard {
+  animation-delay: 100ms;
 }
 
 .pageHeader {
@@ -132,5 +192,34 @@
 
   .pageActions {
     justify-content: flex-start;
+  }
+}
+
+@keyframes outline-loading {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes outline-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loadingLines span,
+  .pageCard {
+    animation: none;
   }
 }

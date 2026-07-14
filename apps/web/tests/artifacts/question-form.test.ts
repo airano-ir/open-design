@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   formatFormAnswers,
+  selectedTemplateCard,
   splitOnQuestionForms,
   parsePartialQuestionForm,
 } from '../../src/artifacts/question-form';
@@ -14,6 +15,60 @@ const VALID_BODY = `{
 }`;
 
 describe('splitOnQuestionForms', () => {
+  it('parses safe visual template cards and keeps their stable ids in answers', () => {
+    const input = [
+      '<question-form id="community-template-search" title="Choose a template">',
+      JSON.stringify({
+        questions: [
+          {
+            id: 'template',
+            label: 'Best matches',
+            type: 'template-cards',
+            required: true,
+            allowCustom: false,
+            defaultValue: 'business-deck',
+            templates: [
+              {
+                id: 'business-deck',
+                label: 'Business Deck',
+                source: 'community',
+                reason: 'Matches professional presentation intent.',
+                preview: {
+                  kind: 'html',
+                  url: '/api/plugins/business-deck/preview',
+                },
+              },
+              {
+                id: 'unsafe',
+                label: 'Unsafe remote preview',
+                source: 'community',
+                preview: { kind: 'image', url: 'https://example.com/tracker.png' },
+              },
+            ],
+          },
+        ],
+      }),
+      '</question-form>',
+    ].join('\n');
+
+    const segment = splitOnQuestionForms(input)[0];
+    if (segment?.kind !== 'form') throw new Error('expected parsed form');
+    const question = segment.form.questions[0];
+    expect(question?.type).toBe('template-cards');
+    expect(question?.templates?.[0]?.preview).toEqual({
+      kind: 'html',
+      url: '/api/plugins/business-deck/preview',
+    });
+    expect(question?.templates?.[1]?.preview).toEqual({ kind: 'none' });
+    expect(formatFormAnswers(segment.form, { template: 'business-deck' })).toContain(
+      'Business Deck [value: business-deck]',
+    );
+    expect(selectedTemplateCard(segment.form, { template: 'business-deck' })).toMatchObject({
+      id: 'business-deck',
+      source: 'community',
+    });
+  });
+
   it('normalizes string and object question options', () => {
     const input = [
       '<question-form id="discovery" title="Quick brief">',

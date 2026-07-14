@@ -63,6 +63,7 @@ const MEDIA_GENERATE_STRING_FLAGS = new Set([
   'surface',
   'model',
   'prompt',
+  'prompt-file',
   'output',
   'aspect',
   'length',
@@ -80,6 +81,16 @@ const MEDIA_GENERATE_BOOLEAN_FLAGS = new Set([
   'h',
   'loop',
 ]);
+const MEDIA_BATCH_STRING_FLAGS = new Set([
+  'project',
+  'model',
+  'prompt-file',
+  'concurrency',
+  'daemon-url',
+]);
+const MEDIA_BATCH_BOOLEAN_FLAGS = new Set(['help', 'h', 'json']);
+const MEDIA_CONFIG_STRING_FLAGS = new Set(['source', 'model', 'daemon-url']);
+const MEDIA_CONFIG_BOOLEAN_FLAGS = new Set(['help', 'h', 'json']);
 
 const MCP_STRING_FLAGS = new Set([
   'daemon-url',
@@ -125,9 +136,13 @@ const INSPIRE_STRING_FLAGS = new Set([
   'daemon-url',
   'conversation',
   'brief',
+  'query',
   'prompt-file',
   'outline',
   'mode',
+  'source',
+  'limit',
+  'locale',
   'template',
 ]);
 const INSPIRE_BOOLEAN_FLAGS = new Set(['help', 'h', 'json']);
@@ -219,8 +234,9 @@ const PROJECT_STRING_FLAGS = new Set([
   'agent', 'model', 'snapshot-id', 'inputs', 'grant-caps', 'editor',
   'title', 'label', 'against', 'seed-from', 'fork-after', 'mode',
   'source', 'research',
+  'deck-mode',
 ]);
-const PROJECT_BOOLEAN_FLAGS = new Set(['help', 'h', 'json', 'follow']);
+const PROJECT_BOOLEAN_FLAGS = new Set(['help', 'h', 'json', 'follow', 'fast']);
 // `od templates …` mirrors NewProjectPanel / ExamplesTab. Same surface,
 // same /api/templates store. The CLI form is the embeddability contract:
 // external agents (hermes-agent, openclaw, ...) can snapshot, list, or
@@ -574,6 +590,8 @@ function printRootHelp() {
   od flow status <conversationId> [--json]
       Print a conversation's staged-flow progress (clarify → research →
       plan → inspire → generate → deliver).
+  od flow confirm <conversationId> [--prompt-file <path|->] [--json]
+      Confirm the editable plan and open the inspiration checkpoint.
 
   od inspire <rank|apply|skip> [options]
       Rank shape-compatible templates or finalize a conversation's inspiration choice.
@@ -803,13 +821,16 @@ Flags:
 async function runInspire(args) {
   if (args.length === 0 || args[0] === 'help' || args.includes('--help') || args.includes('-h')) {
     console.log(`Usage:
+  od inspire search --query <text> [--source community|design-template|all] [--mode <shape>] [--limit 12] [--locale zh-CN] [--json]
+  od inspire search --prompt-file <path|-> [--source community|design-template|all] [--json]
   od inspire rank --brief <text> [--outline "Title 1|Title 2"] [--mode <shape>] [--json]
   od inspire rank --prompt-file <path|-> [--outline "Title 1|Title 2"] [--mode <shape>] [--json]
   od inspire apply --conversation <id> --template <templateId> [--json]
   od inspire skip --conversation <id> [--json]
 
-Ranks the design-template catalogue for a staged flow, or finalizes the
-conversation's inspiration choice. Long briefs may be read from a file or stdin.
+Semantically searches visual Community examples, ranks the design-template
+catalogue for a staged flow, or finalizes the conversation's inspiration choice.
+Long queries and briefs may be read from a file or stdin.
 
 Common options:
   --mode <shape>        deck | prototype | landing | mobile | webapp | document | report | media
@@ -825,6 +846,44 @@ Common options:
     boolean: INSPIRE_BOOLEAN_FLAGS,
   });
   const base = (await cliDaemonUrl(flags)).replace(/\/$/, '');
+
+  if (sub === 'search') {
+    const fromFile = await readPromptFromFlags(flags);
+    const query =
+      typeof flags.query === 'string' && flags.query.trim()
+        ? flags.query.trim()
+        : fromFile?.trim() || positionalArgs(rest, INSPIRE_STRING_FLAGS)[0]?.trim();
+    if (!query) {
+      console.error('--query or --prompt-file is required');
+      process.exit(2);
+    }
+    const limit = typeof flags.limit === 'string' ? Number(flags.limit) : undefined;
+    if (limit !== undefined && (!Number.isFinite(limit) || limit <= 0)) {
+      console.error('--limit must be a positive number');
+      process.exit(2);
+    }
+    const resp = await fetch(`${base}/api/inspire/search`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        query,
+        source: typeof flags.source === 'string' ? flags.source : 'community',
+        ...(typeof flags.mode === 'string' ? { mode: flags.mode } : {}),
+        ...(limit === undefined ? {} : { limit }),
+        ...(typeof flags.locale === 'string' ? { locale: flags.locale } : {}),
+      }),
+    });
+    if (!resp.ok) return structuredHttpFailure(resp);
+    const data = await resp.json();
+    if (flags.json) return process.stdout.write(JSON.stringify(data, null, 2) + '\n');
+    for (const [index, result] of (data.results ?? []).entries()) {
+      console.log(`${index + 1}. ${result.title} (${result.id}) — ${result.reason}`);
+      if (result.preview?.kind !== 'none' && result.preview?.url) {
+        console.log(`   ${result.preview.url}`);
+      }
+    }
+    return;
+  }
 
   if (sub === 'rank') {
     const fromFile = await readPromptFromFlags(flags);
@@ -906,7 +965,7 @@ async function runMedia(args) {
     printMediaHelp();
     return;
   }
-  if (sub !== 'generate' && sub !== 'wait') {
+  if (sub !== 'generate' && sub !== 'wait' && sub !== 'config' && sub !== 'batch') {
     console.error(`unknown subcommand: od media ${sub}`);
     printMediaHelp();
     process.exit(1);
@@ -915,6 +974,8 @@ async function runMedia(args) {
   const idx = args.indexOf(sub);
   const subArgs = [...args.slice(0, idx), ...args.slice(idx + 1)];
   if (sub === 'wait') return runMediaWait(subArgs);
+  if (sub === 'config') return runMediaConfig(subArgs);
+  if (sub === 'batch') return runMediaBatch(subArgs);
   return runMediaGenerate(subArgs);
 }
 
@@ -946,15 +1007,25 @@ async function runMediaGenerate(rawArgs) {
     console.error('--surface must be one of: image | video | audio');
     process.exit(2);
   }
-  if (!flags.model) {
-    console.error('--model required (see http://<daemon>/api/media/models)');
+  const promptFromFile = await readPromptFromFlags(flags);
+  let model = flags.model || null;
+  if (!model && surface === 'image') {
+    try {
+      model = await resolveConfiguredImageModel(daemonUrl);
+    } catch (err) {
+      surfaceFetchError(err, daemonUrl);
+      process.exit(3);
+    }
+  }
+  if (!model) {
+    console.error('--model required (or configure an image source in Settings → Media)');
     process.exit(2);
   }
 
   const body = {
     surface,
-    model: flags.model,
-    prompt: flags.prompt,
+    model,
+    prompt: promptFromFile,
     output: flags.output,
     aspect: flags.aspect,
     voice: flags.voice,
@@ -968,29 +1039,13 @@ async function runMediaGenerate(rawArgs) {
   if (flags['prompt-influence'] != null) body.promptInfluence = Number(flags['prompt-influence']);
   if (flags.loop === true) body.loop = true;
 
-  const url = token
-    ? `${daemonUrl.replace(/\/$/, '')}/api/tools/media/generate`
-    : `${daemonUrl.replace(/\/$/, '')}/api/projects/${encodeURIComponent(projectId)}/media/generate`;
-  let resp;
+  let accepted;
   try {
-    resp = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        ...(token ? { authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify(body),
-    });
+    accepted = await queueMediaGeneration(daemonUrl, projectId, token, body);
   } catch (err) {
     surfaceFetchError(err, daemonUrl);
     process.exit(3);
   }
-  if (!resp.ok) {
-    const text = await resp.text();
-    console.error(`daemon ${resp.status}: ${text}`);
-    process.exit(4);
-  }
-  const accepted = await resp.json();
   const { taskId } = accepted;
   if (!taskId) {
     console.error('daemon did not return a taskId');
@@ -1000,6 +1055,164 @@ async function runMediaGenerate(rawArgs) {
   await pollUntilDoneOrBudget(daemonUrl, taskId, 0, {
     stillRunningExitCode: 0,
   });
+}
+
+async function resolveConfiguredImageModel(daemonUrl) {
+  const resp = await fetch(`${daemonUrl.replace(/\/$/, '')}/api/media/image-generation`);
+  if (!resp.ok) return null;
+  const data = await resp.json();
+  return typeof data?.selected?.model === 'string' ? data.selected.model : null;
+}
+
+async function queueMediaGeneration(daemonUrl, projectId, token, body) {
+  const url = token
+    ? `${daemonUrl.replace(/\/$/, '')}/api/tools/media/generate`
+    : `${daemonUrl.replace(/\/$/, '')}/api/projects/${encodeURIComponent(projectId)}/media/generate`;
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+  if (!resp.ok) {
+    const text = await resp.text();
+    const error = new Error(`daemon ${resp.status}: ${text}`);
+    error.status = resp.status;
+    throw error;
+  }
+  return await resp.json();
+}
+
+async function runMediaConfig(rawArgs) {
+  const flags = parseFlags(rawArgs, {
+    string: MEDIA_CONFIG_STRING_FLAGS,
+    boolean: MEDIA_CONFIG_BOOLEAN_FLAGS,
+  });
+  const daemonUrl = await cliDaemonUrl(flags);
+  const url = `${daemonUrl.replace(/\/$/, '')}/api/media/image-generation`;
+  const source = typeof flags.source === 'string' ? flags.source : '';
+  let response;
+  try {
+    response = await fetch(url, source
+      ? {
+          method: 'PUT',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            source,
+            ...(typeof flags.model === 'string' ? { model: flags.model } : {}),
+          }),
+        }
+      : undefined);
+  } catch (err) {
+    surfaceFetchError(err, daemonUrl);
+    process.exit(3);
+  }
+  if (!response.ok) return structuredHttpFailure(response);
+  const data = await response.json();
+  if (flags.json || !source) {
+    process.stdout.write(JSON.stringify(data, null, 2) + '\n');
+    return;
+  }
+  console.log(`[media] image source ${data?.selected?.source ?? '-'} · ${data?.selected?.model ?? '-'}`);
+}
+
+async function runMediaBatch(rawArgs) {
+  const flags = parseFlags(rawArgs, {
+    string: MEDIA_BATCH_STRING_FLAGS,
+    boolean: MEDIA_BATCH_BOOLEAN_FLAGS,
+  });
+  const daemonUrl = await cliDaemonUrl(flags);
+  const projectId = flags.project || process.env.OD_PROJECT_ID;
+  const token = process.env.OD_TOOL_TOKEN;
+  if (!projectId && !token) {
+    console.error('project id required. Pass --project <id> or set OD_PROJECT_ID.');
+    process.exit(2);
+  }
+  const raw = await readFileFlagOrStdin(flags['prompt-file']);
+  if (!raw) {
+    console.error('--prompt-file <path|-> is required');
+    process.exit(2);
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    console.error(`invalid batch manifest JSON: ${error?.message ?? error}`);
+    process.exit(2);
+  }
+  const items = Array.isArray(parsed) ? parsed : parsed?.items;
+  if (!Array.isArray(items) || items.length === 0 || items.length > 40) {
+    console.error('batch manifest must contain 1-40 items');
+    process.exit(2);
+  }
+  let fallbackModel = flags.model || null;
+  if (!fallbackModel) {
+    try {
+      fallbackModel = await resolveConfiguredImageModel(daemonUrl);
+    } catch (err) {
+      surfaceFetchError(err, daemonUrl);
+      process.exit(3);
+    }
+  }
+  if (!fallbackModel) {
+    console.error('no configured image model; choose one in Settings → Media or pass --model');
+    process.exit(2);
+  }
+  const requestedConcurrency = Number(flags.concurrency ?? 4);
+  const concurrency = Math.min(4, Math.max(1, Number.isFinite(requestedConcurrency) ? requestedConcurrency : 4));
+  const queue = items.map((item, index) => ({ item, index }));
+  const results = new Array(items.length);
+  let cursor = 0;
+
+  async function worker() {
+    while (cursor < queue.length) {
+      const next = queue[cursor++];
+      const item = next.item;
+      if (!item || typeof item.prompt !== 'string' || !item.prompt.trim()) {
+        throw new Error(`batch item ${next.index + 1} requires prompt`);
+      }
+      const accepted = await queueMediaGeneration(daemonUrl, projectId, token, {
+        surface: 'image',
+        model: typeof item.model === 'string' && item.model ? item.model : fallbackModel,
+        prompt: item.prompt,
+        output: item.output,
+        aspect: item.aspect ?? '16:9',
+        image: item.image,
+      });
+      if (!accepted?.taskId) throw new Error(`batch item ${next.index + 1} did not return taskId`);
+      results[next.index] = await waitForMediaTaskTerminal(daemonUrl, accepted.taskId);
+    }
+  }
+
+  try {
+    await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, () => worker()));
+  } catch (error) {
+    console.error(error?.message ?? String(error));
+    process.exit(5);
+  }
+  const output = { concurrency, results };
+  process.stdout.write(JSON.stringify(output, null, flags.json ? 2 : 0) + '\n');
+}
+
+async function waitForMediaTaskTerminal(daemonUrl, taskId) {
+  let since = 0;
+  const url = `${daemonUrl.replace(/\/$/, '')}/api/media/tasks/${encodeURIComponent(taskId)}/wait`;
+  while (true) {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ since, timeoutMs: 25_000 }),
+    });
+    if (!response.ok) throw new Error(`task ${taskId} wait failed: ${response.status} ${await response.text()}`);
+    const snapshot = await response.json();
+    if (typeof snapshot.nextSince === 'number') since = snapshot.nextSince;
+    if (snapshot.status === 'done') return { taskId, file: snapshot.file };
+    if (snapshot.status === 'failed' || snapshot.status === 'interrupted') {
+      throw new Error(`task ${taskId} ${snapshot.status}: ${snapshot.error?.message ?? 'unknown error'}`);
+    }
+  }
 }
 
 async function runMediaWait(rawArgs) {
@@ -1235,16 +1448,24 @@ async function cliDaemonBaseUrl(flags) {
 }
 
 function printMediaHelp() {
-  console.log(`Usage: od media generate --surface <image|video|audio> --model <id> [opts]
-       "$OD_NODE_BIN" "$OD_BIN" media generate --surface <image|video|audio> --model <id> [opts]
+  console.log(`Usage:
+  od media config [--source codex|byok|cloud] [--model <id>] [--json]
+  od media generate --surface <image|video|audio> [--model <id>] [opts]
+  od media batch --prompt-file <manifest.json|-> [--model <id>] [--concurrency 1-4] [--json]
+  od media wait <taskId> [--since <n>]
+
+Image generation uses the Settings → Media source when --model is omitted.
+Slides Image + Fast uses \`media batch\`, whose JSON manifest is an array of:
+  { "prompt": "...", "output": "slides/01.png", "aspect": "16:9" }
 
 Required:
   --surface  image | video | audio
-  --model    Model id from /api/media/models (e.g. gpt-image-2, seedance-2, suno-v5).
+  --model    Model id from /api/media/models. Optional for image when a source is configured.
   --project  Project id. Auto-resolved from OD_PROJECT_ID when invoked by the daemon.
 
 Common options:
   --prompt "<text>"         Generation prompt. ElevenLabs SFX prompts must stay under 450 characters.
+  --prompt-file <path|->     Read a long prompt (or batch JSON manifest) from a file/stdin.
   --output <filename>       File to write under the project. Auto-named if omitted.
   --aspect 1:1|16:9|9:16|4:3|3:4
   --length <seconds>        Video length.
@@ -5843,6 +6064,7 @@ async function runProject(args) {
   od project create [--name "<title>"] [--skill <id>] [--design-system <id>]
                     [--plugin <id>] [--inputs <json>] [--metadata-json <path|->]
                     [--mode design|chat|plan]
+                    [--deck-mode standard|image] [--fast]
   od project create-design-system <id> [--name "<title>"]
                     [--prompt "<text>" | --prompt-file <path|->] [--json]
                     Duplicate a project as a design-system workspace and seed
@@ -5928,6 +6150,26 @@ Common options:
       if (flags['metadata-json']) {
         const mj = safeReadJsonFile(flags['metadata-json']);
         if (mj && typeof mj === 'object') body.metadata = mj;
+      }
+      if (flags['deck-mode']) {
+        const deckMode = String(flags['deck-mode']).trim();
+        if (deckMode !== 'standard' && deckMode !== 'image') {
+          console.error('--deck-mode must be standard or image');
+          process.exit(2);
+        }
+        if (flags.fast === true && deckMode !== 'image') {
+          console.error('--fast is only valid with --deck-mode image');
+          process.exit(2);
+        }
+        body.metadata = {
+          ...(body.metadata && typeof body.metadata === 'object' ? body.metadata : {}),
+          kind: 'deck',
+          deckGenerationMode: deckMode,
+          deckFast: deckMode === 'image' && flags.fast === true,
+        };
+      } else if (flags.fast === true) {
+        console.error('--fast is only valid with --deck-mode image');
+        process.exit(2);
       }
       if (flags.plugin) body.pluginId = flags.plugin;
       if (flags.inputs) {
@@ -7198,7 +7440,7 @@ Common options:
 // (specs/current/staged-flow-north-star.zh-CN.md §5.9).
 // ---------------------------------------------------------------------------
 
-const FLOW_STRING_FLAGS = new Set(['daemon-url', 'conversation', 'mode']);
+const FLOW_STRING_FLAGS = new Set(['daemon-url', 'conversation', 'mode', 'prompt-file']);
 const FLOW_BOOLEAN_FLAGS = new Set(['json']);
 const FLOW_STAGE_ICONS = {
   pending: '○',
@@ -7216,6 +7458,9 @@ async function runFlow(args) {
                                       generate → deliver).
   od flow research <conversationId> --mode deep|basic|off
                                       Persist the conversation research mode.
+  od flow confirm <conversationId> [--prompt-file <path|->]
+                                      Confirm the plan without starting an
+                                      otherwise empty agent turn.
 
 Common options:
   --daemon-url <url>   Open Design daemon HTTP base.
@@ -7224,7 +7469,7 @@ Common options:
   }
   const sub = args[0];
   const rest = args.slice(1);
-  if (sub !== 'status' && sub !== 'research') {
+  if (sub !== 'status' && sub !== 'research' && sub !== 'confirm') {
     console.error(`unknown subcommand: od flow ${sub}`);
     process.exit(2);
   }
@@ -7237,6 +7482,33 @@ Common options:
     process.exit(2);
   }
   const base = (await cliDaemonUrl(flags)).replace(/\/$/, '');
+  if (sub === 'confirm') {
+    let context = null;
+    try {
+      context = await readFileFlagOrStdin(flags['prompt-file']);
+    } catch (err) {
+      console.error(`could not read --prompt-file: ${err.message}`);
+      process.exit(2);
+    }
+    const message = [
+      '[form answers — plan-confirm]',
+      '- Decision: ✓ Confirm [value: confirm]',
+      ...(context?.trim() ? [`- Additional context: ${context.trim()}`] : []),
+    ].join('\n');
+    const resp = await fetch(
+      `${base}/api/conversations/${encodeURIComponent(conversationId)}/flow/plan-confirm`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ message }),
+      },
+    );
+    if (!resp.ok) return structuredHttpFailure(resp, 'flow-plan-confirm-failed');
+    const data = await resp.json();
+    if (flags.json) return process.stdout.write(JSON.stringify(data, null, 2) + '\n');
+    console.log(`[flow] plan confirmed · ${data?.flow?.activeStage ?? 'inspire'} active`);
+    return;
+  }
   if (sub === 'research') {
     if (!flags.mode || !['deep', 'basic', 'off'].includes(flags.mode)) {
       console.error('--mode must be one of: deep | basic | off');

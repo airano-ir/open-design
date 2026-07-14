@@ -4,12 +4,14 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  readImageGenerationConfig,
   readAliasMap,
   readMaskedConfig,
   resolveCodexSubscriptionStatus,
   resolveModelAlias,
   resolveProviderConfig,
   seedProviderIfMissing,
+  writeImageGenerationPreference,
   writeConfig,
 } from '../../src/media/config.js';
 
@@ -32,6 +34,7 @@ describe('media-config OpenAI auth-file fallback', () => {
   const originalMediaConfigDir = process.env.OD_MEDIA_CONFIG_DIR;
   const originalDataDir = process.env.OD_DATA_DIR;
   const originalSandboxMode = process.env.OD_SANDBOX_MODE;
+  const originalCodexHome = process.env.CODEX_HOME;
   let homedirSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(async () => {
@@ -45,6 +48,7 @@ describe('media-config OpenAI auth-file fallback', () => {
     delete process.env.OD_MEDIA_CONFIG_DIR;
     delete process.env.OD_DATA_DIR;
     delete process.env.OD_SANDBOX_MODE;
+    delete process.env.CODEX_HOME;
   });
 
   afterEach(async () => {
@@ -74,6 +78,11 @@ describe('media-config OpenAI auth-file fallback', () => {
       delete process.env.OD_SANDBOX_MODE;
     } else {
       process.env.OD_SANDBOX_MODE = originalSandboxMode;
+    }
+    if (originalCodexHome == null) {
+      delete process.env.CODEX_HOME;
+    } else {
+      process.env.CODEX_HOME = originalCodexHome;
     }
     homedirSpy.mockRestore();
     await rm(homeDir, { recursive: true, force: true });
@@ -234,6 +243,105 @@ describe('media-config OpenAI auth-file fallback', () => {
 
     await expect(resolveCodexSubscriptionStatus(projectRoot)).resolves.toEqual({
       available: true,
+    });
+  });
+
+  it('defaults image generation to an available Codex subscription', async () => {
+    await writeHomeJson('.codex/auth.json', {
+      auth_mode: 'chatgpt',
+    });
+
+    await expect(readImageGenerationConfig(projectRoot)).resolves.toMatchObject({
+      preference: null,
+      selected: {
+        source: 'codex',
+        model: 'codex-gpt-image-2',
+      },
+      sources: expect.arrayContaining([
+        expect.objectContaining({
+          id: 'codex',
+          available: true,
+          configured: true,
+        }),
+        expect.objectContaining({
+          id: 'cloud',
+          available: false,
+        }),
+      ]),
+    });
+  });
+
+  it('switches image generation to BYOK and preserves that preference across provider saves', async () => {
+    await writeHomeJson('.codex/auth.json', {
+      auth_mode: 'chatgpt',
+    });
+    await writeConfig(projectRoot, {
+      providers: {
+        openai: {
+          apiKey: 'byok-openai-key',
+          baseUrl: 'https://api.openai.com/v1',
+        },
+      },
+    });
+
+    await expect(
+      writeImageGenerationPreference(projectRoot, {
+        source: 'byok',
+        model: 'gpt-image-2',
+      }),
+    ).resolves.toMatchObject({
+      preference: {
+        source: 'byok',
+        model: 'gpt-image-2',
+      },
+      selected: {
+        source: 'byok',
+        model: 'gpt-image-2',
+      },
+    });
+
+    await writeConfig(projectRoot, {
+      providers: {
+        openai: {
+          preserveApiKey: true,
+          baseUrl: 'https://proxy.example.test/v1',
+        },
+      },
+    });
+
+    await expect(readImageGenerationConfig(projectRoot)).resolves.toMatchObject({
+      preference: {
+        source: 'byok',
+        model: 'gpt-image-2',
+      },
+      selected: {
+        source: 'byok',
+        model: 'gpt-image-2',
+      },
+    });
+  });
+
+  it('falls back to Codex when a saved BYOK preference is no longer available', async () => {
+    await writeHomeJson('.codex/auth.json', {
+      auth_mode: 'chatgpt',
+    });
+    await writeStoredMediaConfig({
+      providers: {},
+      imageGeneration: {
+        source: 'byok',
+        model: 'gpt-image-2',
+      },
+    });
+
+    await expect(readImageGenerationConfig(projectRoot)).resolves.toMatchObject({
+      preference: {
+        source: 'byok',
+        model: 'gpt-image-2',
+      },
+      selected: {
+        source: 'codex',
+        model: 'codex-gpt-image-2',
+      },
     });
   });
 

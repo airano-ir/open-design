@@ -32,6 +32,25 @@ const baseSummary = {
 };
 
 describe('composeSystemPrompt — metadata.promptTemplate', () => {
+  it('pins the staged-flow checkpoint after artifact-building guidance', () => {
+    const out = composeSystemPrompt({
+      metadata: { kind: 'deck' },
+      skillBody: '# Deck skill\n\nCopy the seed and generate the deck.',
+      skillName: 'Deck starter',
+      flowProtocol: '## Staged flow protocol\n\nHARD CHECKPOINT',
+    });
+
+    const skillIdx = out.indexOf('## Active skill');
+    const metadataIdx = out.indexOf('## Project metadata');
+    const flowIdx = out.indexOf('## Staged flow protocol');
+    const roleMarkerIdx = out.indexOf('## CRITICAL: Never fabricate conversation turns');
+    expect(skillIdx).toBeGreaterThanOrEqual(0);
+    expect(metadataIdx).toBeGreaterThanOrEqual(0);
+    expect(flowIdx).toBeGreaterThan(skillIdx);
+    expect(flowIdx).toBeGreaterThan(metadataIdx);
+    expect(flowIdx).toBeLessThan(roleMarkerIdx);
+  });
+
   it('pins the API batch-mode discovery skip before the normal discovery rules', () => {
     const out = composeSystemPrompt({
       metadata: {

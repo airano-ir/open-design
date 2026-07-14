@@ -96,9 +96,20 @@ function addExisting(
 }
 
 function generationCandidates(flow: FlowSnapshot, files: ProjectFile[]): string[] {
-  const extensions = FLOW_SHAPES[flow.shape].generateExtensions;
+  const spec = FLOW_SHAPES[flow.shape];
+  const extensions = spec.generateExtensions;
+  const supportingArtifacts = new Set([
+    'generated/brief.md',
+    'generated/research.md',
+    'generated/research-report.md',
+    'generated/inspiration.json',
+    ...spec.planArtifacts,
+  ]);
   const matching = files.filter((file) => {
-    if (file.name.startsWith('generated/') || file.name.startsWith('research/')) {
+    if (
+      file.name.startsWith('research/') ||
+      supportingArtifacts.has(file.name)
+    ) {
       return false;
     }
     const lower = file.name.toLowerCase();

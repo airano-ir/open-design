@@ -145,6 +145,8 @@ const WEB_PROTOTYPE_PLUGIN = {
     od: {
       kind: 'scenario',
       taskKind: 'new-generation',
+      mode: 'prototype',
+      platform: 'desktop',
       useCase: {
         query: 'Build a {{fidelity}} {{artifactKind}} for {{audience}} using {{designSystem}} from {{template}}.',
       },
@@ -202,6 +204,7 @@ const SIMPLE_DECK_PLUGIN = {
     od: {
       kind: 'scenario',
       taskKind: 'new-generation',
+      mode: 'deck',
       useCase: {
         query: 'Create a {{deckType}} for {{audience}} about {{topic}} with {{slideCount}}. Speaker notes: {{speakerNotes}}. Use {{designSystem}}.',
       },
@@ -691,6 +694,11 @@ describe('HomeView prompt handoff', () => {
       prompt: 'Use the selected starter as the driver',
       pluginId: 'example-web-prototype',
       appliedPluginSnapshotId: 'snap-web-prototype',
+      projectKind: 'prototype',
+      projectMetadata: expect.objectContaining({
+        kind: 'prototype',
+        platform: 'web-desktop',
+      }),
     })));
   });
 
@@ -1329,7 +1337,7 @@ describe('HomeView prompt handoff', () => {
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
-  it('binds the deck chip and keeps only the design-system picker in the footer', async () => {
+  it('binds the deck chip and exposes Image/Fast without moving Deep research out of the plus menu', async () => {
     // Slide count + speaker-notes footer controls were removed from the deck
     // composer; the agent asks for them in the first-turn discovery flow. The
     // deck footer now mirrors the prototype footer — design system only.
@@ -1375,6 +1383,20 @@ describe('HomeView prompt handoff', () => {
     // The design-system picker is the persistent control below the composer.
     expect(screen.getByTestId('home-hero-design-system-trigger')).toBeTruthy();
 
+    expect(screen.getByTestId('home-hero-deck-mode-trigger').textContent).toContain('Standard');
+    fireEvent.click(screen.getByTestId('home-hero-plus-trigger'));
+    expect(screen.getByTestId('composer-plus-deep-research')).toBeTruthy();
+    expect(screen.queryByTestId('composer-plus-fast')).toBeNull();
+    fireEvent.click(screen.getByTestId('home-hero-plus-trigger'));
+
+    fireEvent.click(screen.getByTestId('home-hero-deck-mode-trigger'));
+    fireEvent.click(screen.getByTestId('home-hero-deck-mode-image'));
+
+    fireEvent.click(screen.getByTestId('home-hero-plus-trigger'));
+    expect(screen.getByTestId('composer-plus-deep-research')).toBeTruthy();
+    fireEvent.click(screen.getByTestId('composer-plus-fast'));
+    expect(screen.getByTestId('composer-plus-fast').getAttribute('aria-checked')).toBe('true');
+
     await setPromptAndSettle('Create an investor deck for a local-first design tool.');
     fireEvent.click(screen.getByTestId('home-hero-submit'));
 
@@ -1384,6 +1406,8 @@ describe('HomeView prompt handoff', () => {
       projectKind: 'deck',
       projectMetadata: expect.objectContaining({
         kind: 'deck',
+        deckGenerationMode: 'image',
+        deckFast: true,
       }),
     })));
   });

@@ -775,6 +775,7 @@ function AssistantMessageImpl({
   // and Download to the chosen file; incomplete cards fall back to composer
   // prompts or toolbox actions.
   const showNextStepActions =
+    !flowSnapshot &&
     !streaming &&
     runTerminal &&
     ((!!isLast && hasNextStepPrimary) || showOpenDesignSubmission);
@@ -2546,11 +2547,50 @@ function ProseBlock({
 function QuestionsBanner({
   onOpen,
   answered = false,
+  form,
 }: {
   onOpen?: () => void;
   answered?: boolean;
+  form?: QuestionForm;
 }) {
   const t = useT();
+  const templateQuestion = form?.questions.find(
+    (question) => question.type === "template-cards" && question.templates?.length,
+  );
+  if (form && templateQuestion?.templates) {
+    const templates = templateQuestion.templates;
+    return (
+      <div
+        className={`${styles.templateBanner}${answered ? ` ${styles.templateBannerAnswered}` : ""}`}
+        data-testid="questions-banner"
+        data-answered={answered ? "true" : undefined}
+      >
+        <button
+          type="button"
+          className={styles.templateBannerHead}
+          disabled={!onOpen}
+          onClick={() => onOpen?.()}
+        >
+          <span className={styles.templateBannerIcon} aria-hidden>
+            <Icon name={answered ? "check" : "image"} size={16} />
+          </span>
+          <span className={styles.templateBannerTitle}>{form.title}</span>
+          <span className={styles.templateBannerCta}>
+            {answered ? t("questions.bannerAnswered") : t("questions.banner")}
+            <Icon name="chevron-right" size={14} />
+          </span>
+        </button>
+        <div className={styles.templateBannerPreviews} aria-hidden>
+          {templates.slice(0, 4).map((card) => (
+            <TemplateBannerPreview key={`${card.source}:${card.id}`} card={card} />
+          ))}
+          {templates.length > 4 ? (
+            <span className={styles.templateBannerMore}>+{templates.length - 4}</span>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
   // Answered forms remain useful as a durable decision record. Reopen them in
   // the Questions tab, where submitted answers render in a locked state.
   return (
@@ -2574,6 +2614,45 @@ function QuestionsBanner({
         </span>
       ) : null}
     </button>
+  );
+}
+
+function TemplateBannerPreview({
+  card,
+}: {
+  card: NonNullable<QuestionForm["questions"][number]["templates"]>[number];
+}) {
+  const preview = card.preview;
+  if (preview.kind === "image" && preview.url) {
+    return <img className={styles.templateBannerPreview} src={preview.url} alt="" loading="lazy" />;
+  }
+  if (preview.kind === "html" && preview.url) {
+    return (
+      <iframe
+        className={styles.templateBannerPreview}
+        src={preview.url}
+        title=""
+        sandbox="allow-scripts"
+        loading="lazy"
+        tabIndex={-1}
+      />
+    );
+  }
+  if (preview.kind === "video" && (preview.posterUrl || preview.url)) {
+    return (
+      <video
+        className={styles.templateBannerPreview}
+        src={preview.url}
+        poster={preview.posterUrl}
+        muted
+        preload="metadata"
+      />
+    );
+  }
+  return (
+    <span className={styles.templateBannerFallback}>
+      <Icon name="image" size={17} />
+    </span>
   );
 }
 
@@ -2603,6 +2682,7 @@ function FormBlock({
   return (
     <QuestionsBanner
       answered={submittedFromHistory != null}
+      form={form}
       onOpen={() => {
         onOpenQuestions?.({
           form,

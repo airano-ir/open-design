@@ -38,7 +38,12 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { MEDIA_PROVIDERS } from './models.js';
+import type {
+  ImageGenerationConfigResponse,
+  ImageGenerationPreference,
+  ImageGenerationSource,
+} from '@open-design/contracts';
+import { IMAGE_MODELS, MEDIA_PROVIDERS } from './models.js';
 import { agentCliEnvForAgent, appConfigDir, readAppConfig } from '../app-config.js';
 import { expandHomePrefix } from '../home-expansion.js';
 import { spawnEnvForAgent } from '../runtimes/env.js';
@@ -52,6 +57,10 @@ type ModelAliasMap = Record<string, string>;
 type JsonRecord = Record<string, unknown>;
 type OAuthCredential = { apiKey: string; source: string };
 export type CodexSubscriptionStatus = { available: boolean };
+type StoredImageGenerationPreference = {
+  source: ImageGenerationSource;
+  model?: string;
+};
 
 // Single env var carries the full alias map as JSON so we don't have
 // to dynamically lift `OD_MEDIA_MODEL_ALIAS_<id>=value` into a record
@@ -196,10 +205,33 @@ async function readStoredAliases(projectRoot: string): Promise<ModelAliasMap> {
   return coerceAliasMap(parsed.aliases);
 }
 
+function coerceImageGenerationPreference(
+  raw: unknown,
+): StoredImageGenerationPreference | null {
+  if (!isRecord(raw)) return null;
+  const source = raw.source;
+  if (source !== 'codex' && source !== 'byok' && source !== 'cloud') return null;
+  const model = typeof raw.model === 'string' && raw.model.trim()
+    ? raw.model.trim()
+    : undefined;
+  return {
+    source,
+    ...(model ? { model } : {}),
+  };
+}
+
+async function readStoredImageGenerationPreference(
+  projectRoot: string,
+): Promise<StoredImageGenerationPreference | null> {
+  const parsed = await readStoredFile(projectRoot);
+  return coerceImageGenerationPreference(parsed.imageGeneration);
+}
+
 async function writeStored(
   projectRoot: string,
   providers: ProviderMap,
   aliases?: ModelAliasMap,
+  imageGeneration?: StoredImageGenerationPreference | null,
 ): Promise<void> {
   const file = configFile(projectRoot);
   await mkdir(path.dirname(file), { recursive: true });
@@ -209,9 +241,15 @@ async function writeStored(
   // #1277 introduces aliases but the Settings UI surface for editing
   // them lands in a follow-up PR).
   const resolvedAliases = aliases ?? (await readStoredAliases(projectRoot));
+  const resolvedImageGeneration = imageGeneration === undefined
+    ? await readStoredImageGenerationPreference(projectRoot)
+    : imageGeneration;
   const body: JsonRecord = { providers };
   if (Object.keys(resolvedAliases).length > 0) {
     body.aliases = resolvedAliases;
+  }
+  if (resolvedImageGeneration) {
+    body.imageGeneration = resolvedImageGeneration;
   }
   await writeFile(file, JSON.stringify(body, null, 2), 'utf8');
 }
@@ -325,6 +363,119 @@ export async function resolveCodexSubscriptionStatus(
   const authMode = readNestedString(codexAuth, ['auth_mode']);
   const accessToken = readNestedString(codexAuth, ['tokens', 'access_token']);
   return { available: authMode === 'chatgpt' || Boolean(accessToken) };
+}
+
+function imageGenerationPreferenceError(message: string, status = 400): Error {
+  const error = new Error(message) as Error & { status: number };
+  error.status = status;
+  return error;
+}
+
+/**
+ * Resolve the one image-generation capability shared by Slides image mode,
+ * image projects, and `od media generate`. Codex is the zero-key local source;
+ * BYOK options come from configured provider slots; Cloud remains an explicit
+ * unavailable slot so adding the hosted implementation later does not change
+ * the consumer contract.
+ */
+export async function readImageGenerationConfig(
+  projectRoot: string,
+): Promise<ImageGenerationConfigResponse> {
+  const preference = await readStoredImageGenerationPreference(projectRoot);
+  const codex = await resolveCodexSubscriptionStatus(projectRoot);
+  const byokModels: ImageGenerationConfigResponse['sources'][number]['models'] = [];
+  const seen = new Set<string>();
+
+  for (const provider of MEDIA_PROVIDERS) {
+    if (!provider.integrated || provider.id === 'codex' || provider.id === 'stub') continue;
+    const resolved = await resolveProviderConfig(projectRoot, provider.id);
+    if (!resolved.apiKey) continue;
+    for (const model of IMAGE_MODELS) {
+      if (model.provider !== provider.id || seen.has(model.id)) continue;
+      seen.add(model.id);
+      byokModels.push({ id: model.id, label: model.label, provider: provider.id });
+    }
+    if (resolved.model && !seen.has(resolved.model)) {
+      seen.add(resolved.model);
+      byokModels.push({
+        id: resolved.model,
+        label: resolved.model,
+        provider: provider.id,
+      });
+    }
+  }
+
+  const sources: ImageGenerationConfigResponse['sources'] = [
+    {
+      id: 'codex',
+      label: 'Codex Subscription',
+      available: codex.available,
+      configured: codex.available,
+      models: codex.available
+        ? [{ id: 'codex-gpt-image-2', label: 'gpt-image-2', provider: 'codex' }]
+        : [],
+    },
+    {
+      id: 'byok',
+      label: 'BYOK',
+      available: byokModels.length > 0,
+      configured: byokModels.length > 0,
+      models: byokModels,
+    },
+    {
+      id: 'cloud',
+      label: 'Open Design Cloud',
+      available: false,
+      configured: false,
+      models: [],
+    },
+  ];
+
+  const source = (preference
+    ? sources.find((item) => item.id === preference.source && item.available)
+    : undefined)
+    ?? sources.find((item) => item.id === 'codex' && item.available)
+    ?? sources.find((item) => item.id === 'byok' && item.available);
+  const preferredModel = preference?.model;
+  const model = source?.available
+    ? source.models.find((item) => item.id === preferredModel)?.id
+      ?? source.models[0]?.id
+      ?? null
+    : null;
+
+  return {
+    preference,
+    selected: source && model ? { source: source.id, model } : null,
+    sources,
+  };
+}
+
+export async function writeImageGenerationPreference(
+  projectRoot: string,
+  input: unknown,
+): Promise<ImageGenerationConfigResponse> {
+  const preference = coerceImageGenerationPreference(input);
+  if (!preference) {
+    throw imageGenerationPreferenceError('source must be codex, byok, or cloud');
+  }
+  const current = await readImageGenerationConfig(projectRoot);
+  const source = current.sources.find((item) => item.id === preference.source);
+  if (!source?.available) {
+    throw imageGenerationPreferenceError(
+      `${preference.source} image generation is not available`,
+      409,
+    );
+  }
+  const model = preference.model ?? source.models[0]?.id;
+  if (!model || !source.models.some((item) => item.id === model)) {
+    throw imageGenerationPreferenceError(
+      `model is not available for ${preference.source} image generation`,
+    );
+  }
+  const next: ImageGenerationPreference = { source: preference.source, model };
+  const providers = await readStored(projectRoot);
+  await writeStored(projectRoot, providers, undefined, next);
+  return readImageGenerationConfig(projectRoot);
 }
 
 function apiKeyFromCodexAuth(data: unknown): string {

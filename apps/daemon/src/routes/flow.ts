@@ -1,6 +1,8 @@
 import type { Express } from 'express';
 import type Database from 'better-sqlite3';
+import { randomUUID } from 'node:crypto';
 import type {
+  ConfirmFlowPlanRequest,
   FlowSnapshot,
   FlowResearchMode,
   FlowStatusResponse,
@@ -13,6 +15,7 @@ import {
   getProject,
   listMessages,
   setConversationFlow,
+  upsertMessage,
 } from '../db.js';
 import { materializeFlowArtifacts } from '../flow/artifacts.js';
 import {
@@ -187,6 +190,64 @@ export function registerFlowRoutes(app: Express, deps: RegisterFlowRoutesDeps): 
         ? flow
         : { ...flow, researchMode: request.researchMode, updatedAt: now() };
     if (flowCreated || next !== flow) setConversationFlow(db, id, next);
+    const body: FlowStatusResponse = {
+      conversationId: id,
+      flow: next,
+    };
+    res.json(body);
+  });
+
+  app.post('/api/conversations/:id/flow/plan-confirm', (req, res) => {
+    const id = String(req.params.id ?? '');
+    const conversation = getConversation(db, id);
+    if (!conversation) {
+      res.status(404).json({ error: 'conversation not found' });
+      return;
+    }
+    const request = (req.body ?? {}) as Partial<ConfirmFlowPlanRequest>;
+    const message = typeof request.message === 'string' ? request.message.trim() : '';
+    if (
+      !message.includes('[form answers') ||
+      !message.includes('plan-confirm') ||
+      !/\[value:\s*confirm\]/iu.test(message)
+    ) {
+      res.status(400).json({ error: 'a confirmed plan-confirm form answer is required' });
+      return;
+    }
+
+    const current = getConversationFlow(db, id);
+    if (!current) {
+      res.status(409).json({ error: 'conversation flow is not initialized' });
+      return;
+    }
+    const planState = current.stages.find((stage) => stage.id === 'plan')?.state;
+    if (planState !== 'active' && planState !== 'complete') {
+      res.status(409).json({ error: 'the plan is not ready for confirmation' });
+      return;
+    }
+
+    const tracker = createFlowTracker({ shape: current.shape, initial: current, now });
+    tracker.noteUserMessage(message);
+    const next = tracker.snapshot;
+    const inspireState = next.stages.find((stage) => stage.id === 'inspire')?.state;
+    if (inspireState !== 'active') {
+      res.status(409).json({ error: 'the inspiration checkpoint could not be activated' });
+      return;
+    }
+
+    setConversationFlow(db, id, next);
+    const messages = listMessages(db, id);
+    if (messages.at(-1)?.role !== 'user' || messages.at(-1)?.content !== message) {
+      const timestamp = now();
+      upsertMessage(db, id, {
+        id: randomUUID(),
+        role: 'user',
+        content: message,
+        sessionMode: conversation.sessionMode ?? 'design',
+        startedAt: timestamp,
+        endedAt: timestamp,
+      });
+    }
     const body: FlowStatusResponse = {
       conversationId: id,
       flow: next,

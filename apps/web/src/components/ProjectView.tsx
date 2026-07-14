@@ -21,6 +21,7 @@ import {
   findFirstQuestionForm,
   hasUnterminatedQuestionForm,
   parsePartialQuestionForm,
+  selectedTemplateCard,
   type QuestionForm,
 } from '../artifacts/question-form';
 import { parseSubmittedAnswers } from './QuestionForm';
@@ -164,6 +165,8 @@ import {
 } from '../design-system-auto-prompt';
 import {
   createConversation,
+  applyPlugin,
+  confirmConversationFlowPlan,
   deleteConversation as deleteConversationApi,
   duplicatePluginAsProject,
   fetchAppliedPluginSnapshot,
@@ -2031,6 +2034,8 @@ export function ProjectView({
   // form as a freshly appeared one.
   const hasQuestions =
     Boolean(questionForm || questionsGenerating) && questionFormSubmittedAnswers === undefined;
+  const hasQuestionsRef = useRef(hasQuestions);
+  hasQuestionsRef.current = hasQuestions;
   // Stable identity for the current form occurrence, used to remember that its
   // one-by-one reveal already played. Keyed on the conversation + the hosting
   // assistant message id (not the message index, and NOT the parsed form id —
@@ -2376,6 +2381,10 @@ export function ProjectView({
   const flowPlanArtifact = flowSnapshot
     ? primaryFlowPlanArtifact(flowSnapshot.shape)
     : null;
+  const flowPlanArtifactFile = flowPlanArtifact
+    ? projectFiles.find((file) => file.name === flowPlanArtifact)
+    : undefined;
+  const flowPlanArtifactMtime = flowPlanArtifactFile?.mtime;
 
   useEffect(() => {
     if (!flowSnapshot || flowSnapshot.activeStage !== 'plan' || !flowPlanArtifact) {
@@ -2405,6 +2414,7 @@ export function ProjectView({
     flowSnapshot?.shape,
     flowSnapshot?.updatedAt,
     flowPlanArtifact,
+    flowPlanArtifactMtime,
     project.id,
   ]);
 
@@ -2785,8 +2795,9 @@ export function ProjectView({
     persistTabsState({ tabs: [primaryFile.name], active: primaryFile.name });
   }, [openTabsState.active, openTabsState.tabs.length, persistTabsState, projectFiles, routeFileName]);
 
-  const requestOpenFile = useCallback((name: string) => {
+  const requestOpenFile = useCallback((name: string, options?: { automatic?: boolean }) => {
     if (!name) return;
+    if (options?.automatic && hasQuestionsRef.current) return;
     setOpenRequest({ name, nonce: Date.now() });
   }, []);
 
@@ -2920,7 +2931,7 @@ export function ProjectView({
         if (pointerTarget) {
           if (savedArtifactRef.current === pointerTarget) return;
           savedArtifactRef.current = pointerTarget;
-          requestOpenFile(pointerTarget);
+          requestOpenFile(pointerTarget, { automatic: true });
           return;
         }
       }
@@ -2980,7 +2991,7 @@ export function ProjectView({
         // Auto-open the freshly-persisted artifact as a tab so the user
         // sees it without an extra click. The Write-tool path already does
         // this for tool-emitted files; this handles the artifact-tag path.
-        requestOpenFile(file.name);
+        requestOpenFile(file.name, { automatic: true });
       } else {
         // writeProjectTextFile collapses all failure paths (non-OK HTTP
         // responses, network errors, and stub-guard 422s) to null — the
@@ -4220,7 +4231,7 @@ export function ProjectView({
                 );
               if (recoveredExistingArtifact) {
                 savedArtifactRef.current = recoveredExistingArtifact.name;
-                requestOpenFile(recoveredExistingArtifact.name);
+                requestOpenFile(recoveredExistingArtifact.name, { automatic: true });
               } else {
                 savedArtifactRef.current = null;
                 await persistArtifact(
@@ -4235,7 +4246,9 @@ export function ProjectView({
             const diff = computeProducedFiles(beforeFileNames, nextFiles) ?? [];
             const produced = mergeRecoveredArtifact(diff, recoveredExistingArtifact);
             const producedArtifactToOpen = selectAutoOpenProducedArtifact(produced, autoOpenArtifactOptions);
-            if (producedArtifactToOpen) requestOpenFile(producedArtifactToOpen);
+            if (producedArtifactToOpen) {
+              requestOpenFile(producedArtifactToOpen, { automatic: true });
+            }
             if (produced.length > 0) {
               updateMessageById(
                 message.id,
@@ -4488,7 +4501,7 @@ export function ProjectView({
                     );
                   if (recoveredExistingArtifact) {
                     savedArtifactRef.current = recoveredExistingArtifact.name;
-                    requestOpenFile(recoveredExistingArtifact.name);
+                    requestOpenFile(recoveredExistingArtifact.name, { automatic: true });
                   } else {
                     savedArtifactRef.current = null;
                     await persistArtifact(
@@ -4513,7 +4526,9 @@ export function ProjectView({
                   recoveredExistingArtifact,
                 );
                 const producedArtifactToOpen = selectAutoOpenProducedArtifact(produced, autoOpenArtifactOptions);
-                if (producedArtifactToOpen) requestOpenFile(producedArtifactToOpen);
+                if (producedArtifactToOpen) {
+                  requestOpenFile(producedArtifactToOpen, { automatic: true });
+                }
                 updateMessageById(
                   message.id,
                   (prev) => ({ ...prev, producedFiles: produced, traceObjectFiles }),
@@ -4580,7 +4595,7 @@ export function ProjectView({
                       );
                     if (recoveredExistingArtifact) {
                       savedArtifactRef.current = recoveredExistingArtifact.name;
-                      requestOpenFile(recoveredExistingArtifact.name);
+                      requestOpenFile(recoveredExistingArtifact.name, { automatic: true });
                     } else {
                       savedArtifactRef.current = null;
                       await persistArtifact(
@@ -4602,7 +4617,9 @@ export function ProjectView({
                       recoveredArtifactMessagesRef.current.add(message.id);
                     }
                     const producedArtifactToOpen = selectAutoOpenProducedArtifact(produced, autoOpenArtifactOptions);
-                    if (producedArtifactToOpen) requestOpenFile(producedArtifactToOpen);
+                    if (producedArtifactToOpen) {
+                      requestOpenFile(producedArtifactToOpen, { automatic: true });
+                    }
                     if (latestRunStatus?.status === 'succeeded') setError(null);
                     // Unlike the recoverArtifacts sibling below, this row's
                     // endedAt was already stamped synchronously above (~4041)
@@ -4940,7 +4957,7 @@ export function ProjectView({
             );
           if (recoveredExistingArtifact) {
             savedArtifactRef.current = recoveredExistingArtifact.name;
-            requestOpenFile(recoveredExistingArtifact.name);
+            requestOpenFile(recoveredExistingArtifact.name, { automatic: true });
           } else {
             savedArtifactRef.current = null;
             await persistArtifact(
@@ -4964,7 +4981,9 @@ export function ProjectView({
           }
           recoveredArtifactMessagesRef.current.add(message.id);
           const producedArtifactToOpen = selectAutoOpenProducedArtifact(produced, autoOpenArtifactOptions);
-          if (producedArtifactToOpen) requestOpenFile(producedArtifactToOpen);
+          if (producedArtifactToOpen) {
+            requestOpenFile(producedArtifactToOpen, { automatic: true });
+          }
           // This message's persisted runStatus was already terminal (a
           // precondition of hasRecoverableArtifactMessage); when it has no
           // stored endedAt, fall back to the daemon's authoritative terminal
@@ -5556,7 +5575,9 @@ export function ProjectView({
         if (ev.kind === 'live_artifact') {
           setLiveArtifactEvents((prev) => appendLiveArtifactEventItem(prev, ev));
           void refreshLiveArtifacts().then(() => {
-            if (ev.action !== 'deleted') requestOpenFile(liveArtifactTabId(ev.artifactId));
+            if (ev.action !== 'deleted') {
+              requestOpenFile(liveArtifactTabId(ev.artifactId), { automatic: true });
+            }
           });
           onProjectsRefresh();
           return;
@@ -5617,7 +5638,7 @@ export function ProjectView({
                   moduleFileNames,
                 });
                 if (decision.shouldOpen && decision.fileName) {
-                  requestOpenFile(decision.fileName);
+                  requestOpenFile(decision.fileName, { automatic: true });
                 }
               });
             }
@@ -5849,7 +5870,7 @@ export function ProjectView({
                 const sameTurnWrite = sameTurnArtifactWrite ?? sameTurnHtmlWrite;
                 if (sameTurnWrite) {
                   savedArtifactRef.current = sameTurnWrite.name;
-                  requestOpenFile(sameTurnWrite.name);
+                  requestOpenFile(sameTurnWrite.name, { automatic: true });
                 } else {
                   await persistArtifact(artifactToPersist, nextFiles, finalText);
                   nextFiles = await refreshProjectFiles();
@@ -5884,7 +5905,9 @@ export function ProjectView({
                 traceTouchedFilePaths,
               ) ?? [];
               const producedArtifactToOpen = selectAutoOpenProducedArtifact(produced, autoOpenArtifactOptions);
-              if (producedArtifactToOpen) requestOpenFile(producedArtifactToOpen);
+              if (producedArtifactToOpen) {
+                requestOpenFile(producedArtifactToOpen, { automatic: true });
+              }
               setMessages((curr) => {
                 const updated = curr.map((m) =>
                   m.id === assistantId
@@ -7891,7 +7914,7 @@ export function ProjectView({
         if (action === 'apply') {
           onProjectChange({ ...project, skillId: templateId ?? null });
           await refreshWorkspaceItems();
-          requestOpenFile('index.html');
+          requestOpenFile('index.html', { automatic: true });
         }
         await handleSend(
           action === 'skip'
@@ -8019,13 +8042,17 @@ export function ProjectView({
   );
   const visibleInspireTemplates = useMemo(() => {
     const query = inspireSearch.trim().toLocaleLowerCase();
-    return inspireTemplates.filter((template) => {
+    const matching = inspireTemplates.filter((template) => {
       if (inspireCategory && template.category !== inspireCategory) return false;
       if (!query) return true;
       return [template.title, template.reason, template.category]
         .filter(Boolean)
         .some((value) => value?.toLocaleLowerCase().includes(query));
     });
+    // Keep the default checkpoint fast and decision-sized. Search and category
+    // filters still expose the full eligible catalogue when the user wants to
+    // browse beyond the leading recommendations.
+    return !query && !inspireCategory ? matching.slice(0, 6) : matching;
   }, [inspireCategory, inspireSearch, inspireTemplates]);
   useEffect(() => {
     if (flowSnapshot?.activeStage !== 'inspire') return;
@@ -8052,6 +8079,7 @@ export function ProjectView({
     ) {
       const researchStage = flowSnapshot.stages.find((stage) => stage.id === 'research');
       return {
+        stage: 'research' as const,
         label: t('flow.stage.research'),
         nonce: flowSnapshot.updatedAt,
         content: (
@@ -8074,13 +8102,17 @@ export function ProjectView({
     if (flowSnapshot.activeStage === 'plan') {
       const shape = FLOW_SHAPES[flowSnapshot.shape];
       const planUnit = t(shape.plan.itemLabelKey as keyof Dict);
+      const planStage = flowSnapshot.stages.find((stage) => stage.id === 'plan');
       return {
+        stage: 'plan' as const,
         label: t('flow.stage.plan'),
         nonce: flowSnapshot.updatedAt,
         content: (
           <OutlinePanel
-            pages={outlinePages}
+            pages={flowPlanArtifactFile ? outlinePages : []}
             onChange={handleOutlineChange}
+            loading={!flowPlanArtifactFile}
+            statusDetail={planStage?.detail ?? t('flow.state.active')}
             copy={{
               title: t('flow.stage.plan'),
               pageLabel: planUnit,
@@ -8101,6 +8133,7 @@ export function ProjectView({
     }
     if (flowSnapshot.activeStage === 'inspire') {
       return {
+        stage: 'inspire' as const,
         label: t('flow.stage.inspire'),
         nonce: flowSnapshot.updatedAt,
         content: (
@@ -8141,6 +8174,7 @@ export function ProjectView({
     return null;
   }, [
     flowSnapshot,
+    flowPlanArtifactFile,
     handleInspireChoice,
     handleOutlineChange,
     inspireCategories,
@@ -9513,10 +9547,67 @@ export function ProjectView({
                   });
                   return;
                 }
+                if (activeConversationId && /\[value:\s*confirm\]/iu.test(text)) {
+                  try {
+                    const confirmedFlow = await confirmConversationFlowPlan(
+                      activeConversationId,
+                      { message: text },
+                    );
+                    trackStagedFlowSnapshot(confirmedFlow);
+                    setFlowSnapshot(confirmedFlow);
+                    await refreshConversationMessagesFromServer(activeConversationId);
+                  } catch (confirmationError) {
+                    setProjectActionsToast({
+                      message: t('flow.plan.saveError'),
+                      details:
+                        confirmationError instanceof Error
+                          ? confirmationError.message
+                          : null,
+                      tone: 'error',
+                      ttlMs: 3_000,
+                    });
+                  }
+                  return;
+                }
+              }
+              const submittedAnswers = displayedQuestionForm
+                ? parseSubmittedAnswers(displayedQuestionForm, text)
+                : null;
+              const templateSelection =
+                displayedQuestionForm && submittedAnswers
+                  ? selectedTemplateCard(displayedQuestionForm, submittedAnswers)
+                  : null;
+              if (templateSelection?.source === 'community') {
+                const applied = await applyPlugin(templateSelection.id, {
+                  projectId: project.id,
+                  locale,
+                });
+                if (!applied) {
+                  setProjectActionsToast({
+                    message: `Unable to apply “${templateSelection.label}” to this conversation.`,
+                    details: null,
+                    tone: 'error',
+                    ttlMs: 3_000,
+                  });
+                  return;
+                }
+                await handleSend(text, attachments, [], {
+                  entryFrom: 'question_answer',
+                  ...(context ? { context } : {}),
+                  appliedPluginSnapshot: applied.appliedPlugin,
+                  inlineAppliedPlugin: {
+                    pluginId: templateSelection.id,
+                    label: templateSelection.label,
+                  },
+                });
+                return;
               }
               await handleSend(text, attachments, [], {
                 entryFrom: 'question_answer',
                 ...(context ? { context } : {}),
+                ...(templateSelection?.source === 'design-template'
+                  ? { skillIds: [templateSelection.id] }
+                  : {}),
               });
             })();
           }}

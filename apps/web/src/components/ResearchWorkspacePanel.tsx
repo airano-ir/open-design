@@ -137,14 +137,26 @@ export function ResearchWorkspacePanel({
         >
           {renderMarkdown(reportMarkdown)}
         </div>
-      ) : null}
+      ) : (
+        <div className={styles.reportSkeleton} role="status" aria-live="polite">
+          <div aria-hidden="true">
+            <span />
+            <span />
+            <span />
+            <span />
+          </div>
+          <p>{copy.reportPending}</p>
+        </div>
+      )}
 
       <footer className={styles.report}>
         <div className={styles.reportCopy}>
           <span className={styles.reportLabel}>{copy.reportLabel}</span>
-          <span className={reportPath ? styles.reportPath : styles.reportPending}>
-            {reportPath ?? copy.reportPending}
-          </span>
+          {reportPath || reportMarkdown ? (
+            <span className={reportPath ? styles.reportPath : styles.reportPending}>
+              {reportPath ?? copy.reportPending}
+            </span>
+          ) : null}
         </div>
         {reportPath && onOpenReport ? (
           <Button

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Explore Open Design"
+  short_description: "Explain what Open Design can create and help users choose a path"
+  default_prompt: "Help me understand what Open Design can do for my goal."
+
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Search Community Templates"
+  short_description: "Find visual Community examples by meaning"
+  default_prompt: "Search Community for visual examples that match my brief."
+
+policy:
+  allow_implicit_invocation: true

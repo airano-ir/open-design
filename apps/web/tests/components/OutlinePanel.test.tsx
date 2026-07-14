@@ -23,6 +23,26 @@ const pages: OutlinePage[] = [
 ];
 
 describe('OutlinePanel', () => {
+  it('shows the live planning handoff before the first outline file arrives', () => {
+    render(
+      <OutlinePanel
+        pages={[]}
+        onChange={vi.fn()}
+        loading
+        statusDetail="Writing · generated/outline.md"
+      />,
+    );
+
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Writing · generated/outline.md',
+    );
+    expect(screen.queryByText('Add a page to start the outline.')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Add page' })).toHaveProperty(
+      'disabled',
+      true,
+    );
+  });
+
   it('emits title and key-point edits immediately', () => {
     const onChange = vi.fn();
     render(<OutlinePanel pages={pages} onChange={onChange} />);

@@ -181,6 +181,10 @@ export interface ComposerPlusMenuProps {
   deepResearchEnabled?: boolean;
   onDeepResearchChange?: (enabled: boolean) => void;
 
+  /** Image-deck-only parallel page rendering toggle. Omit outside that mode. */
+  fastEnabled?: boolean;
+  onFastChange?: (enabled: boolean) => void;
+
   /** Opens the reference-project picker. */
   onReferenceProject?: () => void;
 
@@ -298,6 +302,8 @@ export function ComposerPlusMenu({
   attachLoading,
   deepResearchEnabled = false,
   onDeepResearchChange,
+  fastEnabled = false,
+  onFastChange,
   onReferenceProject,
   onLinkLocalCode,
   onSelectFromLibrary,
@@ -624,6 +630,25 @@ export function ComposerPlusMenu({
               <span>{t('chat.plus.deepResearch')}</span>
               <span
                 className={`plus-menu__toggle${deepResearchEnabled ? ' is-active' : ''}`}
+                aria-hidden
+              >
+                <span />
+              </span>
+            </button>
+          ) : null}
+          {onFastChange ? (
+            <button
+              type="button"
+              role="menuitemcheckbox"
+              aria-checked={fastEnabled}
+              className="plus-menu__item"
+              data-testid="composer-plus-fast"
+              onClick={() => onFastChange(!fastEnabled)}
+            >
+              <Icon name="sparkles" size={14} className="plus-menu__item-icon" />
+              <span>Fast</span>
+              <span
+                className={`plus-menu__toggle${fastEnabled ? ' is-active' : ''}`}
                 aria-hidden
               >
                 <span />

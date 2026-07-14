@@ -150,6 +150,10 @@ import { LiveArtifactBadges } from './LiveArtifactBadges';
 import { MissingBrandFontsBanner } from './MissingBrandFontsBanner';
 import { LibraryPicker } from './LibraryPicker';
 import { QuestionsPanel } from './QuestionsPanel';
+import {
+  FlowWorkspaceTransition,
+  type FlowWorkspaceDescriptor,
+} from './FlowWorkspaceTransition';
 import { QuickSwitcher } from './QuickSwitcher';
 import { SketchEditor } from './SketchEditor';
 import { SketchEnginePrewarm } from './SketchEnginePrewarm';
@@ -280,11 +284,7 @@ interface Props {
   onWorkspaceContextsChange?: (contexts: WorkspaceContextItem[]) => void;
   messages?: ChatMessage[];
   artifactHtml?: string | null;
-  flowWorkspace?: {
-    label: string;
-    content: ReactNode;
-    nonce: number;
-  } | null;
+  flowWorkspace?: FlowWorkspaceDescriptor | null;
   conversationError?: string | null;
   onRetry?: (message: ChatMessage) => void;
   // Contextual failure recovery, mirrored from the chat error card so the
@@ -1324,6 +1324,10 @@ export function FileWorkspace({
   // lives here, including after submission when a banner click can reopen the
   // answered preview.
   const showQuestionsTab = Boolean(questionForm || questionFormPreview || questionsGenerating);
+  const displayedQuestionForm = questionForm ?? questionFormPreview;
+  const isPlanCheckpoint = Boolean(
+    flowWorkspace?.stage === 'plan' && displayedQuestionForm?.id === 'plan-confirm',
+  );
   const analytics = useAnalytics();
   // P1 page_view page_name=file_manager — once per project the user lands
   // inside the workspace. Re-fire when the projectId changes so a
@@ -1996,16 +2000,23 @@ export function FileWorkspace({
   // the persisted tab list.
   useEffect(() => {
     if (!focusQuestionsRequest) return;
-    setActiveTab(QUESTIONS_TAB);
+    // Plan confirmation belongs beside the editable outline. Keep the staged
+    // workspace selected so the decision never replaces the thing being
+    // approved; the dedicated Questions tab remains available on click.
+    setActiveTab(isPlanCheckpoint ? FLOW_STAGE_TAB : QUESTIONS_TAB);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusQuestionsRequest?.nonce]);
+  }, [focusQuestionsRequest?.nonce, isPlanCheckpoint]);
 
   useEffect(() => {
     if (!flowWorkspace) return;
-    if (activeTab === QUESTIONS_TAB && showQuestionsTab) return;
+    // A live form is the current checkpoint. Let the Questions focus effect
+    // win even when a plan-file refresh changes the staged workspace in the
+    // same commit; once the form is answered, this dependency re-runs and
+    // advances the panel to the next host-owned stage.
+    if (questionFormInteractive && showQuestionsTab && !isPlanCheckpoint) return;
     setActiveTab(FLOW_STAGE_TAB);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [flowWorkspace?.nonce]);
+  }, [flowWorkspace?.nonce, questionFormInteractive, isPlanCheckpoint]);
 
   // Submitting from the right-hand panel should close the preview once. The
   // answered form remains available, so a later chat-banner click can reopen
@@ -2016,18 +2027,18 @@ export function FileWorkspace({
     const isAnswered = questionFormSubmittedAnswers !== undefined;
     previousQuestionFormSubmittedAnswersRef.current = questionFormSubmittedAnswers;
     if (activeTab === QUESTIONS_TAB && !wasAnswered && isAnswered) {
-      setActiveTab(defaultRootTab);
+      setActiveTab(flowWorkspace ? FLOW_STAGE_TAB : defaultRootTab);
     }
-  }, [activeTab, defaultRootTab, questionFormSubmittedAnswers]);
+  }, [activeTab, defaultRootTab, flowWorkspace, questionFormSubmittedAnswers]);
 
   // If the Questions tab is active but the form is gone because a new assistant
   // turn has no form, fall back to the default root tab.
   useEffect(() => {
     if (activeTab === QUESTIONS_TAB && !showQuestionsTab) {
-      setActiveTab(defaultRootTab);
+      setActiveTab(flowWorkspace ? FLOW_STAGE_TAB : defaultRootTab);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, showQuestionsTab]);
+  }, [activeTab, showQuestionsTab, flowWorkspace]);
 
   useEffect(() => {
     if (activeTab === FLOW_STAGE_TAB && !flowWorkspace) {
@@ -3806,13 +3817,33 @@ export function FileWorkspace({
           </div>
         ))}
         {activeTab === FLOW_STAGE_TAB && flowWorkspace ? (
-          flowWorkspace.content
+          <FlowWorkspaceTransition
+            workspace={flowWorkspace}
+            checkpoint={
+              isPlanCheckpoint ? (
+                <QuestionsPanel
+                  key={questionFormKey ?? undefined}
+                  projectId={projectId}
+                  formKey={questionFormKey}
+                  form={displayedQuestionForm}
+                  interactive={questionFormInteractive}
+                  submitDisabled={questionFormSubmitDisabled}
+                  submittedAnswers={questionFormSubmittedAnswers}
+                  generating={questionsGenerating}
+                  flowTrackingContext={flowTrackingContext}
+                  onSubmit={(text, payload) =>
+                    onSubmitQuestionForm?.(text, payload?.attachments ?? [], payload?.context)
+                  }
+                />
+              ) : undefined
+            }
+          />
         ) : activeTab === QUESTIONS_TAB ? (
           <QuestionsPanel
             key={questionFormKey ?? undefined}
             projectId={projectId}
             formKey={questionFormKey}
-            form={questionForm ?? questionFormPreview}
+            form={displayedQuestionForm}
             interactive={questionFormInteractive}
             submitDisabled={questionFormSubmitDisabled}
             submittedAnswers={questionFormSubmittedAnswers}

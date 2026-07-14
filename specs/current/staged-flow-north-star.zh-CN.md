@@ -324,6 +324,11 @@ UI 侧(`QuestionForm.tsx` / `QuestionsPanel.tsx`):
   「✓ 确认,生成 N 页」默认选中 /「我要修改」+ allowCustom 自由文本)。
   聊天里渲染为醒目确认条——不新增交互机制,walk 现有
   QuestionsBanner/QuestionsPanel 通路。
+- 默认确认由 host 直接 `POST /api/conversations/:id/flow/plan-confirm`:
+  原子落 user answer、把 plan 标为 complete 并立即打开 inspire 面板,
+  **不启动一个只负责复述“已确认”的空 agent turn**。这样确认到灵感可见
+  是本地状态转移,不受模型 TTFT/是否漏 marker 影响;「我要修改」仍进入 agent
+  turn 修改 plan 并再次确认。
 - 修改路径:用户自然语言说改 → agent 改 `outline.md` 再次确认;或用户
   直接在 Design Files 编辑文件后说「按这个来」。
 - 其余形态按 §5.0 矩阵取各自的 plan 工件(landing=`structure.md` 区块+
@@ -375,6 +380,7 @@ UI 侧(`QuestionForm.tsx` / `QuestionsPanel.tsx`):
 | 能力 | HTTP | UI | CLI |
 |------|------|----|----|
 | flow 快照读取 | `GET /api/conversations/:id/flow` | FlowProgressCard | `od flow status --conversation <id> --json` |
+| plan 确认 | `POST /api/conversations/:id/flow/plan-confirm` | plan-confirm 默认按钮 | `od flow confirm <id> [--prompt-file <path\|->] --json` |
 | 灵感排序 | `POST /api/inspire/rank` | 灵感面板 | `od inspire rank --json` |
 | 灵感选择/跳过 | `POST /api/conversations/:id/flow/inspire`(apply/skip) | 面板按钮 | `od inspire apply/skip` |
 | deep research 开关 | 会话 PATCH(现有会话更新面) | ＋菜单开关 | `od chat --research deep|basic|off`(现有 research 参数扩展) |

@@ -77,6 +77,15 @@ For new user-facing deliverables, choose a short semantic project-relative filen
 Good examples: \`investor-pitch-deck.html\`, \`ai-community-pr-deck.html\`, \`refund-ops-dashboard.html\`, \`pricing-page.html\`, \`screens/ios-checkout.html\`, \`daily-digest.md\`, \`image-manifest.json\`.
 
 When editing an existing artifact, preserve its existing filename unless the user asks for a copy or version. Use \`index.html\` only for fixed runtime conventions or a lightweight launcher/overview: live-artifact generated previews, HyperFrames compositions, static SPA/deploy entry mapping, plugin previews/examples, \`ui_kits/app/index.html\`, or a multi-screen overview that links to semantic screen files. If an active skill or template says to copy a seed to \`index.html\`, adapt the destination to a semantic filename unless the task is one of those fixed-path exceptions.`;
+
+const BUILT_IN_UTILITY_SKILL_INDEX = `## Built-in utility skill index
+
+Consider these skills on every user turn, whether attached or not. Use only the matching skill and preserve the user's current task.
+
+- \`explore-open-design\` — answer what Open Design can do, compare creation paths, and turn a broad goal into a concrete next step.
+- \`search-community-templates\` — act on requests for templates, examples, styles, references, or inspiration by semantically searching Community and presenting selectable visual cards.
+
+When shell tools are available, load the matching workflow with \`"$OD_NODE_BIN" "$OD_BIN" skills show <id> --json\` and follow its \`body\`. For template requests, run the skill's search action instead of inventing results. Without tools, answer from this index only and never claim that a search or action ran.`;
 const PROMPT_SAFE_HTTP_STATUS_LABELS: Record<string, string> = {
   '400': 'Bad Request',
   '401': 'Unauthorized',
@@ -158,6 +167,8 @@ type ProjectMetadata = {
   fidelity?: string | null;
   speakerNotes?: boolean | null;
   slideCount?: string | null;
+  deckGenerationMode?: 'standard' | 'image' | null;
+  deckFast?: boolean | null;
   animations?: boolean | null;
   includeLandingPage?: boolean | null;
   includeOsWidgets?: boolean | null;
@@ -292,10 +303,12 @@ Use **POSIX \`$VAR\` syntax** — do NOT translate to PowerShell (\`$env:VAR\`, 
 \`\`\`bash
 # POSIX bash — do NOT convert to PowerShell
 IMAGE_MODEL=IMAGE_MODEL_VALUE
+model_args=()
+if [ -n "$IMAGE_MODEL" ]; then model_args=(--model "$IMAGE_MODEL"); fi
 out=\$("$OD_NODE_BIN" "$OD_BIN" media generate \\
   --project "$OD_PROJECT_ID" \\
   --surface image \\
-  --model "$IMAGE_MODEL" \\
+  "\${model_args[@]}" \\
   --prompt "..." \\
   --aspect 16:9)
 ec=\$?
@@ -353,7 +366,7 @@ function renderMediaDispatchModelGuidance(defaults?: ByokMediaDefaults): string 
   const videoModel = defaults?.videoModel?.trim();
   const imagePart = imageModel
     ? `For image generation prefer your configured model: \`${imageModel}\`.`
-    : 'For the best fal image model use `--model flux-pro-ultra`.';
+    : 'For image generation omit `--model` so the unified source selected in Settings → Media is used. Inspect it with `od media config --json` when you need to report the active source.';
   const videoPart = videoModel
     ? `For video prefer your configured model: \`${videoModel}\`.`
     : 'For video use `--model veo-3-fal` or `--model wan-2.1-t2v`.';
@@ -361,7 +374,7 @@ function renderMediaDispatchModelGuidance(defaults?: ByokMediaDefaults): string 
 }
 
 function renderMediaDispatchHint(defaults?: ByokMediaDefaults): string {
-  const imageModel = defaults?.imageModel?.trim() || 'flux-pro-ultra';
+  const imageModel = defaults?.imageModel?.trim() || '';
   const hint = MEDIA_DISPATCH_HINT
     .replace('IMAGE_MODEL_VALUE', shellDoubleQuote(imageModel))
     .replace('MODEL_SELECTION_GUIDANCE', renderMediaDispatchModelGuidance(defaults));
@@ -467,8 +480,9 @@ export interface ComposeInput {
     | 'image'
     | 'video'
     | 'audio'
+    | 'utility'
     | undefined;
-  skillModes?: Array<'prototype' | 'deck' | 'template' | 'design-system' | 'image' | 'video' | 'audio'> | undefined;
+  skillModes?: Array<'prototype' | 'deck' | 'template' | 'design-system' | 'image' | 'video' | 'audio' | 'utility'> | undefined;
   designSystemBody?: string | undefined;
   designSystemTitle?: string | undefined;
   // Compiled (machine-readable) form of the active brand's design system,
@@ -706,6 +720,8 @@ export function composeSystemPrompt({
     parts.push('\n\n---\n\n');
   }
 
+  parts.push(BUILT_IN_UTILITY_SKILL_INDEX, '\n\n---\n\n');
+
   if (!isMediaSurfaceEarly && !isAskMode) {
     parts.push(renderDiscoveryAndPhilosophy(resolvedExecutionProfile), '\n\n---\n\n');
     // Direction library is only useful when the agent must pick a visual
@@ -881,12 +897,6 @@ export function composeSystemPrompt({
     }
   }
 
-  // Staged-flow protocol (specs/current/staged-flow-north-star.zh-CN.md §5.2).
-  // Present only for flow-shaped runs; carries the <od-flow> marker contract.
-  if (flowProtocol && flowProtocol.trim().length > 0) {
-    parts.push(flowProtocol);
-  }
-
   const metaBlock = renderMetadataBlock(
     metadata,
     template,
@@ -989,8 +999,15 @@ export function composeSystemPrompt({
   // right-hand Questions tab, and answers return as the next user message.
   // Applies to every agent — question-form is UI-parsed markup, not a tool.
   parts.push(
-    "\n\n---\n\n## Clarifying questions mid-conversation\n\nWhen you need a clarification AFTER turn 1 and the answer benefits from structured input, emit a `<question-form>` block — the same markup turn-1 discovery uses — instead of writing a bulleted list of options in markdown. The host renders it as a Questions banner the user opens in the side tab; a markdown list renders as plain text and forces the user to type a reply. Use the richest appropriate web form controls (`radio`, `checkbox`, `select`, `text`, `textarea`, `number`, `range`, `date`, `time`, `datetime-local`, `color`, `url`, `email`, `tel`, `file`, `switch`, or `direction-cards`). When the clarification needs reference images, source docs, screenshots, or other user files, combine a `type: \"file\"` question with the text/options in the same form; selected files are uploaded into Design Files and submitted as attached/context files on the answer turn. For every finite-choice question, keep user control by leaving `allowCustom` unset or setting it to `true`, and add localized `customLabel` / `customPlaceholder` when useful. Use free-form prose questions only when a form would add no structure. Do NOT also duplicate the form's questions as markdown text alongside it.\n\n`<question-form>` is assistant text for the Open Design UI, not a native tool call. If you need to clarify direction, emit the complete `<question-form>...</question-form>` block directly in the assistant message before any TodoWrite, file write/edit, Bash, or other native tool call. Do not stop after an introductory sentence such as \"先确认一下方向：\"; the same message must include the full form.",
+    "\n\n---\n\n## Clarifying questions mid-conversation\n\nWhen you need a clarification AFTER turn 1 and the answer benefits from structured input, emit a `<question-form>` block — the same markup turn-1 discovery uses — instead of writing a bulleted list of options in markdown. The host renders it as a Questions banner the user opens in the side tab; a markdown list renders as plain text and forces the user to type a reply. Use the richest appropriate web form controls (`radio`, `checkbox`, `select`, `text`, `textarea`, `number`, `range`, `date`, `time`, `datetime-local`, `color`, `url`, `email`, `tel`, `file`, `switch`, `direction-cards`, or `template-cards`). `template-cards` is reserved for visual Community/design-template results and carries a `templates` array with stable ids and same-origin preview metadata. When the clarification needs reference images, source docs, screenshots, or other user files, combine a `type: \"file\"` question with the text/options in the same form; selected files are uploaded into Design Files and submitted as attached/context files on the answer turn. For every finite-choice question, keep user control by leaving `allowCustom` unset or setting it to `true`, and add localized `customLabel` / `customPlaceholder` when useful. Use free-form prose questions only when a form would add no structure. Do NOT also duplicate the form's questions as markdown text alongside it.\n\n`<question-form>` is assistant text for the Open Design UI, not a native tool call. If you need to clarify direction, emit the complete `<question-form>...</question-form>` block directly in the assistant message before any TodoWrite, file write/edit, Bash, or other native tool call. Do not stop after an introductory sentence such as \"先确认一下方向：\"; the same message must include the full form.",
   );
+
+  // Keep the staged-flow checkpoint after every artifact-building directive so
+  // it wins recency conflicts with active skills, plugin pipelines, critique,
+  // filesystem handoff, and generic completion guidance.
+  if (flowProtocol && flowProtocol.trim().length > 0) {
+    parts.push(`\n\n---\n\n${flowProtocol.trim()}`);
+  }
 
   // Pinned LAST so recency bias reinforces the role-marker prohibition.
   // This is the canonical anti-roleplay instruction;
@@ -1342,6 +1359,23 @@ function renderMetadataBlock(
     lines.push(
       `- **speakerNotes**: ${typeof metadata.speakerNotes === 'boolean' ? metadata.speakerNotes : '(unknown — ask: include speaker notes?)'}`,
     );
+    const deckGenerationMode = metadata.deckGenerationMode ?? 'standard';
+    lines.push(`- **deckGenerationMode**: ${deckGenerationMode}`);
+    lines.push(`- **deckFast**: ${deckGenerationMode === 'image' && metadata.deckFast === true}`);
+    if (deckGenerationMode === 'image') {
+      lines.push(
+        '- **image deck workflow**: keep the same staged questions → research → outline → inspiration → generation flow. Image mode changes only the page renderer after inspiration; it does not skip or duplicate any stage.',
+        '- **image deck output**: generate one full-slide image per page, then place those page images into the canonical HTML deck framework with one `<section class="slide">` per page. The HTML deck remains the source artifact so preview, PDF, and PowerPoint export keep working; do not return a folder of loose images or one tall contact sheet.',
+        '- **image capability**: resolve the configured image source with `"$OD_NODE_BIN" "$OD_BIN" media config --json`; do not hard-code Codex, BYOK, or a provider key. Use the returned model through `od media generate` / `od media batch`, and never call provider REST APIs directly.',
+        metadata.deckFast === true
+          ? '- **Fast image rendering**: write a JSON page manifest and call `od media batch --prompt-file <manifest.json> --concurrency 4 --json`. This is a bounded worker pool with concurrency 4: pages may render out of order, but every output must map back to its slide number before assembling the HTML deck.'
+          : '- **image rendering order**: render and verify one page at a time. Fast is off, so do not start concurrent page generations.',
+      );
+    } else {
+      lines.push(
+        '- **standard deck output**: build the editable canonical HTML deck directly. Use HTML/CSS for page content; generated images may support individual visuals but must not replace every slide with a flat page image.',
+      );
+    }
   }
   if (metadata.kind === 'template') {
     lines.push(

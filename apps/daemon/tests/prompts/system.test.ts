@@ -89,6 +89,28 @@ describe('composeSystemPrompt — activeStageBlocks splice (spec §23.4)', () =>
   });
 });
 
+describe('composeSystemPrompt — built-in utility skill index', () => {
+  it('makes capability discovery and Community template search available on every turn', () => {
+    for (const sessionMode of [undefined, 'chat', 'plan'] as const) {
+      const prompt = composeSystemPrompt({ sessionMode });
+
+      expect(prompt).toContain('## Built-in utility skill index');
+      expect(prompt).toContain('Consider these skills on every user turn');
+      expect(prompt).toContain('`explore-open-design`');
+      expect(prompt).toContain('`search-community-templates`');
+      expect(prompt).toContain('skills show <id> --json');
+      expect(prompt).toContain('run the skill\'s search action instead of inventing');
+    }
+  });
+
+  it('does not pretend utility actions ran when the runtime has no shell tools', () => {
+    const prompt = composeSystemPrompt({ streamFormat: 'plain', sessionMode: 'chat' });
+
+    expect(prompt).toContain('Without tools, answer from this index only');
+    expect(prompt).toContain('never claim that a search or action ran');
+  });
+});
+
 describe('composeSystemPrompt', () => {
   it('injects Chinese quick brief guidance when the UI locale is zh-CN', () => {
     const prompt = composeSystemPrompt({ locale: 'zh-CN' });
@@ -293,6 +315,25 @@ describe('composeSystemPrompt', () => {
     expect(prompt).toContain('- **slideCount**: 10-15 pages');
     expect(prompt).not.toContain('**responsive web contract**');
     expect(prompt).not.toContain('**platformTargets**');
+  });
+
+  it('keeps the staged deck flow while rendering image-mode pages through the configured image capability', () => {
+    const prompt = composeSystemPrompt({
+      metadata: {
+        kind: 'deck',
+        deckGenerationMode: 'image',
+        deckFast: true,
+      } as any,
+    });
+
+    expect(prompt).toContain('- **deckGenerationMode**: image');
+    expect(prompt).toContain('- **deckFast**: true');
+    expect(prompt).toContain('questions → research → outline → inspiration → generation');
+    expect(prompt).toContain('one full-slide image per page');
+    expect(prompt).toContain('HTML deck');
+    expect(prompt).toContain('od media config');
+    expect(prompt).toContain('od media batch');
+    expect(prompt).toContain('concurrency 4');
   });
 
   it('tells artifact generation to summarize instead of dumping raw HTML source into chat', () => {

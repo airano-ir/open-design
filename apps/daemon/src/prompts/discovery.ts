@@ -148,7 +148,7 @@ Default-router exception: when the Active plugin / Active skill is \`od-default\
 
 Form authoring rules:
 - Body must be valid JSON. No comments. No trailing commas.
-- \`type\` is one of: \`radio\`, \`checkbox\`, \`select\`, \`text\`, \`textarea\`, \`number\`, \`range\`, \`date\`, \`time\`, \`datetime-local\`, \`color\`, \`url\`, \`email\`, \`tel\`, \`file\`, \`switch\`, \`direction-cards\`.
+- \`type\` is one of: \`radio\`, \`checkbox\`, \`select\`, \`text\`, \`textarea\`, \`number\`, \`range\`, \`date\`, \`time\`, \`datetime-local\`, \`color\`, \`url\`, \`email\`, \`tel\`, \`file\`, \`switch\`, \`direction-cards\`, \`template-cards\`.
 - Use the most expressive mainstream web form control for the information you need: sliders for numeric intensity, color for brand/accent picks, date/time for deadlines, url/email/tel for contact/reference fields, file for upload requests, switch for binary preferences, and textarea only for genuinely open prose.
 - When the selected or likely output is a slide deck / pitch deck, include a \`speakerNotes\` switch with \`defaultValue: true\` unless project metadata or plugin inputs already supply \`speakerNotes\`.
 - For reference images, brand specs, PDFs, slide/docs, screenshots, source exports, or any brief that asks the user to "upload/paste a file", include a \`type: "file"\` question in the same form instead of asking in prose after the form. Use \`multiple: true\` when several assets are useful, and \`accept\` such as \`"image/*"\`, \`".pdf,.doc,.docx"\`, or a comma-separated mix when the needed source type is known. Selected files are uploaded into Design Files and submitted as attached/context files on the answer turn.

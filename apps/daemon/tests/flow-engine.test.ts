@@ -117,6 +117,22 @@ describe('createFlowTracker', () => {
     expect(selectFlowShape(planning.snapshot, 'mobile')).toBe('prototype');
   });
 
+  it('never downgrades a specific shape to its generic project shape', () => {
+    for (const shape of ['landing', 'mobile', 'webapp'] as const) {
+      const initial = createFlowTracker({
+        shape,
+        now: () => 1,
+      }).snapshot;
+      expect(selectFlowShape(initial, 'prototype')).toBe(shape);
+    }
+
+    const report = createFlowTracker({
+      shape: 'report',
+      now: () => 1,
+    }).snapshot;
+    expect(selectFlowShape(report, 'document')).toBe('report');
+  });
+
   it('starts a fresh conversation at clarify', () => {
     const tracker = createFlowTracker({ shape: 'deck', now: () => 1 });
     expect(tracker.snapshot.shape).toBe('deck');
@@ -170,6 +186,9 @@ describe('createFlowTracker', () => {
       input: { command: '"$OD_NODE_BIN" "$OD_BIN" research search --query "robots"' },
     });
     expect(stageState(tracker, 'research')).toBe('active');
+    expect(tracker.snapshot.stages.find((stage) => stage.id === 'research')?.detail).toBe(
+      'Searching · robots',
+    );
     tracker.observeAgentEvent({
       type: 'tool_use',
       id: 't2',
@@ -177,6 +196,36 @@ describe('createFlowTracker', () => {
       input: { file_path: 'research/robots-market.md', content: '# findings' },
     });
     expect(stageState(tracker, 'research')).toBe('complete');
+    expect(tracker.snapshot.stages.find((stage) => stage.id === 'research')?.detail).toBe(
+      'Research saved · research/robots-market.md',
+    );
+  });
+
+  it('detects Bash-authored plan files and requests a host confirmation fallback', () => {
+    const tracker = createFlowTracker({ shape: 'deck', now: () => 1 });
+    tracker.noteUserMessage('[form answers — discovery]\n- Format: 16:9');
+    tracker.observeAgentEvent({
+      type: 'tool_use',
+      id: 't1',
+      name: 'Bash',
+      input: {
+        command:
+          'mkdir -p research generated && printf \'# Research\' > research/brief.md && printf \'# Outline\' > generated/outline.md',
+      },
+    });
+
+    expect(stageState(tracker, 'research')).toBe('complete');
+    expect(stageState(tracker, 'plan')).toBe('active');
+    expect(tracker.snapshot.stages.find((stage) => stage.id === 'plan')?.detail).toBe(
+      'Writing · generated/outline.md',
+    );
+    expect(tracker.needsPlanConfirmationFallback()).toBe(true);
+
+    tracker.observeAgentEvent({
+      type: 'text_delta',
+      delta: '<question-form id="plan-confirm">',
+    });
+    expect(tracker.needsPlanConfirmationFallback()).toBe(false);
   });
 
   it('blocks html generation until the outline and inspiration are confirmed', () => {
@@ -265,7 +314,8 @@ describe('createFlowTracker', () => {
 
     expect(advanced).not.toBeNull();
     expect(stageState(tracker, 'plan')).toBe('complete');
-    expect(stageState(tracker, 'inspire')).toBe('pending');
+    expect(stageState(tracker, 'inspire')).toBe('active');
+    expect(tracker.snapshot.activeStage).toBe('inspire');
   });
 
   it('keeps plan active when the plan-confirm form requests changes', () => {

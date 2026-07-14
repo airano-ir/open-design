@@ -18,6 +18,8 @@ export type ProjectKind =
 
 export type MediaAspect = '1:1' | '16:9' | '9:16' | '4:3' | '3:4';
 
+export type DeckGenerationMode = 'standard' | 'image';
+
 export type ProjectPlatform =
   | 'auto'
   | 'responsive'
@@ -112,6 +114,10 @@ export interface ProjectMetadata {
   fidelity?: 'wireframe' | 'high-fidelity';
   speakerNotes?: boolean;
   slideCount?: string;
+  /** Standard keeps the editable HTML slide surface; image renders one full-slide image per page into that same HTML/PPT export shell. */
+  deckGenerationMode?: DeckGenerationMode;
+  /** Image-mode only. Enables a four-worker page render pool; ignored for Standard decks. */
+  deckFast?: boolean;
   animations?: boolean;
   includeLandingPage?: boolean;
   includeOsWidgets?: boolean;

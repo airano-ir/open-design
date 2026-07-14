@@ -7,16 +7,26 @@ import {
   type InspireChoiceResponse,
   type InspireRankRequest,
   type InspireRankResponse,
+  type InspireSearchCandidate,
+  type InspireSearchRequest,
+  type InspireSearchResponse,
 } from '@open-design/contracts';
 import type { Express } from 'express';
 
 import { applyInspireChoice } from '../inspire/choice.js';
-import { filterInspireCatalogue, rankInspireCatalogue } from '../inspire/rank.js';
+import {
+  filterInspireCatalogue,
+  rankInspireCatalogue,
+  searchInspireCatalogue,
+} from '../inspire/rank.js';
 
 type MaybePromise<T> = T | Promise<T>;
 
 export interface RegisterInspireRoutesDeps {
   listCatalogueEntries: () => MaybePromise<readonly InspireCatalogueEntry[]>;
+  listSearchEntries?: (
+    locale?: string,
+  ) => MaybePromise<readonly InspireSearchCandidate[]>;
   loadConversationFlow: (
     conversationId: string,
   ) => MaybePromise<FlowSnapshot | null | undefined>;
@@ -29,6 +39,36 @@ export interface RegisterInspireRoutesDeps {
     templateId: string,
   ) => MaybePromise<void>;
   now?: () => number;
+}
+
+function parseSearchRequest(value: unknown): InspireSearchRequest | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const body = value as Record<string, unknown>;
+  const query = typeof body.query === 'string' ? body.query.trim() : '';
+  if (!query) return null;
+  const source = body.source;
+  if (
+    source !== undefined &&
+    source !== 'all' &&
+    source !== 'community' &&
+    source !== 'design-template'
+  ) {
+    return null;
+  }
+  if (body.mode !== undefined && !isFlowShapeId(body.mode)) return null;
+  const limit = typeof body.limit === 'number' && Number.isFinite(body.limit)
+    ? body.limit
+    : undefined;
+  const locale = typeof body.locale === 'string' && body.locale.trim()
+    ? body.locale.trim()
+    : undefined;
+  return {
+    query,
+    ...(source ? { source } : {}),
+    ...(body.mode ? { mode: body.mode } : {}),
+    ...(limit !== undefined ? { limit } : {}),
+    ...(locale ? { locale } : {}),
+  };
 }
 
 function isFlowShapeId(value: unknown): value is FlowShapeId {
@@ -79,6 +119,29 @@ export function registerInspireRoutes(
       const body: InspireRankResponse = rankInspireCatalogue(
         request,
         await deps.listCatalogueEntries(),
+      );
+      res.json(body);
+    } catch (error) {
+      res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  app.post('/api/inspire/search', async (req, res) => {
+    const request = parseSearchRequest(req.body);
+    if (!request) {
+      res.status(400).json({
+        error: 'query is required; source and mode must be valid when provided',
+      });
+      return;
+    }
+    if (!deps.listSearchEntries) {
+      res.status(501).json({ error: 'inspiration search is not configured' });
+      return;
+    }
+    try {
+      const body: InspireSearchResponse = searchInspireCatalogue(
+        request,
+        await deps.listSearchEntries(request.locale),
       );
       res.json(body);
     } catch (error) {

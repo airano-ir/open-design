@@ -60,6 +60,7 @@ import {
 import { isVisibleLocalCliAgent } from '../utils/visibleAgents';
 import { ExportDiagnosticsRow } from './ExportDiagnosticsButton';
 import { Icon } from './Icon';
+import { ImageGenerationSettings } from './ImageGenerationSettings';
 import { defaultAgentModelId, effectiveAgentModelChoice } from './agentModelSelection';
 import {
   CUSTOM_MODEL_SENTINEL,
@@ -7178,6 +7179,7 @@ function MediaProvidersSection({
 
   return (
     <section className="settings-section">
+      <ImageGenerationSettings />
       {mediaProvidersNotice ? (
         <p className="hint" role="alert">{mediaProvidersNotice}</p>
       ) : null}

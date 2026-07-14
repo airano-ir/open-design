@@ -32,15 +32,70 @@ describe('SettingsDialog media providers', () => {
     );
   });
 
-  it('shows Codex Subscription without API key fields', () => {
+  it('shows Codex as a configured image source and can switch Slides image generation to BYOK', async () => {
+    const fetchMock = vi.fn<typeof fetch>(async (input, init) => {
+      const url = String(input);
+      if (url === '/api/media/image-generation' && (!init?.method || init.method === 'GET')) {
+        return new Response(JSON.stringify({
+          preference: null,
+          selected: { source: 'codex', model: 'codex-gpt-image-2' },
+          sources: [
+            {
+              id: 'codex',
+              label: 'Codex Subscription',
+              available: true,
+              configured: true,
+              models: [{ id: 'codex-gpt-image-2', label: 'gpt-image-2' }],
+            },
+            {
+              id: 'byok',
+              label: 'BYOK',
+              available: true,
+              configured: true,
+              models: [{ id: 'gpt-image-2', label: 'gpt-image-2', provider: 'openai' }],
+            },
+            {
+              id: 'cloud',
+              label: 'Open Design Cloud',
+              available: false,
+              configured: false,
+              models: [],
+            },
+          ],
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+      if (url === '/api/media/image-generation' && init?.method === 'PUT') {
+        expect(JSON.parse(String(init.body))).toEqual({
+          source: 'byok',
+          model: 'gpt-image-2',
+        });
+        return new Response(JSON.stringify({
+          preference: { source: 'byok', model: 'gpt-image-2' },
+          selected: { source: 'byok', model: 'gpt-image-2' },
+          sources: [],
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+      throw new Error(`unexpected fetch ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
     renderDialog({
       ...DEFAULT_CONFIG,
       mediaProviders: {},
     });
 
-    expect(screen.getByText('Codex Subscription')).toBeTruthy();
+    const imageSettings = await screen.findByTestId('image-generation-settings');
+    expect(within(imageSettings).getByText('Codex Subscription')).toBeTruthy();
+    expect(within(within(imageSettings).getByRole('radio', { name: 'Codex Subscription' })).getByText('Configured')).toBeTruthy();
     expect(screen.queryByLabelText('Codex Subscription API key')).toBeNull();
     expect(screen.queryByLabelText('Codex Subscription Base URL')).toBeNull();
+
+    fireEvent.click(within(imageSettings).getByRole('radio', { name: /BYOK/i }));
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith('/api/media/image-generation', expect.objectContaining({
+        method: 'PUT',
+      }));
+    });
   });
 
   it('shows daemon fallback notice and reloads media providers from daemon', async () => {

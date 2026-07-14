@@ -13,6 +13,41 @@ export const MEDIA_SURFACES = [
 
 export type MediaSurface = (typeof MEDIA_SURFACES)[number];
 
+export const IMAGE_GENERATION_SOURCES = [
+  'codex',
+  'byok',
+  'cloud',
+] as const;
+
+export type ImageGenerationSource = (typeof IMAGE_GENERATION_SOURCES)[number];
+
+export interface ImageGenerationPreference {
+  source: ImageGenerationSource;
+  model?: string;
+}
+
+export interface ImageGenerationModelOption {
+  id: string;
+  label: string;
+  provider?: string;
+}
+
+export interface ImageGenerationSourceStatus {
+  id: ImageGenerationSource;
+  label: string;
+  available: boolean;
+  configured: boolean;
+  models: ImageGenerationModelOption[];
+}
+
+export interface ImageGenerationConfigResponse {
+  /** Null means Open Design resolves the best available local source. */
+  preference: ImageGenerationPreference | null;
+  /** The effective source/model used by `od media generate` when no model is supplied. */
+  selected: Required<ImageGenerationPreference> | null;
+  sources: ImageGenerationSourceStatus[];
+}
+
 export const MEDIA_POLICY_DENIAL_CODES = [
   'MEDIA_EXECUTION_DISABLED',
   'MEDIA_SURFACE_DENIED',

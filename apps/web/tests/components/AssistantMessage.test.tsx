@@ -82,11 +82,13 @@ describe('AssistantMessage feedback gate', () => {
         flowSnapshot={createFlowSnapshot('deck', { now: 1 })}
         flowQuestionFormRequests={{ clarify: clarifyRequest }}
         onOpenQuestions={onOpenQuestions}
+        onNextStepPromptAction={vi.fn()}
       />,
     );
 
     const status = screen.getByTestId('assistant-flow-status');
     expect(status.closest('.msg.assistant')).toBeTruthy();
+    expect(screen.queryByTestId('next-step-actions')).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Confirm the brief' }));
     expect(onOpenQuestions).toHaveBeenCalledWith(clarifyRequest);
@@ -390,6 +392,56 @@ describe('AssistantMessage thinking blocks', () => {
 });
 
 describe('AssistantMessage question forms', () => {
+  it('shows Community search results as a compact visual preview strip', () => {
+    const form = [
+      '<question-form id="community-template-search" title="Inspiration for a business deck">',
+      JSON.stringify({
+        questions: [
+          {
+            id: 'template',
+            label: 'Best matches',
+            type: 'template-cards',
+            required: true,
+            templates: [
+              {
+                id: 'business-deck',
+                label: 'Business Deck',
+                source: 'community',
+                preview: { kind: 'html', url: '/api/plugins/business-deck/preview' },
+              },
+              {
+                id: 'editorial-site',
+                label: 'Editorial Site',
+                source: 'community',
+                preview: { kind: 'none' },
+              },
+            ],
+          },
+        ],
+      }),
+      '</question-form>',
+    ].join('\n');
+    const onOpenQuestions = vi.fn();
+
+    const { container } = render(
+      <AssistantMessage
+        message={baseMessage({
+          events: [{ kind: 'text', text: form } as ChatMessage['events'][number]],
+        })}
+        streaming={false}
+        projectId="proj-1"
+        onOpenQuestions={onOpenQuestions}
+      />,
+    );
+
+    expect(screen.getByText('Inspiration for a business deck')).toBeTruthy();
+    expect(container.querySelectorAll('iframe')).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: /Inspiration for a business deck/i }));
+    expect(onOpenQuestions).toHaveBeenCalledWith(expect.objectContaining({
+      form: expect.objectContaining({ id: 'community-template-search' }),
+    }));
+  });
+
   it('renders repeated question forms as one compact Questions banner in chat', () => {
     const firstForm = [
       '<question-form id="discovery" title="Quick brief — tailored">',

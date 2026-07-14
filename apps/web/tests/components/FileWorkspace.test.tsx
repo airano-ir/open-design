@@ -2142,6 +2142,7 @@ describe('FileWorkspace staged-flow tab', () => {
       <FileWorkspace
         {...baseProps}
         flowWorkspace={{
+          stage: 'research',
           label: 'Research',
           nonce: 1,
           content: <div>Research round 1</div>,
@@ -2158,6 +2159,7 @@ describe('FileWorkspace staged-flow tab', () => {
       <FileWorkspace
         {...baseProps}
         flowWorkspace={{
+          stage: 'plan',
           label: 'Outline',
           nonce: 2,
           content: <div>Editable outline</div>,
@@ -2171,11 +2173,84 @@ describe('FileWorkspace staged-flow tab', () => {
     expect(screen.queryByText('Research round 1')).toBeNull();
   });
 
+  it('keeps a live checkpoint form focused before advancing to the next stage', async () => {
+    const planForm = {
+      id: 'plan-confirm',
+      title: 'Confirm the plan',
+      questions: [
+        {
+          id: 'decision',
+          label: 'Continue?',
+          type: 'radio' as const,
+          options: [{ label: 'Confirm', value: 'confirm' }],
+          required: true,
+        },
+      ],
+    };
+    const { rerender } = render(
+      <FileWorkspace
+        {...baseProps}
+        flowWorkspace={{
+          stage: 'plan',
+          label: 'Plan',
+          nonce: 1,
+          content: <div>Editable plan</div>,
+        }}
+      />,
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Editable plan')).toBeTruthy();
+    });
+
+    rerender(
+      <FileWorkspace
+        {...baseProps}
+        flowWorkspace={{
+          stage: 'plan',
+          label: 'Plan',
+          nonce: 2,
+          content: <div>Updated plan</div>,
+        }}
+        questionForm={planForm}
+        questionFormInteractive
+        focusQuestionsRequest={{ nonce: 1 }}
+      />,
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Confirm the plan')).toBeTruthy();
+    });
+    // The plan remains visible at its confirmation checkpoint. Questions is a
+    // docked decision surface, not a replacement that hides the work being
+    // approved.
+    expect(screen.getByText('Updated plan')).toBeTruthy();
+    expect(screen.getByTestId('flow-stage-tab').getAttribute('aria-selected')).toBe('true');
+
+    rerender(
+      <FileWorkspace
+        {...baseProps}
+        flowWorkspace={{
+          stage: 'inspire',
+          label: 'Inspiration',
+          nonce: 3,
+          content: <div>Template choices</div>,
+        }}
+        questionForm={planForm}
+        questionFormInteractive={false}
+        questionFormSubmittedAnswers={{ decision: 'Confirm' }}
+        focusQuestionsRequest={{ nonce: 1 }}
+      />,
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Template choices')).toBeTruthy();
+    });
+  });
+
   it('removes the transient tab when the staged workspace finishes', async () => {
     const { rerender } = render(
       <FileWorkspace
         {...baseProps}
         flowWorkspace={{
+          stage: 'inspire',
           label: 'Inspiration',
           nonce: 1,
           content: <div>Template choices</div>,

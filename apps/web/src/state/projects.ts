@@ -9,6 +9,7 @@ import type {
   AppliedPluginSnapshot,
   ApplyResult,
   ChatSessionMode,
+  ConfirmFlowPlanRequest,
   CreateConversationRequest,
   CreateDesignSystemProjectFromProjectResponse,
   DuplicateProjectResponse,
@@ -526,6 +527,31 @@ export async function patchConversationFlowResearchMode(
   } catch {
     return null;
   }
+}
+
+export async function confirmConversationFlowPlan(
+  conversationId: string,
+  request: ConfirmFlowPlanRequest,
+): Promise<FlowSnapshot> {
+  const resp = await fetch(
+    `/api/conversations/${encodeURIComponent(conversationId)}/flow/plan-confirm`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    },
+  );
+  if (!resp.ok) {
+    const body = await resp.json().catch(() => null) as { error?: unknown } | null;
+    throw new Error(
+      typeof body?.error === 'string'
+        ? body.error
+        : `Could not confirm the plan (${resp.status})`,
+    );
+  }
+  const body = (await resp.json()) as FlowStatusResponse;
+  if (!body.flow) throw new Error('The confirmed plan did not return a staged flow');
+  return body.flow;
 }
 
 export async function rankInspiration(

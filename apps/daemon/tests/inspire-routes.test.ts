@@ -7,6 +7,7 @@ import {
   type FlowSnapshot,
   type InspireChoiceResponse,
   type InspireRankResponse,
+  type InspireSearchResponse,
 } from '@open-design/contracts';
 import { registerInspireRoutes } from '../src/routes/inspire.js';
 
@@ -69,6 +70,62 @@ describe('inspiration routes', () => {
       const body = await response.json() as InspireRankResponse;
       expect(body.ranked).toEqual(['coffee-story', 'plain-deck']);
       expect(body.reasons['coffee-story']).toContain('coffee');
+    });
+  });
+
+  it('serves semantic community search with preview metadata', async () => {
+    const app = express();
+    app.use(express.json());
+    registerInspireRoutes(app, {
+      listCatalogueEntries: () => catalogue,
+      listSearchEntries: () => [
+        {
+          id: 'business-deck',
+          name: 'Investor review',
+          title: 'Investor review',
+          description: 'A polished finance and board presentation',
+          mode: 'deck',
+          source: 'community',
+          tags: ['finance', 'slides'],
+          preview: {
+            kind: 'html',
+            url: '/api/plugins/business-deck/preview',
+          },
+        },
+        {
+          id: 'mobile-app',
+          name: 'Mobile App',
+          title: 'Mobile App',
+          mode: 'prototype',
+          source: 'community',
+          tags: ['mobile'],
+          preview: { kind: 'none' },
+        },
+      ],
+      loadConversationFlow: () => undefined,
+      saveConversationFlow: () => {},
+    });
+
+    await withServer(app, async (baseUrl) => {
+      const response = await fetch(baseUrl + '/api/inspire/search', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          query: 'professional business presentation',
+          source: 'community',
+          mode: 'deck',
+          limit: 6,
+        }),
+      });
+      expect(response.status).toBe(200);
+      const body = await response.json() as InspireSearchResponse;
+      expect(body.semantic).toBe(true);
+      expect(body.results[0]).toMatchObject({
+        id: 'business-deck',
+        source: 'community',
+        preview: { kind: 'html' },
+      });
+      expect(body.results[0]?.reason).toContain('professional business');
     });
   });
 

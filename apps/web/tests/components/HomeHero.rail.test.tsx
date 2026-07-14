@@ -545,6 +545,19 @@ describe('HomeHero intent rail', () => {
     expect(findChip('deck')?.action).toMatchObject({ pluginId: 'example-simple-deck', projectKind: 'deck' });
   });
 
+  it('stamps the mobile chip with a concrete handheld platform', () => {
+    expect(findChip('mobile')?.action).toMatchObject({
+      kind: 'apply-scenario',
+      pluginId: 'example-web-prototype',
+      projectKind: 'prototype',
+      projectMetadata: {
+        kind: 'prototype',
+        platform: 'mobile-ios',
+        platformTargets: ['mobile-ios', 'mobile-android'],
+      },
+    });
+  });
+
   it('specialised category chips route to their bundled scenario plugin', () => {
     // HyperFrames is the motion-graphics specialisation of Video,
     // surfaced as a separate chip so users can target it directly

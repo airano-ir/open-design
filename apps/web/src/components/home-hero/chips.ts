@@ -180,7 +180,7 @@ export const HOME_HERO_CHIPS: ReadonlyArray<HomeHeroChip> = [
       projectKind: 'prototype',
       projectMetadata: {
         kind: 'prototype',
-        platform: 'auto',
+        platform: 'mobile-ios',
         platformTargets: ['mobile-ios', 'mobile-android'],
       },
     },

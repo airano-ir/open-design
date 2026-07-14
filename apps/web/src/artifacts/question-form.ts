@@ -44,7 +44,8 @@ export type QuestionType =
   | 'tel'
   | 'file'
   | 'switch'
-  | 'direction-cards';
+  | 'direction-cards'
+  | 'template-cards';
 
 /**
  * Rich card metadata for a single `direction-cards` option. The picker
@@ -68,6 +69,25 @@ export interface DirectionCard {
   displayFont: string;
   /** Body font stack, used to render the secondary sample. */
   bodyFont: string;
+}
+
+export interface TemplateCardPreview {
+  kind: 'html' | 'image' | 'video' | 'none';
+  url?: string;
+  posterUrl?: string;
+}
+
+/** A selectable Community/design-template search result rendered as a live visual card. */
+export interface TemplateCard {
+  id: string;
+  label: string;
+  source: 'community' | 'design-template';
+  description?: string;
+  reason?: string;
+  category?: string;
+  mode?: string;
+  prompt?: string;
+  preview: TemplateCardPreview;
 }
 
 export interface FormOption {
@@ -105,6 +125,8 @@ export interface FormQuestion {
   accept?: string;
   /** Only present when `type === 'direction-cards'`. Mapped to options by `id`. */
   cards?: DirectionCard[];
+  /** Only present when `type === 'template-cards'`. */
+  templates?: TemplateCard[];
 }
 
 export interface QuestionForm {
@@ -288,6 +310,7 @@ function mapRawQuestion(q: unknown, index: number): FormQuestion | null {
       ? qo.maxSelections
       : undefined;
   const cards = parseDirectionCards(qo.cards);
+  const templates = parseTemplateCards(qo.templates);
   const defaultValue = parseDefaultValue(qo, options);
   const allowCustom =
     qo.allowCustom === false
@@ -322,6 +345,7 @@ function mapRawQuestion(q: unknown, index: number): FormQuestion | null {
     ...(multiple && type === 'file' ? { multiple } : {}),
     ...(accept && type === 'file' ? { accept } : {}),
     ...(cards ? { cards } : {}),
+    ...(templates ? { templates } : {}),
   };
 }
 
@@ -591,6 +615,12 @@ function normalizeType(raw: unknown): QuestionType {
     lower === 'direction'
   )
     return 'direction-cards';
+  if (
+    lower === 'template-cards' ||
+    lower === 'template-picker' ||
+    lower === 'community-cards'
+  )
+    return 'template-cards';
   return 'text';
 }
 
@@ -682,6 +712,58 @@ function parseDirectionCards(raw: unknown): DirectionCard[] | undefined {
   return out.length > 0 ? out : undefined;
 }
 
+function safeTemplatePreviewUrl(raw: unknown): string | undefined {
+  if (typeof raw !== 'string') return undefined;
+  const url = raw.trim();
+  if (!url.startsWith('/api/plugins/') && !url.startsWith('/api/skills/')) return undefined;
+  return url;
+}
+
+function parseTemplateCards(raw: unknown): TemplateCard[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const out: TemplateCard[] = [];
+  for (const entry of raw.slice(0, 50)) {
+    if (!entry || typeof entry !== 'object') continue;
+    const value = entry as Record<string, unknown>;
+    const id = typeof value.id === 'string' ? value.id.trim() : '';
+    const label = typeof value.label === 'string' ? value.label.trim() : '';
+    const source = value.source;
+    if (!id || !label || (source !== 'community' && source !== 'design-template')) continue;
+    const rawPreview =
+      value.preview && typeof value.preview === 'object'
+        ? (value.preview as Record<string, unknown>)
+        : {};
+    const kind =
+      rawPreview.kind === 'html' ||
+      rawPreview.kind === 'image' ||
+      rawPreview.kind === 'video'
+        ? rawPreview.kind
+        : 'none';
+    const url = safeTemplatePreviewUrl(rawPreview.url);
+    const posterUrl = safeTemplatePreviewUrl(rawPreview.posterUrl);
+    const preview: TemplateCardPreview =
+      kind !== 'none' && url
+        ? { kind, url, ...(posterUrl ? { posterUrl } : {}) }
+        : { kind: 'none' };
+    const optionalText = (key: string): string | undefined => {
+      const candidate = value[key];
+      return typeof candidate === 'string' && candidate.trim() ? candidate.trim() : undefined;
+    };
+    out.push({
+      id,
+      label,
+      source,
+      preview,
+      ...(optionalText('description') ? { description: optionalText('description') } : {}),
+      ...(optionalText('reason') ? { reason: optionalText('reason') } : {}),
+      ...(optionalText('category') ? { category: optionalText('category') } : {}),
+      ...(optionalText('mode') ? { mode: optionalText('mode') } : {}),
+      ...(optionalText('prompt') ? { prompt: optionalText('prompt') } : {}),
+    });
+  }
+  return out.length > 0 ? out : undefined;
+}
+
 /**
  * Format a finished set of answers into a prose user message that the
  * agent can read on its next turn. The shape is stable enough that the
@@ -709,29 +791,57 @@ export function formatFormAnswers(
 }
 
 function formOptionDisplayForValue(
-  question: Pick<FormQuestion, 'options'>,
+  question: Pick<FormQuestion, 'options' | 'cards' | 'templates'>,
   value: string,
 ): string {
   const match = question.options?.find((option) => option.value === value || option.label === value);
-  if (!match) return value;
+  if (!match) {
+    const card = [...(question.cards ?? []), ...(question.templates ?? [])].find(
+      (candidate) => candidate.id === value || candidate.label === value,
+    );
+    if (!card) return value;
+    return card.id === card.label ? card.label : `${card.label} [value: ${card.id}]`;
+  }
   if (match.value === match.label) return match.label;
   return `${match.label} [value: ${match.value}]`;
 }
 
 export function formOptionLabelForValue(
-  question: Pick<FormQuestion, 'options'>,
+  question: Pick<FormQuestion, 'options' | 'cards' | 'templates'>,
   value: string,
 ): string {
   const match = question.options?.find((option) => option.value === value || option.label === value);
-  return match?.label ?? value;
+  const card = [...(question.cards ?? []), ...(question.templates ?? [])].find(
+    (candidate) => candidate.id === value || candidate.label === value,
+  );
+  return match?.label ?? card?.label ?? value;
 }
 
 export function formOptionValueForLabel(
-  question: Pick<FormQuestion, 'options'>,
+  question: Pick<FormQuestion, 'options' | 'cards' | 'templates'>,
   labelOrValue: string,
 ): string {
   const match = question.options?.find(
     (option) => option.value === labelOrValue || option.label === labelOrValue,
   );
-  return match?.value ?? labelOrValue;
+  const card = [...(question.cards ?? []), ...(question.templates ?? [])].find(
+    (candidate) => candidate.id === labelOrValue || candidate.label === labelOrValue,
+  );
+  return match?.value ?? card?.id ?? labelOrValue;
+}
+
+export function selectedTemplateCard(
+  form: QuestionForm,
+  answers: Record<string, string | string[]>,
+): TemplateCard | null {
+  for (const question of form.questions) {
+    if (question.type !== 'template-cards' || !question.templates) continue;
+    const answer = answers[question.id];
+    if (typeof answer !== 'string') continue;
+    const selected = question.templates.find(
+      (candidate) => candidate.id === answer || candidate.label === answer,
+    );
+    if (selected) return selected;
+  }
+  return null;
 }

@@ -10,6 +10,7 @@ import {
 import { useT } from '../i18n';
 import type { DirectionCard, FormOption, QuestionForm } from '../artifacts/question-form';
 import { formatFormAnswers, formOptionValueForLabel } from '../artifacts/question-form';
+import { TemplateCardsQuestion } from './TemplateCardsQuestion';
 
 interface Props {
   form: QuestionForm;
@@ -458,6 +459,16 @@ export const QuestionFormView = forwardRef<QuestionFormHandle, Props>(function Q
                   ))}
                 </div>
               ) : null}
+              {q.type === 'template-cards' && q.templates && q.templates.length > 0 ? (
+                <TemplateCardsQuestion
+                  cards={q.templates}
+                  formId={form.id}
+                  questionId={q.id}
+                  selected={typeof value === 'string' ? value : ''}
+                  disabled={locked}
+                  onSelect={(id) => update(q.id, id)}
+                />
+              ) : null}
               {q.type === 'direction-cards' && q.cards && q.cards.length > 0 && shouldRenderCustomChoice(q) ? (
                 <CustomChoiceInput
                   label={q.customLabel ?? t('qf.customLabel')}
@@ -687,6 +698,9 @@ function questionHasFiniteOptions(q: QuestionForm['questions'][number]): boolean
   if (q.type === 'direction-cards') {
     return Boolean(q.cards && q.cards.length > 0);
   }
+  if (q.type === 'template-cards') {
+    return Boolean(q.templates && q.templates.length > 0);
+  }
   return false;
 }
 
@@ -765,6 +779,7 @@ function shouldRenderCustomChoice(q: QuestionForm['questions'][number]): boolean
 function questionValueIsKnown(q: QuestionForm['questions'][number], value: string): boolean {
   if (q.options?.some((option) => option.value === value || option.label === value)) return true;
   if (q.cards?.some((card) => card.id === value || card.label === value)) return true;
+  if (q.templates?.some((card) => card.id === value || card.label === value)) return true;
   return false;
 }
 

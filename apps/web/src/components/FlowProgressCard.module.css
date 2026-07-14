@@ -43,6 +43,14 @@
 
 .step {
   min-width: 0;
+  border-radius: 6px;
+  transition:
+    background-color 200ms cubic-bezier(0.23, 1, 0.32, 1),
+    color 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.step.active {
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
 }
 
 .stepContent,
@@ -92,6 +100,7 @@
 
 .step.active .icon {
   color: var(--accent);
+  animation: flow-progress-spin 1.2s linear infinite;
 }
 
 .step.error .icon {
@@ -136,6 +145,27 @@
   white-space: nowrap;
 }
 
+.artifacts {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 3px;
+}
+
+.artifactPath {
+  overflow: hidden;
+  color: var(--text-muted, var(--text));
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stepAction:hover .artifactPath {
+  color: var(--accent);
+}
+
 .openIcon {
   flex: 0 0 auto;
   color: var(--text-muted, var(--text));
@@ -145,4 +175,16 @@
 
 .stepAction:hover .openIcon {
   color: var(--accent);
+}
+
+@keyframes flow-progress-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step.active .icon {
+    animation: none;
+  }
 }

@@ -1,0 +1,70 @@
+.root {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.stage {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.withCheckpoint {
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 38%);
+}
+
+.main {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.checkpoint {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-left: 1px solid var(--border);
+  background: var(--bg-panel);
+}
+
+.checkpoint :global(.questions-panel-body) {
+  padding: 16px;
+}
+
+.checkpoint :global(.questions-panel-body .question-form) {
+  box-shadow: none;
+}
+
+.checkpoint :global(.questions-panel-foot) {
+  flex-wrap: wrap;
+  padding: 12px;
+}
+
+.checkpoint :global(.questions-panel-status) {
+  flex-basis: 100%;
+}
+
+@media (max-width: 900px) {
+  .withCheckpoint {
+    grid-template-rows: minmax(280px, 1fr) minmax(300px, 44%);
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .checkpoint {
+    border-top: 1px solid var(--border);
+    border-left: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .main {
+    padding: 12px;
+  }
+}

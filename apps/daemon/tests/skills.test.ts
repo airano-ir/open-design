@@ -191,6 +191,41 @@ function writeSkill(
 }
 
 describe('listSkills', () => {
+  it('preserves explicit utility skills without inferring an artifact mode', async () => {
+    const root = fresh();
+    try {
+      const dir = path.join(root, 'catalogue-search');
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(
+        path.join(dir, 'SKILL.md'),
+        [
+          '---',
+          'name: catalogue-search',
+          'description: Search visual templates and image references.',
+          'od:',
+          '  mode: utility',
+          '  category: discovery',
+          '  design_system:',
+          '    requires: false',
+          '---',
+          '',
+          '# Catalogue search',
+          '',
+        ].join('\n'),
+      );
+
+      expect((await listSkills(root))[0]).toMatchObject({
+        id: 'catalogue-search',
+        mode: 'utility',
+        surface: 'web',
+        category: 'discovery',
+        designSystemRequired: false,
+      });
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it('surfaces optional localized display metadata from SKILL.md frontmatter', async () => {
     const root = fresh();
     try {

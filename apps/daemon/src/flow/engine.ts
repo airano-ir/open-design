@@ -33,8 +33,23 @@ import {
 /** Longest prefix of a marker/tag we may need to hold across chunk splits. */
 const TAG_CARRY = 96;
 const QUESTION_FORM_TAG = '<question-form';
+const PLAN_CONFIRM_FORM_RE =
+  /<question-form\b[^>]*\bid\s*=\s*(?:"plan-confirm"|'plan-confirm')/iu;
 const PLAN_CONFIRM_ANSWER = '[form answers — plan-confirm]';
 const PLAN_CONFIRM_ANSWER_ASCII = '[form answers - plan-confirm]';
+
+function commandFlagValue(command: string, flag: string): string | null {
+  const escapedFlag = flag.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+  const match = new RegExp(
+    `(?:^|\\s)${escapedFlag}(?:=|\\s+)(?:"([^"]*)"|'([^']*)'|([^\\s]+))`,
+    'u',
+  ).exec(command);
+  return match?.[1] ?? match?.[2] ?? match?.[3] ?? null;
+}
+
+function commandResearchPath(command: string): string | null {
+  return /(?:^|[\s>])((?:research\/)[^\s'";]+\.md)\b/iu.exec(command)?.[1] ?? null;
+}
 
 export interface ResolveFlowShapeInput {
   sessionMode?: string | null;
@@ -88,6 +103,11 @@ export function selectFlowShape(
 ): FlowShapeId | null {
   if (!initial) return inferred;
   if (!inferred || inferred === initial.shape) return initial.shape;
+  const isRefinement =
+    (initial.shape === 'prototype' &&
+      (inferred === 'landing' || inferred === 'mobile' || inferred === 'webapp')) ||
+    (initial.shape === 'document' && inferred === 'report');
+  if (!isRefinement) return initial.shape;
   const clarify = initial.stages.find((stage) => stage.id === 'clarify');
   const laterStageStarted = initial.stages.some(
     (stage) => stage.id !== 'clarify' && stage.state !== 'pending',
@@ -105,6 +125,8 @@ export interface FlowTracker {
   noteUserMessage(text: string): FlowSnapshot | null;
   /** Feed the run's terminal status. */
   noteRunEnd(status: string | null | undefined): FlowSnapshot | null;
+  /** True when a plan exists but the agent ended without the required form. */
+  needsPlanConfirmationFallback(): boolean;
 }
 
 export interface CreateFlowTrackerOptions {
@@ -140,6 +162,8 @@ export function createFlowTracker(options: CreateFlowTrackerOptions): FlowTracke
   /** Rolling window for `<question-form` detection across chunk boundaries. */
   let questionFormWindow = '';
   let questionFormSeen = false;
+  let planConfirmFormWindow = '';
+  let planConfirmFormSeen = false;
   let planConfirmed =
     snapshot.stages.find((stage) => stage.id === 'plan')?.state === 'complete';
   let inspirationFinalized =
@@ -148,7 +172,8 @@ export function createFlowTracker(options: CreateFlowTrackerOptions): FlowTracke
       snapshot.stages.find((stage) => stage.id === 'inspire')?.state ?? '',
     );
 
-  const planArtifactNames = FLOW_SHAPES[snapshot.shape].planArtifacts.map((p) => {
+  const planArtifactPaths = FLOW_SHAPES[snapshot.shape].planArtifacts;
+  const planArtifactNames = planArtifactPaths.map((p) => {
     const parts = p.split('/');
     return parts[parts.length - 1] ?? p;
   });
@@ -225,6 +250,12 @@ export function createFlowTracker(options: CreateFlowTrackerOptions): FlowTracke
       }
       questionFormWindow = questionFormWindow.slice(-QUESTION_FORM_TAG.length);
     }
+    if (!planConfirmFormSeen) {
+      planConfirmFormWindow = (planConfirmFormWindow + delta).slice(-512);
+      if (PLAN_CONFIRM_FORM_RE.test(planConfirmFormWindow)) {
+        planConfirmFormSeen = true;
+      }
+    }
     return advanced;
   }
 
@@ -245,18 +276,77 @@ export function createFlowTracker(options: CreateFlowTrackerOptions): FlowTracke
         ? String((input as Record<string, unknown>).command)
         : '';
     if (command.includes('research search')) {
-      if (apply({ stage: 'research', state: 'active' })) advanced = true;
+      const query = commandFlagValue(command, '--query');
+      if (
+        apply({
+          stage: 'research',
+          state: 'active',
+          detail: query ? `Searching · ${query}` : 'Searching sources',
+        })
+      ) {
+        advanced = true;
+      }
       return advanced;
+    }
+    const lowerCommand = command.toLowerCase();
+    if (lowerCommand.includes('research/') && lowerCommand.includes('.md')) {
+      const researchPath = commandResearchPath(command);
+      if (
+        apply({
+          stage: 'research',
+          state: 'complete',
+          ...(researchPath ? { detail: `Research saved · ${researchPath}` } : {}),
+        })
+      ) {
+        advanced = true;
+      }
+    }
+    const commandPlanPath = planArtifactPaths.find((artifact) =>
+      lowerCommand.includes(artifact.toLowerCase()),
+    );
+    if (commandPlanPath) {
+      if (
+        apply({
+          stage: 'plan',
+          state: 'active',
+          detail: `Writing · ${commandPlanPath}`,
+        })
+      ) {
+        advanced = true;
+      }
+    }
+    if (
+      generateExtensions.some((extension) =>
+        lowerCommand.includes(extension.toLowerCase()),
+      )
+    ) {
+      if (apply({ stage: 'generate', state: 'active' })) advanced = true;
     }
     const path = toolWritePath(input);
     if (!path) return advanced;
     const lower = path.toLowerCase();
     if (lower.includes('research/') && lower.endsWith('.md')) {
-      if (apply({ stage: 'research', state: 'complete' })) advanced = true;
+      if (
+        apply({
+          stage: 'research',
+          state: 'complete',
+          detail: `Research saved · ${path}`,
+        })
+      ) {
+        advanced = true;
+      }
       return advanced;
     }
     if (planArtifactNames.some((artifact) => lower.endsWith(artifact.toLowerCase()))) {
-      if (apply({ stage: 'plan', state: 'active' })) advanced = true;
+      if (
+        apply({
+          stage: 'plan',
+          state: 'active',
+          detail: `Writing · ${path}`,
+        })
+      ) {
+        advanced = true;
+      }
       return advanced;
     }
     if (isGenerateArtifact(lower)) {
@@ -331,6 +421,10 @@ export function createFlowTracker(options: CreateFlowTrackerOptions): FlowTracke
           ) {
             advanced = true;
           }
+          // Plan confirmation is a host checkpoint. Open the host-owned
+          // inspiration picker immediately instead of waiting for a model turn
+          // to remember a second protocol marker.
+          if (apply({ stage: 'inspire', state: 'active' })) advanced = true;
         }
       }
       if (text.includes('[inspiration —') || text.includes('[inspiration -')) {
@@ -347,6 +441,14 @@ export function createFlowTracker(options: CreateFlowTrackerOptions): FlowTracke
       let advanced = apply({ stage: 'generate', state: 'complete' });
       if (apply({ stage: 'deliver', state: 'active' })) advanced = true;
       return advanced ? snapshot : null;
+    },
+
+    needsPlanConfirmationFallback(): boolean {
+      return (
+        !planConfirmed &&
+        !planConfirmFormSeen &&
+        snapshot.stages.find((stage) => stage.id === 'plan')?.state === 'active'
+      );
     },
   };
 }

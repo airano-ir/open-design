@@ -71,7 +71,7 @@ export function registerMediaRoutes(app: Express, ctx: RegisterMediaRoutesDeps) 
   const { PROJECT_ROOT, PROJECTS_DIR, RUNTIME_DATA_DIR } = ctx.paths;
   const { authorizeToolRequest, optionalToolGrantFromRequest, requestProjectOverride } = ctx.auth;
   const { randomUUID } = ctx.ids;
-  const { MEDIA_PROVIDERS, IMAGE_MODELS, VIDEO_MODELS, AUDIO_MODELS_BY_KIND, MEDIA_ASPECTS, VIDEO_LENGTHS_SEC, AUDIO_DURATIONS_SEC, readMaskedConfig, writeConfig, generateMedia, createMediaTask, persistMediaTask, appendTaskProgress, notifyTaskWaiters, getLiveMediaTask, mediaTaskSnapshot, listMediaTasksByProject, listElevenLabsVoiceOptions } = ctx.media;
+  const { MEDIA_PROVIDERS, IMAGE_MODELS, VIDEO_MODELS, AUDIO_MODELS_BY_KIND, MEDIA_ASPECTS, VIDEO_LENGTHS_SEC, AUDIO_DURATIONS_SEC, readMaskedConfig, writeConfig, readImageGenerationConfig, writeImageGenerationPreference, generateMedia, createMediaTask, persistMediaTask, appendTaskProgress, notifyTaskWaiters, getLiveMediaTask, mediaTaskSnapshot, listMediaTasksByProject, listElevenLabsVoiceOptions } = ctx.media;
   const { readAppConfig, writeAppConfig } = ctx.appConfig;
   const { orbitService } = ctx.orbit;
   const { openBrowser, openNativeFolderDialog } = ctx.nativeDialogs;
@@ -310,6 +310,27 @@ export function registerMediaRoutes(app: Express, ctx: RegisterMediaRoutesDeps) 
       res
         .status(status)
         .json({ error: String(err && err.message ? err.message : err) });
+    }
+  });
+
+  app.get('/api/media/image-generation', async (_req, res) => {
+    try {
+      res.json(await readImageGenerationConfig(PROJECT_ROOT));
+    } catch (err: any) {
+      res.status(500).json({
+        error: String(err && err.message ? err.message : err),
+      });
+    }
+  });
+
+  app.put('/api/media/image-generation', async (req, res) => {
+    try {
+      res.json(await writeImageGenerationPreference(PROJECT_ROOT, req.body));
+    } catch (err: any) {
+      const status = typeof err?.status === 'number' ? err.status : 400;
+      res.status(status).json({
+        error: String(err && err.message ? err.message : err),
+      });
     }
   });
 

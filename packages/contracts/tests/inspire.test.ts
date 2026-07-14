@@ -4,6 +4,8 @@ import type {
   InspireChoiceRequest,
   InspireRankRequest,
   InspireRankResponse,
+  InspireSearchRequest,
+  InspireSearchResponse,
 } from '../src/index';
 
 describe('inspiration API contracts', () => {
@@ -28,5 +30,38 @@ describe('inspiration API contracts', () => {
       { action: 'skip' },
     ];
     expect(choices.map((choice) => choice.action)).toEqual(['apply', 'skip']);
+  });
+
+  it('keeps semantic search results previewable without exposing local paths', () => {
+    const request: InspireSearchRequest = {
+      query: 'professional business presentation',
+      source: 'community',
+      mode: 'deck',
+      limit: 6,
+      locale: 'en',
+    };
+    const response: InspireSearchResponse = {
+      query: request.query,
+      semantic: true,
+      total: 1,
+      results: [
+        {
+          id: 'example-business-deck',
+          title: 'Business deck',
+          source: 'community',
+          mode: 'deck',
+          tags: ['slides'],
+          preview: {
+            kind: 'html',
+            url: '/api/plugins/example-business-deck/preview',
+          },
+          score: 42,
+          reason: 'Matches presentation and professional intent.',
+        },
+      ],
+    };
+
+    expect(response.results[0]?.preview.kind).toBe('html');
+    expect(JSON.stringify(response)).not.toContain('fsPath');
   });
 });

@@ -10,7 +10,10 @@ import {
   parseOdFlowMarkers,
   stripOdFlowMarkers,
 } from '../src/api/flow';
-import { renderFlowProtocol } from '../src/prompts/flow-protocol';
+import {
+  renderFlowProtocol,
+  renderPlanConfirmationForm,
+} from '../src/prompts/flow-protocol';
 
 describe('flow shape registry', () => {
   it('declares every stage in ladder order for every shape', () => {
@@ -72,6 +75,17 @@ describe('flow shape registry', () => {
     expect(protocol).toContain(spec.plan.title);
     expect(protocol).toContain(spec.clarifyDefaults[0]);
     expect(protocol).toContain(spec.deliverActions.join(', '));
+    expect(protocol).toContain('overrides active skill, plugin, pipeline, Todo, and verification instructions');
+    expect(protocol).toContain('HARD TURN BOUNDARY');
+    expect(protocol).toContain('END THE TURN IMMEDIATELY');
+  });
+
+  it('renders a parseable host fallback for a missing plan confirmation form', () => {
+    const form = renderPlanConfirmationForm('deck', 'zh-CN');
+    expect(form).toContain('<question-form id="plan-confirm">');
+    expect(form).toContain('"defaultValue": "confirm"');
+    expect(form).toContain('"value": "modify"');
+    expect(form).toContain('确认方案');
   });
 });
 

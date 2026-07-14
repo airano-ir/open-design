@@ -94,6 +94,25 @@ describe('FlowProgressCard', () => {
     expect(onOpenArtifact).toHaveBeenCalledWith('generated/brief.md');
   });
 
+  it('keeps completed research and plan outputs visible instead of collapsing them to Done', () => {
+    let flow = createFlowSnapshot('deck', { now: 1, researchMode: 'deep' });
+    flow = applyFlowMarker(flow, { stage: 'research', state: 'complete' }, 2);
+    flow = applyFlowMarker(flow, { stage: 'plan', state: 'active' }, 3);
+
+    render(
+      <FlowProgressCard
+        flow={flow}
+        stageArtifactPaths={{
+          research: ['research/market-scan.md'],
+          plan: ['generated/outline.md'],
+        }}
+      />,
+    );
+
+    expect(screen.getByText('research/market-scan.md')).toBeTruthy();
+    expect(screen.getByText('generated/outline.md')).toBeTruthy();
+  });
+
   it('opens the stage form instead of its generated brief artifact', () => {
     const onOpenForm = vi.fn();
     const onOpenArtifact = vi.fn();

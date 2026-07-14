@@ -27,6 +27,7 @@ import type {
 import type {
   ChatSessionMode,
   ConnectorDetail,
+  DeckGenerationMode,
   DesignSystemSummary,
   InputFieldSpec,
   InstalledPluginRecord,
@@ -93,6 +94,7 @@ import { ContextChipHoverCard } from './ContextChipHoverCard';
 import { workspaceContextDetailLine, workspaceContextKindLabel } from './workspace-context';
 import { FigmaHelpModal } from './FigmaHelpModal';
 import { TemplatePicker } from './home-hero/TemplatePicker';
+import { DeckModePicker } from './home-hero/DeckModePicker';
 import { LibraryPicker } from './LibraryPicker';
 import { SessionModeToggle } from './SessionModeToggle';
 import { assetTitle } from './LibraryAssetMeta';
@@ -154,6 +156,10 @@ interface Props {
   onSubmitScenario?: (scenario: PlaceholderScenario) => void;
   deepResearchEnabled?: boolean;
   onDeepResearchChange?: (enabled: boolean) => void;
+  deckGenerationMode?: DeckGenerationMode;
+  onDeckGenerationModeChange?: (mode: DeckGenerationMode) => void;
+  deckFast?: boolean;
+  onDeckFastChange?: (enabled: boolean) => void;
   sessionMode?: ChatSessionMode;
   onSessionModeChange?: (mode: ChatSessionMode) => void;
   activePluginTitle: string | null;
@@ -302,6 +308,10 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
     onSubmitScenario = () => undefined,
     deepResearchEnabled = false,
     onDeepResearchChange,
+    deckGenerationMode = 'standard',
+    onDeckGenerationModeChange,
+    deckFast = false,
+    onDeckFastChange,
     sessionMode = 'design',
     onSessionModeChange,
     firstRunGuide,
@@ -1758,6 +1768,8 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
               }}
               deepResearchEnabled={deepResearchEnabled}
               onDeepResearchChange={onDeepResearchChange}
+              fastEnabled={activeChipId === 'deck' && deckGenerationMode === 'image' ? deckFast : undefined}
+              onFastChange={activeChipId === 'deck' && deckGenerationMode === 'image' ? onDeckFastChange : undefined}
               connectors={connectorOptions}
               onPickConnector={(connector) => {
                 trackHomeChatComposerClick(analytics.track, {
@@ -1910,6 +1922,18 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
                 <span aria-hidden={true}>×</span>
               </Button>
             ) : null}
+            {activeChipId === 'deck' && deckGenerationMode === 'image' && deckFast && onDeckFastChange ? (
+              <Button
+                variant={'subtle'}
+                className={'home-hero__research-pill'}
+                onClick={() => onDeckFastChange(false)}
+                aria-label="Fast ×"
+              >
+                <Icon name={'sparkles'} size={13} aria-hidden={true} />
+                <span>Fast</span>
+                <span aria-hidden={true}>×</span>
+              </Button>
+            ) : null}
             {libraryPickerOpen ? (
               <LibraryPicker
                 onClose={() => setLibraryPickerOpen(false)}
@@ -1953,6 +1977,12 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
                 onClearActiveChip();
               }}
             />
+            {activeChipId === 'deck' && onDeckGenerationModeChange ? (
+              <DeckModePicker
+                value={deckGenerationMode}
+                onChange={onDeckGenerationModeChange}
+              />
+            ) : null}
             {footerInputFields.length > 0 ? (
               <div className="home-hero__footer-options" data-testid="home-hero-footer-options">
                 {footerInputFields.map((field) => (

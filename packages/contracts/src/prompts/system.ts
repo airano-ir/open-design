@@ -46,6 +46,15 @@ Good examples: \`investor-pitch-deck.html\`, \`ai-community-pr-deck.html\`, \`re
 
 When editing an existing artifact, preserve its existing filename unless the user asks for a copy or version. Use \`index.html\` only for fixed runtime conventions or a lightweight launcher/overview: live-artifact generated previews, HyperFrames compositions, static SPA/deploy entry mapping, plugin previews/examples, \`ui_kits/app/index.html\`, or a multi-screen overview that links to semantic screen files. If an active skill or template says to copy a seed to \`index.html\`, adapt the destination to a semantic filename unless the task is one of those fixed-path exceptions.`;
 
+const BUILT_IN_UTILITY_SKILL_INDEX = `## Built-in utility skill index
+
+Consider these skills on every user turn, whether attached or not. Use only the matching skill and preserve the user's current task.
+
+- \`explore-open-design\` — answer what Open Design can do, compare creation paths, and turn a broad goal into a concrete next step.
+- \`search-community-templates\` — act on requests for templates, examples, styles, references, or inspiration by semantically searching Community and presenting selectable visual cards.
+
+When shell tools are available, load the matching workflow with \`"$OD_NODE_BIN" "$OD_BIN" skills show <id> --json\` and follow its \`body\`. For template requests, run the skill's search action instead of inventing results. Without tools, answer from this index only and never claim that a search or action ran.`;
+
 export interface AudioVoiceOption {
   name: string;
   voiceId: string;
@@ -186,6 +195,7 @@ export interface ComposeInput {
     | 'image'
     | 'video'
     | 'audio'
+    | 'utility'
     | undefined;
   designSystemBody?: string | undefined;
   designSystemTitle?: string | undefined;
@@ -343,6 +353,8 @@ export function composeSystemPrompt({
     parts.push('\n\n---\n\n');
   }
 
+  parts.push(BUILT_IN_UTILITY_SKILL_INDEX, '\n\n---\n\n');
+
   if (!isMediaSurfaceEarly && !isAskMode) {
     parts.push(DISCOVERY_AND_PHILOSOPHY, '\n\n---\n\n');
   }
@@ -368,7 +380,7 @@ export function composeSystemPrompt({
   // and a BYOK/API chat route follow-up choices through the same surface
   // instead of drifting back to plain markdown option lists.
   parts.push(
-    "\n\n---\n\n## Clarifying questions mid-conversation\n\nWhen you need a clarification AFTER turn 1 and the answer benefits from structured input, emit a `<question-form>` block — the same markup turn-1 discovery uses — instead of writing a bulleted list of options in markdown. The host renders it as a Questions banner the user opens in the side tab; a markdown list renders as plain text and forces the user to type a reply. Use the richest appropriate web form controls (`radio`, `checkbox`, `select`, `text`, `textarea`, `number`, `range`, `date`, `time`, `datetime-local`, `color`, `url`, `email`, `tel`, `file`, `switch`, or `direction-cards`). When the clarification needs reference images, source docs, screenshots, or other user files, combine a `type: \"file\"` question with the text/options in the same form; selected files are uploaded into Design Files and submitted as attached/context files on the answer turn. For every finite-choice question, keep user control by leaving `allowCustom` unset or setting it to `true`, and add localized `customLabel` / `customPlaceholder` when useful. Use free-form prose questions only when a form would add no structure. Do NOT also duplicate the form's questions as markdown text alongside it.\n\n`<question-form>` is assistant text for the Open Design UI, not a native tool call. If you need to clarify direction, emit the complete `<question-form>...</question-form>` block directly in the assistant message before any TodoWrite, file write/edit, Bash, or other native tool call. Do not stop after an introductory sentence such as \"先确认一下方向：\"; the same message must include the full form.",
+    "\n\n---\n\n## Clarifying questions mid-conversation\n\nWhen you need a clarification AFTER turn 1 and the answer benefits from structured input, emit a `<question-form>` block — the same markup turn-1 discovery uses — instead of writing a bulleted list of options in markdown. The host renders it as a Questions banner the user opens in the side tab; a markdown list renders as plain text and forces the user to type a reply. Use the richest appropriate web form controls (`radio`, `checkbox`, `select`, `text`, `textarea`, `number`, `range`, `date`, `time`, `datetime-local`, `color`, `url`, `email`, `tel`, `file`, `switch`, `direction-cards`, or `template-cards`). `template-cards` is reserved for visual Community/design-template results and carries a `templates` array with stable ids and same-origin preview metadata. When the clarification needs reference images, source docs, screenshots, or other user files, combine a `type: \"file\"` question with the text/options in the same form; selected files are uploaded into Design Files and submitted as attached/context files on the answer turn. For every finite-choice question, keep user control by leaving `allowCustom` unset or setting it to `true`, and add localized `customLabel` / `customPlaceholder` when useful. Use free-form prose questions only when a form would add no structure. Do NOT also duplicate the form's questions as markdown text alongside it.\n\n`<question-form>` is assistant text for the Open Design UI, not a native tool call. If you need to clarify direction, emit the complete `<question-form>...</question-form>` block directly in the assistant message before any TodoWrite, file write/edit, Bash, or other native tool call. Do not stop after an introductory sentence such as \"先确认一下方向：\"; the same message must include the full form.",
   );
 
   // Mirrors the daemon-side composer in apps/daemon/src/prompts/system.ts —
@@ -732,6 +744,21 @@ function kindDetailLines(
     out.push(
       `- **speakerNotes**: ${typeof metadata.speakerNotes === 'boolean' ? metadata.speakerNotes : '(unknown — ask: include speaker notes?)'}`,
     );
+    const deckGenerationMode = metadata.deckGenerationMode ?? 'standard';
+    out.push(`- **deckGenerationMode**: ${deckGenerationMode}`);
+    out.push(`- **deckFast**: ${deckGenerationMode === 'image' && metadata.deckFast === true}`);
+    if (deckGenerationMode === 'image') {
+      out.push(
+        '- **image deck workflow**: keep the same staged questions → research → outline → inspiration → generation flow. Image mode changes only the page renderer after inspiration.',
+        '- **image deck output**: create one full-slide image per page and assemble those images into the canonical HTML deck with one slide section per page. The HTML deck remains the preview and PowerPoint/PDF export source.',
+        '- **image capability**: resolve the configured Codex/BYOK/Open Design Cloud image source through `od media config --json`; do not hard-code a provider or request an API key in chat.',
+        metadata.deckFast === true
+          ? '- **Fast image rendering**: call `od media batch --prompt-file <manifest.json> --concurrency 4 --json`; preserve slide-number ordering when assembling the HTML deck.'
+          : '- **image rendering order**: render and verify one slide image at a time.',
+      );
+    } else {
+      out.push('- **standard deck output**: build the editable canonical HTML deck directly; do not flatten every page into an image.');
+    }
   }
   if (metadata.kind === 'template') {
     out.push(

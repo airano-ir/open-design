@@ -26,6 +26,8 @@ export interface OutlinePanelCopy {
 export interface OutlinePanelProps {
   pages: readonly OutlinePage[];
   onChange: (pages: OutlinePage[]) => void;
+  loading?: boolean;
+  statusDetail?: string;
   copy?: Partial<OutlinePanelCopy>;
 }
 
@@ -65,6 +67,8 @@ function createPage(
 export function OutlinePanel({
   pages,
   onChange,
+  loading = false,
+  statusDetail,
   copy: copyOverrides,
 }: OutlinePanelProps) {
   const copy = { ...DEFAULT_COPY, ...copyOverrides };
@@ -118,12 +122,21 @@ export function OutlinePanel({
     >
       <header className={styles.header}>
         <h2 className={styles.panelTitle}>{copy.title}</h2>
-        <Button variant={'primary'} onClick={addPage}>
+        <Button variant={'primary'} onClick={addPage} disabled={loading}>
           {copy.addPage}
         </Button>
       </header>
 
-      {pages.length === 0 ? (
+      {loading ? (
+        <div className={styles.loading} role="status" aria-live="polite">
+          <div className={styles.loadingLines} aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
+          <span className={styles.loadingDetail}>{statusDetail ?? copy.emptyState}</span>
+        </div>
+      ) : pages.length === 0 ? (
         <div className={styles.empty}>{copy.emptyState}</div>
       ) : (
         <ol className={styles.pages}>

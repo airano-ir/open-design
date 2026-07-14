@@ -5,6 +5,7 @@ import { applyInspireChoice } from '../src/inspire/choice.js';
 import {
   filterInspireCatalogue,
   rankInspireCatalogue,
+  searchInspireCatalogue,
 } from '../src/inspire/rank.js';
 
 describe('inspiration keyword ranking', () => {
@@ -125,6 +126,33 @@ describe('inspiration keyword ranking', () => {
     ]);
   });
 
+  it('prefers fundraising inspiration for a seed pitch over generic sales decks', () => {
+    const result = rankInspireCatalogue(
+      {
+        brief: 'A six-slide seed pitch for a privacy-first product',
+        outlineTitles: ['Team wedge', 'Seed ask'],
+        mode: 'deck',
+      },
+      [
+        {
+          id: 'sales-rollout',
+          name: 'Pitch a Team Rollout',
+          mode: 'deck',
+          tags: ['sales', 'product', 'pitch-deck'],
+        },
+        {
+          id: 'demo-day',
+          name: 'Write a Demo Day Pitch',
+          mode: 'deck',
+          tags: ['fundraising', 'investor-deck', 'accelerator'],
+        },
+      ],
+    );
+
+    expect(result.ranked[0]).toBe('demo-day');
+    expect(result.reasons['demo-day']).toContain('fundraising');
+  });
+
   it('isolates each prototype-family catalogue by platform and shape tag', () => {
     expect(
       filterInspireCatalogue('prototype', catalogue).map((entry) => entry.id),
@@ -147,6 +175,51 @@ describe('inspiration keyword ranking', () => {
     expect(
       filterInspireCatalogue('report', catalogue).map((entry) => entry.id),
     ).toEqual(['executive-operating-review']);
+  });
+});
+
+describe('community semantic search', () => {
+  it('matches bilingual presentation intent and keeps source filters isolated', () => {
+    const result = searchInspireCatalogue(
+      {
+        query: '专业商务 PPT',
+        source: 'community',
+        mode: 'deck',
+        limit: 1,
+      },
+      [
+        {
+          id: 'investor-review',
+          name: 'Investor Review',
+          title: 'Investor Review',
+          description: 'Finance board presentation with polished slides',
+          mode: 'deck',
+          tags: ['business', 'slides'],
+          triggers: [],
+          source: 'community',
+          preview: { kind: 'none' },
+        },
+        {
+          id: 'template-only',
+          name: 'Template only',
+          title: 'Template only',
+          description: 'Professional presentation',
+          mode: 'deck',
+          tags: ['business'],
+          triggers: [],
+          source: 'design-template',
+          preview: { kind: 'none' },
+        },
+      ],
+    );
+
+    expect(result.total).toBe(1);
+    expect(result.results).toHaveLength(1);
+    expect(result.results[0]).toMatchObject({
+      id: 'investor-review',
+      source: 'community',
+    });
+    expect(result.results[0]?.reason).toContain('意图');
   });
 });
 

@@ -19,7 +19,10 @@ import os from 'node:os';
 import net from 'node:net';
 import { executionProfileFromStreamFormat, PLUGIN_SHARE_ACTION_PLUGIN_IDS } from '@open-design/contracts';
 import { isTodoWriteToolName, stopReasonIsTruncation, todoItemsFromTodoWriteInput } from '@open-design/contracts';
-import { renderFlowProtocol } from '@open-design/contracts';
+import {
+  renderFlowProtocol,
+  renderPlanConfirmationForm,
+} from '@open-design/contracts';
 import {
   composeSystemPrompt,
   renderConnectedExternalMcpDirective,
@@ -430,7 +433,12 @@ import {
   VIDEO_LENGTHS_SEC,
   VIDEO_MODELS,
 } from './media/models.js';
-import { readMaskedConfig, writeConfig } from './media/config.js';
+import {
+  readImageGenerationConfig,
+  readMaskedConfig,
+  writeConfig,
+  writeImageGenerationPreference,
+} from './media/config.js';
 import {
   listMediaTasksByProject,
   listRecentMediaTasks,
@@ -592,6 +600,10 @@ import { registerDaemonRoutes } from './routes/daemon.js';
 import { registerGenuiRoutes } from './routes/genui.js';
 import { registerFlowRoutes } from './routes/flow.js';
 import { registerInspireRoutes } from './routes/inspire.js';
+import {
+  communityInspireCandidates,
+  designTemplateInspireCandidates,
+} from './inspire/catalogue.js';
 import { registerDesignSystemRoutes } from './routes/design-systems.js';
 import { registerHostToolsRoutes } from './routes/host-tools.js';
 import { registerPluginAssetRoutes } from './routes/plugins/assets.js';
@@ -2791,6 +2803,8 @@ export async function startServer({
     AUDIO_DURATIONS_SEC,
     readMaskedConfig,
     writeConfig,
+    readImageGenerationConfig,
+    writeImageGenerationPreference,
     generateMedia,
     mediaTasks: mediaTaskStore.mediaTasks,
     createMediaTask: mediaTaskStore.createMediaTask,
@@ -3449,6 +3463,13 @@ export async function startServer({
         examplePrompt: template.examplePrompt,
         defaultFor: template.defaultFor,
       })),
+    listSearchEntries: async (locale) => {
+      const templates = await listAllDesignTemplates();
+      return [
+        ...communityInspireCandidates(listInstalledPlugins(db), locale),
+        ...designTemplateInspireCandidates(templates, locale),
+      ];
+    },
     loadConversationFlow: (conversationId) => {
       const conversation = getConversation(db, conversationId);
       return conversation ? getConversationFlow(db, conversationId) : undefined;
@@ -5594,6 +5615,15 @@ export async function startServer({
         }
       }
       pendingRpcCloseReason = null;
+      if (
+        flowTracker &&
+        status === 'succeeded' &&
+        flowTracker.needsPlanConfirmationFallback()
+      ) {
+        const delta = `\n\n${renderPlanConfirmationForm(flowTracker.snapshot.shape, locale)}`;
+        observeFlowEvent({ type: 'text_delta', delta });
+        send('agent', { type: 'text_delta', delta });
+      }
       // A clean end while generating advances the flow to deliver so the UI
       // renders the delivery CTA row off the terminal frame (spec §5.8).
       if (flowTracker) emitFlowSnapshot(flowTracker.noteRunEnd(status));

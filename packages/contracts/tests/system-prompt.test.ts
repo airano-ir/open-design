@@ -119,6 +119,19 @@ describe('DISCOVERY_AND_PHILOSOPHY (contracts copy) — prompt routing parity', 
 });
 
 describe('composeSystemPrompt', () => {
+  it('indexes the two built-in utility skills in every conversation mode', () => {
+    for (const sessionMode of [undefined, 'chat', 'plan'] as const) {
+      const prompt = composeSystemPrompt({ sessionMode });
+
+      expect(prompt).toContain('## Built-in utility skill index');
+      expect(prompt).toContain('Consider these skills on every user turn');
+      expect(prompt).toContain('`explore-open-design`');
+      expect(prompt).toContain('`search-community-templates`');
+      expect(prompt).toContain('skills show <id> --json');
+      expect(prompt).toContain('run the skill\'s search action instead of inventing');
+    }
+  });
+
   it('injects Chinese quick brief guidance when the UI locale is zh-CN', () => {
     const prompt = composeSystemPrompt({ locale: 'zh-CN' });
 

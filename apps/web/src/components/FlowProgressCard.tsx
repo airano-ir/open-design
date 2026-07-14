@@ -21,6 +21,49 @@ const STAGE_LABEL_KEY: Record<FlowStageId, keyof Dict> = {
   deliver: 'flow.stage.deliver',
 };
 
+/** i18n key for a stage label — shared with the pinned task-progress card so
+ * the collapsed row can name the current step without re-deriving the map. */
+export function flowStageLabelKey(id: FlowStageId): keyof Dict {
+  return STAGE_LABEL_KEY[id];
+}
+
+export interface FlowProgressSummary {
+  current: number;
+  total: number;
+  activeStage: { id: FlowStageId; labelKey: keyof Dict } | null;
+}
+
+/** The `Step N of M` counts + the active stage, computed the same way the card
+ * renders them. Lets the pinned wrapper own the header while the card body
+ * stays a pure renderer (`hideHead`). */
+export function flowProgressSummary(flow: FlowSnapshot): FlowProgressSummary {
+  const visibleStages = visibleFlowStages(flow);
+  const total = visibleStages.length;
+  const activeIndex = flow.activeStage
+    ? visibleStages.findIndex((s) => s.id === flow.activeStage)
+    : -1;
+  const terminalCount = visibleStages.filter(
+    (stage) => stage.state !== 'pending' && stage.state !== 'active',
+  ).length;
+  const current =
+    activeIndex >= 0 ? activeIndex + 1 : Math.max(1, Math.min(terminalCount, total));
+  const active = activeIndex >= 0 ? visibleStages[activeIndex] : null;
+  return {
+    current,
+    total,
+    activeStage: active ? { id: active.id, labelKey: STAGE_LABEL_KEY[active.id] } : null,
+  };
+}
+
+function visibleFlowStages(flow: FlowSnapshot) {
+  return flow.stages.filter(
+    (stage) =>
+      stage.id !== 'research' ||
+      flow.researchMode === 'deep' ||
+      stage.state !== 'pending',
+  );
+}
+
 const STAGE_HINT_KEY: Record<FlowStageId, keyof Dict> = {
   clarify: 'flow.hint.clarify',
   research: 'flow.hint.research',
@@ -64,35 +107,29 @@ export function FlowProgressCard({
   stageArtifactPaths,
   stageActions,
   onOpenArtifact,
+  hideHead = false,
 }: {
   flow: FlowSnapshot;
   stageArtifactPaths?: FlowStageArtifactPaths;
   stageActions?: Partial<Record<FlowStageId, () => void>>;
   onOpenArtifact?: (path: string) => void;
+  /** When the pinned task-progress wrapper renders its own header, hide the
+   * card's own `Task progress · Step N of M` head to avoid duplication. */
+  hideHead?: boolean;
 }) {
   const t = useT();
-  const visibleStages = flow.stages.filter(
-    (stage) =>
-      stage.id !== 'research' ||
-      flow.researchMode === 'deep' ||
-      stage.state !== 'pending',
-  );
-  const total = visibleStages.length;
-  const activeIndex = flow.activeStage
-    ? visibleStages.findIndex((s) => s.id === flow.activeStage)
-    : -1;
-  const terminalCount = visibleStages.filter(
-    (stage) => stage.state !== 'pending' && stage.state !== 'active',
-  ).length;
-  const current = activeIndex >= 0 ? activeIndex + 1 : Math.max(1, Math.min(terminalCount, total));
+  const visibleStages = visibleFlowStages(flow);
+  const { current, total } = flowProgressSummary(flow);
   const unit = t(FLOW_SHAPES[flow.shape].progressUnitKey as keyof Dict);
 
   return (
     <div className={styles.root} data-testid="flow-progress-card">
-      <div className={styles.head}>
-        <span className={styles.title}>{t('flow.title')}</span>
-        <span className={styles.stepOf}>{t('flow.stepOf', { current, total })}</span>
-      </div>
+      {hideHead ? null : (
+        <div className={styles.head}>
+          <span className={styles.title}>{t('flow.title')}</span>
+          <span className={styles.stepOf}>{t('flow.stepOf', { current, total })}</span>
+        </div>
+      )}
       <ol className={styles.steps}>
         {visibleStages.map((stage) => {
           const detail =
@@ -102,7 +139,8 @@ export function FlowProgressCard({
               : t(STATE_KEY[stage.state]));
           const label = t(STAGE_LABEL_KEY[stage.id]);
           const stageAction = stageActions?.[stage.id];
-          const artifactPath = stageArtifactPaths?.[stage.id]?.[0];
+          const artifactPaths = stageArtifactPaths?.[stage.id] ?? [];
+          const artifactPath = artifactPaths[0];
           const actionable = Boolean(stageAction || (artifactPath && onOpenArtifact));
           const content = (
             <>
@@ -119,6 +157,15 @@ export function FlowProgressCard({
                   ) : null}
                 </div>
                 <div className={styles.detail}>{detail}</div>
+                {artifactPaths.length > 0 ? (
+                  <div className={styles.artifacts} aria-label={`${label} outputs`}>
+                    {artifactPaths.slice(0, 2).map((path) => (
+                      <span key={path} className={styles.artifactPath} title={path}>
+                        {path}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
               </div>
               {actionable ? (
                 <span className={styles.openIcon} aria-hidden>

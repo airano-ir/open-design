@@ -13,6 +13,7 @@ import type {
   ApplyResult,
   ChatSessionMode,
   ConnectorDetail,
+  DeckGenerationMode,
   InputFieldSpec,
   McpServerConfig,
   InstalledPluginRecord,
@@ -272,6 +273,8 @@ const EMPTY_PROMPT_TEMPLATES: PromptTemplateSummary[] = [];
 const HOME_COMPOSER_PROMPT_KEY = 'open-design:home-composer:prompt';
 const HOME_COMPOSER_DESIGN_SYSTEM_KEY = 'open-design:home-composer:design-system';
 const HOME_COMPOSER_RESEARCH_KEY = 'open-design:home-composer:deep-research';
+const HOME_COMPOSER_DECK_MODE_KEY = 'open-design:home-composer:deck-mode';
+const HOME_COMPOSER_DECK_FAST_KEY = 'open-design:home-composer:deck-fast';
 
 function readHomeComposerDraft(key: string): string | null {
   if (typeof window === 'undefined') return null;
@@ -299,6 +302,8 @@ function clearHomeComposerDraft(): void {
   writeHomeComposerDraft(HOME_COMPOSER_PROMPT_KEY, null);
   writeHomeComposerDraft(HOME_COMPOSER_DESIGN_SYSTEM_KEY, null);
   writeHomeComposerDraft(HOME_COMPOSER_RESEARCH_KEY, null);
+  writeHomeComposerDraft(HOME_COMPOSER_DECK_MODE_KEY, null);
+  writeHomeComposerDraft(HOME_COMPOSER_DECK_FAST_KEY, null);
 }
 
 export function HomeView({
@@ -393,12 +398,18 @@ export function HomeView({
     prompt: string;
     designSystemId: string | null;
     deepResearchEnabled: boolean;
+    deckGenerationMode: DeckGenerationMode;
+    deckFast: boolean;
   } | null>(null);
   if (restoredDraftRef.current === null) {
     restoredDraftRef.current = {
       prompt: readHomeComposerDraft(HOME_COMPOSER_PROMPT_KEY) ?? '',
       designSystemId: readHomeComposerDraft(HOME_COMPOSER_DESIGN_SYSTEM_KEY),
       deepResearchEnabled: readHomeComposerDraft(HOME_COMPOSER_RESEARCH_KEY) === '1',
+      deckGenerationMode: readHomeComposerDraft(HOME_COMPOSER_DECK_MODE_KEY) === 'image'
+        ? 'image'
+        : 'standard',
+      deckFast: readHomeComposerDraft(HOME_COMPOSER_DECK_FAST_KEY) === '1',
     };
   }
   const restoredDraft = restoredDraftRef.current;
@@ -435,6 +446,12 @@ export function HomeView({
   const [deepResearchEnabled, setDeepResearchEnabled] = useState(
     () => restoredDraft.deepResearchEnabled,
   );
+  const [deckGenerationMode, setDeckGenerationMode] = useState<DeckGenerationMode>(
+    () => restoredDraft.deckGenerationMode,
+  );
+  const [deckFast, setDeckFast] = useState(
+    () => restoredDraft.deckGenerationMode === 'image' && restoredDraft.deckFast,
+  );
   // Treat a restored non-empty prompt as user-edited so the plugin/skill
   // replacement guard still asks before clobbering it.
   const [promptEditedByUser, setPromptEditedByUser] = useState(
@@ -455,6 +472,15 @@ export function HomeView({
       deepResearchEnabled ? '1' : null,
     );
   }, [deepResearchEnabled]);
+  useEffect(() => {
+    writeHomeComposerDraft(HOME_COMPOSER_DECK_MODE_KEY, deckGenerationMode);
+  }, [deckGenerationMode]);
+  useEffect(() => {
+    writeHomeComposerDraft(
+      HOME_COMPOSER_DECK_FAST_KEY,
+      deckGenerationMode === 'image' && deckFast ? '1' : null,
+    );
+  }, [deckFast, deckGenerationMode]);
   const [figmaModalOpen, setFigmaModalOpen] = useState(false);
   const examplePromptInfoRef = useRef<ExamplePromptInfo | null>(null);
   const handleExamplePromptStatusChange = useCallback((info: ExamplePromptInfo | null) => {
@@ -1071,6 +1097,12 @@ export function HomeView({
       plugin_type: record.marketplaceTrust ?? 'official',
       action: action === 'use-with-query' ? 'use_with_query' : 'use',
     });
+    const inferredProject = projectContextForPlugin(record);
+    const routedProjectKind = active?.projectKind ?? inferredProject.projectKind;
+    const routedProjectMetadata = active?.projectKind
+      ? active.projectMetadata
+      : inferredProject.projectMetadata;
+    const routedChipId = active?.projectKind ? active.chipId : null;
     if (action === 'use-with-query') {
       // Prompt-loading "Use" seeds the composer with the SAME human-friendly
       // text the Home example-prompt cards use (examplePresetSeedPrompt), NOT the
@@ -1104,6 +1136,9 @@ export function HomeView({
       const hasTemplate = Boolean(rawQueryTemplate && trimmedSeed);
       const submittable = await usePlugin(record, combined, {
         ...(inputs ? { inputs } : {}),
+        ...(routedProjectKind ? { projectKind: routedProjectKind } : {}),
+        ...(routedChipId ? { chipId: routedChipId } : {}),
+        projectMetadata: routedProjectMetadata,
         queryTemplate: hasTemplate ? rawQueryTemplate : null,
         // Allow an arbitrary prefix whenever we track the query template, so the
         // placeholder extractor matches the query as a suffix even when the user
@@ -1123,6 +1158,9 @@ export function HomeView({
     }
     const submittable = await usePlugin(record, undefined, {
       ...(inputs ? { inputs } : {}),
+      ...(routedProjectKind ? { projectKind: routedProjectKind } : {}),
+      ...(routedChipId ? { chipId: routedChipId } : {}),
+      projectMetadata: routedProjectMetadata,
       suppressPromptUpdate: true,
       explicitPick: true,
     });
@@ -1989,13 +2027,20 @@ export function HomeView({
       const contextLinkedDirs = contextLinkedDirCandidates;
       const submittedProjectKind =
         submittedActive?.projectKind ?? fallbackProjectKind ?? projectKindForSkill(activeSkill) ?? 'other';
-      const submittedProjectMetadata = submittedActive?.mediaSurface
+      const baseSubmittedProjectMetadata = submittedActive?.mediaSurface
         ? metadataForHomeMediaComposer(submittedActive.mediaSurface, submittedActive.inputs, promptTemplates)
         : homeCreateProjectMetadata(
             submittedProjectKind,
             submittedActive?.inputs ?? null,
             submittedActive?.projectMetadata ?? fallbackProjectMetadata ?? null,
           );
+      const submittedProjectMetadata = submittedProjectKind === 'deck'
+        ? {
+            ...(baseSubmittedProjectMetadata ?? { kind: 'deck' as const }),
+            deckGenerationMode,
+            deckFast: deckGenerationMode === 'image' && deckFast,
+          }
+        : baseSubmittedProjectMetadata;
       // Scenario plugins (chips / preset cards) and explicit skill picks are
       // mutually exclusive routing sources. In Design mode, free-form prompts
       // route through the default design router; in Ask mode they stay plain
@@ -2019,7 +2064,9 @@ export function HomeView({
         pluginType: submittedActive?.record.marketplaceTrust ?? (routedPluginId ? 'official' : null),
         skillId: resolvedSkillId,
         appliedPluginSnapshotId: submittedActive?.result?.appliedPlugin?.snapshotId ?? null,
-        pluginTitle: submittedActive?.record.title ?? null,
+        // Type chips bind a framework, not the project's subject. Only an
+        // explicitly chosen preset/template should name the new project.
+        pluginTitle: submittedActive?.explicitPick ? submittedActive.record.title : null,
         taskKind: submittedActive?.result?.appliedPlugin?.taskKind ?? null,
         pluginInputs: submittedPluginInputs,
         projectKind: submittedProjectKind,
@@ -2082,6 +2129,13 @@ export function HomeView({
         onSubmitScenario={submitScenario}
         deepResearchEnabled={deepResearchEnabled}
         onDeepResearchChange={setDeepResearchEnabled}
+        deckGenerationMode={deckGenerationMode}
+        onDeckGenerationModeChange={(mode) => {
+          setDeckGenerationMode(mode);
+          if (mode !== 'image') setDeckFast(false);
+        }}
+        deckFast={deckFast}
+        onDeckFastChange={setDeckFast}
         sessionMode={sessionMode}
         onSessionModeChange={setSessionMode}
         submitting={sending}
@@ -2540,6 +2594,40 @@ function homeCreateProjectMetadata(
     kind,
   };
   return next;
+}
+
+function projectContextForPlugin(record: InstalledPluginRecord): {
+  projectKind?: ProjectKind;
+  projectMetadata: ProjectMetadata | null;
+} {
+  const mode = typeof record.manifest?.od?.mode === 'string'
+    ? record.manifest.od.mode.toLowerCase()
+    : '';
+  const platform = typeof record.manifest?.od?.platform === 'string'
+    ? record.manifest.od.platform.toLowerCase()
+    : '';
+
+  if (mode === 'prototype') {
+    const projectPlatform = platform === 'mobile'
+      ? 'mobile-ios'
+      : platform === 'desktop'
+        ? 'web-desktop'
+        : undefined;
+    return {
+      projectKind: 'prototype',
+      projectMetadata: {
+        kind: 'prototype',
+        ...(projectPlatform ? { platform: projectPlatform } : {}),
+      },
+    };
+  }
+  if (mode === 'deck' || mode === 'template' || mode === 'image' || mode === 'video' || mode === 'audio') {
+    return {
+      projectKind: mode,
+      projectMetadata: { kind: mode },
+    };
+  }
+  return { projectMetadata: null };
 }
 
 // Selectable design systems for the home composer, sorted to match the picker:

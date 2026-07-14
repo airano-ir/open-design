@@ -11,6 +11,7 @@ import {
   getConversationFlow,
   insertConversation,
   insertProject,
+  listMessages,
   openDatabase,
   setConversationFlow,
   upsertMessage,
@@ -91,6 +92,39 @@ describe('flow routes', () => {
           method: 'PATCH',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify(body),
+        },
+      );
+      return {
+        status: response.status,
+        body: await response.json() as {
+          error?: string;
+          conversationId?: string;
+          flow?: import('@open-design/contracts').FlowSnapshot | null;
+        },
+      };
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+  }
+
+  async function confirmPlan(conversationId: string, message: string) {
+    const app = express();
+    app.use(express.json());
+    registerFlowRoutes(app, {
+      db,
+      paths: { PROJECTS_DIR: projectsRoot },
+      now: () => 60,
+    });
+    const server = http.createServer(app);
+    await new Promise<void>((resolve) => server.listen(0, resolve));
+    const { port } = server.address() as { port: number };
+    try {
+      const response = await fetch(
+        'http://127.0.0.1:' + port + '/api/conversations/' + conversationId + '/flow/plan-confirm',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ message }),
         },
       );
       return {
@@ -215,6 +249,35 @@ describe('flow routes', () => {
     setConversationFlow(db, 'conv-1', createFlowSnapshot('deck', { now: 10 }));
     const response = await patchFlow('conv-1', { researchMode: 'turbo' });
     expect(response.status).toBe(400);
+  });
+
+  it('confirms a plan without starting an agent turn and opens inspiration', async () => {
+    setConversationFlow(
+      db,
+      'conv-1',
+      applyFlowMarker(
+        createFlowSnapshot('deck', { now: 10 }),
+        { stage: 'plan', state: 'active' },
+        20,
+      ),
+    );
+    const message = [
+      '[form answers — plan-confirm]',
+      '- How should I proceed?: ✓ Confirm, generate 6 slides [value: confirm]',
+    ].join('\n');
+
+    const response = await confirmPlan('conv-1', message);
+
+    expect(response.status).toBe(200);
+    expect(response.body.flow?.activeStage).toBe('inspire');
+    expect(response.body.flow?.stages.find((stage) => stage.id === 'plan')?.state).toBe(
+      'complete',
+    );
+    expect(listMessages(db, 'conv-1').at(-1)?.content).toBe(message);
+
+    const retry = await confirmPlan('conv-1', message);
+    expect(retry.status).toBe(200);
+    expect(listMessages(db, 'conv-1').filter((item) => item.content === message)).toHaveLength(1);
   });
 
   it('recovers a missing generic-project flow from the persisted transcript', async () => {

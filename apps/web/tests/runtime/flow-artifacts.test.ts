@@ -38,6 +38,7 @@ describe('flowStageArtifactPaths', () => {
       file('generated/inspiration.json', 'text', 4),
       file('alternate.html', 'html', 6),
       file('index.html', 'html', 5),
+      file('generated/deck.html', 'html', 8),
       file('deck.pdf', 'pdf', 7),
     ]);
 
@@ -46,18 +47,18 @@ describe('flowStageArtifactPaths', () => {
       research: ['research/market.md'],
       plan: ['generated/outline.md'],
       inspire: ['generated/inspiration.json'],
-      generate: ['index.html', 'alternate.html'],
+      generate: ['index.html', 'generated/deck.html', 'alternate.html'],
       deliver: ['deck.pdf'],
     });
   });
 
   it.each([
-    ['prototype', 'generated/prototype-plan.md', 'concept.html', 'html'],
-    ['landing', 'generated/structure.md', 'index.html', 'html'],
-    ['mobile', 'generated/flows.md', 'mobile.html', 'html'],
-    ['webapp', 'generated/plan.md', 'dashboard.html', 'html'],
-    ['document', 'generated/toc.md', 'decision-memo.md', 'text'],
-    ['report', 'generated/outline.md', 'operating-review.html', 'html'],
+    ['prototype', 'generated/prototype-plan.md', 'generated/concept.html', 'html'],
+    ['landing', 'generated/structure.md', 'generated/index.html', 'html'],
+    ['mobile', 'generated/flows.md', 'generated/mobile.html', 'html'],
+    ['webapp', 'generated/plan.md', 'generated/dashboard.html', 'html'],
+    ['document', 'generated/toc.md', 'generated/decision-memo.md', 'text'],
+    ['report', 'generated/outline.md', 'generated/operating-review.html', 'html'],
   ] as const)(
     'maps %s plan and generation artifacts from the shared registry',
     (shape, planPath, artifactPath, kind) => {

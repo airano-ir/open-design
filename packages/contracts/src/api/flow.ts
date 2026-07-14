@@ -499,6 +499,12 @@ export interface UpdateFlowResearchModeRequest {
   researchMode: FlowResearchMode;
 }
 
+/** `POST /api/conversations/:id/flow/plan-confirm` request. */
+export interface ConfirmFlowPlanRequest {
+  /** The formatted `[form answers — plan-confirm]` message persisted to chat. */
+  message: string;
+}
+
 /** Map a design-template / plugin `od.mode` (+ platform) to a flow shape.
  * Returns null when the mode has no staged-flow shape (e.g. unknown modes). */
 export function flowShapeFromModePlatform(

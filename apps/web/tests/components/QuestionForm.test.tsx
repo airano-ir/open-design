@@ -108,8 +108,55 @@ const selectObjectForm = {
   ],
 } as QuestionForm;
 
+const templateForm = {
+  id: 'community-template-search',
+  title: 'Choose a visual starting point',
+  questions: [
+    {
+      id: 'template',
+      label: 'Best matches',
+      type: 'template-cards',
+      required: true,
+      allowCustom: false,
+      defaultValue: 'business-deck',
+      templates: [
+        {
+          id: 'business-deck',
+          label: 'Business Deck',
+          source: 'community',
+          reason: 'Matches professional presentation intent.',
+          preview: { kind: 'html', url: '/api/plugins/business-deck/preview' },
+        },
+        {
+          id: 'editorial-site',
+          label: 'Editorial Site',
+          source: 'community',
+          description: 'A magazine-like landing page.',
+          preview: { kind: 'none' },
+        },
+      ],
+    },
+  ],
+  submitLabel: 'Use template',
+} as QuestionForm;
+
 describe('QuestionFormView', () => {
   afterEach(() => cleanup());
+
+  it('renders visual template cards and submits the selected stable plugin id', () => {
+    const onSubmit = vi.fn();
+    render(<QuestionFormView form={templateForm} interactive onSubmit={onSubmit} />);
+
+    expect((screen.getByLabelText('Business Deck') as HTMLInputElement).checked).toBe(true);
+    expect(screen.getByText('Matches professional presentation intent.')).toBeTruthy();
+    fireEvent.click(screen.getByLabelText('Editorial Site'));
+    fireEvent.click(screen.getByRole('button', { name: 'Use template' }));
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      '[form answers — community-template-search]\n- Best matches: Editorial Site [value: editorial-site]',
+      { template: 'editorial-site' },
+    );
+  });
 
   it('updates locked answers when submitted history arrives after the initial render', () => {
     const onSubmit = vi.fn();
