@@ -76,6 +76,10 @@ import {
   resolveModelAlias,
   resolveProviderConfig,
 } from './config.js';
+import {
+  fetchImageGenerationWithResponseRetry,
+  type ImageGenerationRequestSummary,
+} from './image-generation-retry.js';
 import { codexNeedsDangerFullAccessSandbox } from '../runtimes/defs/codex.js';
 import {
   ensureProject,
@@ -139,6 +143,9 @@ type MediaContext = {
   /** Additional reference images for multi-image i2v / style reference flows. */
   imageRefs: ImageRef[];
   projectRoot: string;
+  onProviderRequestSettled:
+    | ((summary: ImageGenerationRequestSummary & { providerId: string }) => void)
+    | undefined;
 };
 type RenderResult = { bytes: Buffer; providerNote: string; suggestedExt?: string };
 type JsonRecord = Record<string, unknown>;
@@ -318,6 +325,7 @@ export async function generateMedia(args: {
   prompt?: string; output?: string; aspect?: string; length?: number; duration?: number; voice?: string;
   audioKind?: AudioKind; language?: string; loop?: boolean; promptInfluence?: number;
   compositionDir?: string; image?: string; images?: string[]; onProgress?: ProgressFn; requestInit?: MediaRequestInit;
+  onProviderRequestSettled?: (summary: ImageGenerationRequestSummary & { providerId: string }) => void;
 }) {
   const {
     projectRoot,
@@ -338,6 +346,7 @@ export async function generateMedia(args: {
     compositionDir,
     image,
     requestInit,
+    onProviderRequestSettled,
   } = args;
 
   if (!projectRoot) throw new Error('projectRoot required');
@@ -473,7 +482,7 @@ export async function generateMedia(args: {
   // instructions, MINIMAX/FISHAUDIO TTS map) continue to key off the
   // catalog id while the provider's request body carries the alias.
   const wireModel = await resolveModelAlias(projectRoot, model);
-  const ctx = {
+  const ctx: MediaContext = {
     surface,
     model,
     wireModel,
@@ -500,6 +509,7 @@ export async function generateMedia(args: {
     requestInit: requestInit || {},
     imageRefs,
     projectRoot,
+    onProviderRequestSettled,
   };
 
   const credentials = await resolveProviderConfig(projectRoot, def.provider);
@@ -1241,11 +1251,17 @@ async function renderCustomOpenAIImage(ctx: MediaContext, credentials: ProviderC
     url = buildOpenAIImageEditUrl(baseUrl);
   }
 
-  const resp = await fetch(url, withMediaRequestInit(ctx, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(body),
-  }));
+  const resp = await fetchImageGenerationWithResponseRetry(
+    () => fetch(url, withMediaRequestInit(ctx, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+    })),
+    (summary) => ctx.onProviderRequestSettled?.({
+      providerId: 'custom-image',
+      ...summary,
+    }),
+  );
   const data = await parseOpenAICompatibleJson(resp, 'custom image');
   const bytes = await bytesFromOpenAICompatibleData(data, 'custom image', ctx.requestInit);
   return {
@@ -1816,7 +1832,8 @@ async function renderGrokImage(ctx: MediaContext, credentials: ProviderConfig): 
 }
 
 async function renderNanoBananaImage(ctx: MediaContext, credentials: ProviderConfig): Promise<RenderResult> {
-  if (!credentials.apiKey) {
+  const apiKey = credentials.apiKey;
+  if (!apiKey) {
     throw new Error(
       'no Nano Banana API key — configure it in Settings or set OD_NANOBANANA_API_KEY',
     );
@@ -1839,11 +1856,17 @@ async function renderNanoBananaImage(ctx: MediaContext, credentials: ProviderCon
     },
   };
 
-  const resp = await fetch(`${baseUrl}/v1beta/models/${encodeURIComponent(wireModel)}:generateContent`, withMediaRequestInit(ctx, {
-    method: 'POST',
-    headers: nanoBananaHeaders(baseUrl, credentials.apiKey),
-    body: JSON.stringify(body),
-  }));
+  const resp = await fetchImageGenerationWithResponseRetry(
+    () => fetch(`${baseUrl}/v1beta/models/${encodeURIComponent(wireModel)}:generateContent`, withMediaRequestInit(ctx, {
+      method: 'POST',
+      headers: nanoBananaHeaders(baseUrl, apiKey),
+      body: JSON.stringify(body),
+    })),
+    (summary) => ctx.onProviderRequestSettled?.({
+      providerId: 'nanobanana',
+      ...summary,
+    }),
+  );
   const text = await resp.text();
   if (!resp.ok) {
     throw new Error(`nano-banana image ${resp.status}: ${truncate(text, 240)}`);
