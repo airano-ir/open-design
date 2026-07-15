@@ -17,6 +17,7 @@ import {
   readTelemetrySinkConfig,
   readTelemetrySinkConfigForChannel,
   clearRunAwaitingFinalAcceptance,
+  configureDeferredFeedbackDataDir,
   hasPendingRunFeedbackForTests,
   markRunAwaitingFinalAcceptance,
   rememberAcceptedFinalTraceBodyId,
@@ -3610,10 +3611,18 @@ describe('reportRunFeedback', () => {
   beforeEach(() => {
     vi.useRealTimers();
     resetAcceptedFinalTraceBodyIdsForTests();
+    resetPendingRunFeedbackForTests();
+    // Default live consent on so deferred flushes are not fail-closed when
+    // no OD_DATA_DIR / configured data root is present in unit tests.
+    setLiveTelemetryPrefsReaderForTests(() => ({
+      metrics: true,
+      content: true,
+    }));
   });
 
   afterEach(() => {
     resetAcceptedFinalTraceBodyIdsForTests();
+    resetPendingRunFeedbackForTests();
   });
 
   it('skips when metrics consent is off', async () => {
@@ -4161,7 +4170,7 @@ describe('reportRunFeedback', () => {
         new Response(JSON.stringify({ successes: [], errors: [] }), { status: 207 }),
       );
 
-      markRunAwaitingFinalAcceptance(runId);
+      const tfToken = markRunAwaitingFinalAcceptance(runId);
       await reportRunFeedback(
         makeFeedbackCtx({
           runId,
@@ -4181,6 +4190,8 @@ describe('reportRunFeedback', () => {
         'terminal_fallback',
         'langfuse',
       );
+      // Production finally releases the TF attempt token after acceptance.
+      clearRunAwaitingFinalAcceptance(runId, tfToken);
 
       // Immediate flush onto :tf; queue retained for a possible late final.
       await vi.waitFor(() => {
@@ -4462,6 +4473,269 @@ describe('reportRunFeedback', () => {
       });
       expect(fetchSpy).not.toHaveBeenCalled();
     } finally {
+      resetPendingRunFeedbackForTests();
+    }
+  });
+
+  it('fails closed on deferred flush when OD_DATA_DIR is unset and consent flipped via configured data root', async () => {
+    // Production resolves RUNTIME_DATA_DIR even when OD_DATA_DIR is absent.
+    // Consent re-check must read that root — not fall back to the queued
+    // submit-time snapshot when process.env.OD_DATA_DIR is empty.
+    resetAcceptedFinalTraceBodyIdsForTests();
+    resetPendingRunFeedbackForTests();
+    const runId = 'run-deferred-consent-via-data-dir';
+    const dataDir = mkdtempSync(path.join(tmpdir(), 'od-deferred-consent-'));
+    const previousOdDataDir = process.env.OD_DATA_DIR;
+    delete process.env.OD_DATA_DIR;
+    const fetchSpy = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ successes: [], errors: [] }), { status: 207 }),
+    );
+
+    try {
+      // No test reader: production path only.
+      setLiveTelemetryPrefsReaderForTests(undefined);
+      configureDeferredFeedbackDataDir(dataDir);
+      writeFileSync(
+        path.join(dataDir, 'app-config.json'),
+        JSON.stringify({ telemetry: { metrics: true, content: true } }),
+      );
+
+      markRunAwaitingFinalAcceptance(runId);
+      await reportRunFeedback(
+        makeFeedbackCtx({
+          runId,
+          runStatus: 'failed',
+          telemetryFinalized: false,
+          rating: 'negative',
+          reasonCodes: [],
+          hasCustomReason: true,
+          customReason: 'queued custom reason',
+        }),
+        { config: TEST_CONFIG, fetchImpl: fetchSpy as any },
+      );
+      expect(hasPendingRunFeedbackForTests(runId)).toBe(true);
+
+      // Opt out after queueing; live config must win over queued prefs.
+      writeFileSync(
+        path.join(dataDir, 'app-config.json'),
+        JSON.stringify({ telemetry: { metrics: false, content: false } }),
+      );
+
+      rememberAcceptedFinalTraceBodyId(
+        runId,
+        scopedTelemetryBodyId(runId, 'final', 'terminal_fallback'),
+        'terminal_fallback',
+        'langfuse',
+      );
+
+      await vi.waitFor(() => {
+        expect(hasPendingRunFeedbackForTests(runId)).toBe(false);
+      });
+      expect(fetchSpy).not.toHaveBeenCalled();
+    } finally {
+      if (previousOdDataDir === undefined) delete process.env.OD_DATA_DIR;
+      else process.env.OD_DATA_DIR = previousOdDataDir;
+      rmSync(dataDir, { recursive: true, force: true });
+      resetPendingRunFeedbackForTests();
+    }
+  });
+
+  it('keeps the deferred queue past the late-final window while final_message is still in flight', async () => {
+    // terminal_fallback accepts first and would schedule a 30s drop, but a
+    // concurrent final_message can take ~40s (20s timeout + 1 retry). Tokens
+    // must survive TF accept so the drop timer re-arms until FM completes.
+    vi.useFakeTimers();
+    try {
+      resetAcceptedFinalTraceBodyIdsForTests();
+      resetPendingRunFeedbackForTests();
+      setLiveTelemetryPrefsReaderForTests(() => ({
+        metrics: true,
+        content: true,
+      }));
+      const runId = 'run-tf-then-slow-final';
+      const fallbackTraceId = scopedTelemetryBodyId(
+        runId,
+        'final',
+        'terminal_fallback',
+      );
+      const fetchSpy = vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ successes: [], errors: [] }), { status: 207 }),
+      );
+
+      const tokenTf = markRunAwaitingFinalAcceptance(runId);
+      const tokenFinal = markRunAwaitingFinalAcceptance(runId);
+
+      await reportRunFeedback(
+        makeFeedbackCtx({
+          runId,
+          runStatus: 'failed',
+          telemetryFinalized: false,
+          rating: 'positive',
+          reasonCodes: [],
+        }),
+        { config: TEST_CONFIG, fetchImpl: fetchSpy as any },
+      );
+      expect(hasPendingRunFeedbackForTests(runId)).toBe(true);
+
+      // TF accepts first; preserve the final_message token.
+      rememberAcceptedFinalTraceBodyId(
+        runId,
+        fallbackTraceId,
+        'terminal_fallback',
+        'langfuse',
+      );
+      clearRunAwaitingFinalAcceptance(runId, tokenTf);
+
+      await vi.waitFor(() => {
+        expect(fetchSpy).toHaveBeenCalledTimes(1);
+      });
+      expect(hasPendingRunFeedbackForTests(runId)).toBe(true);
+
+      // Mid-window re-rate while only :tf is accepted.
+      await reportRunFeedback(
+        makeFeedbackCtx({
+          runId,
+          runStatus: 'failed',
+          telemetryFinalized: false,
+          rating: 'negative',
+          reasonCodes: ['matched_request'],
+          acceptedReportTrigger: 'terminal_fallback',
+          acceptedDeliveryChannel: 'langfuse',
+          traceId: fallbackTraceId,
+        }),
+        { config: TEST_CONFIG, fetchImpl: fetchSpy as any },
+      );
+      await vi.waitFor(() => {
+        expect(fetchSpy).toHaveBeenCalledTimes(2);
+      });
+
+      // Past the default 30s late-final window; queue must still be held
+      // because final_message is still in flight.
+      await vi.advanceTimersByTimeAsync(TERMINAL_FALLBACK_LATE_FINAL_FEEDBACK_MS + 5_000);
+      expect(hasPendingRunFeedbackForTests(runId)).toBe(true);
+
+      // Slow final_message accepts after ~40s of Vela timeout/retry budget.
+      rememberAcceptedFinalTraceBodyId(runId, runId, 'final_message', 'langfuse');
+      clearRunAwaitingFinalAcceptance(runId, tokenFinal);
+
+      await vi.waitFor(() => {
+        expect(fetchSpy).toHaveBeenCalledTimes(3);
+      });
+      const finalScore = JSON.parse(fetchSpy.mock.calls[2]![1].body as string);
+      expect(finalScore.batch[0].type).toBe('score-create');
+      expect(finalScore.batch[0].body.traceId).toBe(runId);
+      expect(finalScore.batch[0].body.value).toBe(-1);
+      expect(hasPendingRunFeedbackForTests(runId)).toBe(false);
+    } finally {
+      vi.useRealTimers();
+      resetPendingRunFeedbackForTests();
+    }
+  });
+
+  it('refreshes deferred queue on re-rate even when sticky Vela identity cannot deliver', async () => {
+    // TF accepted under Vela identity A; user switches profile before re-rating.
+    // Immediate send is suppressed, but the deferred queue must still take the
+    // new score so final_message under identity B can replay it.
+    resetAcceptedFinalTraceBodyIdsForTests();
+    resetPendingRunFeedbackForTests();
+    setLiveTelemetryPrefsReaderForTests(() => ({
+      metrics: true,
+      content: true,
+    }));
+    const runId = 'run-tf-vela-identity-rerate-queue';
+    const previous = {
+      VELA_CONTROL_KEY: process.env.VELA_CONTROL_KEY,
+      VELA_API_URL: process.env.VELA_API_URL,
+      OPEN_DESIGN_TELEMETRY_RELAY_URL: process.env.OPEN_DESIGN_TELEMETRY_RELAY_URL,
+      LANGFUSE_PUBLIC_KEY: process.env.LANGFUSE_PUBLIC_KEY,
+      LANGFUSE_SECRET_KEY: process.env.LANGFUSE_SECRET_KEY,
+    };
+    process.env.VELA_CONTROL_KEY = 'ck_new_after_switch';
+    process.env.VELA_API_URL = 'https://amr-api.example.com';
+    delete process.env.OPEN_DESIGN_TELEMETRY_RELAY_URL;
+    delete process.env.LANGFUSE_PUBLIC_KEY;
+    delete process.env.LANGFUSE_SECRET_KEY;
+
+    const oldIdentity = velaSinkIdentityFingerprint('prod', 'ck_old_accepted');
+    const newIdentity = velaSinkIdentityFingerprint('prod', 'ck_new_after_switch');
+    const fallbackBodyId = scopedTelemetryBodyId(
+      runId,
+      'final',
+      'terminal_fallback',
+    );
+    const fetchSpy = vi.fn().mockResolvedValue(new Response('', { status: 202 }));
+
+    try {
+      markRunAwaitingFinalAcceptance(runId);
+      rememberAcceptedFinalTraceBodyId(
+        runId,
+        fallbackBodyId,
+        'terminal_fallback',
+        'vela',
+        oldIdentity,
+      );
+
+      // Live sink after profile switch (new key). Sticky accepted identity is
+      // still the old fingerprint, so canDeliverRunFeedback rejects the send.
+      const liveVela: TelemetrySinkConfig = {
+        kind: 'vela',
+        apiUrl: 'https://amr-api.example.com',
+        controlKey: 'ck_new_after_switch',
+        timeoutMs: 20_000,
+        retries: 0,
+        profile: 'prod',
+        authSource: 'env',
+      };
+      await reportRunFeedback(
+        makeFeedbackCtx({
+          runId,
+          rating: 'negative',
+          reasonCodes: ['matched_request'],
+          acceptedReportTrigger: 'terminal_fallback',
+          acceptedDeliveryChannel: 'vela',
+          acceptedVelaIdentity: oldIdentity,
+          traceId: fallbackBodyId,
+        }),
+        { config: liveVela, fetchImpl: fetchSpy as any },
+      );
+      // Immediate send suppressed.
+      expect(fetchSpy).not.toHaveBeenCalled();
+      expect(hasPendingRunFeedbackForTests(runId)).toBe(true);
+
+      // final_message accepts under the new Vela identity and must replay the
+      // re-rated (negative) score — not drop for lack of a refreshed queue.
+      rememberAcceptedFinalTraceBodyId(
+        runId,
+        runId,
+        'final_message',
+        'vela',
+        newIdentity,
+      );
+
+      await vi.waitFor(() => {
+        expect(fetchSpy).toHaveBeenCalled();
+      });
+      const envelope = JSON.parse(fetchSpy.mock.calls[0]![1].body as string);
+      expect(envelope.events).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            kind: 'score',
+            data: expect.objectContaining({
+              name: 'user_rating',
+              value: -1,
+              traceId: runId,
+            }),
+          }),
+        ]),
+      );
+      expect(String(fetchSpy.mock.calls[0]![1].headers?.Authorization ?? '')).toBe(
+        'Bearer ck_new_after_switch',
+      );
+    } finally {
+      for (const [key, value] of Object.entries(previous)) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
       resetPendingRunFeedbackForTests();
     }
   });

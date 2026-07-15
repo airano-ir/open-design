@@ -331,23 +331,28 @@ export function rememberAcceptedFinalTraceBodyId(
     ...(channel ? { deliveryChannel: channel } : {}),
     ...(identity ? { velaIdentity: identity } : {}),
   });
-  // End every live-finalization wait before flushing so a concurrent clear does
-  // not double-ship the same deferred score on the canonical body. Acceptance
-  // supersedes all in-flight tokens for this run.
-  runsAwaitingFinalAcceptance.delete(key);
-  // Open the late-final re-attach window as soon as terminal_fallback wins so
-  // mid-window live re-ratings can refresh the deferred queue even when no
-  // pre-acceptance feedback was pending. final_message cancels this timer.
-  if (reportTrigger === 'terminal_fallback') {
-    schedulePendingTerminalFallbackQueueDrop(key);
-  } else if (reportTrigger === 'final_message') {
+  // final_message owns the anchor: drop every in-flight token. terminal_fallback
+  // must NOT clear unrelated tokens — a concurrent final_message attempt can
+  // still accept after TERMINAL_FALLBACK_LATE_FINAL_FEEDBACK_MS, and the drop
+  // timer re-arms while awaitingFinalAcceptanceCount > 0. Callers release their
+  // own token via clearRunAwaitingFinalAcceptance; clear skips deferred flush
+  // when an accepted body already exists, so preserving tokens cannot double-
+  // ship onto the canonical body.
+  if (reportTrigger === 'final_message') {
+    runsAwaitingFinalAcceptance.delete(key);
     cancelPendingTerminalFallbackQueueDrop(key);
+  } else if (reportTrigger === 'terminal_fallback') {
+    // Open the late-final re-attach window as soon as terminal_fallback wins so
+    // mid-window live re-ratings can refresh the deferred queue even when no
+    // pre-acceptance feedback was pending.
+    schedulePendingTerminalFallbackQueueDrop(key);
   }
   // Replay any feedback that arrived during the terminal_fallback delay (or
   // before final_message acceptance) onto the body that was actually accepted.
   // Keep the queue after terminal_fallback so a later final_message can re-
   // attach the same score to the canonical body when it wins the anchor —
-  // bounded by TERMINAL_FALLBACK_LATE_FINAL_FEEDBACK_MS for TF-only runs.
+  // bounded by TERMINAL_FALLBACK_LATE_FINAL_FEEDBACK_MS for TF-only runs, or
+  // until the last concurrent final-purpose attempt clears.
   flushPendingRunFeedback(key, acceptedBodyId, reportTrigger, channel, identity);
 }
 
@@ -457,6 +462,23 @@ function hasPendingTerminalFallbackQueueRetention(runId: string): boolean {
 }
 
 /**
+ * True while a terminal_fallback acceptance still allows late-final feedback
+ * handoff: either the bounded retention timer is armed, or a concurrent
+ * final-purpose delivery is still in flight (so a slow final_message can
+ * still re-attach the deferred score after the first 30s window).
+ */
+export function isLateFinalFeedbackHandoffOpen(runId: string): boolean {
+  const key = typeof runId === 'string' ? runId.trim() : '';
+  if (!key) return false;
+  const accepted = acceptedFinalTraceBodyIds.get(key);
+  if (!accepted || accepted.reportTrigger !== 'terminal_fallback') return false;
+  return (
+    hasPendingTerminalFallbackQueueRetention(key) ||
+    awaitingFinalAcceptanceCount(key) > 0
+  );
+}
+
+/**
  * True when feedback should wait for an accepted final-purpose body id.
  *
  * Defer only while this process still has a live final-purpose completer
@@ -563,16 +585,37 @@ function flushReportOpts(
 }
 
 /**
+ * Authoritative daemon data root for deferred-feedback consent re-checks.
+ *
+ * Prefer this over raw `process.env.OD_DATA_DIR`: server.ts resolves
+ * `RUNTIME_DATA_DIR` once at startup and does not always write it back into
+ * the environment. Wired via `configureDeferredFeedbackDataDir`.
+ */
+let deferredFeedbackDataDir: string | null = null;
+
+/**
  * Optional test override for re-reading telemetry prefs at deferred-flush time.
- * `undefined` means use the production reader (`OD_DATA_DIR` + app-config).
+ * `undefined` means use the production reader (configured data dir / app-config).
  */
 let liveTelemetryPrefsReaderForTests:
   | (() => TelemetryPrefs | null)
   | undefined;
 
 /**
+ * Pin the resolved daemon data directory used when re-reading telemetry
+ * prefs before a deferred feedback flush. Call once from server bootstrap
+ * with `RUNTIME_DATA_DIR`.
+ */
+export function configureDeferredFeedbackDataDir(
+  dataDir: string | null | undefined,
+): void {
+  const trimmed = typeof dataDir === 'string' ? dataDir.trim() : '';
+  deferredFeedbackDataDir = trimmed || null;
+}
+
+/**
  * Test-only: inject live telemetry prefs for deferred feedback flush gates.
- * Pass `undefined` to restore the production `OD_DATA_DIR` reader.
+ * Pass `undefined` to restore the production data-dir reader.
  */
 export function setLiveTelemetryPrefsReaderForTests(
   reader: (() => TelemetryPrefs | null) | undefined,
@@ -583,17 +626,24 @@ export function setLiveTelemetryPrefsReaderForTests(
 /**
  * Re-read current telemetry prefs for a deferred feedback flush.
  *
- * Production uses the same sync app-config path as spawn-env consent checks
- * (`OD_DATA_DIR` + `readAppConfigSync`). When no data dir is available (unit
- * tests that never set one), returns null so the caller can fall back to the
- * queued snapshot.
+ * Production uses the configured daemon data root (`configureDeferredFeedbackDataDir`
+ * / `RUNTIME_DATA_DIR`) with `readAppConfigSync`, falling back to
+ * `process.env.OD_DATA_DIR` only when the configured root was never set.
+ * When no data dir is available or config is unreadable, fail closed
+ * (metrics/content off) so a mid-window opt-out cannot be skipped by falling
+ * back to the queued submit-time snapshot.
  */
-function readLiveTelemetryPrefsForFlush(): TelemetryPrefs | null {
+function readLiveTelemetryPrefsForFlush(): TelemetryPrefs {
   if (liveTelemetryPrefsReaderForTests !== undefined) {
-    return liveTelemetryPrefsReaderForTests();
+    const injected = liveTelemetryPrefsReaderForTests();
+    // Treat a null test injection as fail-closed (same as missing data dir).
+    return injected ?? { metrics: false, content: false };
   }
-  const dataDir = process.env.OD_DATA_DIR?.trim();
-  if (!dataDir) return null;
+  const dataDir =
+    deferredFeedbackDataDir ?? process.env.OD_DATA_DIR?.trim() ?? '';
+  if (!dataDir) {
+    return { metrics: false, content: false };
+  }
   try {
     const cfg = readAppConfigSync(dataDir);
     return cfg.telemetry ?? {};
@@ -610,19 +660,19 @@ function readLiveTelemetryPrefsForFlush(): TelemetryPrefs | null {
  * terminal-fallback / late-final window; re-check live prefs before the
  * network send so a revoked opt-in does not leak custom reasons. Returns
  * null when current consent is off (caller must drop without sending).
+ * Live prefs always win — never fall back to the queued snapshot.
  */
 function prefsForDeferredFeedbackFlush(
-  queued: TelemetryPrefs,
+  _queued: TelemetryPrefs,
 ): TelemetryPrefs | null {
-  let live: TelemetryPrefs | null;
+  let live: TelemetryPrefs;
   try {
     live = readLiveTelemetryPrefsForFlush();
   } catch {
     return null;
   }
-  const effective = live ?? queued;
-  if (effective.metrics !== true || effective.content !== true) return null;
-  return effective;
+  if (live.metrics !== true || live.content !== true) return null;
+  return live;
 }
 
 function flushPendingRunFeedback(
@@ -688,6 +738,7 @@ export function resetPendingRunFeedbackForTests(): void {
   runsAwaitingFinalAcceptance.clear();
   awaitingFinalAcceptanceTokenSeq = 0;
   liveTelemetryPrefsReaderForTests = undefined;
+  deferredFeedbackDataDir = null;
 }
 
 /** Test-only: whether deferred feedback is still queued for a run. */
@@ -3513,18 +3564,12 @@ export async function reportRunFeedback(
           : getAcceptedFinalVelaIdentity(ctx.runId))
       : null;
   const config = resolveReportConfig(opts, requireChannel);
-  // Same eligibility as reportRunFeedbackFromDaemon preflight: exact channel
-  // match when an accepted anchor exists; Vela also needs installationId +
-  // matching accepting-account fingerprint when known.
-  if (!canDeliverRunFeedback(config, ctx.installationId, process.env, {
-    requireChannel,
-    requireVelaIdentity,
-  })) {
-    return;
-  }
 
   // Failed/canceled runs may still be waiting on terminal_fallback acceptance.
   // Queue until rememberAcceptedFinalTraceBodyId flushes onto the accepted body.
+  // Do this before the sticky-sink delivery gate so a mid-window re-rate that
+  // cannot deliver on the old accepted channel still refreshes the deferred
+  // queue for a later final_message (e.g. after an AMR profile switch).
   if (
     shouldDeferRunFeedback({
       runId: ctx.runId,
@@ -3540,8 +3585,11 @@ export async function reportRunFeedback(
   }
 
   // After terminal_fallback is accepted, live re-ratings ship immediately onto
-  // `:tf` but must also refresh the deferred queue so a later final_message
-  // re-attach uses the latest score (not a stale pre-fallback rating).
+  // `:tf` when the sticky sink can still deliver, but must also refresh the
+  // deferred queue so a later final_message re-attach uses the latest score
+  // (not a stale pre-fallback rating). Refresh even when the immediate send is
+  // suppressed (Vela account switched / logged out) — only the network path is
+  // gated by canDeliverRunFeedback below.
   // The bridge pins an explicit `:tf` body id once the DB/process anchor is
   // accepted, so we must refresh even when `traceId` is present — otherwise
   // mid-window re-ratings leave the queue on a stale pre-fallback payload.
@@ -3550,18 +3598,8 @@ export async function reportRunFeedback(
   // with no completer to clear them. final_message flush deletes the queue
   // before shipping, so it never re-enters here after the canonical body wins.
   const runKey = typeof ctx.runId === 'string' ? ctx.runId.trim() : '';
-  const acceptedTrigger =
-    acceptedFinalTraceBodyIds.get(runKey)?.reportTrigger ??
-    (ctx.acceptedReportTrigger === 'terminal_fallback' ||
-    ctx.acceptedReportTrigger === 'final_message'
-      ? ctx.acceptedReportTrigger
-      : null);
-  if (
-    runKey &&
-    acceptedTrigger === 'terminal_fallback' &&
-    (hasPendingTerminalFallbackQueueRetention(runKey) ||
-      awaitingFinalAcceptanceCount(runKey) > 0)
-  ) {
+  const lateFinalOpen = isLateFinalFeedbackHandoffOpen(runKey);
+  if (lateFinalOpen) {
     // Keep the deferred entry unpinned so final_message flush can re-target
     // the canonical body via rememberAcceptedFinalTraceBodyId.
     const { traceId: _pinnedTraceId, ...unpinnedCtx } = ctx;
@@ -3569,6 +3607,17 @@ export async function reportRunFeedback(
     // Ensure a drop is scheduled when retention came only from an in-flight
     // final attempt (no prior TF flush scheduled a timer yet).
     schedulePendingTerminalFallbackQueueDrop(runKey);
+  }
+
+  // Same eligibility as reportRunFeedbackFromDaemon preflight: exact channel
+  // match when an accepted anchor exists; Vela also needs installationId +
+  // matching accepting-account fingerprint when known. Applies only to the
+  // immediate network send — deferred queue refresh above already ran.
+  if (!canDeliverRunFeedback(config, ctx.installationId, process.env, {
+    requireChannel,
+    requireVelaIdentity,
+  })) {
+    return;
   }
 
   let batch: unknown[];

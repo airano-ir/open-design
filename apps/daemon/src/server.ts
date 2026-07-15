@@ -387,6 +387,7 @@ import {
 import { reportRunCompletedFromDaemon } from './langfuse-bridge.js';
 import {
   clearRunAwaitingFinalAcceptance,
+  configureDeferredFeedbackDataDir,
   markRunAwaitingFinalAcceptance,
   scopedTelemetryBodyId,
 } from './langfuse-trace.js';
@@ -809,6 +810,10 @@ const SANDBOX_MODE_ENABLED = isSandboxModeEnabled(process.env);
 const RUNTIME_DATA_DIR = resolveDataDir(process.env.OD_DATA_DIR, PROJECT_ROOT, {
   requireExplicit: SANDBOX_MODE_ENABLED,
 });
+// Deferred feedback consent re-checks must use the resolved data root, not
+// raw process.env.OD_DATA_DIR (which may be unset when the default path is
+// used). See prefsForDeferredFeedbackFlush in langfuse-trace.ts.
+configureDeferredFeedbackDataDir(RUNTIME_DATA_DIR);
 const SANDBOX_RUNTIME = resolveSandboxRuntimeConfig(SANDBOX_MODE_ENABLED, RUNTIME_DATA_DIR);
 ensureSandboxRuntimeDirs(SANDBOX_RUNTIME);
 const PLUGIN_LOCKFILE_PATH = path.join(RUNTIME_DATA_DIR, 'od-plugin-lock.json');
@@ -1613,9 +1618,11 @@ export function createFinalizedMessageTelemetryReporter({
           status: saved.runStatus,
         });
       } finally {
-        // On accept, rememberAcceptedFinalTraceBodyId already cleared all tokens
-        // and flushed deferred scores. On failure/skip, release only this
-        // attempt; other in-flight final-purpose deliveries may still accept.
+        // On final_message accept, rememberAcceptedFinalTraceBodyId clears all
+        // tokens and flushes deferred scores. On terminal_fallback accept,
+        // unrelated in-flight tokens are preserved so a slow final_message can
+        // still re-attach; this finally releases only this attempt's token.
+        // On failure/skip, the same per-token clear applies.
         clearRunAwaitingFinalAcceptance(run.id, awaitingToken || undefined);
       }
     })();

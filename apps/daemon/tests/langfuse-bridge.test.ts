@@ -8,12 +8,14 @@ import {
   reportRunFeedbackFromDaemon,
 } from '../src/langfuse-bridge.js';
 import {
+  hasPendingRunFeedbackForTests,
   markRunAwaitingFinalAcceptance,
   rememberAcceptedFinalTraceBodyId,
   reportRunCompleted,
   resetAcceptedFinalTraceBodyIdsForTests,
   resetPendingRunFeedbackForTests,
   scopedTelemetryBodyId,
+  setLiveTelemetryPrefsReaderForTests,
   velaSinkIdentityFingerprint,
 } from '../src/langfuse-trace.js';
 import { buildPromptStackTelemetry } from '../src/prompt-telemetry.js';
@@ -1985,6 +1987,10 @@ describe('langfuse-bridge.reportRunFeedbackFromDaemon', () => {
     dataDir = await mkdtemp(path.join(tmpdir(), 'od-bridge-feedback-'));
     resetAcceptedFinalTraceBodyIdsForTests();
     resetPendingRunFeedbackForTests();
+    setLiveTelemetryPrefsReaderForTests(() => ({
+      metrics: true,
+      content: true,
+    }));
   });
 
   afterEach(async () => {
@@ -2721,6 +2727,100 @@ describe('langfuse-bridge.reportRunFeedbackFromDaemon', () => {
       delete process.env.LANGFUSE_PUBLIC_KEY;
       delete process.env.LANGFUSE_SECRET_KEY;
     }
+  });
+
+  it('queues a re-rate after Vela profile switch during late-final without skipping', async () => {
+    // terminal_fallback accepted on Vela identity A. User switches AMR profile
+    // (live key B) and re-rates: sticky canDeliver fails, but the deferred
+    // queue must still refresh so final_message under B can replay the latest
+    // score instead of a stale queued rating (or none).
+    await writeAppCfg({
+      installationId: 'install-uuid-1',
+      telemetry: { metrics: true, content: true },
+    });
+    process.env.VELA_CONTROL_KEY = 'ck_new_profile';
+    process.env.VELA_API_URL = 'https://amr-api.example.com';
+    const runId = 'run-bridge-vela-switch-rerate';
+    const oldIdentity = velaSinkIdentityFingerprint('prod', 'ck_old_profile');
+    const newIdentity = velaSinkIdentityFingerprint('prod', 'ck_new_profile');
+    const fallbackBodyId = scopedTelemetryBodyId(runId, 'final', 'terminal_fallback');
+    const fetchSpy = vi.fn().mockResolvedValue(new Response('', { status: 202 }));
+
+    // Process-local + DB-shaped sticky anchor under the old Vela identity.
+    rememberAcceptedFinalTraceBodyId(
+      runId,
+      fallbackBodyId,
+      'terminal_fallback',
+      'vela',
+      oldIdentity,
+    );
+    const db = {
+      prepare: (sql: string) => {
+        if (
+          sql.includes('run_telemetry_accepted_anchors') ||
+          sql.includes('telemetry_accepted_body_id')
+        ) {
+          return {
+            get: () => ({
+              runStatus: 'failed',
+              telemetryFinalizedAt: null,
+              acceptedTraceBodyId: fallbackBodyId,
+              acceptedReportTrigger: 'terminal_fallback',
+              acceptedDeliveryChannel: 'vela',
+              acceptedVelaIdentity: oldIdentity,
+            }),
+          };
+        }
+        return { get: () => undefined, run: () => ({ changes: 0 }), all: () => [] };
+      },
+    };
+
+    const rerate = await reportRunFeedbackFromDaemon({
+      dataDir,
+      runId,
+      rating: 'negative',
+      reasonCodes: ['matched_request'],
+      hasCustomReason: false,
+      customReason: '',
+      db,
+      fetchImpl: fetchSpy as any,
+    });
+    expect(rerate).toEqual({ status: 'accepted' });
+    // Sticky old identity cannot deliver; immediate send suppressed.
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(hasPendingRunFeedbackForTests(runId)).toBe(true);
+
+    // final_message under the new Vela identity replays the re-rated score.
+    rememberAcceptedFinalTraceBodyId(
+      runId,
+      runId,
+      'final_message',
+      'vela',
+      newIdentity,
+    );
+    await vi.waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalled();
+    });
+    const envelope = JSON.parse(
+      (fetchSpy.mock.calls[0]![1] as RequestInit).body as string,
+    );
+    expect(envelope.events).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'score',
+          data: expect.objectContaining({
+            name: 'user_rating',
+            value: -1,
+            traceId: runId,
+          }),
+        }),
+      ]),
+    );
+    const auth = String(
+      (fetchSpy.mock.calls[0]![1] as { headers?: Record<string, string> }).headers
+        ?.Authorization ?? '',
+    );
+    expect(auth).toBe('Bearer ck_new_profile');
   });
 });
 

@@ -24,6 +24,7 @@ import {
 import {
   canDeliverRunFeedback,
   deriveLangfuseDeliveryState,
+  isLateFinalFeedbackHandoffOpen,
   readLegacyAnonymousAcceptedSinkConfig,
   readTelemetrySinkConfigForChannel,
   reportRunCompleted,
@@ -1322,13 +1323,18 @@ export async function reportRunFeedbackFromDaemon(
         process.env,
         configuredEnv,
       );
-  if (
-    !canDeliverRunFeedback(sink, installationId, process.env, {
-      requireChannel,
-      requireVelaIdentity:
-        requireChannel === 'vela' ? (acceptedVelaIdentity ?? null) : null,
-    })
-  ) {
+  const canDeliver = canDeliverRunFeedback(sink, installationId, process.env, {
+    requireChannel,
+    requireVelaIdentity:
+      requireChannel === 'vela' ? (acceptedVelaIdentity ?? null) : null,
+  });
+  // When the sticky accepted channel cannot deliver (e.g. Vela profile switch
+  // or logout during the late-final window), still refresh the deferred queue
+  // so a later final_message under a new identity can replay the latest score.
+  // Only suppress the immediate network send; do not return skipped_no_sink
+  // while the late-final handoff is open.
+  const lateFinalOpen = isLateFinalFeedbackHandoffOpen(opts.runId);
+  if (!canDeliver && !lateFinalOpen) {
     return { status: 'skipped_no_sink' };
   }
   const resolveInput = {
@@ -1376,11 +1382,14 @@ export async function reportRunFeedbackFromDaemon(
   // telemetry, not a client-facing signal. Deferred feedback is still
   // `accepted` from the caller's perspective — it ships when the run's
   // final-purpose body is accepted.
-  // Pass the preflight-resolved sink so reportRunFeedback does not re-run
-  // global priority selection and potentially diverge from the sticky channel
-  // that just passed canDeliverRunFeedback.
+  // When canDeliver is false, omit the sticky sink config so reportRunFeedback
+  // only refreshes the deferred queue (immediate send remains suppressed) and
+  // a later final_message flush re-resolves from live env/identity.
+  // When canDeliver is true, pass the preflight-resolved sink so reportRunFeedback
+  // does not re-run global priority selection and potentially diverge from the
+  // sticky channel that just passed canDeliverRunFeedback.
   void reportRunFeedback(ctx, {
-    config: sink,
+    ...(canDeliver ? { config: sink } : {}),
     configuredEnv,
     ...(opts.fetchImpl ? { fetchImpl: opts.fetchImpl } : {}),
   }).catch((err) => {
