@@ -1306,29 +1306,39 @@ function normalizeIntentSignals(value: unknown): ConversationIntentSignals {
  * genuine mid-conversation activation costs exactly one stable-prompt miss
  * and a later signal-free turn cannot flip it back OFF. A conversationId
  * without a persisted row degrades to fresh detection (nothing to latch on).
+ *
+ * The read+merge+write runs inside a BEGIN IMMEDIATE transaction: the write
+ * lock is taken before the read, so no other connection can commit between
+ * them and clobber a previously latched bit. Within one daemon process the
+ * sequence is already non-interleavable (better-sqlite3 is synchronous and
+ * there is no await point between read and write); the transaction pins the
+ * monotonic guarantee against future refactors and multi-connection writers.
  */
 export function latchConversationIntentSignals(
   db: SqliteDb,
   conversationId: string,
   fresh: ConversationIntentSignals,
 ): ConversationIntentSignals {
-  const stored = readConversationIntentSignals(db, conversationId);
-  const effective: ConversationIntentSignals = {
-    deck: stored.deck || fresh.deck,
-    media: stored.media || fresh.media,
-    platform: stored.platform || fresh.platform,
-  };
-  if (
-    effective.deck !== stored.deck ||
-    effective.media !== stored.media ||
-    effective.platform !== stored.platform
-  ) {
-    db.prepare(`UPDATE conversations SET intent_signals_json = ? WHERE id = ?`).run(
-      JSON.stringify(effective),
-      conversationId,
-    );
-  }
-  return effective;
+  const latch = db.transaction((): ConversationIntentSignals => {
+    const stored = readConversationIntentSignals(db, conversationId);
+    const effective: ConversationIntentSignals = {
+      deck: stored.deck || fresh.deck,
+      media: stored.media || fresh.media,
+      platform: stored.platform || fresh.platform,
+    };
+    if (
+      effective.deck !== stored.deck ||
+      effective.media !== stored.media ||
+      effective.platform !== stored.platform
+    ) {
+      db.prepare(`UPDATE conversations SET intent_signals_json = ? WHERE id = ?`).run(
+        JSON.stringify(effective),
+        conversationId,
+      );
+    }
+    return effective;
+  });
+  return latch.immediate();
 }
 
 // ---------- agent sessions ----------
