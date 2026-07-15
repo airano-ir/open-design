@@ -28,6 +28,7 @@ import {
   getDesignToolboxAction,
   type DesignToolboxActionId,
 } from '../runtime/design-toolbox';
+import { isRetryableAssistantTerminalFailure } from '../runtime/design-delivery';
 import type { Dict } from '../i18n/types';
 import { copyToClipboard } from '../lib/copy-to-clipboard';
 import { projectRawUrl } from '../providers/registry';
@@ -71,6 +72,7 @@ import { RESUME_CONTINUE_PROMPT } from '../runtime/resume';
 import {
   ChatComposer,
   type ChatComposerHandle,
+  type ChatSendOutcome,
   type ChatSendMeta,
 } from './ChatComposer';
 import type { PlaceholderScenario } from './home-hero/placeholderScenarios';
@@ -487,7 +489,7 @@ interface Props {
     attachments: ChatAttachment[],
     commentAttachments: ChatCommentAttachment[],
     meta?: ChatSendMeta,
-  ) => void;
+  ) => ChatSendOutcome | Promise<ChatSendOutcome>;
   onRetry?: (assistantMessage: ChatMessage) => void;
   onResumeRun?: (assistantMessage: ChatMessage) => void;
   onStop: () => void;
@@ -2043,7 +2045,15 @@ export function ChatPane({
         anchorActiveRef.current = false;
         resetTailSpacer();
         anchorPendingRef.current = true;
-        onSend(prompt, attachments, commentAttachments, meta);
+        const outcome = onSend(prompt, attachments, commentAttachments, meta);
+        if (outcome instanceof Promise) {
+          return outcome.then((result) => {
+            if (result === 'restore-draft') anchorPendingRef.current = false;
+            return result;
+          });
+        }
+        if (outcome === 'restore-draft') anchorPendingRef.current = false;
+        return outcome;
       }}
       onStop={onStop}
       onOpenSettings={onOpenSettings}
@@ -3708,7 +3718,7 @@ export function retryableAssistantMessage(
   const last = messages[messages.length - 1];
   if (!last || last.role !== 'assistant') return null;
   if (last.id !== lastAssistantId) return null;
-  return last.runStatus === 'failed' ? last : null;
+  return isRetryableAssistantTerminalFailure(last) ? last : null;
 }
 
 export function isAssistantMessageStreaming(

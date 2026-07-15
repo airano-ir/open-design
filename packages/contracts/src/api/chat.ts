@@ -309,6 +309,9 @@ export const CHAT_RUN_STATUSES = [
 
 export type ChatRunStatus = (typeof CHAT_RUN_STATUSES)[number];
 
+/** User-facing result delivery, kept separate from agent-process runStatus. */
+export type ResultDeliveryState = 'delivered' | 'no_result' | 'delivery_failed';
+
 export type ChatMessageFeedbackRating = 'positive' | 'negative';
 
 export type ChatMessageFeedbackReasonCode =
@@ -487,6 +490,9 @@ export interface ChatRunStatusResponse {
    *  Judged by the canonical `todoSnapshotHasUnfinishedWork` predicate so it can
    *  never diverge from the chat footer's `unfinishedTodosFromEvents`. */
   endedWithUnfinishedWork?: boolean;
+  /** Authoritative artifact files created or modified by this run. Mirrors
+   *  ChatSseEndPayload.artifactCount and run_finished.artifact_count. */
+  artifactCount?: number;
   /** Absolute path to the per-run JSONL event log the daemon mirrors
    *  the SSE stream to (see runs.ts `runsLogDir`). Null when the
    *  daemon was launched without event persistence configured. */
@@ -643,6 +649,7 @@ export interface ChatMessage {
   createdAt?: number;
   runId?: string;
   runStatus?: ChatRunStatus;
+  resultDeliveryState?: ResultDeliveryState;
   /** True when this message's failed run can be recovered by resuming the
    *  agent's CLI session (transient upstream drop / inactivity on a
    *  session-resuming runtime). Drives the chat's Continue affordance; mirrors

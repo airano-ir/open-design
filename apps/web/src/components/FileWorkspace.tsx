@@ -3669,6 +3669,10 @@ export function FileWorkspace({
           onClose={() => setLauncherOpen(false)}
         />
       ) : null}
+      {/* Workspace-owned toasts anchor to this pane's bottom-center instead of
+          the viewport's: a bare fixed .od-toast centers across the whole
+          window, drifting over the chat pane and covering the composer send
+          area in split view. */}
       {browserSnapshotToast ? (
         <div className="workspace-toast-anchor">
           <Toast
@@ -3684,11 +3688,13 @@ export function FileWorkspace({
           />
         </div>
       ) : launcherToast ? (
-        <Toast
-          message={launcherToast}
-          role="alert"
-          onDismiss={() => setLauncherToast(null)}
-        />
+        <div className="workspace-toast-anchor">
+          <Toast
+            message={launcherToast}
+            role="alert"
+            onDismiss={() => setLauncherToast(null)}
+          />
+        </div>
       ) : null}
       <div className="ws-body">
         {/* Banner moved into DesignFilesPanel for the Design Files tab so
