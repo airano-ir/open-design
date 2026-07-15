@@ -32,6 +32,7 @@ import {
   fetchVelaLoginStatus,
   listActiveChatRuns,
   listProjectRuns,
+  publishDaemonRunFinishedEvent,
   reattachDaemonRun,
   reportChatRunFeedback,
   streamViaDaemon,
@@ -55,6 +56,7 @@ import {
 import { useProjectFileEvents, type ProjectEvent } from '../providers/project-events';
 import { claimProjectTurnIndex, claimRunTurnIndex } from '../analytics/identity';
 import { useCoalescedCallback } from '../hooks/useCoalescedCallback';
+import { requestAmrArtifactUpgrade } from '../runtime/amr-artifact-upgrade';
 import {
   type AmrWalletSnapshot,
   type ByokMediaDefaults,
@@ -111,9 +113,15 @@ import {
   runFailureFieldsFromError,
 } from '../runtime/chat-events';
 import type { RunFailureClassificationFields } from '../runtime/chat-events';
+import {
+  designDeliveryVerificationPending,
+  isRetryableAssistantTerminalFailure,
+  resolveDesignDeliveryOutcome,
+  type DesignDeliveryOutcome,
+} from '../runtime/design-delivery';
 import { RESUME_CONTINUE_PROMPT } from '../runtime/resume';
 import { checkAmrBalanceGate } from '../runtime/amr-balance-gate';
-import { resolveAmrLowBalancePlan } from '../runtime/amr-low-balance-plan';
+import { isPaidAmrPlan, resolveAmrPlan } from '../runtime/amr-low-balance-plan';
 import { AmrBalanceDialog } from './AmrBalanceDialog';
 import { AmrLowBalanceDialog, type AmrLowBalanceDecision } from './AmrLowBalanceDialog';
 import {
@@ -220,7 +228,7 @@ import { PluginDetailsModal } from './PluginDetailsModal';
 import { DesignSystemPreviewModal } from './DesignSystemPreviewModal';
 import { ChatPane } from './ChatPane';
 import type { QuestionFormOpenRequest } from './AssistantMessage';
-import type { ChatSendMeta } from './ChatComposer';
+import type { ChatSendMeta, ChatSendOutcome } from './ChatComposer';
 import {
   CritiqueTheaterMount,
   useCritiqueTheaterEnabled,
@@ -229,6 +237,7 @@ import { useIframeKeepAlivePool } from './IframeKeepAlivePool';
 import {
   decideAutoOpenAfterWrite,
   selectAutoOpenProducedArtifact,
+  selectAutoOpenTurnArtifact,
 } from './auto-open-file';
 import { buildRepoImportPrompt, designSystemNeedsRepoConnect } from './design-system-github-evidence';
 import { isDesignSystemProject, resolveProjectDesignSystemId } from './design-system-project';
@@ -1657,7 +1666,6 @@ export function ProjectView({
   const [amrLowBalanceWarn, setAmrLowBalanceWarn] = useState<
     {
       snapshot: AmrWalletSnapshot;
-      plan: string | null;
       resolve: (decision: AmrLowBalanceDecision) => void;
     } | null
   >(null);
@@ -1763,6 +1771,11 @@ export function ProjectView({
   const reattachControllersRef = useRef<Map<string, AbortController>>(new Map());
   const reattachCancelControllersRef = useRef<Map<string, AbortController>>(new Map());
   const completedReattachRunsRef = useRef<Set<string>>(new Set());
+  // A locally finished run briefly has terminal status before its async
+  // project-file refresh attaches delivery evidence. Do not let that same
+  // browser session reattach the run during this handoff; reattach remains
+  // the recovery path after a reload, where this in-memory set is empty.
+  const finalizingLocalRunIdsRef = useRef<Set<string>>(new Set());
   // Tracks transient null-status retry attempts per runId; bounded by
   // MAX_TRANSIENT_RETRIES so we never spin indefinitely on a persistently
   // missing run.
@@ -2250,7 +2263,11 @@ export function ProjectView({
     // file mutations or live artifacts.
     setDesignMdRefreshKey((n) => n + 1);
 
-    const status = last.runStatus;
+    const status =
+      last.resultDeliveryState === 'no_result' ||
+      last.resultDeliveryState === 'delivery_failed'
+        ? 'failed'
+        : last.runStatus;
     if (status !== 'succeeded' && status !== 'failed') return;
 
     const cfg = config.notifications ?? DEFAULT_NOTIFICATIONS;
@@ -2299,6 +2316,7 @@ export function ProjectView({
         continue;
       }
       if (message.runStatus !== 'succeeded' && message.runStatus !== 'failed') continue;
+      if (message.runStatus === 'succeeded' && designDeliveryVerificationPending(message)) continue;
       if (!keys.some((key) => activeCompletionNotificationRunsRef.current.has(key))) continue;
       if (keys.some((key) => completedNotificationRunsRef.current.has(key))) continue;
       for (const key of keys) completedNotificationRunsRef.current.add(key);
@@ -2568,10 +2586,12 @@ export function ProjectView({
           projectFiles: pointerProjectFiles,
         });
         if (pointerTarget) {
-          if (savedArtifactRef.current === pointerTarget) return;
+          if (savedArtifactRef.current === pointerTarget) {
+            return { ok: true as const, fileName: pointerTarget };
+          }
           savedArtifactRef.current = pointerTarget;
           requestOpenFile(pointerTarget);
-          return;
+          return { ok: true as const, fileName: pointerTarget };
         }
       }
       // Pre-write structural gate for HTML artifacts (#50, #1143). Reject
@@ -2582,11 +2602,16 @@ export function ProjectView({
       if (ext === '.html') {
         const validation = validateHtmlArtifact(artifactToPersist.html);
         if (!validation.ok) {
-          setError(`Refused to save artifact "${art.identifier || art.title || 'untitled'}": ${validation.reason}`);
-          return;
+          const message =
+            `Refused to save artifact "${art.identifier || art.title || 'untitled'}": ` +
+            validation.reason;
+          setError(message);
+          return { ok: false as const, error: message };
         }
       }
-      if (savedArtifactRef.current === fileName) return;
+      if (savedArtifactRef.current === fileName) {
+        return { ok: true as const, fileName };
+      }
       const title = art.title || art.identifier || fileName;
       const metadata = {
         identifier: art.identifier,
@@ -2631,6 +2656,7 @@ export function ProjectView({
         // sees it without an extra click. The Write-tool path already does
         // this for tool-emitted files; this handles the artifact-tag path.
         requestOpenFile(file.name);
+        return { ok: true as const, fileName: file.name };
       } else {
         // writeProjectTextFile collapses all failure paths (non-OK HTTP
         // responses, network errors, and stub-guard 422s) to null — the
@@ -2640,10 +2666,11 @@ export function ProjectView({
         // the structured details for any specific error type.
         // Clear the saved-artifact ref so the user can retry.
         savedArtifactRef.current = '';
-        setError(
+        const message =
           `Couldn't save artifact "${fileName}". The write failed — ` +
-            'check the daemon logs for details.',
-        );
+          'check the daemon logs for details.';
+        setError(message);
+        return { ok: false as const, error: message };
       }
     },
     [project.id, projectDesignSystemId, project.skillId, requestOpenFile],
@@ -3680,6 +3707,7 @@ export function ProjectView({
           );
           continue;
         }
+        if (finalizingLocalRunIdsRef.current.has(runId)) continue;
         if (reattachControllersRef.current.has(runId)) continue;
         if (completedReattachRunsRef.current.has(runId)) continue;
         const genericDisconnectBackoffUntil =
@@ -3853,6 +3881,8 @@ export function ProjectView({
               ? parsedArtifact
               : artifactFromStandaloneHtml(replayedContent);
             let recoveredExistingArtifact: ProjectFile | null = null;
+            let artifactPersistenceSucceeded = false;
+            let artifactPersistenceError: string | undefined;
             if (artifactToPersist?.html) {
               const producedBeforeFallback = computeProducedFiles(beforeFileNames, nextFiles) ?? [];
               const runStartedAt = status.createdAt || message.startedAt || message.createdAt;
@@ -3869,30 +3899,68 @@ export function ProjectView({
                   { minMtime: runStartedAt },
                 );
               if (recoveredExistingArtifact) {
+                artifactPersistenceSucceeded = true;
                 savedArtifactRef.current = recoveredExistingArtifact.name;
                 requestOpenFile(recoveredExistingArtifact.name);
               } else {
                 savedArtifactRef.current = null;
-                await persistArtifact(
+                const persistence = await persistArtifact(
                   artifactToPersist,
                   nextFiles,
                   replayedContent,
                   { pointerMinMtime: runStartedAt },
                 );
+                if (persistence.ok) artifactPersistenceSucceeded = true;
+                else artifactPersistenceError = persistence.error;
                 nextFiles = await refreshProjectFiles();
               }
             }
             const diff = computeProducedFiles(beforeFileNames, nextFiles) ?? [];
             const produced = mergeRecoveredArtifact(diff, recoveredExistingArtifact);
-            const producedArtifactToOpen = selectAutoOpenProducedArtifact(produced, autoOpenArtifactOptions);
+            const touchedFilePaths = extractTouchedFilePathsFromEvents(message.events);
+            const traceObjectFiles = mergeRecoveredTraceObjectFile(
+              computeTraceObjectFiles(
+                beforeFileNames,
+                nextFiles,
+                touchedFilePaths,
+              ) ?? [],
+              recoveredExistingArtifact,
+            );
+            const producedArtifactToOpen = selectAutoOpenTurnArtifact(produced, nextFiles, {
+              ...autoOpenArtifactOptions,
+              turnStartedAt: status.createdAt || message.startedAt || message.createdAt || null,
+              turnEndedAt: message.endedAt || legacyReplayEndedAt || null,
+              agentTouchedFileNames: resolveAgentTouchedFileNames(touchedFilePaths, nextFiles),
+            });
             if (producedArtifactToOpen) requestOpenFile(producedArtifactToOpen);
-            if (produced.length > 0) {
-              updateMessageById(
-                message.id,
-                (prev) => ({ ...prev, producedFiles: produced }),
-                true,
-                { telemetryFinalized: true },
-              );
+            const deliveryOutcome = resolveDesignDeliveryOutcome({
+              sessionMode: message.sessionMode,
+              runStatus: 'succeeded',
+              content: replayedContent,
+              events: message.events,
+              producedFileCount: produced.length,
+              traceObjectFileCount: traceObjectFiles.length,
+              persistenceSucceeded: artifactPersistenceSucceeded,
+              persistenceFailed: artifactPersistenceError !== undefined,
+            });
+            updateMessageById(
+              message.id,
+              (prev) =>
+                applyDesignDeliveryOutcome(
+                  {
+                    ...prev,
+                    content: replayedContent,
+                    producedFiles: produced,
+                    traceObjectFiles,
+                  },
+                  deliveryOutcome,
+                  artifactPersistenceError,
+                ),
+              true,
+              { telemetryFinalized: true },
+            );
+            if (deliveryOutcome === 'no_result' || deliveryOutcome === 'delivery_failed') {
+              setError(artifactPersistenceError ?? DESIGN_RESULT_MISSING_DETAIL);
             }
             await auditDesignSystemWorkspaceAfterRun(message.id);
             // Clear stale retry count for successfully recovered run.
@@ -4019,11 +4087,18 @@ export function ProjectView({
           reattachTextBuffersRef.current.delete(textBuffer);
         };
 
+        const shouldPublishRunFinishedEvent =
+          isActiveRunStatus(message.runStatus)
+          || spuriouslyFailedPending
+          || recoverableGenericDisconnectFailed;
         void reattachDaemonRun({
           runId,
+          projectId: project.id,
+          conversationId: reattachConversationId,
           signal: controller.signal,
           cancelSignal: cancelController.signal,
           initialLastEventId: needsFullReplay ? null : message.lastRunEventId ?? null,
+          publishRunFinishedEvent: shouldPublishRunFinishedEvent,
           handlers: {
             onDelta: (delta) => {
               // First payload from the resumed stream is real recovery — the daemon is
@@ -4113,6 +4188,8 @@ export function ProjectView({
               void (async () => {
                 const preTurn = message.preTurnFileNames;
                 let nextFiles = await refreshProjectFiles();
+                let artifactPersistenceSucceeded = false;
+                let artifactPersistenceError: string | undefined;
                 // Use the turn-start snapshot when available so reload
                 // recovers files produced before the artifact write too;
                 // fall back to the current list for legacy messages.
@@ -4137,39 +4214,74 @@ export function ProjectView({
                       { minMtime: runStartedAt },
                     );
                   if (recoveredExistingArtifact) {
+                    artifactPersistenceSucceeded = true;
                     savedArtifactRef.current = recoveredExistingArtifact.name;
                     requestOpenFile(recoveredExistingArtifact.name);
                   } else {
                     savedArtifactRef.current = null;
-                    await persistArtifact(
+                    const persistence = await persistArtifact(
                       artifactToPersist,
                       nextFiles,
                       replayedContent,
                       { pointerMinMtime: runStartedAt },
                     );
+                    if (persistence.ok) artifactPersistenceSucceeded = true;
+                    else artifactPersistenceError = persistence.error;
                     nextFiles = await refreshProjectFiles();
                   }
                 }
                 const diff = computeProducedFiles(beforeFileNames, nextFiles) ?? [];
                 const produced = mergeRecoveredArtifact(diff, recoveredExistingArtifact);
+                const touchedFilePaths = extractTouchedFilePathsFromEvents(
+                  needsFullReplay ? replayedEvents : message.events,
+                );
                 const traceObjectFiles = mergeRecoveredTraceObjectFile(
                   computeTraceObjectFiles(
                     beforeFileNames,
                     nextFiles,
-                    extractTouchedFilePathsFromEvents(
-                      needsFullReplay ? replayedEvents : message.events,
-                    ),
+                    touchedFilePaths,
                   ) ?? [],
                   recoveredExistingArtifact,
                 );
-                const producedArtifactToOpen = selectAutoOpenProducedArtifact(produced, autoOpenArtifactOptions);
+                const producedArtifactToOpen = selectAutoOpenTurnArtifact(produced, nextFiles, {
+                  ...autoOpenArtifactOptions,
+                  turnStartedAt: status.createdAt || message.startedAt || message.createdAt || null,
+                  turnEndedAt: endedAt ?? null,
+                  agentTouchedFileNames: resolveAgentTouchedFileNames(touchedFilePaths, nextFiles),
+                });
                 if (producedArtifactToOpen) requestOpenFile(producedArtifactToOpen);
+                const deliveryContent = needsFullReplay ? replayedContent : message.content;
+                const deliveryEvents = needsFullReplay ? replayedEvents : message.events;
+                const deliveryOutcome = resolveDesignDeliveryOutcome({
+                  sessionMode: message.sessionMode,
+                  runStatus: 'succeeded',
+                  content: deliveryContent,
+                  events: deliveryEvents,
+                  producedFileCount: produced.length,
+                  traceObjectFileCount: traceObjectFiles.length,
+                  persistenceSucceeded: artifactPersistenceSucceeded,
+                  persistenceFailed: artifactPersistenceError !== undefined,
+                });
                 updateMessageById(
                   message.id,
-                  (prev) => ({ ...prev, producedFiles: produced, traceObjectFiles }),
+                  (prev) =>
+                    applyDesignDeliveryOutcome(
+                      {
+                        ...prev,
+                        content: deliveryContent,
+                        events: deliveryEvents,
+                        producedFiles: produced,
+                        traceObjectFiles,
+                      },
+                      deliveryOutcome,
+                      artifactPersistenceError,
+                    ),
                   true,
                   { telemetryFinalized: true },
                 );
+                if (deliveryOutcome === 'no_result' || deliveryOutcome === 'delivery_failed') {
+                  setError(artifactPersistenceError ?? DESIGN_RESULT_MISSING_DETAIL);
+                }
                 await auditDesignSystemWorkspaceAfterRun(message.id);
               })();
               onProjectsRefresh();
@@ -4254,6 +4366,19 @@ export function ProjectView({
                     const producedArtifactToOpen = selectAutoOpenProducedArtifact(produced, autoOpenArtifactOptions);
                     if (producedArtifactToOpen) requestOpenFile(producedArtifactToOpen);
                     if (latestRunStatus?.status === 'succeeded') setError(null);
+                    if (
+                      shouldPublishRunFinishedEvent
+                      && latestRunStatus?.status === 'succeeded'
+                      && typeof latestRunStatus.artifactCount === 'number'
+                    ) {
+                      publishDaemonRunFinishedEvent({
+                        runId,
+                        projectId: project.id,
+                        conversationId: reattachConversationId,
+                        result: 'success',
+                        artifactCount: latestRunStatus.artifactCount,
+                      });
+                    }
                     // Unlike the recoverArtifacts sibling below, this row's
                     // endedAt was already stamped synchronously above (~4041)
                     // at disconnect time — `prev.endedAt` is never null here,
@@ -4271,6 +4396,8 @@ export function ProjectView({
                         ...prev,
                         content: replayedContent,
                         producedFiles: produced.length > 0 ? produced : prev.producedFiles,
+                        resultDeliveryState:
+                          produced.length > 0 ? 'delivered' : prev.resultDeliveryState,
                         runStatus: latestRunStatus?.status === 'succeeded' ? 'succeeded' : prev.runStatus,
                         endedAt:
                           latestRunStatus?.status === 'succeeded'
@@ -4325,6 +4452,18 @@ export function ProjectView({
                   const latestRunStatus = await fetchChatRunStatus(runId).catch(() => null);
                   if (!latestRunStatus || isActiveRunStatus(latestRunStatus.status)) {
                   } else if (latestRunStatus.status === 'succeeded') {
+                    if (
+                      shouldPublishRunFinishedEvent
+                      && typeof latestRunStatus.artifactCount === 'number'
+                    ) {
+                      publishDaemonRunFinishedEvent({
+                        runId,
+                        projectId: project.id,
+                        conversationId: reattachConversationId,
+                        result: 'success',
+                        artifactCount: latestRunStatus.artifactCount,
+                      });
+                    }
                     clearProjectTimeout(backoffTimer);
                     setError(null);
                     // If the resumed stream already replayed some content/events
@@ -4627,6 +4766,7 @@ export function ProjectView({
               ...prev,
               content: sourceText,
               producedFiles: produced,
+              resultDeliveryState: 'delivered',
               runStatus:
                 latestRunStatus?.status === 'succeeded'
                   ? 'succeeded'
@@ -4897,20 +5037,22 @@ export function ProjectView({
             // Low balance: pause THIS send while the reminder dialog waits
             // for a decision. 'proceed' resumes the very same send below —
             // a continuation, not a re-submit.
-            const plan = await resolveAmrLowBalancePlan(gate.snapshot);
+            const plan = await resolveAmrPlan(gate.snapshot);
             if (messagesConversationIdRef.current !== activeConversationId) {
               queueGateSend();
               return false;
             }
-            const decision = await new Promise<AmrLowBalanceDecision>((resolve) => {
-              setAmrLowBalanceWarn({ snapshot: gate.snapshot, plan, resolve });
-            });
-            setAmrLowBalanceWarn(null);
-            // Same conversation-switch guard for the dialog-open window; the
-            // payload is parked (not sent) so nothing is lost either way.
-            if (decision !== 'proceed' || messagesConversationIdRef.current !== activeConversationId) {
-              parkBlockedSend();
-              return false;
+            if (isPaidAmrPlan(plan)) {
+              const decision = await new Promise<AmrLowBalanceDecision>((resolve) => {
+                setAmrLowBalanceWarn({ snapshot: gate.snapshot, resolve });
+              });
+              setAmrLowBalanceWarn(null);
+              // Same conversation-switch guard for the dialog-open window; the
+              // payload is parked (not sent) so nothing is lost either way.
+              if (decision !== 'proceed' || messagesConversationIdRef.current !== activeConversationId) {
+                parkBlockedSend();
+                return false;
+              }
             }
           }
           amrGatePausedQueueConversationsRef.current.delete(gateConversationId);
@@ -5007,6 +5149,7 @@ export function ProjectView({
         createdAt: startedAt,
         runStatus: config.mode === 'daemon' ? 'running' : undefined,
         startedAt,
+        sessionMode: runSessionMode,
         preTurnFileNames,
       };
       let latestAssistantMsg: ChatMessage = assistantMsg;
@@ -5449,6 +5592,8 @@ export function ProjectView({
               runStatus: finalRunStatus,
             };
           });
+          const finalizingRunId = currentRunId;
+          if (finalizingRunId) finalizingLocalRunIdsRef.current.add(finalizingRunId);
           if (runCommentAttachments.length > 0) {
             void patchAttachedStatuses(runCommentAttachments, 'needs_review');
           }
@@ -5465,6 +5610,8 @@ export function ProjectView({
           void (async () => {
             try {
               let nextFiles = await refreshProjectFiles();
+              let artifactPersistenceSucceeded = false;
+              let artifactPersistenceError: string | undefined;
               const finalText = streamedText || fullText;
               const artifactToPersist = parsedArtifact?.html
                 ? parsedArtifact
@@ -5490,10 +5637,13 @@ export function ProjectView({
                     });
                 const sameTurnWrite = sameTurnArtifactWrite ?? sameTurnHtmlWrite;
                 if (sameTurnWrite) {
+                  artifactPersistenceSucceeded = true;
                   savedArtifactRef.current = sameTurnWrite.name;
                   requestOpenFile(sameTurnWrite.name);
                 } else {
-                  await persistArtifact(artifactToPersist, nextFiles, finalText);
+                  const persistence = await persistArtifact(artifactToPersist, nextFiles, finalText);
+                  if (persistence.ok) artifactPersistenceSucceeded = true;
+                  else artifactPersistenceError = persistence.error;
                   nextFiles = await refreshProjectFiles();
                 }
               }
@@ -5525,21 +5675,56 @@ export function ProjectView({
                 nextFiles,
                 traceTouchedFilePaths,
               ) ?? [];
-              const producedArtifactToOpen = selectAutoOpenProducedArtifact(produced, autoOpenArtifactOptions);
+              const producedArtifactToOpen = selectAutoOpenTurnArtifact(produced, nextFiles, {
+                ...autoOpenArtifactOptions,
+                turnStartedAt: startedAt,
+                turnEndedAt: endedAt ?? null,
+                agentTouchedFileNames: resolveAgentTouchedFileNames(traceTouchedFilePaths, nextFiles),
+              });
               if (producedArtifactToOpen) requestOpenFile(producedArtifactToOpen);
+              const deliveryCandidate: ChatMessage = {
+                ...latestAssistantMsg,
+                endedAt,
+                runStatus: finalRunStatus,
+                sessionMode: runSessionMode,
+                producedFiles: produced,
+                traceObjectFiles,
+              };
+              const deliveryOutcome = resolveDesignDeliveryOutcome({
+                sessionMode: deliveryCandidate.sessionMode,
+                runStatus: deliveryCandidate.runStatus,
+                content: deliveryCandidate.content,
+                events: deliveryCandidate.events,
+                producedFileCount: produced.length,
+                traceObjectFileCount: traceObjectFiles.length,
+                persistenceSucceeded: artifactPersistenceSucceeded,
+                persistenceFailed: artifactPersistenceError !== undefined,
+              });
+              const finalized = applyDesignDeliveryOutcome(
+                deliveryCandidate,
+                deliveryOutcome,
+                artifactPersistenceError,
+              );
+              latestAssistantMsg = finalized;
               setMessages((curr) => {
                 const updated = curr.map((m) =>
                   m.id === assistantId
-                    ? { ...m, producedFiles: produced, traceObjectFiles }
+                    ? finalized
                     : m,
                 );
-                const finalized = updated.find((m) => m.id === assistantId);
-                if (finalized) persistMessage(finalized, { telemetryFinalized: true });
+                persistMessage(finalized, { telemetryFinalized: true });
                 return updated;
               });
+              if (deliveryOutcome === 'no_result' || deliveryOutcome === 'delivery_failed') {
+                setError(artifactPersistenceError ?? DESIGN_RESULT_MISSING_DETAIL);
+                if (runCommentAttachments.length > 0) {
+                  void patchAttachedStatuses(runCommentAttachments, 'failed');
+                }
+              }
               await auditDesignSystemWorkspaceAfterRun(assistantId);
             } finally {
               clearTraceTouchedFilePaths();
+              if (finalizingRunId) finalizingLocalRunIdsRef.current.delete(finalizingRunId);
             }
           })();
           onProjectsRefresh();
@@ -5632,6 +5817,15 @@ export function ProjectView({
                 const latestRunStatus = await fetchChatRunStatus(runIdForGenericDisconnect).catch(() => null);
                 if (!latestRunStatus || isActiveRunStatus(latestRunStatus.status)) {
                 } else if (latestRunStatus.status === 'succeeded') {
+                  if (typeof latestRunStatus.artifactCount === 'number') {
+                    publishDaemonRunFinishedEvent({
+                      runId: runIdForGenericDisconnect,
+                      projectId: project.id,
+                      conversationId: runConversationId,
+                      result: 'success',
+                      artifactCount: latestRunStatus.artifactCount,
+                    });
+                  }
                   clearProjectTimeout(backoffTimer);
                   // Advance the outer endedAt so updateConversationLatestRun()
                   // below adopts this same authoritative terminal timestamp,
@@ -6088,6 +6282,26 @@ export function ProjectView({
       byokVideoModelOptionsPV,
       byokSpeechModelOptionsPV,
     ],
+  );
+
+  const handleComposerSend = useCallback(
+    async (
+      prompt: string,
+      attachments: ChatAttachment[],
+      commentAttachments: ChatCommentAttachment[],
+      meta?: ChatSendMeta,
+    ): Promise<ChatSendOutcome> => {
+      if (activeConversationId) {
+        const decision = await requestAmrArtifactUpgrade({
+          projectId: project.id,
+          conversationId: activeConversationId,
+          source: 'chat_send',
+        });
+        if (decision === 'cancel') return 'restore-draft';
+      }
+      void handleSend(prompt, attachments, commentAttachments, meta);
+    },
+    [activeConversationId, handleSend, project.id],
   );
 
   // Cancel every in-flight run for the current conversation (the user's own
@@ -7137,7 +7351,7 @@ export function ProjectView({
 	            sendDisabled: currentConversationSendDisabled,
             queuedItems: currentConversationQueuedItems,
             error: conversationLoadError ?? error,
-            onSend: handleSend,
+            onSend: handleComposerSend,
             onRetry: handleRetry,
             onStop: handleStop,
             onRemoveQueuedSend: removeQueuedChatSend,
@@ -7158,7 +7372,7 @@ export function ProjectView({
       error,
       handleAssistantFeedback,
       handleRetry,
-      handleSend,
+      handleComposerSend,
       handleStop,
       messages,
       removeQueuedChatSend,
@@ -7824,6 +8038,7 @@ export function ProjectView({
             details: null,
             tone: 'error',
             ttlMs: 7000,
+            scope: 'chat-pane',
           });
           return { status: 'handled' };
         }
@@ -7846,6 +8061,7 @@ export function ProjectView({
             details: null,
             tone: 'error',
             ttlMs: 6000,
+            scope: 'chat-pane',
           });
           return { status: 'handled' };
         }
@@ -7875,6 +8091,7 @@ export function ProjectView({
             details: null,
             tone: 'error',
             ttlMs: 5000,
+            scope: 'chat-pane',
           });
           return;
         }
@@ -7923,6 +8140,7 @@ export function ProjectView({
         details: t('chat.brandBrowserAssistDownloadGuideDetails'),
         tone: 'error',
         ttlMs: 7000,
+        scope: 'chat-pane',
       });
     })()
       .catch((err) => {
@@ -7932,6 +8150,7 @@ export function ProjectView({
           details: null,
           tone: 'error',
           ttlMs: 5000,
+          scope: 'chat-pane',
         });
       })
       .finally(() => {
@@ -8465,7 +8684,7 @@ export function ProjectView({
               onAttachComment={attachPreviewComment}
               onDetachComment={detachPreviewComment}
               onDeleteComment={(commentId) => void removePreviewComment(commentId)}
-              onSend={handleSend}
+              onSend={handleComposerSend}
               onRetry={handleRetry}
               onResumeRun={handleResumeRun}
               onStop={handleStop}
@@ -8824,7 +9043,6 @@ export function ProjectView({
       {amrLowBalanceWarn ? (
         <AmrLowBalanceDialog
           balanceUsd={amrLowBalanceWarn.snapshot.balanceUsd}
-          plan={amrLowBalanceWarn.plan}
           profile={amrLowBalanceWarn.snapshot.profile}
           entrySource="chat_low_balance_warn_recharge"
           metricsConsent={config.telemetry?.metrics === true}
@@ -9208,10 +9426,14 @@ function artifactFromRecoverableSourceText(sourceText: string): Artifact | null 
   };
 }
 
-function shouldReplayTerminalRunMessage(message: ChatMessage): boolean {
+export function shouldReplayTerminalRunMessage(message: ChatMessage): boolean {
   if (message.role !== 'assistant') return false;
   if (!message.runId) return false;
   if (message.runStatus !== 'succeeded') return false;
+  // A daemon can persist terminal success before the browser finishes its
+  // project-file refresh. Reattach once even when prose already exists so the
+  // delivery invariant can confirm a file or downgrade the turn after reload.
+  if (designDeliveryVerificationPending(message)) return true;
   if (message.content.trim().length > 0) return false;
   if (
     message.startedAt == null
@@ -9296,7 +9518,7 @@ export function resolveRetryTarget(
     (message) =>
       message.id === failedAssistantId &&
       message.role === 'assistant' &&
-      message.runStatus === 'failed',
+      isRetryableAssistantTerminalFailure(message),
   );
   if (failedIndex <= 0 || failedIndex !== messages.length - 1) return null;
 
@@ -9304,7 +9526,7 @@ export function resolveRetryTarget(
   while (
     userIndex >= 0 &&
     messages[userIndex]?.role === 'assistant' &&
-    messages[userIndex]?.runStatus === 'failed'
+    isRetryableAssistantTerminalFailure(messages[userIndex]!)
   ) {
     userIndex -= 1;
   }
@@ -9469,6 +9691,36 @@ export function resolveSucceededRunStatus(status: ChatMessage['runStatus']): Cha
   return status === 'failed' || status === 'canceled' ? status : 'succeeded';
 }
 
+const DESIGN_RESULT_MISSING_DETAIL =
+  'The design run finished without producing a deliverable project file.';
+const DESIGN_RESULT_DELIVERY_FAILED_DETAIL =
+  'The design result was generated, but Open Design could not save it to the project.';
+
+function applyDesignDeliveryOutcome(
+  message: ChatMessage,
+  outcome: DesignDeliveryOutcome,
+  persistenceError?: string,
+): ChatMessage {
+  if (outcome === 'delivered') {
+    return { ...message, resultDeliveryState: 'delivered' };
+  }
+  if (outcome !== 'no_result' && outcome !== 'delivery_failed') return message;
+  const detail =
+    outcome === 'delivery_failed'
+      ? persistenceError || DESIGN_RESULT_DELIVERY_FAILED_DETAIL
+      : DESIGN_RESULT_MISSING_DETAIL;
+  const failed = {
+    ...message,
+    resultDeliveryState: outcome,
+    resumable: false,
+  };
+  return appendErrorStatusEvent(
+    failed,
+    detail,
+    'ARTIFACT_NOT_FOUND',
+  );
+}
+
 export function computeProducedFiles(
   beforeNames: ReadonlySet<string> | readonly string[] | undefined,
   next: readonly ProjectFile[],
@@ -9546,6 +9798,23 @@ function normalizeComparableFilePath(value: string): string {
     .split('/')
     .filter((part) => part && part !== '.')
     .join('/');
+}
+
+// Resolve the agent's raw Write/Edit tool paths (absolute or partial) to
+// project file NAMES for selectAutoOpenTurnArtifact's touched-file
+// restriction. Paths that do not resolve to a project file (out-of-project
+// writes) are dropped; ambiguous matches resolve to null inside
+// findTouchedProjectFile and are dropped the same way.
+export function resolveAgentTouchedFileNames(
+  touchedPaths: Iterable<string>,
+  files: readonly ProjectFile[],
+): Set<string> {
+  const names = new Set<string>();
+  for (const rawPath of touchedPaths) {
+    const file = findTouchedProjectFile(rawPath, files);
+    if (file) names.add(file.name);
+  }
+  return names;
 }
 
 // Reattach with a recovered (on-disk) artifact must still include any

@@ -9,6 +9,22 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createChatRunService } from '../../src/runtimes/runs.js';
 
 describe('chat run service shutdown', () => {
+  it('publishes the authoritative artifact count in status and terminal events', async () => {
+    const runs = createRuns();
+    const run = runs.create({ projectId: 'project-1', conversationId: 'conv-1' });
+
+    run.artifactCount = 2;
+    const wait = runs.wait(run);
+    runs.finish(run, 'succeeded', 0, null);
+
+    expect(runs.statusBody(run)).toMatchObject({ status: 'succeeded', artifactCount: 2 });
+    expect(run.events.at(-1)).toMatchObject({
+      event: 'end',
+      data: { status: 'succeeded', artifactCount: 2 },
+    });
+    await expect(wait).resolves.toMatchObject({ status: 'succeeded', artifactCount: 2 });
+  });
+
   it('retains structured error details on failed run status bodies', async () => {
     const runs = createRuns();
     const run = runs.create({ projectId: 'project-1', conversationId: 'conv-1' });
@@ -63,6 +79,22 @@ describe('chat run service shutdown', () => {
       runs.list({ projectId: 'project-1', conversationId: 'conv-b', status: 'active' }),
     ).toEqual([runB]);
   });
+
+  it('normalizes session mode and run context metadata at creation', () => {
+    const runs = createRuns();
+    const workspaceContext = {
+      workspaceItems: [{ id: 'active-file:index.html', label: 'index.html', kind: 'file' }],
+    };
+
+    const valid = runs.create({ sessionMode: 'plan', context: workspaceContext });
+    expect(valid.sessionMode).toBe('plan');
+    expect(valid.context).toEqual(workspaceContext);
+
+    const invalid = runs.create({ sessionMode: 'review', context: [] });
+    expect(invalid.sessionMode).toBeNull();
+    expect(invalid.context).toBeNull();
+  });
+
   it('cancels a queued run immediately without waiting for child process shutdown', async () => {
     const runs = createRuns();
     const run = runs.create({ projectId: 'project-1', conversationId: 'conv-queued' });

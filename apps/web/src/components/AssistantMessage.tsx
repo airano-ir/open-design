@@ -28,6 +28,7 @@ import {
   type TrackingProjectKind,
 } from "@open-design/contracts/analytics";
 import {
+  hasUnterminatedQuestionForm,
   splitOnQuestionForms,
   stripTrailingOpenQuestionForm,
   type QuestionForm,
@@ -664,6 +665,9 @@ function AssistantMessageImpl({
   const hasEmptyResponse = events.some(
     (e) => e.kind === "status" && e.label === "empty_response"
   );
+  const hasResultDeliveryFailure =
+    message.resultDeliveryState === "no_result" ||
+    message.resultDeliveryState === "delivery_failed";
   const isBrandBrowserAssistMessage =
     isBrandExtractionNextStepVariant(nextStepVariant) &&
     (message.content.includes('<od-card type="brand-browser-assist"') ||
@@ -682,6 +686,7 @@ function AssistantMessageImpl({
   const unfinishedTodos = streaming ? [] : unfinishedTodosFromEvents(events);
   const runSucceeded =
     !streaming &&
+    !hasResultDeliveryFailure &&
     (
       message.runStatus === "succeeded" ||
       (!message.runStatus && !!message.endedAt) ||
@@ -748,13 +753,30 @@ function AssistantMessageImpl({
             : !!onToolboxAction ||
               !!onNextStepCreateDesignSystem ||
               (!!nextStepArtifactName && (!!onArtifactShare || !!onArtifactDownload));
+  // A clarification turn terminates its run while the emitted <question-form>
+  // is still waiting for the user in the Questions tab. Until the immediate
+  // user reply submits that form's answers (skip-all submits through the same
+  // path), the turn is mid-handshake, not settled. Suppressed direction forms
+  // render as a locked pill the user cannot answer, so they don't hold the
+  // card back.
+  const hasPendingQuestionForm = useMemo(() => {
+    if (hasUnterminatedQuestionForm(message.content)) return true;
+    return splitOnQuestionForms(message.content).some(
+      (seg) =>
+        seg.kind === "form" &&
+        !(suppressDirectionForms && isDirectionForm(seg.form)) &&
+        (!nextUserContent || !parseSubmittedAnswers(seg.form, nextUserContent)),
+    );
+  }, [message.content, nextUserContent, suppressDirectionForms]);
   // Terminal turns should leave the user with an actionable path, including
   // canceled/failed/no-artifact turns. Artifact-backed cards still wire Share
   // and Download to the chosen file; incomplete cards fall back to composer
-  // prompts or toolbox actions.
+  // prompts or toolbox actions. A turn still waiting on question-form answers
+  // is the exception: the next step IS answering the form.
   const showNextStepActions =
     !streaming &&
     runTerminal &&
+    !hasPendingQuestionForm &&
     ((!!isLast && hasNextStepPrimary) || showOpenDesignSubmission);
   // Pre-output vs working: before any real content (text / thinking / tools /
   // files) the footer shimmers "Preparing…"; the moment content lands it
@@ -1320,7 +1342,13 @@ function isFeedbackEligible({
   hasEmptyResponse: boolean;
   hasUnfinishedTodos: boolean;
 }): boolean {
-  if (streaming || hasEmptyResponse || hasUnfinishedTodos) return false;
+  if (
+    streaming ||
+    hasEmptyResponse ||
+    hasUnfinishedTodos ||
+    message.resultDeliveryState === "no_result" ||
+    message.resultDeliveryState === "delivery_failed"
+  ) return false;
   if (message.runStatus) return isTerminalRunStatus(message.runStatus);
   return !!message.endedAt;
 }
@@ -3006,8 +3034,8 @@ function toolFamily(name: string): string {
   if (name === "Grep") return "grep";
   if (name === "Bash") return "bash";
   if (isTodoWriteToolName(name)) return "todo";
-  if (name === "WebFetch" || name === "web_fetch") return "fetch";
-  if (name === "WebSearch" || name === "web_search") return "search";
+  if (name === "WebFetch" || name === "web_fetch" || name === "webfetch") return "fetch";
+  if (name === "WebSearch" || name === "web_search" || name === "websearch") return "search";
   return name.toLowerCase();
 }
 

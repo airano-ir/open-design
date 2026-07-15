@@ -112,6 +112,8 @@ export function createChatRunService({
       lastTodoSnapshot: null,
       truncatedMidTurn: false,
       endedWithUnfinishedWork: false,
+      artifactCount: undefined as number | undefined,
+      artifactOutcome: undefined,
       eventsLogPath: runsLogDir ? path.join(runsLogDir, id, 'events.jsonl') : null,
       eventsLogStream: null,
       // Set once finish() has closed the log stream, so a late post-finish emit
@@ -219,6 +221,7 @@ export function createChatRunService({
     failureDetail: run.failureDetail ?? null,
     resumable: run.resumable ?? false,
     endedWithUnfinishedWork: !!run.endedWithUnfinishedWork,
+    ...(Number.isFinite(run.artifactCount) ? { artifactCount: run.artifactCount } : {}),
     eventsLogPath: run.eventsLogPath ?? null,
     workspace: projectWorkspaceProvenance(run.projectMetadata),
     mediaExecution: run.mediaExecution ?? normalizeMediaExecutionPolicyForRun(null),
@@ -258,6 +261,7 @@ export function createChatRunService({
       status,
       resumable: run.resumable ?? false,
       endedWithUnfinishedWork: run.endedWithUnfinishedWork,
+      ...(Number.isFinite(run.artifactCount) ? { artifactCount: run.artifactCount } : {}),
       failureCategory: run.failureCategory ?? null,
       failureDetail: run.failureDetail ?? null,
     });
@@ -383,12 +387,53 @@ export function createChatRunService({
     }
   };
 
-  const killChild = (run, signal) =>
-    signalChildProcess(run.child, run.processGroupId, signal);
+  const killChild = (run, signal) => {
+    if (signalChildProcess(run.child, run.processGroupId, signal)) return true;
+    // The direct child has already exited, but its process group can still hold
+    // survivors — grandchildren that inherited its stdio outlive it. Reap them by
+    // pgid so cancel/shutdown don't leave orphans (the same class the retry
+    // teardown reaps). Safe here: every killChild caller is a terminating path
+    // (cancel / shutdownActive) that never re-spawns into this pgid, so there is
+    // no next-generation group to mis-target (cf. #5202).
+    return signalProcessGroup(run.processGroupId, signal);
+  };
 
   const cancelGraceMs = () => {
     const raw = Number(process.env.OD_CHAT_RUN_CANCEL_GRACE_MS || process.env.OD_CHAT_RUN_SHUTDOWN_GRACE_MS);
     return Number.isFinite(raw) && raw > 0 ? raw : 3000;
+  };
+
+  // Signal a whole process group by pgid, even after the direct child object has
+  // already exited. A CLI's spawned descendants (MCP servers, tool subprocesses,
+  // internal runners) share the attempt's process group and outlive the direct
+  // child; reaping them requires targeting the group, not the child. Kept
+  // deliberately SEPARATE from signalChildProcess so the shared cancel/escalation
+  // path keeps its childHasExited guard against the cross-generation kill fixed
+  // in #5202. Returns true when a group signal was actually attempted (POSIX +
+  // a valid pgid), false when not applicable (win32 / no pgid).
+  const signalProcessGroup = (processGroupId, signal) => {
+    if (process.platform === 'win32' || !Number.isInteger(processGroupId)) return false;
+    try {
+      process.kill(-processGroupId, signal);
+    } catch {
+      // ESRCH (group already gone) or EPERM — nothing more we can do; the group
+      // signal was still the right action to take.
+    }
+    return true;
+  };
+
+  // Reap a torn-down attempt's whole process group: SIGTERM now, then SIGKILL any
+  // survivors after the grace window. Both target the CAPTURED pgid passed in —
+  // callers must snapshot run.processGroupId before a same-run retry overwrites
+  // it, so the escalation can never hit the next attempt's group (#5202). Returns
+  // whether the group path handled it (so callers can fall back on win32).
+  const reapProcessGroup = (processGroupId) => {
+    if (!signalProcessGroup(processGroupId, 'SIGTERM')) return false;
+    const timer = setTimeout(() => {
+      signalProcessGroup(processGroupId, 'SIGKILL');
+    }, cancelGraceMs());
+    timer.unref?.();
+    return true;
   };
 
   const finishCanceledFromChildState = (run, fallbackSignal = 'SIGTERM') => {
@@ -538,6 +583,8 @@ export function createChatRunService({
     fail,
     drop,
     signalChild: killChild,
+    reapProcessGroup,
+    signalProcessGroup,
     statusBody,
     signalChildProcess,
     isTerminal(status) {

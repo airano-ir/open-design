@@ -1225,9 +1225,7 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
   return (
     <section ref={homeHeroRef} className="home-hero" data-testid="home-hero">
       <div className="home-hero__brand" aria-hidden>
-        <span className="home-hero__brand-mark">
-          <img src="/app-icon.svg" alt="" draggable={false} />
-        </span>
+        <span className="home-hero__brand-mark od-brand-glyph" />
         <span className="home-hero__brand-name">Open Design</span>
       </div>
       <h1 className="home-hero__title">{t('homeHero.title')}</h1>
@@ -2259,7 +2257,7 @@ function PluginPromptPresets({
   );
 }
 
-// A Website-clone text example ("Website URL to clone: https://kimi.com") —
+// A Website-clone text example ("Website URL to clone: https://open-design.ai") —
 // pull the site out so the card can show the site's own favicon + bare domain
 // instead of the raw prompt line. Returns null for non-URL examples so the
 // generic text card renders unchanged.
@@ -2386,6 +2384,7 @@ function PluginPromptPresetCard({
             pluginId={record.id}
             pluginTitle={title}
             preview={preview}
+            eager={odMode === 'deck'}
           />
           {active ? (
             <span className="home-hero__plugin-preset-check" aria-hidden>
@@ -4196,7 +4195,6 @@ const HOME_PROMPT_EXAMPLES: Record<Locale, Record<string, string[]>> = {
   "en": {
     "web-clone": [
       "Website URL to clone: https://open-design.ai",
-      "Website URL to clone: https://kimi.com",
     ],
     prototype: [
       "Design a high-converting website for an AI CRM with a clear hero, feature story, proof points, and trial CTA",
@@ -4332,7 +4330,6 @@ const HOME_PROMPT_EXAMPLES: Record<Locale, Record<string, string[]>> = {
   "zh-CN": {
     "web-clone": [
       "想要复刻的网站链接：https://open-design.ai",
-      "想要复刻的网站链接：https://kimi.com",
     ],
     prototype: [
       "为 AI CRM 设计一个高转化官网，包含首屏、功能卖点、客户案例和清晰的试用入口",
