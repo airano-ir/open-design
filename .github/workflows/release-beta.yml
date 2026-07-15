@@ -50,6 +50,11 @@ on:
         required: false
         type: string
         default: ""
+      amr_profile:
+        description: "Optional AMR profile baked into the build (e.g. feature-test to point the packaged app at the amr-feature backend and enable the workspace-team transport). Empty leaves the default (prod)."
+        required: false
+        type: string
+        default: ""
       mac_arm64_sign_mode:
         description: "macOS arm64 signing mode."
         required: true
@@ -193,6 +198,10 @@ on:
         type: string
         default: ""
       ref:
+        required: false
+        type: string
+        default: ""
+      amr_profile:
         required: false
         type: string
         default: ""
@@ -465,6 +474,11 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # Bake the AMR profile (tools-pack reads OPEN_DESIGN_AMR_PROFILE) so a
+          # feature-test dispatch produces a packaged app that targets the
+          # amr-feature backend and enables the workspace-team transport. Empty =
+          # default (prod) — the normal beta pipeline is unaffected.
+          OPEN_DESIGN_AMR_PROFILE: ${{ inputs.amr_profile }}
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/release-build/mac_arm64"
@@ -498,6 +512,11 @@ jobs:
 
       - name: Retry beta mac_arm64 without restored cache
         if: ${{ steps.mac_arm64_tools_pack_build.outcome == 'failure' }}
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          OPEN_DESIGN_AMR_PROFILE: ${{ inputs.amr_profile }}
         run: |
           set -euo pipefail
           rm -rf "$RUNNER_TEMP/tools-pack-cache"
@@ -529,6 +548,18 @@ jobs:
             printf '%s\n' "$build_output"
             exit "$build_status"
           fi
+
+      - name: Upload mac_arm64 DMG for manual distribution
+        # Only when NOT publishing to the release feed: this is the downloadable
+        # artifact for a manual dispatch (e.g. a signed feature-test build handed
+        # to teammates). The normal publish=true release pipeline is unchanged.
+        if: ${{ !cancelled() && !inputs.publish }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: open-design-beta-mac-arm64-dmg
+          path: ${{ runner.temp }}/tools-pack/out/mac/namespaces/release-beta/**/*.dmg
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Delete failed mac_arm64 tools-pack cache
         if: ${{ steps.mac_arm64_tools_pack_build.outcome == 'failure' && steps.mac_arm64_tools_pack_cache_restore.outputs.cache-matched-key != '' }}
