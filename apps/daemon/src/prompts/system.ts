@@ -333,6 +333,24 @@ export function detectMediaIntentSignal(
 // message is always a real boundary.
 const TRANSCRIPT_USER_MARKER = '## user';
 const TRANSCRIPT_ASSISTANT_MARKER = '## assistant';
+const TRANSCRIPT_CONTEXT_WARNING_MARKER = '## context warning';
+
+// A packed transcript (buildDaemonTranscript, apps/web/src/providers/
+// daemon.ts) always starts with a role marker or the context-warning header,
+// and always carries the latest user turn. Both properties are required
+// before treating a message as a transcript: a plain prompt that merely
+// QUOTES `## user` mid-text (the quote is not the first content line) must
+// keep whole-text scanning — dropping the text before the quote would
+// silence the very request the signals exist to detect.
+function isPackedTranscriptShape(lines: string[]): boolean {
+  if (!lines.includes(TRANSCRIPT_USER_MARKER)) return false;
+  const firstContent = lines.find((line) => line.trim().length > 0);
+  return (
+    firstContent === TRANSCRIPT_USER_MARKER ||
+    firstContent === TRANSCRIPT_ASSISTANT_MARKER ||
+    firstContent === TRANSCRIPT_CONTEXT_WARNING_MARKER
+  );
+}
 // Mirrors the repo's accepted form-answer header grammar — the shared parser
 // in packages/contracts/src/artifacts/od-card.ts (parseFormAnswers) accepts
 // em-dash / hyphen / colon separators and the bare `[form answers]` header,
@@ -388,12 +406,7 @@ export function extractUserAuthoredSignalText(
   const lines = message.split('\n').map((line) =>
     line.endsWith('\r') ? line.slice(0, -1) : line,
   );
-  // Enter transcript mode only when a `## user` marker line exists: a packed
-  // transcript always carries the latest user turn, whereas a plain prompt
-  // that merely QUOTES a `## assistant` heading must keep legacy whole-text
-  // scanning — extracting an empty body would suppress the very request the
-  // signals exist to detect.
-  if (!lines.includes(TRANSCRIPT_USER_MARKER)) {
+  if (!isPackedTranscriptShape(lines)) {
     return narrowFormAnswerSignalText(message);
   }
   const userSections: string[][] = [];

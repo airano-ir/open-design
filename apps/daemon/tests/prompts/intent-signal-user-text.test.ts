@@ -122,6 +122,25 @@ describe('extractUserAuthoredSignalText — role scoping (§3 cases 1/2/4/5)', (
     expect(detectDeckIntentSignal(extractUserAuthoredSignalText(afterQuote))).toBe(true);
   });
 
+  it('a plain prompt that quotes a ## user heading mid-text keeps whole-text scanning', () => {
+    // The quoted heading is not the first content line, so this is not a
+    // packed-transcript shape; dropping the text before the quote would
+    // silence an explicit deck request.
+    const quoted = '帮我做一份路演材料。参考这个格式：\n## user\nAgenda';
+    expect(extractUserAuthoredSignalText(quoted)).toBe(quoted);
+    expect(detectDeckIntentSignal(extractUserAuthoredSignalText(quoted))).toBe(true);
+  });
+
+  it('a transcript that starts with an ## assistant section still parses as a transcript', () => {
+    // scopeHistoryToAgent can trim history so the packed transcript begins
+    // with a same-family assistant turn; its copy must stay suppressed.
+    const msg = [
+      `## assistant\n${LOCALIZED_DISCOVERY_FORM_ASSISTANT_TURN}`,
+      '## user\n继续优化布局',
+    ].join('\n\n');
+    expect(detectDeckIntentSignal(extractUserAuthoredSignalText(msg))).toBe(false);
+  });
+
   it('parses CRLF transcripts identically to LF transcripts', () => {
     const crlf = ['## user', '帮我做一份路演材料', '', '## assistant', '好的，我先列大纲。'].join('\r\n');
     expect(detectDeckIntentSignal(extractUserAuthoredSignalText(crlf))).toBe(true);
