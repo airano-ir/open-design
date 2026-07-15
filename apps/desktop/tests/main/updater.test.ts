@@ -623,7 +623,19 @@ describe("desktop updater", () => {
       expect(installed.installResult?.path).toBe(checked.downloadPath);
       expect(installed.installResult?.artifactPath).toBe(checked.downloadPath);
       expect(installed.installResult?.activeVersion).toBe("1.0.0-beta.2");
-      expect(installed.installResult?.launchPath).toBe(launcherLaunchPath);
+      const payloadLaunchPath = join(
+        root,
+        "launcher",
+        "channels",
+        "beta",
+        "namespaces",
+        "release-beta-win",
+        "versions",
+        "1.0.0-beta.2",
+        "payload",
+        "Open Design.exe",
+      );
+      expect(installed.installResult?.launchPath).toBe(payloadLaunchPath);
       expect(installed.installResult?.launcherRuntimePath).toBe(launcherRuntimePath);
       expect(installed.installResult?.helperLogPath).toEqual(expect.stringContaining("open-app-after-quit-test.log"));
       expect(installed.installResult?.dryRun).toBe(false);
@@ -631,7 +643,7 @@ describe("desktop updater", () => {
       expect(launches).toEqual([
         {
           appPid: 4242,
-          launchPath: launcherLaunchPath,
+          launchPath: payloadLaunchPath,
           root: await realpath(join(root, "updates")),
         },
       ]);
@@ -1207,7 +1219,7 @@ describe("desktop updater", () => {
     }
   });
 
-  it("relaunches mac launcher payloads through the installed app bundle from a payload-backed process", async () => {
+  it("relaunches mac launcher payloads through the prepared payload executable", async () => {
     const root = makeRoot();
     const fixture = await createUpdaterFixture({
       artifactBody: "open design mac dmg fixture",
@@ -1297,7 +1309,21 @@ describe("desktop updater", () => {
       expect(launches).toEqual([
         {
           appPid: 4243,
-          launchPath: launcherLaunchPath,
+          launchPath: join(
+            root,
+            "launcher",
+            "channels",
+            "beta",
+            "namespaces",
+            "release-beta",
+            "versions",
+            "1.0.0-beta.3",
+            "payload",
+            "Open Design Beta.app",
+            "Contents",
+            "MacOS",
+            "Open Design Beta",
+          ),
           root: await realpath(join(root, "updates")),
         },
       ]);
@@ -1307,7 +1333,7 @@ describe("desktop updater", () => {
     }
   });
 
-  it("relaunches Windows launcher payloads through the installed executable from a payload-backed process", async () => {
+  it("relaunches Windows launcher payloads through the prepared payload executable", async () => {
     const root = makeRoot();
     const fixture = await createUpdaterFixture({
       artifactBody: "open design windows installer fixture",
@@ -1397,7 +1423,18 @@ describe("desktop updater", () => {
       expect(launches).toEqual([
         {
           appPid: 4244,
-          launchPath: launcherLaunchPath,
+          launchPath: join(
+            root,
+            "launcher",
+            "channels",
+            "beta",
+            "namespaces",
+            "release-beta-win",
+            "versions",
+            "1.0.0-beta.3",
+            "payload",
+            "Open Design.exe",
+          ),
           root: await realpath(join(root, "updates")),
         },
       ]);
@@ -1407,7 +1444,7 @@ describe("desktop updater", () => {
     }
   });
 
-  it("fails launcher payload relaunch when the stable launcher entry is unavailable", async () => {
+  it("relaunches the prepared payload even when the stable outer entry disappears", async () => {
     const root = makeRoot();
     const fixture = await createUpdaterFixture({
       artifactBody: "open design windows installer fixture",
@@ -1488,17 +1525,32 @@ describe("desktop updater", () => {
 
       const installed = await updater.installUpdate();
 
-      expect(installed.state).toBe(DESKTOP_UPDATE_STATES.ERROR);
-      expect(installed.error?.code).toBe("payload-relaunch-failed");
-      expect(installed.error?.message).toContain("Open Design.exe");
-      expect(launches).toEqual([]);
+      expect(installed.state).toBe(DESKTOP_UPDATE_STATES.DOWNLOADED);
+      expect(installed.error).toBeUndefined();
+      expect(launches).toEqual([
+        expect.objectContaining({
+          appPid: 4246,
+          launchPath: join(
+            root,
+            "launcher",
+            "channels",
+            "beta",
+            "namespaces",
+            "release-beta-win",
+            "versions",
+            "1.0.0-beta.3",
+            "payload",
+            "Open Design.exe",
+          ),
+        }),
+      ]);
     } finally {
       await fixture.close();
       rmSync(root, { force: true, recursive: true });
     }
   });
 
-  it("starts the stable Windows launcher in after-quit mode for payload installs", async () => {
+  it("starts the Windows payload executable in after-quit mode for payload installs", async () => {
     const root = makeRoot();
     const fixture = await createUpdaterFixture({
       artifactBody: "open design windows installer fixture",
@@ -1575,11 +1627,23 @@ describe("desktop updater", () => {
 
       expect(installed.error).toBeUndefined();
       expect(installed.installResult?.path).toBe(checked.downloadPath);
-      expect(installed.installResult?.launchPath).toBe(launcherLaunchPath);
+      const payloadLaunchPath = join(
+        root,
+        "launcher",
+        "channels",
+        "beta",
+        "namespaces",
+        "release-beta-win",
+        "versions",
+        "1.0.0-beta.3",
+        "payload",
+        "Open Design.exe",
+      );
+      expect(installed.installResult?.launchPath).toBe(payloadLaunchPath);
       expect(installed.installResult?.helperLogPath).toBeUndefined();
       expect(spawned).toHaveLength(1);
       expect(unref).toHaveBeenCalledTimes(1);
-      expect(spawned[0]?.command).toBe(launcherLaunchPath);
+      expect(spawned[0]?.command).toBe(payloadLaunchPath);
       expect(spawned[0]?.options).toEqual({ detached: true, stdio: "ignore", windowsHide: true });
       const args = spawned[0]?.args ?? [];
       expect(args).toEqual(expect.arrayContaining([

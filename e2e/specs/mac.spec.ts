@@ -49,6 +49,40 @@ const healthExpression = `
     };
   })()
 `;
+const pptxExportExpression = `
+  (async () => {
+    const projectId = 'packaged-payload-pptx-' + Date.now().toString(36);
+    const html = '<!doctype html><html><head><style>' +
+      'html,body{margin:0}.slide{width:1920px;height:1080px;display:flex;align-items:center;justify-content:center;font:96px sans-serif;color:white}' +
+      '.slide:first-child{background:#17324d}.slide:last-child{background:#8b3a2b}' +
+      '</style></head><body><section class="slide">Payload One</section><section class="slide">Payload Two</section></body></html>';
+    const created = await fetch('/api/projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: projectId, name: 'Packaged payload PPTX' }),
+    });
+    if (!created.ok) throw new Error('project create failed: ' + created.status);
+    const written = await fetch('/api/projects/' + encodeURIComponent(projectId) + '/files', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'deck.html', content: html }),
+    });
+    if (!written.ok) throw new Error('deck write failed: ' + written.status);
+    const exported = await fetch('/api/projects/' + encodeURIComponent(projectId) + '/export/pptx', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fileName: 'deck.html' }),
+    });
+    const bytes = new Uint8Array(await exported.arrayBuffer());
+    return {
+      byteLength: bytes.length,
+      contentType: exported.headers.get('content-type'),
+      magic: String.fromCharCode(...bytes.slice(0, 2)),
+      projectId,
+      status: exported.status,
+    };
+  })()
+`;
 const updaterPopupExpression = `
   (() => {
     const popup = document.querySelector('[data-testid="updater-popup"]');
@@ -194,6 +228,8 @@ type LauncherSnapshot = {
   channel: string;
   error?: string;
   exists: boolean;
+  handoff: unknown | null;
+  handoffPath: string;
   lastSuccessful: LauncherPointer | null;
   namespace: string;
   root: string;
@@ -222,6 +258,32 @@ type HealthEvalValue = {
   href: string;
   status: number;
   title: string;
+};
+
+type PptxExportEvalValue = {
+  byteLength: number;
+  contentType: string | null;
+  magic: string;
+  projectId: string;
+  status: number;
+};
+
+type DesktopIdentityMarker = {
+  appPath: string;
+  executablePath: string;
+  pid: number;
+  version: number;
+};
+
+type PayloadRuntimeAcceptance = {
+  coldStart: {
+    health: HealthEvalValue;
+    identity: DesktopIdentityMarker;
+    launcher: LauncherSnapshot;
+    start: MacStartResult;
+  };
+  identity: DesktopIdentityMarker;
+  pptx: PptxExportEvalValue;
 };
 
 type UpdaterPopupEvalValue = {
@@ -274,6 +336,7 @@ macDescribe('packaged mac runtime smoke', () => {
     let popup: UpdaterPopupEvalValue | { skipped: true } = { skipped: true };
     let updateInstall: NonNullable<MacInspectResult['update']> | { skipped: true } = { skipped: true };
     let updateStatus: NonNullable<MacInspectResult['update']> | { skipped: true } = { skipped: true };
+    let payloadRuntime: PayloadRuntimeAcceptance | { skipped: true } = { skipped: true };
     let passed = false;
     try {
       const install = await runToolsPackJson<MacInstallResult>('install');
@@ -390,6 +453,53 @@ macDescribe('packaged mac runtime smoke', () => {
         );
         if (terminalUpdate.update == null) throw new Error('mac terminal update status is missing');
         updateInstall = terminalUpdate.update;
+
+        const identity = await readDesktopIdentityMarker();
+        assertPayloadDesktopIdentity(identity, postUpdateInspect.launcher, updaterVersion);
+        expect(postUpdateInspect.launcher.attempt).toBeNull();
+        assertSettledDesktopHandoff(postUpdateInspect.launcher.handoff);
+
+        const pptxInspect = await runToolsPackJson<MacInspectResult>('inspect', ['--expr', pptxExportExpression]);
+        const pptx = assertPptxExportEvalValue(pptxInspect.eval?.value);
+
+        const coldStop = await runToolsPackJson<MacStopResult>('stop');
+        started = false;
+        expect(coldStop.status).not.toBe('partial');
+        expect(coldStop.remainingPids).toEqual([]);
+
+        const coldStart = await runToolsPackJson<MacStartResult>('start');
+        started = true;
+        expect(coldStart.source).toBe('installed');
+        expect(coldStart.appPath).toBe(install.installedAppPath);
+        const coldInspect = await waitForHealthyDesktopVersion(updaterVersion, identity.pid);
+        const coldHealth = assertHealthEvalValue(coldInspect.eval?.value);
+        expect(coldHealth.status).toBe(200);
+        expect(coldHealth.health.ok).toBe(true);
+        expect(coldHealth.health.version).toBe(updaterVersion);
+        const confirmedGeneration = postUpdateInspect.launcher.active?.generation;
+        if (confirmedGeneration == null) throw new Error('post-update launcher active pointer is missing');
+        assertLauncherPointer(coldInspect.launcher.active, updaterVersion, confirmedGeneration, 'cold-start active');
+        assertLauncherPointer(
+          coldInspect.launcher.lastSuccessful,
+          updaterVersion,
+          confirmedGeneration,
+          'cold-start lastSuccessful',
+        );
+        expect(coldInspect.launcher.attempt).toBeNull();
+        assertSettledDesktopHandoff(coldInspect.launcher.handoff);
+        const coldIdentity = await readDesktopIdentityMarker();
+        assertPayloadDesktopIdentity(coldIdentity, coldInspect.launcher, updaterVersion);
+        expect(coldIdentity.pid).not.toBe(identity.pid);
+        payloadRuntime = {
+          coldStart: {
+            health: coldHealth,
+            identity: coldIdentity,
+            launcher: coldInspect.launcher,
+            start: coldStart,
+          },
+          identity,
+          pptx,
+        };
       }
 
       await mkdir(dirname(screenshotPath), { recursive: true });
@@ -425,6 +535,7 @@ macDescribe('packaged mac runtime smoke', () => {
         },
         logs: 'skipped' in logs ? logs : summarizeLogs(logs),
         namespace,
+        payloadRuntime,
         screenshot: report.screenshotRelpath,
         start: {
           appPath: start.appPath,
@@ -462,7 +573,7 @@ macDescribe('packaged mac runtime smoke', () => {
         installedAppPath = null;
       }
     }
-  }, 180_000);
+  }, 240_000);
 });
 
 macOnboardingDescribe('packaged mac onboarding AMR smoke', () => {
@@ -2068,6 +2179,58 @@ async function waitForUpdaterPopupMatching(
   }
 
   throw new Error(`${label}: updater popup timed out: ${formatUnknown(lastResult)}`);
+}
+
+async function readDesktopIdentityMarker(): Promise<DesktopIdentityMarker> {
+  const markerPath = join(runtimeNamespaceRoot, 'runtime', 'desktop-root.json');
+  const value = JSON.parse(await readFile(markerPath, 'utf8')) as unknown;
+  if (
+    !isRecord(value) ||
+    typeof value.appPath !== 'string' ||
+    typeof value.executablePath !== 'string' ||
+    typeof value.pid !== 'number' ||
+    value.version !== 1
+  ) {
+    throw new Error(`invalid packaged desktop identity at ${markerPath}: ${formatUnknown(value)}`);
+  }
+  return value as DesktopIdentityMarker;
+}
+
+function assertPayloadDesktopIdentity(
+  identity: DesktopIdentityMarker,
+  launcher: LauncherSnapshot,
+  version: string,
+): void {
+  const payloadRoot = join(launcher.versionsRoot, version, 'payload');
+  expect(identity.pid).toBeGreaterThan(0);
+  expectPathInside(identity.appPath, payloadRoot);
+  expectPathInside(identity.executablePath, payloadRoot);
+}
+
+function assertPptxExportEvalValue(value: unknown): PptxExportEvalValue {
+  if (
+    !isRecord(value) ||
+    typeof value.byteLength !== 'number' ||
+    (value.contentType != null && typeof value.contentType !== 'string') ||
+    typeof value.magic !== 'string' ||
+    typeof value.projectId !== 'string' ||
+    typeof value.status !== 'number'
+  ) {
+    throw new Error(`unexpected PPTX export eval value: ${formatUnknown(value)}`);
+  }
+  expect(value.status).toBe(200);
+  expect(value.contentType).toContain(
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  );
+  expect(value.byteLength).toBeGreaterThan(0);
+  expect(value.magic).toBe('PK');
+  return value as PptxExportEvalValue;
+}
+
+function assertSettledDesktopHandoff(value: unknown | null): void {
+  if (value == null) return;
+  if (!isRecord(value)) throw new Error(`invalid launcher desktop handoff: ${formatUnknown(value)}`);
+  expect(value.state).toBe('confirmed');
 }
 
 function assertLauncherPointer(
