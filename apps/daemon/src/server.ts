@@ -1501,10 +1501,22 @@ export function createFinalizedMessageTelemetryReporter({
     });
   };
   return (saved, body = {}, options = {}) => {
+    // Optional schedule-time token for terminal_fallback: reuse it as this
+    // report's in-flight token so delay + report share one attempt and dual
+    // terminal_fallback/final_message flights keep independent counts.
+    const reusedAwaitingToken =
+      typeof options.awaitingToken === 'string' && options.awaitingToken.trim()
+        ? options.awaitingToken.trim()
+        : '';
     if (!shouldReportRunCompletedFromMessage(saved, body)) {
-      // terminal_fallback may have marked at timer schedule; release if this
-      // path never starts a report that would clear in finally.
-      if (saved?.runId) clearRunAwaitingFinalAcceptance(saved.runId);
+      // terminal_fallback may have marked at timer schedule; release only that
+      // attempt (or all tokens if this path never received one).
+      if (saved?.runId) {
+        clearRunAwaitingFinalAcceptance(
+          saved.runId,
+          reusedAwaitingToken || undefined,
+        );
+      }
       return;
     }
     const runId = saved.runId;
@@ -1526,7 +1538,7 @@ export function createFinalizedMessageTelemetryReporter({
         status: saved.runStatus,
       });
       // Schedule-only awaiting mark must not outlive a skipped report.
-      clearRunAwaitingFinalAcceptance(runId);
+      clearRunAwaitingFinalAcceptance(runId, reusedAwaitingToken || undefined);
       return;
     }
     const reportTrigger = options.reportTrigger ?? 'final_message';
@@ -1547,7 +1559,11 @@ export function createFinalizedMessageTelemetryReporter({
         skipReason: 'duplicate_run',
         status: saved.runStatus,
       });
-      // In-flight final_message owns the mark; do not clear here.
+      // In-flight final_message owns its mark; release only a reused schedule
+      // token so this duplicate path does not strand delay-window deferral.
+      if (reusedAwaitingToken) {
+        clearRunAwaitingFinalAcceptance(run.id, reusedAwaitingToken);
+      }
       return;
     }
     if (reportTrigger !== 'terminal_fallback') {
@@ -1557,7 +1573,10 @@ export function createFinalizedMessageTelemetryReporter({
     // before async reportRunCompleted can rememberAcceptedFinalTraceBodyId.
     // Feedback during this window defers; cold finalized/no-anchor rows without
     // this mark ship on the canonical body instead of queueing forever.
-    markRunAwaitingFinalAcceptance(run.id);
+    // Reuse the schedule-time terminal_fallback token when provided so one
+    // attempt spans delay + report and dual flights stay independently counted.
+    const awaitingToken =
+      reusedAwaitingToken || markRunAwaitingFinalAcceptance(run.id);
     void (async () => {
       const start = Date.now();
       try {
@@ -1594,10 +1613,10 @@ export function createFinalizedMessageTelemetryReporter({
           status: saved.runStatus,
         });
       } finally {
-        // On accept, rememberAcceptedFinalTraceBodyId already cleared the mark
-        // and flushed deferred scores. On failure/skip, release any queue onto
-        // the canonical body so scores are not stranded until process exit.
-        clearRunAwaitingFinalAcceptance(run.id);
+        // On accept, rememberAcceptedFinalTraceBodyId already cleared all tokens
+        // and flushed deferred scores. On failure/skip, release only this
+        // attempt; other in-flight final-purpose deliveries may still accept.
+        clearRunAwaitingFinalAcceptance(run.id, awaitingToken || undefined);
       }
     })();
   };
@@ -2544,12 +2563,16 @@ export async function startServer({
   }) => {
     if (!shouldReportRunCompletionTelemetryFallbackStatus(status)) return;
     // Cover the whole terminal_fallback delay + report flight so mid-window
-    // feedback defers onto `:tf` (or flushes on clear). Cold restarts have no
-    // mark, so failed/canceled feedback must not queue forever on status alone.
-    markRunAwaitingFinalAcceptance(run.id);
+    // feedback defers onto `:tf` (or flushes on clear). Token is keyed by
+    // immutable run.id so assistant-row reuse cannot drop deferral for this
+    // run. Cold restarts have no mark, so failed/canceled feedback must not
+    // queue forever on status alone.
+    const awaitingToken = markRunAwaitingFinalAcceptance(run.id);
     const timer = setTimeout(() => {
       if (reportedRuns.has(run.id)) {
-        // final_message claimed the run and owns the awaiting-mark lifecycle.
+        // final_message claimed the run and owns its own awaiting token —
+        // release this schedule-only token so scores are not stranded.
+        clearRunAwaitingFinalAcceptance(run.id, awaitingToken);
         return;
       }
       if (run.assistantMessageId) {
@@ -2564,7 +2587,7 @@ export async function startServer({
         if (messageTelemetry.finalizedAt !== null) {
           // Finalized without claiming reportedRuns (e.g. run already gone) —
           // release the schedule-only mark so scores are not stranded.
-          clearRunAwaitingFinalAcceptance(run.id);
+          clearRunAwaitingFinalAcceptance(run.id, awaitingToken);
           return;
         }
       }
@@ -2583,6 +2606,8 @@ export async function startServer({
           conversationId: run.conversationId,
           projectId: run.projectId,
           reportTrigger: 'terminal_fallback',
+          // Reuse the schedule token as this report's in-flight attempt.
+          awaitingToken,
         },
       );
     }, LANGFUSE_TERMINAL_FALLBACK_DELAY_MS);

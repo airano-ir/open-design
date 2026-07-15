@@ -16,6 +16,7 @@ import {
   readLegacyAnonymousAcceptedSinkConfig,
   readTelemetrySinkConfig,
   readTelemetrySinkConfigForChannel,
+  clearRunAwaitingFinalAcceptance,
   markRunAwaitingFinalAcceptance,
   rememberAcceptedFinalTraceBodyId,
   reportRunCompleted,
@@ -3875,12 +3876,103 @@ describe('reportRunFeedback', () => {
         runStatus: 'canceled',
       }),
     ).toBe(false);
-    // Unscoped feedback (no status / finalized signal) still ships immediately.
+    // Unscoped feedback (no status / finalized signal) still ships immediately
+    // when no run-scoped awaiting token exists (cold / no completer).
     expect(
       shouldDeferRunFeedback({
         runId: 'run-no-context',
       }),
     ).toBe(false);
+  });
+
+  it('defers unscoped feedback while a run-scoped terminal_fallback token is open (row-reuse window)', () => {
+    // After assistant-row reuse, getRunFeedbackTelemetryAnchor(run A) returns
+    // null until A:tf is accepted — resolveInput is only { runId }. The
+    // schedule-time awaiting token is keyed by immutable run_id so feedback
+    // still defers instead of shipping on canonical runId.
+    resetAcceptedFinalTraceBodyIdsForTests();
+    resetPendingRunFeedbackForTests();
+    const runId = 'run-a-null-anchor-pending-tf';
+    markRunAwaitingFinalAcceptance(runId);
+    expect(shouldDeferRunFeedback({ runId })).toBe(true);
+    clearRunAwaitingFinalAcceptance(runId);
+    expect(shouldDeferRunFeedback({ runId })).toBe(false);
+  });
+
+  it('keeps deferral until the last in-flight final-purpose attempt clears without accept', async () => {
+    // terminal_fallback + final_message can both be in flight. The first
+    // clear must not flush deferred feedback onto canonical runId while the
+    // other delivery can still accept a sticky body (e.g. runId:tf).
+    resetAcceptedFinalTraceBodyIdsForTests();
+    resetPendingRunFeedbackForTests();
+    const runId = 'run-dual-inflight-final';
+    const expectedTf = scopedTelemetryBodyId(runId, 'final', 'terminal_fallback');
+    const fetchSpy = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ successes: [], errors: [] }), { status: 207 }),
+    );
+
+    const tokenTf = markRunAwaitingFinalAcceptance(runId);
+    const tokenFinal = markRunAwaitingFinalAcceptance(runId);
+    expect(shouldDeferRunFeedback({ runId })).toBe(true);
+
+    await reportRunFeedback(
+      makeFeedbackCtx({
+        runId,
+        runStatus: 'failed',
+        telemetryFinalized: false,
+        reasonCodes: [],
+      }),
+      { config: TEST_CONFIG, fetchImpl: fetchSpy as any },
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    // First attempt fails/ends — other delivery still pending.
+    clearRunAwaitingFinalAcceptance(runId, tokenTf);
+    expect(shouldDeferRunFeedback({ runId })).toBe(true);
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    // Second attempt accepts sticky :tf and flushes the deferred score there.
+    rememberAcceptedFinalTraceBodyId(runId, expectedTf, 'terminal_fallback', 'langfuse');
+    await vi.waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalled();
+    });
+    const body = JSON.parse(fetchSpy.mock.calls[0]![1].body as string);
+    expect(body.batch[0].body.traceId).toBe(expectedTf);
+    // Stale clear of the already-superseded token must not re-flush canonical.
+    clearRunAwaitingFinalAcceptance(runId, tokenFinal);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('flushes deferred feedback to canonical only after the last in-flight attempt fails', async () => {
+    resetAcceptedFinalTraceBodyIdsForTests();
+    resetPendingRunFeedbackForTests();
+    const runId = 'run-dual-inflight-both-fail';
+    const fetchSpy = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ successes: [], errors: [] }), { status: 207 }),
+    );
+
+    const tokenTf = markRunAwaitingFinalAcceptance(runId);
+    const tokenFinal = markRunAwaitingFinalAcceptance(runId);
+    await reportRunFeedback(
+      makeFeedbackCtx({
+        runId,
+        runStatus: 'failed',
+        telemetryFinalized: false,
+        reasonCodes: [],
+      }),
+      { config: TEST_CONFIG, fetchImpl: fetchSpy as any },
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    clearRunAwaitingFinalAcceptance(runId, tokenTf);
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    clearRunAwaitingFinalAcceptance(runId, tokenFinal);
+    await vi.waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalled();
+    });
+    const body = JSON.parse(fetchSpy.mock.calls[0]![1].body as string);
+    expect(body.batch[0].body.traceId).toBe(runId);
   });
 
   it('defers feedback submitted before terminal_fallback acceptance onto runId:tf', async () => {

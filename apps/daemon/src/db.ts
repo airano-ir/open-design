@@ -1917,6 +1917,14 @@ export function setRunTelemetryAcceptedAnchor(
  * delayed terminal_fallback acceptance for run A still resolves after the
  * assistant row was rebound to run B.
  *
+ * Before that acceptance, this helper can return `null` for run A once the
+ * only assistant row has been rebound to run B (no run_id=A message row and
+ * no accepted anchor yet). Mid-window feedback must still defer via the
+ * process-local run-scoped awaiting token registered when terminal_fallback
+ * is scheduled (`markRunAwaitingFinalAcceptance(runId)`), not via message-row
+ * status — otherwise scores ship on canonical `runId` and detach from a later
+ * accepted `runId:tf` body.
+ *
  * An explicit `assistantMessageId` is only trusted when it is the terminal
  * assistant row for the URL `runId`. Stale or foreign ids (user messages,
  * other runs, non-terminal placeholders) fall through to the run lookup so

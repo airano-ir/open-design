@@ -75,6 +75,11 @@ export interface TelemetryDeps {
       projectId?: string;
       conversationId?: string;
       reportTrigger?: 'final_message' | 'terminal_fallback';
+      /**
+       * Schedule-time awaiting token from markRunAwaitingFinalAcceptance so the
+       * terminal_fallback delay and report share one in-flight attempt.
+       */
+      awaitingToken?: string;
     },
   ) => void;
   /**

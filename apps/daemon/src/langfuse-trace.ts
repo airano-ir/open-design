@@ -182,39 +182,81 @@ const acceptedFinalTraceBodyIds = new Map<
 >();
 
 /**
- * Process-local set of runs whose final-purpose telemetry delivery is still
- * in flight. createFinalizedMessageTelemetryReporter marks the message
- * `telemetry_finalized` before reportRunCompleted can call
- * rememberAcceptedFinalTraceBodyId; feedback during that window must wait.
+ * Process-local in-flight final-purpose telemetry deliveries, keyed by run id.
  *
- * Absent from this set means there is no completer that will flush a deferred
- * score (cold start, pre-migration row, or delivery already finished without
- * an accepted anchor) — do not queue forever on those rows.
+ * Each `markRunAwaitingFinalAcceptance` returns a token; only that token's
+ * matching clear (or a full clear on acceptance) ends that attempt. A boolean
+ * set is insufficient: `terminal_fallback` and `final_message` can both be in
+ * flight for the same run, and clearing on the first failure must not flush
+ * deferred feedback while the other delivery can still accept a sticky body.
+ *
+ * The schedule-time token for terminal_fallback delay is also run-scoped (not
+ * message-row-scoped), so after assistant-row reuse feedback for the old run
+ * still defers until that run's accepted body is known.
+ *
+ * Empty token set means there is no completer that will flush a deferred score
+ * (cold start, pre-migration row, or delivery already finished without an
+ * accepted anchor) — do not queue forever on those rows.
  */
-const runsAwaitingFinalAcceptance = new Set<string>();
+const runsAwaitingFinalAcceptance = new Map<string, Set<string>>();
+let awaitingFinalAcceptanceTokenSeq = 0;
+
+function awaitingFinalAcceptanceCount(runId: string): number {
+  return runsAwaitingFinalAcceptance.get(runId)?.size ?? 0;
+}
 
 /**
  * Mark a run as having a final-purpose telemetry delivery in flight so
  * feedback can defer until rememberAcceptedFinalTraceBodyId (or clear).
+ *
+ * Returns a token that must be passed to `clearRunAwaitingFinalAcceptance` for
+ * that attempt. Empty string means the run id was invalid and nothing was
+ * registered.
  */
-export function markRunAwaitingFinalAcceptance(runId: string): void {
+export function markRunAwaitingFinalAcceptance(runId: string): string {
   const key = typeof runId === 'string' ? runId.trim() : '';
-  if (key) runsAwaitingFinalAcceptance.add(key);
+  if (!key) return '';
+  let tokens = runsAwaitingFinalAcceptance.get(key);
+  if (!tokens) {
+    tokens = new Set();
+    runsAwaitingFinalAcceptance.set(key, tokens);
+  }
+  const token = `${key}:${++awaitingFinalAcceptanceTokenSeq}`;
+  tokens.add(token);
+  return token;
 }
 
 /**
- * End the live finalization wait for a run.
+ * End one (or all) live finalization wait(s) for a run.
  *
- * When an accepted body was never recorded, any deferred feedback is released
- * onto the canonical runId (legacy cold / failed-finalization path) instead of
- * remaining in pendingRunFeedbackByRunId until process exit.
+ * When `token` is provided, only that in-flight attempt is released. When
+ * omitted, every remaining attempt is cleared (used when an accepted body is
+ * already known or a path never obtained a token).
+ *
+ * Deferred feedback is released onto the canonical runId only when the last
+ * attempt ends without an accepted body (legacy cold / failed-finalization
+ * path) instead of remaining in pendingRunFeedbackByRunId until process exit.
  */
-export function clearRunAwaitingFinalAcceptance(runId: string): void {
+export function clearRunAwaitingFinalAcceptance(
+  runId: string,
+  token?: string | null,
+): void {
   const key = typeof runId === 'string' ? runId.trim() : '';
   if (!key) return;
-  if (!runsAwaitingFinalAcceptance.delete(key)) return;
+  const tokens = runsAwaitingFinalAcceptance.get(key);
+  if (!tokens || tokens.size === 0) return;
+
+  if (typeof token === 'string' && token) {
+    if (!tokens.delete(token)) return;
+  } else {
+    tokens.clear();
+  }
+
+  if (tokens.size > 0) return;
+  runsAwaitingFinalAcceptance.delete(key);
+
   // Accepted anchors already flushed via rememberAcceptedFinalTraceBodyId
-  // (which clears this set first). Remaining queue entries have no completer.
+  // (which clears tokens first). Remaining queue entries have no completer.
   if (acceptedFinalTraceBodyIds.has(key)) return;
   const pending = pendingRunFeedbackByRunId.get(key);
   if (!pending) return;
@@ -284,8 +326,9 @@ export function rememberAcceptedFinalTraceBodyId(
     ...(channel ? { deliveryChannel: channel } : {}),
     ...(identity ? { velaIdentity: identity } : {}),
   });
-  // End the live-finalization wait before flushing so a concurrent clear does
-  // not double-ship the same deferred score on the canonical body.
+  // End every live-finalization wait before flushing so a concurrent clear does
+  // not double-ship the same deferred score on the canonical body. Acceptance
+  // supersedes all in-flight tokens for this run.
   runsAwaitingFinalAcceptance.delete(key);
   // Replay any feedback that arrived during the terminal_fallback delay (or
   // before final_message acceptance) onto the body that was actually accepted.
@@ -372,10 +415,13 @@ export function shouldDeferRunFeedback(input: {
       ? input.acceptedTraceBodyId.trim()
       : '';
   if (accepted) return false;
-  // Live completer only. Cold failed/canceled/finalized rows have no pending
-  // rememberAcceptedFinalTraceBodyId / clearRunAwaitingFinalAcceptance — do
-  // not queue them forever on status or finalized flags alone.
-  return runsAwaitingFinalAcceptance.has(runId);
+  // Live completer only (schedule-time terminal_fallback token and/or in-flight
+  // final-purpose report tokens). Cold failed/canceled/finalized rows have no
+  // pending rememberAcceptedFinalTraceBodyId / clearRunAwaitingFinalAcceptance
+  // — do not queue them forever on status or finalized flags alone.
+  // Run-id tokens survive assistant-row reuse: getRunFeedbackTelemetryAnchor
+  // may return null for the old run while its delayed fallback is still open.
+  return awaitingFinalAcceptanceCount(runId) > 0;
 }
 
 export function queuePendingRunFeedback(
@@ -478,6 +524,7 @@ function flushPendingRunFeedback(
 export function resetPendingRunFeedbackForTests(): void {
   pendingRunFeedbackByRunId.clear();
   runsAwaitingFinalAcceptance.clear();
+  awaitingFinalAcceptanceTokenSeq = 0;
 }
 
 /**
