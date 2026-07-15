@@ -1022,7 +1022,9 @@ export interface Dict {
   'workspaceTabs.marketplace': string;
 
   // Entry home
-  'homeHero.title': string;
+  'homeHero.title.morning': string;
+  'homeHero.title.afternoon': string;
+  'homeHero.title.evening': string;
   'homeHero.startWithTemplate': string;
   'homeHero.startBlankProject': string;
   'homeHero.templatePicker.label': string;

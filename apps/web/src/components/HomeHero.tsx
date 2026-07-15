@@ -114,6 +114,7 @@ import {
   PLACEHOLDER_BASE_HINT_KEY,
   type PlaceholderScenario,
 } from './home-hero/placeholderScenarios';
+import { dayPeriodForHour, homeHeroGreetingKey } from './home-hero/greeting';
 
 export interface HomeHeroSubmitHandler {
   (): void;
@@ -373,6 +374,7 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
 ) {
   const { locale, t } = useI18n();
   const analytics = useAnalytics();
+  const [dayPeriod, setDayPeriod] = useState(() => dayPeriodForHour(new Date().getHours()));
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [mentionTab, setMentionTab] = useState<HomeMentionTab>('all');
   const [hoveredPlugin, setHoveredPlugin] = useState<InstalledPluginRecord | null>(null);
@@ -403,6 +405,11 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
   useEffect(() => {
     setPreviewTemplateId(null);
   }, [activeChipId]);
+  useEffect(() => {
+    const updateDayPeriod = () => setDayPeriod(dayPeriodForHour(new Date().getHours()));
+    const timer = window.setInterval(updateDayPeriod, 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
   const [selectedPromptExample, setSelectedPromptExample] = useState<SelectedPromptExample | null>(null);
   const [previewHomeFileKey, setPreviewHomeFileKey] = useState<string | null>(null);
   const [stagedFilePreviewUrls, setStagedFilePreviewUrls] = useState<Map<string, string>>(() => new Map());
@@ -1228,7 +1235,7 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
         <span className="home-hero__brand-mark od-brand-glyph" />
         <span className="home-hero__brand-name">Open Design</span>
       </div>
-      <h1 className="home-hero__title">{t('homeHero.title')}</h1>
+      <h1 className="home-hero__title">{t(homeHeroGreetingKey(dayPeriod))}</h1>
       <p className="home-hero__subtitle">
         {t('homeHero.subtitlePrefix')}
       </p>
