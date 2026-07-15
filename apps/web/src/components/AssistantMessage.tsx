@@ -2661,19 +2661,29 @@ function FormBlock({
         .map((value) => formOptionLabelForValue(question, value));
       if (labels.length === 0) continue;
 
-      const visualCards =
+      const visualStyleCards =
         visualStyleContext &&
         question.id === "tone" &&
         (question.type === "checkbox" || question.type === "radio") &&
         question.options
-          ? visualStyleCardsForOptions(visualStyleContext, question.options).flatMap((card) =>
-              values.includes(card.value) && card.preview
-                ? [{ title: card.title, src: card.preview.src }]
-                : [],
-            )
+          ? visualStyleCardsForOptions(visualStyleContext, question.options)
           : [];
+      const visualCards = visualStyleCards.flatMap((card) =>
+        values.includes(card.value) && card.preview
+          ? [{ title: card.title, src: card.preview.src }]
+          : [],
+      );
       if (visualCards.length > 0) {
         visualItems.push({ label: question.label, cards: visualCards });
+        const selectedLabelsWithoutPreview = visualStyleCards
+          .filter((card) => values.includes(card.value) && !card.preview)
+          .map((card) => formOptionLabelForValue(question, card.value));
+        if (selectedLabelsWithoutPreview.length > 0) {
+          items.push({
+            label: question.label,
+            value: selectedLabelsWithoutPreview.join(", "),
+          });
+        }
         continue;
       }
       items.push({ label: question.label, value: labels.join(", ") });

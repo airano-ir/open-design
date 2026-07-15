@@ -810,6 +810,42 @@ describe('AssistantMessage question forms', () => {
     );
   });
 
+  it('keeps selected visual styles without previews alongside preview cards', () => {
+    const form = [
+      '<question-form id="discovery" title="Quick brief">',
+      JSON.stringify({
+        questions: [
+          {
+            id: 'tone',
+            label: 'Visual tone',
+            type: 'checkbox',
+            options: ['Editorial / magazine', 'Luxury / refined'],
+          },
+        ],
+      }),
+      '</question-form>',
+    ].join('\n');
+
+    render(
+      <AssistantMessage
+        message={baseMessage({
+          content: form,
+          events: [{ kind: 'text', text: form } as ChatMessage['events'][number]],
+        })}
+        streaming={false}
+        projectId="proj-1"
+        projectKind="slide_deck"
+        nextUserContent={[
+          '[form answers for discovery]',
+          '- Visual tone: Editorial / magazine, Luxury / refined',
+        ].join('\n')}
+      />,
+    );
+
+    expect(screen.getByRole('img', { name: 'Visual tone: Editorial narrative' })).toBeTruthy();
+    expect(screen.getByText('Luxury / refined')).toBeTruthy();
+  });
+
   it('does not recommend next steps on the same turn as an inline question form', () => {
     const form = [
       '<question-form id="discovery" title="Quick brief — tailored">',
