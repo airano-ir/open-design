@@ -57,6 +57,14 @@
   color: var(--text-strong);
   text-align: center;
 }
+.home-hero__title-emoji {
+  display: inline-block;
+  margin-inline-start: 0.18em;
+  font-size: 0.6em;
+  line-height: 1;
+  vertical-align: 0.08em;
+  letter-spacing: 0;
+}
 .home-hero__subtitle {
   margin: 0;
   color: var(--text-muted);

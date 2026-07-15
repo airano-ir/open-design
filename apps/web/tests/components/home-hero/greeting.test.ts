@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { dayPeriodForHour, homeHeroGreetingKey } from '../../../src/components/home-hero/greeting';
+import {
+  dayPeriodEmoji,
+  dayPeriodForHour,
+  homeHeroGreetingKey,
+} from '../../../src/components/home-hero/greeting';
 
 describe('home hero time-aware greeting', () => {
   it.each([
@@ -17,5 +21,11 @@ describe('home hero time-aware greeting', () => {
     expect(homeHeroGreetingKey('morning')).toBe('homeHero.title.morning');
     expect(homeHeroGreetingKey('afternoon')).toBe('homeHero.title.afternoon');
     expect(homeHeroGreetingKey('evening')).toBe('homeHero.title.evening');
+  });
+
+  it('maps each period to its contextual emoji', () => {
+    expect(dayPeriodEmoji('morning')).toBe('☀️');
+    expect(dayPeriodEmoji('afternoon')).toBe('🌤️');
+    expect(dayPeriodEmoji('evening')).toBe('🌙');
   });
 });

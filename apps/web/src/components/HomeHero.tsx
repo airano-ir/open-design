@@ -114,7 +114,7 @@ import {
   PLACEHOLDER_BASE_HINT_KEY,
   type PlaceholderScenario,
 } from './home-hero/placeholderScenarios';
-import { dayPeriodForHour, homeHeroGreetingKey } from './home-hero/greeting';
+import { dayPeriodEmoji, dayPeriodForHour, homeHeroGreetingKey } from './home-hero/greeting';
 
 export interface HomeHeroSubmitHandler {
   (): void;
@@ -1235,7 +1235,12 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
         <span className="home-hero__brand-mark od-brand-glyph" />
         <span className="home-hero__brand-name">Open Design</span>
       </div>
-      <h1 className="home-hero__title">{t(homeHeroGreetingKey(dayPeriod))}</h1>
+      <h1 className="home-hero__title">
+        {t(homeHeroGreetingKey(dayPeriod))}
+        <span className="home-hero__title-emoji" aria-hidden="true">
+          {dayPeriodEmoji(dayPeriod)}
+        </span>
+      </h1>
       <p className="home-hero__subtitle">
         {t('homeHero.subtitlePrefix')}
       </p>
