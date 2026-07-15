@@ -135,6 +135,24 @@ describe('AssistantMessage tool status', () => {
     expect(container.textContent).not.toContain('×2');
   });
 
+  it('keeps read-only files in execution history instead of labeling them as output', () => {
+    render(
+      <AssistantMessage
+        projectKind="prototype"
+        conversationId="conv-1"
+        message={messageWithEvents([
+          { kind: 'tool_use', id: 'tool-1', name: 'Read', input: { file_path: '/repo/source.ts' } },
+          { kind: 'tool_result', toolUseId: 'tool-1', content: 'source', isError: false },
+        ])}
+        streaming={false}
+        projectId="project-1"
+      />,
+    );
+
+    expect(screen.getByTestId('task-activity-toggle')).toBeTruthy();
+    expect(screen.queryByTestId('file-ops-summary')).toBeNull();
+  });
+
   it('collapses mixed tool families into one execution record', () => {
     const { container } = render(
       <AssistantMessage
