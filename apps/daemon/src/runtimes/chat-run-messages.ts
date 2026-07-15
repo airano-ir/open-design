@@ -297,11 +297,13 @@ export function pinAssistantMessageOnRunCreate(db: SqliteDb, run: ChatRunMessage
       typeof run.id === 'string' && run.id.trim() ? run.id.trim() : null;
     const clearAcceptedTelemetryAnchor = prevRunId !== nextRunId;
     // Ownership change (retry reusing the assistant id under a new run_id)
-    // must write the new run's status. Preserving a prior terminal
-    // run_status would make a fresh retry look completed until the next
-    // message upsert, so feedback and other terminal-state logic can
-    // observe run B as failed/succeeded/canceled before it produces output.
-    // Same-run re-pins still preserve an already-terminal status.
+    // must write the new run's status and clear run-owned terminal metadata.
+    // Preserving a prior terminal run_status would make a fresh retry look
+    // completed until the next message upsert; leaving result_delivery_state
+    // or started_at/ended_at from run A would mark run B as already
+    // delivery_failed/no_result and leak stale duration into conversation
+    // summaries (conversationRunSummaryFromRow trusts any finite pair).
+    // Same-run re-pins still preserve terminal status and timestamps.
     db.prepare(
       `UPDATE messages
           SET run_id = ?,
@@ -310,9 +312,20 @@ export function pinAssistantMessageOnRunCreate(db: SqliteDb, run: ChatRunMessage
                 WHEN run_status IN ('succeeded', 'failed', 'canceled') THEN run_status
                 ELSE ?
               END,
+              result_delivery_state = CASE
+                WHEN ? THEN NULL
+                ELSE result_delivery_state
+              END,
               session_mode = ?,
               run_context_json = ?,
-              started_at = COALESCE(started_at, ?),
+              started_at = CASE
+                WHEN ? THEN ?
+                ELSE COALESCE(started_at, ?)
+              END,
+              ended_at = CASE
+                WHEN ? THEN NULL
+                ELSE ended_at
+              END,
               telemetry_finalized_at = CASE
                 WHEN ? THEN NULL
                 ELSE telemetry_finalized_at
@@ -335,9 +348,13 @@ export function pinAssistantMessageOnRunCreate(db: SqliteDb, run: ChatRunMessage
       clearAcceptedTelemetryAnchor ? 1 : 0,
       run.status,
       run.status,
+      clearAcceptedTelemetryAnchor ? 1 : 0,
       run.sessionMode ?? null,
       run.context ? JSON.stringify(run.context) : null,
+      clearAcceptedTelemetryAnchor ? 1 : 0,
       run.createdAt,
+      run.createdAt,
+      clearAcceptedTelemetryAnchor ? 1 : 0,
       clearAcceptedTelemetryAnchor ? 1 : 0,
       clearAcceptedTelemetryAnchor ? 1 : 0,
       clearAcceptedTelemetryAnchor ? 1 : 0,

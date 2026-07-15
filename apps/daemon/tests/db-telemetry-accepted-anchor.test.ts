@@ -427,6 +427,13 @@ describe('persisted telemetry accepted anchor', () => {
     const staleBodyId = scopedTelemetryBodyId(oldRunId, 'final', 'terminal_fallback');
     const db = openDatabase(tempDir, { dataDir: tempDir });
     seedFailedAssistant(db, oldRunId);
+    // Seed terminal delivery metadata from the failed run so ownership change
+    // must clear it (otherwise a fresh running retry stays delivery_failed).
+    db.prepare(
+      `UPDATE messages
+          SET result_delivery_state = ?, started_at = ?, ended_at = ?
+        WHERE id = ?`,
+    ).run('delivery_failed', 1_700_000_000_000, 1_700_000_001_000, 'assistant-1');
     expect(
       setRunTelemetryAcceptedAnchor(db, {
         runId: oldRunId,
@@ -446,12 +453,13 @@ describe('persisted telemetry accepted anchor', () => {
 
     // Run creation pins existing assistant rows through a raw UPDATE, not
     // upsertMessage — message columns clear for B, run-keyed A stays.
+    const retryCreatedAt = 1_700_000_100_000;
     pinAssistantMessageOnRunCreate(db, {
       id: newRunId,
       conversationId: 'conv-1',
       assistantMessageId: 'assistant-1',
       status: 'running',
-      createdAt: Date.now(),
+      createdAt: retryCreatedAt,
     });
 
     expect(getRunFeedbackTelemetryAnchor(db, oldRunId, 'assistant-1')).toEqual({
@@ -471,6 +479,26 @@ describe('persisted telemetry accepted anchor', () => {
       acceptedReportTrigger: null,
       acceptedDeliveryChannel: null,
       acceptedVelaIdentity: null,
+    });
+    // Run-owned terminal fields must reset so conversation summaries and
+    // delivery state do not inherit the previous run.
+    expect(
+      db
+        .prepare(
+          `SELECT result_delivery_state AS resultDeliveryState,
+                  started_at AS startedAt,
+                  ended_at AS endedAt
+             FROM messages WHERE id = ?`,
+        )
+        .get('assistant-1') as {
+        resultDeliveryState: string | null;
+        startedAt: number | null;
+        endedAt: number | null;
+      },
+    ).toEqual({
+      resultDeliveryState: null,
+      startedAt: retryCreatedAt,
+      endedAt: null,
     });
     expect(getMessageTelemetryFinalizationState(db, 'assistant-1')).toEqual({
       exists: true,
@@ -502,7 +530,7 @@ describe('persisted telemetry accepted anchor', () => {
       conversationId: 'conv-1',
       assistantMessageId: 'assistant-1',
       status: 'running',
-      createdAt: Date.now(),
+      createdAt: retryCreatedAt + 1,
     });
     expect(getRunFeedbackTelemetryAnchor(db, newRunId, 'assistant-1')).toEqual({
       runStatus: 'running',
@@ -511,6 +539,26 @@ describe('persisted telemetry accepted anchor', () => {
       acceptedReportTrigger: 'final_message',
       acceptedDeliveryChannel: null,
       acceptedVelaIdentity: null,
+    });
+    // Same-run re-pin must keep the ownership-change started_at (COALESCE)
+    // and leave ended_at / result_delivery_state cleared.
+    expect(
+      db
+        .prepare(
+          `SELECT result_delivery_state AS resultDeliveryState,
+                  started_at AS startedAt,
+                  ended_at AS endedAt
+             FROM messages WHERE id = ?`,
+        )
+        .get('assistant-1') as {
+        resultDeliveryState: string | null;
+        startedAt: number | null;
+        endedAt: number | null;
+      },
+    ).toEqual({
+      resultDeliveryState: null,
+      startedAt: retryCreatedAt,
+      endedAt: null,
     });
   });
 
