@@ -764,7 +764,7 @@ export function TasksView({ skills = [], designTemplates = [], connectors = [] }
                       disabled={isBusy}
                       title={t('automations.runNowTitle')}
                     >
-                      <Icon name="play" size={12} />
+                      <Icon name="play" size={14} />
                       <span>{t('automations.run')}</span>
                     </button>
                     <button
@@ -777,7 +777,7 @@ export function TasksView({ skills = [], designTemplates = [], connectors = [] }
                       }}
                       aria-expanded={isExpanded}
                     >
-                      <Icon name="history" size={12} />
+                      <Icon name="history" size={14} />
                       <span>{isExpanded ? t('automations.hideHistory') : t('automations.history')}</span>
                     </button>
                     <button
@@ -789,7 +789,7 @@ export function TasksView({ skills = [], designTemplates = [], connectors = [] }
                       }}
                       disabled={isBusy}
                     >
-                      <Icon name="edit" size={12} />
+                      <Icon name="edit" size={14} />
                       <span>{t('automations.edit')}</span>
                     </button>
                     <button
@@ -814,7 +814,7 @@ export function TasksView({ skills = [], designTemplates = [], connectors = [] }
                       aria-label={t('automations.deleteAria')}
                       title={t('automations.deleteTitle')}
                     >
-                      <Icon name="trash" size={12} />
+                      <Icon name="trash" size={14} />
                     </button>
                   </div>
                   {isExpanded ? (
@@ -884,7 +884,7 @@ export function TasksView({ skills = [], designTemplates = [], connectors = [] }
                       }}
                       disabled={isBusy}
                     >
-                      <Icon name="check" size={12} />
+                      <Icon name="check" size={14} />
                       <span>{t('automations.apply')}</span>
                     </button>
                     <button
@@ -972,14 +972,14 @@ export function TasksView({ skills = [], designTemplates = [], connectors = [] }
               </span>
               <span className="automation-template-card__body">
                 <span className="automation-template-card__kicker">
-                  <Icon name={kindIcon(template.kind)} size={11} />
+                  <Icon name={kindIcon(template.kind)} size={14} />
                   {kindLabel(template.kind, t)}
                 </span>
                 <span className="automation-template-card__title">{template.title}</span>
                 <span className="automation-template-card__desc">{template.description}</span>
                 <span className="automation-template-card__cta">
                   {t('automations.useTemplate')}
-                  <Icon name="chevron-right" size={12} />
+                  <Icon name="chevron-right" size={14} />
                 </span>
               </span>
             </button>
@@ -1106,7 +1106,7 @@ function AutomationRunHistory({
                   disabled={crystallizingRunId === run.id}
                   title={t('automations.crystallizeTitle')}
                 >
-                  <Icon name="sparkles" size={12} />
+                  <Icon name="sparkles" size={14} />
                   <span>{crystallizingRunId === run.id ? t('automations.crystallizing') : t('automations.crystallize')}</span>
                 </button>
               ) : null}
@@ -1124,7 +1124,7 @@ function AutomationRunHistory({
                 }}
               >
                 {t('automations.openConversation')}
-                <Icon name="chevron-right" size={12} />
+                <Icon name="chevron-right" size={14} />
               </button>
             </div>
           </li>

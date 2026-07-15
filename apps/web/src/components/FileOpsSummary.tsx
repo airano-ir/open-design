@@ -90,13 +90,13 @@ export function FileOpsSummary({
         data-testid="file-ops-toggle"
       >
         <span className="file-ops-icon" aria-hidden>
-          <Icon name="file" size={13} />
+          <Icon name="file" size={14} />
         </span>
         <span className="file-ops-label">{t('assistant.producedFiles')}</span>
         <span className="file-ops-summary-line">{summaryParts.join(' · ')}</span>
         <span className="file-ops-count">{entries.length}</span>
         <span className="file-ops-chev" aria-hidden>
-          <Icon name={open ? 'chevron-down' : 'chevron-right'} size={11} />
+          <Icon name={open ? 'chevron-down' : 'chevron-right'} size={14} />
         </span>
       </button>
       {open ? (

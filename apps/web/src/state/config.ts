@@ -21,7 +21,8 @@ import {
 import { randomUUID } from '../utils/uuid';
 
 const STORAGE_KEY = 'open-design:config';
-const CONFIG_MIGRATION_VERSION = 1;
+const CONFIG_MIGRATION_VERSION = 2;
+const LEGACY_DEFAULT_ACCENT_COLOR = '#87ea5c';
 
 // Hatched out of the box, but tucked away — the user has to go through
 // either the entry-view "adopt a pet" callout or Settings → Pets to
@@ -43,7 +44,7 @@ export const DEFAULT_PET: PetConfig = {
   custom: {
     name: 'Buddy',
     glyph: '🦄',
-    accent: '#c96442',
+    accent: '#353535',
     greeting: 'Hi! I am here whenever you need me.',
   },
 };
@@ -619,6 +620,9 @@ export function loadConfig(): AppConfig {
           (p) => p.baseUrl === merged.baseUrl,
         );
         merged.apiProviderBaseUrl = knownProvider?.baseUrl ?? null;
+      }
+      if (normalizeAccentColor(parsed.accentColor) === LEGACY_DEFAULT_ACCENT_COLOR) {
+        merged.accentColor = DEFAULT_CONFIG.accentColor;
       }
       merged.configMigrationVersion = CONFIG_MIGRATION_VERSION;
     }

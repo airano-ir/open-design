@@ -8,16 +8,17 @@ const ACCENT_VARS = [
   '--accent-hover',
 ] as const;
 
-export const DEFAULT_ACCENT_COLOR = '#c96442';
+export const DEFAULT_ACCENT_COLOR = '#353535';
 export const ACCENT_SWATCHES = [
   DEFAULT_ACCENT_COLOR,
-  '#2563eb',
-  '#7c3aed',
-  '#059669',
-  '#dc2626',
-  '#d97706',
-  '#0891b2',
-  '#db2777',
+  '#202020',
+  '#848484',
+  '#87ea5c',
+  '#0d5400',
+  '#1A74FF',
+  '#FFBA12',
+  '#FF7528',
+  '#F04142',
 ] as const;
 
 export function normalizeAccentColor(value: unknown): string | null {
@@ -34,10 +35,10 @@ function accentVars(accentColor: string): Record<(typeof ACCENT_VARS)[number], s
   return {
     '--accent': accentColor,
     // Keep these mix ratios in sync with the pre-hydration script in app/layout.tsx.
-    '--accent-strong': `color-mix(in srgb, ${accentColor} 86%, var(--text-strong))`,
-    '--accent-soft': `color-mix(in srgb, ${accentColor} 22%, var(--bg-panel))`,
-    '--accent-tint': `color-mix(in srgb, ${accentColor} 12%, var(--bg-panel))`,
-    '--accent-hover': `color-mix(in srgb, ${accentColor} 90%, var(--text-strong))`,
+    '--accent-strong': `color-mix(in srgb, ${accentColor} 82%, var(--text-strong))`,
+    '--accent-soft': `color-mix(in srgb, ${accentColor} 12%, var(--bg-subtle))`,
+    '--accent-tint': `color-mix(in srgb, ${accentColor} 6%, var(--bg-panel))`,
+    '--accent-hover': `color-mix(in srgb, ${accentColor} 86%, var(--text-strong))`,
   };
 }
 

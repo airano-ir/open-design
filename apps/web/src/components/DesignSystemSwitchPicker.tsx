@@ -112,7 +112,7 @@ export function DesignSystemSwitchPicker({
           onClick={onBack}
           aria-label={t('chat.importDesignSystemBack')}
         >
-          <Icon name="arrow-up" size={12} style={{ transform: 'rotate(-90deg)' }} />
+          <Icon name="arrow-up" size={14} style={{ transform: 'rotate(-90deg)' }} />
           <span>{t('chat.importDesignSystemBack')}</span>
         </button>
         <div className="composer-ds-picker-title">{t('chat.importDesignSystemHeader')}</div>

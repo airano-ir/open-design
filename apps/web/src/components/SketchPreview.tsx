@@ -397,7 +397,7 @@ function renderSketchSvgItem(item: SketchItem, index: number) {
       y={clampSketchNumber(item.y)}
       fill={item.color}
       fontSize={Math.max(12, clampSketchSize(item.size))}
-      fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+      fontFamily="Albert Sans, PingFang SC, Microsoft YaHei, sans-serif"
     >
       {normalizeSketchText(item.text)}
     </text>

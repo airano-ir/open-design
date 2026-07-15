@@ -302,9 +302,9 @@ export function SessionModeToggle({ mode, onChange, disabled = false }: Props) {
           setPreviewMode(mode);
         }}
       >
-        <Icon name={active.icon} size={13} />
+        <Icon name={active.icon} size={14} />
         <span className="session-mode-toggle__label">{active.label}</span>
-        <Icon name="chevron-down" size={12} />
+        <Icon name="chevron-down" size={14} />
       </button>
       {open ? (
         <div className="session-mode-toggle__popover">
@@ -331,11 +331,11 @@ export function SessionModeToggle({ mode, onChange, disabled = false }: Props) {
                       closeMenu();
                     }}
                   >
-                    <Icon name={item.icon} size={13} />
+                    <Icon name={item.icon} size={14} />
                     <span className="session-mode-toggle__label">{item.label}</span>
                     <ModeCostTag cost={item.cost} label={item.costLabel} variant="menu" />
                     <span className="session-mode-toggle__check" aria-hidden>
-                      {itemActive ? <Icon name="check" size={13} /> : null}
+                      {itemActive ? <Icon name="check" size={14} /> : null}
                     </span>
                   </button>
                 );

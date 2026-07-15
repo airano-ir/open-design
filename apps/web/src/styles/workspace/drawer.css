@@ -4,8 +4,8 @@
   inset: 0;
   z-index: 100;
   background: color-mix(in srgb, #111827 18%, transparent);
-  backdrop-filter: blur(1px);
-  -webkit-backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: var(--scrim-backdrop);
+  backdrop-filter: var(--scrim-backdrop);
   display: flex;
   justify-content: flex-end;
   align-items: flex-end;
@@ -54,7 +54,7 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -62,7 +62,7 @@
 }
 .connector-drawer-titles h2 {
   margin: 0;
-  font-size: 21px;
+  font-size: 20px;
   font-weight: 600;
   line-height: 1.2;
   letter-spacing: 0;
@@ -84,7 +84,7 @@
   border: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
   background: color-mix(in srgb, var(--bg-panel) 72%, var(--bg-subtle));
   color: var(--text-muted);
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1.2;
 }
@@ -126,7 +126,7 @@
 }
 .connector-drawer-section-title {
   margin: 0;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -158,7 +158,7 @@
   background: var(--bg-subtle);
   border: 1px solid var(--border);
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0;
   text-transform: none;
@@ -190,7 +190,7 @@
 .connector-drawer-details dt {
   margin: 0;
   color: var(--text-muted);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
 }
 .connector-drawer-details dd {
@@ -241,7 +241,7 @@
 }
 .connector-drawer-tool-title {
   min-width: 0;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text);
   line-height: 1.35;
@@ -252,7 +252,7 @@
   flex: 0 0 auto;
   padding: 1px 6px;
   border-radius: var(--radius-pill);
-  font-size: 9.5px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -283,7 +283,7 @@
 }
 .connector-drawer-tool-name {
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--text-faint);
   background: color-mix(in srgb, var(--bg-subtle) 76%, transparent);
   padding: 2px 5px;
@@ -446,7 +446,17 @@
   overflow: hidden;
   min-height: 168px;
 }
+.design-card.is-design-system-project {
+  border-color: color-mix(in srgb, var(--red) 62%, var(--border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--red) 42%, transparent);
+}
 .design-card:hover { border-color: var(--border-strong); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+.design-card.is-design-system-project:hover {
+  border-color: var(--red);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--red) 54%, transparent),
+    var(--shadow-sm);
+}
 .design-card-thumb {
   flex: 1;
   min-height: 100px;
@@ -455,8 +465,11 @@
   justify-content: center;
   background: var(--bg-subtle);
   color: var(--text-faint);
-  font-size: 38px;
+  font-size: 36px;
   position: relative;
+  /* Clip the hover cover zoom below so scaled media never bleeds onto the
+     meta block. */
+  overflow: hidden;
 }
 .design-card-thumb::before {
   /* Folder-shape icon */
@@ -503,7 +516,7 @@
   display: flex;
   align-items: baseline;
   gap: 6px;
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-muted);
   min-width: 0;
   white-space: nowrap;
@@ -627,7 +640,7 @@
   background: transparent;
   border-radius: var(--radius-sm);
   color: var(--text-strong);
-  font-size: 12.5px;
+  font-size: 13px;
   text-align: left;
   cursor: pointer;
 }
@@ -672,11 +685,10 @@
   border-radius: var(--radius-pill);
   background: var(--bg-panel);
   color: var(--text-strong);
-  font-size: 12.5px;
+  font-size: 13px;
   cursor: pointer;
 }
 .designs-select-toggle:hover { border-color: var(--border-strong); }
-.designs-new-project-button,
 .designs-refresh-button {
   display: inline-flex;
   align-items: center;
@@ -687,15 +699,10 @@
   border-radius: var(--radius-pill);
   background: var(--bg-panel);
   color: var(--text-strong);
-  font-size: 12.5px;
+  font-size: 13px;
   cursor: pointer;
   transition: border-color 120ms var(--ease-out), opacity 120ms var(--ease-out);
 }
-.designs-new-project-button {
-  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
-  color: var(--accent);
-}
-.designs-new-project-button:hover,
 .designs-refresh-button:hover:not(:disabled) {
   border-color: var(--border-strong);
 }
@@ -713,7 +720,7 @@
   background: var(--bg-panel);
 }
 .designs-select-count {
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text-strong);
 }
 .designs-select-delete {
@@ -770,6 +777,7 @@
   height: 100%;
   object-fit: cover;
   display: block;
+  transition: transform 320ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 .design-card-thumb .thumb-iframe {
   position: absolute;
@@ -777,11 +785,22 @@
   left: 0;
   width: 250%;
   height: 250%;
-  transform: scale(0.4);
+  /* --thumb-zoom multiplies the fixed fit scale so the hover zoom composes
+     with (never replaces) it. */
+  --thumb-zoom: 1;
+  transform: scale(calc(0.4 * var(--thumb-zoom)));
   transform-origin: top left;
   border: 0;
   background: var(--bg-panel);
   pointer-events: none;
+  transition: transform 320ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+/* Subtle cover zoom on hover. */
+.design-card:hover .design-card-thumb .thumb-media {
+  transform: scale(1.04);
+}
+.design-card:hover .design-card-thumb .thumb-iframe {
+  --thumb-zoom: 1.04;
 }
 .project-thumb-image,
 .project-thumb-video,
@@ -874,7 +893,7 @@
   border-radius: var(--radius-pill);
   border: 1px solid var(--border);
   padding: 2px 7px;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -910,7 +929,7 @@
 }
 .live-artifact-badges.compact .live-artifact-badge {
   padding: 1px 5px;
-  font-size: 9px;
+  font-size: 12px;
   line-height: 1.25;
 }
 .design-live-count {
@@ -984,7 +1003,7 @@
   background: var(--bg-panel);
   border: 1px solid var(--border-soft);
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 12px;
   padding: 2px 8px;
   border-radius: var(--radius-pill);
   flex-shrink: 0;
@@ -1019,10 +1038,22 @@
   transition: border-color 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out), transform 0.15s var(--ease-out);
   box-shadow: var(--shadow-xs);
 }
+.design-kanban-card.is-design-system-project {
+  border-color: color-mix(in srgb, var(--red) 62%, var(--border));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--red) 42%, transparent),
+    var(--shadow-xs);
+}
 .design-kanban-card:hover {
   border-color: var(--border-strong);
   box-shadow: var(--shadow-sm);
   transform: translateY(-1px);
+}
+.design-kanban-card.is-design-system-project:hover {
+  border-color: var(--red);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--red) 54%, transparent),
+    var(--shadow-sm);
 }
 .design-kanban-card:active {
   transform: none;
@@ -1124,7 +1155,7 @@
 }
 .example-cta { align-self: flex-start; padding: 8px 18px; }
 .example-tag {
-  font-size: 10px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   padding: 2px 8px;
@@ -1204,7 +1235,7 @@
   bottom: 8px;
   background: rgba(15, 15, 18, 0.78);
   color: #fff;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1242,7 +1273,7 @@
   min-width: 0;
 }
 .ds-card-badge {
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.06em;
   padding: 2px 6px;
@@ -1269,7 +1300,7 @@
   padding-top: 6px;
 }
 .ds-card-category {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1318,7 +1349,7 @@
   gap: 8px;
 }
 .ds-row-default {
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.06em;
   padding: 2px 6px;
@@ -1345,11 +1376,10 @@
 .ds-row-swatch + .ds-row-swatch { border-left: 1px solid rgba(0, 0, 0, 0.05); }
 
 @media (max-width: 900px) {
-  .entry {
-    grid-template-columns: 56px 1fr !important;
-    height: 100%;
-    min-height: 0;
-  }
+  /* The legacy `.entry { grid-template-columns: 56px 1fr !important }` narrow
+     override is gone: entry-layout.css owns the entry grid now, and its
+     ≤1080px rule collapses the rail track to 0 (hidden) instead of squeezing
+     a broken 56px sliver. */
   .example-card { grid-template-columns: 1fr; }
   .example-preview { height: 240px; }
   /* Note: home-redesign breakpoints (entry-nav-rail, entry-main__inner,
@@ -1368,7 +1398,7 @@
   flex-direction: column;
   min-height: 0;
   min-width: 0;
-  background: var(--bg);
+  background: var(--veil-canvas);
   flex: 1;
   overflow: hidden;
 }
@@ -1377,9 +1407,15 @@
   align-items: center;
   gap: 8px;
   padding: 0 10px;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-panel);
-  height: 38px;
+  /* Solid, matching the panel below (材质规范 exception: nothing scrolls
+     under this strip, so glass only produced a tone mismatch). */
+  background: var(--bg);
+  /* 44px (matches the top workspace chrome) rather than 38px: the active tab
+     pill carries a 1px inset border now, and at 38px the pill filled almost
+     the whole row so `.ws-tabs-bar`'s `overflow-y: hidden` shaved its top and
+     bottom border strokes. The extra height gives the pill clear vertical
+     margin so it reads fully, un-clipped. */
+  height: 44px;
   position: sticky;
   top: 0;
   z-index: 4;
@@ -1390,7 +1426,7 @@
 .ws-tabs-bar {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 0;
   overflow-x: auto;
   overflow-y: hidden;
   flex-wrap: nowrap;
@@ -1428,6 +1464,7 @@
   gap: 6px;
   flex-shrink: 0;
 }
+
 /* The present button is wrapped in an inline-block .present-wrap that
    doesn't vertically center its child; make it a flex item so the icon
    button sits on the row's centerline like the others. */
@@ -1435,13 +1472,14 @@
   display: inline-flex;
   align-items: center;
 }
-.ws-tabs-file-actions-before:not(:empty) + .ws-tabs-file-actions:not(:empty),
+/* Settings cluster sits after the file-actions group with a small gap and no
+   divider (both the leading divider before file-actions and this one after
+   分享 were removed per design). */
 .ws-tabs-file-actions:not(:empty) + .ws-tabs-project-actions {
   margin-inline-start: 2px;
-  padding-inline-start: 8px;
-  border-inline-start: 1px solid var(--border);
+  padding-inline-start: 4px;
 }
-/* The Design Files row is 38px tall, so shrink the action cluster's buttons
+/* The Design Files row is 44px tall, so shrink the action cluster's buttons
    (present / share / handoff / avatar) to sit comfortably within it without
    touching the global chrome-action sizing used elsewhere. The `.app`
    prefix matches the specificity of the global `.app .handoff-trigger` /
@@ -1460,6 +1498,20 @@
   min-height: 28px;
   padding: 0;
   justify-content: center;
+  /* Borderless soft grey-white icon buttons: drop the outline and sit on a
+     light grey fill so present / 历史版本 read as one quiet cluster next to the
+     dark 分享 button. */
+  border-color: transparent;
+  background: var(--bg-subtle);
+}
+.app .ws-tabs-actions .chrome-action-icon:hover:not(:disabled) {
+  background: var(--bg-muted);
+  border-color: transparent;
+}
+.app .ws-tabs-actions .chrome-action-icon.is-active,
+.app .ws-tabs-actions .chrome-action-icon[aria-expanded='true'] {
+  background: var(--bg-muted);
+  border-color: transparent;
 }
 .app .ws-tabs-actions .handoff-trigger {
   height: 28px;
@@ -1476,16 +1528,136 @@
 .app .ws-tabs-actions .chrome-action > svg:first-child {
   transform: none;
 }
+/* 分享 button as a solid dark (inverted) action: black fill + white icon/label
+   in light mode; inverts cleanly to a light fill + dark content in dark mode. */
+.app .ws-tabs-actions .chrome-action-share-dark {
+  background: var(--text-strong);
+  border-color: var(--text-strong);
+  color: var(--bg-app);
+}
+.app .ws-tabs-actions .chrome-action-share-dark:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--text-strong) 88%, var(--bg-app));
+  border-color: color-mix(in srgb, var(--text-strong) 88%, var(--bg-app));
+  color: var(--bg-app);
+}
+.app .ws-tabs-actions .chrome-action-share-dark svg,
+.app .ws-tabs-actions .chrome-action-share-dark i {
+  color: var(--bg-app);
+}
+
+.project-collab-demo-stage {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.project-collab-demo-stage > .viewer {
+  height: 100%;
+}
+
+.project-collab-demo-overlay {
+  position: absolute;
+  inset: 48px 0 0;
+  z-index: 32;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.project-collab-demo-selection {
+  --collab-color: var(--accent);
+  position: absolute;
+  border: 2px solid var(--collab-color);
+  border-radius: 12px;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, #fff 82%, transparent),
+    0 0 0 4px color-mix(in srgb, var(--collab-color) 12%, transparent),
+    0 16px 44px color-mix(in srgb, var(--collab-color) 16%, transparent);
+  transition:
+    left 520ms cubic-bezier(0.23, 1, 0.32, 1),
+    top 520ms cubic-bezier(0.23, 1, 0.32, 1),
+    width 520ms cubic-bezier(0.23, 1, 0.32, 1),
+    height 520ms cubic-bezier(0.23, 1, 0.32, 1),
+    border-color 220ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.project-collab-demo-selection > span {
+  position: absolute;
+  top: -29px;
+  left: -2px;
+  padding: 5px 8px 6px;
+  border-radius: var(--radius-large, 8px) 7px 7px 2px;
+  background: var(--collab-color);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.project-collab-demo-cursor {
+  --collab-color: var(--accent);
+  position: absolute;
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: var(--collab-color);
+  filter: drop-shadow(0 6px 12px color-mix(in srgb, var(--text-strong) 16%, transparent));
+  transition:
+    left 520ms cubic-bezier(0.23, 1, 0.32, 1),
+    top 520ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.project-collab-demo-cursor__pointer {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  transform: translate(-4px, -3px);
+}
+
+.project-collab-demo-cursor__outline {
+  fill: #fff;
+  stroke: #fff;
+  stroke-linejoin: round;
+  stroke-width: 3.25px;
+}
+
+.project-collab-demo-cursor__fill {
+  fill: var(--collab-color);
+  stroke: color-mix(in srgb, var(--collab-color) 72%, #000);
+  stroke-linejoin: round;
+  stroke-width: 0.75px;
+}
+
+.project-collab-demo-cursor__name {
+  margin-top: 11px;
+  margin-left: -9px;
+  padding: 3px 8px 4px;
+  border-radius: var(--radius-medium, 4px);
+  background: var(--collab-color);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, #fff 18%, transparent),
+    0 5px 12px color-mix(in srgb, var(--collab-color) 18%, transparent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
 
 .ws-tab {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 5px 8px;
+  box-sizing: border-box;
+  height: 30px;
+  min-height: 30px;
+  padding: 0 8px;
   background: transparent;
   border: none;
-  border-radius: var(--radius-sm);
-  font-size: 12.5px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  line-height: 1;
   cursor: pointer;
   flex-shrink: 0;
   max-width: 110px;
@@ -1523,7 +1695,7 @@
 .ws-tab.active {
   background: var(--bg-subtle);
   color: var(--text);
-  font-weight: 500;
+  box-shadow: none;
 }
 .ws-tab .tab-icon {
   flex: 0 0 auto;
@@ -1558,6 +1730,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 96px;
+  line-height: 1;
 }
 .ws-tab.has-meta {
   max-width: 320px;
@@ -1577,8 +1750,8 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--text-faint);
-  font-size: 11.5px;
-  font-weight: 450;
+  font-size: 12px;
+  font-weight: 500;
 }
 .ws-tab-meta::before {
   content: "/";
@@ -2458,7 +2631,7 @@
 }
 .ws-tabs-bar.is-overflowing + .ws-add-tab {
   padding-left: 4px;
-  background: var(--bg-panel);
+  background: #fff;
   box-shadow: -8px 0 10px -9px color-mix(in srgb, var(--text) 30%, transparent);
 }
 .ws-tab-add {
@@ -2466,7 +2639,7 @@
   height: 28px;
   padding: 0;
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   background: transparent;
   color: var(--text-muted);
   display: inline-flex;
@@ -2520,7 +2693,7 @@
 }
 .ws-tab-action {
   padding: 4px 12px;
-  font-size: 12.5px;
+  font-size: 13px;
   background: transparent;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
@@ -2538,6 +2711,23 @@
   border-color: #000;
 }
 
+.workspace-readonly-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 7px 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+  background: color-mix(in srgb, var(--bg-subtle) 74%, var(--bg-panel));
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.workspace-readonly-notice svg {
+  flex: 0 0 auto;
+  color: var(--text-soft);
+}
+
 .ws-body {
   flex: 1;
   min-height: 0;
@@ -2547,7 +2737,7 @@
 }
 
 .ws-browser-panel {
-  display: flex;
+  display: none;
   position: absolute;
   inset: 0;
   flex: 1 1 auto;
@@ -2555,16 +2745,9 @@
   width: 100%;
   height: 100%;
   overflow: hidden;
-  opacity: 0;
-  pointer-events: none;
-  visibility: hidden;
-  z-index: 0;
 }
 .ws-browser-panel.active {
-  opacity: 1;
-  pointer-events: auto;
-  visibility: visible;
-  z-index: 1;
+  display: flex;
 }
 
 .designs-empty-state {
@@ -2611,22 +2794,4 @@
 
 .designs-empty-cta:active {
   transform: scale(0.98);
-}
-
-/* Read-only notice for a member viewing a team-shared project (single-writer). */
-.workspace-readonly-notice {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 34px;
-  padding: 7px 14px;
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
-  background: color-mix(in srgb, var(--bg-subtle) 74%, var(--bg-panel));
-  color: var(--text-muted);
-  font-size: 12px;
-  line-height: 1.35;
-}
-.workspace-readonly-notice svg {
-  flex: 0 0 auto;
-  color: var(--text-soft);
 }

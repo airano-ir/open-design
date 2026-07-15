@@ -874,7 +874,7 @@ function DesignKitViewInner({
         title={label}
         aria-label={label}
       >
-        <Icon name={loading ? 'spinner' : icon} size={13} />
+        <Icon name={loading ? 'spinner' : icon} size={14} />
         <span>{label}</span>
       </button>
     );
@@ -1343,7 +1343,7 @@ function DesignKitViewInner({
                           title={t('ds.editColor', { name: c.name || c.role || t('ds.colorLabel') })}
                           onClick={() => openColorEditor(i)}
                         >
-                          <Icon name="edit" size={13} />
+                          <Icon name="edit" size={14} />
                         </button>
                       ) : null}
                       <span
@@ -1508,7 +1508,7 @@ function DesignKitViewInner({
                             aria-label={t('ds.deleteImage', { caption: cap })}
                             title={t('ds.deleteImage', { caption: cap })}
                           >
-                            <Icon name={actionBusy === `delete-image:${sampleIndex}` ? 'spinner' : 'trash'} size={13} />
+                            <Icon name={actionBusy === `delete-image:${sampleIndex}` ? 'spinner' : 'trash'} size={14} />
                           </button>
                         ) : null}
                         {s.caption || s.kind ? (
@@ -1745,7 +1745,7 @@ function DesignKitViewInner({
                           className={styles.moduleAction}
                           onClick={() => openUrlInNewTab(assetPreview.url)}
                         >
-                          <Icon name="external-link" size={13} />
+                          <Icon name="external-link" size={14} />
                           <span>{t('preview.openInNewTab')}</span>
                         </button>
                         <button
@@ -1920,7 +1920,7 @@ function DesignKitViewInner({
                         disabled={colorSaving || !onColorReset}
                         onClick={() => void resetColorDraft()}
                       >
-                        <Icon name={colorSaving ? 'spinner' : 'reload'} size={13} />
+                        <Icon name={colorSaving ? 'spinner' : 'reload'} size={14} />
                         <span>{colorSaving ? t('ds.saving') : t('ds.reset')}</span>
                       </button>
                       <Button variant="primary" disabled={colorSaving} onClick={() => void saveColorDraft()}>

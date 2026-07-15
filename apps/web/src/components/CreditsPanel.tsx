@@ -70,7 +70,7 @@ export function CreditsPanel({
             <Icon name="sparkles" size={15} />
             {t('entry.creditsRemaining')}
             <span className="credits-panel__help" title={info.grantTip} aria-label={info.grantTip}>
-              <Icon name="info" size={13} />
+              <Icon name="info" size={14} />
             </span>
           </span>
           <span className="credits-panel__row-value">{info.balance != null ? fmt(info.balance) : '—'}</span>

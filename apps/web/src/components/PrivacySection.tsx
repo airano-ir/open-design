@@ -140,7 +140,7 @@ export function PrivacySection({ cfg, setCfg }: Props): JSX.Element {
               }}
               style={{ alignSelf: 'flex-start', marginTop: 12 }}
             >
-              <Icon name="trash" size={13} />
+              <Icon name="trash" size={14} />
               <span style={{ marginLeft: 6 }}>{t('settings.privacyDataDeletion')}</span>
             </button>
           </div>

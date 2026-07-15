@@ -402,7 +402,7 @@ export function PluginsView({
             }}
             data-testid="plugins-create-button"
           >
-            <Icon name="edit" size={13} />
+            <Icon name="edit" size={14} />
             <span>{t('homeHero.chip.createPlugin')}</span>
           </button>
           <button
@@ -419,7 +419,7 @@ export function PluginsView({
             aria-haspopup="dialog"
             data-testid="plugins-import-button"
           >
-            <Icon name="plus" size={13} />
+            <Icon name="plus" size={14} />
             <span>{t('pluginsView.importPlugin')}</span>
           </button>
           <div className="plugins-view__badge" aria-hidden="true">
@@ -1978,7 +1978,7 @@ function AvailablePluginsPanel({
       {plugins.length > 0 ? (
         <div className="plugins-view__available-controls" aria-label={t('pluginsView.availableFiltersAria')}>
           <div className="plugins-view__search">
-            <Icon name="search" size={13} className="plugins-view__search-icon" />
+            <Icon name="search" size={14} className="plugins-view__search-icon" />
             <input
               id="plugins-available-search"
               type="search"
@@ -2000,7 +2000,7 @@ function AvailablePluginsPanel({
                 aria-label={t('pluginsView.clearAvailableSearch')}
                 title={t('pluginsHome.clearSearch')}
               >
-                <Icon name="close" size={11} />
+                <Icon name="close" size={14} />
               </button>
             ) : null}
           </div>
@@ -2278,7 +2278,7 @@ function AvailablePluginDetailsModal({
                     className="plugin-details-modal__chip-btn"
                     onClick={() => void copyInstallCommand()}
                   >
-                    <Icon name="copy" size={12} />
+                    <Icon name="copy" size={14} />
                     {copiedInstall
                       ? t('plugins.availableDetails.copied')
                       : t('plugins.availableDetails.copyInstallCommand')}

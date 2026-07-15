@@ -64,7 +64,7 @@
   background: transparent;
   color: var(--text-muted);
   font: inherit;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 500;
   line-height: 18px;
   white-space: nowrap;
@@ -120,7 +120,7 @@
   box-shadow: inset 2px 0 0 0 var(--accent);
 }
 .mention-section-label {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -155,7 +155,7 @@
   align-self: stretch;
   text-align: left;
   white-space: nowrap;
-  font-size: 10.5px;
+  font-size: 12px;
   line-height: 1.3;
   color: var(--text-muted);
   overflow: hidden;
@@ -164,12 +164,12 @@
 }
 .mention-meta--path {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 10px;
+  font-size: 12px;
   color: color-mix(in srgb, var(--text-muted) 84%, var(--text-soft));
 }
 .mention-item code {
   flex: 1;
-  font-size: 11px;
+  font-size: 12px;
   background: transparent;
   padding: 0;
   overflow: hidden;
@@ -194,7 +194,7 @@
 .mention-meta {
   min-width: 0;
   color: var(--text-soft);
-  font-size: 10px;
+  font-size: 12px;
   align-self: center;
 }
 .mention-item-kind {
@@ -204,7 +204,7 @@
   border-radius: var(--radius-pill);
   background: color-mix(in srgb, var(--bg-subtle) 72%, transparent);
   color: var(--text-soft);
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.35;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -220,7 +220,7 @@
   .mention-tab {
     min-height: 26px;
     padding: 3px 9px;
-    font-size: 11px;
+    font-size: 12px;
     line-height: 16px;
   }
 }
@@ -228,7 +228,7 @@
 /* Section header inside the @-popover when both skills and files appear. */
 .mention-section-head {
   padding: 6px 10px 2px;
-  font-size: 10px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-muted);
@@ -240,7 +240,7 @@
   gap: 6px;
   width: 100%;
 }
-.mention-skill-row code { flex: none; font-size: 11px; }
+.mention-skill-row code { flex: none; font-size: 12px; }
 .mention-skill-badge {
   display: inline-flex;
   align-items: center;
@@ -249,13 +249,13 @@
   border-radius: var(--radius-pill);
   background: var(--bg-subtle);
   color: var(--text-muted);
-  font-size: 9px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 .mention-skill-desc {
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -281,14 +281,17 @@
 .modal-backdrop {
   position: fixed; inset: 0;
   background: rgba(28, 27, 26, 0.42);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: var(--scrim-backdrop);
+  backdrop-filter: var(--scrim-backdrop);
   -webkit-app-region: no-drag;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
+  z-index: 1700;
   animation: fade-in 160ms ease-out;
+}
+.modal-backdrop--app-modal {
+  z-index: 10000;
 }
 .modal {
   background: var(--bg-elevated);
@@ -371,7 +374,7 @@
   margin: 0;
   font-size: 16px;
   line-height: 1.25;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .updater-popup__body p {
@@ -475,7 +478,6 @@
 }
 .modal-rename input[type="text"]:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 .modal-rename .row button {
   padding: 8px 18px;
@@ -527,6 +529,28 @@
   color: var(--text-strong);
 }
 .modal-confirm .row button:hover { border-color: var(--border-strong); }
+.modal-confirm .row button.primary {
+  background: #202020;
+  border-color: #202020;
+  color: #fafafa;
+}
+.modal-confirm .row button.primary:hover {
+  background: #353535;
+  border-color: #353535;
+  color: #fafafa;
+}
+.modal-confirm .row button.primary:active {
+  background: #494949;
+  border-color: #494949;
+  color: #fafafa;
+}
+.modal-confirm .row button.primary:disabled,
+.modal-confirm .row button.primary:disabled:hover {
+  background: #ededed;
+  border-color: transparent;
+  color: #bdbdbd;
+  cursor: not-allowed;
+}
 .modal-confirm .row button.primary.danger {
   background: var(--red);
   border-color: var(--red);
@@ -541,7 +565,7 @@
   align-self: flex-start;
   padding: 1px 7px;
   border-radius: var(--radius-pill);
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 500;
   line-height: 1.5;
   letter-spacing: 0.01em;
@@ -618,9 +642,53 @@
   width: calc(100vw - 24px);
   height: calc(100vh - 24px);
 }
+.settings-page-shell {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overflow-x: hidden;
+  /* Translucent over the app wash, matching the home ground (app-wash.css
+     veil token restores the solid page in degraded modes). */
+  background: var(--veil-page);
+}
+.settings-page-shell .modal-settings.settings-page-surface {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 272px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+.settings-page-shell .settings-chrome,
+.settings-page-shell .settings-sidebar-toggle {
+  display: none;
+}
+.settings-page-shell .modal-head {
+  display: none;
+}
+.settings-page-shell .modal-head .kicker {
+  display: none;
+}
+.settings-page-shell .modal-head h2 {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.settings-page-shell .modal-head .subtitle {
+  margin-top: 6px;
+  font-size: 13px;
+}
 @media (max-height: 600px) {
   .modal-settings { height: 90vh; }
   .modal-settings.settings-fullscreen { height: calc(100vh - 12px); }
+  .settings-page-shell .modal-settings.settings-page-surface {
+    height: 100%;
+    min-height: 0;
+  }
 }
 .modal-settings .modal-body {
   position: relative;
@@ -633,6 +701,22 @@
   margin: 0;
   padding: 0;
 }
+.settings-page-shell .modal-body {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  display: grid;
+  grid-template-columns: 272px minmax(0, 1fr);
+  gap: 0;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  overflow-x: hidden;
+  /* Same ground as the home board: the page-level veil token from
+     app-wash.css (currently fully transparent, so the wash shows straight
+     through, exactly like the home scroll surface). The reduced-transparency
+     and no-backdrop-filter fallbacks restore it to solid --bg. */
+  background: var(--veil-page, var(--bg));
+}
 .modal-settings.settings-sidebar-collapsed .modal-body {
   grid-template-columns: minmax(0, 1fr);
 }
@@ -644,14 +728,14 @@
   padding: var(--modal-padding);
 }
 .modal-head .kicker {
-  font-size: 11px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-muted);
   font-weight: 600;
 }
 .modal-head h2 {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 600;
   letter-spacing: -0.015em;
   color: var(--text);
@@ -716,8 +800,8 @@
   color: var(--text-muted);
   cursor: pointer;
   transition: color 140ms var(--ease-out), border-color 140ms var(--ease-out), background-color 140ms var(--ease-out), transform 140ms var(--ease-out);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: var(--material-thin-backdrop);
+  backdrop-filter: var(--material-thin-backdrop);
 }
 .settings-fullscreen-toggle {
   border-color: color-mix(in srgb, var(--border) 72%, transparent);
@@ -760,14 +844,14 @@
   min-height: 24px;
   padding: 4px 10px;
   border-radius: var(--radius-pill);
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.005em;
   color: var(--text-muted);
   background: color-mix(in srgb, var(--bg-panel) 90%, transparent);
   border: 1px solid transparent;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: var(--material-thin-backdrop);
+  backdrop-filter: var(--material-thin-backdrop);
   transition: opacity 160ms var(--ease-out), color 160ms var(--ease-out), background-color 160ms var(--ease-out), border-color 160ms var(--ease-out), transform 160ms var(--ease-out);
   pointer-events: none;
   user-select: none;
@@ -853,7 +937,7 @@
 .modal-settings .modal-head-line > .subtitle {
   margin: 0;
   flex: 1 1 240px;
-  font-size: 12.5px;
+  font-size: 13px;
   /* Override the 72ch cap from the stacked variant so the subtitle
      can take the full remaining inline width before wrapping. */
   max-width: none;
@@ -910,7 +994,7 @@
   border: 1px solid var(--red-border);
   background: color-mix(in srgb, var(--red-bg) 78%, transparent);
   color: var(--text);
-  font-size: 12.5px;
+  font-size: 13px;
   line-height: 1.45;
   animation: settings-connectors-clear-confirm-in 180ms ease-out;
 }
@@ -958,7 +1042,7 @@
 }
 .settings-connectors-clear-confirm-copy strong {
   font-size: 13px;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--text);
   line-height: 1.3;
 }
@@ -1020,7 +1104,7 @@
   background: var(--red);
   color: var(--bg-panel);
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: 0.01em;
   cursor: pointer;
   transition:
@@ -1105,10 +1189,105 @@
   gap: 2px;
   padding: 16px 10px;
   background: var(--bg-panel);
-  border-right: 1px solid var(--border);
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+.settings-page-shell .settings-sidebar {
+  grid-column: 1;
+  grid-row: 1;
+  gap: 3px;
+  padding: 28px 10px 18px;
+  /* Same treatment as the top tab strip: fully transparent, riding the
+     shell's translucent ground so the wash/wallpaper shows identically —
+     no extra white layer, no blur. */
+  background: transparent;
+}
+@media (prefers-reduced-transparency: reduce) {
+  .settings-page-shell .settings-sidebar {
+    background: color-mix(in srgb, var(--bg-subtle) 45%, var(--bg-panel));
+  }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .settings-page-shell .settings-sidebar {
+    background: color-mix(in srgb, var(--bg-subtle) 45%, var(--bg-panel));
+  }
+}
+.settings-page-nav-head {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 0 12px;
+}
+.settings-page-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  min-height: 28px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+.settings-page-back:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+}
+.settings-page-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 36px;
+  width: 100%;
+  padding: 0 10px 0 32px;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  border-radius: var(--radius-large, 8px);
+  background: var(--bg);
+  color: var(--text-muted);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--text) 4%, transparent);
+}
+.settings-page-search .od-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--text-muted);
+}
+.settings-page-search input {
+  appearance: none;
+  -webkit-appearance: none;
+  min-width: 0;
+  height: 100%;
+  width: 100%;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  line-height: 36px;
+  pointer-events: none;
+}
+.settings-page-search input::-webkit-search-decoration,
+.settings-page-search input::-webkit-search-cancel-button,
+.settings-page-search input::-webkit-search-results-button,
+.settings-page-search input::-webkit-search-results-decoration {
+  display: none;
+}
+.settings-page-search input::placeholder {
+  color: color-mix(in srgb, var(--text-muted) 72%, transparent);
+}
+.settings-page-nav-group {
+  padding: 8px 8px 2px 38px;
+  color: color-mix(in srgb, var(--text-muted) 82%, transparent);
+  font-size: 12px;
+  font-weight: 600;
 }
 .modal-settings.settings-sidebar-collapsed .settings-sidebar {
   display: none;
@@ -1132,8 +1311,8 @@
   cursor: pointer;
   opacity: 0;
   box-shadow: 0 2px 8px color-mix(in srgb, var(--shadow-color, #000) 8%, transparent);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: var(--material-thin-backdrop);
+  backdrop-filter: var(--material-thin-backdrop);
   transition:
     opacity 140ms var(--ease-out),
     color 140ms var(--ease-out),
@@ -1184,6 +1363,7 @@
    handle; the section's own subtitle in the content area carries any
    intro copy. */
 .settings-nav-item {
+  position: relative;
   width: 100%;
   border: 1px solid transparent;
   border-radius: var(--radius);
@@ -1197,12 +1377,20 @@
   text-align: left;
   cursor: pointer;
 }
-.settings-nav-item:hover {
-  background: rgba(0, 0, 0, 0.04);
+.settings-nav-item:hover:not(:disabled) {
+  /* Same fill as .active; the :not(:disabled) bumps specificity above the
+     generic `button:hover:not(:disabled)` in primitives.css, which was
+     leaking its bg-subtle fill and border ring onto these pills. */
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  border-color: transparent;
+}
+.settings-page-shell .settings-nav-item {
+  border-radius: var(--radius-large, 8px);
+  padding: 8px 10px;
 }
 .settings-nav-item.active,
 .settings-nav-item.active:hover {
-  background: var(--bg-subtle);
+  background: color-mix(in srgb, var(--text) 5%, transparent);
   border-color: transparent;
   color: var(--text);
   box-shadow: none;
@@ -1210,6 +1398,13 @@
 .settings-nav-item svg {
   justify-self: center;
   opacity: 0.75;
+}
+/* Selected item: the filled Remix glyph uses the spec's strongest
+   text/icon tone (#202020 light / #fafafa dark via --text-strong) at full
+   opacity. */
+.settings-nav-item.active .od-icon {
+  opacity: 1;
+  color: var(--text-strong);
 }
 .settings-nav-item span {
   min-width: 0;
@@ -1240,29 +1435,45 @@
      sidebar nav-item across the gutter. */
   padding: 16px var(--modal-padding) 22px;
   overflow: auto;
+  overflow-x: hidden;
   overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: 18px;
 }
-.settings-general-block-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-.settings-general-block-head h3 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 650;
-  color: var(--text-strong);
+.settings-page-shell .settings-content {
+  grid-column: 2;
+  grid-row: 1;
+  width: min(848px, calc(100% - 56px));
+  max-width: calc(100% - 56px);
+  justify-self: center;
+  align-self: start;
+  margin: 24px 0 28px;
+  height: calc(100% - 52px);
+  padding: 36px 44px 56px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  /* The whole content block rides one white card (spec: white surface +
+     #dbdbdb hairline + large radius) floating on the shell ground. */
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
 }
 .modal-settings.settings-sidebar-collapsed .settings-content {
   padding-left: calc(var(--modal-padding) + 16px);
 }
 @media (max-width: 760px) {
+  .settings-page-shell {
+    overflow: auto;
+  }
   .modal-settings {
     width: min(560px, calc(100vw - 24px));
+  }
+  .settings-page-shell .modal-settings.settings-page-surface {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
   }
   .modal-settings.settings-fullscreen {
     width: calc(100vw - 12px);
@@ -1270,6 +1481,17 @@
   }
   .modal-settings .modal-body {
     grid-template-columns: 1fr;
+  }
+  .settings-page-shell .modal-body {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .settings-page-shell .modal-head,
+  .settings-page-shell .settings-content {
+    width: 100%;
+    padding-left: 18px;
+    padding-right: 18px;
   }
   .settings-sidebar-toggle {
     display: none;
@@ -1304,8 +1526,9 @@
   grid-template-columns: repeat(var(--seg-cols, 2), minmax(0, 1fr));
   gap: 2px;
   padding: 3px;
+  /* Borderless: the subtle track fill alone delineates the control. */
   background: var(--bg-subtle);
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: var(--radius);
   /* Height-match the active sidebar nav-item across the gutter so the
      top of the content area lines up neatly with the picked section. */
@@ -1323,6 +1546,7 @@
   background: transparent;
   cursor: pointer;
   text-align: center;
+  line-height: 1;
   min-width: 0;
 }
 .seg-btn:hover:not(:disabled):not(.active) { color: var(--text); }
@@ -1348,11 +1572,12 @@
    execution-mode tabs (Local CLI · 2 installed / BYOK · API provider). */
 .seg-btn--inline {
   flex-direction: row;
-  align-items: baseline;
+  align-items: center;
+  justify-content: center;
   gap: 8px;
   padding-block: 8px;
 }
-.seg-btn--inline > .seg-title { min-width: 0; flex: 0 0 auto; }
+.seg-btn--inline > .seg-title { min-width: 0; flex: 0 1 auto; text-align: center; }
 .seg-btn--inline > .seg-meta { min-width: 0; flex: 1 1 auto; }
 
 /* Secondary protocol selector — pill chips, wraps to multiple rows */
@@ -1372,7 +1597,7 @@
 }
 .protocol-chip-group-label {
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -1383,6 +1608,10 @@
   min-width: 0;
 }
 .protocol-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   flex: 0 1 auto;
   max-width: 100%;
   min-width: 0;
@@ -1398,30 +1627,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   transition: background 120ms var(--ease-out), color 120ms var(--ease-out), border-color 120ms var(--ease-out), box-shadow 120ms var(--ease-out);
-}
-.protocol-chip--provider {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.protocol-chip-status {
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-  flex: 0 0 auto;
-  background: var(--text-disabled, #94a3b8);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--text-disabled, #94a3b8) 16%, transparent);
-}
-.protocol-chip-status.is-configured {
-  background: var(--success, #22c55e);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--success, #22c55e) 18%, transparent);
-}
-.protocol-chip-status.is-unset {
-  background: var(--text-disabled, #94a3b8);
-}
-.protocol-chip.active .protocol-chip-status {
-  background: currentColor;
-  box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 22%, transparent);
 }
 .protocol-chip:hover:not(.active) {
   background: var(--bg-subtle);
@@ -1441,6 +1646,34 @@
   background: color-mix(in srgb, var(--selected) 88%, var(--text-strong));
   border-color: color-mix(in srgb, var(--selected) 80%, var(--text-strong));
   color: #fff;
+}
+.protocol-chip .media-provider-chip-status {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 999px;
+  background: var(--border-strong);
+}
+.protocol-chip.active .media-provider-chip-status {
+  background: var(--green);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--green) 34%, transparent);
+  animation: settings-provider-status-pulse 2.4s var(--curve-easy-ease) infinite;
+}
+@keyframes settings-provider-status-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--green) 34%, transparent);
+  }
+  50% {
+    opacity: 0.72;
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--green) 0%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .protocol-chip.active .media-provider-chip-status {
+    animation: none;
+  }
 }
 
 .settings-section { display: flex; flex-direction: column; gap: 12px; }
@@ -1464,14 +1697,15 @@
 }
 .project-location-card.is-default,
 .project-location-edit.is-default {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
+  border-color: var(--border-strong);
+  background: color-mix(in srgb, var(--bg-subtle) 42%, var(--bg-panel));
+  box-shadow: none;
 }
 .project-location-card code {
   display: block;
   margin-top: 3px;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 12px;
   word-break: break-all;
 }
 .project-location-default-control span {
@@ -1479,7 +1713,7 @@
   border-radius: var(--radius-pill);
   padding: 4px 10px;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   background: var(--bg-subtle);
   white-space: nowrap;
@@ -1518,12 +1752,12 @@
 }
 .project-location-edit-main code {
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 12px;
   word-break: break-all;
 }
 .project-location-edit-main small {
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 12px;
 }
 .project-location-add { align-self: flex-start; }
 @media (max-width: 720px) {
@@ -1578,7 +1812,7 @@
   border: 0;
   background: transparent;
   color: var(--green);
-  font-size: 11.5px;
+  font-size: 12px;
   white-space: nowrap;
 }
 .settings-rescan-status-inline.error {
@@ -1673,7 +1907,7 @@
   min-width: 0;
 }
 .orbit-hero-eyebrow {
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1682,14 +1916,14 @@
 .orbit-hero-title {
   margin: 0;
   font-size: 18px;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: -0.015em;
   color: var(--text-strong);
   line-height: 1.15;
 }
 .orbit-hero-lede {
   margin: 4px 0 0;
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text-muted);
   line-height: 1.5;
   max-width: 52ch;
@@ -1711,7 +1945,7 @@
   gap: 6px;
   padding: 4px 10px 4px 8px;
   border-radius: var(--radius-pill);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.02em;
   background: var(--bg-subtle);
@@ -1745,7 +1979,7 @@
   color: #fff;
   border: 1px solid var(--accent);
   border-radius: var(--radius-sm);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.005em;
   cursor: pointer;
@@ -1864,7 +2098,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 18px;
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-muted);
   background: color-mix(in srgb, var(--accent) 5%, var(--bg-panel));
   border-bottom: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
@@ -1874,7 +2108,7 @@
   flex-shrink: 0;
 }
 .orbit-automation-lock-badge {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1922,7 +2156,7 @@
   letter-spacing: -0.005em;
 }
 .orbit-automation-sub {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-muted);
   line-height: 1.45;
 }
@@ -2017,7 +2251,7 @@
   display: inline-flex;
   align-items: baseline;
   gap: 6px;
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-muted);
   max-width: 260px;
   overflow: hidden;
@@ -2027,7 +2261,7 @@
 .orbit-next-run-label {
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-soft);
 }
@@ -2117,7 +2351,7 @@
   padding: 2px 8px;
   margin-left: auto;
   font: inherit;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.02em;
   color: #8a5217;
@@ -2177,7 +2411,6 @@
 .orbit-template-select-input:focus-visible {
   outline: none;
   border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 .orbit-template-select-input:disabled {
   /* While the skill registry is loading we show a progress cursor; the
@@ -2238,7 +2471,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -2247,7 +2480,7 @@
 .orbit-receipt-eyebrow svg { color: var(--text-soft); }
 .orbit-receipt-timestamp {
   font-size: 14px;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--text-strong);
   letter-spacing: -0.005em;
   font-variant-numeric: tabular-nums;
@@ -2259,7 +2492,7 @@
 .orbit-trigger-pill {
   padding: 2px 10px;
   border-radius: var(--radius-pill);
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -2284,7 +2517,7 @@
   gap: 6px;
   padding: 6px 10px;
   border-radius: var(--radius-sm);
-  font-size: 11.5px;
+  font-size: 12px;
   line-height: 1.4;
   border: 1px solid var(--border);
   background: var(--bg-subtle);
@@ -2354,7 +2587,7 @@
   background: var(--border-soft);
 }
 .orbit-count dt {
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -2364,7 +2597,7 @@
 .orbit-count dd {
   margin: 0;
   font-size: 20px;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: -0.015em;
   color: var(--text-strong);
   font-variant-numeric: tabular-nums;
@@ -2455,9 +2688,9 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 70%, #000) 100%);
-  color: var(--btn-primary-fg, #fff);
-  box-shadow: 0 4px 10px color-mix(in srgb, var(--accent) 32%, transparent);
+  background: var(--text-strong);
+  color: var(--bg);
+  box-shadow: var(--shadow-xs);
 }
 @media (prefers-reduced-motion: reduce) {
   .orbit-config-gate-ring { animation: none !important; }
@@ -2470,7 +2703,7 @@
   min-width: 0;
 }
 .orbit-config-gate-eyebrow {
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -2479,7 +2712,7 @@
 .orbit-config-gate-title {
   margin: 0;
   font-size: 14px;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: -0.005em;
   color: var(--text-strong);
   line-height: 1.3;
@@ -2504,24 +2737,23 @@
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.005em;
-  color: var(--btn-primary-fg, #fff);
-  background: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 70%, #000) 100%);
-  border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  color: var(--bg);
+  background: var(--text-strong);
+  border: var(--stroke-thin, 1px) solid var(--text-strong);
   border-radius: var(--radius-pill);
   cursor: pointer;
-  transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out), filter 140ms var(--ease-out);
-  box-shadow: 0 6px 14px color-mix(in srgb, var(--accent) 22%, transparent);
+  transition: transform var(--duration-faster, 100ms) var(--curve-easy-ease, ease), background var(--duration-ultra-fast, 50ms) var(--curve-easy-ease, ease), border-color var(--duration-ultra-fast, 50ms) var(--curve-easy-ease, ease);
 }
 .orbit-config-gate-action:hover {
   transform: translateY(-1px);
-  filter: brightness(1.05);
-  box-shadow: 0 10px 20px color-mix(in srgb, var(--accent) 28%, transparent);
+  background: #353535;
+  border-color: #353535;
 }
 .orbit-config-gate-action:focus-visible {
-  outline: 2px solid var(--accent-strong);
+  outline: var(--stroke-thin, 1px) solid var(--blue);
   outline-offset: 2px;
 }
 .orbit-config-gate-action svg {

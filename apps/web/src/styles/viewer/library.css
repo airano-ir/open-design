@@ -78,7 +78,7 @@
 }
 
 .pet-atlas-row-meta {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 
@@ -113,7 +113,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.5;
   color: var(--text);
   max-height: 200px;
@@ -319,13 +319,13 @@
   border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--border));
   background: color-mix(in srgb, var(--accent) 8%, transparent);
   color: var(--accent-strong);
-  font-size: 9.5px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1.4;
 }
 
 .pet-codex-description {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -377,14 +377,14 @@
   padding: 5px 7px 7px;
   border-bottom: 1px solid var(--border-soft);
   margin-bottom: 4px;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-soft);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 .slash-popover-hint {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 400;
   text-transform: none;
   letter-spacing: 0;
@@ -434,15 +434,15 @@
   padding: 0;
 }
 .slash-item-arg {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--text-muted);
   font-family: var(--mono, ui-monospace, SFMono-Regular, Menlo, monospace);
 }
-.slash-item-desc { font-size: 11px; color: var(--text-muted); line-height: 1.35; }
+.slash-item-desc { font-size: 12px; color: var(--text-muted); line-height: 1.35; }
 
-/* --- CJK (Chinese / Korean) Comfort Pass --- */
-:lang(zh), :lang(zh-CN), :lang(zh-TW), :lang(ko) {
-  --sans: "Inter", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Hiragino Sans GB", "Source Han Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+/* --- CJK (Chinese / Japanese / Korean) Comfort Pass --- */
+:lang(zh), :lang(zh-CN), :lang(zh-TW), :lang(ja), :lang(ko) {
+  --sans: "Albert Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
 /* --- Japanese Comfort Pass --- */
@@ -452,7 +452,7 @@
 
 /* --- Arabic & Persian Comfort Pass --- */
 [dir="rtl"] {
-  --sans: "Cairo", "Inter", "Vazirmatn", "Noto Sans Arabic", "Segoe UI Arabic", "Tahoma", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --sans: "Albert Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
 /* Scope line-height increase to prose and chat to avoid breaking compact UI chrome */
@@ -562,14 +562,14 @@
 }
 .qs-path {
   color: var(--text-muted);
-  font-size: 12.5px;
+  font-size: 13px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
 }
 .qs-kind {
-  font-size: 10.5px;
+  font-size: 12px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-faint);
@@ -583,7 +583,7 @@
   gap: 14px;
   padding: 8px 16px;
   border-top: 1px solid var(--border-soft);
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 .qs-footer kbd {
@@ -593,7 +593,7 @@
   padding: 0 4px;
   margin-right: 2px;
   font-family: ui-monospace, monospace;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 
@@ -669,7 +669,7 @@
 
 .library-search:focus {
   border-color: var(--selected);
-  box-shadow: 0 0 0 3px var(--selected-soft), var(--shadow-xs);
+  box-shadow: var(--shadow-xs);
 }
 
 .library-filters {
@@ -776,7 +776,7 @@
 
 .library-group-count {
   font-weight: 400;
-  font-size: 11px;
+  font-size: 12px;
   opacity: 0.6;
 }
 
@@ -827,7 +827,7 @@
 }
 
 .library-card-badge {
-  font-size: 10px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 1px 6px;
@@ -909,7 +909,7 @@
 .library-import-block {
   display: grid;
   gap: 4px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 .library-import-row input,
@@ -1038,7 +1038,7 @@
 }
 
 .library-ds-summary {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
   line-height: 1.3;
   display: -webkit-box;
@@ -1107,7 +1107,7 @@
 }
 .library-empty-hint code {
   font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: 12px;
   padding: 1px 6px;
   background: var(--bg-subtle);
   border-radius: var(--radius-xs);
@@ -1184,8 +1184,8 @@
   border-radius: var(--radius-pill);
   background: transparent;
   color: var(--text-muted);
-  font-size: 11.5px;
-  font-weight: 620;
+  font-size: 12px;
+  font-weight: 600;
   line-height: 1;
   white-space: nowrap;
   cursor: pointer;
@@ -1251,8 +1251,8 @@
   border-radius: var(--radius-pill);
   background: var(--bg-subtle);
   color: var(--text-muted);
-  font-size: 11.5px;
-  font-weight: 620;
+  font-size: 12px;
+  font-weight: 600;
   line-height: 1.2;
 }
 
@@ -1264,7 +1264,7 @@
   max-width: 780px;
   margin: 0;
   color: var(--text-muted);
-  font-size: 12.5px;
+  font-size: 13px;
   line-height: 1.45;
 }
 
@@ -1319,13 +1319,13 @@
 
 .memory-add-summary-copy strong {
   font-size: 13px;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.2;
   color: var(--text);
 }
 
 .memory-add-summary-copy small {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
   line-height: 1.2;
 }
@@ -1389,14 +1389,14 @@
 
 .memory-action-modal-head h3 {
   margin: 0;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.25;
 }
 
 .memory-action-modal-head p {
   margin: 3px 0 0;
   color: var(--text-muted);
-  font-size: 12.5px;
+  font-size: 13px;
   line-height: 1.4;
 }
 
@@ -1467,7 +1467,7 @@
 
 .memory-kicker {
   color: var(--text-muted);
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0;
   line-height: 1.2;
@@ -1478,7 +1478,7 @@
 .memory-gateway-card h4 {
   margin: 0;
   color: var(--text);
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.25;
 }
 
@@ -1486,7 +1486,7 @@
   max-width: 680px;
   margin: 0;
   color: var(--text-muted);
-  font-size: 12.5px;
+  font-size: 13px;
   line-height: 1.45;
 }
 
@@ -1500,8 +1500,8 @@
   border-radius: var(--radius-pill);
   background: var(--bg-subtle);
   color: var(--text-muted);
-  font-size: 11px;
-  font-weight: 650;
+  font-size: 12px;
+  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -1565,7 +1565,7 @@
 
 .memory-guide-step {
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1.2;
   text-transform: uppercase;
@@ -1581,14 +1581,14 @@
 .memory-guide-copy small,
 .memory-scenario-card small {
   color: var(--text-muted);
-  font-size: 11.5px;
+  font-size: 12px;
   line-height: 1.35;
 }
 
 .memory-guide-cta {
   align-self: end;
   color: var(--accent);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1.2;
 }
@@ -1633,7 +1633,7 @@
 
 .memory-example-label {
   color: var(--text-muted);
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1.2;
   text-transform: uppercase;
@@ -1651,7 +1651,7 @@
   margin: 0;
   color: var(--text);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.45;
   white-space: pre;
 }
@@ -1684,7 +1684,7 @@
 .memory-scenario-count {
   overflow: hidden;
   color: var(--text-muted);
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1.2;
   text-overflow: ellipsis;
@@ -1774,7 +1774,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.2;
   white-space: nowrap;
 }
@@ -1783,7 +1783,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--text-muted);
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 500;
   line-height: 1.2;
   white-space: nowrap;
@@ -1901,7 +1901,7 @@
   align-items: center;
   gap: 7px;
   margin: 0 0 1px;
-  font-size: 11.5px;
+  font-size: 12px;
   letter-spacing: 0.12em;
 }
 
@@ -1910,7 +1910,7 @@
 }
 
 .memory-records-section .library-group-count {
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .memory-records-section .library-card {
@@ -2141,7 +2141,7 @@
   border-radius: var(--radius-pill);
   background: var(--bg-subtle);
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -2156,7 +2156,7 @@
   border-radius: var(--radius-pill);
   background: var(--bg-subtle);
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -2344,8 +2344,8 @@
   border-radius: var(--radius-pill);
   background: var(--bg-panel);
   color: var(--text-muted);
-  font-size: 11px;
-  font-weight: 650;
+  font-size: 12px;
+  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -2386,8 +2386,8 @@
   border-radius: var(--radius-pill);
   background: color-mix(in oklab, var(--accent) 8%, var(--bg-panel));
   color: var(--accent);
-  font-size: 11px;
-  font-weight: 650;
+  font-size: 12px;
+  font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
 }
@@ -2448,7 +2448,7 @@
 .memory-connector-copy strong {
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 12.5px;
+  font-size: 13px;
   line-height: 1.25;
   white-space: nowrap;
 }
@@ -2457,7 +2457,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.25;
   white-space: nowrap;
 }
@@ -2470,7 +2470,7 @@
   border-radius: var(--radius-pill);
   background: var(--bg-subtle);
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -2567,7 +2567,7 @@
 
 .memory-connector-diagnostics-head span {
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -2623,7 +2623,7 @@
 .memory-connector-diagnostic-copy small {
   overflow: hidden;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.35;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2654,7 +2654,7 @@
   padding: 0 12px 0 28px;
   color: var(--text);
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 600;
   cursor: pointer;
   list-style: none;
 }
@@ -2690,7 +2690,7 @@
   border-radius: var(--radius-pill);
   background: var(--bg-subtle);
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .memory-scan-history .memory-connector-run-history {
@@ -2738,7 +2738,7 @@
 .memory-suggestion-title strong {
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 12.5px;
+  font-size: 13px;
   line-height: 1.25;
   white-space: nowrap;
 }
@@ -2751,7 +2751,7 @@
   border-radius: var(--radius-pill);
   background: var(--bg-subtle);
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
 }
@@ -2760,7 +2760,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.35;
   white-space: nowrap;
 }

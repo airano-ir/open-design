@@ -177,7 +177,7 @@ export function PluginScenarioDetail({
                 })}
                 data-testid={`plugin-details-use-${record.id}-menu`}
               >
-                <Icon name="chevron-down" size={12} />
+                <Icon name="chevron-down" size={14} />
               </button>
               {useMenuOpen ? (
                 <div className="plugin-details-modal__use-menu" role="menu">

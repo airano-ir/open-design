@@ -48,7 +48,7 @@ const COMMUNITY_TEMPLATES: TemplateDemo[] = [
     type: 'Live Artifact',
     subtype: 'Editorial',
   },
-  { id: 'ai-product-site', title: 'Wireframe Sketch', tags: ['Prototype', 'Wireframe'], accent: '#7c3aed', meta: 'Prototype · Wireframe', type: 'Prototype', subtype: 'Wireframe' },
+  { id: 'ai-product-site', title: 'Wireframe Sketch', tags: ['Prototype', 'Wireframe'], accent: '#353535', meta: 'Prototype · Wireframe', type: 'Prototype', subtype: 'Wireframe' },
   { id: 'commerce-home', title: 'Wireframe Greybox', tags: ['Prototype', 'Wireframe'], accent: '#ea580c', meta: 'Prototype · Greybox', type: 'Prototype', subtype: 'Wireframe' },
   { id: 'mobile-app-launch', title: 'Mobile Flow', tags: ['Prototype', 'Mobile'], accent: '#0284c7', meta: 'Prototype · Mobile', type: 'Prototype', subtype: 'Mobile' },
   { id: 'portfolio-case-study', title: 'Pitch Deck', tags: ['Slides', 'Pitch'], accent: '#111827', meta: 'Slides · Pitch deck', type: 'Slides', subtype: 'Pitch deck' },
@@ -60,7 +60,7 @@ const COMMUNITY_TEMPLATES: TemplateDemo[] = [
   { id: 'developer-docs', title: 'API Docs', tags: ['Live Artifact', 'Docs'], accent: '#475569', meta: 'Live Artifact · Docs', type: 'Live Artifact', subtype: 'Docs' },
   { id: 'pricing-test', title: 'Pricing Experiment', tags: ['Live Artifact', 'Growth'], accent: '#f59e0b', meta: 'Live Artifact · Pricing', type: 'Live Artifact', subtype: 'Growth' },
   { id: 'admin-console', title: 'Admin Console', tags: ['Prototype', 'Admin'], accent: '#0f172a', meta: 'Prototype · Admin', type: 'Prototype', subtype: 'Admin' },
-  { id: 'education-course', title: 'Course Landing', tags: ['Live Artifact', 'Education'], accent: '#2563eb', meta: 'Live Artifact · Course', type: 'Live Artifact', subtype: 'Education' },
+  { id: 'education-course', title: 'Course Landing', tags: ['Live Artifact', 'Education'], accent: '#1A74FF', meta: 'Live Artifact · Course', type: 'Live Artifact', subtype: 'Education' },
   { id: 'restaurant-booking', title: 'Booking Flow', tags: ['Prototype', 'Booking'], accent: '#be123c', meta: 'Prototype · Booking', type: 'Prototype', subtype: 'Booking' },
   { id: 'real-estate-listing', title: 'Listing Page', tags: ['Live Artifact', 'Real estate'], accent: '#0d9488', meta: 'Live Artifact · Listing', type: 'Live Artifact', subtype: 'Real estate' },
   { id: 'support-center', title: 'Support Center', tags: ['Live Artifact', 'Support'], accent: '#0891b2', meta: 'Live Artifact · Support', type: 'Live Artifact', subtype: 'Support' },
@@ -205,10 +205,6 @@ export function CommunityView({ onRemixTemplate }: CommunityViewProps) {
             className="community-template-card is-clickable"
             onClick={() => setPreviewTemplate(template)}
           >
-            <div className="community-template-card__head">
-              <span className="community-template-card__status" aria-hidden />
-              <h3>{template.title}</h3>
-            </div>
             <div
               className="community-template-card__preview"
               style={{ '--template-accent': template.accent } as CSSProperties}
@@ -338,11 +334,11 @@ function templatePreviewHtml(template: TemplateDemo): string {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #111827; background: #f8fafc; }
+    body { margin: 0; font-family: var(--sans); color: #111827; background: #f8fafc; }
     .shell { min-height: 100vh; padding: 56px; background: linear-gradient(135deg, ${template.accent}1f, #ffffff 42%, #f8fafc); }
     nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 72px; font-size: 14px; color: #64748b; }
     .logo { display: flex; align-items: center; gap: 10px; color: #111827; font-weight: 800; }
-    .mark { width: 28px; height: 28px; border-radius: 9px; background: ${template.accent}; box-shadow: 0 12px 30px ${template.accent}45; }
+    .mark { width: 28px; height: 28px; border-radius: var(--radius-large, 8px); background: ${template.accent}; box-shadow: 0 12px 30px ${template.accent}45; }
     .hero { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 56px; align-items: center; }
     h1 { margin: 0; max-width: 740px; font-size: 64px; line-height: .94; letter-spacing: -.04em; }
     p { color: #64748b; line-height: 1.7; font-size: 18px; }

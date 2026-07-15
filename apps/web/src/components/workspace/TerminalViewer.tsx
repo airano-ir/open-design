@@ -425,7 +425,7 @@ export function TerminalViewer({ terminalId, projectId, onClose, onSessionIdChan
             data-testid="terminal-restart"
             onClick={() => void restart()}
           >
-            <Icon name="reload" size={12} />
+            <Icon name="reload" size={14} />
             {t('workspace.terminalRestart')}
           </button>
           <button
@@ -434,7 +434,7 @@ export function TerminalViewer({ terminalId, projectId, onClose, onSessionIdChan
             data-testid="terminal-close"
             onClick={onClose}
           >
-            <Icon name="close" size={12} />
+            <Icon name="close" size={14} />
             {t('workspace.closeTab')}
           </button>
         </div>

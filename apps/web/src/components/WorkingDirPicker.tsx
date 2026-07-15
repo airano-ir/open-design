@@ -100,11 +100,11 @@ export function WorkingDirPicker({
             })
           }
         >
-          <Icon name="folder" size={13} className={styles.triggerIcon} />
+          <Icon name="folder" size={14} className={styles.triggerIcon} />
           <span className={styles.triggerLabel}>
             {workingDir ? basename(workingDir) : t('homeWorkingDir.trigger')}
           </span>
-          <Icon name="chevron-down" size={11} className={styles.triggerChevron} />
+          <Icon name="chevron-down" size={14} className={styles.triggerChevron} />
         </button>
       </div>
 
@@ -144,7 +144,7 @@ export function WorkingDirPicker({
             >
               <Icon name="history" size={14} className={styles.itemIcon} />
               <span>{t('homeWorkingDir.recent')}</span>
-              <Icon name="chevron-right" size={12} className={styles.itemChevron} />
+              <Icon name="chevron-right" size={14} className={styles.itemChevron} />
             </button>
             {recentOpen ? (
               <div
@@ -167,7 +167,7 @@ export function WorkingDirPicker({
                         setOpen(false);
                       }}
                     >
-                      <Icon name="folder" size={13} className={styles.itemIcon} />
+                      <Icon name="folder" size={14} className={styles.itemIcon} />
                       <span className={styles.recentName}>{basename(dir)}</span>
                       <span className={styles.recentPath}>{dir}</span>
                     </button>

@@ -177,14 +177,14 @@ function TaskBriefCard({ card }: { card: OdCardTaskBrief }) {
         onClick={() => setOpen((o) => !o)}
       >
         <span className={styles.briefChipIcon} aria-hidden>
-          <Icon name="sparkles" size={13} />
+          <Icon name="sparkles" size={14} />
         </span>
         <span className={styles.briefChipLabel}>
           {t('artifact.odCardTaskBriefChip')}
         </span>
         <span className={styles.briefChipSummary}>{card.summary}</span>
         <span className={styles.briefChipChevron} aria-hidden>
-          <Icon name={open ? 'chevron-down' : 'chevron-right'} size={13} />
+          <Icon name={open ? 'chevron-down' : 'chevron-right'} size={14} />
         </span>
       </button>
       <div className={`accordion-collapsible${open ? ' open' : ''}`}>
@@ -224,7 +224,7 @@ function MemoryAppliedCard({ card }: { card: OdCardMemoryApplied }) {
   return (
     <div className={`${styles.card} ${styles.appliedCard}`} data-od-card="memory-applied">
       <span className={styles.appliedIcon} aria-hidden>
-        <Icon name="sparkles" size={13} />
+        <Icon name="sparkles" size={14} />
       </span>
       <span className={styles.appliedSummary}>{card.summary}</span>
       {card.used.length > 0 ? (
@@ -295,7 +295,7 @@ function VerifyScorecardCard({ card }: { card: OdCardVerifyScorecard }) {
             className={`${styles.scoreRow} ${SCORE_ROW_CLASS[row.status]}`}
           >
             <span className={styles.scoreRowIcon} aria-hidden>
-              <Icon name={ROW_STATUS_ICON[row.status]} size={13} />
+              <Icon name={ROW_STATUS_ICON[row.status]} size={14} />
             </span>
             <span className={styles.scoreRowBody}>
               <span className={styles.scoreRowRule}>{row.rule}</span>
@@ -421,7 +421,7 @@ function RuleProposalCard({
     <div className={`${styles.card} ${styles.ruleCard}`} data-od-card="rule-proposal">
       <div className={styles.ruleHead}>
         <span className={styles.ruleHeadIcon} aria-hidden>
-          <Icon name="star" size={13} />
+          <Icon name="star" size={14} />
         </span>
         <span className={styles.ruleKicker}>
           {t('artifact.odCardRuleKicker')}
@@ -604,7 +604,7 @@ function BrandBrowserAssistCard({
     <div className={`${styles.card} ${styles.ruleCard}`} data-od-card="brand-browser-assist">
       <div className={styles.ruleHead}>
         <span className={styles.ruleHeadIcon} aria-hidden>
-          <Icon name="globe" size={13} />
+          <Icon name="globe" size={14} />
         </span>
         <span className={styles.ruleKicker}>
           {t('artifact.odCardBrandAssistKicker', { reason: card.reason || 'Browser' })}

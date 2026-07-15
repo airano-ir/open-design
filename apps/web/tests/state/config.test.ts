@@ -883,7 +883,7 @@ describe('loadConfig', () => {
     expect(config.baseUrl).toBe('https://api.deepseek.com');
     expect(config.model).toBe('deepseek-chat');
     expect(config.apiProtocol).toBe('openai');
-    expect(config.configMigrationVersion).toBe(1);
+    expect(config.configMigrationVersion).toBe(2);
   });
 
   it('backfills the fixed-origin base URL for AIHubMix when persisted empty', () => {
@@ -1065,7 +1065,7 @@ describe('loadConfig', () => {
 
     expect(config.mode).toBe('daemon');
     expect(config.apiProtocol).toBe('openai');
-    expect(config.configMigrationVersion).toBe(1);
+    expect(config.configMigrationVersion).toBe(2);
   });
 
   it('migrates legacy Ollama Cloud configs to an explicit ollama apiProtocol', () => {
@@ -1087,7 +1087,7 @@ describe('loadConfig', () => {
     expect(config.model).toBe('gpt-oss:120b');
     expect(config.apiProtocol).toBe('ollama');
     expect(config.apiProviderBaseUrl).toBe('https://ollama.com');
-    expect(config.configMigrationVersion).toBe(1);
+    expect(config.configMigrationVersion).toBe(2);
   });
 
   it('migrates legacy ollama.com configs with a custom base URL path', () => {
@@ -1209,8 +1209,8 @@ describe('loadConfig', () => {
 
   it('sets an explicit apiProtocol for new default configs', () => {
     expect(DEFAULT_CONFIG.apiProtocol).toBe('anthropic');
-    expect(DEFAULT_CONFIG.configMigrationVersion).toBe(1);
-    expect(DEFAULT_CONFIG.accentColor).toBe('#c96442');
+    expect(DEFAULT_CONFIG.configMigrationVersion).toBe(2);
+    expect(DEFAULT_CONFIG.accentColor).toBe('#353535');
   });
 });
 

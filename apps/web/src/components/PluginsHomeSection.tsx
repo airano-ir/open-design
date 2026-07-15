@@ -348,7 +348,7 @@ function CategoryRow({
             aria-pressed={savedActive}
             data-testid="plugins-home-chip-saved"
           >
-            <Icon name="star" size={11} />
+            <Icon name="star" size={14} />
             <span>{t('pluginsHome.featured')}</span>
             <span className="plugins-home__chip-count">{savedCount}</span>
           </button>
@@ -556,7 +556,7 @@ function SearchInput({ value, onChange }: SearchInputProps) {
   const t = useT();
   return (
     <div className="plugins-home__search">
-      <Icon name="search" size={12} className="plugins-home__search-icon" />
+      <Icon name="search" size={14} className="plugins-home__search-icon" />
       <Input
         type="search"
         className="plugins-home__search-input"
@@ -576,7 +576,7 @@ function SearchInput({ value, onChange }: SearchInputProps) {
           aria-label={t('pluginsHome.clearSearch')}
           data-testid="plugins-home-search-clear"
         >
-          <Icon name="close" size={12} />
+          <Icon name="close" size={14} />
         </Button>
       ) : null}
     </div>

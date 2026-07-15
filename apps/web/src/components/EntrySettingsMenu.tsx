@@ -209,7 +209,7 @@ export function EntrySettingsMenu({
         >
           <section className="entry-settings-menu__section">
             <div className="entry-settings-menu__section-title">
-              <Icon name="languages" size={13} />
+              <Icon name="languages" size={14} />
               <span>{t('settings.language')}</span>
             </div>
             <div className="entry-settings-menu__select">
@@ -272,7 +272,7 @@ export function EntrySettingsMenu({
                           {active ? (
                             <Icon
                               name="check"
-                              size={12}
+                              size={14}
                               className="entry-settings-menu__option-check"
                             />
                           ) : null}
@@ -287,7 +287,7 @@ export function EntrySettingsMenu({
 
           <section className="entry-settings-menu__section">
             <div className="entry-settings-menu__section-title">
-              <Icon name="palette" size={13} />
+              <Icon name="palette" size={14} />
               <span>{t('settings.appearance')}</span>
             </div>
             <div className="entry-settings-menu__theme-row">
@@ -313,7 +313,7 @@ export function EntrySettingsMenu({
                       setOpen(false);
                     }}
                   >
-                    <Icon name={option.icon} size={13} />
+                    <Icon name={option.icon} size={14} />
                     <span>{t(option.labelKey)}</span>
                   </button>
                 );
@@ -323,7 +323,7 @@ export function EntrySettingsMenu({
 
           <section className="entry-settings-menu__section">
             <div className="entry-settings-menu__section-title">
-              <Icon name="external-link" size={13} />
+              <Icon name="external-link" size={14} />
               <span>{t('socialShare.openDesignSection')}</span>
             </div>
             <SocialShareGrid
@@ -388,7 +388,7 @@ export function EntrySettingsMenu({
                 {discordOnlineLabel}
               </span>
             ) : null}
-            <Icon name="external-link" size={12} className="entry-settings-menu__item-end" />
+            <Icon name="external-link" size={14} className="entry-settings-menu__item-end" />
           </a>
           <a
             className="entry-settings-menu__item"
@@ -412,7 +412,7 @@ export function EntrySettingsMenu({
               X
             </span>
             <span>{t('entry.followXLabel')}</span>
-            <Icon name="external-link" size={12} className="entry-settings-menu__item-end" />
+            <Icon name="external-link" size={14} className="entry-settings-menu__item-end" />
           </a>
           <a
             className="entry-settings-menu__item"
@@ -436,7 +436,7 @@ export function EntrySettingsMenu({
               @
             </span>
             <span>{t('entry.followThreadsLabel')}</span>
-            <Icon name="external-link" size={12} className="entry-settings-menu__item-end" />
+            <Icon name="external-link" size={14} className="entry-settings-menu__item-end" />
           </a>
           <a
             className="entry-settings-menu__item"
@@ -460,7 +460,7 @@ export function EntrySettingsMenu({
               YT
             </span>
             <span>{t('entry.youtubeLabel')}</span>
-            <Icon name="external-link" size={12} className="entry-settings-menu__item-end" />
+            <Icon name="external-link" size={14} className="entry-settings-menu__item-end" />
           </a>
           <a
             className="entry-settings-menu__item"

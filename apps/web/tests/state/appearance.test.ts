@@ -46,13 +46,13 @@ describe('applyAppearanceToDocument', () => {
   });
 
   it('does not apply appearance colors to global background variables', () => {
-    document.documentElement.style.setProperty('--bg', '#faf9f7');
-    document.documentElement.style.setProperty('--bg-app', '#faf9f7');
+    document.documentElement.style.setProperty('--bg', '#fafafa');
+    document.documentElement.style.setProperty('--bg-app', '#f7f7f7');
 
     applyAppearanceToDocument({ theme: 'light', accentColor: '#059669' });
 
-    expect(document.documentElement.style.getPropertyValue('--bg')).toBe('#faf9f7');
-    expect(document.documentElement.style.getPropertyValue('--bg-app')).toBe('#faf9f7');
+    expect(document.documentElement.style.getPropertyValue('--bg')).toBe('#fafafa');
+    expect(document.documentElement.style.getPropertyValue('--bg-app')).toBe('#f7f7f7');
 
     document.documentElement.style.removeProperty('--bg');
     document.documentElement.style.removeProperty('--bg-app');

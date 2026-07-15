@@ -74,7 +74,7 @@ const EMPTY_DRAFT: DraftEntry = {
 // of unlabelled inputs.
 const FIELD_LABEL_STYLE: CSSProperties = {
   display: 'block',
-  fontSize: 10,
+  fontSize: 12,
   fontWeight: 600,
   letterSpacing: 0.5,
   textTransform: 'uppercase',
@@ -1654,7 +1654,7 @@ export function MemorySection({
                   title={rootDir}
                   aria-label="Memory storage path — click to copy"
                 >
-                  <Icon name="info" size={13} />
+                  <Icon name="info" size={14} />
                 </button>
                 {flash?.kind === 'pathCopied' ? (
                   <span key={flash.key} className="memory-path-copied-badge">
@@ -1748,11 +1748,11 @@ export function MemorySection({
         <div className="memory-how-panel">
           <div className="memory-auto-flow">
             <span>Onboarding</span>
-            <Icon name="chevron-right" size={13} />
+            <Icon name="chevron-right" size={14} />
             <span>Brand context</span>
-            <Icon name="chevron-right" size={13} />
+            <Icon name="chevron-right" size={14} />
             <span>Chat signals</span>
-            <Icon name="chevron-right" size={13} />
+            <Icon name="chevron-right" size={14} />
             <strong>Saved memory</strong>
           </div>
           <p className="memory-how-copy">
@@ -2007,7 +2007,7 @@ export function MemorySection({
                       lineHeight: 1.5,
                     }}
                   />
-                  <p className="hint" style={{ fontSize: 11, marginTop: 4 }}>
+                  <p className="hint" style={{ fontSize: 12, marginTop: 4 }}>
                     {t('settings.memoryBodyHint')}
                   </p>
                 </div>
@@ -2024,7 +2024,7 @@ export function MemorySection({
                 <span
                   className="hint"
                   style={{
-                    fontSize: 11,
+                    fontSize: 12,
                     margin: 0,
                     color: 'var(--text-muted, #888)',
                   }}
@@ -2130,7 +2130,7 @@ export function MemorySection({
                     <span className={`memory-connector-brand${selected ? ' is-selected' : ''}`}>
                       <ConnectorLogo connector={connector} theme={logoTheme} size="sm" />
                       <span className="memory-connector-selected-mark" aria-hidden="true">
-                        {selected ? <Icon name="check" size={13} /> : null}
+                        {selected ? <Icon name="check" size={14} /> : null}
                       </span>
                     </span>
                     <span className="memory-connector-copy">
@@ -2140,7 +2140,7 @@ export function MemorySection({
                     {connected ? (
                       <span className={`memory-connector-picker${selected ? ' is-selected' : ''}`}>
                         <span className="memory-connector-picker-box" aria-hidden="true">
-                          {selected ? <Icon name="check" size={12} /> : null}
+                          {selected ? <Icon name="check" size={14} /> : null}
                         </span>
                         <span>{selected ? 'Selected' : 'Select'}</span>
                       </span>
@@ -2159,7 +2159,7 @@ export function MemorySection({
                       >
                         <Icon
                           name={connecting || authorizationPending || checkingStatus ? 'refresh' : 'plus'}
-                          size={12}
+                          size={14}
                           className={connecting || authorizationPending || checkingStatus ? 'icon-spin' : ''}
                         />
                         <span>
@@ -2227,7 +2227,7 @@ export function MemorySection({
                           onChange={() => toggleConnectorSuggestion(suggestion.id)}
                         />
                         <span aria-hidden="true">
-                          {selected ? <Icon name="check" size={13} /> : null}
+                          {selected ? <Icon name="check" size={14} /> : null}
                         </span>
                       </span>
                       <span className="memory-suggestion-copy">
@@ -2390,7 +2390,7 @@ export function MemorySection({
                   onClick={() => void onClearExtractions()}
                   title={t('settings.memoryExtractionsClearTitle')}
                 >
-                  <Icon name="close" size={12} />
+                  <Icon name="close" size={14} />
                   <span>{t('settings.memoryExtractionsClear')}</span>
                 </button>
               ) : null}
@@ -2404,7 +2404,7 @@ export function MemorySection({
                 >
                   <Icon
                     name="refresh"
-                    size={12}
+                    size={14}
                     className={isRefreshing ? 'icon-spin' : ''}
                   />
                   <span>
@@ -2515,7 +2515,7 @@ export function MemorySection({
                 <span
                   className="hint"
                   style={{
-                    fontSize: 11,
+                    fontSize: 12,
                     margin: 0,
                     color:
                       indexDraft !== null

@@ -228,7 +228,7 @@ export function ProjectLocationsSection({ cfg, setCfg, onProjectsRefresh }: Prop
         onClick={handleAddFolder}
         disabled={loading || saving}
       >
-        <Icon name="plus" size={12} />
+        <Icon name="plus" size={14} />
         {t('settings.projectLocationsAddFolder')}
       </button>
 

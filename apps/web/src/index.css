@@ -1,7 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap');
 @import './styles/remixicon/remixicon.css';
 @import './styles/design-system-flow.css';
 @import './styles/tokens.css';
+@import './styles/material.css';
+@import './styles/app-wash.css';
 @import './styles/base.css';
 @import '../../../packages/components/src/styles.css';
 @import './styles/primitives.css';

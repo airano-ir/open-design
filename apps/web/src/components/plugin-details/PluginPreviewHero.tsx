@@ -96,7 +96,7 @@ export function PluginPreviewHero({ pluginId, pluginTitle, examples }: Props) {
             className="plugin-details-modal__hero-url"
             title={active.name}
           >
-            <Icon name="eye" size={11} />
+            <Icon name="eye" size={14} />
             <span>{active.name}</span>
           </div>
           <a
@@ -107,7 +107,7 @@ export function PluginPreviewHero({ pluginId, pluginTitle, examples }: Props) {
             title="Open this example in a new tab"
             data-testid="plugin-details-hero-popout"
           >
-            <Icon name="external-link" size={12} />
+            <Icon name="external-link" size={14} />
             <span>Open</span>
           </a>
         </div>

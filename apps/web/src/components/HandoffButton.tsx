@@ -712,7 +712,7 @@ export function HandoffButton({
             >
               <span className="handoff-path-button-main">
                 <span className="handoff-path-button-icon" aria-hidden>
-                  <Icon name={copiedCliId === PROJECT_PATH_COPY_ID ? 'check' : 'copy'} size={13} />
+                  <Icon name={copiedCliId === PROJECT_PATH_COPY_ID ? 'check' : 'copy'} size={14} />
                 </span>
                 <span className="handoff-path-button-label">
                   {copiedCliId === PROJECT_PATH_COPY_ID ? t('handoff.copied') : t('designFiles.copyPath')}
@@ -737,7 +737,7 @@ export function HandoffButton({
                     >
                       <EditorIcon editorId={editor.id} size={24} />
                       <span className="handoff-target-label">{editor.label}</span>
-                      <Icon className="handoff-target-arrow" name="chevron-right" size={12} />
+                      <Icon className="handoff-target-arrow" name="chevron-right" size={14} />
                     </button>
                   ))}
                 </div>
@@ -775,7 +775,7 @@ export function HandoffButton({
               >
                 <AgentIcon id="amr" size={18} />
                 <span>{t('handoff.amrWebsite')}</span>
-                <Icon name="external-link" size={12} />
+                <Icon name="external-link" size={14} />
               </a>
               <div className="handoff-framework-row" role="group" aria-label={t('handoff.framework')}>
                 <span className="handoff-framework-label">{t('handoff.framework')}</span>

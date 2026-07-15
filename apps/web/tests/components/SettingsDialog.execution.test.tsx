@@ -4247,7 +4247,7 @@ describe('SettingsDialog appearance interactions', () => {
     );
 
     expect(screen.getByRole('radio', { name: 'Default accent color' }).getAttribute('aria-checked')).toBe('true');
-    expect(document.documentElement.style.getPropertyValue('--accent')).toBe('#c96442');
+    expect(document.documentElement.style.getPropertyValue('--accent')).toBe('#353535');
   });
 
   it('live previews explicit themes and removes the explicit document theme when switching back to System', () => {
@@ -4439,12 +4439,12 @@ describe('SettingsDialog appearance interactions', () => {
 
     fireEvent.click(screen.getByRole('radio', { name: 'Default accent color' }));
 
-    expect(document.documentElement.style.getPropertyValue('--accent')).toBe('#c96442');
+    expect(document.documentElement.style.getPropertyValue('--accent')).toBe('#353535');
 
     await waitForPersist(
       onPersist,
       expect.objectContaining({
-        accentColor: '#c96442',
+        accentColor: '#353535',
       }),
       {},
     );
@@ -4456,12 +4456,12 @@ describe('SettingsDialog appearance interactions', () => {
       { initialSection: 'appearance' },
     );
 
-    fireEvent.click(screen.getByRole('radio', { name: '#059669' }));
+    fireEvent.click(screen.getByRole('radio', { name: '#87ea5c' }));
 
     await waitForPersist(
       view.onPersist,
       expect.objectContaining({
-        accentColor: '#059669',
+        accentColor: '#87ea5c',
       }),
       {},
     );
@@ -4470,7 +4470,7 @@ describe('SettingsDialog appearance interactions', () => {
     expect(view.onClose).toHaveBeenCalledTimes(1);
 
     view.unmount();
-    expect(document.documentElement.style.getPropertyValue('--accent')).toBe('#059669');
+    expect(document.documentElement.style.getPropertyValue('--accent')).toBe('#87ea5c');
   });
 
   it('live previews and autosaves preset and custom accent colors', async () => {
@@ -4479,13 +4479,13 @@ describe('SettingsDialog appearance interactions', () => {
       { initialSection: 'appearance' },
     );
 
-    fireEvent.click(screen.getByRole('radio', { name: '#059669' }));
-    expect(document.documentElement.style.getPropertyValue('--accent')).toBe('#059669');
+    fireEvent.click(screen.getByRole('radio', { name: '#87ea5c' }));
+    expect(document.documentElement.style.getPropertyValue('--accent')).toBe('#87ea5c');
 
     await waitForPersist(
       onPersist,
       expect.objectContaining({
-        accentColor: '#059669',
+        accentColor: '#87ea5c',
       }),
       {},
     );

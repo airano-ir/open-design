@@ -448,7 +448,7 @@ function RunHistory({
               title={t('routines.openProjectTitle')}
             >
               {t('routines.openProject')}
-              <Icon name="chevron-right" size={12} />
+              <Icon name="chevron-right" size={14} />
             </button>
             {failureReason ? (
               <div className="routines-history-error">{failureReason}</div>

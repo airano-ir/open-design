@@ -555,7 +555,7 @@ export function DesignsTab({
 					) : null}
 					<div className="toolbar-search">
 						<span className="search-icon" aria-hidden>
-							<Icon name="search" size={13} />
+							<Icon name="search" size={14} />
 						</span>
 						<input
 							placeholder={t("designs.searchPlaceholder")}
@@ -592,7 +592,7 @@ export function DesignsTab({
 						>
 							<Icon
 								name={projectsRefreshing ? "spinner" : "refresh"}
-								size={13}
+								size={14}
 								className={projectsRefreshing ? "icon-spin" : undefined}
 							/>
 							<span>
@@ -636,7 +636,7 @@ export function DesignsTab({
 								setSelectMode(true);
 							}}
 						>
-							<Icon name="check" size={13} />
+							<Icon name="check" size={14} />
 							<span>{t("designs.selectMode")}</span>
 						</button>
 					) : null}
@@ -745,7 +745,7 @@ export function DesignsTab({
 											void handleDeleteLiveArtifact(p.id, artifact);
 										}}
 									>
-										<Icon name="close" size={12} />
+										<Icon name="close" size={14} />
 									</button>
 									<div
 										className="design-card-thumb live-artifact-thumb"
@@ -827,7 +827,7 @@ export function DesignsTab({
 										className={`design-card-checkbox${isSelected ? " checked" : ""}`}
 										aria-hidden
 									>
-										{isSelected ? <Icon name="check" size={12} /> : null}
+										{isSelected ? <Icon name="check" size={14} /> : null}
 									</span>
 								) : (
 									<div
@@ -882,7 +882,7 @@ export function DesignsTab({
 													handleRenameProject(p);
 												}}
 											>
-												<Icon name="pencil" size={12} />
+												<Icon name="pencil" size={14} />
 												<span>{t("designs.menuRename")}</span>
 											</button>
 											{onDuplicate ? (
@@ -923,7 +923,7 @@ export function DesignsTab({
 													handleDeleteProject(p);
 												}}
 											>
-												<Icon name="close" size={12} />
+												<Icon name="close" size={14} />
 												<span>{t("designs.menuDelete")}</span>
 											</button>
 										</div>
@@ -1044,7 +1044,7 @@ export function DesignsTab({
 															handleDeleteProject(p);
 														}}
 													>
-														<Icon name="close" size={12} />
+														<Icon name="close" size={14} />
 													</button>
 													<div
 														className="design-kanban-card-name"

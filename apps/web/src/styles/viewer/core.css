@@ -5,7 +5,7 @@
   flex-direction: column;
   min-height: 0;
   min-width: 0;
-  background: var(--bg);
+  background: var(--veil-canvas);
   overflow: hidden;
 }
 .workspace:has(.share-menu-popover, .present-menu),
@@ -22,54 +22,20 @@
   align-items: center;
   padding: 8px 14px;
   border-bottom: 1px solid var(--border);
-  background: var(--bg-panel);
-  font-size: 12.5px;
+  /* Functional toolbar → Liquid Glass regular (材质规范). */
+  background: var(--glass-regular);
+  -webkit-backdrop-filter: var(--glass-backdrop);
+  backdrop-filter: var(--glass-backdrop);
+  font-size: 13px;
   color: var(--text-muted);
   gap: 8px;
   min-height: 44px;
-  min-width: 0;
   flex-shrink: 0;
-  container-type: inline-size;
 }
-.viewer-toolbar-left,
-.viewer-toolbar-actions,
-.viewer-toolbar-inline-actions,
-.viewer-preview-toolbar-inline {
-  min-width: 0;
-  display: inline-flex;
-  align-items: center;
-}
-.viewer-toolbar-left { gap: 8px; flex: 1 1 auto; }
-.viewer-toolbar-actions { gap: 2px; flex: 0 0 auto; }
-.viewer-toolbar-inline-actions { gap: 2px; }
-.viewer-preview-toolbar-inline { gap: 8px; }
-.viewer-toolbar-presence {
-  display: inline-flex;
-  align-items: center;
-  min-height: 30px;
-  margin-right: 6px;
-}
-.file-version-trigger {
-  width: 30px;
-  min-width: 30px;
-  min-height: 28px;
-  gap: 6px;
-  justify-content: center;
-  padding: 0;
-  font-size: 12.5px;
-}
-.file-version-trigger span {
-  display: none;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+.viewer-toolbar-left { display: inline-flex; align-items: center; gap: 8px; }
+.viewer-toolbar-actions { display: inline-flex; gap: 2px; align-items: center; }
 .viewer-toolbar-tool-divider {
-  width: 1px;
-  height: 18px;
-  margin: 0 5px;
-  background: var(--border);
+  display: none;
 }
 .viewer-toolbar .icon-only,
 .viewer-toolbar-actions .icon-only {
@@ -250,7 +216,7 @@
 }
 .viewer-module-pointer__title {
   margin: 0;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text);
 }
@@ -307,10 +273,15 @@
   border: none;
   border-radius: var(--radius-sm);
   color: var(--text-muted);
-  font-size: 12.5px;
+  font-size: 13px;
   white-space: nowrap;
 }
 .viewer-action:hover:not(:disabled) { background: var(--bg-subtle); color: var(--text); }
+.viewer-action:disabled,
+.viewer-tab:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
 .viewer-action.active {
   background: var(--accent-tint);
   color: var(--accent-strong);
@@ -353,7 +324,7 @@
 .viewer-comment-count {
   min-width: 12px;
   color: currentColor;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -371,7 +342,7 @@
   border-radius: var(--radius-sm);
   background: var(--text);
   color: var(--bg-panel);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.2;
   opacity: 0;
   pointer-events: none;
@@ -403,8 +374,10 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  background: var(--bg-panel);
-  border: 1px solid var(--border);
+  background: var(--glass-regular);
+  -webkit-backdrop-filter: var(--glass-backdrop);
+  backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--material-separator);
   border-radius: var(--radius-md, 10px);
   box-shadow: var(--shadow-md, 0 8px 24px rgba(0, 0, 0, 0.12));
 }
@@ -418,7 +391,7 @@
   border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-muted);
-  font-size: 12.5px;
+  font-size: 13px;
   line-height: 1.2;
   white-space: nowrap;
   text-align: left;
@@ -461,7 +434,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text-muted);
   padding: 4px 10px;
   border-radius: var(--radius-sm);
@@ -491,7 +464,17 @@
 .viewer-toggle.active .switch { background: var(--text); border-color: var(--text); }
 .viewer-toggle.on .switch::after,
 .viewer-toggle.active .switch::after { transform: translateX(12px); }
-.viewer-tabs { min-width: 0; display: inline-flex; gap: 2px; }
+/* Switch-style segmented control (opendesign spec): a recessed neutral
+   track holding pill segments; the active segment reads as a raised light
+   thumb — 极浅背景 fill + thin default border on the 次级浅背景 track. */
+.viewer-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-subtle);
+}
 .viewer-mode-menu {
   position: relative;
   display: inline-flex;
@@ -507,7 +490,7 @@
   border-color: var(--border);
   background-color: var(--bg-panel);
   color: var(--text);
-  font-size: 12.5px;
+  font-size: 13px;
   line-height: 1.2;
   box-shadow: var(--shadow-xs);
 }
@@ -543,7 +526,7 @@
   border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-muted);
-  font-size: 12.5px;
+  font-size: 13px;
   text-align: left;
 }
 .viewer-mode-menu-item:hover,
@@ -556,23 +539,27 @@
   color: var(--accent-strong);
 }
 .viewer-tab {
-  min-width: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
   background: transparent;
-  border: none;
-  padding: 4px 10px;
+  border: var(--stroke-thin, 1px) solid transparent;
+  padding: 3px 12px;
   font-size: 12px;
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
+  /* Segment stays a capsule inside the switch track. */
+  border-radius: var(--radius-pill);
+  color: var(--text-soft);
   white-space: nowrap;
+  transition:
+    background-color var(--duration-faster) var(--curve-easy-ease),
+    color var(--duration-faster) var(--curve-easy-ease),
+    border-color var(--duration-faster) var(--curve-easy-ease);
 }
-.viewer-tab:hover { background: var(--bg-subtle); color: var(--text); }
+/* Inactive segment hover: text deepens only — a fill would fight the track. */
+.viewer-tab:hover:not(:disabled):not(.active) { background: transparent; color: var(--text); }
+/* Active segment = the switch thumb: light fill + thin border lifts it off
+   the recessed track (border kept alive in theater.css). */
 .viewer-tab.active {
-  background: var(--bg-subtle);
-  color: var(--text);
+  background: var(--bg-panel);
+  border-color: var(--border);
+  color: var(--text-strong);
   font-weight: 500;
 }
 .viewer-meta { font-size: 12px; color: var(--text-muted); }
@@ -793,7 +780,7 @@
   border-bottom: 1px solid var(--border);
   background: var(--bg-panel);
   color: var(--text-muted);
-  font-size: 12.5px;
+  font-size: 13px;
 }
 .live-artifact-refresh-notice-copy {
   display: inline-flex;
@@ -910,7 +897,7 @@
 .live-artifact-refresh-hero-desc {
   margin: 0;
   color: var(--text-muted);
-  font-size: 12.5px;
+  font-size: 13px;
   line-height: 1.5;
 }
 .live-artifact-refresh-hero-meta {
@@ -928,7 +915,7 @@
   text-align: right;
 }
 .live-artifact-refresh-label {
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -945,7 +932,7 @@
   font-weight: 500;
 }
 .live-artifact-refresh-sub {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
@@ -953,7 +940,7 @@
 /* Refresh status badges reuse the .live-artifact-badge pill shape with tone mixins */
 .live-artifact-badge.refresh-status {
   text-transform: uppercase;
-  letter-spacing: 0;
+  letter-spacing: 0.04em;
 }
 .live-artifact-badge.refresh-status.tone-neutral {
   color: var(--text-muted);
@@ -1014,14 +1001,14 @@
 }
 .live-artifact-refresh-section-header h4 {
   margin: 0;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--text-muted);
 }
 .live-artifact-refresh-hint {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 .live-artifact-refresh-empty {
@@ -1030,7 +1017,7 @@
   border-radius: var(--radius);
   background: var(--bg-panel);
   color: var(--text-muted);
-  font-size: 12.5px;
+  font-size: 13px;
   line-height: 1.5;
 }
 .live-artifact-refresh-empty em {
@@ -1098,12 +1085,12 @@
   flex-wrap: wrap;
 }
 .live-artifact-refresh-event-time {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
 .live-artifact-refresh-event-detail {
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text);
   line-height: 1.5;
   word-break: break-word;
@@ -1147,7 +1134,7 @@
   white-space: nowrap;
 }
 .live-artifact-refresh-tile-meta code {
-  font-size: 11px;
+  font-size: 12px;
   font-family: var(--mono);
   color: var(--text-muted);
   background: var(--bg-subtle);
@@ -1160,7 +1147,7 @@
 }
 .live-artifact-refresh-tile-error {
   grid-column: 1 / -1;
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--red);
   background: var(--red-bg);
   border: 1px solid var(--red-border);
@@ -1192,7 +1179,7 @@
   min-width: 0;
 }
 .live-artifact-refresh-kv dt {
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1247,7 +1234,7 @@
   margin: 0;
   padding: 0 14px 10px;
   color: var(--text-muted);
-  font-size: 11.5px;
+  font-size: 12px;
   line-height: 1.5;
 }
 .live-artifact-refresh-raw pre.viewer-source {
@@ -1323,15 +1310,16 @@
   height: 14px;
 }
 .viewer-viewport-trigger > span {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* Size to the label text, don't stretch to fill the button. */
+  flex: 0 0 auto;
   white-space: nowrap;
 }
-.viewer-viewport-trigger:hover:not(:disabled),
+.viewer-viewport-trigger:hover:not(:disabled) {
+  border-color: transparent;
+  background-color: transparent;
+}
 .viewer-viewport-trigger[aria-expanded='true'] {
-  border-color: var(--border-strong);
+  border-color: transparent;
   background-color: var(--bg-subtle);
   color: var(--text);
 }
@@ -1342,6 +1330,9 @@
   z-index: 80;
   width: max-content;
   min-width: 144px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2, 2px);
   padding: 4px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -1371,8 +1362,8 @@
   border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-muted);
-  font-size: 12.5px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 400;
   line-height: 1;
   text-align: left;
 }
@@ -1381,7 +1372,10 @@
   color: var(--text);
 }
 .viewer-viewport-menu-item.active {
-  border-color: color-mix(in srgb, var(--accent) 28%, transparent);
+  /* No stroke on the selected row — the fill, darker text and checkmark
+     already mark it. The border stays transparent (keeps the reserved 1px
+     from the base rule so text doesn't shift). */
+  border-color: transparent;
   background: color-mix(in srgb, var(--accent-tint) 82%, var(--bg-panel));
   color: var(--accent-strong);
 }
@@ -1581,7 +1575,7 @@
   background: #d96a46;
   color: white;
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 36px;
   text-align: center;
   box-shadow: 0 10px 22px rgba(33, 24, 18, 0.22);
@@ -1596,33 +1590,6 @@
 .comment-active-pin {
   pointer-events: none;
 }
-/* Team collaboration drift-ladder states: surface anchor drift instead of
-   silently mis-pointing. */
-.comment-saved-marker--reanchored .comment-saved-pin {
-  background: #b8791f; /* amber — based on an older content version */
-}
-.comment-saved-marker--stale .comment-saved-pin {
-  background: #b8791f;
-  border-style: dashed; /* anchor may have moved */
-}
-.comment-saved-marker--stale .comment-saved-outline,
-.comment-saved-marker--lost .comment-saved-outline {
-  display: block;
-  position: absolute;
-  inset: 0;
-  border: 2px dashed rgba(184, 121, 31, 0.8);
-  border-radius: 6px;
-  pointer-events: none;
-}
-.comment-saved-marker--lost .comment-saved-pin {
-  background: #8a8f98; /* grey ghost — anchor lost */
-  opacity: 0.85;
-  box-shadow: none;
-}
-.comment-saved-marker--lost .comment-saved-outline {
-  border-color: rgba(138, 143, 152, 0.7);
-  border-style: dotted;
-}
 .comment-popover {
   position: absolute;
   left: 14px;
@@ -1632,9 +1599,11 @@
   max-height: calc(100% - 28px);
   overflow: auto;
   padding: 10px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--material-separator);
   border-radius: var(--radius);
-  background: var(--bg-panel);
+  background: var(--glass-regular);
+  -webkit-backdrop-filter: var(--glass-backdrop);
+  backdrop-filter: var(--glass-backdrop);
   box-shadow: var(--shadow-lg);
 }
 .comment-popover-titlebar {
@@ -1790,7 +1759,7 @@
   border-radius: var(--radius-pill);
   background: var(--bg-panel);
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 12px;
 }
 .board-pod-chip-remove {
   display: inline-flex;
@@ -1847,17 +1816,6 @@
   max-height: 112px;
   overflow-y: auto;
   resize: none;
-}
-/* Non-author comment composer. The textarea keeps `readOnly` (instead of the
-   native `disabled`) so the existing note text renders at full legibility
-   rather than being dimmed by the browser. On top of that we present a
-   disabled affordance purely with CSS: a muted fill, a not-allowed cursor,
-   and suppressed text selection/caret so the field reads as untouchable. */
-.comment-popover textarea.composer-note--readonly {
-  cursor: not-allowed;
-  user-select: none;
-  -webkit-user-select: none;
-  background: var(--bg-muted);
 }
 .comment-popover-actions {
   display: flex;
@@ -2060,7 +2018,7 @@
   background: transparent;
   color: var(--text-muted);
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 600;
   cursor: pointer;
 }
 .comment-side-select-all:hover:not(:disabled) {
@@ -2114,7 +2072,7 @@
 .comment-side-rail span {
   writing-mode: vertical-rl;
   text-orientation: mixed;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.04em;
 }
@@ -2128,7 +2086,7 @@
   border-radius: var(--radius-pill);
   background: #ff5a3c;
   color: #fff;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1;
 }
@@ -2144,7 +2102,7 @@
   padding: 24px 8px;
   text-align: center;
   color: var(--text-muted);
-  font-size: 12.5px;
+  font-size: 13px;
 }
 .comment-side-item {
   position: relative;
@@ -2243,7 +2201,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
   line-height: 1.2;
 }
@@ -2253,7 +2211,7 @@
   border-radius: 50%;
   background: #0a0a0a;
   color: #fff;
-  font-size: 11px;
+  font-size: 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2261,7 +2219,7 @@
   flex-shrink: 0;
 }
 .comment-side-time {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
   white-space: nowrap;
 }
@@ -2422,8 +2380,8 @@
   background: #0d3858;
   color: #fff;
   box-shadow: 0 12px 32px rgba(6, 22, 36, 0.28);
-  font-size: 15px;
-  font-weight: 650;
+  font-size: 16px;
+  font-weight: 600;
   white-space: nowrap;
 }
 .screenshot-toast > i {
@@ -2501,7 +2459,7 @@
 }
 .inspect-panel-title code {
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 12px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2515,7 +2473,7 @@
   border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
   border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--accent) 8%, var(--bg-panel));
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.4;
 }
 .inspect-ancestor-notice-icon {
@@ -2527,7 +2485,7 @@
   color: var(--accent);
   border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
   border-radius: var(--radius-pill);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1;
 }
@@ -2542,7 +2500,7 @@
   border-radius: 3px;
   background: color-mix(in srgb, var(--text) 8%, transparent);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 12px;
 }
 
 /* MCP Copy button floats above a syntax-highlighted <pre>; .ghost's
@@ -2566,7 +2524,7 @@ button.ghost.mcp-copy-btn:hover:not(:disabled) {
 }
 .inspect-section-label {
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -2579,7 +2537,7 @@ button.ghost.mcp-copy-btn:hover:not(:disabled) {
 }
 .inspect-row > label {
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 12px;
 }
 .inspect-row input[type='color'] {
   width: 28px;
@@ -2596,7 +2554,7 @@ button.ghost.mcp-copy-btn:hover:not(:disabled) {
   border: 1px solid var(--border);
   border-radius: var(--radius-xs);
   background-color: var(--bg);
-  font-size: 11px;
+  font-size: 12px;
   font-family: inherit;
 }
 .inspect-row input[type='text'] {
@@ -2608,7 +2566,7 @@ button.ghost.mcp-copy-btn:hover:not(:disabled) {
 .inspect-row-value {
   font-variant-numeric: tabular-nums;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 12px;
   min-width: 42px;
   text-align: right;
 }
@@ -2624,7 +2582,7 @@ button.ghost.mcp-copy-btn:hover:not(:disabled) {
   border-radius: var(--radius-xs);
   background: var(--red-bg);
   color: var(--red);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .inspect-empty-hint-container {
@@ -2654,7 +2612,7 @@ button.ghost.mcp-copy-btn:hover:not(:disabled) {
   padding: 1px 5px;
   border-radius: 3px;
   background: var(--bg);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .comments-panel {
@@ -2672,7 +2630,7 @@ button.ghost.mcp-copy-btn:hover:not(:disabled) {
 .comments-section h3 {
   margin: 0;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -2723,7 +2681,7 @@ button.ghost.mcp-copy-btn:hover:not(:disabled) {
 .comment-card p {
   margin: 0;
   color: var(--text);
-  font-size: 12.5px;
+  font-size: 13px;
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
@@ -2734,7 +2692,7 @@ button.ghost.mcp-copy-btn:hover:not(:disabled) {
   border-radius: var(--radius-pill);
   background: var(--bg);
   color: var(--text-muted);
-  font-size: 11.5px;
+  font-size: 12px;
 }
 .comment-card-action:hover {
   border-color: var(--accent-soft);
@@ -2752,7 +2710,7 @@ button.ghost.mcp-copy-btn:hover:not(:disabled) {
   flex-wrap: wrap;
   gap: 4px;
   color: var(--text-faint);
-  font-size: 11px;
+  font-size: 12px;
 }
 .comment-card-meta span {
   max-width: 140px;
