@@ -27,7 +27,7 @@ describe('FileOpsSummary', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('starts collapsed while streaming and surfaces per-op totals in the header', () => {
+  it('shows up to four files directly, including while the run is streaming', () => {
     render(
       <FileOpsSummary
         entries={[
@@ -44,13 +44,13 @@ describe('FileOpsSummary', () => {
     expect(screen.getByText(/Edit 3/)).toBeTruthy();
     expect(screen.getByText(/Delete 1/)).toBeTruthy();
     expect(screen.getByText(/Read 2/)).toBeTruthy();
-    // While streaming we collapse the file list so the running pill stays compact.
-    expect(screen.queryByTestId('file-ops-row-a.ts')).toBeNull();
+    expect(screen.getByTestId('file-ops-row-a.ts')).toBeTruthy();
+    expect(screen.getByTestId('file-ops-row-b.ts')).toBeTruthy();
     const toggle = screen.getByTestId('file-ops-toggle');
-    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(toggle.getAttribute('aria-expanded')).toBeNull();
   });
 
-  it('stays collapsed once the run is complete until the user asks for file details', () => {
+  it('shows small completed result sets without a disclosure click', () => {
     render(
       <FileOpsSummary
         entries={[
@@ -61,23 +61,18 @@ describe('FileOpsSummary', () => {
       />,
     );
 
-    expect(screen.queryByTestId('file-ops-row-a.ts')).toBeNull();
-    expect(screen.queryByTestId('file-ops-row-b.ts')).toBeNull();
-    expect(screen.getByTestId('file-ops-toggle').getAttribute('aria-expanded')).toBe('false');
-
-    fireEvent.click(screen.getByTestId('file-ops-toggle'));
     expect(screen.getByTestId('file-ops-row-a.ts')).toBeTruthy();
     expect(screen.getByTestId('file-ops-row-b.ts')).toBeTruthy();
   });
 
-  it('remains collapsed when a streaming turn finishes', () => {
+  it('keeps a small result set visible when a streaming turn finishes', () => {
     const { rerender } = render(
       <FileOpsSummary
         entries={[entry({ path: 'a.ts' })]}
         streaming
       />,
     );
-    expect(screen.getByTestId('file-ops-toggle').getAttribute('aria-expanded')).toBe('false');
+    expect(screen.getByTestId('file-ops-row-a.ts')).toBeTruthy();
 
     rerender(
       <FileOpsSummary
@@ -85,7 +80,31 @@ describe('FileOpsSummary', () => {
         streaming={false}
       />,
     );
-    expect(screen.getByTestId('file-ops-toggle').getAttribute('aria-expanded')).toBe('false');
+    expect(screen.getByTestId('file-ops-row-a.ts')).toBeTruthy();
+  });
+
+  it('collapses batches larger than four files until the user expands them', () => {
+    render(
+      <FileOpsSummary
+        entries={[
+          entry({ path: 'a.ts' }),
+          entry({ path: 'b.ts' }),
+          entry({ path: 'c.ts' }),
+          entry({ path: 'd.ts' }),
+          entry({ path: 'e.ts' }),
+        ]}
+        streaming={false}
+      />,
+    );
+
+    const toggle = screen.getByTestId('file-ops-toggle');
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(screen.queryByTestId('file-ops-row-a.ts')).toBeNull();
+
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByTestId('file-ops-row-a.ts')).toBeTruthy();
+    expect(screen.getByTestId('file-ops-row-e.ts')).toBeTruthy();
   });
 
   it('shows the open button only for files that are present in the project file set', () => {
@@ -102,7 +121,6 @@ describe('FileOpsSummary', () => {
       />,
     );
 
-    fireEvent.click(screen.getByTestId('file-ops-toggle'));
     expect(screen.getByTestId('file-ops-row-open-a.ts')).toBeTruthy();
     expect(screen.queryByTestId('file-ops-row-open-missing.ts')).toBeNull();
 
@@ -110,16 +128,19 @@ describe('FileOpsSummary', () => {
     expect(onRequestOpenFile).toHaveBeenCalledWith('a.ts');
   });
 
-  it('offers one direct result entry point for the latest changed file', () => {
+  it('offers one direct result entry point while a large batch is collapsed', () => {
     const onRequestOpenFile = vi.fn();
     render(
       <FileOpsSummary
         entries={[
           entry({ path: 'input.ts' }),
           entry({ path: 'result.ts', ops: ['write'], opCounts: { read: 0, write: 1, edit: 0, delete: 0 } }),
+          entry({ path: 'third.ts' }),
+          entry({ path: 'fourth.ts' }),
+          entry({ path: 'fifth.ts' }),
         ]}
         streaming={false}
-        projectFileNames={new Set(['input.ts', 'result.ts'])}
+        projectFileNames={new Set(['input.ts', 'result.ts', 'third.ts', 'fourth.ts', 'fifth.ts'])}
         onRequestOpenFile={onRequestOpenFile}
       />,
     );
@@ -142,7 +163,6 @@ describe('FileOpsSummary', () => {
       />,
     );
 
-    fireEvent.click(screen.getByTestId('file-ops-toggle'));
     expect(screen.getByTestId('file-ops-row-gone.ts')).toBeTruthy();
     expect(screen.queryByTestId('file-ops-row-open-gone.ts')).toBeNull();
   });
@@ -157,8 +177,6 @@ describe('FileOpsSummary', () => {
         streaming
       />,
     );
-    fireEvent.click(screen.getByTestId('file-ops-toggle'));
-
     const pending = screen.getByTestId('file-ops-row-pending.ts');
     const broken = screen.getByTestId('file-ops-row-broken.ts');
     expect(pending.className).toContain('file-ops-row--running');

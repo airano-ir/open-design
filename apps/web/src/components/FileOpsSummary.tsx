@@ -1,10 +1,11 @@
 /**
  * "Files this turn" disclosure pinned to the top of an assistant message.
  *
- * The row stays compact with live counters (Write 1 · Edit 2 · Read 3).
- * Opening its disclosure reveals the full file list with per-file op badges;
- * a changed result file gets one direct "Open" action that lifts the basename
- * up to ProjectView so FileWorkspace focuses the matching tab.
+ * Up to four files stay visible so an artifact is presented as a result, not
+ * hidden inside execution history. Larger batches start as a disclosure to
+ * keep the response compact; a changed result file then gets one direct
+ * "Open" action that lifts the basename up to ProjectView so FileWorkspace
+ * focuses the matching tab.
  *
  * The component is read-only over `events` — derivation lives in
  * `runtime/file-ops.ts` so the same logic is reachable from tests and
@@ -46,6 +47,8 @@ const OP_BADGE_GLYPH: Record<FileOpKind, string> = {
   delete: 'D',
 };
 
+const COLLAPSE_AFTER_ENTRY_COUNT = 4;
+
 export function FileOpsSummary({
   entries,
   streaming,
@@ -53,12 +56,15 @@ export function FileOpsSummary({
   onRequestOpenFile,
 }: Props) {
   const t = useT();
-  // File details are review material, not the result itself. Keep them
-  // collapsed in every terminal state so a completed task reads as answer →
-  // delivery, while preserving a single disclosure for audit.
-  const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   if (entries.length === 0) return null;
+
+  // Small result sets should be immediately legible. Once a run touches more
+  // than four files, preserve a compact answer and let the user opt into the
+  // audit list. A manually expanded large batch stays open as it streams.
+  const isCollapsible = entries.length > COLLAPSE_AFTER_ENTRY_COUNT;
+  const open = !isCollapsible || expanded;
 
   const counts = countFileOps(entries);
   const summaryParts: string[] = [];
@@ -80,6 +86,21 @@ export function FileOpsSummary({
     !!primaryEntry &&
     !!onRequestOpenFile &&
     (projectFileNames ? projectFileNames.has(primaryEntry.path) : true);
+  const header = (
+    <>
+      <span className="file-ops-icon" aria-hidden>
+        <Icon name="file" size={13} />
+      </span>
+      <span className="file-ops-label">{t('assistant.producedFiles')}</span>
+      <span className="file-ops-summary-line">{summaryParts.join(' · ')}</span>
+      <span className="file-ops-count">{entries.length}</span>
+      {isCollapsible ? (
+        <span className="file-ops-chev" aria-hidden>
+          <Icon name={open ? 'chevron-down' : 'chevron-right'} size={11} />
+        </span>
+      ) : null}
+    </>
+  );
 
   return (
     <div
@@ -87,24 +108,25 @@ export function FileOpsSummary({
       data-testid="file-ops-summary"
     >
       <div className="file-ops-head">
-        <button
-          type="button"
-          className="file-ops-toggle"
-          onClick={() => setOpen((value) => !value)}
-          aria-expanded={open}
-          data-testid="file-ops-toggle"
-        >
-          <span className="file-ops-icon" aria-hidden>
-            <Icon name="file" size={13} />
-          </span>
-          <span className="file-ops-label">{t('assistant.producedFiles')}</span>
-          <span className="file-ops-summary-line">{summaryParts.join(' · ')}</span>
-          <span className="file-ops-count">{entries.length}</span>
-          <span className="file-ops-chev" aria-hidden>
-            <Icon name={open ? 'chevron-down' : 'chevron-right'} size={11} />
-          </span>
-        </button>
-        {canOpenPrimary && primaryEntry ? (
+        {isCollapsible ? (
+          <button
+            type="button"
+            className="file-ops-toggle"
+            onClick={() => setExpanded((value) => !value)}
+            aria-expanded={open}
+            data-testid="file-ops-toggle"
+          >
+            {header}
+          </button>
+        ) : (
+          <div
+            className="file-ops-toggle file-ops-toggle--static"
+            data-testid="file-ops-toggle"
+          >
+            {header}
+          </div>
+        )}
+        {canOpenPrimary && primaryEntry && !open ? (
           <button
             type="button"
             className="file-ops-primary-action"

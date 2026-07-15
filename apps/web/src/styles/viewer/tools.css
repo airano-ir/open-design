@@ -269,9 +269,9 @@
   word-break: break-all;
 }
 
-/* "Files this turn" summary — derived from file operation tool_use events
-   so users can scan every file the agent touched without expanding tool-
-   group disclosures. Compact pill while streaming, full list once done. */
+/* "Files this turn" summary — derived from file operation tool_use events.
+   Show up to four files as part of the answer; larger batches stay compact
+   until the user opens the disclosure. */
 .file-ops {
   display: flex;
   flex-direction: column;
@@ -306,6 +306,8 @@
   min-width: 0;
 }
 .file-ops-toggle:hover { background: var(--bg-subtle); }
+.file-ops-toggle--static { cursor: default; }
+.file-ops-toggle--static:hover { background: transparent; }
 .file-ops-primary-action {
   flex: 0 0 auto;
   margin: 4px 6px 4px 0;
