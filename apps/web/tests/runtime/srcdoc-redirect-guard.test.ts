@@ -55,7 +55,11 @@ function makeMeta(content: string, httpEquiv = 'refresh') {
 // A VM context that models a sandboxed preview iframe. `window` is its own
 // globalThis, `window.name` persists across guard runs (the browsing-context
 // store the guard relies on), and the parent's postMessage is captured.
-function createIframeHarness(href = 'https://preview.local/index.html') {
+function createIframeHarness(
+  opts: { href?: string; baseURI?: string } = {},
+) {
+  const href = opts.href ?? 'https://preview.local/index.html';
+  const baseURI = opts.baseURI ?? href;
   const posted: Array<{ type?: string; hops?: number }> = [];
   const clock = { now: 1_000 };
   const ctx = vm.createContext({});
@@ -76,7 +80,7 @@ function createIframeHarness(href = 'https://preview.local/index.html') {
   context.location = { href };
   context.document = {
     readyState: 'complete',
-    baseURI: href,
+    baseURI,
     _metas: [],
     getElementsByTagName(tag: string) {
       return tag === 'meta' ? this._metas : [];
@@ -133,6 +137,47 @@ describe('injected redirect guard breaks meta-refresh loops (#710)', () => {
     expect(h.posted).toHaveLength(1);
     expect(h.posted[0]?.type).toBe(PREVIEW_REDIRECT_LOOP_MESSAGE);
     // Once broken, the persisted counter is cleared so a later clean run starts fresh.
+    expect(h.windowName()).toBe('');
+  });
+
+  it('kills an immediate same-artifact URL target while the iframe URL is about:srcdoc', () => {
+    const h = createIframeHarness({
+      href: 'about:srcdoc',
+      baseURI: 'https://preview.local/index.html',
+    });
+    const meta = makeMeta('0; url=index.html');
+    h.load([meta], guardBody);
+    expect(meta._removed).toBe(true);
+    expect(h.posted).toHaveLength(1);
+    expect(h.posted[0]?.type).toBe(PREVIEW_REDIRECT_LOOP_MESSAGE);
+    expect(h.windowName()).toBe('');
+  });
+
+  it('blocks fast URL-target refreshes before a srcdoc iframe leaves the injected guard', () => {
+    const h = createIframeHarness({
+      href: 'about:srcdoc',
+      baseURI: 'https://preview.local/a.html',
+    });
+    const meta = makeMeta('0; url=./b.html');
+    h.load([meta], guardBody);
+    expect(meta._removed).toBe(true);
+    expect(h.posted).toHaveLength(1);
+    expect(h.posted[0]?.type).toBe(PREVIEW_REDIRECT_LOOP_MESSAGE);
+    expect(h.windowName()).toBe('');
+  });
+
+  it('reports no-meta load-time script redirects before author code can keep reloading', () => {
+    const scriptRedirectGuard = extractGuardBody(
+      buildSrcdoc('<!doctype html><html><head><script>location.reload()</script></head><body>x</body></html>'),
+    );
+    const h = createIframeHarness({
+      href: 'about:srcdoc',
+      baseURI: 'https://preview.local/index.html',
+    });
+    h.load([], scriptRedirectGuard);
+    expect(h.posted).toHaveLength(1);
+    expect(h.posted[0]?.type).toBe(PREVIEW_REDIRECT_LOOP_MESSAGE);
+    expect(h.posted[0]?.hops).toBe(1);
     expect(h.windowName()).toBe('');
   });
 

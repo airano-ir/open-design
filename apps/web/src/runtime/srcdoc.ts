@@ -378,10 +378,11 @@ export function buildSrcdoc(
   const withSourcePaths = options.editBridge ? annotateManualEditSourcePaths(withOdIds) : withOdIds;
   const withBase = options.baseHref ? injectBaseHref(withSourcePaths, options.baseHref) : withSourcePaths;
   const withShim = injectSandboxShim(withBase);
+  const blockLoadTimeScriptRedirect = htmlHasLoadTimeLocationNavigation(withBase);
   // Always on: a redirect loop can freeze ANY previewed artifact, and the guard
   // is inert on documents that never self-redirect. Injected right after the
   // sandbox shim so it is installed before any author script or meta refresh.
-  const withRedirectGuard = injectPreviewRedirectGuard(withShim);
+  const withRedirectGuard = injectPreviewRedirectGuard(withShim, { blockLoadTimeScriptRedirect });
   const withFocusGuard = options.previewFocusGuard ? injectPreviewFocusGuard(withRedirectGuard) : withRedirectGuard;
   const withMotionFreeze = options.freezeMotion ? injectMotionFreeze(withFocusGuard) : withFocusGuard;
   const withDeckStageFallback = options.deck
@@ -1311,13 +1312,24 @@ function injectPreviewFocusGuard(doc: string): string {
 // because that is the only per-context store that survives the iframe navigating
 // itself, and it runs its check on DOMContentLoaded so the author's `<meta>`
 // tags (parsed after this head script) are already in the DOM.
-function injectPreviewRedirectGuard(doc: string): string {
+function htmlHasLoadTimeLocationNavigation(source: string): boolean {
+  if (/\blocation\s*\.\s*(?:reload|replace|assign)\s*\(/i.test(source)) return true;
+  if (/\blocation\s*\.\s*href\s*=[^=]/i.test(source)) return true;
+  if (/\b(?:window|document|self|top|parent)\s*\.\s*location\s*=[^=]/i.test(source)) return true;
+  return false;
+}
+
+function injectPreviewRedirectGuard(
+  doc: string,
+  opts: { blockLoadTimeScriptRedirect?: boolean } = {},
+): string {
   const script = `<script data-od-preview-redirect-guard>(function(){
   var NAME_PREFIX = '__odRedirectGuard=';
   var MAX_HOPS = ${PREVIEW_REDIRECT_GUARD_MAX_HOPS};
   var WINDOW_MS = ${PREVIEW_REDIRECT_GUARD_WINDOW_MS};
   var SELF_MIN_DELAY_MS = ${PREVIEW_REDIRECT_GUARD_SELF_REFRESH_MIN_DELAY_MS};
   var MESSAGE_TYPE = ${JSON.stringify(PREVIEW_REDIRECT_LOOP_MESSAGE)};
+  var BLOCK_LOAD_TIME_SCRIPT_REDIRECT = ${opts.blockLoadTimeScriptRedirect ? 'true' : 'false'};
   function nowMs(){ try { return Date.now(); } catch (_) { return 0; } }
   function readState(){
     try {
@@ -1354,12 +1366,27 @@ function injectPreviewRedirectGuard(doc: string): string {
     var urlMatch = content.match(/[;,]\\s*url\\s*=\\s*['"]?\\s*([^'"\\s]+)/i);
     return { delayMs: delayMs, url: urlMatch ? urlMatch[1] : '' };
   }
+  function currentArtifactHref(){
+    try {
+      var href = String(location.href || '');
+      if (href === 'about:srcdoc') {
+        return String(document.baseURI || href);
+      }
+      return href;
+    } catch (_) {
+      return '';
+    }
+  }
   function isSelfTarget(url){
     if (!url) return true; // no url => refresh the current document
     try {
       var base = (document.baseURI) || location.href;
-      return new URL(url, base).href === location.href;
+      return new URL(url, base).href === currentArtifactHref();
     } catch (_) { return false; }
+  }
+  function isFastSrcdocUrlHop(parsed){
+    if (!parsed.url || parsed.delayMs > SELF_MIN_DELAY_MS) return false;
+    try { return String(location.href || '') === 'about:srcdoc'; } catch (_) { return false; }
   }
   function neutralize(metas){
     for (var i = 0; i < metas.length; i++) {
@@ -1376,6 +1403,12 @@ function injectPreviewRedirectGuard(doc: string): string {
   }
   function evaluate(){
     var metas = metaRefreshes();
+    if (BLOCK_LOAD_TIME_SCRIPT_REDIRECT) {
+      neutralize(metas);
+      clearState();
+      report(1);
+      return;
+    }
     if (!metas.length) {
       // No refresh directive: this document breaks any accumulating chain.
       clearState();
@@ -1385,6 +1418,7 @@ function injectPreviewRedirectGuard(doc: string): string {
     for (var i = 0; i < metas.length; i++) {
       var parsed = parseContent(metas[i]);
       if (parsed.delayMs <= SELF_MIN_DELAY_MS && isSelfTarget(parsed.url)) { selfLoop = true; break; }
+      if (isFastSrcdocUrlHop(parsed)) { selfLoop = true; break; }
     }
     var t = nowMs();
     var prev = readState();
