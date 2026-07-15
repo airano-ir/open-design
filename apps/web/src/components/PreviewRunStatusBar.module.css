@@ -43,8 +43,7 @@
   color: var(--text-muted);
 }
 
-.elapsed::before,
-.action::before {
+.elapsed::before {
   content: '·';
   color: var(--text-faint);
 }
@@ -54,33 +53,6 @@
      failure label neutral here; the full Chat failure card carries the
      semantic error treatment and recovery action. */
   color: var(--text-muted);
-}
-
-/* The shared ghost Button has a bordered, filled hover state. This action
-   lives over arbitrary generated content, so it must stay a text link in
-   every interaction state rather than becoming a floating app-chrome button. */
-.root button.action {
-  display: inline-flex;
-  align-items: baseline;
-  min-height: 28px;
-  margin: -5px -6px;
-  padding: 5px 6px;
-  font-size: 12px;
-  line-height: 18px;
-  color: var(--text-muted);
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-  pointer-events: auto;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.root button.action:hover:not(:disabled) {
-  color: var(--text);
-  background: transparent;
-  border-color: transparent;
-  box-shadow: none;
 }
 
 @keyframes preview-stage-enter {

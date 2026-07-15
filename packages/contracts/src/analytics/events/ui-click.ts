@@ -905,18 +905,6 @@ export interface RunFailedToastClickProps {
   element: 'go_amr';
 }
 
-export interface PreviewRunStatusClickProps {
-  page_name: 'file_manager';
-  area: 'preview_run_status';
-  element: 'view_details';
-  status: 'generating' | 'verifying' | 'succeeded' | 'failed';
-  delivery_state?: 'delivered' | 'no_result' | 'delivery_failed';
-  project_id: string;
-  conversation_id: string | null;
-  assistant_message_id: string;
-  run_id?: string;
-}
-
 export interface AmrEntryClickProps {
   page_name: TrackingPageName;
   area: 'amr_entry';
@@ -1585,7 +1573,6 @@ export type UiClickProps =
   | NextStepActionClickProps
   | QuestionsFormClickProps
   | RunFailedToastClickProps
-  | PreviewRunStatusClickProps
   | AmrEntryClickProps
   | ChatPanelResourcesPopoverClickProps
   | ChatPanelMessageQueueClickProps

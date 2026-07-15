@@ -3153,8 +3153,7 @@ describe('FileWorkspace empty-project generation contract', () => {
     },
   );
 
-  it('keeps delivery recovery in Chat and leaves a compact details handoff over existing preview files', () => {
-    const onViewRunDetails = vi.fn();
+  it('keeps delivery recovery in Chat and leaves a passive failure hint over existing preview files', () => {
     render(
       <FileWorkspace
         projectId="project-1"
@@ -3165,7 +3164,6 @@ describe('FileWorkspace empty-project generation contract', () => {
         isDeck={false}
         tabsState={{ tabs: [], active: DESIGN_FILES_TAB }}
         onTabsStateChange={vi.fn()}
-        onViewRunDetails={onViewRunDetails}
         messages={[
           {
             ...assistantMessage('failed'),
@@ -3180,15 +3178,12 @@ describe('FileWorkspace empty-project generation contract', () => {
     );
 
     const previewStatus = screen.getByTestId('preview-run-status');
-    expect(previewStatus).toHaveTextContent('Delivery needs attention');
+    expect(previewStatus).toHaveTextContent('Delivery needs attention · Retry in Chat');
     expect(previewStatus.closest('.ws-preview-run-status-slot')).not.toBeNull();
     expect(previewStatus.closest('[data-testid="design-files-empty"]')).toBeNull();
     expect(screen.queryByTestId('preview-run-status-retry')).toBeNull();
+    expect(screen.queryByTestId('preview-run-status-view-details')).toBeNull();
     expect(previewStatus).not.toHaveTextContent('Elapsed');
-    fireEvent.click(screen.getByTestId('preview-run-status-view-details'));
-    expect(onViewRunDetails).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'delivery-failure' }),
-    );
   });
 
   it('does not mount main-preview delivery feedback over a browser tab', () => {
