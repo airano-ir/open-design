@@ -27,6 +27,7 @@ import {
   resetPendingRunFeedbackForTests,
   resolveFeedbackTraceId,
   scopedTelemetryBodyId,
+  setLiveDeferredFeedbackOwnerCheckForTests,
   setLiveTelemetryPrefsReaderForTests,
   shouldDeferRunFeedback,
   stableIngestionEventId,
@@ -4588,6 +4589,130 @@ describe('reportRunFeedback', () => {
       });
       expect(fetchSpy).not.toHaveBeenCalled();
     } finally {
+      resetPendingRunFeedbackForTests();
+    }
+  });
+
+  it('drops deferred feedback when conversation owner is deleted before flush', async () => {
+    // Queued during terminal_fallback delay; user deletes the conversation
+    // before the delayed report accepts. rememberAcceptedFinalTraceBodyId
+    // flushes before setRunTelemetryAcceptedAnchor's DB owner check, so the
+    // flush path must re-check live ownership and drop custom reasons.
+    resetAcceptedFinalTraceBodyIdsForTests();
+    resetPendingRunFeedbackForTests();
+    const runId = 'run-deferred-owner-deleted';
+    const fetchSpy = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ successes: [], errors: [] }), { status: 207 }),
+    );
+    let ownerLive = true;
+
+    try {
+      setLiveTelemetryPrefsReaderForTests(() => ({
+        metrics: true,
+        content: true,
+      }));
+      setLiveDeferredFeedbackOwnerCheckForTests(() => ownerLive);
+      markRunAwaitingFinalAcceptance(runId);
+      await reportRunFeedback(
+        makeFeedbackCtx({
+          runId,
+          runStatus: 'failed',
+          telemetryFinalized: false,
+          rating: 'negative',
+          reasonCodes: [],
+          hasCustomReason: true,
+          customReason: 'secret free-text for deleted conversation',
+          metadata: {
+            conversationId: 'conv-deleted-mid-window',
+            assistantMessageId: 'assistant-deleted-mid-window',
+          },
+        }),
+        { config: TEST_CONFIG, fetchImpl: fetchSpy as any },
+      );
+      expect(fetchSpy).not.toHaveBeenCalled();
+      expect(hasPendingRunFeedbackForTests(runId)).toBe(true);
+
+      // Owner deleted during the terminal-fallback delay window.
+      ownerLive = false;
+
+      rememberAcceptedFinalTraceBodyId(
+        runId,
+        scopedTelemetryBodyId(runId, 'final', 'terminal_fallback'),
+        'terminal_fallback',
+        'langfuse',
+      );
+
+      await vi.waitFor(() => {
+        expect(hasPendingRunFeedbackForTests(runId)).toBe(false);
+      });
+      expect(fetchSpy).not.toHaveBeenCalled();
+    } finally {
+      resetPendingRunFeedbackForTests();
+    }
+  });
+
+  it('drops deferred feedback on canonical fallback when owner is deleted before last attempt clears', async () => {
+    // All in-flight final-purpose attempts fail after conversation delete.
+    // clearRunAwaitingFinalAcceptance must not ship the queued custom reason
+    // onto the canonical body when the owner no longer exists.
+    resetAcceptedFinalTraceBodyIdsForTests();
+    resetPendingRunFeedbackForTests();
+    setLiveTelemetryPrefsReaderForTests(() => ({
+      metrics: true,
+      content: true,
+    }));
+    const runId = 'run-canonical-owner-deleted';
+    const previous = {
+      LANGFUSE_PUBLIC_KEY: process.env.LANGFUSE_PUBLIC_KEY,
+      LANGFUSE_SECRET_KEY: process.env.LANGFUSE_SECRET_KEY,
+      LANGFUSE_BASE_URL: process.env.LANGFUSE_BASE_URL,
+      OPEN_DESIGN_TELEMETRY_RELAY_URL: process.env.OPEN_DESIGN_TELEMETRY_RELAY_URL,
+      VELA_CONTROL_KEY: process.env.VELA_CONTROL_KEY,
+      VELA_API_URL: process.env.VELA_API_URL,
+    };
+    process.env.LANGFUSE_PUBLIC_KEY = 'pk';
+    process.env.LANGFUSE_SECRET_KEY = 'sk';
+    process.env.LANGFUSE_BASE_URL = 'https://us.cloud.langfuse.com';
+    delete process.env.OPEN_DESIGN_TELEMETRY_RELAY_URL;
+    delete process.env.VELA_CONTROL_KEY;
+    delete process.env.VELA_API_URL;
+    const fetchSpy = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ successes: [], errors: [] }), { status: 207 }),
+    );
+    let ownerLive = true;
+
+    try {
+      setLiveDeferredFeedbackOwnerCheckForTests(() => ownerLive);
+      const token = markRunAwaitingFinalAcceptance(runId);
+      await reportRunFeedback(
+        makeFeedbackCtx({
+          runId,
+          runStatus: 'failed',
+          telemetryFinalized: false,
+          rating: 'negative',
+          reasonCodes: [],
+          hasCustomReason: true,
+          customReason: 'canonical flush must not leak after delete',
+          metadata: { conversationId: 'conv-gone' },
+        }),
+        { config: TEST_CONFIG, fetchImpl: fetchSpy as any },
+      );
+      expect(fetchSpy).not.toHaveBeenCalled();
+      expect(hasPendingRunFeedbackForTests(runId)).toBe(true);
+
+      ownerLive = false;
+      clearRunAwaitingFinalAcceptance(runId, token);
+
+      // Queue entry is consumed; network must stay silent.
+      expect(hasPendingRunFeedbackForTests(runId)).toBe(false);
+      // Give any accidental async send a chance to fire.
+      await Promise.resolve();
+      expect(fetchSpy).not.toHaveBeenCalled();
+    } finally {
+      for (const [key, value] of Object.entries(previous)) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
       resetPendingRunFeedbackForTests();
     }
   });

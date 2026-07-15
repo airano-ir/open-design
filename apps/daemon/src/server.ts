@@ -388,6 +388,7 @@ import { reportRunCompletedFromDaemon } from './langfuse-bridge.js';
 import {
   clearRunAwaitingFinalAcceptance,
   configureDeferredFeedbackDataDir,
+  configureDeferredFeedbackOwnerCheck,
   markRunAwaitingFinalAcceptance,
   scopedTelemetryBodyId,
 } from './langfuse-trace.js';
@@ -544,6 +545,7 @@ import {
   normalizeConversationSessionMode,
   deleteRoutine as dbDeleteRoutine,
   openDatabase,
+  runHasLiveTelemetryOwner,
   setTabs,
   updateConversation,
   updatePreviewCommentStatus,
@@ -2295,6 +2297,13 @@ export async function startServer({
     next();
   });
   const db = openDatabase(PROJECT_ROOT, { dataDir: RUNTIME_DATA_DIR });
+  // Deferred feedback flushes re-check live conversation ownership so a late
+  // terminal_fallback accept after conversation/project delete cannot ship
+  // queued custom reasons (setRunTelemetryAcceptedAnchor already refuses the
+  // unowned DB row, but process-local flush runs earlier).
+  configureDeferredFeedbackOwnerCheck((input) =>
+    runHasLiveTelemetryOwner(db, input),
+  );
   // Restore paired browser-extension origins into the in-memory allowlist the
   // /api origin middleware above consults, so a paired clipper survives daemon
   // restarts without re-pairing.

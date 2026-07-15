@@ -1963,6 +1963,34 @@ function resolveConversationIdForRunAnchor(
   return null;
 }
 
+/**
+ * True when a run still has a live conversation owner that can cascade
+ * accepted-anchor lifecycle (conversation row present via explicit id,
+ * assistant message, or current run_id message lookup).
+ *
+ * Used by deferred feedback flush gates so a late terminal_fallback accept
+ * after conversation/project delete does not ship queued custom reasons.
+ */
+export function runHasLiveTelemetryOwner(
+  db: SqliteDb,
+  opts: {
+    runId: string;
+    assistantMessageId?: string | null;
+    conversationId?: string | null;
+  },
+): boolean {
+  const runId = typeof opts.runId === 'string' ? opts.runId.trim() : '';
+  if (!runId) return false;
+  return (
+    resolveConversationIdForRunAnchor(
+      db,
+      runId,
+      opts.assistantMessageId,
+      opts.conversationId,
+    ) != null
+  );
+}
+
 export function setRunTelemetryAcceptedAnchor(
   db: SqliteDb,
   opts: {

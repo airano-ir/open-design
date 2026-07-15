@@ -265,6 +265,9 @@ export function clearRunAwaitingFinalAcceptance(
   // custom reason if live consent flipped off while waiting.
   const flushPrefs = prefsForDeferredFeedbackFlush(pending.ctx.prefs);
   if (flushPrefs == null) return;
+  // Same owner gate as flushPendingRunFeedback: conversation/project may
+  // have been deleted during the terminal-fallback / awaiting window.
+  if (!liveDeferredFeedbackOwnerExists(pending.ctx)) return;
   // Submit-time opts may pin a Vela Control Key / profile. Logout or AMR
   // switch during the awaiting window must not reuse that stale sink on the
   // canonical fallback path — strip config so resolveReportConfig re-reads
@@ -607,6 +610,28 @@ let liveTelemetryPrefsReaderForTests:
   | undefined;
 
 /**
+ * Live conversation-owner check for deferred feedback flushes.
+ *
+ * Wired from server bootstrap with SQLite (`runHasLiveTelemetryOwner`) so a
+ * terminal_fallback accept after conversation/project delete does not ship
+ * queued custom reasons. `undefined` means "assume live" (unit tests that do
+ * not model ownership); production always configures a real check.
+ */
+export type DeferredFeedbackOwnerCheckInput = {
+  runId: string;
+  conversationId?: string | null;
+  assistantMessageId?: string | null;
+};
+export type DeferredFeedbackOwnerCheck = (
+  input: DeferredFeedbackOwnerCheckInput,
+) => boolean;
+
+let deferredFeedbackOwnerCheck: DeferredFeedbackOwnerCheck | undefined;
+let liveDeferredFeedbackOwnerCheckForTests:
+  | DeferredFeedbackOwnerCheck
+  | undefined;
+
+/**
  * Pin the resolved daemon data directory used when re-reading telemetry
  * prefs before a deferred feedback flush. Call once from server bootstrap
  * with `RUNTIME_DATA_DIR`.
@@ -619,6 +644,16 @@ export function configureDeferredFeedbackDataDir(
 }
 
 /**
+ * Pin the live conversation-owner check used before deferred feedback flushes.
+ * Call once from server bootstrap after SQLite is open.
+ */
+export function configureDeferredFeedbackOwnerCheck(
+  check: DeferredFeedbackOwnerCheck | null | undefined,
+): void {
+  deferredFeedbackOwnerCheck = check ?? undefined;
+}
+
+/**
  * Test-only: inject live telemetry prefs for deferred feedback flush gates.
  * Pass `undefined` to restore the production data-dir reader.
  */
@@ -626,6 +661,16 @@ export function setLiveTelemetryPrefsReaderForTests(
   reader: (() => TelemetryPrefs | null) | undefined,
 ): void {
   liveTelemetryPrefsReaderForTests = reader;
+}
+
+/**
+ * Test-only: inject live conversation-owner existence for deferred flushes.
+ * Pass `undefined` to restore the production configured check (or default-live).
+ */
+export function setLiveDeferredFeedbackOwnerCheckForTests(
+  check: DeferredFeedbackOwnerCheck | undefined,
+): void {
+  liveDeferredFeedbackOwnerCheckForTests = check;
 }
 
 /**
@@ -680,6 +725,46 @@ function prefsForDeferredFeedbackFlush(
   return live;
 }
 
+function stringMetaField(
+  metadata: Record<string, unknown> | undefined,
+  key: string,
+): string | null {
+  if (!metadata) return null;
+  const value = metadata[key];
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed || null;
+}
+
+/**
+ * Whether the conversation/project owner for queued feedback still exists.
+ *
+ * `setRunTelemetryAcceptedAnchor` refuses unowned rows after delete; this
+ * gate runs earlier (inside rememberAcceptedFinalTraceBodyId) so pending
+ * custom reasons are not flushed before that DB check can reject.
+ */
+function liveDeferredFeedbackOwnerExists(ctx: FeedbackReportContext): boolean {
+  const input: DeferredFeedbackOwnerCheckInput = {
+    runId: typeof ctx.runId === 'string' ? ctx.runId.trim() : '',
+    conversationId: stringMetaField(ctx.metadata, 'conversationId'),
+    assistantMessageId: stringMetaField(ctx.metadata, 'assistantMessageId'),
+  };
+  if (!input.runId) return false;
+  const check =
+    liveDeferredFeedbackOwnerCheckForTests ?? deferredFeedbackOwnerCheck;
+  if (!check) {
+    // Unit tests without a configured owner model treat the owner as live.
+    // Production always wires configureDeferredFeedbackOwnerCheck after DB open.
+    return true;
+  }
+  try {
+    return check(input) === true;
+  } catch {
+    // Unreadable owner state during a delayed content send: fail closed.
+    return false;
+  }
+}
+
 function flushPendingRunFeedback(
   runId: string,
   acceptedBodyId: string,
@@ -698,6 +783,16 @@ function flushPendingRunFeedback(
   // custom reason (or retain it for a later final_message re-attach).
   const flushPrefs = prefsForDeferredFeedbackFlush(pending.ctx.prefs);
   if (flushPrefs == null) {
+    pendingRunFeedbackByRunId.delete(key);
+    cancelPendingTerminalFallbackQueueDrop(key);
+    return;
+  }
+
+  // Privacy: re-check live conversation/project owner. Delete can land during
+  // the terminal_fallback delay; setRunTelemetryAcceptedAnchor later refuses
+  // the unowned row, but this flush runs first and would still ship the
+  // queued custom reason without this gate.
+  if (!liveDeferredFeedbackOwnerExists(pending.ctx)) {
     pendingRunFeedbackByRunId.delete(key);
     cancelPendingTerminalFallbackQueueDrop(key);
     return;
@@ -743,7 +838,9 @@ export function resetPendingRunFeedbackForTests(): void {
   runsAwaitingFinalAcceptance.clear();
   awaitingFinalAcceptanceTokenSeq = 0;
   liveTelemetryPrefsReaderForTests = undefined;
+  liveDeferredFeedbackOwnerCheckForTests = undefined;
   deferredFeedbackDataDir = null;
+  deferredFeedbackOwnerCheck = undefined;
 }
 
 /** Test-only: whether deferred feedback is still queued for a run. */
