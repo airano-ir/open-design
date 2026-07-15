@@ -67,6 +67,7 @@ import { copyToClipboard } from '../lib/copy-to-clipboard';
 import type { PluginUseAction } from './plugins-home/useActions';
 import { AnimatePresence } from 'motion/react';
 import { navigate } from '../router';
+import { useWorkspaceContext } from '../collab/useWorkspaceContext';
 
 type PluginsTab = 'installed' | 'available' | 'sources' | 'team';
 
@@ -98,12 +99,30 @@ function sharedResourceMetaEqual(
     if (
       prev.title !== next.title ||
       prev.description !== next.description ||
-      prev.canUnshare !== next.canUnshare
+      prev.canUnshare !== next.canUnshare ||
+      prev.ownerMemberId !== next.ownerMemberId
     ) {
       return false;
     }
   }
   return true;
+}
+
+/**
+ * Whether a team-shared resource belongs in MY Personal tab — i.e. I personally
+ * own it. Ownership is `ownerMemberId === myMemberId`, NOT `canUnshare`: a
+ * workspace owner/admin can unshare anyone's shared resource, and a resource I
+ * merely happen to have a local copy of (a shared fixture, a materialized team
+ * resource) is not my personal one. Falls back to `canUnshare` only when the
+ * owner id is unknown, so behavior degrades to the previous heuristic rather
+ * than dropping a resource whose owner the hub did not report.
+ */
+export function sharedResourceIsMine(
+  meta: SharedResourceCardMeta | undefined,
+  myMemberId: string | null,
+): boolean {
+  if (meta?.ownerMemberId) return myMemberId != null && meta.ownerMemberId === myMemberId;
+  return meta?.canUnshare === true;
 }
 
 function isPersonalPluginRecord(plugin: InstalledPluginRecord): boolean {
@@ -736,6 +755,13 @@ interface SharedResourceCardMeta {
   title?: string;
   description?: string;
   canUnshare?: boolean;
+  /**
+   * The member who shared this resource to the team. This is the ownership
+   * signal for the Personal tab: a workspace owner/admin can unshare anyone's
+   * resource (so `canUnshare` is true for them), but that does not make it their
+   * personal resource — only a matching `ownerMemberId` does.
+   */
+  ownerMemberId?: string;
 }
 
 interface MarketCard {
@@ -762,6 +788,9 @@ export function ExtensionsMarketplace({
 }: ExtensionsMarketplaceProps) {
   const { locale, t } = useI18n();
   const analytics = useAnalytics();
+  // My own member id, to keep the Personal tab to resources I actually own.
+  const { context: workspaceContext } = useWorkspaceContext();
+  const myMemberId = workspaceContext?.workspaceMemberId ?? null;
   const pageViewFiredRef = useRef(false);
   useEffect(() => {
     if (pageViewFiredRef.current) return;
@@ -938,6 +967,9 @@ export function ExtensionsMarketplace({
                 ? { description: record.description }
                 : {}),
               ...(typeof record.canUnshare === 'boolean' ? { canUnshare: record.canUnshare } : {}),
+              ...(typeof record.ownerMemberId === 'string' && record.ownerMemberId.trim()
+                ? { ownerMemberId: record.ownerMemberId }
+                : {}),
             });
           }
           metaSetter((prev) => sharedResourceMetaEqual(prev, meta) ? prev : meta);
@@ -1082,7 +1114,17 @@ export function ExtensionsMarketplace({
     };
 
     if (mode === 'plugins') {
-      if (scope === 'personal') return userPlugins.map((record) => pluginRecordCard(record, true));
+      if (scope === 'personal')
+        return userPlugins
+          // A locally-present plugin that is team-shared by someone ELSE is not
+          // personal — it belongs in the Team tab only. Keep unshared plugins and
+          // the ones I own.
+          .filter(
+            (record) =>
+              !sharedPluginIds.has(record.id) ||
+              sharedResourceIsMine(sharedPluginMeta.get(record.id), myMemberId),
+          )
+          .map((record) => pluginRecordCard(record, true));
       if (scope === 'official') {
         return availablePlugins.map((plugin) => {
           const title = availablePluginTitle(plugin.entry, locale);
@@ -1124,7 +1166,17 @@ export function ExtensionsMarketplace({
     }
 
     // skills
-    if (scope === 'personal') return userSkills.map((skill) => skillCard(skill, true));
+    if (scope === 'personal')
+      return userSkills
+        // A locally-present skill that is team-shared by someone ELSE (e.g. a
+        // shared fixture both members have on disk) is not personal — it belongs
+        // in the Team tab only. Keep unshared skills and the ones I own.
+        .filter(
+          (skill) =>
+            !sharedSkillIds.has(skill.id) ||
+            sharedResourceIsMine(sharedSkillMeta.get(skill.id), myMemberId),
+        )
+        .map((skill) => skillCard(skill, true));
     if (scope === 'official') return officialSkills.map((skill) => skillCard(skill, false));
     return [...sharedSkillIds].map((id) => {
       const meta = sharedSkillMeta.get(id);
@@ -1156,6 +1208,7 @@ export function ExtensionsMarketplace({
     sharedSkillIds,
     sharedSkillMeta,
     skills,
+    myMemberId,
   ]);
 
   const visibleCards = useMemo(() => {
