@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { AssistantMessage } from '../../src/components/AssistantMessage';
 import type { AgentEvent, ChatMessage } from '../../src/types';
@@ -38,8 +38,8 @@ describe('AssistantMessage tool status', () => {
       />,
     );
 
-    expect(container.querySelector('.op-status-ok')).not.toBeNull();
-    expect(container.querySelector('.op-status-running')).toBeNull();
+    expect(container.querySelector('.action-card-status.op-status-ok')).not.toBeNull();
+    expect(container.querySelector('.action-card-status.op-status-running')).toBeNull();
   });
 
   it('keeps legacy completed messages without runStatus as Done', () => {
@@ -63,8 +63,8 @@ describe('AssistantMessage tool status', () => {
       />,
     );
 
-    expect(container.querySelector('.op-status-ok')).not.toBeNull();
-    expect(container.querySelector('.op-status-running')).toBeNull();
+    expect(container.querySelector('.action-card-status.op-status-ok')).not.toBeNull();
+    expect(container.querySelector('.action-card-status.op-status-running')).toBeNull();
   });
 
   it('shows Done in a grouped completed run when tool results are missing', () => {
@@ -125,8 +125,12 @@ describe('AssistantMessage tool status', () => {
       />,
     );
 
-    expect(container.querySelector('.action-card-toggle')).toBeNull();
-    expect(container.querySelectorAll('.op-card.op-file')).toHaveLength(1);
+    const toggle = container.querySelector<HTMLButtonElement>('.action-card-toggle');
+    expect(toggle).not.toBeNull();
+    expect(toggle?.getAttribute('aria-expanded')).toBe('false');
+    expect(container.querySelector('.action-card .accordion-collapsible')?.className).not.toContain('open');
+    if (toggle) fireEvent.click(toggle);
+    expect(container.querySelector('.action-card .accordion-collapsible')?.className).toContain('open');
     expect(container.querySelector('[data-testid="file-ops-toggle"]')?.textContent).toContain('Write 1');
     expect(container.textContent).not.toContain('×2');
   });
@@ -152,8 +156,8 @@ describe('AssistantMessage tool status', () => {
       />,
     );
 
-    expect(container.querySelector('.op-status-error')).not.toBeNull();
-    expect(container.querySelector('.op-status-ok')).toBeNull();
+    expect(container.querySelector('.action-card-status.op-status-error')).not.toBeNull();
+    expect(container.querySelector('.action-card-status.op-status-ok')).toBeNull();
   });
 
   it('does not show Done when a canceled run is missing a tool result', () => {
@@ -177,8 +181,8 @@ describe('AssistantMessage tool status', () => {
       />,
     );
 
-    expect(container.querySelector('.op-status-error')).not.toBeNull();
-    expect(container.querySelector('.op-status-ok')).toBeNull();
+    expect(container.querySelector('.action-card-status.op-status-error')).not.toBeNull();
+    expect(container.querySelector('.action-card-status.op-status-ok')).toBeNull();
   });
 
   it('keeps Running for a streaming tool use that has no tool result', () => {
@@ -203,8 +207,8 @@ describe('AssistantMessage tool status', () => {
       />,
     );
 
-    expect(container.querySelector('.op-status-running')).not.toBeNull();
-    expect(container.querySelector('.op-status-ok')).toBeNull();
+    expect(container.querySelector('.action-card-status.op-status-running')).not.toBeNull();
+    expect(container.querySelector('.action-card-status.op-status-ok')).toBeNull();
   });
 
   it('renders URLs in JSON-like status details without trailing structural characters', () => {

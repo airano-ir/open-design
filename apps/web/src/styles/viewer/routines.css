@@ -1278,8 +1278,8 @@
   transition: opacity 150ms var(--ease-out);
 }
 .app .msg.assistant:hover .assistant-footer,
-.app .assistant-footer[data-streaming="true"],
-.app .assistant-footer[data-last="true"] { opacity: 1; }
+.app .msg.assistant:focus-within .assistant-footer,
+.app .assistant-footer[data-streaming="true"] { opacity: 1; }
 .app .assistant-footer .dot {
   width: 5px;
   height: 5px;

@@ -3503,7 +3503,16 @@ function ToolGroupCard({
   onRequestOpenFile?: (name: string) => void;
 }) {
   const t = useT();
-  const [open, setOpen] = useState(false);
+  // While a task is running, expose the current execution detail. Once it
+  // settles, retain just the activity summary and let the user expand it for
+  // command-level evidence. This gives a task one readable progress line
+  // instead of a stack of finished tool cards.
+  const [open, setOpen] = useState(runStreaming);
+  const [userToggled, setUserToggled] = useState(false);
+
+  useEffect(() => {
+    if (!userToggled) setOpen(runStreaming);
+  }, [runStreaming, userToggled]);
 
   // Snapshot-style tools (TodoWrite and friends) replace their whole state on
   // each call, so a turn that wrote the list several times would otherwise
@@ -3511,30 +3520,19 @@ function ToolGroupCard({
   // snapshot; every other tool passes through untouched.
   items = dedupeSnapshotToolRetries(items);
 
-  // A run of one tool collapses to that tool's card directly so we don't
-  // wrap a single child in a redundant disclosure.
-  if (items.length === 1) {
-    return (
-      <ToolCard
-        use={items[0]!.use}
-        result={items[0]!.result}
-        runStreaming={runStreaming}
-        runSucceeded={runSucceeded}
-        projectFileNames={projectFileNames}
-        onRequestOpenFile={onRequestOpenFile}
-      />
-    );
-  }
-
   const summary = summarizeGroup(items, t, runStreaming, runSucceeded);
   const running = runStreaming && items.some((it) => !it.result);
-  const hasError = items.some((it) => it.result?.isError);
+  const hasError =
+    items.some((it) => it.result?.isError) || (!runStreaming && !runSucceeded);
   return (
     <div className="action-card">
       <button
         type="button"
         className={`action-card-toggle ${running ? "running" : ""}`}
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => {
+          setUserToggled(true);
+          setOpen((value) => !value);
+        }}
         aria-expanded={open}
       >
         <span className={`action-card-status ${running ? 'op-status-running' : hasError ? 'op-status-error' : 'op-status-ok'}`} aria-hidden>
