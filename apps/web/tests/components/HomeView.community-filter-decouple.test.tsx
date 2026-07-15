@@ -94,7 +94,7 @@ describe('HomeView community filter decoupling', () => {
     // Home boots with a default active type chip and the Community grid now
     // leads with Slides directly instead of a generic All bucket.
     await waitFor(() => {
-      expect(screen.getByTestId('plugins-home-pill-category-deck')).toBeTruthy();
+      expect(ariaSelected('plugins-home-pill-category-deck')).toBe('true');
     });
     expect(screen.queryByTestId('plugins-home-pill-category-all')).toBeNull();
     expect(ariaSelected('plugins-home-pill-category-deck')).toBe('true');
