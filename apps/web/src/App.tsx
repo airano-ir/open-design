@@ -37,6 +37,7 @@ import { PetOverlay, type PetTaskCenter } from './components/pet/PetOverlay';
 import { buildPetTaskCenter } from './components/pet/taskCenter';
 import { migrateCustomPetAtlas } from './components/pet/pets';
 import { ProjectView } from './components/ProjectView';
+import { ProjectSidebar } from './components/ProjectSidebar';
 import { TooltipLayer } from './components/TooltipLayer';
 import { openWorkspaceTab, WorkspaceTabsBar } from './components/WorkspaceTabsBar';
 import {
@@ -1918,14 +1919,31 @@ function AppInner() {
     return false;
   }, [beginProjectListRequest, reconcileFetchedProjects, t]);
 
+  const handleSidebarOpenProject = useCallback((id: string) => {
+    const projectRoute = {
+      kind: 'project',
+      projectId: id,
+      fileName: null,
+    } as const;
+    openWorkspaceTab(projectRoute);
+    void handleOpenProject(id);
+  }, [handleOpenProject]);
+  const handleSidebarOpenHome = useCallback(() => {
+    navigate({ kind: 'home', view: 'home' });
+  }, []);
+  const handleSidebarOpenProjects = useCallback(() => {
+    navigate({ kind: 'home', view: 'projects' });
+  }, []);
+
   useEffect(() => {
-    if (!config.pet?.enabled || !daemonLive) {
+    if (!daemonLive) {
       setPetTaskCenter({ running: [], queued: [], recent: [] });
       return;
     }
 
     let cancelled = false;
     const refresh = async () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
       const runs = await listProjectRuns();
       if (cancelled) return;
       setPetTaskCenter(buildPetTaskCenter(projects, runs));
@@ -1933,16 +1951,21 @@ function AppInner() {
     const handleRunsChanged = () => {
       void refresh();
     };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') void refresh();
+    };
 
     void refresh();
     window.addEventListener(RUNS_CHANGED_EVENT, handleRunsChanged);
-    const id = window.setInterval(refresh, 2000);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    const id = window.setInterval(refresh, 5000);
     return () => {
       cancelled = true;
       window.removeEventListener(RUNS_CHANGED_EVENT, handleRunsChanged);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.clearInterval(id);
     };
-  }, [config.pet?.enabled, daemonLive, projects]);
+  }, [daemonLive, projects]);
 
   const handleOpenLiveArtifact = useCallback((projectId: string, artifactId: string) => {
     navigate({ kind: 'project', projectId, fileName: liveArtifactTabId(artifactId) });
@@ -2489,6 +2512,16 @@ function AppInner() {
         className={`workspace-shell workspace-shell--${clientType}`}
         data-client-type={clientType}
       >
+        <ProjectSidebar
+          route={route}
+          projects={projects}
+          projectsLoading={projectsLoading}
+          taskCenter={petTaskCenter}
+          onOpenProject={handleSidebarOpenProject}
+          onNewProject={handleSidebarOpenHome}
+          onOpenHome={handleSidebarOpenHome}
+          onOpenProjects={handleSidebarOpenProjects}
+        />
         <WorkspaceTabsBar
           route={route}
           projects={projects}

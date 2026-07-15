@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { applyFlowMarker, createFlowSnapshot } from '@open-design/contracts';
 import { PinnedTaskProgress } from '../../src/components/PinnedTaskProgress';
@@ -34,9 +34,9 @@ describe('PinnedTaskProgress', () => {
     const pinned = screen.getByTestId('pinned-task-progress');
     // The flow ladder lives inside the pinned card (headless FlowProgressCard).
     expect(pinned.contains(screen.getByTestId('flow-progress-card'))).toBe(true);
-    // Expanded header shows the section title + a Live pill.
-    expect(screen.getByText('Task progress')).toBeTruthy();
-    expect(screen.getByTestId('pinned-task-live').textContent).toContain('Live');
+    // The composer copy starts as a compact one-line summary.
+    expect(screen.getAllByText('Brief & questions')).toHaveLength(2);
+    expect(screen.queryByTestId('pinned-task-live')).toBeNull();
     expect(screen.queryByTestId('pinned-task-status')).toBeNull();
   });
 
@@ -46,8 +46,9 @@ describe('PinnedTaskProgress', () => {
 
     render(<PinnedTaskProgress flow={flow} round={round('succeeded')} live={false} status="succeeded" />);
 
-    expect(screen.getByTestId('pinned-task-status').textContent).toContain('Task completed');
+    expect(screen.queryByTestId('pinned-task-status')).toBeNull();
     expect(screen.queryByTestId('pinned-task-live')).toBeNull();
+    expect(within(screen.getByRole('button', { name: 'Expand' })).getByText('Implement')).toBeTruthy();
   });
 
   it('shows Needs input instead of completed while a staged flow awaits the user', () => {
@@ -60,6 +61,7 @@ describe('PinnedTaskProgress', () => {
       />,
     );
 
+    fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
     expect(screen.getByTestId('pinned-task-status').textContent).toContain('Needs input');
     expect(screen.queryByText('Task completed')).toBeNull();
   });
@@ -68,21 +70,25 @@ describe('PinnedTaskProgress', () => {
     render(<PinnedTaskProgress flow={clarifyActiveDeck()} round={round()} live />);
     const pinned = screen.getByTestId('pinned-task-progress');
 
-    // Expanded: the accordion body is open.
-    expect(pinned.querySelector('.accordion-collapsible.open')).toBeTruthy();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Collapse' }));
-
-    // Collapsed: body closed, toggle now offers to expand.
+    // Compact by default; details expand upward on demand.
     expect(pinned.querySelector('.accordion-collapsible.open')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Expand' })).toBeTruthy();
+    expect(pinned.querySelector('[data-transition-state="collapsed"]')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
+
+    expect(pinned.querySelector('.accordion-collapsible.open')).toBeTruthy();
+    expect(pinned.querySelector('[data-transition-state="expanded"]')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Collapse' })).toBeTruthy();
   });
 
-  it('expands again when a new live round replaces a collapsed terminal round', () => {
+  it('returns to the compact summary when a new live round starts', () => {
     const { rerender } = render(
       <PinnedTaskProgress flow={clarifyActiveDeck()} round={round('succeeded')} live={false} status="succeeded" />,
     );
     expect(screen.getByTestId('pinned-task-progress').querySelector('.accordion-collapsible.open')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
+    expect(screen.getByTestId('pinned-task-progress').querySelector('.accordion-collapsible.open')).toBeTruthy();
 
     rerender(
       <PinnedTaskProgress
@@ -93,7 +99,7 @@ describe('PinnedTaskProgress', () => {
       />,
     );
 
-    expect(screen.getByTestId('pinned-task-progress').querySelector('.accordion-collapsible.open')).toBeTruthy();
+    expect(screen.getByTestId('pinned-task-progress').querySelector('.accordion-collapsible.open')).toBeNull();
   });
 
   it('exposes a Computer entry only when a handler is provided', () => {
@@ -104,7 +110,7 @@ describe('PinnedTaskProgress', () => {
     rerender(
       <PinnedTaskProgress flow={clarifyActiveDeck()} round={round()} live onOpenComputer={onOpenComputer} />,
     );
-    expect(screen.getByTestId('pinned-task-computer-preview').textContent).toContain('Updated the plan');
+    expect(screen.getByTestId('pinned-task-computer-preview')).toBeTruthy();
     fireEvent.click(screen.getByTestId('pinned-task-computer-entry'));
     expect(onOpenComputer).toHaveBeenCalledTimes(1);
   });
@@ -126,7 +132,7 @@ describe('PinnedTaskProgress', () => {
     );
 
     expect(screen.getByTestId('flow-progress-card')).toBeTruthy();
-    expect(screen.getByText('Brief & questions')).toBeTruthy();
+    expect(screen.getAllByText('Brief & questions')).toHaveLength(2);
     expect(screen.getByText('Research (optional)')).toBeTruthy();
     expect(screen.getByText('Outline')).toBeTruthy();
     expect(screen.getByText('Inspiration')).toBeTruthy();

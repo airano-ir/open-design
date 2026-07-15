@@ -716,6 +716,16 @@ const MAC_WINDOW_CHROME =
     : {};
 
 const MAC_WINDOW_CHROME_CSS = `
+  [data-project-sidebar] {
+    padding-top: 40px;
+    -webkit-app-region: drag;
+  }
+  [data-project-sidebar] button,
+  [data-project-sidebar] input,
+  [data-project-sidebar] a,
+  [data-project-sidebar] [role="button"] {
+    -webkit-app-region: no-drag;
+  }
   .app-chrome-header {
     --app-chrome-traffic-space: 96px !important;
     --app-chrome-traffic-margin: 12px !important;

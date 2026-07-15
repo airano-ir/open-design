@@ -48,17 +48,18 @@ describe('taskStepBrief', () => {
 });
 
 describe('computerStepsFromEvents', () => {
-  it('joins each derived step with its raw tool_use and tool_result', () => {
+  it('joins a completed search detail with its raw tool_use and tool_result', () => {
     const steps = computerStepsFromEvents([
-      { kind: 'tool_use', id: 't1', name: 'Read', input: { file_path: 'x.ts' } },
+      { kind: 'tool_use', id: 't1', name: 'WebFetch', input: { url: 'https://example.com/detail' } },
       { kind: 'tool_result', toolUseId: 't1', content: 'hi', isError: false },
     ]);
     expect(steps).toHaveLength(1);
-    expect(steps[0]?.use?.name).toBe('Read');
+    expect(steps[0]?.contentKind).toBe('search-detail');
+    expect(steps[0]?.use?.name).toBe('WebFetch');
     expect(steps[0]?.result?.content).toBe('hi');
   });
 
-  it('excludes TodoWrite snapshots because they belong to the pinned task progress card', () => {
+  it('keeps only resolved plan, search, drilldown, and artifact content', () => {
     const steps = computerStepsFromEvents([
       {
         kind: 'tool_use',
@@ -66,10 +67,34 @@ describe('computerStepsFromEvents', () => {
         name: 'TodoWrite',
         input: { todos: [{ content: 'Plan the work', status: 'in_progress' }] },
       },
+      { kind: 'tool_result', toolUseId: 'todo-1', content: 'ok', isError: false },
+      { kind: 'tool_use', id: 'loading-search', name: 'WebSearch', input: { query: 'still loading' } },
+      { kind: 'tool_use', id: 'search-1', name: 'WebSearch', input: { query: 'design replay' } },
+      { kind: 'tool_result', toolUseId: 'search-1', content: 'search results', isError: false },
+      { kind: 'tool_use', id: 'fetch-1', name: 'WebFetch', input: { url: 'https://example.com/result' } },
+      { kind: 'tool_result', toolUseId: 'fetch-1', content: 'detail', isError: false },
       { kind: 'tool_use', id: 'read-1', name: 'Read', input: { file_path: 'DESIGN.md' } },
+      { kind: 'tool_result', toolUseId: 'read-1', content: 'tokens', isError: false },
+      { kind: 'tool_use', id: 'bash-1', name: 'Bash', input: { command: 'pnpm typecheck' } },
+      { kind: 'tool_result', toolUseId: 'bash-1', content: 'done', isError: false },
+      { kind: 'tool_use', id: 'plan-1', name: 'Write', input: { file_path: 'generated/plan.md' } },
+      { kind: 'tool_result', toolUseId: 'plan-1', content: 'ok', isError: false },
+      { kind: 'tool_use', id: 'artifact-1', name: 'Write', input: { file_path: 'report.md' } },
+      { kind: 'tool_result', toolUseId: 'artifact-1', content: 'ok', isError: false },
+      { kind: 'thinking', text: 'Checking spacing and tokens' },
     ]);
 
-    expect(steps).toHaveLength(1);
-    expect(steps[0]?.use?.name).toBe('Read');
+    expect(steps.map(({ contentKind }) => contentKind)).toEqual([
+      'search-list',
+      'search-detail',
+      'plan',
+      'artifact',
+    ]);
+    expect(steps.map(({ step }) => step.id)).toEqual([
+      'search-1',
+      'fetch-1',
+      'plan-1',
+      'artifact-1',
+    ]);
   });
 });

@@ -2833,12 +2833,14 @@ body.entry-resizing { cursor: col-resize; user-select: none; }
    ============================================================ */
 .assistant-completion-row {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
 }
 .assistant-footer {
   display: inline-flex;
+  width: 100%;
+  min-width: 0;
   align-items: center;
   gap: 6px;
   padding: 4px 0;
@@ -2847,13 +2849,13 @@ body.entry-resizing { cursor: col-resize; user-select: none; }
   border-radius: 0;
   font-size: 11px;
   color: var(--text-faint);
-  width: fit-content;
   opacity: 0;
   transition: opacity 150ms var(--ease-out);
 }
 .msg.assistant:hover .assistant-footer,
 .assistant-footer[data-streaming="true"],
-.assistant-footer[data-last="true"] { opacity: 1; }
+.assistant-footer[data-last="true"],
+.assistant-footer[data-terminal="true"] { opacity: 1; }
 .assistant-footer .dot {
   width: 5px;
   height: 5px;

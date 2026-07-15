@@ -2,6 +2,8 @@
    to Manus's "computer". Works docked (side) or as a modal (data-variant). */
 
 .root {
+  position: relative;
+  z-index: 0;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -9,6 +11,8 @@
   background: var(--bg-panel, #fff);
   color: var(--text);
   overflow: hidden;
+  isolation: isolate;
+  contain: paint;
 }
 
 .root[data-variant='modal'] {
@@ -88,6 +92,12 @@
     color 140ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 
+.badge svg,
+.iconBtn svg {
+  display: block;
+  flex: 0 0 auto;
+}
+
 .iconBtn:hover {
   background: var(--bg-hover, color-mix(in srgb, var(--text) 7%, transparent));
   color: var(--text);
@@ -104,6 +114,30 @@
   min-height: 0;
   overflow: auto;
   padding: 16px;
+  background: var(--bg-panel, #fff);
+}
+
+.stepTransition {
+  min-width: 0;
+  min-height: 100%;
+  height: 100%;
+  transform-origin: center;
+}
+
+.stepTransition[data-direction='forward'] {
+  animation: od-computer-step-forward 200ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.stepTransition[data-direction='backward'] {
+  animation: od-computer-step-backward 200ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.status[data-direction='forward'] {
+  animation: od-computer-status-forward 200ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.status[data-direction='backward'] {
+  animation: od-computer-status-backward 200ms cubic-bezier(0.23, 1, 0.32, 1) both;
 }
 
 .toolWrap {
@@ -421,10 +455,31 @@
   transform: rotate(-90deg);
 }
 
-.taskProgressBody {
+.taskProgress .taskProgressBody {
+  display: grid;
+  grid-template-rows: 0fr;
+  overflow: hidden;
+  padding: 0 12px;
+  opacity: 0;
+}
+
+.taskProgress[data-collapsed='false'] .taskProgressBody {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition:
+    grid-template-rows 200ms cubic-bezier(0.23, 1, 0.32, 1),
+    opacity 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.taskProgress[data-collapsed='true'] .taskProgressBody {
+  transition:
+    grid-template-rows 140ms cubic-bezier(0.23, 1, 0.32, 1),
+    opacity 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.taskProgressBody > :global(.accordion-collapsible-inner) {
   max-height: min(184px, 28vh);
   overflow: auto;
-  padding: 0 12px;
 }
 
 .taskProgressList {
@@ -530,7 +585,42 @@
   }
 }
 
+@keyframes od-computer-step-forward {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+}
+
+@keyframes od-computer-step-backward {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+}
+
+@keyframes od-computer-status-forward {
+  from {
+    opacity: 0;
+    transform: translateX(5px);
+  }
+}
+
+@keyframes od-computer-status-backward {
+  from {
+    opacity: 0;
+    transform: translateX(-5px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .stepTransition,
+  .status,
+  .taskProgressBody {
+    animation: none;
+    transition: none;
+  }
+
   .liveDot {
     animation: none;
   }

@@ -6,7 +6,7 @@
  * streaming turns, failed runs, and empty responses.
  */
 
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createFlowSnapshot } from '@open-design/contracts';
 
@@ -90,7 +90,7 @@ describe('AssistantMessage feedback gate', () => {
     expect(status.closest('.msg.assistant')).toBeTruthy();
     expect(screen.queryByTestId('next-step-actions')).toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Confirm the brief' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Brief & questions' }));
     expect(onOpenQuestions).toHaveBeenCalledWith(clarifyRequest);
   });
 
@@ -254,6 +254,42 @@ describe('AssistantMessage feedback gate', () => {
     expect(screen.getByRole('group', { name: 'Feedback' })).toBeTruthy();
   });
 
+  it('keeps completion and four actions on one row without per-turn usage stats', () => {
+    render(
+      <AssistantMessage
+        message={baseMessage({
+          events: [
+            { kind: 'text', text: 'Done.' },
+            {
+              kind: 'usage',
+              inputTokens: 120,
+              outputTokens: 34,
+              costUsd: 0.5,
+              durationMs: 5_000,
+            },
+          ] as ChatMessage['events'],
+        })}
+        streaming={false}
+        projectId="proj-1"
+        isLast
+        onForkFromMessage={vi.fn()}
+        onFeedback={vi.fn()}
+      />,
+    );
+
+    const row = screen.getByTestId('assistant-completion-row');
+    expect(row.textContent).toContain('Task completed');
+    expect(row.textContent).not.toContain('34 out');
+    expect(row.textContent).not.toContain('$0.5000');
+    expect(row.textContent).not.toContain('5.0s');
+    expect(row.querySelector('.assistant-stats')).toBeNull();
+    expect(row.querySelectorAll('button')).toHaveLength(4);
+    expect(screen.getByRole('button', { name: 'Copy response markdown' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Fork from here' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Helpful' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Not helpful' })).toBeTruthy();
+  });
+
   it('hides the feedback widget while the turn is still streaming', () => {
     render(
       <AssistantMessage
@@ -334,7 +370,7 @@ describe('AssistantMessage minimal task transcript', () => {
     expect(onOpenComputer).toHaveBeenCalledWith('run-preview', 'write-preview');
   });
 
-  it('collapses completed tool detail into briefs, status, one deliverable, and three one-click follow-ups', () => {
+  it('shows three task-specific follow-ups before Next step and delegates clicks for composer prefill', () => {
     const onOpenComputer = vi.fn();
     const onTaskFollowup = vi.fn();
     render(
@@ -355,22 +391,34 @@ describe('AssistantMessage minimal task transcript', () => {
         streaming={false}
         projectId="proj-1"
         isLast
+        previousUserContent="Compare AgentHER with langchain-replay"
         onOpenComputer={onOpenComputer}
         onTaskFollowup={onTaskFollowup}
+        onToolboxAction={vi.fn()}
       />,
     );
 
     expect(screen.getByTestId('assistant-task-status').textContent).toContain('Task completed');
     expect(screen.getByTestId('primary-deliverable').textContent).toContain('deck.html');
     expect(screen.getByTestId('primary-deliverable').textContent).not.toContain('notes.html');
-    expect(screen.getAllByTestId(/^task-followup-/)).toHaveLength(3);
+    const followups = screen.getByTestId('task-followup-suggestions');
+    expect(within(followups).getAllByRole('button')).toHaveLength(3);
+    expect(screen.getByTestId('task-followup-details').textContent)
+      .toContain('Compare AgentHER with langchain-replay');
+
+    const nextStep = screen.getByTestId('next-step-actions');
+    expect(
+      followups.compareDocumentPosition(nextStep) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
 
     fireEvent.click(screen.getByRole('button', { name: 'Open deck.html' }));
     fireEvent.click(screen.getByRole('button', { name: /Generated.*deck\.html/ }));
     expect(onOpenComputer).toHaveBeenCalledWith('run-1', 'write-1');
 
-    fireEvent.click(screen.getAllByTestId(/^task-followup-/)[0]!);
-    expect(onTaskFollowup).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByTestId('task-followup-details'));
+    expect(onTaskFollowup).toHaveBeenCalledWith(
+      expect.stringContaining('Compare AgentHER with langchain-replay'),
+    );
   });
 });
 

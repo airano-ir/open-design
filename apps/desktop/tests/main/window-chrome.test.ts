@@ -36,6 +36,13 @@ describe("desktop BrowserWindow chrome options", () => {
     expect(runtimeSource).toContain("width: 96px !important;");
   });
 
+  test("keeps the persistent project sidebar draggable without swallowing its controls", () => {
+    expect(runtimeSource).toContain('[data-project-sidebar] {');
+    expect(runtimeSource).toContain('-webkit-app-region: drag;');
+    expect(runtimeSource).toContain('[data-project-sidebar] button,');
+    expect(runtimeSource).toContain('-webkit-app-region: no-drag;');
+  });
+
   test("keeps the visible renderer responsive when Chromium misclassifies visibility", () => {
     expect(mainAppWindowOptions()).toContain("backgroundThrottling: false");
   });

@@ -121,7 +121,7 @@
   flex: 0 0 auto;
   margin-inline-start: auto;
 }
-.chat-project-action-button {
+.chat-project-primary-actions .chat-project-action-button {
   width: 28px;
   height: 28px;
   min-width: 28px;
@@ -131,9 +131,17 @@
   color: var(--text-muted);
   box-shadow: none;
 }
-.chat-project-action-button:hover {
+.chat-project-primary-actions .chat-project-action-button:hover:not(:disabled) {
+  border-color: transparent;
   color: var(--text);
   background: var(--bg-subtle);
+}
+.chat-project-primary-actions .chat-project-action-button > svg,
+.chat-project-primary-actions .chat-session-trigger > svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
 }
 .chat-cloud-entry {
   height: 28px;

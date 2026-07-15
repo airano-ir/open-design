@@ -60,6 +60,8 @@ vi.mock('../../src/components/AssistantMessage', () => ({
     flowQuestionFormRequests,
     onOpenQuestions,
     showInlineFlowProgress,
+    previousUserContent,
+    onTaskFollowup,
   }: {
     streaming: boolean;
     message: ChatMessage;
@@ -75,6 +77,8 @@ vi.mock('../../src/components/AssistantMessage', () => ({
     flowQuestionFormRequests?: FlowQuestionFormRequests;
     onOpenQuestions?: (request?: FlowQuestionFormRequests['clarify']) => void;
     showInlineFlowProgress?: boolean;
+    previousUserContent?: string;
+    onTaskFollowup?: (prompt: string) => void;
   }) => (
     <>
       <output data-testid={`assistant-streaming-${message.id}`}>{streaming ? 'streaming' : 'idle'}</output>
@@ -114,6 +118,15 @@ vi.mock('../../src/components/AssistantMessage', () => ({
           onClick={onShareToOpenDesign}
         >
           {shareToOpenDesignBusy ? 'Preparing package…' : 'Share to Open Design'}
+        </button>
+      ) : null}
+      {onTaskFollowup ? (
+        <button
+          type="button"
+          data-testid={`mock-task-followup-${message.id}`}
+          onClick={() => onTaskFollowup(`Follow up: ${previousUserContent ?? ''}`)}
+        >
+          Follow up
         </button>
       ) : null}
     </>
@@ -231,6 +244,39 @@ afterEach(() => {
 });
 
 describe('ChatPane streaming state', () => {
+  it('prefills the composer from a task follow-up without sending it immediately', () => {
+    const onSend = vi.fn();
+    render(
+      <ChatPane
+        projectKindForTracking="prototype"
+        messages={[
+          { id: 'user-1', role: 'user', content: 'Compare AgentHER with langchain-replay', createdAt: 1 },
+          { id: 'assistant-1', role: 'assistant', content: 'Done', createdAt: 2, runStatus: 'succeeded' },
+        ]}
+        streaming={false}
+        error={null}
+        projectId="project-1"
+        projectFiles={[]}
+        onEnsureProject={async () => 'project-1'}
+        onSend={onSend}
+        onStop={vi.fn()}
+        conversations={conversations}
+        activeConversationId="conv-1"
+        onSelectConversation={vi.fn()}
+        onDeleteConversation={vi.fn()}
+        projectMetadata={projectMetadata}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('mock-task-followup-assistant-1'));
+
+    expect(composerMocks.setDraft).toHaveBeenCalledWith(
+      'Follow up: Compare AgentHER with langchain-replay',
+      { entryFrom: 'next_step' },
+    );
+    expect(onSend).not.toHaveBeenCalled();
+  });
+
   it('keeps queued-send strip styles compact above the composer', () => {
     const css = readExpandedIndexCss();
 
@@ -362,6 +408,43 @@ describe('ChatPane streaming state', () => {
     // Updates in place (same node), driven by the new snapshot.
     expect(screen.getByTestId('flow-progress-card')).toBe(card);
     expect(card.textContent).toContain('Researching sources');
+  });
+
+  it('hides the composer progress while the outer Computer owns that state', () => {
+    const messages: ChatMessage[] = [
+      { id: 'user-1', role: 'user', content: 'Make the landing page', createdAt: 1 },
+      { id: 'assistant-1', role: 'assistant', content: 'Starting now', createdAt: 2 },
+    ];
+    const flow = applyFlowMarker(
+      createFlowSnapshot('landing', { now: 1 }),
+      { stage: 'clarify', state: 'active', detail: 'Confirming the brief' },
+      2,
+    );
+    const props = {
+      projectKindForTracking: 'prototype' as const,
+      messages,
+      streaming: false,
+      error: null,
+      projectId: 'project-1',
+      projectFiles: [],
+      onEnsureProject: async () => 'project-1',
+      onSend: vi.fn(),
+      onStop: vi.fn(),
+      conversations,
+      activeConversationId: 'conv-1',
+      onSelectConversation: vi.fn(),
+      onDeleteConversation: vi.fn(),
+      projectMetadata,
+      flowSnapshot: flow,
+    };
+    const { rerender } = render(
+      <ChatPane {...props} showPinnedTaskProgress={false} />,
+    );
+
+    expect(screen.queryByTestId('pinned-task-progress')).toBeNull();
+
+    rerender(<ChatPane {...props} showPinnedTaskProgress />);
+    expect(screen.getByTestId('pinned-task-progress')).toBeTruthy();
   });
 
   it('reopens the clarification form from the latest flow card', () => {

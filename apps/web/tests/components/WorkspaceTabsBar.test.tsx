@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   openWorkspaceTab,
+  readWorkspaceTabsSnapshot,
   WorkspaceTabsBar,
 } from '../../src/components/WorkspaceTabsBar';
 import { navigate, type Route } from '../../src/router';
@@ -349,6 +350,20 @@ describe('WorkspaceTabsBar navigation semantics', () => {
       expect(labels).toHaveLength(2);
       expect(labels.some((label) => label.includes('Home'))).toBe(true);
       expect(labels.some((label) => label.includes('Project Alpha'))).toBe(true);
+    });
+  });
+
+  it('reuses an already-open project tab and exposes its sidebar snapshot', async () => {
+    render(<WorkspaceTabsBar route={{ kind: 'home', view: 'home' }} projects={[project]} />);
+
+    openWorkspaceTab({ ...projectRoute });
+    openWorkspaceTab({ ...projectRoute, fileName: 'DESIGN.md' });
+
+    await waitFor(() => {
+      const labels = screen.getAllByRole('tab').map((tab) => tab.textContent ?? '');
+      expect(labels.filter((label) => label.includes('Project Alpha'))).toHaveLength(1);
+      expect(readWorkspaceTabsSnapshot().openProjectIds).toEqual(['project-alpha']);
+      expect(readWorkspaceTabsSnapshot().activeProjectId).toBe('project-alpha');
     });
   });
 

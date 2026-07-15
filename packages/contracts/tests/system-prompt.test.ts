@@ -74,6 +74,12 @@ describe('DISCOVERY_AND_PHILOSOPHY (contracts copy) — prompt routing parity', 
     expect(DISCOVERY_AND_PHILOSOPHY).toContain(
       'keep the latest usable preview visible',
     );
+    expect(DISCOVERY_AND_PHILOSOPHY).toContain(
+      'Complete all implementation / generation Todos first',
+    );
+    expect(DISCOVERY_AND_PHILOSOPHY).toContain(
+      'Do not rerun the full validation suite after each Todo.',
+    );
   });
 
   it('uses the single-shot task-type form shape from the daemon prompt', () => {

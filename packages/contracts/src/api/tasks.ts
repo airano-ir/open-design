@@ -56,6 +56,13 @@ export interface TaskStep {
   isError?: boolean;
 }
 
+/** The four user-value lanes allowed into the visual Computer replay. */
+export type TaskStepComputerContentKind =
+  | 'plan'
+  | 'search-list'
+  | 'search-detail'
+  | 'artifact';
+
 export interface TaskStepSource {
   events?: readonly PersistedAgentEvent[];
   startedAt?: number;
@@ -91,6 +98,12 @@ const WRITE_TOOL_NAMES = new Set(['Write', 'write', 'create_file']);
 const EDIT_TOOL_NAMES = new Set(['Edit', 'str_replace_edit', 'MultiEdit', 'multi_edit']);
 const LIST_TOOL_NAMES = new Set(['Glob', 'list_files', 'Grep']);
 const COMMAND_TOOL_NAMES = new Set(['Bash', 'bash', 'exec_command']);
+const MEDIA_GENERATE_TOOL_NAMES = new Set([
+  'generate_image',
+  'generate_video',
+  'generate_speech',
+]);
+const COMPUTER_DELIVERABLE_PATH_PATTERN = /(?:^|\/)generated\/|(?:^|\/)[^/]+\.(?:mdx?|txt|rtf|csv|html?|pdf|docx?|pptx?|xlsx?|png|jpe?g|gif|webp|svg|mp3|wav|m4a|mp4|mov|webm)$/iu;
 
 const PATH_KEYS = ['file_path', 'filePath', 'path', 'filename', 'target_path', 'targetPath', 'file'];
 const QUERY_KEYS = ['query', 'q', 'search', 'prompt'];
@@ -116,6 +129,7 @@ function baseKindForTool(name: string): TaskStepKind {
   if (EDIT_TOOL_NAMES.has(name)) return 'edit';
   if (LIST_TOOL_NAMES.has(name)) return 'list';
   if (COMMAND_TOOL_NAMES.has(name)) return 'command';
+  if (MEDIA_GENERATE_TOOL_NAMES.has(name)) return 'generate';
   return 'tool';
 }
 
@@ -328,4 +342,41 @@ export function deriveTaskSteps(source: readonly PersistedAgentEvent[] | TaskSte
     previousTs = step.ts;
   }
   return steps;
+}
+
+function isResolvedComputerValue(step: TaskStep): boolean {
+  return step.status === 'done' && !step.isError && Boolean(step.toolResult || step.artifact);
+}
+
+/**
+ * Project a raw persisted step onto the user-facing Computer content policy.
+ * Returning null keeps the event available to diagnostics/CLI without turning
+ * operational noise or loading state into a visual replay frame.
+ */
+export function taskStepComputerContentKind(
+  step: TaskStep,
+): TaskStepComputerContentKind | null {
+  if (step.tool && PLAN_TOOL_NAMES.has(step.tool)) return null;
+
+  if (step.kind === 'search') {
+    return isResolvedComputerValue(step) ? 'search-list' : null;
+  }
+  if (step.kind === 'search-drilldown') {
+    return isResolvedComputerValue(step) ? 'search-detail' : null;
+  }
+  if (step.kind === 'outline' || step.kind === 'inspiration') {
+    return isResolvedComputerValue(step) ? 'plan' : null;
+  }
+  if (step.kind === 'generate' || step.artifact) {
+    return isResolvedComputerValue(step) ? 'artifact' : null;
+  }
+  if (
+    (step.kind === 'write' || step.kind === 'edit')
+    && step.target
+    && COMPUTER_DELIVERABLE_PATH_PATTERN.test(step.target.replace(/\\/gu, '/'))
+  ) {
+    return isResolvedComputerValue(step) ? 'artifact' : null;
+  }
+
+  return null;
 }

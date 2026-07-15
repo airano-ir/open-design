@@ -238,9 +238,13 @@ import { DesignSystemPicker } from './DesignSystemPicker';
 import { PluginDetailsModal } from './PluginDetailsModal';
 import { DesignSystemPreviewModal } from './DesignSystemPreviewModal';
 import { ChatPane } from './ChatPane';
-import { OdComputerOverlay } from './OdComputerOverlay';
 import { ComputerWorkspaceShell } from './ComputerWorkspaceShell';
-import { deriveCurrentRound, findTaskRound } from '../runtime/task-steps';
+import {
+  computerStepsFromRound,
+  deriveCurrentRound,
+  taskStepBrief,
+  taskStepTargetLabel,
+} from '../runtime/task-steps';
 import type { QuestionFormOpenRequest } from './AssistantMessage';
 import type { ChatSendMeta } from './ChatComposer';
 import {
@@ -1162,11 +1166,11 @@ function appendLiveArtifactEventItem(
 }
 
 export function projectSplitClassName(
-  workspaceFocused: boolean,
+  _computerWorkspaceModalOpen: boolean,
   computerWorkspaceOpen = true,
 ): string {
   if (!computerWorkspaceOpen) return 'split split-chat-only';
-  return workspaceFocused ? 'split split-focus' : 'split';
+  return 'split';
 }
 
 // React key for the on-screen question form. Deliberately does NOT include the
@@ -1194,33 +1198,29 @@ type ProjectSplitStyle = CSSProperties & {
 };
 
 export function projectSplitStyle(
-  workspaceFocused: boolean,
+  _computerWorkspaceModalOpen: boolean,
   chatPanelWidth: number,
   workspacePanelTrack: string,
-  computerWorkspaceOpen = true,
-): ProjectSplitStyle | undefined {
-  if (workspaceFocused || !computerWorkspaceOpen) return undefined;
+  _computerWorkspaceOpen = true,
+): ProjectSplitStyle {
   return {
     '--project-chat-panel-width': `${chatPanelWidth}px`,
     '--project-workspace-panel-track': workspacePanelTrack,
-    gridTemplateColumns: `${chatPanelWidth}px ${SPLIT_RESIZE_HANDLE_WIDTH}px ${workspacePanelTrack}`,
   };
 }
 
 export function applySplitChatPanelWidth(
   split: HTMLDivElement | null,
   width: number,
-  workspacePanelTrack: string,
-  splitLayoutActive = true,
+  _workspacePanelTrack: string,
+  _splitLayoutActive = true,
 ): void {
   if (!split) return;
-  if (!splitLayoutActive) {
-    split.style.removeProperty('grid-template-columns');
-    return;
-  }
   split.style.setProperty('--project-chat-panel-width', `${width}px`);
-  split.style.gridTemplateColumns =
-    `${width}px ${SPLIT_RESIZE_HANDLE_WIDTH}px ${workspacePanelTrack}`;
+  // Keep the track declaration in CSS so `.split-chat-only` can transition
+  // between two compatible three-track lists. Inline grid declarations win
+  // over that class and make the Computer close/open state snap instead.
+  split.style.removeProperty('grid-template-columns');
 }
 
 // The media model the user picked in the New Project → Media dialog, keyed by
@@ -1639,18 +1639,14 @@ export function ProjectView({
   const projectFilesRef = useRef<ProjectFile[]>([]);
   const [liveArtifacts, setLiveArtifacts] = useState<LiveArtifactSummary[]>([]);
   const [liveArtifactEvents, setLiveArtifactEvents] = useState<LiveArtifactEventItem[]>([]);
-  const [workspaceFocused, setWorkspaceFocused] = useState(false);
+  const [computerWorkspaceModalOpen, setComputerWorkspaceModalOpen] = useState(false);
   const [computerWorkspaceOpen, setComputerWorkspaceOpen] = useState(true);
-  // Replayable Computer panel (spec §3.4): a durable workspace tab plus an
-  // optional focused modal for the same run/step.
+  // Replayable Computer panel (spec §3.4): a durable workspace tab inside the
+  // single outer Computer shell. Focusing the shell never remounts its views.
   const [computerOpenRequest, setComputerOpenRequest] = useState<{
     runId: string;
     stepId?: string;
     nonce: number;
-  } | null>(null);
-  const [computerModalRequest, setComputerModalRequest] = useState<{
-    runId: string;
-    stepId?: string;
   } | null>(null);
   const computerOpenNonceRef = useRef(0);
   const [commentInspectorActive, setCommentInspectorActive] = useState(false);
@@ -2027,17 +2023,24 @@ export function ProjectView({
     () => deriveCurrentRound(messages, { streaming: currentConversationControlStreaming }),
     [messages, currentConversationControlStreaming],
   );
+  const latestComputerStep = useMemo(
+    () => computerStepsFromRound(currentRound).at(-1)?.step,
+    [currentRound],
+  );
   const handleOpenComputer = useCallback((runId: string, stepId?: string) => {
     setComputerWorkspaceOpen(true);
     computerOpenNonceRef.current += 1;
     setComputerOpenRequest({ runId, ...(stepId ? { stepId } : {}), nonce: computerOpenNonceRef.current });
   }, []);
-  const handleOpenComputerModal = useCallback((runId: string, stepId?: string) => {
-    setComputerModalRequest({ runId, ...(stepId ? { stepId } : {}) });
+  const handleOpenComputerModal = useCallback((_runId: string, _stepId?: string) => {
+    setComputerWorkspaceOpen(true);
+    setComputerWorkspaceModalOpen(true);
+  }, []);
+  const handleToggleComputerWorkspaceModal = useCallback(() => {
+    setComputerWorkspaceModalOpen((open) => !open);
   }, []);
   const handleCloseComputerSurface = useCallback(() => {
-    setComputerModalRequest(null);
-    setWorkspaceFocused(false);
+    setComputerWorkspaceModalOpen(false);
     setComputerWorkspaceOpen(false);
   }, []);
   // Auto-open once for every live round, including plain edit/chat turns. The
@@ -2316,7 +2319,7 @@ export function ProjectView({
   }, [routeConversationId, conversations, activeConversationId]);
 
   useEffect(() => {
-    setWorkspaceFocused(false);
+    setComputerWorkspaceModalOpen(false);
   }, [project.id]);
 
   // Load messages whenever the active conversation changes. This happens
@@ -6880,7 +6883,7 @@ export function ProjectView({
     async (commentAttachments: ChatCommentAttachment[], images: File[] = []) => {
       if (currentConversationQueueDisabled) return false;
       if (commentAttachments.length === 0 && images.length === 0) return false;
-      setWorkspaceFocused(false);
+      setComputerWorkspaceModalOpen(false);
       setCommentInspectorActive(false);
       // Upload any attached images once, then queue. Each comment becomes its
       // own task (so multiple notes => multiple queued tasks); the images ride
@@ -7958,7 +7961,7 @@ export function ProjectView({
   );
 
   const handleBrowserUsePrompt = useCallback((text: string) => {
-    setWorkspaceFocused(false);
+    setComputerWorkspaceModalOpen(false);
     setComposerDraftSignal({
       text,
       nonce: Date.now(),
@@ -8352,7 +8355,6 @@ export function ProjectView({
   const chatPanelAriaMinWidth = Math.min(MIN_CHAT_PANEL_WIDTH, chatPanelMaxWidth);
   const projectActionsToastInChatPane =
     projectActionsToast?.scope === 'chat-pane' &&
-    !workspaceFocused &&
     !commentInspectorActive &&
     Boolean(activeConversationId || conversationLoadError);
   const projectActionsToastNode = projectActionsToast ? (
@@ -8377,11 +8379,11 @@ export function ProjectView({
       splitRef.current,
       next,
       workspacePanelTrack,
-      computerWorkspaceOpen && !workspaceFocused,
+      computerWorkspaceOpen,
     );
     if (options.commitState !== false) setChatPanelWidth(next);
     return next;
-  }, [computerWorkspaceOpen, workspaceFocused, workspacePanelTrack]);
+  }, [computerWorkspaceOpen, workspacePanelTrack]);
 
   const applyChatPanelWidth = useCallback((
     width: number,
@@ -8416,9 +8418,9 @@ export function ProjectView({
       splitRef.current,
       chatPanelWidth,
       workspacePanelTrack,
-      computerWorkspaceOpen && !workspaceFocused,
+      computerWorkspaceOpen,
     );
-  }, [chatPanelWidth, computerWorkspaceOpen, workspaceFocused, workspacePanelTrack]);
+  }, [chatPanelWidth, computerWorkspaceOpen, workspacePanelTrack]);
 
   useEffect(() => {
     chatPanelMaxWidthRef.current = chatPanelMaxWidth;
@@ -9342,18 +9344,18 @@ export function ProjectView({
       <div
         ref={splitRef}
         className={[
-          projectSplitClassName(workspaceFocused, computerWorkspaceOpen),
-          leftInspectorActive && !workspaceFocused ? 'split-manual-edit' : '',
-          resizingChatPanel && !workspaceFocused ? 'is-resizing-chat' : '',
+          projectSplitClassName(computerWorkspaceModalOpen, computerWorkspaceOpen),
+          leftInspectorActive ? 'split-manual-edit' : '',
+          resizingChatPanel ? 'is-resizing-chat' : '',
         ].filter(Boolean).join(' ')}
         style={projectSplitStyle(
-          workspaceFocused,
+          computerWorkspaceModalOpen,
           splitLeftPanelWidth,
           workspacePanelTrack,
           computerWorkspaceOpen,
         )}
       >
-        <div className="split-chat-slot" hidden={workspaceFocused}>
+        <div className="split-chat-slot">
           {commentInspectorActive ? (
             <div
               id={commentInspectorPortalId}
@@ -9401,6 +9403,7 @@ export function ProjectView({
               onSendQueuedNow={sendQueuedChatSendNow}
               onRequestOpenFile={requestOpenFile}
               onOpenComputer={handleOpenComputer}
+              showPinnedTaskProgress={!computerWorkspaceOpen}
               onRequestPluginDetails={handleOpenContextPluginDetails}
               onRequestDesignSystemDetails={handleOpenContextDesignSystemDetails}
               onRequestPluginFolderAgentAction={handlePluginFolderAgentAction}
@@ -9550,7 +9553,7 @@ export function ProjectView({
             </div>
           )}
         </div>
-        {!workspaceFocused && computerWorkspaceOpen ? (
+        {computerWorkspaceOpen ? (
           leftInspectorActive ? (
             <div className="split-edit-divider" aria-hidden />
           ) : (
@@ -9570,37 +9573,19 @@ export function ProjectView({
             />
           )
         ) : null}
-        <OdComputerOverlay
-          open={computerModalRequest !== null}
-          onClose={handleCloseComputerSurface}
-          round={computerModalRequest
-            ? findTaskRound(messages, computerModalRequest.runId, {
-                streamingRunId: currentRound?.live ? currentRound.runId : null,
-              })
-            : null}
-          initialStepId={computerModalRequest?.stepId}
-          projectId={project.id}
-          projectKind={projectKindFromMetadataToTracking(currentProject.metadata) ?? 'prototype'}
-          projectFiles={projectFiles}
-          filesRefreshKey={filesRefresh}
-          projectFileNames={projectFileNames}
-          onRequestOpenFile={requestOpenFile}
-          onDock={(runId, stepId) => {
-            setComputerModalRequest(null);
-            handleOpenComputer(runId, stepId);
-          }}
-        />
         <ComputerWorkspaceShell
           open={computerWorkspaceOpen}
-          focused={workspaceFocused}
+          focused={computerWorkspaceModalOpen}
           title={t('task.computer.title')}
-          detail={currentRound?.live
-            ? `${t('task.computer.live')} · ${t('workspace.allProjectFiles')}`
+          detail={latestComputerStep
+            ? `${currentRound?.live ? `${t('task.computer.live')} · ` : ''}${t('brand.appliedToChat', {
+                name: latestComputerStep.tool ?? taskStepBrief(latestComputerStep, t),
+              })} · ${taskStepTargetLabel(latestComputerStep, t)}`
             : t('workspace.allProjectFiles')}
           expandLabel={t('task.computer.expand')}
           restoreLabel={t('task.computer.sideView')}
           closeLabel={t('task.computer.close')}
-          onToggleFocus={() => setWorkspaceFocused((focused) => !focused)}
+          onToggleFocus={handleToggleComputerWorkspaceModal}
           onClose={handleCloseComputerSurface}
         >
           <FileWorkspace
@@ -9889,7 +9874,7 @@ export function ProjectView({
           <BrandReadyPrompt
             key="brand-ready-prompt"
             brandName={brandReadyPrompt.brandName}
-            workspaceOffsetPx={workspaceFocused ? 0 : splitLeftPanelWidth + SPLIT_RESIZE_HANDLE_WIDTH}
+            workspaceOffsetPx={splitLeftPanelWidth + SPLIT_RESIZE_HANDLE_WIDTH}
             onPreview={() => {
               requestOpenFile(DESIGN_SYSTEM_TAB);
               setProjectActionsToast({

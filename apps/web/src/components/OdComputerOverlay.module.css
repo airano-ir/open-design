@@ -39,6 +39,16 @@
   animation: od-computer-modal-in 200ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 
+.layer[data-state='closing'] .backdrop {
+  pointer-events: none;
+  animation: od-computer-backdrop-out 140ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.layer[data-state='closing'] .shell {
+  pointer-events: none;
+  animation: od-computer-modal-out 140ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
 .shell[data-variant='side'] {
   position: absolute;
   top: 0;
@@ -64,6 +74,19 @@
   }
 }
 
+@keyframes od-computer-backdrop-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes od-computer-modal-out {
+  to {
+    opacity: 0;
+    transform: scale(0.98) translateY(4px);
+  }
+}
+
 @keyframes od-computer-side-in {
   from {
     transform: translateX(24px);
@@ -74,7 +97,8 @@
 @media (prefers-reduced-motion: reduce) {
   .backdrop,
   .shell[data-variant='modal'],
-  .shell[data-variant='side'] {
+  .shell[data-variant='side'],
+  .layer[data-state='closing'] .shell {
     animation: none;
   }
 }

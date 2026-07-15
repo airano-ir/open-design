@@ -56,6 +56,9 @@ export interface Dict {
   'task.computer.stepCount': string;
   'task.computer.live': string;
   'task.status.completed': string;
+  'task.followup.details': string;
+  'task.followup.report': string;
+  'task.followup.demo': string;
   'task.status.failed': string;
   'task.status.stopped': string;
   'task.followUps.label': string;
@@ -3866,6 +3869,13 @@ export interface Dict {
   'assistant.continueRemaining': string;
   'chat.resumeRunCta': string;
   'assistant.outTokens': string;
+  'chat.usage.title': string;
+  'chat.usage.tokensUsed': string;
+  'chat.usage.timeWorked': string;
+  'chat.usage.inputTokens': string;
+  'chat.usage.outputTokens': string;
+  'chat.usage.cost': string;
+  'chat.usage.rounds': string;
   'assistant.producedFiles': string;
   'assistant.openFile': string;
   'assistant.downloadFile': string;

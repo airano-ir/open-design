@@ -66,6 +66,30 @@ describe('ChatPane session switcher', () => {
     expect(onNewConversation).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps every compact header action icon at a legible, consistent size', () => {
+    renderChatPane({
+      conversations: [conversation({ id: 'conv-1', title: 'Contract review draft' })],
+      activeConversationId: 'conv-1',
+      onOpenDesignFiles: vi.fn(),
+      onNewConversation: vi.fn(),
+      onRenameConversation: vi.fn(),
+    });
+
+    const actionIds = [
+      'conversation-usage-trigger',
+      'chat-open-design-files',
+      'chat-new-conversation',
+      'conversation-history-trigger',
+      'chat-conversation-actions-trigger',
+    ];
+
+    for (const actionId of actionIds) {
+      const icon = screen.getByTestId(actionId).querySelector('svg');
+      expect(icon?.getAttribute('width')).toBe('18');
+      expect(icon?.getAttribute('height')).toBe('18');
+    }
+  });
+
   it('renames and deletes the active conversation from the header menu', () => {
     const onRenameConversation = vi.fn();
     const onDeleteConversation = vi.fn();

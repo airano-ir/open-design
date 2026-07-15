@@ -2,24 +2,43 @@
    replay.zh-CN.md §3.1). Sits above the composer; single card, collapsible. */
 
 .root {
+  position: relative;
+  z-index: 7;
   display: flex;
   flex-direction: column;
-  margin: 0 0 8px;
-  border: 1px solid var(--border);
-  border-radius: 13px;
-  background: var(--bg-panel);
-  box-shadow: 0 8px 18px -18px rgb(0 0 0 / 26%);
-  font-size: 12px;
-  line-height: 1.45;
-  overflow: hidden;
+  margin: 0 20px -12px;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 12.5px;
+  line-height: 1.4;
+  overflow: visible;
 }
 
 .head {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 58px;
-  padding: 8px 10px;
+  gap: 9px;
+  min-height: 48px;
+  padding: 7px 9px;
+  border: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+  border-radius: 17px;
+  background: var(--bg-panel);
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 4%),
+    0 10px 30px -22px rgb(0 0 0 / 32%);
+  transition:
+    border-color 140ms cubic-bezier(0.23, 1, 0.32, 1),
+    border-radius 200ms cubic-bezier(0.23, 1, 0.32, 1),
+    box-shadow 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.root[data-collapsed='false'] .head {
+  border-top-color: transparent;
+  border-radius: 0 0 17px 17px;
+  box-shadow: 0 12px 30px -24px rgb(0 0 0 / 34%);
 }
 
 .computer {
@@ -27,11 +46,11 @@
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  width: 72px;
-  height: 42px;
+  width: 52px;
+  height: 32px;
   padding: 0;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--bg-subtle);
   color: var(--text-muted, var(--text));
   cursor: default;
@@ -65,8 +84,8 @@ button.computer:focus-visible {
   align-items: center;
   gap: 7px;
   margin: 0;
-  min-height: 42px;
-  padding: 0 3px;
+  min-height: 32px;
+  padding: 0 2px;
   border: 0;
   background: transparent;
   color: inherit;
@@ -90,10 +109,11 @@ button.computer:focus-visible {
   display: inline-flex;
   min-width: 0;
   align-items: center;
-  gap: 6px;
-  font-weight: 600;
+  gap: 7px;
+  font-weight: 620;
   color: var(--text);
-  font-size: 12.5px;
+  font-size: 13px;
+  letter-spacing: -0.008em;
 }
 
 .progressStatusIcon {
@@ -128,7 +148,7 @@ button.computer:focus-visible {
 .currentLabel {
   min-width: 0;
   overflow: hidden;
-  font-weight: 520;
+  font-weight: 570;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -144,7 +164,7 @@ button.computer:focus-visible {
   gap: 5px;
   color: var(--success, #2e9e5b);
   font-weight: 600;
-  font-size: 11.5px;
+  font-size: 11px;
 }
 
 .liveDot {
@@ -161,7 +181,7 @@ button.computer:focus-visible {
   align-items: center;
   gap: 5px;
   font-weight: 600;
-  font-size: 11.5px;
+  font-size: 11px;
 }
 
 .terminal.done {
@@ -185,6 +205,7 @@ button.computer:focus-visible {
   color: var(--text-muted, var(--text));
   font-variant-numeric: tabular-nums;
   font-size: 11.5px;
+  letter-spacing: 0.01em;
 }
 
 .chevron {
@@ -204,22 +225,53 @@ button.computer:focus-visible {
 }
 
 .body {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% - 1px);
+  left: 0;
+  z-index: 1;
   padding: 0 12px;
-  border-top: 1px solid transparent;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 17px 17px 0 0;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.root[data-collapsed='false'] .body {
+  border-color: color-mix(in srgb, var(--border) 88%, transparent);
+  border-bottom-color: transparent;
+  background: var(--bg-panel);
+  box-shadow: 0 -16px 34px -28px rgb(0 0 0 / 38%);
+  pointer-events: auto;
+}
+
+.root[data-collapsed='false'] .body {
+  transition:
+    grid-template-rows 200ms cubic-bezier(0.23, 1, 0.32, 1),
+    opacity 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.root[data-collapsed='true'] .body {
+  transition:
+    grid-template-rows 140ms cubic-bezier(0.23, 1, 0.32, 1),
+    opacity 140ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .bodyInner {
-  padding: 9px 0 12px;
-  border-top: 1px solid var(--border-soft);
+  max-height: min(44vh, 360px);
+  padding: 12px 0 11px;
+  overflow-y: auto;
 }
 
 .preview {
   display: grid;
   width: 100%;
   height: 100%;
-  grid-template-rows: 15px minmax(0, 1fr);
+  grid-template-rows: 11px minmax(0, 1fr);
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: 6px;
   background: var(--bg-panel);
   color: var(--text-muted);
   text-align: left;
@@ -229,15 +281,15 @@ button.computer:focus-visible {
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: 4px;
-  padding: 0 6px;
+  gap: 3px;
+  padding: 0 4px;
   border-bottom: 1px solid var(--border-soft);
   background: var(--bg-subtle);
 }
 
 .previewDot {
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
   flex: 0 0 auto;
   border-radius: 50%;
   background: var(--text-muted);
@@ -250,7 +302,7 @@ button.computer:focus-visible {
 .previewStatus {
   overflow: hidden;
   color: var(--text-muted);
-  font-size: 7.5px;
+  font-size: 6.5px;
   font-weight: 650;
   line-height: 1;
   text-overflow: ellipsis;
@@ -260,10 +312,10 @@ button.computer:focus-visible {
 .previewContent {
   display: grid;
   min-width: 0;
-  grid-template-columns: 14px minmax(0, 1fr);
+  grid-template-columns: 11px minmax(0, 1fr);
   align-items: center;
-  gap: 4px;
-  padding: 2px 6px 3px;
+  gap: 3px;
+  padding: 2px 4px 3px;
 }
 
 .previewGlyph {
@@ -276,7 +328,7 @@ button.computer:focus-visible {
 .previewLabel {
   overflow: hidden;
   color: var(--text);
-  font-size: 8px;
+  font-size: 7px;
   font-weight: 580;
   line-height: 1.15;
   text-overflow: ellipsis;
@@ -356,6 +408,11 @@ button.computer:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .head,
+  .body {
+    transition: none;
+  }
+
   .liveDot {
     animation: none;
   }

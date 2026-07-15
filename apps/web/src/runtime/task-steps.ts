@@ -1,11 +1,12 @@
 import {
   deriveTaskSteps,
+  taskStepComputerContentKind,
   type PersistedAgentEvent,
   type TaskStep,
+  type TaskStepComputerContentKind,
   type TaskStepKind,
 } from '@open-design/contracts';
 import type { Dict } from '../i18n/types';
-import { isTodoWriteToolName } from './todos';
 
 export type { TaskStep, TaskStepKind };
 export { deriveTaskSteps };
@@ -140,33 +141,36 @@ export function taskStepGlyph(kind: TaskStepKind): string {
 
 export interface ComputerStep {
   step: TaskStep;
+  contentKind: TaskStepComputerContentKind;
   use?: NonNullable<TaskStep['toolUse']>;
   result?: NonNullable<TaskStep['toolResult']>;
 }
 
+/**
+ * Computer is a presentation surface, not an event log. Only content that is
+ * useful to watch or revisit belongs in its timeline; operational state stays
+ * in the pinned Task progress card and in telemetry.
+ */
 export function computerStepsFromRound(round: TaskRound | null | undefined): ComputerStep[] {
   if (!round) return [];
-  return round.steps.filter(isComputerStep).map((step) => ({
-    step,
-    ...(step.toolUse ? { use: step.toolUse } : {}),
-    ...(step.toolResult ? { result: step.toolResult } : {}),
-  }));
+  return computerSteps(round.steps);
 }
 
 /** Backwards-compatible helper for isolated tests/renderers with only events. */
 export function computerStepsFromEvents(events: readonly PersistedAgentEvent[] | undefined): ComputerStep[] {
   if (!events) return [];
-  const steps = deriveTaskSteps(events).filter(isComputerStep);
-  return steps.map((step) => ({
-    step,
-    ...(step.toolUse ? { use: step.toolUse } : {}),
-    ...(step.toolResult ? { result: step.toolResult } : {}),
-  }));
+  return computerSteps(deriveTaskSteps(events));
 }
 
-function isComputerStep(step: TaskStep): boolean {
-  // TodoWrite/update_plan is the canonical state source for the composer-side
-  // Task progress card. Replaying the same snapshot as a Computer action makes
-  // the right panel duplicate (and visually compete with) that progress UI.
-  return !step.tool || !isTodoWriteToolName(step.tool);
+function computerSteps(steps: readonly TaskStep[]): ComputerStep[] {
+  return steps.flatMap((step) => {
+    const contentKind = taskStepComputerContentKind(step);
+    if (!contentKind) return [];
+    return [{
+      step,
+      contentKind,
+      ...(step.toolUse ? { use: step.toolUse } : {}),
+      ...(step.toolResult ? { result: step.toolResult } : {}),
+    }];
+  });
 }

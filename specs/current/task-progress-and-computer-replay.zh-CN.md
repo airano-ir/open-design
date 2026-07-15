@@ -12,9 +12,10 @@
 ## 0. 一句话
 
 一次提问 = 一个任务(round)。会话里只看到**最精炼的一行行 brief 和最终产物**;
-想看细节就点开 **Computer**——它把这一轮的搜索、读取、思考、plan、灵感、产物
-全部按时间**打点**记录下来,可以 ◀ ▶ 回放、拖动进度条、● Live 实时跟随;任务
-完成后有醒目的状态徽章、折叠的过程、一个大的产物预览、以及 3 个可点的追问。
+想看细节就点开 **Computer**——它把这一轮已经形成用户价值的 plan、搜索列表、
+搜索下钻详情与产物按时间**打点**记录下来,可以 ◀ ▶ 回放、拖动进度条、● Live
+实时跟随;任务
+完成后有醒目的状态徽章、折叠的过程、一个大的产物预览、以及 3 个可点击回填输入框的追问。
 
 ## 1. 现状四问题
 
@@ -77,8 +78,8 @@
 信息架构定位(面向普通用户,层级最优):
 - **左侧会话 = 入口 + reference + 状态 + 最终产物**。它只承载最简单有效的信息:
   一行行 brief、任务**状态**、以及最终**产物**入口。
-- **Computer = 可回放执行过程的唯一详情载体**,包含**核心 task 步骤本身**、
-  搜索/读取/思考/写入/灵感/产物,以及它们的完整内容与时间轴回放。Todo 状态只在
+- **Computer = 可回放价值内容的唯一详情载体**,只包含 plan 正文、搜索列表、
+  搜索下钻详情与已经可看的文档/图片/HTML 等产物。Todo 状态只在
   左侧固定 Task progress 展示和更新。
 
 - 运行中,会话里每个顶层步骤只显示**一行精炼 brief**(`TaskStep.brief`)+ 状态
@@ -96,8 +97,9 @@
 - **大产物预览卡**:复用 `ProducedFiles` + `pickPreviewableArtifact` /
   `pickPlanDocument`,渲染该轮主产物的一个大号可点预览;点击在 Computer 的
   `FileViewer` 里打开。**其余产物文件 → Computer**,不散落在会话里。
-- **3 个追问 chip**:复用/扩展 `NextStepActions`,每轮完成后给 3 个建议追问;
-  点击即发送。来源:一期用简单启发式,三期改为 agent 提供(如 `<od-followups>` 标记)。
+- **3 条推荐追问**:在 `NextStepActions` 前独立展示与当前任务相关的 3 条轻量列表;
+  点击只回填并聚焦输入框,不自动发送,方便用户修改后追问。来源:一期用上一条用户需求与
+  简单启发式生成,后续可改为 agent 提供(如 `<od-followups>` 标记)。
 
 ### 3.4 Tier 3 · 可回放的 Computer 面板
 
@@ -110,7 +112,8 @@
   - **顶部**状态行 `Using {tool} · {target}`,取自当前/选中步骤。
   - **正文**用**既有 family 卡**渲染选中步骤的类型化内容——`WebSearchCard`
     (搜索列表)、`FileReadCard`(读取详情)、`FileWriteCard`(plan/大纲)、
-    `WebFetchCard`,以及 `FileViewer`(产物/deck 预览)。TodoWrite 不在 Computer 渲染。
+    `WebFetchCard`,以及 `FileViewer`(产物/deck 预览)。TodoWrite、loading 和纯执行日志
+    不在 Computer 渲染。
   - **底部时间轴**:◀ ▶ 上一步/下一步、可拖拽进度条、● Live + **Jump to live**;
     下方是 `Task progress` 迷你摘要。
 - **两种呈现**:(a) 停靠 **Side view**(分栏里的新 body);(b) 全局 **弹框**
@@ -133,6 +136,32 @@
   模式;`FileViewer` + `ToolCard` family 卡渲染内容。这是**新 body 类型**,不是
   fork `FileViewer`。
 
+### 3.5 Computer 内容价值规范（展示白名单）
+
+Computer 是“看 AI 产出价值”的舞台，不是开发者事件流、日志控制台或 Todo 镜像。
+原始事件继续完整持久化，但进入 Computer 时间轴前必须经过以下白名单投影：
+
+1. **Plan 正文**：已经写入并可阅读的 plan / outline / inspiration 文档内容；
+   TodoWrite、update_plan、TaskCreate/TaskUpdate 等任务状态快照不属于 plan 正文。
+2. **搜索列表**：`WebSearch` / `web_search` 已返回的结果列表；仅有 tool_use、仍在等待
+   结果或失败的搜索不创建回放帧。
+3. **搜索下钻详情**：`WebFetch` / `web_fetch` 或 URL 读取已经返回的正文详情。
+4. **生成产物**：已经可看的文档、图片、HTML、演示、表格、音视频等产物；包含已完成的
+   `generate_image` / `generate_video` / `generate_speech`，并优先直接用 `FileViewer` /
+   live artifact 呈现真实内容，不用占位 loading 替代。
+
+默认排除：Todo/进度更新、thinking、Bash/命令、Glob/Grep/文件列表、普通源码读取、
+心跳、Preparing、spinner/skeleton、仅有 tool_use 的加载态、错误/重试噪音和未知工具。
+排除只影响 Computer 展示，不删除原始事件，也不影响左侧 Task progress 与诊断能力。
+
+执行规范：Todo 状态可以在每个 durable 工作项完成时更新，但昂贵校验不跟着逐项重复。
+先完成同一批实现/生成 Todo，再把 checklist、构建、Browser / Computer Use 和回归测试合并到
+最后一次验证步骤；只有会决定后续操作是否安全的破坏性/高风险检查可以中途打断批次。
+
+交互约束：用户一旦拖动时间轴、点上一步或点进度摘要中的历史步骤，即进入
+**history lock**；同一 run 的新事件只增加 `max`，不得改写当前 `stepId`。只有显式点击
+`Jump to live`、走到最新一步，或开始新的 run 才恢复实时跟随。
+
 ## 4. 打点步骤种类(按工具名分类)
 
 | kind | 触发(工具名 / 事件) | Computer 正文渲染 |
@@ -140,10 +169,10 @@
 | `plan` / `outline` | 写 plan 产物(`generated/outline.md` 等) | `FileWriteCard` / `FileViewer` |
 | `search` | `WebSearch` / `web_search` | `WebSearchCard` |
 | `search-drilldown` | `WebFetch` / `web_fetch` / 对搜索结果的 `Read` | `WebFetchCard` / `FileReadCard` |
-| `read` | `Read` / `read_file` | `FileReadCard` |
+| `read` | 仅 URL 搜索下钻读取 | `FileReadCard`;普通源码读取不进入 Computer |
 | `inspiration` | 灵感阶段标记 / `generated/inspiration.json` | 灵感卡 / `FileViewer` |
 | `generate` | 写/改 `generateExtensions` 文件、`live_artifact` | `FileViewer`(产物/deck) |
-| `thinking` | `thinking` 事件 | 思考文本 |
+| `thinking` | `thinking` 事件 | 不进入 Computer;保留在原始事件中 |
 
 分类复用既有:`toolFamily()`、`file-ops.ts` 名单、`isTodoWriteToolName()`。
 
@@ -159,14 +188,15 @@
 ## 6. UI / CLI 双轨(仓库硬规则)
 
 新增 `od task steps <conversationId> [--round N] [--json]`(或扩展 `od flow status`),
-由 daemon 只读路由返回某轮派生的 `TaskStep[]`(读既有 `messages.events_json`,
-**无迁移**),DTO 落 `packages/contracts`。UI + CLI + contract 同一 PR 落地,
-PR 模板 Surface area 两个框都勾。
+由 daemon 只读路由返回某轮完整派生的 `TaskStep[]`(读既有 `messages.events_json`,
+**无迁移**),DTO 与 `taskStepComputerContentKind()` 白名单策略都落在
+`packages/contracts`。CLI 保留完整诊断轨迹，UI 使用同一 contract 策略投影 Computer；
+展示过滤不删除原始记录。UI + CLI + contract 同一 PR 落地，PR 模板 Surface area 两个框都勾。
 
 ## 7. 里程碑(每个单独 PR)
 
 - **M1 · 会话体验**:按轮 task 模型 + Tier 1 固定折叠卡 + live/结束徽标 +
-  完成态(折叠、大产物卡、3 追问 chip)。详情暂留内联但可折叠,先出可见价值。
+  完成态(折叠、大产物卡、3 条推荐追问)。详情暂留内联但可折叠,先出可见价值。
 - **M2 · Computer + 极简会话**:`task-steps.ts` 派生;`OdComputerPanel` 作为新
   `computer:` body + 弹框;时间轴 + Jump-to-live + 运行即放大;把详情从会话搬进
   Computer(Tier 2 极简 brief)。CLI + contract。
@@ -178,15 +208,16 @@ PR 模板 Surface area 两个框都勾。
   `deriveCurrentRound`、Tier 1 折叠、完成态(选产物 + 3 chip)写单测。
 - 通过 `mocks/` 回放一段 generate+edit 会话(PATH overlay + `OD_MOCKS_TRACE`),
   验证:按轮切换、live→结束、极简 brief、Computer 回放/上一步下一步、Jump-to-live、
-  各步骤种类渲染、完成折叠、大产物卡、3 追问 chip。
+  各步骤种类渲染、完成折叠、大产物卡、3 条推荐追问。
 - 双 namespace `tools-dev` 人工核验:跑一次 deck 生成,看固定卡 + Computer 实时
-  (自动放大),回放上一步;再跑一次编辑,确认是独立 task;点一个追问 chip。
-- `od task steps <id> --json` 与 UI 所见一致。
+  (自动放大),回放上一步;再跑一次编辑,确认是独立 task;点一条推荐追问并确认只回填未发送。
+- `od task steps <id> --json` 的原始顺序与 UI 派生源一致；contract 白名单测试应能从同一
+  `TaskStep[]` 精确复现 Computer 所见的价值帧。
 
 ## 9. 实施与验收记录（2026-07-15）
 
 - [x] M1：每轮 task、输入框上方固定进度卡、Live/终态、完成后自动折叠、主产物与
-  3 个追问入口已落地。
+  3 条推荐追问已落地；追问位于 Next step 前，点击只回填输入框。
 - [x] M2：`computer:<runId>` 持久标签、自动聚焦、Side view / 弹框切换、类型化正文、
   上一步/下一步、拖拽时间轴与 Jump to live 已落地；会话正文已收敛为摘要、状态与主产物。
 - [x] M3：共享步骤投影覆盖 plan / outline / search / search-drilldown / read / write /
@@ -264,3 +295,31 @@ PR 模板 Surface area 两个框都勾。
   truth；生成按小批次持久化并持续挂载最新可用预览，使回放与实时查看都不出现空窗。
 - [x] focused prompt tests 覆盖 daemon、API/contracts 与 8 个 flow shape，确保上述体验
   原则不会在本地 provider 与 BYOK/API 路径间漂移。
+
+### 9.4 价值白名单、项目工作区与最终合并验收（2026-07-15）
+
+- [x] Computer 共享投影收敛为四类价值帧：plan 正文、搜索列表、搜索下钻详情、已完成
+  产物；TodoWrite / update_plan、普通源码读取、命令、列表、thinking、loading、失败重试与
+  未知工具仍完整持久化，但不进入 Computer。生产录制回放的 Computer 作用域内未发现
+  Todo / Preparing / Loading / Bash / Grep / Glob 等噪音。
+- [x] discovery / system prompt 明确采用批量验证：同一批实现和生成 Todo 全部完成后，
+  最后只运行一次 checklist、构建、Browser / Computer Use 与回归测试；不再在每个 Todo
+  后重复昂贵校验。
+- [x] 右侧 Task progress 可独立折叠，生产态实测从 `229px` 展开区收敛为 `45px` 单行；
+  左侧输入框上方的五阶段进度保持独立、可折叠，并继续作为 Todo 更新的唯一 UI。
+- [x] history lock 生产态停在 `Step 5 of 19`（slider `4/18`）后保持不动；新数据只推进
+  max。点击 Jump to live 后才切到 `18/18`，按钮随即消失。
+- [x] Computer 是右侧一级外壳，Design Files、Browser、文件/产物预览与回放均在其中；
+  放大为居中工作区，关闭后拖拽柄卸载且会话占满内容区，重新打开保留内部标签与用户调整
+  过的分栏宽度。
+- [x] 常驻 Project 侧栏实测支持 `256px ↔ 72px` 折叠、搜索、项目切换与状态展示；搜索
+  `Matrix` 精确返回 report / media / document / webapp / mobile / landing / prototype 七个项目。
+- [x] 视觉 QA 发现并修复 Electron 中挂载 iframe 的 Computer 做 FLIP scale 后出现黑色
+  合成块的问题：预览层保持挂载但不再参与父级缩放，背景继续自然淡入；从弹框还原分栏时
+  在浏览器绘制前同步失效旧合成块，普通内容仍保留 FLIP。重建生产桌面并对 Side → Modal →
+  Side 双向截图复核后均不再出现黑块。
+- [x] 最终一次性门禁：contracts `36` 条、daemon flow/task/CLI/mock `37` 条、Web
+  核心链路 `92` 条全部通过；Web typecheck、生产 build、仓库 guard 与 diff 检查通过。
+  8 类 query（deck / prototype / landing / mobile / webapp / document / report / media）继续由
+  同一共享路由测试覆盖。详细视觉记录见根目录 `design-qa.md` 的
+  “Final value-only Computer and project workspace” 段落。

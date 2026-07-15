@@ -884,7 +884,8 @@
 /* Project page audit pass: one final rule set for the active project shell.
    Keep the outer panes flat; only controls and repeated items get radius. */
 .workspace-shell {
-  grid-template-rows: 34px minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
 }
 .workspace-shell .workspace-tabs-chrome.app-chrome-header {
   --workspace-tabs-chrome-height: 34px;
@@ -1228,7 +1229,8 @@
 }
 .app .msg.assistant:hover .assistant-footer,
 .app .assistant-footer[data-streaming="true"],
-.app .assistant-footer[data-last="true"] { opacity: 1; }
+.app .assistant-footer[data-last="true"],
+.app .assistant-footer[data-terminal="true"] { opacity: 1; }
 .app .assistant-footer .dot {
   width: 5px;
   height: 5px;

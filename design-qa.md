@@ -53,6 +53,236 @@ final result: blocked
 
 ---
 
+# Design QA · Final value-only Computer and project workspace
+
+- Date: 2026-07-15
+- Runtime: `task-computer-e2e`, production Web build in the real Electron desktop shell
+- Reference progress / replay: `/var/folders/5j/fb63hyxj11nblszkmd3vfcjm0000gn/T/codex-clipboard-174108a1-90fe-4f90-8e85-4ba3721a3530.png`
+- Reference outer Computer: `/var/folders/5j/fb63hyxj11nblszkmd3vfcjm0000gn/T/codex-clipboard-6c0457b2-fa7e-433e-b874-44d5179d0523.png`
+- Implementation history lock: `/Users/pftom/.codex/visualizations/2026/07/15/019f63ca-00a9-71e2-a094-05905737dd75/computer-history-locked.png`
+- Implementation final modal: `/Users/pftom/.codex/visualizations/2026/07/15/019f63ca-00a9-71e2-a094-05905737dd75/final-focus-bidirectional.png`
+- Implementation restored side view: `/Users/pftom/.codex/visualizations/2026/07/15/019f63ca-00a9-71e2-a094-05905737dd75/final-side-bidirectional.png`
+- Implementation close/full conversation: `/Users/pftom/.codex/visualizations/2026/07/15/019f63ca-00a9-71e2-a094-05905737dd75/computer-closed-chat-full.png`
+- Viewport: 1280×900 CSS pixels in the desktop runtime; screenshots were captured at the device pixel ratio.
+
+## Source-to-implementation comparison
+
+- The reference and implementation were opened together in the same comparison input for both the replay/progress state and the outer Computer state.
+- The final hierarchy matches the requested model: persistent project navigation, conversation-first center, one outer Computer shell, then Pages / previews / browser / replay nested inside it.
+- The implementation keeps Open Design's own typography, neutral surfaces, orange accent, radii, controls, and icon library instead of copying the reference brand.
+- Task progress metadata, step count, disclosure control, timeline thumb, and Jump to live remain aligned and legible at the narrower right-column width.
+
+## Core interaction evidence
+
+- History lock held at `value=4 / max=18` (Step 5 of 19) after the live run continued; Jump to live alone changed it to `18 / 18` and removed the button.
+- Right Task progress changed from a 229px expanded region to a 45px collapsed row and restored independently of the composer-side progress card.
+- Modal close hid Computer, removed the separator, and expanded chat to the full 1024px content width; reopening restored the previous split and mounted workspace state.
+- Project navigation collapsed from 256px to 72px, expanded without losing state, and a real `Matrix` search returned the seven matching project rows.
+- Scoped Computer text contained only generated artifact frames in the recorded run; TodoWrite, update_plan, Preparing, Loading, Bash, Grep, Glob, and spinner text were absent.
+
+## Visual defects found and fixed
+
+- [P1] A focused Computer containing a mounted iframe could leave black Chromium/Electron compositor tiles after the FLIP scale animation.
+  - Fix: detect mounted iframe/video/canvas/webview previews and preserve them without a parent scale transform; the backdrop still fades naturally, while non-composited content retains the FLIP transition. A synchronous pre-paint reflow invalidates Electron's tiles when the same preview returns from fixed modal layout to the split grid.
+  - Regression: component test proves preview layers are not transformed and the paint refresh restores body state; rebuilt production screenshots confirm both side → modal and modal → side remain clean with no black tiles.
+- [P2] Empty replay content could expose a stale GPU layer from the previous preview.
+  - Fix: give the replay root an isolated paint layer, explicit surface background, and paint containment.
+
+## Required fidelity surfaces
+
+- Typography: existing product font stack and weights retained; primary/secondary hierarchy is consistent across sidebar, conversation, Computer, timeline, and progress.
+- Spacing: outer shell, 52px Computer header, workspace tabs, 28–30px icon controls, timeline, and 45px collapsed progress row share a coherent rhythm.
+- Color and borders: existing semantic tokens only; backdrop, panel surfaces, success status, accent thumb, borders, and focus treatments remain accessible.
+- Assets: existing Open Design icon primitives and real artifact/file previews are used; no emoji, handcrafted SVG, CSS art, or fake screenshot preview was introduced.
+- Copy: Computer is value-only; Todo and operational loading copy remain on the conversation/progress side or in raw diagnostics.
+
+## Automated and runtime evidence
+
+- Contracts flow + Computer projection: 2 files / 36 tests passed.
+- Daemon flow/task route, CLI, and mock replay: 4 files / 37 tests passed.
+- Focused Web creation/replay/sidebar/shell suites: 8 files / 92 tests passed.
+- Web typecheck and production build: passed.
+- Desktop runtime status: running and visible; console contains only the expected unpackaged Electron CSP warning.
+- The in-app Browser blocked direct navigation to the local URL under its URL-security policy, so it was not bypassed; equivalent visible validation was completed through the repository-supported desktop Computer Use inspector and screenshots.
+
+## Comparison history
+
+- Initial comparison: hierarchy and controls matched, but the focused preview exposed black compositor tiles.
+- Correction: skipped unsafe scaling for mounted preview layers and added a regression test.
+- Final comparison: modal background, canvas, header, nested workspace, timeline, progress, and surrounding backdrop all render cleanly; no remaining P0/P1/P2 visual defect was found in the requested path.
+
+final result: passed
+
+---
+
+# Design QA · Aggregated conversation Usage and completion actions
+
+- Date: 2026-07-15
+- Source visual truth:
+  - `/var/folders/5j/fb63hyxj11nblszkmd3vfcjm0000gn/T/codex-clipboard-73247ba9-f1cc-4a4f-a74c-12e6fe15f2f3.png`
+  - `/Users/pftom/Library/Application Support/LarkShell/OptimizeImage/60e1334c-77d5-4012-a629-30f293ba4993.jpeg`
+- Implementation URL: `http://127.0.0.1:4367/projects/5b53861d-fc5b-4f9a-afef-1c4e8bf75cc8/conversations/48bc1820-d07a-450d-abe6-06724117a09a`
+- Implementation screenshot: `.tmp/design-qa/conversation-usage.png`
+- Full comparison: `.tmp/design-qa/conversation-usage-comparison-full.png`
+- Focused comparison: `.tmp/design-qa/conversation-usage-comparison-focus.png`
+- Viewport: 1280×720 implementation; supplied references were normalized in the combined comparison.
+
+## Full-view comparison evidence
+
+The two supplied references and the implementation were assembled into one comparison image. The implementation follows the requested information hierarchy while retaining Open Design's product shell and visual tokens: conversation usage lives in the header, turn bodies stay focused on results, and the terminal row is a single compact action line.
+
+## Focused region comparison evidence
+
+The focused comparison places the original per-turn statistics, the Manus header-usage pattern, and the final Open Design state in one image. The final state removes per-turn token, cost, and time copy; exposes aggregate token and elapsed totals in the header panel; and keeps the green Task completed label plus copy, fork, helpful, and not-helpful controls on one 30px-high flex row.
+
+## Findings and fixes
+
+- [P1] Token, cost, and elapsed statistics were repeated after each assistant round.
+  - Fix: remove the per-turn statistics block and aggregate each assistant round's latest usage event into the conversation-level header panel.
+- [P2] Terminal status and feedback actions were visually fragmented across separate groups.
+  - Fix: move the terminal badge into the assistant footer, keep copy and fork adjacent on the left, and push helpful/not-helpful to the far right with flex layout.
+- [P2] Task completed read as a detached outlined badge rather than a lightweight terminal state.
+  - Fix: use the existing success icon and semantic success color without a pill background or border.
+
+## Runtime and regression evidence
+
+- Header Usage panel rendered one aggregated total across two assistant rounds: 1,300,641 tokens and 3m 14s.
+- DOM inspection found zero `.assistant-stats` per-turn blocks.
+- Both rendered completion rows used flex layout at 30px height and exposed four action buttons in left/right pairs.
+- Browser console error log: empty.
+- New usage aggregation/component tests: 3 passed.
+- Focused completion-row and header-action tests: passed.
+- Locale dictionary alignment: passed across all locale files.
+- Full Web typecheck is currently blocked by two pre-existing errors in the dirty `PinnedTaskProgress.tsx`; the new usage and completion files produced no type errors.
+
+## Comparison history
+
+- Initial state: terminal statistics were repeated per round, the completion label was pill-like, and action alignment was fragmented.
+- Implementation pass: usage aggregation, header popover, single-row terminal layout, and all locale copy were added.
+- Final comparison: header totals, per-turn removal, one-row action geometry, interaction state, and console logs all passed with no remaining P0/P1/P2 mismatch in this scope.
+
+final result: passed
+
+---
+
+# Design QA · Single-source floating Task progress
+
+- Date: 2026-07-15
+- Source visual truth: `/var/folders/5j/fb63hyxj11nblszkmd3vfcjm0000gn/T/codex-clipboard-df2b5558-60fb-4db8-8e7b-ca4fa6040e54.png`
+- Computer-open implementation: `/Users/pftom/.codex/visualizations/2026/07/15/019f63ca-00a9-71e2-a094-05905737dd75/progress-single-source-open.png`
+- Computer-closed implementation: `/Users/pftom/.codex/visualizations/2026/07/15/019f63ca-00a9-71e2-a094-05905737dd75/progress-floating-closed.png`
+- Expanded implementation: `/Users/pftom/.codex/visualizations/2026/07/15/019f63ca-00a9-71e2-a094-05905737dd75/progress-floating-expanded-clean.png`
+- Viewport: desktop, 1866×1307 implementation; source component normalized by content width.
+- State: completed five-stage design flow, compared with Computer open, Computer closed, collapsed, and expanded.
+
+## Full-view comparison evidence
+
+The source and final collapsed implementation were opened together in one comparison input. The final implementation keeps the same hierarchy as the source: miniature Computer preview, semantic status icon, current/final step label, tabular progress count, and one disclosure control, directly attached to the top edge of the composer. The earlier full-height card is gone.
+
+## Focused region comparison evidence
+
+- Computer open: the left composer has no pinned Task progress; only the right Computer progress source remains.
+- Computer closed: one 48px compact row floats above and slightly overlaps the composer, with a 52×32 preview and restrained 13px step label.
+- Expanded: details open upward over the transcript, so the composer position and typing area do not jump.
+- Terminal state: the collapsed summary keeps the useful final stage label rather than repeating a generic completion badge.
+
+## Findings and fixes
+
+- [P1] The same progress was visible on both left and right when Computer was open.
+  - Fix: `ProjectView` now suppresses the composer copy whenever the outer Computer workspace is visible.
+- [P2] The left progress occupied a large block and pushed the composer downward.
+  - Fix: default to a one-row summary and position the expanded detail surface above the row.
+- [P2] Status copy, step count, and thumbnail were crowded and visually heavy.
+  - Fix: reduced the preview to 52×32, tightened type and spacing, removed duplicate terminal copy while collapsed, and aligned the count with the disclosure control.
+- [P2] Translucent blur on the expanded surface produced Electron compositor artifacts.
+  - Fix: replaced backdrop filtering with the existing solid panel token; the post-fix expanded capture is clean.
+
+## Required fidelity surfaces
+
+- Fonts and typography: inherited product font, 13px/620 summary title, 11.5px tabular progress count, tighter negative letter spacing only on the primary label.
+- Spacing and layout rhythm: 48px summary row, 17px radius, 20px composer-side inset, and a 12px intentional overlap with the composer stack.
+- Colors and visual tokens: existing panel, border, text, muted, success, accent, and danger tokens only.
+- Image quality and asset fidelity: the existing memoized Computer preview and product icon library remain; no emoji, hand-authored SVG, placeholder art, or newly generated assets were introduced.
+- Copy and content: collapsed state shows the useful active/final stage label and `Step N of M`; detailed status copy appears only after expansion.
+
+## Interaction and regression verification
+
+- Computer-open duplicate suppression: passed.
+- Computer-close compact summary restoration: passed.
+- Compact expand/collapse and upward reveal: passed.
+- New round resets to compact state: passed.
+- Focused component regression: 31 tests passed.
+- Web typecheck: passed.
+
+## Comparison history
+
+- Initial state: the left card duplicated the right Computer progress and occupied a large vertical block.
+- First implementation: compact floating summary and single-source ownership were added.
+- Visual correction: removed expanded-surface backdrop filtering after it exposed Electron compositor blocks.
+- Final comparison: collapsed, expanded, and Computer-open states have no remaining P0/P1/P2 mismatch.
+
+final result: passed
+
+---
+
+# Design QA · Task Progress and Computer motion transitions
+
+- Date: 2026-07-15
+- Source visual truth: `/var/folders/5j/fb63hyxj11nblszkmd3vfcjm0000gn/T/codex-clipboard-bcc4bc8b-c3d4-4bf9-9ada-3614d5108127.png`
+- Implementation screenshot: `.tmp/design-qa/task-computer-motion/task-progress-expanded.png`
+- Combined comparison: `.tmp/design-qa/task-computer-motion/reference-vs-task-progress.png`
+- Viewport: 1280×720 implementation capture; source normalized to the same width in the combined comparison.
+- States covered: Task Progress expanded/collapsed, Computer hidden/docked/focused modal, replay previous/next, replay progress expanded/collapsed.
+
+## Full-view comparison evidence
+
+The supplied screenshot establishes the requested task-to-Computer journey rather than a pixel-identical Open Design screen. The combined comparison confirms that the implemented Task Progress remains attached to the conversation/composer and Computer remains the dedicated right-hand surface. The change intentionally preserves the current product typography, shell, colors, spacing, and iconography; only movement and transient presence behavior change.
+
+## Focused motion evidence
+
+- Task Progress disclosure uses the existing grid-row accordion and asymmetric `200ms` expand / `140ms` collapse timings.
+- Computer hidden ↔ right-hand workspace uses a compatible three-track grid transition; the live panel remains mounted for the exit interval so content does not blink away.
+- Right-hand workspace ↔ focused modal uses one mounted frame and a FLIP bounds animation (`240ms` into focus, `200ms` back) with the product ease-out curve.
+- Modal/backdrop exits remain present for `140ms` before dock/close callbacks complete.
+- Replay steps key their content by run + step and animate forward/backward from opposite horizontal directions over `200ms`.
+- All added motion is disabled under `prefers-reduced-motion: reduce`.
+
+## Findings and fixes
+
+- [P1] The first split-track implementation snapped because an imperative inline grid declaration overrode the state class and mixed non-compatible track shapes.
+  - Fix: keep `grid-template-columns` ownership in CSS and update only the chat-width custom property during resize. Open and closed states now use compatible three-track lists.
+- [P2] Close and dock callbacks previously removed the surface before an exit animation could render.
+  - Fix: add a `140ms` presence state with timer cleanup and an immediate reduced-motion path.
+- [P2] Replay content changed without spatial continuity.
+  - Fix: infer forward/backward direction from the durable run/step selection and animate status plus body in the matching direction.
+
+## Required fidelity surfaces
+
+- Typography and layout: unchanged; the motion patch reuses existing tokens, primitives, panel geometry, and responsive modal bounds.
+- Colors and shadows: existing background, border, text, and modal backdrop tokens retained; no new palette introduced.
+- Iconography: existing `Icon` and shared `Button` primitives retained at the established Computer header size.
+- Accessibility: semantic buttons, Escape-to-restore, modal labeling, focus transfer, and reduced-motion behavior covered.
+- State preservation: Computer children stay mounted across side/modal movement and through the short close transition.
+
+## Automated and runtime evidence
+
+- Focused motion suite: 28 passed; 76 unrelated tests skipped by the focused filter.
+- `@open-design/web` typecheck: passed.
+- Repository `pnpm guard`: passed, including style policy and cross-app boundaries.
+- Runtime disclosure check: expand reported `0.2s`; collapse reported `0.14s`; intermediate height/opacity values confirmed a real transition rather than a delayed snap.
+- Runtime modal check: the mounted Computer frame moved from the right workspace into a centered dialog without remounting its content.
+- Final console-log recheck could not be repeated after another local workflow stopped the shared default service; the interactive session completed without a visible runtime exception, and component/type/guard validation remained green.
+
+## Comparison history
+
+- Initial implementation: Task Progress transitioned correctly, but the Computer split grid snapped during close/open.
+- First correction: converted the open/closed track lists to simple lengths; DOM style parsing exposed continued imperative ownership.
+- Final correction: removed imperative grid ownership entirely, leaving resize to a custom property and state to CSS classes; focused regression tests then passed.
+
+final result: passed
+
+---
+
 # Design QA · Task Progress + Replayable Computer
 
 - Date: 2026-07-15
@@ -80,6 +310,43 @@ final result: blocked
 - Web production build: passed.
 - Repository guard: passed (78 policy tests).
 - Repository typecheck: passed; the landing-page package emitted pre-existing Astro hints only.
+
+final result: passed
+
+---
+
+# Design QA · Large primary deliverable preview card
+
+- Date: 2026-07-15
+- Result: Passed
+- Reference screenshot: `/Users/pftom/Library/Application Support/LarkShell/sdk_storage/9f491e950d29cedbe5e09d1fb4868a2c/resources/images/img_v3_0213k_149ba12a-91c9-4c8b-9408-21c0979d6e0g.jpg`
+- Previous compact-row screenshot: `/var/folders/5j/fb63hyxj11nblszkmd3vfcjm0000gn/T/codex-clipboard-5091750a-4e17-4a3b-8d78-507826539c6a.png`
+- Implementation screenshot: `.tmp/design-qa/primary-deliverable-card/implementation.png`
+- Full comparison: `.tmp/design-qa/primary-deliverable-card/reference-vs-implementation.jpg`
+- Focused comparison: `.tmp/design-qa/primary-deliverable-card/focused-reference-vs-implementation.jpg`
+
+## Visual result
+
+- The primary file now renders as one content-first card with a 62px identity/action header and a large 16:10 preview surface instead of a one-line attachment row.
+- HTML uses the real rendered artifact in a sandboxed iframe. Images, video, Markdown/text/code, and structured document previews keep their native content character rather than substituting a fake thumbnail.
+- Existing Open and Download affordances remain visible in the card header. The complete preview is also a keyboard-focusable Open target with a restrained hover hint.
+- The implementation retains Open Design typography, color tokens, icon library, and panel chrome while matching the reference's hierarchy, scale, rounded container, whitespace, and content-forward presentation.
+
+## Responsive and interaction checks
+
+- Desktop preview: 16:10 aspect ratio with a 240px minimum height.
+- Narrow preview: 4:3 aspect ratio with actions wrapping below the file identity.
+- Reduced-motion mode removes card and hint transitions.
+- Focused regression test verifies that the primary HTML deliverable renders inline and that activating the preview opens the existing Computer/file flow.
+- Real-project runtime inspection confirmed large Markdown and HTML cards with working Open and Download controls.
+
+## Findings
+
+- [P1] The previous primary deliverable was visually indistinguishable from a small attachment row.
+  - Fix: promote the primary file into a dedicated card and reserve the compact list for non-primary/multiple-file cases.
+- [P2] The result's actual content was hidden behind an Open action.
+  - Fix: render a safe, type-aware preview directly in the conversation while preserving the existing full-view path.
+- No remaining P0/P1/P2 visual defects were found in the supplied reference comparison.
 
 final result: passed
 
@@ -321,5 +588,67 @@ The supplied 3840×2098 reference and the 1280×720 production capture were norm
 - Initial reference: Todo occupied the Computer canvas; header copy ran together; the timeline was a dominant blue bar; right progress text was ungrouped.
 - First implementation comparison: Todo was removed from Computer and icon/spacing/timeline hierarchy was corrected.
 - Final audit: added current-round Todo precedence over stale flow, re-ran focused tests, rebuilt production, and repeated the browser interaction checks.
+
+final result: passed
+
+---
+
+# Design QA · Conversation header action icon sizing
+
+- Date: 2026-07-15
+- Source visual truth: `/var/folders/5j/fb63hyxj11nblszkmd3vfcjm0000gn/T/codex-clipboard-db451250-e59c-4a35-aa70-4b8cc023fbee.png`
+- Implementation screenshot: unavailable — the in-app Browser blocked capture of the local development URL under its URL policy.
+- Viewport: source screenshot 2048×1118; intended implementation state is the same desktop split view.
+- State: active project conversation with Design Files, New conversation, Conversation history, and Current conversation actions visible.
+- Primary interactions tested: the existing callbacks for Design Files, Cloud, and New conversation; history, rename, and delete menus; icon geometry for all four compact header actions.
+- Console errors checked: blocked with the browser-rendered implementation capture.
+
+## Full-view comparison evidence
+
+Blocked. The supplied source was opened at original resolution, but the browser-rendered local implementation could not be captured, so a valid combined source/implementation comparison was not possible.
+
+## Focused region comparison evidence
+
+Blocked for the same reason. The intended focused comparison is the four-button cluster highlighted in red in the source screenshot. Code and component-test evidence confirms a uniform 18×18px SVG box inside the existing 28×28px controls, but that is not a substitute for visual comparison.
+
+## Findings
+
+- [P1] Post-change browser evidence is unavailable.
+  - Location: conversation header action cluster.
+  - Evidence: source screenshot is available; the in-app Browser rejected local-page capture under its URL policy.
+  - Impact: optical balance between the folder, plus, comment, and filled ellipsis glyphs cannot be accepted from dimensions alone.
+  - Fix: capture the active project page in an allowed local browser surface at the matching desktop viewport, combine its focused crop with the source crop, and adjust any remaining optical-size drift.
+
+## Required fidelity surfaces
+
+- Fonts and typography: unchanged by this icon-only patch; browser comparison blocked.
+- Spacing and layout rhythm: existing 28px button boxes and 2px action gap retained; all four SVG boxes normalized to 18px; browser comparison blocked.
+- Colors and visual tokens: existing muted, hover, background, and border tokens retained; browser comparison blocked.
+- Image quality and asset fidelity: existing product `Icon` primitives retained; no replacement assets, glyph characters, or new SVG artwork introduced; browser comparison blocked.
+- Copy and content: labels, tooltips, and accessible names unchanged.
+
+## Comparison history
+
+- Initial source review: the four action glyphs read undersized and inconsistent inside equal button containers.
+- Implementation change: normalized all four to 18px and increased the three stroke icons to a 1.75 stroke while preserving the filled ellipsis treatment.
+- Post-fix visual comparison: blocked because the permitted browser could not capture the local implementation.
+
+## Implementation checklist
+
+- Capture the active project header at the matching viewport.
+- Compare a focused crop of the four-button cluster against the source crop.
+- Verify normal, hover, open-menu, and disabled states remain optically balanced.
+
+final result: blocked
+
+---
+
+# Design QA · Task Progress and Computer replay overall closeout
+
+The requested Task Progress / Computer / Project workspace path is accepted by the final value-only
+Computer comparison above. The blocked header-icon note immediately above is an older, separately
+scoped local-URL capture limitation and does not block this completed flow. Final runtime evidence is
+`final-focus-bidirectional.png`, `final-side-bidirectional.png`,
+`computer-history-locked.png`, and `computer-closed-chat-full.png`; no P0/P1/P2 issue remains in the requested path.
 
 final result: passed

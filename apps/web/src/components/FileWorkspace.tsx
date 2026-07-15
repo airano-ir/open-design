@@ -4092,7 +4092,7 @@ export function FileWorkspace({
             round={findTaskRound(messages, runIdFromComputerTabId(activeTab), {
               streamingRunId: streaming ? runIdFromComputerTabId(activeTab) : null,
             })}
-            variant="side"
+            variant="workspace"
             initialStepId={
               computerOpenRequest?.runId === runIdFromComputerTabId(activeTab)
                 ? computerOpenRequest.stepId

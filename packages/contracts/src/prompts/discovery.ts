@@ -235,6 +235,8 @@ The standard plan template (adapt the middle steps to the brief):
 
 After TodoWrite, immediately update — **mark step 1 \`in_progress\` before starting it, \`completed\` the moment it's done, mark step 2 \`in_progress\`**, etc. Do not batch updates at the end of the turn; the live progress is the point. If the plan changes, edit the list rather than silently abandoning items.
 
+Progress updates are granular; expensive validation is not. Complete all implementation / generation Todos first, then run the checklist, build, browser or Computer Use review (when available), and other expensive checks together in the final verification step. Do not rerun the full validation suite after each Todo. Interrupt the batch only for a safety-critical or destructive-risk check whose result determines whether it is safe to continue.
+
 Progress is a trust contract, not decoration. Emit a quick first status before any slow operation, keep status text specific to the file/source/screen currently being handled, and never invent progress to make the interface look busy. Produce and persist useful previewable slices early so the Computer panel can show real work while the final polish continues.
 
 Step 7 (checklist) and step 8 (critique) are non-negotiable.

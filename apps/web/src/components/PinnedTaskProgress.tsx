@@ -21,7 +21,11 @@ import {
   type TaskRound,
   type TaskStep,
 } from '../runtime/task-steps';
-import { FlowProgressCard, flowProgressSummary } from './FlowProgressCard';
+import {
+  FlowProgressCard,
+  flowProgressSummary,
+  flowStageLabelKey,
+} from './FlowProgressCard';
 import { Icon } from './Icon';
 import styles from './PinnedTaskProgress.module.css';
 
@@ -62,14 +66,16 @@ export function PinnedTaskProgress({
 }) {
   const t = useT();
   const terminal = round.status === 'succeeded' || round.status === 'failed' || round.status === 'canceled';
-  const [collapsed, setCollapsed] = useState(terminal);
+  // The composer copy is intentionally a compact floating summary. The full
+  // ladder is one click away and opens above the composer without moving it.
+  const [collapsed, setCollapsed] = useState(true);
   const previousTerminalRef = useRef(terminal);
   const previousRunIdRef = useRef(round.runId);
   useEffect(() => {
     if (previousRunIdRef.current !== round.runId) {
       previousRunIdRef.current = round.runId;
       previousTerminalRef.current = terminal;
-      setCollapsed(terminal);
+      setCollapsed(true);
       return;
     }
     if (!previousTerminalRef.current && terminal) setCollapsed(true);
@@ -80,6 +86,11 @@ export function PinnedTaskProgress({
     ? flow
     : null;
   const flowSummary = activeFlow ? flowProgressSummary(activeFlow) : null;
+  const lastCompletedFlowStage = activeFlow
+    ? [...activeFlow.stages]
+      .reverse()
+      .find((stage) => stage.state === 'complete' || stage.state === 'skipped')
+    : null;
   const awaitingInput = !live && status === 'succeeded' && Boolean(flowSummary?.activeStage);
   const stepSummary = taskRoundSummary(round.steps);
   const todoSummary = todoProgressSummary(todos);
@@ -89,7 +100,9 @@ export function PinnedTaskProgress({
       total: flowSummary.total,
       currentLabel: flowSummary.activeStage
         ? t(flowSummary.activeStage.labelKey)
-        : t('flow.state.complete'),
+        : lastCompletedFlowStage
+          ? t(flowStageLabelKey(lastCompletedFlowStage.id))
+          : t('flow.state.complete'),
       status: flowSummary.activeStage ? ('running' as const) : ('done' as const),
     }
     : todos.length > 0
@@ -158,12 +171,12 @@ export function PinnedTaskProgress({
             )}
           </span>
           <span className={styles.spacer} />
-          {live ? (
+          {!collapsed && live ? (
             <span className={styles.live} data-testid="pinned-task-live">
               <span className={styles.liveDot} aria-hidden />
               {t('designs.badgeLive')}
             </span>
-          ) : awaitingInput ? (
+          ) : !collapsed && awaitingInput ? (
             <span
               className={`${styles.terminal} ${styles.waiting}`}
               data-testid="pinned-task-status"
@@ -171,7 +184,7 @@ export function PinnedTaskProgress({
               <Icon name="comment" size={13} />
               {t('designs.status.awaitingInput')}
             </span>
-          ) : status === 'succeeded' ? (
+          ) : !collapsed && status === 'succeeded' ? (
             <span
               className={`${styles.terminal} ${styles.done}`}
               data-testid="pinned-task-status"
@@ -179,7 +192,7 @@ export function PinnedTaskProgress({
               <Icon name="check" size={13} />
               {t('task.status.completed')}
             </span>
-          ) : status === 'failed' ? (
+          ) : !collapsed && status === 'failed' ? (
             <span
               className={`${styles.terminal} ${styles.failed}`}
               data-testid="pinned-task-status"
@@ -187,7 +200,7 @@ export function PinnedTaskProgress({
               <Icon name="close" size={13} />
               {t('task.status.failed')}
             </span>
-          ) : status === 'canceled' ? (
+          ) : !collapsed && status === 'canceled' ? (
             <span
               className={`${styles.terminal} ${styles.stopped}`}
               data-testid="pinned-task-status"
@@ -210,6 +223,7 @@ export function PinnedTaskProgress({
       </div>
       <div
         className={`accordion-collapsible ${styles.body}${collapsed ? '' : ' open'}`}
+        data-transition-state={collapsed ? 'collapsed' : 'expanded'}
       >
         <div className="accordion-collapsible-inner">
           <div className={styles.bodyInner}>

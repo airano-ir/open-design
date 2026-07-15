@@ -35,4 +35,13 @@ describe('discovery.ts RULE 3 — TodoWrite plan item count', () => {
     expect(DISCOVERY_AND_PHILOSOPHY).toContain('TodoWrite');
     expect(DISCOVERY_AND_PHILOSOPHY).toContain('RULE 3');
   });
+
+  it('batches expensive validation after the implementation queue', () => {
+    expect(DISCOVERY_AND_PHILOSOPHY).toContain(
+      'Complete all implementation / generation Todos first',
+    );
+    expect(DISCOVERY_AND_PHILOSOPHY).toContain(
+      'Do not rerun the full validation suite after each Todo.',
+    );
+  });
 });

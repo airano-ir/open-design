@@ -88,6 +88,7 @@ import { listDesignArtifactCandidates } from './design-files/designArtifacts';
 import type { PluginFolderAgentAction } from './design-files/pluginFolderActions';
 import { Icon, type IconName } from './Icon';
 import { PinnedTaskProgress, type PinnedTaskRunStatus } from './PinnedTaskProgress';
+import { ConversationUsage } from './ConversationUsage';
 import { repoConnectCopy } from './design-system-github-evidence';
 import { isRenderableSketchJson, SketchPreview } from './SketchPreview';
 import type { SettingsSection } from './SettingsDialog';
@@ -517,6 +518,9 @@ interface Props {
   onRequestOpenFile?: (name: string) => void;
   /** Opens the replayable Computer panel from the pinned task-progress card. */
   onOpenComputer?: (runId: string, stepId?: string) => void;
+  /** The right-hand Computer owns task progress while it is visible. Hide the
+   * compact composer progress so the same state never appears twice. */
+  showPinnedTaskProgress?: boolean;
   onRequestPluginDetails?: (pluginId: string) => void;
   onRequestDesignSystemDetails?: (system: DesignSystemSummary) => void;
   onRequestPluginFolderAgentAction?: (
@@ -860,6 +864,7 @@ export function ChatPane({
   onSendQueuedNow,
   onRequestOpenFile,
   onOpenComputer,
+  showPinnedTaskProgress = true,
   onRequestPluginDetails,
   onRequestDesignSystemDetails,
   onRequestPluginFolderAgentAction,
@@ -1107,8 +1112,8 @@ export function ChatPane({
     });
   }, [onSessionModeChange, sessionMode]);
   const handleTaskFollowup = useCallback((prompt: string) => {
-    onSend(prompt, [], []);
-  }, [onSend]);
+    composerRef.current?.setDraft(prompt, { entryFrom: 'next_step' });
+  }, []);
   const handlePickSkill = useCallback((skillId: string) => {
     composerRef.current?.applyDesignToolboxSkill(skillId);
   }, []);
@@ -1510,6 +1515,20 @@ export function ChatPane({
       const next = displayMessages[i + 1]!;
       if (m.role === 'assistant' && next.role === 'user') {
         map.set(m.id, next.content);
+      }
+    }
+    return map;
+  }, [displayMessages]);
+  // The completed-task suggestions should stay anchored to the user request
+  // that started each turn, including historical turns after later follow-ups.
+  const previousUserContentByAssistantId = useMemo(() => {
+    const map = new Map<string, string>();
+    let previousUserContent = '';
+    for (const message of displayMessages) {
+      if (message.role === 'user') {
+        previousUserContent = message.content;
+      } else if (message.role === 'assistant' && previousUserContent) {
+        map.set(message.id, previousUserContent);
       }
     }
     return map;
@@ -2254,6 +2273,23 @@ export function ChatPane({
               <span>{t('settings.amrCloud')}</span>
             </Button>
           ) : null}
+          {activeConversation ? (
+            <ConversationUsage
+              messages={
+                messagesConversationId &&
+                activeConversationId &&
+                messagesConversationId !== activeConversationId
+                  ? []
+                  : messages
+              }
+              streaming={streaming}
+              onOpen={() => {
+                setShowConvList(false);
+                setShowConversationActions(false);
+                setRenamingActiveConversation(false);
+              }}
+            />
+          ) : null}
           {onOpenDesignFiles ? (
             <Button
               variant="ghost"
@@ -2264,7 +2300,7 @@ export function ChatPane({
               aria-label={t('workspace.allProjectFiles')}
               onClick={onOpenDesignFiles}
             >
-              <Icon name="folder" size={16} />
+              <Icon name="folder" size={18} strokeWidth={1.75} />
             </Button>
           ) : null}
           {onNewConversation ? (
@@ -2286,7 +2322,7 @@ export function ChatPane({
                 onNewConversation();
               }}
             >
-              <Icon name="plus" size={16} />
+              <Icon name="plus" size={18} strokeWidth={1.75} />
             </Button>
           ) : null}
         <div
@@ -2319,7 +2355,7 @@ export function ChatPane({
               });
             }}
           >
-            <Icon name="comment" size={16} />
+            <Icon name="comment" size={18} strokeWidth={1.75} />
           </button>
           {showConvList ? (
             <div className="chat-history-menu" role="menu" data-testid="conversation-history-menu">
@@ -2424,7 +2460,7 @@ export function ChatPane({
                   setShowConversationActions((open) => !open);
                 }}
               >
-                <Icon name="more-horizontal" size={17} />
+                <Icon name="more-horizontal" size={18} />
               </Button>
               {showConversationActions ? (
                 <div className="chat-conversation-actions-menu" role="menu">
@@ -2633,6 +2669,7 @@ export function ChatPane({
                 hasActiveDesignSystem={hasActiveDesignSystem}
                 errorCardOwnerId={errorCardOwnerId}
                 nextUserContentByAssistantId={nextUserContentByAssistantId}
+                previousUserContentByAssistantId={previousUserContentByAssistantId}
                 assistantCallbacksRef={assistantCallbacksRef}
                 onContinueRemainingTasks={onContinueRemainingTasks}
                 onBrandBrowserAssistConfirm={onBrandBrowserAssistConfirm}
@@ -2984,7 +3021,7 @@ export function ChatPane({
                 }
               : undefined}
           />
-          {currentTaskRound ? (
+          {currentTaskRound && showPinnedTaskProgress ? (
             <PinnedTaskProgress
               flow={flowSnapshot}
               round={currentTaskRound}
@@ -3096,6 +3133,7 @@ function ChatRows({
   hasActiveDesignSystem,
   errorCardOwnerId,
   nextUserContentByAssistantId,
+  previousUserContentByAssistantId,
   assistantCallbacksRef,
   onContinueRemainingTasks,
   onBrandBrowserAssistConfirm,
@@ -3156,6 +3194,7 @@ function ChatRows({
   hasActiveDesignSystem: boolean;
   errorCardOwnerId: string | null;
   nextUserContentByAssistantId: Map<string, string>;
+  previousUserContentByAssistantId: Map<string, string>;
   assistantCallbacksRef: MutableRefObject<AssistantCallbacks>;
   onContinueRemainingTasks?: (assistantMessage: ChatMessage, todos: TodoItem[]) => void;
   onBrandBrowserAssistConfirm?: BrandBrowserAssistConfirm;
@@ -3279,6 +3318,7 @@ function ChatRows({
         isLast={m.id === lastAssistantId}
         errorCardOwnerId={errorCardOwnerId}
         nextUserContent={nextUserContentByAssistantId.get(m.id)}
+        previousUserContent={previousUserContentByAssistantId.get(m.id)}
         suppressDirectionForms={hasActiveDesignSystem}
         hasDesignSystemContext={hasActiveDesignSystem || !!activeDesignSystem}
         onOpenQuestions={onOpenQuestions}

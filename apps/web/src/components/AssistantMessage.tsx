@@ -56,7 +56,7 @@ import {
   type PluginFolderCandidate,
 } from "./design-files/pluginFolders";
 import type { PluginFolderAgentAction } from "./design-files/pluginFolderActions";
-import { Icon } from "./Icon";
+import { Icon, type IconName } from "./Icon";
 import { NextStepActions, type NextStepActionsVariant } from "./NextStepActions";
 import type { DesignToolboxActionId } from "../runtime/design-toolbox";
 import { copyToClipboard } from "../lib/copy-to-clipboard";
@@ -365,6 +365,9 @@ interface Props {
   // Kept for ChatPane compatibility; chat-side question forms now always
   // render as a compact Questions banner.
   nextUserContent?: string;
+  // The user request that started this assistant turn. Completed task rounds
+  // use it to keep the three suggested follow-ups specific to the task.
+  previousUserContent?: string;
   // Open the right-hand Questions tab. The active discovery form renders
   // there (Claude-Design style) instead of inline; this assistant message
   // shows a banner that focuses the tab on click.
@@ -445,6 +448,7 @@ const ASSISTANT_MESSAGE_COMPARED_PROPS: Array<keyof Props> = [
   'isLast',
   'errorCardOwnerId',
   'nextUserContent',
+  'previousUserContent',
   'forking',
   'shareToOpenDesignBusy',
   'suppressDirectionForms',
@@ -516,6 +520,7 @@ function AssistantMessageImpl({
   isLast,
   errorCardOwnerId = null,
   nextUserContent,
+  previousUserContent,
   onOpenQuestions,
   onContinueRemainingTasks,
   onForkFromMessage,
@@ -706,9 +711,6 @@ function AssistantMessageImpl({
     },
     [pluginBusyKey, onRequestPluginFolderAgentAction],
   );
-  const usage = events.find((e) => e.kind === "usage") as
-    | Extract<AgentEvent, { kind: "usage" }>
-    | undefined;
   const roleName = assistantRoleName(message, t);
   const roleIconId = agentIconId(message.agentId, message.agentName);
   const hasEmptyResponse = events.some(
@@ -764,7 +766,6 @@ function AssistantMessageImpl({
     streaming ||
     !!message.startedAt ||
     !!message.endedAt ||
-    !!usage ||
     unfinishedTodos.length > 0 ||
     hasEmptyResponse ||
     !!copyMarkdown ||
@@ -798,7 +799,7 @@ function AssistantMessageImpl({
             : !!onToolboxAction ||
               !!onNextStepCreateDesignSystem ||
               (!!nextStepArtifactName && (!!onArtifactShare || !!onArtifactDownload));
-  const hasRoundFollowups = minimalTaskTranscript && runSucceeded && !!onTaskFollowup;
+  const showTaskFollowups = minimalTaskTranscript && runSucceeded && !!onTaskFollowup;
   // Terminal turns should leave the user with an actionable path, including
   // canceled/failed/no-artifact turns. Artifact-backed cards still wire Share
   // and Download to the chosen file; incomplete cards fall back to composer
@@ -807,7 +808,7 @@ function AssistantMessageImpl({
     !flowSnapshot &&
     !streaming &&
     runTerminal &&
-    (hasRoundFollowups || (!!isLast && hasNextStepPrimary) || showOpenDesignSubmission);
+    ((!!isLast && hasNextStepPrimary) || showOpenDesignSubmission);
   // Pre-output vs working: before any real content (text / thinking / tools /
   // files) the footer shimmers "Preparing…"; the moment content lands it
   // flips to "Working". The elapsed clock stays anchored to the persisted run
@@ -948,21 +949,13 @@ function AssistantMessageImpl({
           }
           return null;
         })}
-        {flowSnapshot ? (
+        {flowSnapshot && showInlineFlowProgress ? (
           <div className={styles.flowStatus} data-testid="assistant-flow-status">
-            {showInlineFlowProgress ? (
-              <FlowProgressCard
-                flow={flowSnapshot}
-                stageArtifactPaths={flowStageArtifactPaths}
-                stageActions={flowStageActions}
-                onOpenArtifact={onRequestOpenFile}
-              />
-            ) : null}
-            <FlowDeliveryActions
+            <FlowProgressCard
               flow={flowSnapshot}
-              fileName={flowDeliveryArtifactName}
-              onDownload={onArtifactDownload}
-              onShare={onArtifactShare}
+              stageArtifactPaths={flowStageArtifactPaths}
+              stageActions={flowStageActions}
+              onOpenArtifact={onRequestOpenFile}
             />
           </div>
         ) : null}
@@ -1042,8 +1035,7 @@ function AssistantMessageImpl({
           />
         ) : null}
         {showCompletionRow ? (
-          <div className="assistant-completion-row">
-            {runTerminal ? <TaskTerminalBadge status={message.runStatus ?? 'succeeded'} /> : null}
+          <div className="assistant-completion-row" data-testid="assistant-completion-row">
             {showFeedback ? (
               <AssistantFeedback
                 feedback={message.feedback}
@@ -1059,9 +1051,7 @@ function AssistantMessageImpl({
                 hasDesignSystemContext={hasDesignSystemContext}
                 footerProps={{
                   streaming,
-                  startedAt: message.startedAt,
-                  endedAt: message.endedAt,
-                  usage,
+                  terminalStatus: runTerminal ? message.runStatus ?? 'succeeded' : undefined,
                   hasUnfinishedTodos: unfinishedTodos.length > 0,
                   hasEmptyResponse,
                   preparing,
@@ -1076,9 +1066,7 @@ function AssistantMessageImpl({
             ) : (
               <AssistantFooter
                 streaming={streaming}
-                startedAt={message.startedAt}
-                endedAt={message.endedAt}
-                usage={usage}
+                terminalStatus={runTerminal ? message.runStatus ?? 'succeeded' : undefined}
                 hasUnfinishedTodos={unfinishedTodos.length > 0}
                 hasEmptyResponse={hasEmptyResponse}
                 preparing={preparing}
@@ -1091,33 +1079,47 @@ function AssistantMessageImpl({
             )}
           </div>
         ) : null}
+        {showTaskFollowups ? (
+          <TaskFollowupSuggestions
+            suggestions={taskRoundFollowups(previousUserContent, message.content, t)}
+            onSelect={onTaskFollowup!}
+          />
+        ) : null}
+        {flowSnapshot ? (
+          <div className={styles.flowStatus} data-testid="assistant-flow-delivery">
+            <FlowDeliveryActions
+              flow={flowSnapshot}
+              fileName={flowDeliveryArtifactName}
+              onDownload={onArtifactDownload}
+              onShare={onArtifactShare}
+            />
+          </div>
+        ) : null}
         {showNextStepActions ? (
           <NextStepActions
             fileName={isLast ? nextStepFileName : null}
             planFileName={isLast ? planNextStepName : null}
             artifactFileName={isLast ? nextStepArtifactName : null}
-            onShare={!hasRoundFollowups && isLast && nextStepArtifactName && !isPlanNextStep ? onArtifactShare : undefined}
-            onToolboxAction={!hasRoundFollowups && isLast ? onToolboxAction : undefined}
-            onPromptAction={!hasRoundFollowups && isLast ? onNextStepPromptAction : undefined}
-            onAiOptimize={!hasRoundFollowups && isLast ? onNextStepAiOptimize : undefined}
+            onShare={isLast && nextStepArtifactName && !isPlanNextStep ? onArtifactShare : undefined}
+            onToolboxAction={isLast ? onToolboxAction : undefined}
+            onPromptAction={isLast ? onNextStepPromptAction : undefined}
+            onAiOptimize={isLast ? onNextStepAiOptimize : undefined}
             aiOptimizeBusy={Boolean(isLast && nextStepAiOptimizeBusy)}
-            onContinueExtraction={!hasRoundFollowups && isLast ? onNextStepContinueExtraction : undefined}
+            onContinueExtraction={isLast ? onNextStepContinueExtraction : undefined}
             continueExtractionBusy={Boolean(isLast && nextStepContinueExtractionBusy)}
-            onContinueAiExtraction={!hasRoundFollowups && isLast ? onNextStepContinueAiExtraction : undefined}
+            onContinueAiExtraction={isLast ? onNextStepContinueAiExtraction : undefined}
             continueAiExtractionBusy={Boolean(isLast && nextStepContinueAiExtractionBusy)}
-            onCreateDesign={!hasRoundFollowups && isLast ? onNextStepCreateDesign : undefined}
+            onCreateDesign={isLast ? onNextStepCreateDesign : undefined}
             createDesignBusy={Boolean(isLast && nextStepCreateDesignBusy)}
-            onCreateDesignSystem={!hasRoundFollowups && isLast ? onNextStepCreateDesignSystem : undefined}
+            onCreateDesignSystem={isLast ? onNextStepCreateDesignSystem : undefined}
             createDesignSystemBusy={Boolean(isLast && nextStepCreateDesignSystemBusy)}
             onPickSkill={isLast ? onPickSkill : undefined}
-            onDownload={!hasRoundFollowups && isLast && nextStepFileName ? onArtifactDownload : undefined}
+            onDownload={isLast && nextStepFileName ? onArtifactDownload : undefined}
             skills={isLast ? nextStepSkills : undefined}
             toolboxSkillNames={isLast ? toolboxSkillNames : undefined}
-            onShareToOpenDesign={!hasRoundFollowups && showOpenDesignSubmission ? onShareToOpenDesign : undefined}
+            onShareToOpenDesign={showOpenDesignSubmission ? onShareToOpenDesign : undefined}
             shareToOpenDesignBusy={shareToOpenDesignBusy}
             variant={effectiveNextStepVariant}
-            followups={hasRoundFollowups ? taskRoundFollowups(t) : undefined}
-            onFollowup={hasRoundFollowups ? onTaskFollowup : undefined}
           />
         ) : null}
       </div>
@@ -1510,9 +1512,7 @@ function appendRoleModel(label: string, model: string | null): string {
 
 interface AssistantFooterProps {
   streaming: boolean;
-  startedAt: number | undefined;
-  endedAt: number | undefined;
-  usage: Extract<AgentEvent, { kind: "usage" }> | undefined;
+  terminalStatus?: ChatMessage['runStatus'];
   hasUnfinishedTodos: boolean;
   hasEmptyResponse: boolean;
   // Pre-output phase: streaming but nothing rendered yet. The label shimmers
@@ -1531,9 +1531,7 @@ interface AssistantFooterProps {
 
 function AssistantFooter({
   streaming,
-  startedAt,
-  endedAt,
-  usage,
+  terminalStatus,
   hasUnfinishedTodos,
   hasEmptyResponse,
   preparing = false,
@@ -1546,19 +1544,10 @@ function AssistantFooter({
   isLast = false,
 }: AssistantFooterProps) {
   const t = useT();
-  const elapsed = useLiveElapsed(streaming, startedAt, endedAt, usage?.durationMs);
-  const formattedCost =
-    typeof usage?.costUsd === "number" &&
-    Number.isFinite(usage.costUsd) &&
-    usage.costUsd > 0
-      ? usage.costUsd.toFixed(4)
-      : "";
-  const costLabel = formattedCost && formattedCost !== "0.0000" ? ` · $${formattedCost}` : "";
   if (
     !forceVisible &&
     !streaming &&
-    !elapsed &&
-    !usage &&
+    !terminalStatus &&
     !hasUnfinishedTodos &&
     !hasEmptyResponse &&
     !copyMarkdown &&
@@ -1571,28 +1560,28 @@ function AssistantFooter({
       data-unfinished={hasUnfinishedTodos ? "true" : "false"}
       data-streaming={streaming ? "true" : "false"}
       data-last={isLast ? "true" : "false"}
+      data-terminal={terminalStatus ? "true" : "false"}
     >
-      <span className="dot" data-active={streaming ? "true" : "false"} />
-      <span className={`assistant-label${streaming && preparing ? " shimmer-text shimmer-prepare" : ""}`}>
-        {streaming
-          ? preparing
-            ? preparingStatus === "thinking"
-              ? t("assistant.statusThinking")
-              : t("assistant.statusPreparing")
-            : t("assistant.workingLabel")
-          : hasEmptyResponse
-          ? t("assistant.emptyResponseLabel")
-          : hasUnfinishedTodos
-          ? t("assistant.unfinishedLabel")
-          : t("assistant.doneLabel")}
-      </span>
-      <span className="assistant-stats">
-        {elapsed}
-        {usage?.outputTokens != null
-          ? ` · ${t("assistant.outTokens", { n: usage.outputTokens })}`
-          : ""}
-        {costLabel}
-      </span>
+      {terminalStatus ? (
+        <TaskTerminalBadge status={terminalStatus} />
+      ) : (
+        <>
+          <span className="dot" data-active={streaming ? "true" : "false"} />
+          <span className={`assistant-label${streaming && preparing ? " shimmer-text shimmer-prepare" : ""}`}>
+            {streaming
+              ? preparing
+                ? preparingStatus === "thinking"
+                  ? t("assistant.statusThinking")
+                  : t("assistant.statusPreparing")
+                : t("assistant.workingLabel")
+              : hasEmptyResponse
+              ? t("assistant.emptyResponseLabel")
+              : hasUnfinishedTodos
+              ? t("assistant.unfinishedLabel")
+              : t("assistant.doneLabel")}
+          </span>
+        </>
+      )}
       {copyMarkdown || onFork || feedbackControls ? (
         <span className="assistant-footer-controls">
           {copyMarkdown ? <AssistantMarkdownCopyButton markdown={copyMarkdown} /> : null}
@@ -2247,7 +2236,11 @@ function TaskTerminalBadge({ status }: { status: ChatMessage['runStatus'] }) {
       : t('task.status.completed');
   return (
     <span className={styles.taskTerminalBadge} data-status={normalized} data-testid="assistant-task-status">
-      <span aria-hidden>{normalized === 'succeeded' ? '✓' : normalized === 'failed' ? '✕' : '⊘'}</span>
+      <Icon
+        name={normalized === 'succeeded' ? 'check' : normalized === 'failed' ? 'close' : 'stop'}
+        size={14}
+        strokeWidth={2}
+      />
       {label}
     </span>
   );
@@ -2261,15 +2254,65 @@ function primaryProducedFiles(files: ProjectFile[]): ProjectFile[] {
   return preferred ? [preferred] : [];
 }
 
-function taskRoundFollowups(t: TranslateFn) {
-  const improve = t('nextStep.planImproveArtifactTitle');
-  const align = t('nextStep.planMergeTitle');
-  const continueLabel = t('nextStep.projectContinueTitle');
+type TaskFollowupSuggestion = {
+  id: string;
+  icon: IconName;
+  prompt: string;
+};
+
+function taskRoundFollowups(
+  previousUserContent: string | undefined,
+  assistantContent: string,
+  t: TranslateFn,
+): TaskFollowupSuggestion[] {
+  const topic = summarizeFollowupTopic(
+    previousUserContent || assistantContent,
+    t('task.step.untitled'),
+  );
   return [
-    { id: 'improve', label: improve, prompt: improve },
-    { id: 'align', label: align, prompt: align },
-    { id: 'continue', label: continueLabel, prompt: continueLabel },
+    { id: 'details', icon: 'comment', prompt: t('task.followup.details', { topic }) },
+    { id: 'report', icon: 'file-text', prompt: t('task.followup.report', { topic }) },
+    { id: 'demo', icon: 'file-code', prompt: t('task.followup.demo', { topic }) },
   ];
+}
+
+function summarizeFollowupTopic(content: string, fallback: string): string {
+  const clean = content
+    .replace(/<system-reminder[\s\S]*?<\/system-reminder>/gi, ' ')
+    .replace(/<question-form[\s\S]*?<\/question-form>/gi, ' ')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/[`*_>#]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const chars = Array.from(clean || fallback);
+  return chars.length > 52 ? `${chars.slice(0, 51).join('')}…` : chars.join('');
+}
+
+function TaskFollowupSuggestions({
+  suggestions,
+  onSelect,
+}: {
+  suggestions: readonly TaskFollowupSuggestion[];
+  onSelect: (prompt: string) => void;
+}) {
+  return (
+    <div className={styles.taskFollowupSuggestions} data-testid="task-followup-suggestions">
+      {suggestions.slice(0, 3).map((suggestion) => (
+        <Button
+          key={suggestion.id}
+          variant="ghost"
+          className={styles.taskFollowupSuggestion}
+          data-testid={`task-followup-${suggestion.id}`}
+          onClick={() => onSelect(suggestion.prompt)}
+        >
+          <Icon name={suggestion.icon} size={17} className={styles.taskFollowupIcon} />
+          <span className={styles.taskFollowupLabel}>{suggestion.prompt}</span>
+          <Icon name="chevron-right" size={16} className={styles.taskFollowupArrow} />
+        </Button>
+      ))}
+    </div>
+  );
 }
 
 function ProducedFiles({
@@ -2439,21 +2482,15 @@ function PrimaryDeliverablePreview({
       />
     );
   }
-  if (file.kind === 'pdf') {
-    return (
-      <iframe
-        className={styles.primaryDeliverableMedia}
-        title={file.name}
-        src={url}
-        loading="lazy"
-        tabIndex={-1}
-      />
-    );
-  }
   if (file.kind === 'text' || file.kind === 'code') {
     return <PrimaryTextDeliverablePreview projectId={projectId} file={file} />;
   }
-  if (file.kind === 'document' || file.kind === 'presentation' || file.kind === 'spreadsheet') {
+  if (
+    file.kind === 'pdf' ||
+    file.kind === 'document' ||
+    file.kind === 'presentation' ||
+    file.kind === 'spreadsheet'
+  ) {
     return <PrimaryDocumentDeliverablePreview projectId={projectId} file={file} />;
   }
   return (
@@ -2473,19 +2510,26 @@ function PrimaryTextDeliverablePreview({
 }) {
   const t = useT();
   const [content, setContent] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     let cancelled = false;
     setContent(null);
+    setLoading(true);
     void fetchProjectFileText(projectId, file.name, { cacheBustKey: file.mtime }).then((next) => {
-      if (!cancelled) setContent(next);
+      if (cancelled) return;
+      setContent(next);
+      setLoading(false);
     });
     return () => {
       cancelled = true;
     };
   }, [file.mtime, file.name, projectId]);
 
-  if (content === null) {
+  if (loading) {
     return <span className={styles.primaryDeliverableLoading}>{t('fileViewer.loading')}</span>;
+  }
+  if (content === null) {
+    return <span className={styles.primaryDeliverableLoading}>{t('fileViewer.previewUnavailable')}</span>;
   }
   if (/\.mdx?$/i.test(file.name)) {
     return <div className={styles.primaryDeliverableDocument}>{renderMarkdown(content)}</div>;
@@ -2677,11 +2721,14 @@ function PluginActionPanel({
 
 function kindIconName(
   kind: ProjectFile["kind"]
-): "file-code" | "image" | "pencil" | "file" {
+): "file-code" | "file-text" | "image" | "pencil" | "play" | "present" | "file" {
   if (kind === "html") return "file-code";
   if (kind === "image") return "image";
   if (kind === "sketch") return "pencil";
   if (kind === "code") return "file-code";
+  if (kind === "text" || kind === "document" || kind === "pdf") return "file-text";
+  if (kind === "video" || kind === "audio") return "play";
+  if (kind === "presentation") return "present";
   return "file";
 }
 
@@ -3771,33 +3818,4 @@ function splitSystemReminders(input: string): ProseSegment[] {
         : seg
     )
     .filter((seg) => seg.kind === "reminder" || seg.text.trim().length > 0);
-}
-
-function useLiveElapsed(
-  streaming: boolean,
-  startedAt: number | undefined,
-  endedAt: number | undefined,
-  fixedDurationMs: number | undefined,
-): string {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    if (!streaming) return;
-    const id = window.setInterval(() => setNow(Date.now()), 200);
-    return () => window.clearInterval(id);
-  }, [streaming]);
-  if (!streaming && endedAt === undefined && typeof fixedDurationMs === "number") {
-    return formatElapsedMs(fixedDurationMs);
-  }
-  if (!startedAt || (!streaming && endedAt === undefined)) return "";
-  const end = streaming ? now : endedAt;
-  const ms = Math.max(0, (end ?? now) - startedAt);
-  return formatElapsedMs(ms);
-}
-
-function formatElapsedMs(ms: number): string {
-  const s = ms / 1000;
-  if (s < 60) return `${s.toFixed(s < 10 ? 1 : 0)}s`;
-  const m = Math.floor(s / 60);
-  const rem = Math.floor(s - m * 60);
-  return `${m}m ${rem.toString().padStart(2, "0")}s`;
 }

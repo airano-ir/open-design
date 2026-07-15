@@ -4,6 +4,17 @@ import { useT } from '../i18n';
 import { navigate, type EntryHomeView, type Route } from '../router';
 import type { Project } from '../types';
 import { Icon, type IconName } from './Icon';
+import {
+  WORKSPACE_TABS_STATE_CHANGED_EVENT,
+  WORKSPACE_TABS_STORAGE_KEY,
+  type WorkspaceTabsSnapshot,
+} from './workspace-tabs-snapshot';
+
+export {
+  readWorkspaceTabsSnapshot,
+  WORKSPACE_TABS_STATE_CHANGED_EVENT,
+  type WorkspaceTabsSnapshot,
+} from './workspace-tabs-snapshot';
 
 type WorkspaceChromeTab =
   | {
@@ -60,7 +71,7 @@ interface Props {
   onboardingCompleted?: boolean;
 }
 
-const STORAGE_KEY = 'open-design:workspace-tabs:v1';
+const STORAGE_KEY = WORKSPACE_TABS_STORAGE_KEY;
 const OPEN_WORKSPACE_TAB_EVENT = 'open-design:workspace-tabs:open';
 const MAX_SEARCH_RESULTS = 80;
 const TAB_DRAG_HAPTIC_MS = 8;
@@ -82,6 +93,18 @@ export function openWorkspaceTab(route: Route): void {
       detail: { route },
     }),
   );
+}
+
+function snapshotForTabsState(state: WorkspaceTabsState): WorkspaceTabsSnapshot {
+  const normalized = normalizeTabsState(state);
+  const activeTab = normalized.tabs.find((tab) => tab.id === normalized.activeTabId) ?? null;
+  return {
+    openProjectIds: Array.from(new Set(normalized.tabs.flatMap((tab) =>
+      tab.kind === 'project' ? [tab.projectId] : [],
+    ))),
+    activeProjectId: activeTab?.kind === 'project' ? activeTab.projectId : null,
+    openTabCount: normalized.tabs.length,
+  };
 }
 
 function nowId(): string {
@@ -556,9 +579,29 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
       const detail = (event as CustomEvent<{ route?: Route }>).detail;
       const nextRoute = detail?.route;
       if (!nextRoute) return;
-      const nextTab = tabFromRoute(nextRoute);
       setState((current) => {
         const normalized = normalizeTabsState(current);
+        if (nextRoute.kind === 'project') {
+          const existing = normalized.tabs.find(
+            (tab) => tab.kind === 'project' && tab.projectId === nextRoute.projectId,
+          );
+          if (existing?.kind === 'project') {
+            return normalizeTabsState({
+              tabs: normalized.tabs.map((tab) =>
+                tab.id === existing.id
+                  ? {
+                      ...existing,
+                      conversationId: nextRoute.conversationId ?? null,
+                      fileName: nextRoute.fileName,
+                      lastActiveAt: Date.now(),
+                    }
+                  : tab,
+              ),
+              activeTabId: existing.id,
+            });
+          }
+        }
+        const nextTab = tabFromRoute(nextRoute);
         return normalizeTabsState({
           tabs: [...normalized.tabs, nextTab],
           activeTabId: nextTab.id,
@@ -614,6 +657,11 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
     } catch {
       // Best-effort browser chrome state. Navigation itself remains URL-driven.
     }
+    window.dispatchEvent(
+      new CustomEvent<WorkspaceTabsSnapshot>(WORKSPACE_TABS_STATE_CHANGED_EVENT, {
+        detail: snapshotForTabsState(state),
+      }),
+    );
   }, [state]);
 
   useEffect(() => {

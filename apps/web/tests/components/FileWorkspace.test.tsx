@@ -2274,9 +2274,9 @@ describe('FileWorkspace staged-flow tab', () => {
 });
 
 describe('projectSplitClassName', () => {
-  it('marks the project split as focused so the chat pane can collapse globally', () => {
+  it('keeps the project split visible while the Computer workspace opens as a modal', () => {
     expect(projectSplitClassName(false)).toBe('split');
-    expect(projectSplitClassName(true)).toBe('split split-focus');
+    expect(projectSplitClassName(true)).toBe('split');
     expect(projectSplitClassName(false, false)).toBe('split split-chat-only');
   });
 
@@ -2284,18 +2284,25 @@ describe('projectSplitClassName', () => {
     expect(projectSplitStyle(false, 512, 'minmax(420px, 1fr)')).toEqual({
       '--project-chat-panel-width': '512px',
       '--project-workspace-panel-track': 'minmax(420px, 1fr)',
-      gridTemplateColumns: '512px 8px minmax(420px, 1fr)',
     });
-    expect(projectSplitStyle(true, 512, 'minmax(420px, 1fr)')).toBeUndefined();
-    expect(projectSplitStyle(false, 512, 'minmax(420px, 1fr)', false)).toBeUndefined();
+    expect(projectSplitStyle(true, 512, 'minmax(420px, 1fr)')).toEqual({
+      '--project-chat-panel-width': '512px',
+      '--project-workspace-panel-track': 'minmax(420px, 1fr)',
+    });
+    expect(projectSplitStyle(false, 512, 'minmax(420px, 1fr)', false)).toEqual({
+      '--project-chat-panel-width': '512px',
+      '--project-workspace-panel-track': 'minmax(420px, 1fr)',
+    });
   });
 
-  it('clears an imperatively resized grid when Computer closes or takes focus', () => {
+  it('moves an imperatively resized grid onto the stable collapsed tracks when Computer closes', () => {
     const split = document.createElement('div');
     applySplitChatPanelWidth(split, 756, 'minmax(400px, 1fr)');
-    expect(split.style.gridTemplateColumns).toBe('756px 8px minmax(400px, 1fr)');
+    expect(split.style.getPropertyValue('--project-chat-panel-width')).toBe('756px');
+    expect(split.style.gridTemplateColumns).toBe('');
 
     applySplitChatPanelWidth(split, 756, 'minmax(400px, 1fr)', false);
+    expect(split.style.getPropertyValue('--project-chat-panel-width')).toBe('756px');
     expect(split.style.gridTemplateColumns).toBe('');
   });
 });
@@ -3382,7 +3389,10 @@ describe('FileWorkspace Computer task tab', () => {
         content: '',
         runId: 'run-1',
         runStatus: 'running',
-        events: [{ kind: 'tool_use', id: 'search-1', name: 'WebSearch', input: { query: 'task replay' } }],
+        events: [
+          { kind: 'tool_use', id: 'search-1', name: 'WebSearch', input: { query: 'task replay' } },
+          { kind: 'tool_result', toolUseId: 'search-1', content: 'results', isError: false },
+        ],
       }],
       streaming: true,
       computerOpenRequest: { runId: 'run-1', stepId: 'search-1', nonce: 1 },
@@ -3396,7 +3406,9 @@ describe('FileWorkspace Computer task tab', () => {
     await waitFor(() => expect(screen.getByTestId('od-computer-panel')).toBeTruthy());
     rerender(<FileWorkspace {...props} tabsState={{ tabs: ['computer:run-1'], active: 'computer:run-1' }} />);
     expect(screen.getByRole('tab', { name: 'Computer' })).toBeTruthy();
-    expect(screen.getByTestId('od-computer-status').textContent).toContain('task replay');
+    expect(screen.getByTestId('od-computer-panel').getAttribute('data-variant')).toBe('workspace');
+    expect(screen.getByTestId('od-computer-step-transition').getAttribute('data-step-id')).toBe('search-1');
+    expect(screen.queryByTestId('od-computer-status')).toBeNull();
     expect(onTabsStateChange).toHaveBeenCalledWith(expect.objectContaining({
       tabs: ['computer:run-1'],
       active: 'computer:run-1',

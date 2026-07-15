@@ -948,9 +948,11 @@ describe('ProjectView conversation run isolation', () => {
     await waitFor(() => expect(screen.getByTestId('send-message')).toHaveProperty('disabled', false));
 
     fireEvent.click(screen.getByTestId('computer-workspace-focus-toggle'));
-    await waitFor(() =>
-      expect(screen.getByTestId('active-conversation').closest('.split-chat-slot')?.hasAttribute('hidden')).toBe(true),
-    );
+    await screen.findByRole('dialog', { name: 'task.computer.title' });
+    const chatSlot = screen.getByTestId('active-conversation').closest('.split-chat-slot');
+    expect(chatSlot?.hasAttribute('hidden')).toBe(false);
+    expect(chatSlot?.closest('.split')?.classList.contains('split-focus')).toBe(false);
+    fireEvent.click(screen.getByTestId('computer-workspace-focus-toggle'));
     fireEvent.click(screen.getByTestId('workspace-open-comments'));
     fireEvent.click(screen.getByTestId('workspace-send-comment'));
 
@@ -968,7 +970,7 @@ describe('ProjectView conversation run isolation', () => {
     await waitFor(() => expect(screen.getByTestId('active-conversation').textContent).toBe('conv-a'));
     fireEvent.click(screen.getByTestId('workspace-open-computer-modal'));
 
-    const dialog = await screen.findByRole('dialog', { name: 'Computer' });
+    const dialog = await screen.findByRole('dialog', { name: 'task.computer.title' });
     const close = dialog.querySelector<HTMLButtonElement>('button[aria-label="task.computer.close"]');
     expect(close).toBeTruthy();
     fireEvent.click(close!);
