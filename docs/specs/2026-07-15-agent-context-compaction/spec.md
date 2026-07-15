@@ -137,10 +137,10 @@ is permitted in these events.
 - Repeat no-start and no-completion watchdog cases against the packaged artifact.
 - Never use a teammate's production session for these smokes.
 
-Current release blocker: the packaged `OpenCode 1.15.10` smoke emits compact start and
-completion, but the Vela event stream currently ends before resumed output is relayed.
-This must be resolved before changing production AMR terminality or deleting any
-fresh-session fallback.
+Current packaged evidence: the `OpenCode 1.15.10` smoke completes the structured
+overflow, summary, and synthetic continuation sequence; emits compact start and
+completion; relays resumed assistant output through Vela; and does not expose the
+private summary in ACP output.
 
 ## Rollback
 
