@@ -188,6 +188,36 @@ describe('extractUserAuthoredSignalText — form answers (§3 cases 3/3b + label
   });
 });
 
+describe('extractUserAuthoredSignalText — form-answer header grammar (shared with contracts od-card.ts)', () => {
+  // The repo's accepted form-answer header grammar is wider than the
+  // canonical em-dash: packages/contracts/src/artifacts/od-card.ts
+  // (parseFormAnswers) accepts em-dash / hyphen / colon separators and the
+  // bare `[form answers]` header, case-insensitively; the CLI docs show the
+  // hyphen form. Every accepted variant must narrow echoed labels, or a
+  // CLI-driven form-answer turn re-enters the label false-positive path.
+  const variantCases: Array<[string, string]> = [
+    ['em-dash (canonical)', '[form answers — task-type]'],
+    ['hyphen (CLI docs form)', '[form answers - task-type]'],
+    ['colon', '[form answers: task-type]'],
+    ['bare header', '[form answers]'],
+    ['case-insensitive with leading whitespace', '  [Form Answers - task-type]'],
+  ];
+
+  it.each(variantCases)('%s: echoed labels are narrowed to values', (_name, header) => {
+    const answers = [
+      header,
+      '- What should I build?: Dashboard / tool UI [value: dashboard]',
+      '- For slide decks, include speaker notes?: (skipped)',
+    ].join('\n');
+    expect(detectDeckIntentSignal(extractUserAuthoredSignalText(answers))).toBe(false);
+  });
+
+  it.each(variantCases)('%s: selected values still flip the signal', (_name, header) => {
+    const answers = [header, '- What should I build?: Slide deck [value: slides]'].join('\n');
+    expect(detectDeckIntentSignal(extractUserAuthoredSignalText(answers))).toBe(true);
+  });
+});
+
 describe('extractUserAuthoredSignalText — media/platform parity (§3 case 7)', () => {
   const cases: Array<{
     name: string;

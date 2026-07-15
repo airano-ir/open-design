@@ -334,7 +334,15 @@ export function detectMediaIntentSignal(
 const TRANSCRIPT_USER_MARKER = '## user';
 const TRANSCRIPT_ASSISTANT_MARKER = '## assistant';
 const TRANSCRIPT_ROLE_MARKER = /^## (?:user|assistant)$/m;
-const FORM_ANSWERS_HEADER = /^\[form answers — .+\]/;
+// Mirrors the repo's accepted form-answer header grammar — the shared parser
+// in packages/contracts/src/artifacts/od-card.ts (parseFormAnswers) accepts
+// em-dash / hyphen / colon separators and the bare `[form answers]` header,
+// case-insensitively; the CLI docs show the hyphen form. Narrowing must fire
+// for every variant or CLI/manual form-answer turns re-enter the echoed-label
+// false-positive path. Grammar parity is pinned by
+// tests/prompts/intent-signal-user-text.test.ts.
+const FORM_ANSWERS_HEADER = /^\s*\[form answers(?:\s*[—\-:]\s*[^\]]+)?\]\s*$/i;
+const FORM_ANSWERS_ANSWER_LINE = /^\s*-\s+[^:]*:\s*(.*)$/;
 
 // `formatFormAnswers` (apps/web/src/artifacts/question-form.ts) echoes each
 // question as `- <question label>: <value>`. The label is the FORM's copy,
@@ -345,11 +353,11 @@ const FORM_ANSWERS_HEADER = /^\[form answers — .+\]/;
 function narrowFormAnswerSignalText(body: string): string {
   const lines = body.split('\n');
   const firstContent = lines.find((line) => line.trim().length > 0);
-  if (!firstContent || !FORM_ANSWERS_HEADER.test(firstContent.trim())) return body;
+  if (!firstContent || !FORM_ANSWERS_HEADER.test(firstContent)) return body;
   return lines
     .map((line) => {
-      if (FORM_ANSWERS_HEADER.test(line.trim())) return '';
-      const answer = /^- .*?: (.*)$/.exec(line);
+      if (FORM_ANSWERS_HEADER.test(line)) return '';
+      const answer = FORM_ANSWERS_ANSWER_LINE.exec(line);
       return answer ? answer[1] ?? '' : line;
     })
     .join('\n');
