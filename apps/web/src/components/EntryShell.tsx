@@ -1450,7 +1450,12 @@ export function EntryShell({
               )
             ) : null}
             {view === 'all-projects' ? (
-              projectsLoading ? (
+              // The all-projects grid is fed by `teamProjects`, which has its own
+              // loading state and restarts from empty whenever the entry shell
+              // remounts (e.g. returning from a project). Gating only on
+              // `projectsLoading` flashed the "还没有团队项目" empty state during
+              // that team read; wait for BOTH before deciding the grid is empty.
+              projectsLoading || teamProjects.loading ? (
                 <div className="entry-section">
                   <CenteredLoader label={t('common.loading')} />
                 </div>
