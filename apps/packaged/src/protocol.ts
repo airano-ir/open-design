@@ -1,4 +1,4 @@
-import { protocol } from "electron";
+import { net, protocol } from "electron";
 
 const OD_SCHEME = "od";
 const OD_ENTRY_URL = `${OD_SCHEME}://app/`;
@@ -153,8 +153,24 @@ export function packagedEntryUrl(): string {
   return OD_ENTRY_URL;
 }
 
+/**
+ * Route the od:// proxy through Electron's `net.fetch` (Chromium's network
+ * stack, ~6 pooled connections per origin like a browser tab) instead of Node's
+ * global `fetch` (undici), which caps a single origin far lower. Proxying every
+ * renderer request through undici serialized them: a project-open request burst
+ * that a browser tab runs in parallel dribbled out over minutes in the packaged
+ * app. `net.fetch` gives the packaged client the same concurrency as the
+ * browser. Set OD_OD_PROXY_FETCH=undici to force the old path if `net.fetch`
+ * ever regresses a streaming/upload edge on a specific Electron/OS combo.
+ */
+function resolveOdProxyFetch(): OdProtocolFetch {
+  if (process.env.OD_OD_PROXY_FETCH === "undici") return fetch;
+  return (request) => net.fetch(request);
+}
+
 export function registerOdProtocol(webRuntimeUrl: string): void {
+  const fetchImpl = resolveOdProxyFetch();
   protocol.handle(OD_SCHEME, async (request) => {
-    return await handleOdRequest(request, webRuntimeUrl);
+    return await handleOdRequest(request, webRuntimeUrl, fetchImpl);
   });
 }
