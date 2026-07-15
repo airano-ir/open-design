@@ -103,6 +103,15 @@ type TranslateFn = (
   vars?: Record<string, string | number>
 ) => string;
 
+// The host reports whether it accepted the answer into a real chat turn. A
+// `false` result means a pre-run guard (for example the AMR balance gate)
+// prevented the send, so the inline form must remain editable.
+export type QuestionFormSubmitHandler = (
+  text: string,
+  attachments?: ChatAttachment[],
+  context?: RunContextSelection,
+) => boolean | void | Promise<boolean | void>;
+
 const DISCORD_INVITE_URL = "https://discord.gg/mHAjSMV6gz";
 const viewedInlineQuestionForms = new Set<string>();
 const QUESTION_FORM_DRAFT_STORAGE_PREFIX = "open-design:question-form-draft:";
@@ -371,11 +380,7 @@ interface Props {
   // The user message that immediately follows this assistant turn, if any.
   // Structured form replies are parsed back into the inline answered summary.
   nextUserContent?: string;
-  onSubmitQuestionForm?: (
-    text: string,
-    attachments?: ChatAttachment[],
-    context?: RunContextSelection,
-  ) => void;
+  onSubmitQuestionForm?: QuestionFormSubmitHandler;
   questionFormSubmitDisabled?: boolean;
   onContinueRemainingTasks?: (todos: TodoItem[]) => void;
   onForkFromMessage?: () => void;
@@ -2460,11 +2465,7 @@ function ProseBlock({
   runId?: string | null;
   projectFileNames?: Set<string>;
   projectResolvedDir?: string | null;
-  onSubmitQuestionForm?: (
-    text: string,
-    attachments?: ChatAttachment[],
-    context?: RunContextSelection,
-  ) => void;
+  onSubmitQuestionForm?: QuestionFormSubmitHandler;
   questionFormSubmitDisabled: boolean;
   visualStyleContext?: VisualStyleContext;
   onRequestOpenFile?: (name: string) => void;
@@ -2624,11 +2625,7 @@ function FormBlock({
   conversationId?: string | null;
   nextUserContent?: string;
   interactive: boolean;
-  onSubmit?: (
-    text: string,
-    attachments?: ChatAttachment[],
-    context?: RunContextSelection,
-  ) => void;
+  onSubmit?: QuestionFormSubmitHandler;
   submitDisabled: boolean;
   visualStyleContext?: VisualStyleContext;
 }) {
@@ -2880,13 +2877,34 @@ function FormBlock({
           project_id: projectId,
         });
       }
-      clearInlineQuestionFormDraft(formKey);
-      setDraftAnswers(undefined);
-      if (attachments.length > 0 || context) {
-        onSubmit?.(submittedText, attachments, context);
-      } else {
-        onSubmit?.(submittedText);
+      const releaseSubmitLock = () => {
+        submittingRef.current = false;
+        setSubmitting(false);
+      };
+      const acceptSubmission = () => {
+        clearInlineQuestionFormDraft(formKey);
+        setDraftAnswers(undefined);
+      };
+      let submitOutcome: boolean | void | Promise<boolean | void>;
+      try {
+        submitOutcome =
+          attachments.length > 0 || context
+            ? onSubmit?.(submittedText, attachments, context)
+            : onSubmit?.(submittedText);
+      } catch {
+        releaseSubmitLock();
+        return;
       }
+      void Promise.resolve(submitOutcome).then(
+        (started) => {
+          if (started === false) {
+            releaseSubmitLock();
+            return;
+          }
+          acceptSubmission();
+        },
+        releaseSubmitLock,
+      );
     },
     [analytics.track, form, formKey, onSubmit, projectId, rollbackPendingUploads, t],
   );

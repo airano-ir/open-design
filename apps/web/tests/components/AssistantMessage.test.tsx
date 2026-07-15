@@ -6,7 +6,7 @@
  * streaming turns, failed runs, and empty responses.
  */
 
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AssistantMessage } from '../../src/components/AssistantMessage';
@@ -488,6 +488,56 @@ describe('AssistantMessage question forms', () => {
     fireEvent.click(send);
 
     expect(onSubmitQuestionForm).toHaveBeenCalledTimes(1);
+  });
+
+  it('re-enables an inline form when the host blocks its submit before a run starts', async () => {
+    let resolveSubmit: (started: boolean) => void = () => {};
+    const onSubmitQuestionForm = vi.fn(
+      () => new Promise<boolean>((resolve) => {
+        resolveSubmit = resolve;
+      }),
+    );
+    const form = [
+      '<question-form id="single-submit" title="Quick brief">',
+      JSON.stringify({
+        questions: [{ id: 'audience', label: 'Audience', type: 'text', required: true }],
+      }),
+      '</question-form>',
+    ].join('\n');
+    const { container } = render(
+      <AssistantMessage
+        message={baseMessage({
+          content: form,
+          events: [{ kind: 'text', text: form } as ChatMessage['events'][number]],
+        })}
+        streaming={false}
+        projectId="proj-1"
+        conversationId="conv-1"
+        isLast
+        onSubmitQuestionForm={onSubmitQuestionForm}
+      />,
+    );
+    const audienceInput = container.querySelector('.qf-input');
+    if (!(audienceInput instanceof HTMLInputElement)) throw new Error('expected audience input');
+    fireEvent.change(audienceInput, {
+      target: { value: 'Product leaders' },
+    });
+    const send = screen.getByRole('button', { name: 'Send answers' }) as HTMLButtonElement;
+    fireEvent.click(send);
+
+    await waitFor(() => {
+      expect(onSubmitQuestionForm).toHaveBeenCalledTimes(1);
+    });
+    expect(send.disabled).toBe(true);
+
+    await act(async () => {
+      resolveSubmit(false);
+    });
+
+    await waitFor(() => {
+      expect(send.disabled).toBe(false);
+    });
+    expect(audienceInput.value).toBe('Product leaders');
   });
 
   it('uploads file answers before sending their attachment context', async () => {

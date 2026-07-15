@@ -8569,8 +8569,8 @@ export function ProjectView({
               onboardingStarterPath={onboardingEntryRef.current?.productType ?? null}
               questionFormSubmitDisabled={currentConversationActionDisabled}
               onSubmitQuestionForm={(text, attachments = [], context) => {
-                if (currentConversationActionDisabled) return;
-                void handleSend(text, attachments, [], {
+                if (currentConversationActionDisabled) return false;
+                return handleSend(text, attachments, [], {
                   entryFrom: 'question_answer',
                   ...(context ? { context } : {}),
                 });

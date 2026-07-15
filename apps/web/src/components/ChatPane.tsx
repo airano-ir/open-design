@@ -52,7 +52,7 @@ import { isTodoWriteToolName, latestTodoWriteInputForPinnedCard } from '../runti
 import type { AppConfig, ChatAttachment, ChatCommentAttachment, ChatMessage, ChatMessageFeedbackChange, Conversation, DesignSystemSummary, PreviewComment, Project, ProjectFile, ProjectMetadata, SkillSummary } from '../types';
 import { agentDisplayName } from '../utils/agentLabels';
 import { commentTargetDisplayName, commentsToAttachments, simplePositionLabel } from '../comments';
-import { AssistantMessage } from './AssistantMessage';
+import { AssistantMessage, type QuestionFormSubmitHandler } from './AssistantMessage';
 import type { BrandBrowserAssistConfirm } from './OdCard';
 import {
   DESIGN_SYSTEM_NEXT_STEP_ACTIONS,
@@ -532,11 +532,7 @@ interface Props {
   // starters — one-click composer replacements — instead of the generic set.
   onboardingStarterPath?: ProductType | null;
   composerPlaceholder?: string;
-  onSubmitQuestionForm?: (
-    text: string,
-    attachments?: ChatAttachment[],
-    context?: RunContextSelection,
-  ) => void;
+  onSubmitQuestionForm?: QuestionFormSubmitHandler;
   questionFormSubmitDisabled?: boolean;
   onContinueRemainingTasks?: (assistantMessage: ChatMessage, todos: TodoItem[]) => void;
   onAssistantFeedback?: (assistantMessage: ChatMessage, change: ChatMessageFeedbackChange) => void;
@@ -2763,13 +2759,7 @@ export function ChatPane({
 }
 
 interface AssistantCallbacks {
-  onSubmitQuestionForm:
-    | ((
-        text: string,
-        attachments?: ChatAttachment[],
-        context?: RunContextSelection,
-      ) => void)
-    | undefined;
+  onSubmitQuestionForm: QuestionFormSubmitHandler | undefined;
   onContinueRemainingTasks:
     | ((assistantMessage: ChatMessage, todos: TodoItem[]) => void)
     | undefined;
@@ -2925,11 +2915,7 @@ function ChatRows({
   onAssistantFeedback?: (message: ChatMessage, change: ChatMessageFeedbackChange) => void;
   forkingMessageId?: string | null;
   t: TranslateFn;
-  onSubmitQuestionForm?: (
-    text: string,
-    attachments?: ChatAttachment[],
-    context?: RunContextSelection,
-  ) => void;
+  onSubmitQuestionForm?: QuestionFormSubmitHandler;
   questionFormSubmitDisabled: boolean;
   scrollContainerRef: MutableRefObject<HTMLDivElement | null>;
 }) {
