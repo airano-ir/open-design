@@ -21,8 +21,24 @@ export interface WorkspaceContextState {
   loading: boolean;
 }
 
+// Last successfully-resolved workspace context, kept at module scope so it
+// survives a component unmount/remount. Returning to the home view remounts the
+// nav shell, and starting each remount from `null` flashed the signed-out state
+// for the full duration of the (vela-backed, seconds-long) context read before
+// snapping to the real workspace. Seeding the remount from this cache shows the
+// last-known signed-in state instantly while the background read revalidates.
+let cachedWorkspaceContext: WorkspaceContextState['context'] = null;
+
+/** Test seam: clear the module-level context cache between tests. */
+export function resetWorkspaceContextCache(): void {
+  cachedWorkspaceContext = null;
+}
+
 export function useWorkspaceContext(): WorkspaceContextState {
-  const [state, setState] = useState<WorkspaceContextState>({ context: null, loading: true });
+  const [state, setState] = useState<WorkspaceContextState>(() => ({
+    context: cachedWorkspaceContext,
+    loading: cachedWorkspaceContext === null,
+  }));
   const mountedRef = useRef(true);
 
   useEffect(() => {
@@ -32,7 +48,7 @@ export function useWorkspaceContext(): WorkspaceContextState {
     };
   }, []);
 
-  const loadContext = useCallback(async (clearOnFailure: boolean) => {
+  const loadContext = useCallback(async () => {
     try {
       // Coalesced: every mounted consumer of this hook (and every focus/pageshow
       // refresh across them) fires the same read on a home-view burst — collapse
@@ -42,27 +58,34 @@ export function useWorkspaceContext(): WorkspaceContextState {
         if (!res.ok) throw new Error(`workspace-context ${res.status}`);
         return (await res.json()) as WorkspaceContextResponse;
       });
-      if (mountedRef.current) setState({ context: body.context ?? null, loading: false });
+      // A successful read is the only thing that redefines "signed in": persist it
+      // (including an explicit null for a genuinely signed-out response) so the
+      // next remount seeds from the truth, not a stale value.
+      cachedWorkspaceContext = body.context ?? null;
+      if (mountedRef.current) setState({ context: cachedWorkspaceContext, loading: false });
     } catch {
-      // Personal / offline / daemon without the B proxy: stay in the local state.
-      if (clearOnFailure && mountedRef.current) setState({ context: null, loading: false });
+      // Transient failure (offline, momentary daemon/hub hiccup): keep the
+      // last-known context instead of flashing the signed-out state. A never-
+      // signed-in / personal user has a null cache, so this still shows the local
+      // state for them.
+      if (mountedRef.current) setState({ context: cachedWorkspaceContext, loading: false });
     }
   }, []);
 
   useEffect(() => {
-    void loadContext(true);
+    void loadContext();
   }, [loadContext]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (document.visibilityState === 'visible') void loadContext(false);
+      if (document.visibilityState === 'visible') void loadContext();
     }, WORKSPACE_CONTEXT_POLL_MS);
     return () => clearInterval(interval);
   }, [loadContext]);
 
   useEffect(() => {
     const refresh = () => {
-      void loadContext(true);
+      void loadContext();
     };
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') refresh();
