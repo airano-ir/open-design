@@ -3833,6 +3833,7 @@ export async function startServer({
     collabSync: {
       requestTeamShare: (projectId, ownerMemberId) => collab.requestTeamShare(projectId, ownerMemberId),
       requestTeamUnshare: (projectId, ownerMemberId) => collab.requestTeamUnshare(projectId, ownerMemberId),
+      refreshTeamProjectMetadata: (projectId) => collab.refreshTeamProjectMetadata(projectId),
     },
     ...(workspaceTeamProjectCatalog ? { teamProjectCatalog: workspaceTeamProjectCatalog } : {}),
     // Collab-cloud comment seams (no-op off-team / when unconfigured): stamp the

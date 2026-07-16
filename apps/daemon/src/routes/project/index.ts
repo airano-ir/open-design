@@ -2868,6 +2868,12 @@ export function registerProjectRoutes(app: Express, ctx: RegisterProjectRoutesDe
       const project = updateProject(db, req.params.id, patch);
       if (!project)
         return sendApiError(res, 404, 'PROJECT_NOT_FOUND', 'not found');
+      if (typeof patch.name === 'string' && patch.name.trim().length > 0) {
+        // Write the rename through to the team catalog. Metadata-only changes
+        // never trigger a content publish, so without this a rename only
+        // reached teammates after the NEXT file edit — or never.
+        ctx.collabSync.refreshTeamProjectMetadata(req.params.id);
+      }
       /** @type {import('@open-design/contracts').ProjectResponse} */
       const body = { project };
       res.json(body);

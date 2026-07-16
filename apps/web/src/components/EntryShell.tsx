@@ -571,10 +571,29 @@ export function EntryShell({
         ...(teamProject.metadata ? { metadata: teamProject.metadata } : {}),
       } satisfies Project;
     });
+  // For rows the member has already pulled, the local record's name freezes at
+  // pull time — follow the hub catalog's display name instead so an owner
+  // rename converges here. The owner's own rows keep the local name as the
+  // authority (their fresh rename may not have round-tripped to the catalog
+  // yet, and being overwritten by the stale catalog name would look like the
+  // rename bounced).
+  const selfMemberId = workspaceContext?.workspaceMemberId ?? null;
+  const catalogNameOverride = new Map(
+    teamProjects.projects
+      .filter((teamProject) => teamProject.ownerMemberId !== selfMemberId)
+      .map((teamProject) => [teamProject.projectId, teamProject.name?.trim() || '']),
+  );
   const allProjectsList: Project[] = workspaceContext?.workspaceType === 'personal'
     ? projects
     : [
-        ...projects.filter((project) => teamSharedProjectIds.has(project.id)),
+        ...projects
+          .filter((project) => teamSharedProjectIds.has(project.id))
+          .map((project) => {
+            const catalogName = catalogNameOverride.get(project.id);
+            return catalogName && catalogName !== project.name
+              ? { ...project, name: catalogName }
+              : project;
+          }),
         ...sharedProjectCards,
       ];
   // Persistent set of project ids the team hub already lists as shared. Passed to

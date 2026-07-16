@@ -80,6 +80,14 @@ export interface CollabRuntime {
   requestTeamUnshare(projectId: string, principal?: ResourceHubPrincipal | null): Promise<void>;
   /** Restore a persisted team share into runtime bookkeeping without publishing. */
   rememberTeamShare(projectId: string, share: ResourceHubPrincipal, syncState?: ProjectSyncState): void;
+  /**
+   * Re-upsert the shared project's catalog entry so metadata-only changes
+   * (rename today) reach teammates without waiting for the next content
+   * publish — before this, a rename with no follow-up file edit NEVER
+   * converged on member clients. No-op for projects that are not shared
+   * from this daemon. Fire-and-forget; failures land on `onError`.
+   */
+  refreshTeamProjectMetadata(projectId: string): void;
   /** The member who shared this project, or null if not shared here. */
   projectOwnerMemberId(projectId: string, principal?: ResourceHubPrincipal | null): string | null;
   /** Materialize the published tree into the local member copy. */
@@ -587,6 +595,16 @@ export function createCollabRuntime(options: CreateCollabRuntimeOptions = {}): C
       return owners.get(projectId) ?? null;
     },
     rememberTeamShare,
+    refreshTeamProjectMetadata(projectId) {
+      // Only projects this daemon actually shares have catalog rows to
+      // refresh; principalsForProject is the authority on that. Reuse the
+      // per-principal sync state so a pending upload stays pending.
+      for (const principal of principalsForProject(projectId)) {
+        const state = syncStates.get(scopedProjectKey(projectId, principal));
+        if (state !== 'synced' && state !== 'pending_upload') continue;
+        markTeamProjectSoon(projectId, state, principal);
+      }
+    },
     async pullLatest(projectId, principal) {
       if (baseAdapter.pull) await baseAdapter.pull({ projectId, ...(principal ? { principal } : {}) });
       const head = baseAdapter.syncLatest

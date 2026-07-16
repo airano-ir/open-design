@@ -155,6 +155,13 @@ export interface ServerContext {
   collabSync: {
     requestTeamShare(projectId: string, share?: string | ResourceHubPrincipal): Promise<{ version: number | null }>;
     requestTeamUnshare(projectId: string, share?: string | ResourceHubPrincipal): Promise<void>;
+    /**
+     * Re-upsert the shared project's hub catalog entry after a metadata-only
+     * change (rename). Without this a rename with no follow-up content
+     * publish never reached teammates. Fire-and-forget; no-op for projects
+     * not shared from this daemon.
+     */
+    refreshTeamProjectMetadata(projectId: string): void;
   };
   lifecycle: {
     isDaemonShuttingDown: () => boolean;
