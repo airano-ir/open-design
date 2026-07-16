@@ -1071,7 +1071,10 @@ export function DesignFilesPanel({
                 <span className="df-empty-title">
                   {t('designFiles.empty')}
                 </span>
-                {viewerOnly ? null : (
+                {/* Product call: the empty state shows this component with its
+                    CTAs for EVERY empty project, shared read-only ones
+                    included — the create actions themselves stay guarded by
+                    the read-only enforcement downstream. */}
                 <div className="df-empty-actions">
                   <button
                     type="button"
@@ -1096,18 +1099,19 @@ export function DesignFilesPanel({
                       <span>{t('workspace.newBrowser')}</span>
                     </button>
                   ) : null}
-                  <button
-                    type="button"
-                    className="df-empty-cta df-empty-cta-tertiary"
-                    data-testid="design-files-empty-create-document"
-                    onClick={onPaste}
-                    title={t('designFiles.paste.title')}
-                  >
-                    <Icon name="file" size={13} />
-                    <span>{t('designFiles.paste.label')}</span>
-                  </button>
+                  {onCreateDesignSystem ? (
+                    <button
+                      type="button"
+                      className="df-empty-cta df-empty-cta-tertiary"
+                      data-testid="design-files-empty-create-design-system"
+                      onClick={onCreateDesignSystem}
+                      title={t('dsManager.createTitle')}
+                    >
+                      <Icon name="blocks" size={14} />
+                      <span>{t('dsManager.createTitle')}</span>
+                    </button>
+                  ) : null}
                 </div>
-                )}
               </div>
             </div>
           ) : (

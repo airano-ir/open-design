@@ -162,28 +162,28 @@ describe("DesignFilesPanel sections", () => {
   it("shows prioritized project starter actions in the empty state", () => {
     const onNewSketch = vi.fn();
     const onOpenBrowser = vi.fn();
-    const onPaste = vi.fn();
+    const onCreateDesignSystem = vi.fn();
 
     renderPanel([], {
       onNewSketch,
       onOpenBrowser,
-      onPaste,
+      onCreateDesignSystem,
     });
 
     fireEvent.click(screen.getByTestId("design-files-empty-new-sketch"));
     fireEvent.click(screen.getByTestId("design-files-empty-open-browser"));
-    fireEvent.click(screen.getByTestId("design-files-empty-create-document"));
+    fireEvent.click(screen.getByTestId("design-files-empty-create-design-system"));
 
     expect(onNewSketch).toHaveBeenCalledTimes(1);
     expect(onOpenBrowser).toHaveBeenCalledTimes(1);
-    expect(onPaste).toHaveBeenCalledTimes(1);
-    // #5517 restores the upstream 粘贴/Paste wording for designFiles.paste.*.
-    expect(
-      screen.getByTestId("design-files-empty-create-document").textContent,
-    ).toContain("Paste");
-    expect(
-      screen.queryByRole("button", { name: "Create new design system" }),
-    ).toBeNull();
+    expect(onCreateDesignSystem).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the empty-state starter actions for read-only shared viewers", () => {
+    renderPanel([], { viewerOnly: true, onCreateDesignSystem: vi.fn() });
+
+    expect(screen.getByTestId("design-files-empty-new-sketch")).toBeTruthy();
+    expect(screen.getByTestId("design-files-empty-create-design-system")).toBeTruthy();
   });
 
   it("groups files into semantic sections by category", () => {
