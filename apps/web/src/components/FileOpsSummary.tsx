@@ -1,10 +1,11 @@
 /**
  * "Files this turn" disclosure pinned to the top of an assistant message.
  *
- * The row appears as a compact summary with operation counters
- * (Write 1 · Edit 2 · Read 3). File-level detail is available on demand,
- * with per-file op badges and an "Open" button that lifts the basename up
- * to ProjectView so FileWorkspace focuses the matching tab.
+ * While the run streams, the row appears as a compact pill with live
+ * counters (Write 1 · Edit 2 · Read 3). Once the run finishes, the row
+ * expands to a full file list with per-file op badges and an "Open"
+ * button that lifts the basename up to ProjectView so FileWorkspace
+ * focuses the matching tab.
  *
  * The component is read-only over `events` — derivation lives in
  * `runtime/file-ops.ts` so the same logic is reachable from tests and
