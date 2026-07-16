@@ -83,7 +83,7 @@ describe('FileOpsSummary', () => {
     expect(screen.getByTestId('file-ops-row-a.ts')).toBeTruthy();
   });
 
-  it('shows the first four files and collapses only the remaining rows', () => {
+  it('collapses batches larger than four files until the user expands them', () => {
     render(
       <FileOpsSummary
         entries={[
@@ -99,13 +99,12 @@ describe('FileOpsSummary', () => {
 
     const toggle = screen.getByTestId('file-ops-toggle');
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
-    expect(screen.getByTestId('file-ops-row-a.ts')).not.toHaveAttribute('hidden');
-    expect(screen.getByTestId('file-ops-row-d.ts')).not.toHaveAttribute('hidden');
-    expect(screen.getByTestId('file-ops-row-e.ts')).toHaveAttribute('hidden');
+    expect(screen.queryByTestId('file-ops-row-a.ts')).toBeNull();
 
     fireEvent.click(toggle);
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
-    expect(screen.getByTestId('file-ops-row-e.ts')).not.toHaveAttribute('hidden');
+    expect(screen.getByTestId('file-ops-row-a.ts')).toBeTruthy();
+    expect(screen.getByTestId('file-ops-row-e.ts')).toBeTruthy();
   });
 
   it('shows the open button only for files that are present in the project file set', () => {
