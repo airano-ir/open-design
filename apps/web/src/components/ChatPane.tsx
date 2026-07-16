@@ -1071,19 +1071,6 @@ export function ChatPane({
     })),
     [projectMetadata, t],
   );
-  // Empty-conversation starter cards. A recommendation-started project shows
-  // its OWN product path's starters — clicking replaces the composer draft, so
-  // the pre-filled first request and the cards complement rather than compete.
-  // The general fallback path and every other project keep the generic set.
-  const starterTemplateCards = useMemo<StarterPrompt[]>(() => {
-    if (onboardingStarterPath && onboardingStarterPath !== 'general') {
-      return startersForProduct(onboardingStarterPath).map((starter) => {
-        const copy = starterCopyFor(starter.id);
-        return { icon: '✦', title: t(copy.title), tag: '', prompt: t(copy.firstPrompt) };
-      });
-    }
-    return pickStarters(projectMetadata, t);
-  }, [onboardingStarterPath, projectMetadata, t]);
   const followUpComposerScenarios = useMemo<PlaceholderScenario[]>(() => {
     if (nextStepVariant === 'design-system') {
       return DESIGN_SYSTEM_NEXT_STEP_ACTIONS.map((action) => ({
@@ -2284,54 +2271,9 @@ export function ChatPane({
                     />
                   ) : (
                     <>
-                      {/* Read-only viewers of a team-shared project cannot start
-                          a conversation, so the empty-state title + starter
-                          cards are hidden for them. */}
-                      {!viewerOnly ? (
-                      <>
-                      <div className="chat-empty">
-                        <span className="chat-empty-title">
-                          {t('chat.startTitle')}
-                        </span>
-                      </div>
-                      <div className="chat-examples" role="list">
-                        {starterTemplateCards.map((ex, i) => (
-                          <button
-                            key={`${ex.title}-${i}`}
-                            type="button"
-                            role="listitem"
-                            className="chat-example"
-                            style={{ animationDelay: `${i * 70}ms` }}
-                            onClick={() => {
-                              trackChatPanelClick(analytics.track, {
-                                page_name: 'chat_panel',
-                                area: 'chat_panel',
-                                element: 'template_card',
-                              });
-                              composerRef.current?.setDraft(ex.prompt);
-                            }}
-                            title={t('chat.fillInputTitle')}
-                          >
-                            <span className="chat-example-icon" aria-hidden>
-                              {ex.icon}
-                            </span>
-                            <span className="chat-example-body">
-                              <span className="chat-example-head">
-                                <span className="chat-example-title">{ex.title}</span>
-                                {ex.tag ? (
-                                  <span className="chat-example-tag">{ex.tag}</span>
-                                ) : null}
-                              </span>
-                              <span className="chat-example-prompt">{ex.prompt}</span>
-                            </span>
-                            <span className="chat-example-cta" aria-hidden>
-                              ↵
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                      </>
-                      ) : null}
+                      {/* #5517 leaves the empty conversation pane clean — no
+                          "start a conversation" title or starter template
+                          cards; only the connect-repo note below survives. */}
                       {connectRepoNeeded ? (
                         <div className="chat-connect-repo" role="note">
                           <span className="chat-connect-repo-icon" aria-hidden>
