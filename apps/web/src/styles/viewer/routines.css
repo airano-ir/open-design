@@ -1466,28 +1466,6 @@
 .app .task-activity-current-row .op-output {
   display: none;
 }
-.app .task-activity-complete-icon,
-.app .task-activity-terminal-icon {
-  width: 22px;
-  height: 22px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  border: 1px solid currentColor;
-  border-radius: 50%;
-  background: var(--bg-panel);
-}
-.app .task-activity-terminal {
-  min-height: 36px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 0;
-  color: var(--green);
-  font-size: 13px;
-  font-weight: 600;
-}
 @media (prefers-reduced-motion: reduce) {
   .app .task-activity-current-row {
     animation: none;

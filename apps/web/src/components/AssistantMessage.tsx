@@ -3743,11 +3743,6 @@ function TaskActivityCard({
         data-run-state={runState}
         data-testid="task-activity-toggle"
       >
-        {!running && !hasError ? (
-          <span className="task-activity-complete-icon" aria-hidden>
-            <Icon name="check" size={13} />
-          </span>
-        ) : null}
         <span className={`summary${running ? " shimmer-text" : ""}`}>{stateLabel}</span>
         {elapsed ? <span className="task-activity-elapsed">{elapsed}</span> : null}
         <span className="chev" aria-hidden>
@@ -3785,10 +3780,12 @@ function TaskActivityCard({
             })}
             {!running && !hasError ? (
               <div className="task-activity-terminal" data-testid="task-activity-terminal">
-                <span className="task-activity-terminal-icon" aria-hidden>
-                  <Icon name="check" size={13} />
-                </span>
-                <span>{t("tool.done")}</span>
+                <div className="op-card-head">
+                  <span className="op-status op-status-category" aria-hidden>
+                    <Icon name="check" size={14} />
+                  </span>
+                  <span className="op-title">{t("tool.done")}</span>
+                </div>
               </div>
             ) : null}
           </div>
