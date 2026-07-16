@@ -69,7 +69,7 @@ import type {
   TrackingCliProviderId,
 } from '@open-design/contracts/analytics';
 import { agentIdToTracking } from '@open-design/contracts/analytics';
-import { useT, useI18n } from '../i18n';
+import { useT } from '../i18n';
 import { navigate, useRoute } from '../router';
 import { setPendingDesignSystemCreateEntry } from '../analytics/ds-create-entry';
 import type {
@@ -101,11 +101,6 @@ import { AmrBalanceDialog } from './AmrBalanceDialog';
 import { AmrLowBalanceDialog, type AmrLowBalanceDecision } from './AmrLowBalanceDialog';
 import { checkAmrBalanceGate } from '../runtime/amr-balance-gate';
 import { isPaidAmrPlan, resolveAmrPlan } from '../runtime/amr-low-balance-plan';
-import { GithubStarBadge } from './GithubStarBadge';
-import {
-  formatDiscordPresenceCount,
-  useDiscordPresence,
-} from './useDiscordPresence';
 import { HomeView, seedHomeComposerPrompt } from './HomeView';
 import { EntryBlankState } from './EntryBlankState';
 import { RecentProjectsStrip } from './RecentProjectsStrip';
@@ -203,10 +198,6 @@ function writeStoredRailOpen(open: boolean): void {
   }
 }
 
-const DISCORD_URL = 'https://discord.gg/mHAjSMV6gz';
-const X_URL = 'https://x.com/OpenDesignHQ';
-const CONTACT_EMAIL = 'contact@open.design';
-const CONTACT_EMAIL_URL = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Open Design 反馈')}&body=${encodeURIComponent('你好 Open Design 团队，\n\n我想反馈：\n\n')}`;
 const ONBOARDING_DROPDOWN_OPEN_EVENT = 'open-design:onboarding-dropdown-open';
 
 type OnboardingAgentTestState =
@@ -532,8 +523,6 @@ export function EntryShell({
   artifactUpgradeSlot,
 }: Props) {
   const t = useT();
-  const { locale: uiLocale } = useI18n();
-  const discordPresence = useDiscordPresence();
   // Each entry sub-view (home / projects / design-systems) is its own
   // URL now, so the browser back/forward buttons work and a deep link
   // to /design-systems lands on that section. We derive the active
@@ -702,14 +691,6 @@ export function EntryShell({
   const [onboardingRec, setOnboardingRec] = useState<Recommendation | null>(null);
   const entryMainScrollRef = useRef<HTMLElement | null>(null);
   const analytics = useAnalytics();
-  const discordOnlineLabel = discordPresence
-    ? t('entry.discordOnlineLabel', {
-        count: formatDiscordPresenceCount(discordPresence.onlineCount),
-      })
-    : null;
-  const discordAriaLabel = discordOnlineLabel
-    ? t('entry.discordAriaWithOnline', { online: discordOnlineLabel })
-    : t('entry.discordAria');
   function changeView(next: EntryViewKind) {
     const navElement = navElementForView(next);
     if (navElement) {
@@ -939,68 +920,11 @@ export function EntryShell({
     changeView('home');
   }
 
-  const railFooterActions = (
-    <>
-      <GithubStarBadge />
-      <a
-        className="entry-discord-badge od-tooltip"
-        href={DISCORD_URL}
-        aria-label={discordAriaLabel}
-        data-tooltip={discordAriaLabel}
-        data-tooltip-placement="right"
-        data-testid="entry-discord-badge"
-      >
-        <Icon name="discord" size={14} className="entry-discord-badge__icon" />
-        <span className="entry-discord-badge__label">{t('entry.discordLabel')}</span>
-        {discordOnlineLabel ? (
-          <>
-            <span className="entry-discord-badge__sep" aria-hidden>·</span>
-            <span className="entry-discord-badge__online">{discordOnlineLabel}</span>
-          </>
-        ) : null}
-      </a>
-      <a
-        className="entry-x-badge od-tooltip"
-        href={X_URL}
-        target="_blank"
-        rel="noreferrer noopener"
-        aria-label="在 X 上关注 Open Design"
-        data-tooltip="在 X 上关注 Open Design"
-        data-tooltip-placement="right"
-        data-testid="entry-x-badge"
-      >
-        <span className="entry-x-badge__icon" aria-hidden>X</span>
-        <span className="entry-x-badge__label">@OpenDesignHQ</span>
-      </a>
-      <a
-        className="entry-mail-badge od-tooltip"
-        href={CONTACT_EMAIL_URL}
-        aria-label="给 Open Design 发邮件"
-        data-tooltip="给 Open Design 发邮件"
-        data-tooltip-placement="right"
-        data-testid="entry-mail-badge"
-      >
-        <span className="entry-mail-badge__icon" aria-hidden>
-          <Icon name="comment" size={13} />
-        </span>
-        <span className="entry-mail-badge__label">邮件</span>
-      </a>
-      <button
-        type="button"
-        className="entry-settings-chip od-tooltip"
-        onClick={() => onOpenSettings()}
-        data-tooltip={t('entry.openSettingsTitle')}
-        data-tooltip-placement="right"
-        aria-label={t('entry.openSettingsAria')}
-        data-testid="entry-settings-button"
-      >
-        <span className="entry-settings-chip__icon" aria-hidden>
-          <Icon name="settings" size={13} />
-        </span>
-        <span className="entry-settings-chip__label">{t('settings.title')}</span>
-      </button>
-    </>
-  );
+  // #5517: the GitHub/Discord/X/mail badges and the settings chip leave the
+  // rail footer — socials live in the account menu's social row and settings
+  // stays reachable through the account menu — so the footer reads as just
+  // the credits chip + account row.
+  const railFooterActions = null;
 
   // Drop the personalized recommendation. Fired when the user browses all
   // types, or as soon as they take any other concrete entry, so Home never

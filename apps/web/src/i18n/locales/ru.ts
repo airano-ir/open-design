@@ -712,6 +712,8 @@ export const ru: Dict = {
   'entry.discordAria': 'Присоединиться к Discord-сообществу Open Design',
   'entry.discordAriaWithOnline': 'Присоединиться к Discord-сообществу Open Design — {online}',
   'entry.discordOnlineLabel': '{count} онлайн',
+  'entry.mailAria': 'Написать Open Design по электронной почте',
+  'entry.accountSettings': 'Настройки',
   'collabPresence.ariaOne': '1 collaborator online',
   'collabPresence.aria': '{count} collaborators online',
   'collabPresence.ariaWithSelfOne': '1 collaborator online, including you',

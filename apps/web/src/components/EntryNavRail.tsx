@@ -45,6 +45,9 @@ import type { EntryHomeView } from '../router';
 const REPO_URL = 'https://github.com/nexu-io/open-design';
 const GITHUB_HELP_URL = `${REPO_URL}/issues/new`;
 const GITHUB_FEATURE_URL = `${REPO_URL}/pulls`;
+const DISCORD_URL = 'https://discord.gg/mHAjSMV6gz';
+const X_URL = 'https://x.com/OpenDesignHQ';
+const CONTACT_EMAIL_URL = 'mailto:contact@open.design';
 const externalLinkProps = { target: '_blank', rel: 'noreferrer noopener' } as const;
 
 // The rail's destination ids are the entry-shell home views (kept in sync with
@@ -436,7 +439,7 @@ export function EntryNavRail({
                       onOpenSettings?.();
                     }}
                   >
-                    <Icon name="settings" size={15} /> {t('settings.title')}
+                    <Icon name="settings" size={15} /> {t('entry.accountSettings')}
                   </button>
                   <div className="entry-nav-rail__menu-divider" />
                   <a
@@ -457,6 +460,53 @@ export function EntryNavRail({
                   >
                     <Icon name="sparkles" size={15} /> {t('entry.accountFeatureRequest')}
                   </a>
+                  {/* #5517: the GitHub/Discord/X/mail badges move off the rail
+                      footer into a compact social row inside the account menu. */}
+                  <div className="entry-nav-rail__menu-social">
+                    <a
+                      className="entry-nav-rail__menu-social-btn"
+                      role="menuitem"
+                      href={REPO_URL}
+                      {...externalLinkProps}
+                      aria-label="GitHub"
+                      title="GitHub"
+                      onClick={() => setAccountOpen(false)}
+                    >
+                      <Icon name="github-filled" size={15} />
+                    </a>
+                    <a
+                      className="entry-nav-rail__menu-social-btn"
+                      role="menuitem"
+                      href={DISCORD_URL}
+                      {...externalLinkProps}
+                      aria-label={t('entry.discordAria')}
+                      title={t('entry.discordAria')}
+                      onClick={() => setAccountOpen(false)}
+                    >
+                      <Icon name="discord" size={15} />
+                    </a>
+                    <a
+                      className="entry-nav-rail__menu-social-btn"
+                      role="menuitem"
+                      href={X_URL}
+                      {...externalLinkProps}
+                      aria-label="@OpenDesignHQ"
+                      title="@OpenDesignHQ"
+                      onClick={() => setAccountOpen(false)}
+                    >
+                      <span className="entry-nav-rail__menu-x" aria-hidden>X</span>
+                    </a>
+                    <a
+                      className="entry-nav-rail__menu-social-btn"
+                      role="menuitem"
+                      href={CONTACT_EMAIL_URL}
+                      aria-label={t('entry.mailAria')}
+                      title={t('entry.mailAria')}
+                      onClick={() => setAccountOpen(false)}
+                    >
+                      <Icon name="mail" size={15} />
+                    </a>
+                  </div>
                   <div className="entry-nav-rail__menu-divider" />
                   <button
                     type="button"

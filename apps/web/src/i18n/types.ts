@@ -1071,6 +1071,8 @@ export interface Dict {
   'entry.discordAria': string;
   'entry.discordAriaWithOnline': string;
   'entry.discordOnlineLabel': string;
+  'entry.mailAria': string;
+  'entry.accountSettings': string;
   'collabPresence.ariaOne': string;
   'collabPresence.aria': string;
   'collabPresence.ariaWithSelfOne': string;

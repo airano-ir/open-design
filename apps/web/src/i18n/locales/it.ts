@@ -712,6 +712,8 @@ export const it: Dict = {
   'entry.discordAria': 'Unisciti al Discord di Open Design',
   'entry.discordAriaWithOnline': 'Unisciti al Discord di Open Design - {online}',
   'entry.discordOnlineLabel': '{count} online',
+  'entry.mailAria': 'Invia un\'email a Open Design',
+  'entry.accountSettings': 'Impostazioni',
   'collabPresence.ariaOne': '1 collaborator online',
   'collabPresence.aria': '{count} collaborators online',
   'collabPresence.ariaWithSelfOne': '1 collaborator online, including you',

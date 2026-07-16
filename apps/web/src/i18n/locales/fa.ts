@@ -712,6 +712,8 @@ export const fa: Dict = {
   'entry.discordAria': 'به Discord اوپن دیزاین بپیوندید',
   'entry.discordAriaWithOnline': 'به Discord اوپن دیزاین بپیوندید - {online}',
   'entry.discordOnlineLabel': '{count} آنلاین',
+  'entry.mailAria': 'به Open Design ایمیل بفرستید',
+  'entry.accountSettings': 'تنظیمات',
   'collabPresence.ariaOne': '1 collaborator online',
   'collabPresence.aria': '{count} collaborators online',
   'collabPresence.ariaWithSelfOne': '1 collaborator online, including you',

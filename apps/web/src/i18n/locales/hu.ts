@@ -712,6 +712,8 @@ export const hu: Dict = {
   'entry.discordAria': 'Csatlakozás az Open Design Discordhoz',
   'entry.discordAriaWithOnline': 'Csatlakozás az Open Design Discordhoz - {online}',
   'entry.discordOnlineLabel': '{count} online',
+  'entry.mailAria': 'E-mail küldése az Open Designnak',
+  'entry.accountSettings': 'Beállítások',
   'collabPresence.ariaOne': '1 collaborator online',
   'collabPresence.aria': '{count} collaborators online',
   'collabPresence.ariaWithSelfOne': '1 collaborator online, including you',
