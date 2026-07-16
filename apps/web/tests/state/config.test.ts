@@ -3,6 +3,7 @@ import {
   buildMediaProvidersForDaemonSave,
   BYOK_PROVIDER_PRESETS,
   DEFAULT_CONFIG,
+  defaultKnownProviderModel,
   fetchMediaProvidersFromDaemon,
   isStoredMediaProviderEntryEmpty,
   isStoredMediaProviderEntryPresent,
@@ -73,6 +74,14 @@ describe('KNOWN_PROVIDERS', () => {
         'deepseek-reasoner',
       ]);
     }
+  });
+
+  it('keeps gpt-oss:120b as the Ollama Cloud default', () => {
+    const ollamaCloud = KNOWN_PROVIDERS.find(
+      (provider) => provider.label === 'Ollama Cloud (managed)',
+    );
+
+    expect(defaultKnownProviderModel(ollamaCloud)).toBe('gpt-oss:120b');
   });
 });
 

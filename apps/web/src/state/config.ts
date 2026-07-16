@@ -382,6 +382,7 @@ export const KNOWN_PROVIDERS: KnownProvider[] = [
     protocol: 'ollama',
     baseUrl: 'https://ollama.com',
     preferredModels: [
+      'gpt-oss:120b',
       'cogito-2.1:671b',
       'deepseek-v3.1:671b',
       'deepseek-v3.2',
@@ -400,7 +401,6 @@ export const KNOWN_PROVIDERS: KnownProvider[] = [
       'glm-5.1',
       'glm-5.2',
       'gpt-oss:20b',
-      'gpt-oss:120b',
       'kimi-k2:1t',
       'kimi-k2-thinking',
       'kimi-k2.5',

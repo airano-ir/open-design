@@ -148,7 +148,7 @@ test('[P1] known OpenAI provider is selected and can switch to Anthropic default
     apiProtocol: 'openai',
     apiVersion: '',
     baseUrl: 'https://api.deepseek.com',
-    model: 'deepseek-chat',
+    model: 'deepseek-v4-flash',
     apiProviderBaseUrl: 'https://api.deepseek.com',
     agentId: null,
     skillId: null,
@@ -170,7 +170,7 @@ test('[P1] known OpenAI provider is selected and can switch to Anthropic default
   await expect(deepSeekTab).toHaveAttribute('aria-selected', 'true');
   await expect(dialog.getByRole('heading', { name: 'OpenAI API' })).toBeVisible();
   await expect(baseUrlInput).toHaveValue('https://api.deepseek.com');
-  await expect(modelSelect).toContainText(/deepseek-chat/i);
+  await expect(modelSelect).toContainText(/deepseek-v4-flash/i);
 
   await anthropicTab.click();
 
@@ -312,11 +312,11 @@ test('[P1] BYOK Anthropic gateway preset updates fields and persists after reope
   );
   await expect(providerPresetCombobox(dialog)).toContainText(/DeepSeek — Anthropic/i);
   await expect(dialog.getByLabel('Base URL')).toHaveValue('https://api.deepseek.com/anthropic');
-  await expectModelComboboxText(dialog, /deepseek-chat/i);
+  await expectModelComboboxText(dialog, /deepseek-v4-flash/i);
   await expect.poll(async () => readSavedConfig(page)).toMatchObject({
     apiProtocol: 'anthropic',
     baseUrl: 'https://api.deepseek.com/anthropic',
-    model: 'deepseek-chat',
+    model: 'deepseek-v4-flash',
     apiProviderBaseUrl: 'https://api.deepseek.com/anthropic',
   });
 
@@ -327,7 +327,7 @@ test('[P1] BYOK Anthropic gateway preset updates fields and persists after reope
   const reopenedDialog = page.getByRole('dialog');
   await expect(providerPresetCombobox(reopenedDialog)).toContainText(/DeepSeek — Anthropic/i);
   await expect(reopenedDialog.getByLabel('Base URL')).toHaveValue('https://api.deepseek.com/anthropic');
-  await expectModelComboboxText(reopenedDialog, /deepseek-chat/i);
+  await expectModelComboboxText(reopenedDialog, /deepseek-v4-flash/i);
 });
 
 test('[P1] BYOK Ollama Cloud exposes refreshed model choices and persists selection', async ({ page }) => {
