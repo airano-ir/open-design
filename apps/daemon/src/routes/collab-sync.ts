@@ -730,31 +730,35 @@ export function registerCollabSyncRoutes(app: Express, deps: RegisterCollabSyncR
     if (ownerMemberId) {
       ensureSharedProjectPlaceholder(projectId);
     }
-    if (ownerMemberId && !callerIsOwner && resolveOwnerDisplayName) {
-      try {
-        const entry = await resolveOwnerDisplayName(ownerMemberId);
-        if (entry) {
-          ownerDisplayName = entry.displayName;
-          ownerRole = entry.role;
-        }
-      } catch {
-        /* directory unavailable: omit the name */
-      }
-    }
+    // The owner display-name directory lookup and the hub published-head
+    // round-trip are BOTH uncached ~1-2s vela calls, and ONLY a non-owner member
+    // of a shared project needs either one (the owner never auto-pulls and shows
+    // no "shared by X" banner). They are independent, so run them concurrently:
+    // serialized, they made a member's /collab/status a ~2x round-trip, delaying
+    // the "shared by X" banner and the read-only state for their combined time.
     // Only a NON-OWNER member of a shared project needs the hub-published head: it
     // drives their auto-pull cursor. The owner reads their (newest) version from
     // local state, and a local-only project has no hub head at all.
     const needsHubHead = (syncState !== 'local_only' || ownerMemberId != null) && !callerIsOwner;
-    const head = needsHubHead
-      ? await (async () => {
-          const resourcePrincipal = await resourcePrincipalForSharedProject(projectId, req);
-          try {
-            return await publishedHead(projectId, resourcePrincipal);
-          } catch {
-            return publishedVersion(projectId, principal);
-          }
-        })()
-      : publishedVersion(projectId, principal);
+    const [ownerNameEntry, head] = await Promise.all([
+      ownerMemberId && !callerIsOwner && resolveOwnerDisplayName
+        ? resolveOwnerDisplayName(ownerMemberId).catch(() => null)
+        : Promise.resolve(null),
+      needsHubHead
+        ? (async () => {
+            const resourcePrincipal = await resourcePrincipalForSharedProject(projectId, req);
+            try {
+              return await publishedHead(projectId, resourcePrincipal);
+            } catch {
+              return publishedVersion(projectId, principal);
+            }
+          })()
+        : Promise.resolve(publishedVersion(projectId, principal)),
+    ]);
+    if (ownerNameEntry) {
+      ownerDisplayName = ownerNameEntry.displayName;
+      ownerRole = ownerNameEntry.role;
+    }
     res.json({
       publishedVersion: head,
       syncState,
