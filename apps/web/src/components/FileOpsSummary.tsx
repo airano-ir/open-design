@@ -1,11 +1,11 @@
 /**
  * "Files this turn" disclosure pinned to the top of an assistant message.
  *
- * Up to four files stay visible so an artifact is presented as a result, not
- * hidden inside execution history. Larger batches start as a disclosure to
- * keep the response compact; a changed result file then gets one direct
- * "Open" action that lifts the basename up to ProjectView so FileWorkspace
- * focuses the matching tab.
+ * The first four files stay visible so artifacts are presented as results,
+ * not hidden inside execution history. In larger batches only the remaining
+ * files start collapsed; a changed result file also gets one direct "Open"
+ * action that lifts the basename up to ProjectView so FileWorkspace focuses
+ * the matching tab.
  *
  * The component is read-only over `events` — derivation lives in
  * `runtime/file-ops.ts` so the same logic is reachable from tests and
@@ -60,11 +60,10 @@ export function FileOpsSummary({
 
   if (entries.length === 0) return null;
 
-  // Small result sets should be immediately legible. Once a run touches more
-  // than four files, preserve a compact answer and let the user opt into the
-  // audit list. A manually expanded large batch stays open as it streams.
+  // Keep the first four results immediately legible. Once a run touches more
+  // files, only rows after the fourth start hidden; expanding reveals the
+  // remainder without making the entire result set disappear by default.
   const isCollapsible = entries.length > COLLAPSE_AFTER_ENTRY_COUNT;
-  const open = !isCollapsible || expanded;
 
   const counts = countFileOps(entries);
   const summaryParts: string[] = [];
@@ -95,8 +94,8 @@ export function FileOpsSummary({
       <span className="file-ops-summary-line">{summaryParts.join(' · ')}</span>
       <span className="file-ops-count">{entries.length}</span>
       {isCollapsible ? (
-        <span className="file-ops-chev" aria-hidden>
-          <Icon name={open ? 'chevron-down' : 'chevron-right'} size={11} />
+        <span className={`file-ops-chev${expanded ? ' is-expanded' : ''}`} aria-hidden>
+          <Icon name="chevron-down" size={11} />
         </span>
       ) : null}
     </>
@@ -113,7 +112,7 @@ export function FileOpsSummary({
             type="button"
             className="file-ops-toggle"
             onClick={() => setExpanded((value) => !value)}
-            aria-expanded={open}
+            aria-expanded={expanded}
             data-testid="file-ops-toggle"
           >
             {header}
@@ -126,7 +125,7 @@ export function FileOpsSummary({
             {header}
           </div>
         )}
-        {canOpenPrimary && primaryEntry && !open ? (
+        {canOpenPrimary && primaryEntry && isCollapsible && !expanded ? (
           <button
             type="button"
             className="file-ops-primary-action"
@@ -138,28 +137,29 @@ export function FileOpsSummary({
           </button>
         ) : null}
       </div>
-      {open ? (
-        <ul className="file-ops-list" role="list">
-          {entries.map((entry) => (
-            <FileOpRow
-              key={entry.fullPath}
-              entry={entry}
-              projectFileNames={projectFileNames}
-              onRequestOpenFile={onRequestOpenFile}
-            />
-          ))}
-        </ul>
-      ) : null}
+      <ul className="file-ops-list" role="list">
+        {entries.map((entry, index) => (
+          <FileOpRow
+            key={entry.fullPath}
+            entry={entry}
+            hidden={isCollapsible && !expanded && index >= COLLAPSE_AFTER_ENTRY_COUNT}
+            projectFileNames={projectFileNames}
+            onRequestOpenFile={onRequestOpenFile}
+          />
+        ))}
+      </ul>
     </div>
   );
 }
 
 function FileOpRow({
   entry,
+  hidden,
   projectFileNames,
   onRequestOpenFile,
 }: {
   entry: FileOpEntry;
+  hidden?: boolean;
   projectFileNames?: Set<string> | undefined;
   onRequestOpenFile?: ((name: string) => void) | undefined;
 }) {
@@ -172,6 +172,7 @@ function FileOpRow({
     <li
       className={`file-ops-row file-ops-row--${entry.status}`}
       data-testid={`file-ops-row-${entry.path}`}
+      hidden={hidden}
     >
       <div className="file-ops-row-badges" aria-hidden>
         {entry.ops.map((op) => {

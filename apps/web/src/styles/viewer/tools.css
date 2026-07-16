@@ -356,7 +356,12 @@
   color: var(--accent);
   border-color: color-mix(in oklab, var(--accent) 30%, var(--border));
 }
-.file-ops-chev { display: inline-flex; color: var(--text-muted); }
+.file-ops-chev {
+  display: inline-flex;
+  color: var(--text-muted);
+  transition: transform 120ms var(--ease-out);
+}
+.file-ops-chev.is-expanded { transform: rotate(180deg); }
 .file-ops-list {
   list-style: none;
   margin: 0;
