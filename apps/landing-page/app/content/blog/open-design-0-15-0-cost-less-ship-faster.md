@@ -17,7 +17,7 @@ i18n:
       <p>这条头条很安静，但每一个任务都能感受到。通过优化 Design System Prompt，代表性的评测运行显示<strong>首个 token 的等待时间减少了 49.5%</strong>、<strong>端到端时长减少了 21.2%</strong>、<strong>平均输入 token 用量降低了 25.1%</strong>。日常的设计任务现在开始得更早、抵达那里花掉的 token 更少、也完成得更快——同样的工作，成本更低，而你不必对自己写提示的方式做任何改变。</p>
       <p>这正是代号的用意。更省成本：每个任务用更少的 token。更快交付：从提出到得到答案之间等待更少。一种你无需主动开启的效率。</p>
       <figure>
-        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-speed.webp" alt="A long prompt document compressed into a leaner one, next to a shrinking timer and a falling token counter, the faster result framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-speed.webp" alt="A long prompt document compressed into a leaner one, next to a shrinking timer and a falling token counter, the faster result shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>一个更精简的 Design System Prompt：首个 token 快 49.5%、端到端短 21.2%、输入 token 少 25.1%——在同样的日常任务上。</figcaption>
       </figure>
 
@@ -29,7 +29,7 @@ i18n:
       <p>重建一个网站，过去要从一个空白提示和一大段描述开始。<strong>Website Clone 现在是一个头等入口</strong>，出现在首页和 Library 里：选择该能力、粘贴一个公开的 URL，Open Design 就会带着已经就位的正确上下文创建项目。</p>
       <p>它还会留下一条审计线索。这套工作流会先检查页面结构、路由、资源和交互，生成的项目会保留一份 NOTES.md 风格的文档，描述它的做法、资源来源和已知差异。结果可以直接本地预览，并且<strong>不会带过来任何第三方分析或广告脚本</strong>——而对于像有登录墙的站点这类难啃的目标，Open Design 会说明其局限，而不是假装克隆已经完成。</p>
       <figure>
-        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-clone.webp" alt="A browser address bar with a pasted URL turning into a structured project folder containing a NOTES.md file and page routes, the new project framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-clone.webp" alt="A browser address bar with a pasted URL turning into a structured project folder containing a NOTES.md file and page routes, the new project shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>Website Clone 从一个 URL 开始，检查真实的页面，并留下一条 NOTES.md 风格的线索，记录它是如何重建的。</figcaption>
       </figure>
 
@@ -84,7 +84,7 @@ i18n:
       <p>この見出しは静かですが、あらゆるタスクで感じられます。Design System Prompt を最適化したことで、代表的な評価実行では<strong>最初のトークンまでの時間が49.5%短縮</strong>、<strong>エンドツーエンドの所要時間が21.2%短縮</strong>、<strong>平均入力トークンの使用量が25.1%削減</strong>されました。日々のデザインタスクは、より早く始まり、そこへたどり着くまでに費やすトークンが減り、より速く終わります——同じ作業を、より低いコストで、プロンプトの書き方を何一つ変えることなく。</p>
       <p>それがコードネームの狙いです。コストを抑える：タスクあたりのトークンを減らす。より速く届ける：問いと答えのあいだの待ち時間を減らす。あなたがわざわざ有効にする必要のない効率です。</p>
       <figure>
-        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-speed.webp" alt="A long prompt document compressed into a leaner one, next to a shrinking timer and a falling token counter, the faster result framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-speed.webp" alt="A long prompt document compressed into a leaner one, next to a shrinking timer and a falling token counter, the faster result shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>よりスリムな Design System Prompt：最初のトークンまで49.5%速く、エンドツーエンドで21.2%短く、入力トークンが25.1%少ない——同じ日々のタスクで。</figcaption>
       </figure>
 
@@ -96,7 +96,7 @@ i18n:
       <p>サイトを作り直すのは、以前は空白のプロンプトと大量の説明から始まっていました。<strong>Website Clone はいまやホームと Library の一級の入口です</strong>：その機能を選び、公開 URL を貼り付ければ、Open Design は正しいコンテキストがすでに揃った状態でプロジェクトを作成します。</p>
       <p>それは監査証跡も残します。このワークフローはまずページ構造、ルート、アセット、インタラクションを検査し、生成されたプロジェクトは、そのアプローチ、アセットの出所、既知の差異を記した NOTES.md 形式のドキュメントを保持します。結果はローカルプレビューの準備が整っており、<strong>サードパーティの分析や広告スクリプトを引き継ぎません</strong>——そしてログインの壁があるサイトのような手ごわい対象については、Open Design はクローンが完全であるかのように装うのではなく、その限界を説明します。</p>
       <figure>
-        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-clone.webp" alt="A browser address bar with a pasted URL turning into a structured project folder containing a NOTES.md file and page routes, the new project framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-clone.webp" alt="A browser address bar with a pasted URL turning into a structured project folder containing a NOTES.md file and page routes, the new project shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>Website Clone は URL から始まり、実際のページを検査し、どのように作り直したかを記した NOTES.md 形式の証跡を残します。</figcaption>
       </figure>
 
@@ -151,7 +151,7 @@ i18n:
       <p>이 헤드라인은 조용하지만 모든 작업에서 느껴집니다. Design System Prompt를 최적화함으로써, 대표적인 평가 실행에서 <strong>첫 토큰까지의 시간이 49.5% 감소</strong>, <strong>엔드투엔드 소요 시간이 21.2% 감소</strong>, <strong>평균 입력 토큰 사용량이 25.1% 감소</strong>했습니다. 일상적인 디자인 작업이 이제 더 일찍 시작되고, 거기에 이르기까지 더 적은 토큰을 쓰며, 더 빨리 끝납니다 — 같은 작업을, 더 낮은 비용으로, 당신이 프롬프트를 쓰는 방식은 하나도 바꾸지 않고서.</p>
       <p>그것이 바로 코드명의 요점입니다. 비용은 줄이고: 작업당 더 적은 토큰. 더 빠르게 출시: 요청과 답변 사이의 더 적은 기다림. 당신이 굳이 켤 필요가 없는 효율입니다.</p>
       <figure>
-        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-speed.webp" alt="A long prompt document compressed into a leaner one, next to a shrinking timer and a falling token counter, the faster result framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-speed.webp" alt="A long prompt document compressed into a leaner one, next to a shrinking timer and a falling token counter, the faster result shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>더 가벼운 Design System Prompt: 첫 토큰까지 49.5% 더 빠르게, 엔드투엔드로 21.2% 더 짧게, 입력 토큰 25.1% 더 적게 — 같은 일상 작업에서.</figcaption>
       </figure>
 
@@ -163,7 +163,7 @@ i18n:
       <p>사이트를 다시 만드는 일은 예전엔 빈 프롬프트와 많은 설명에서 시작했습니다. <strong>Website Clone은 이제 홈과 Library의 일급 진입점입니다</strong>: 해당 기능을 고르고, 공개 URL을 붙여 넣으면, Open Design이 올바른 컨텍스트가 이미 갖춰진 상태로 프로젝트를 만듭니다.</p>
       <p>그것은 또한 감사 추적을 남깁니다. 이 워크플로는 먼저 페이지 구조, 라우트, 에셋, 인터랙션을 검사하고, 생성된 프로젝트는 그 접근 방식, 에셋 출처, 알려진 차이를 설명하는 NOTES.md 형식의 문서를 보관합니다. 결과는 로컬 미리보기 준비가 되어 있고 <strong>제3자 분석이나 광고 스크립트를 가져오지 않습니다</strong> — 그리고 로그인 장벽이 있는 사이트 같은 까다로운 대상에 대해서는, Open Design이 클론이 완전한 척하는 대신 그 한계를 설명합니다.</p>
       <figure>
-        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-clone.webp" alt="A browser address bar with a pasted URL turning into a structured project folder containing a NOTES.md file and page routes, the new project framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-clone.webp" alt="A browser address bar with a pasted URL turning into a structured project folder containing a NOTES.md file and page routes, the new project shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>Website Clone은 URL에서 시작해 실제 페이지를 검사하고, 그것을 어떻게 다시 만들었는지에 대한 NOTES.md 형식의 흔적을 남깁니다.</figcaption>
       </figure>
 
@@ -218,7 +218,7 @@ i18n:
       <p>Die Schlagzeile ist leise, aber bei jeder Aufgabe spürbar. Durch die Optimierung des Design System Prompt zeigten repräsentative Evaluierungsläufe eine <strong>Reduktion der Zeit bis zum ersten Token um 49.5%</strong>, eine <strong>Reduktion der Ende-zu-Ende-Dauer um 21.2%</strong> und einen <strong>um 25.1% geringeren durchschnittlichen Eingabe-Token-Verbrauch</strong>. Alltägliche Design-Aufgaben starten jetzt früher, verbrauchen weniger Tokens auf dem Weg dorthin und sind schneller fertig — dieselbe Arbeit, zu geringeren Kosten, ohne dass du irgendetwas an deiner Art zu prompten änderst.</p>
       <p>Das ist der Sinn des Codenamens. Weniger Kosten: weniger Tokens pro Aufgabe. Schneller ausliefern: weniger Warten zwischen Frage und Antwort. Effizienz, für die du dich nicht extra entscheiden musst.</p>
       <figure>
-        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-speed.webp" alt="A long prompt document compressed into a leaner one, next to a shrinking timer and a falling token counter, the faster result framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-speed.webp" alt="A long prompt document compressed into a leaner one, next to a shrinking timer and a falling token counter, the faster result shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>Ein schlankerer Design System Prompt: 49.5% schneller bis zum ersten Token, 21.2% kürzer von Anfang bis Ende, 25.1% weniger Eingabe-Tokens — bei denselben alltäglichen Aufgaben.</figcaption>
       </figure>
 
@@ -230,7 +230,7 @@ i18n:
       <p>Eine Website nachzubauen begann früher mit einem leeren Prompt und viel Beschreibung. <strong>Website Clone ist jetzt ein erstklassiger Einstiegspunkt</strong> auf der Startseite und in der Library: Wähle die Fähigkeit, füge eine öffentliche URL ein, und Open Design erstellt das Projekt mit bereits vorhandenem, passendem Kontext.</p>
       <p>Es hinterlässt außerdem eine Prüfspur. Der Workflow inspiziert zuerst Seitenstruktur, Routen, Assets und Interaktionen, und das erzeugte Projekt bewahrt eine Dokumentation im NOTES.md-Stil, die seinen Ansatz, die Asset-Quellen und bekannte Unterschiede beschreibt. Ergebnisse sind bereit für die lokale Vorschau und <strong>übernehmen keine Analyse- oder Werbeskripte von Drittanbietern</strong> — und bei schwierigen Zielen wie Seiten hinter einer Login-Wand erklärt Open Design die Grenzen, statt vorzugeben, der Klon sei vollständig.</p>
       <figure>
-        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-clone.webp" alt="A browser address bar with a pasted URL turning into a structured project folder containing a NOTES.md file and page routes, the new project framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-clone.webp" alt="A browser address bar with a pasted URL turning into a structured project folder containing a NOTES.md file and page routes, the new project shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>Website Clone startet von einer URL, inspiziert die echte Seite und hinterlässt eine Spur im NOTES.md-Stil, wie es sie neu aufgebaut hat.</figcaption>
       </figure>
 
@@ -285,7 +285,7 @@ i18n:
       <p>Le titre est discret, mais il se ressent sur chaque tâche. En optimisant le Design System Prompt, des exécutions d'évaluation représentatives ont montré une <strong>réduction de 49.5% du temps jusqu'au premier token</strong>, une <strong>réduction de 21.2% de la durée de bout en bout</strong> et une <strong>utilisation moyenne de tokens d'entrée inférieure de 25.1%</strong>. Les tâches de conception quotidiennes démarrent désormais plus tôt, dépensent moins de tokens pour y arriver et se terminent plus vite — le même travail, à moindre coût, sans que vous changiez quoi que ce soit à votre façon de prompter.</p>
       <p>C'est tout l'intérêt du nom de code. Coûter moins : moins de tokens par tâche. Livrer plus vite : moins d'attente entre la demande et la réponse. Une efficacité à laquelle vous n'avez pas à souscrire.</p>
       <figure>
-        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-speed.webp" alt="A long prompt document compressed into a leaner one, next to a shrinking timer and a falling token counter, the faster result framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-speed.webp" alt="A long prompt document compressed into a leaner one, next to a shrinking timer and a falling token counter, the faster result shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>Un Design System Prompt allégé : 49.5% plus rapide jusqu'au premier token, 21.2% plus court de bout en bout, 25.1% de tokens d'entrée en moins — sur les mêmes tâches quotidiennes.</figcaption>
       </figure>
 
@@ -297,7 +297,7 @@ i18n:
       <p>Recréer un site commençait autrefois par un prompt vierge et beaucoup de description. <strong>Website Clone est désormais un point d'entrée de premier plan</strong> sur l'accueil et dans la Library : choisissez la capacité, collez une URL publique, et Open Design crée le projet avec le bon contexte déjà en place.</p>
       <p>Il laisse aussi une piste d'audit. Le flux inspecte d'abord la structure de la page, les routes, les assets et les interactions, et le projet généré conserve une documentation de style NOTES.md décrivant son approche, ses sources d'assets et les différences connues. Les résultats sont prêts pour un aperçu local et <strong>ne reprennent pas les scripts d'analyse ou de publicité tiers</strong> — et pour les cibles difficiles comme les sites protégés par un mur de connexion, Open Design explique les limites au lieu de prétendre que le clone est complet.</p>
       <figure>
-        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-clone.webp" alt="A browser address bar with a pasted URL turning into a structured project folder containing a NOTES.md file and page routes, the new project framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-clone.webp" alt="A browser address bar with a pasted URL turning into a structured project folder containing a NOTES.md file and page routes, the new project shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>Website Clone part d'une URL, inspecte la vraie page, et laisse une piste de style NOTES.md sur la façon dont il l'a reconstruite.</figcaption>
       </figure>
 
@@ -352,7 +352,7 @@ i18n:
       <p>Заголовок тихий, но ощущается на каждой задаче. Благодаря оптимизации Design System Prompt репрезентативные оценочные запуски показали <strong>сокращение времени до первого токена на 49.5%</strong>, <strong>сокращение сквозной длительности на 21.2%</strong> и <strong>снижение среднего расхода входных токенов на 25.1%</strong>. Повседневные задачи по дизайну теперь начинаются раньше, тратят меньше токенов, чтобы до этого дойти, и завершаются быстрее — та же работа, по более низкой цене, и вам не нужно менять ничего в том, как вы пишете промпты.</p>
       <p>В этом и суть кодового названия. Меньше затрат: меньше токенов на задачу. Быстрее релиз: меньше ожидания между вопросом и ответом. Эффективность, которую не нужно специально включать.</p>
       <figure>
-        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-speed.webp" alt="A long prompt document compressed into a leaner one, next to a shrinking timer and a falling token counter, the faster result framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-speed.webp" alt="A long prompt document compressed into a leaner one, next to a shrinking timer and a falling token counter, the faster result shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>Более лёгкий Design System Prompt: на 49.5% быстрее до первого токена, на 21.2% короче от начала до конца, на 25.1% меньше входных токенов — на тех же повседневных задачах.</figcaption>
       </figure>
 
@@ -364,7 +364,7 @@ i18n:
       <p>Воссоздание сайта раньше начиналось с пустого промпта и множества описаний. <strong>Website Clone теперь полноценная точка входа</strong> на главной и в Library: выберите возможность, вставьте публичный URL, и Open Design создаст проект с уже готовым нужным контекстом.</p>
       <p>Он также оставляет контрольный след. Рабочий процесс сначала исследует структуру страницы, маршруты, ресурсы и взаимодействия, а сгенерированный проект хранит документацию в стиле NOTES.md, описывающую его подход, источники ресурсов и известные различия. Результаты готовы к локальному предпросмотру и <strong>не переносят сторонние скрипты аналитики или рекламы</strong> — а для сложных целей, таких как сайты за стеной входа, Open Design объясняет ограничения вместо того, чтобы делать вид, что клон завершён.</p>
       <figure>
-        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-clone.webp" alt="A browser address bar with a pasted URL turning into a structured project folder containing a NOTES.md file and page routes, the new project framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-clone.webp" alt="A browser address bar with a pasted URL turning into a structured project folder containing a NOTES.md file and page routes, the new project shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>Website Clone начинает с URL, исследует реальную страницу и оставляет след в стиле NOTES.md о том, как он её пересобрал.</figcaption>
       </figure>
 
@@ -419,7 +419,7 @@ i18n:
       <p>El titular es discreto, pero se siente en cada tarea. Al optimizar el Design System Prompt, ejecuciones de evaluación representativas mostraron una <strong>reducción del 49.5% en el tiempo hasta el primer token</strong>, una <strong>reducción del 21.2% en la duración de extremo a extremo</strong> y un <strong>uso promedio de tokens de entrada un 25.1% menor</strong>. Las tareas de diseño cotidianas ahora empiezan antes, gastan menos tokens para llegar allí y terminan más rápido — el mismo trabajo, a un coste menor, sin que cambies nada en tu forma de escribir prompts.</p>
       <p>Ese es el sentido del nombre en clave. Cuesta menos: menos tokens por tarea. Entrega más rápido: menos espera entre la petición y la respuesta. Una eficiencia a la que no tienes que suscribirte.</p>
       <figure>
-        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-speed.webp" alt="A long prompt document compressed into a leaner one, next to a shrinking timer and a falling token counter, the faster result framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-speed.webp" alt="A long prompt document compressed into a leaner one, next to a shrinking timer and a falling token counter, the faster result shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>Un Design System Prompt más ligero: un 49.5% más rápido hasta el primer token, un 21.2% más corto de extremo a extremo, un 25.1% menos de tokens de entrada — en las mismas tareas cotidianas.</figcaption>
       </figure>
 
@@ -431,7 +431,7 @@ i18n:
       <p>Recrear un sitio solía empezar con un prompt en blanco y mucha descripción. <strong>Website Clone es ahora un punto de entrada de primera clase</strong> en el Inicio y en la Library: elige la capacidad, pega una URL pública y Open Design crea el proyecto con el contexto correcto ya en su sitio.</p>
       <p>También deja un rastro de auditoría. El flujo inspecciona primero la estructura de la página, las rutas, los recursos y las interacciones, y el proyecto generado conserva documentación al estilo NOTES.md que describe su enfoque, las fuentes de los recursos y las diferencias conocidas. Los resultados están listos para la vista previa local y <strong>no arrastran scripts de analítica ni de publicidad de terceros</strong> — y para objetivos difíciles como sitios protegidos por un muro de inicio de sesión, Open Design explica los límites en lugar de fingir que el clon está completo.</p>
       <figure>
-        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-clone.webp" alt="A browser address bar with a pasted URL turning into a structured project folder containing a NOTES.md file and page routes, the new project framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-clone.webp" alt="A browser address bar with a pasted URL turning into a structured project folder containing a NOTES.md file and page routes, the new project shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>Website Clone parte de una URL, inspecciona la página real y deja un rastro al estilo NOTES.md de cómo la reconstruyó.</figcaption>
       </figure>
 
@@ -486,7 +486,7 @@ i18n:
       <p>A manchete é discreta, mas é sentida em cada tarefa. Ao otimizar o Design System Prompt, execuções de avaliação representativas mostraram uma <strong>redução de 49.5% no tempo até o primeiro token</strong>, uma <strong>redução de 21.2% na duração de ponta a ponta</strong> e um <strong>uso médio de tokens de entrada 25.1% menor</strong>. As tarefas de design do dia a dia agora começam mais cedo, gastam menos tokens para chegar lá e terminam mais rápido — o mesmo trabalho, a um custo menor, sem que você mude nada na forma como escreve prompts.</p>
       <p>É esse o ponto do codinome. Custe menos: menos tokens por tarefa. Entregue mais rápido: menos espera entre o pedido e a resposta. Uma eficiência à qual você não precisa aderir.</p>
       <figure>
-        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-speed.webp" alt="A long prompt document compressed into a leaner one, next to a shrinking timer and a falling token counter, the faster result framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-speed.webp" alt="A long prompt document compressed into a leaner one, next to a shrinking timer and a falling token counter, the faster result shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>Um Design System Prompt mais enxuto: 49.5% mais rápido até o primeiro token, 21.2% mais curto de ponta a ponta, 25.1% menos tokens de entrada — nas mesmas tarefas do dia a dia.</figcaption>
       </figure>
 
@@ -498,7 +498,7 @@ i18n:
       <p>Recriar um site costumava começar com um prompt em branco e muita descrição. <strong>O Website Clone agora é um ponto de entrada de primeira classe</strong> na Home e na Library: escolha a capacidade, cole uma URL pública e o Open Design cria o projeto com o contexto certo já no lugar.</p>
       <p>Ele também deixa uma trilha de auditoria. O fluxo primeiro inspeciona a estrutura da página, as rotas, os assets e as interações, e o projeto gerado mantém uma documentação no estilo NOTES.md descrevendo sua abordagem, as fontes dos assets e as diferenças conhecidas. Os resultados estão prontos para a prévia local e <strong>não carregam scripts de analytics ou de publicidade de terceiros</strong> — e para alvos difíceis como sites protegidos por login, o Open Design explica os limites em vez de fingir que o clone está completo.</p>
       <figure>
-        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-clone.webp" alt="A browser address bar with a pasted URL turning into a structured project folder containing a NOTES.md file and page routes, the new project framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-clone.webp" alt="A browser address bar with a pasted URL turning into a structured project folder containing a NOTES.md file and page routes, the new project shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>O Website Clone parte de uma URL, inspeciona a página real e deixa uma trilha no estilo NOTES.md de como a reconstruiu.</figcaption>
       </figure>
 
@@ -553,7 +553,7 @@ i18n:
       <p>Il titolo è sommesso, ma si sente in ogni attività. Ottimizzando il Design System Prompt, esecuzioni di valutazione rappresentative hanno mostrato una <strong>riduzione del 49.5% del tempo al primo token</strong>, una <strong>riduzione del 21.2% della durata end-to-end</strong> e un <strong>uso medio di token di input inferiore del 25.1%</strong>. Le attività di design di tutti i giorni ora iniziano prima, spendono meno token per arrivarci e finiscono più in fretta — lo stesso lavoro, a un costo minore, senza che tu cambi nulla nel modo in cui scrivi i prompt.</p>
       <p>È questo il senso del nome in codice. Costa meno: meno token per attività. Spedisci più veloce: meno attesa tra la richiesta e la risposta. Un'efficienza a cui non devi aderire.</p>
       <figure>
-        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-speed.webp" alt="A long prompt document compressed into a leaner one, next to a shrinking timer and a falling token counter, the faster result framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-speed.webp" alt="A long prompt document compressed into a leaner one, next to a shrinking timer and a falling token counter, the faster result shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>Un Design System Prompt più snello: 49.5% più rapido al primo token, 21.2% più corto end-to-end, 25.1% di token di input in meno — sulle stesse attività di tutti i giorni.</figcaption>
       </figure>
 
@@ -565,7 +565,7 @@ i18n:
       <p>Ricreare un sito iniziava una volta da un prompt vuoto e da tanta descrizione. <strong>Website Clone è ora un punto d'ingresso di prima classe</strong> nella Home e nella Library: scegli la capacità, incolla un URL pubblico e Open Design crea il progetto con il giusto contesto già al suo posto.</p>
       <p>Lascia anche una traccia di controllo. Il flusso prima ispeziona la struttura della pagina, le route, gli asset e le interazioni, e il progetto generato conserva una documentazione in stile NOTES.md che descrive il suo approccio, le fonti degli asset e le differenze note. I risultati sono pronti per l'anteprima locale e <strong>non riportano script di analisi o pubblicità di terze parti</strong> — e per obiettivi difficili come i siti protetti da login, Open Design spiega i limiti invece di fingere che il clone sia completo.</p>
       <figure>
-        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-clone.webp" alt="A browser address bar with a pasted URL turning into a structured project folder containing a NOTES.md file and page routes, the new project framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-clone.webp" alt="A browser address bar with a pasted URL turning into a structured project folder containing a NOTES.md file and page routes, the new project shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>Website Clone parte da un URL, ispeziona la pagina reale e lascia una traccia in stile NOTES.md di come l'ha ricostruita.</figcaption>
       </figure>
 
@@ -620,7 +620,7 @@ i18n:
       <p>Başlık sessiz ama her görevde hissediliyor. Design System Prompt'u optimize ederek, temsili değerlendirme çalışmaları <strong>ilk token'a kadar geçen sürede 49.5% azalma</strong>, <strong>uçtan uca sürede 21.2% azalma</strong> ve <strong>ortalama girdi token'ı kullanımında 25.1% düşüş</strong> gösterdi. Günlük tasarım görevleri artık daha erken başlıyor, oraya ulaşmak için daha az token harcıyor ve daha hızlı bitiyor — aynı iş, daha düşük maliyetle ve prompt yazma şeklinizde hiçbir şeyi değiştirmeden.</p>
       <p>Kod adının amacı da bu. Daha az maliyet: görev başına daha az token. Daha hızlı teslimat: istek ile yanıt arasında daha az bekleme. Devreye almanız gerekmeyen bir verimlilik.</p>
       <figure>
-        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-speed.webp" alt="A long prompt document compressed into a leaner one, next to a shrinking timer and a falling token counter, the faster result framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-speed.webp" alt="A long prompt document compressed into a leaner one, next to a shrinking timer and a falling token counter, the faster result shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>Daha yalın bir Design System Prompt: ilk token'a kadar 49.5% daha hızlı, uçtan uca 21.2% daha kısa, 25.1% daha az girdi token'ı — aynı günlük görevlerde.</figcaption>
       </figure>
 
@@ -632,7 +632,7 @@ i18n:
       <p>Bir siteyi yeniden oluşturmak eskiden boş bir prompt ve bir sürü açıklamayla başlardı. <strong>Website Clone artık Home'da ve Library'de birinci sınıf bir giriş noktası</strong>: yeteneği seçin, herkese açık bir URL yapıştırın ve Open Design projeyi doğru bağlam zaten yerinde olacak şekilde oluştursun.</p>
       <p>Ayrıca bir denetim izi bırakır. İş akışı önce sayfa yapısını, rotaları, varlıkları ve etkileşimleri inceler ve oluşturulan proje, yaklaşımını, varlık kaynaklarını ve bilinen farklılıkları anlatan NOTES.md tarzı bir belgeyi saklar. Sonuçlar yerel önizleme için hazırdır ve <strong>üçüncü taraf analiz veya reklam betiklerini taşımaz</strong> — ve giriş duvarıyla korunan siteler gibi zorlu hedefler için Open Design, klonun tamamlanmış gibi davranmak yerine sınırları açıklar.</p>
       <figure>
-        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-clone.webp" alt="A browser address bar with a pasted URL turning into a structured project folder containing a NOTES.md file and page routes, the new project framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-15-0-cost-less-ship-faster-clone.webp" alt="A browser address bar with a pasted URL turning into a structured project folder containing a NOTES.md file and page routes, the new project shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>Website Clone bir URL'den başlar, gerçek sayfayı inceler ve onu nasıl yeniden oluşturduğuna dair NOTES.md tarzı bir iz bırakır.</figcaption>
       </figure>
 
@@ -688,7 +688,7 @@ The headline is quiet but it's felt on every task. By optimizing the Design Syst
 That is the point of the codename. Cost less: fewer tokens per task. Ship faster: less waiting between the ask and the answer. Efficiency you don't have to opt into.
 
 <figure>
-  <img src="/blog/open-design-0-15-0-cost-less-ship-faster-speed.webp" alt="A long prompt document compressed into a leaner one, next to a shrinking timer and a falling token counter, the faster result framed inside a green selection box against a near-white editorial background" />
+  <img src="/blog/open-design-0-15-0-cost-less-ship-faster-speed.webp" alt="A long prompt document compressed into a leaner one, next to a shrinking timer and a falling token counter, the faster result shown as a calm sage-green interface in a warm editorial illustration" />
   <figcaption>A leaner Design System Prompt: 49.5% faster to first token, 21.2% shorter end to end, 25.1% fewer input tokens — on the same everyday tasks.</figcaption>
 </figure>
 
@@ -705,7 +705,7 @@ Recreating a site used to start from a blank prompt and a lot of description. **
 It also leaves an audit trail. The workflow first inspects page structure, routes, assets, and interactions, and the generated project keeps NOTES.md-style documentation describing its approach, asset sources, and known differences. Results are ready for local preview and **do not carry over third-party analytics or advertising scripts** — and for hard targets like login-walled sites, Open Design explains the limits instead of pretending the clone is complete.
 
 <figure>
-  <img src="/blog/open-design-0-15-0-cost-less-ship-faster-clone.webp" alt="A browser address bar with a pasted URL turning into a structured project folder containing a NOTES.md file and page routes, the new project framed inside a green selection box against a near-white editorial background" />
+  <img src="/blog/open-design-0-15-0-cost-less-ship-faster-clone.webp" alt="A browser address bar with a pasted URL turning into a structured project folder containing a NOTES.md file and page routes, the new project shown as a calm sage-green interface in a warm editorial illustration" />
   <figcaption>Website Clone starts from a URL, inspects the real page, and leaves a NOTES.md-style trail of how it rebuilt it.</figcaption>
 </figure>
 

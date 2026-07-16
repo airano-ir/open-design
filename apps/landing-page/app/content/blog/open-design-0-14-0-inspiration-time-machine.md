@@ -17,7 +17,7 @@ i18n:
       <p>从一个念头直接跳到一长串提示，会让早期探索显得滑不留手——想法跑得飞快，可真正在用的方案始终看不见，于是第一次真正的运行往往只是在猜你自己的意图。<strong>Plan mode，配上 Excalidraw 草图流程，给了一个粗略想法先落脚的地方。</strong>用提纲、形状和下一步来思考；在你看得见的地方把概念塑形；然后才投入一次完整的构建。</p>
       <p>关键在于，一个想法那段乱糟糟的中间地带，如今在 Open Design 里有了归宿，而不再只待在你脑子里或另一个白板标签页里。你起草方案，看着它稳定下来，再从某个你真的能指着说清的东西开始构建。</p>
       <figure>
-        <img src="/blog/open-design-0-14-0-inspiration-time-machine-plan.webp" alt="A loose Excalidraw-style sketch of boxes and arrows resolving into a structured plan outline, the plan framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-14-0-inspiration-time-machine-plan.webp" alt="A loose Excalidraw-style sketch of boxes and arrows resolving into a structured plan outline, the plan shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>Plan mode 和 Excalidraw 草图流程，在你投入一次完整运行之前，给粗略想法一个落脚的地方。</figcaption>
       </figure>
 
@@ -25,7 +25,7 @@ i18n:
       <p>生成或编辑过的 HTML 曾经让人觉得脆弱：改一次，之前的样子就可能随之消失。<strong>HTML 文件版本历史让迭代更安全</strong>——比较各个版本、恢复某个更早的版本，一路往前推进，而不必把每一次编辑都当成一扇单向门。你十分钟前那份更好的草稿依然还在。</p>
       <p>与此同时，<strong>composer 的上下文不再躲在答案背后。</strong>当一个结果看起来对或不对时，过去要费太多猜测才能想起模型到底看到了什么。上下文来源现在会显示喂给 composer 的材料，并更清晰地追踪那条线索，于是后续编辑感觉是有根据的，而不是模模糊糊的。</p>
       <figure>
-        <img src="/blog/open-design-0-14-0-inspiration-time-machine-history.webp" alt="A stack of HTML document versions arranged along a timeline with a step-back arrow returning to an earlier version, the recovered version framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-14-0-inspiration-time-machine-history.webp" alt="A stack of HTML document versions arranged along a timeline with a step-back arrow returning to an earlier version, the recovered version shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>HTML 版本历史让你比较、恢复、继续前进——更早的那份草稿永远不是一扇单向门。</figcaption>
       </figure>
 
@@ -85,7 +85,7 @@ i18n:
       <p>ある思いつきからいきなり長いプロンプトへ飛ぶと、初期の探索はつかみどころなく感じられました——アイデアは速く動くのに、実際の作業計画は見えないままで、最初の本物の実行はしばしば自分自身の意図への当て推量でした。<strong>Plan mode は、Excalidraw のスケッチフローとともに、粗いアイデアがまず着地できる場所を与えてくれます。</strong>アウトライン、形、次のステップで考え、見える場所でコンセプトを形にし、そのうえで初めて本格的なビルドに踏み切りましょう。</p>
       <p>要点は、アイデアの散らかった中間地帯が、いまやあなたの頭の中や別のホワイトボードのタブではなく、Open Design の中に居場所を持つということです。計画を下書きし、それがじっと落ち着くのを見届け、実際に指し示せる何かからビルドを始めます。</p>
       <figure>
-        <img src="/blog/open-design-0-14-0-inspiration-time-machine-plan.webp" alt="A loose Excalidraw-style sketch of boxes and arrows resolving into a structured plan outline, the plan framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-14-0-inspiration-time-machine-plan.webp" alt="A loose Excalidraw-style sketch of boxes and arrows resolving into a structured plan outline, the plan shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>Plan mode と Excalidraw のスケッチフローは、本格的な実行に踏み切る前に、粗いアイデアが着地できる場所を与えます。</figcaption>
       </figure>
 
@@ -93,7 +93,7 @@ i18n:
       <p>生成した、あるいは編集した HTML は、これまで壊れやすく感じられました：一度変えると、以前の姿がそれと一緒に消えてしまいかねなかったのです。<strong>HTML ファイルのバージョン履歴が反復をより安全にします</strong>——バージョンを比較し、以前のものを復元し、すべての編集を一方通行の扉として扱うことなく前進し続けられます。10分前に持っていたより良い下書きは、まだそこにあります。</p>
       <p>それと並んで、<strong>composer のコンテキストが答えの陰に隠れるのをやめます。</strong>結果が正しく見えたり間違って見えたりしたとき、モデルが実際に何を見ていたのかを思い出すのに、これまでは当て推量が多すぎました。コンテキストソースはいまや composer に流れ込む素材を示し、その道筋をより明確にたどるので、フォローアップの編集は曖昧ではなく地に足がついたものに感じられます。</p>
       <figure>
-        <img src="/blog/open-design-0-14-0-inspiration-time-machine-history.webp" alt="A stack of HTML document versions arranged along a timeline with a step-back arrow returning to an earlier version, the recovered version framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-14-0-inspiration-time-machine-history.webp" alt="A stack of HTML document versions arranged along a timeline with a step-back arrow returning to an earlier version, the recovered version shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>HTML のバージョン履歴は、比較し、復元し、前進し続けさせてくれます——以前の下書きが一方通行の扉になることは決してありません。</figcaption>
       </figure>
 
@@ -153,7 +153,7 @@ i18n:
       <p>어떤 생각에서 곧바로 긴 프롬프트로 건너뛰면 초기 탐색이 미끄럽게 느껴졌습니다 — 아이디어는 빠르게 움직이는데 실제 작업 계획은 보이지 않은 채여서, 첫 진짜 실행은 종종 당신 자신의 의도에 대한 추측이었죠. <strong>Plan mode는 Excalidraw 스케치 흐름과 함께, 거친 아이디어가 먼저 안착할 곳을 마련해 줍니다.</strong> 개요와 형태, 다음 단계로 생각하고, 눈에 보이는 곳에서 개념을 다듬은 다음, 그제야 본격적인 빌드에 뛰어드세요.</p>
       <p>핵심은, 아이디어의 어수선한 중간 지대가 이제 당신의 머릿속이나 별도의 화이트보드 탭이 아니라 Open Design 안에 자리를 잡는다는 것입니다. 계획을 초안으로 잡고, 그것이 가만히 자리 잡는 것을 지켜본 뒤, 실제로 가리켜 보일 수 있는 무언가에서 빌드를 시작합니다.</p>
       <figure>
-        <img src="/blog/open-design-0-14-0-inspiration-time-machine-plan.webp" alt="A loose Excalidraw-style sketch of boxes and arrows resolving into a structured plan outline, the plan framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-14-0-inspiration-time-machine-plan.webp" alt="A loose Excalidraw-style sketch of boxes and arrows resolving into a structured plan outline, the plan shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>Plan mode와 Excalidraw 스케치 흐름은, 당신이 본격적인 실행에 뛰어들기 전에 거친 아이디어가 안착할 곳을 마련해 줍니다.</figcaption>
       </figure>
 
@@ -161,7 +161,7 @@ i18n:
       <p>생성했거나 편집한 HTML은 예전엔 부서지기 쉽게 느껴졌습니다: 한 번 바꾸면 이전 모습이 그와 함께 사라질 수 있었죠. <strong>HTML 파일 버전 기록이 반복 작업을 더 안전하게 만듭니다</strong> — 버전을 비교하고, 이전 것을 복원하고, 모든 편집을 일방통행 문처럼 다루지 않고도 계속 나아갈 수 있습니다. 10분 전에 갖고 있던 더 나은 초안은 여전히 거기 있습니다.</p>
       <p>그와 나란히, <strong>composer의 컨텍스트가 더 이상 답변 뒤에 숨지 않습니다.</strong> 결과가 맞아 보이거나 틀려 보였을 때, 모델이 실제로 무엇을 보았는지 떠올리려면 예전엔 너무 많은 추측이 필요했습니다. 컨텍스트 출처는 이제 composer로 흘러드는 자료를 보여 주고 그 자취를 더 명확하게 추적하므로, 후속 편집이 흐릿하지 않고 근거 있게 느껴집니다.</p>
       <figure>
-        <img src="/blog/open-design-0-14-0-inspiration-time-machine-history.webp" alt="A stack of HTML document versions arranged along a timeline with a step-back arrow returning to an earlier version, the recovered version framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-14-0-inspiration-time-machine-history.webp" alt="A stack of HTML document versions arranged along a timeline with a step-back arrow returning to an earlier version, the recovered version shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>HTML 버전 기록은 당신이 비교하고, 복원하고, 계속 나아가게 해 줍니다 — 이전 초안은 결코 일방통행 문이 아닙니다.</figcaption>
       </figure>
 
@@ -221,7 +221,7 @@ i18n:
       <p>Direkt von einem Gedanken zu einem langen Prompt zu springen ließ die frühe Erkundung glitschig wirken — die Idee bewegte sich schnell, aber der eigentliche Arbeitsplan blieb unsichtbar, sodass der erste echte Lauf oft ein Raten über die eigene Absicht war. <strong>Der Plan mode, mit Excalidraw-Skizzenabläufen, gibt einer groben Idee zuerst irgendwo Platz zum Landen.</strong> Denke in Gliederungen, Formen und nächsten Schritten; forme das Konzept dort, wo du es sehen kannst; und verpflichte dich erst dann zu einem vollständigen Build.</p>
       <p>Der Punkt ist, dass die unordentliche Mitte einer Idee jetzt ein Zuhause in Open Design hat, statt in deinem Kopf oder einem separaten Whiteboard-Tab zu leben. Du entwirfst den Plan, siehst ihn stillhalten und startest den Build von etwas aus, auf das du tatsächlich zeigen kannst.</p>
       <figure>
-        <img src="/blog/open-design-0-14-0-inspiration-time-machine-plan.webp" alt="A loose Excalidraw-style sketch of boxes and arrows resolving into a structured plan outline, the plan framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-14-0-inspiration-time-machine-plan.webp" alt="A loose Excalidraw-style sketch of boxes and arrows resolving into a structured plan outline, the plan shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>Der Plan mode und Excalidraw-Skizzenabläufe geben einer groben Idee Platz zum Landen, bevor du dich zu einem vollständigen Lauf verpflichtest.</figcaption>
       </figure>
 
@@ -229,7 +229,7 @@ i18n:
       <p>Generiertes oder bearbeitetes HTML fühlte sich früher zerbrechlich an: Ändere es einmal, und die vorherige Form konnte damit verschwinden. <strong>Die HTML-Dateiversionshistorie macht das Iterieren sicherer</strong> — Versionen vergleichen, eine frühere wiederherstellen und weiterkommen, ohne jede Bearbeitung wie eine Einbahntür zu behandeln. Der bessere Entwurf, den du vor zehn Minuten hattest, ist noch da.</p>
       <p>Daneben <strong>hört der Composer-Kontext auf, sich hinter der Antwort zu verstecken.</strong> Wenn ein Ergebnis richtig oder falsch aussah, brauchte es früher zu viel Raten, um sich zu erinnern, was das Modell tatsächlich gesehen hatte. Kontextquellen zeigen jetzt das Material, das den Composer speist, und verfolgen diese Spur klarer, sodass sich Folgebearbeitungen fundiert statt verschwommen anfühlen.</p>
       <figure>
-        <img src="/blog/open-design-0-14-0-inspiration-time-machine-history.webp" alt="A stack of HTML document versions arranged along a timeline with a step-back arrow returning to an earlier version, the recovered version framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-14-0-inspiration-time-machine-history.webp" alt="A stack of HTML document versions arranged along a timeline with a step-back arrow returning to an earlier version, the recovered version shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>Die HTML-Versionshistorie lässt dich vergleichen, wiederherstellen und weiterkommen — der frühere Entwurf ist nie eine Einbahntür.</figcaption>
       </figure>
 
@@ -289,7 +289,7 @@ i18n:
       <p>Sauter directement d'une pensée à un long prompt rendait l'exploration précoce glissante — l'idée avançait vite, mais le plan de travail réel restait invisible, si bien que la première vraie exécution était souvent une supposition sur votre propre intention. <strong>Le plan mode, avec les flux d'esquisse Excalidraw, donne d'abord à une idée grossière un endroit où atterrir.</strong> Pensez en grandes lignes, en formes et en prochaines étapes ; façonnez le concept là où vous pouvez le voir ; et ce n'est qu'alors que vous vous engagez dans une construction complète.</p>
       <p>L'essentiel, c'est que le milieu brouillon d'une idée a désormais un foyer dans Open Design au lieu de vivre dans votre tête ou dans un onglet de tableau blanc séparé. Vous ébauchez le plan, vous le regardez se stabiliser, et vous démarrez la construction à partir de quelque chose que vous pouvez réellement désigner.</p>
       <figure>
-        <img src="/blog/open-design-0-14-0-inspiration-time-machine-plan.webp" alt="A loose Excalidraw-style sketch of boxes and arrows resolving into a structured plan outline, the plan framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-14-0-inspiration-time-machine-plan.webp" alt="A loose Excalidraw-style sketch of boxes and arrows resolving into a structured plan outline, the plan shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>Le plan mode et les flux d'esquisse Excalidraw donnent à une idée grossière un endroit où atterrir avant que vous ne vous engagiez dans une exécution complète.</figcaption>
       </figure>
 
@@ -297,7 +297,7 @@ i18n:
       <p>Le HTML généré ou modifié semblait autrefois fragile : changez-le une fois, et la forme précédente pouvait disparaître avec. <strong>L'historique des versions de fichiers HTML rend l'itération plus sûre</strong> — comparez les versions, récupérez-en une antérieure, et continuez d'avancer sans traiter chaque modification comme une porte à sens unique. Le meilleur brouillon que vous aviez il y a dix minutes est toujours là.</p>
       <p>À côté de cela, <strong>le contexte du composer cesse de se cacher derrière la réponse.</strong> Quand un résultat semblait bon ou mauvais, il fallait autrefois trop de suppositions pour se rappeler ce que le modèle avait réellement vu. Les sources de contexte montrent désormais le matériau qui alimente le composer et suivent cette piste plus clairement, si bien que les modifications de suivi semblent ancrées plutôt que floues.</p>
       <figure>
-        <img src="/blog/open-design-0-14-0-inspiration-time-machine-history.webp" alt="A stack of HTML document versions arranged along a timeline with a step-back arrow returning to an earlier version, the recovered version framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-14-0-inspiration-time-machine-history.webp" alt="A stack of HTML document versions arranged along a timeline with a step-back arrow returning to an earlier version, the recovered version shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>L'historique des versions HTML vous laisse comparer, récupérer et continuer d'avancer — le brouillon antérieur n'est jamais une porte à sens unique.</figcaption>
       </figure>
 
@@ -357,7 +357,7 @@ i18n:
       <p>Прыжок напрямую от мысли к длинному запросу делал раннее исследование скользким — идея двигалась быстро, но рабочий план оставался невидимым, так что первый настоящий запуск часто был догадкой о вашем же собственном замысле. <strong>Plan mode вместе с потоками набросков Excalidraw даёт грубой идее место, куда сначала приземлиться.</strong> Думайте набросками, формами и следующими шагами; придавайте концепции форму там, где вы её видите; и только затем беритесь за полноценную сборку.</p>
       <p>Суть в том, что беспорядочная середина идеи теперь обрела дом внутри Open Design, а не живёт у вас в голове или в отдельной вкладке с доской. Вы набрасываете план, видите, как он замирает на месте, и начинаете сборку с чего-то, на что действительно можно указать.</p>
       <figure>
-        <img src="/blog/open-design-0-14-0-inspiration-time-machine-plan.webp" alt="A loose Excalidraw-style sketch of boxes and arrows resolving into a structured plan outline, the plan framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-14-0-inspiration-time-machine-plan.webp" alt="A loose Excalidraw-style sketch of boxes and arrows resolving into a structured plan outline, the plan shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>Plan mode и потоки набросков Excalidraw дают грубой идее место, куда приземлиться, прежде чем вы возьмётесь за полноценный запуск.</figcaption>
       </figure>
 
@@ -365,7 +365,7 @@ i18n:
       <p>Сгенерированный или отредактированный HTML раньше ощущался хрупким: измени его один раз — и прежняя форма могла исчезнуть вместе с ним. <strong>История версий HTML-файлов делает итерации безопаснее</strong> — сравнивайте версии, восстанавливайте более раннюю и продолжайте двигаться, не относясь к каждой правке как к двери в один конец. Тот лучший черновик, что был у вас десять минут назад, всё ещё на месте.</p>
       <p>Рядом с этим <strong>контекст composer перестаёт прятаться за ответом.</strong> Когда результат выглядел правильным или неправильным, раньше требовалось слишком много догадок, чтобы вспомнить, что модель на самом деле видела. Источники контекста теперь показывают материал, питающий composer, и отслеживают этот след яснее, так что последующие правки ощущаются обоснованными, а не размытыми.</p>
       <figure>
-        <img src="/blog/open-design-0-14-0-inspiration-time-machine-history.webp" alt="A stack of HTML document versions arranged along a timeline with a step-back arrow returning to an earlier version, the recovered version framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-14-0-inspiration-time-machine-history.webp" alt="A stack of HTML document versions arranged along a timeline with a step-back arrow returning to an earlier version, the recovered version shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>История версий HTML позволяет сравнивать, восстанавливать и продолжать двигаться — ранний черновик никогда не бывает дверью в один конец.</figcaption>
       </figure>
 
@@ -425,7 +425,7 @@ i18n:
       <p>Saltar directamente de un pensamiento a un prompt largo hacía que la exploración temprana se sintiera resbaladiza: la idea se movía rápido, pero el plan de trabajo real permanecía invisible, así que la primera ejecución de verdad era a menudo una conjetura sobre tu propia intención. <strong>El plan mode, con los flujos de boceto de Excalidraw, le da primero a una idea tosca un lugar donde aterrizar.</strong> Piensa en esquemas, formas y siguientes pasos; da forma al concepto donde puedas verlo; y solo entonces comprométete con una construcción completa.</p>
       <p>El punto es que el desordenado punto medio de una idea ahora tiene un hogar dentro de Open Design en lugar de vivir en tu cabeza o en una pestaña de pizarra aparte. Esbozas el plan, lo ves quedarse quieto, y empiezas la construcción a partir de algo que realmente puedes señalar.</p>
       <figure>
-        <img src="/blog/open-design-0-14-0-inspiration-time-machine-plan.webp" alt="A loose Excalidraw-style sketch of boxes and arrows resolving into a structured plan outline, the plan framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-14-0-inspiration-time-machine-plan.webp" alt="A loose Excalidraw-style sketch of boxes and arrows resolving into a structured plan outline, the plan shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>El plan mode y los flujos de boceto de Excalidraw le dan a una idea tosca un lugar donde aterrizar antes de que te comprometas con una ejecución completa.</figcaption>
       </figure>
 
@@ -433,7 +433,7 @@ i18n:
       <p>El HTML generado o editado solía sentirse frágil: cámbialo una vez, y la forma anterior podía desaparecer con él. <strong>El historial de versiones de archivos HTML hace que iterar sea más seguro</strong>: compara versiones, recupera una anterior, y sigue avanzando sin tratar cada edición como una puerta de un solo sentido. El mejor borrador que tenías hace diez minutos sigue ahí.</p>
       <p>Junto a ello, <strong>el contexto del composer deja de esconderse detrás de la respuesta.</strong> Cuando un resultado parecía correcto o incorrecto, solía costar demasiadas conjeturas recordar qué vio realmente el modelo. Las fuentes de contexto ahora muestran el material que alimenta al composer y siguen ese rastro con más claridad, así que las ediciones de seguimiento se sienten fundamentadas en lugar de difusas.</p>
       <figure>
-        <img src="/blog/open-design-0-14-0-inspiration-time-machine-history.webp" alt="A stack of HTML document versions arranged along a timeline with a step-back arrow returning to an earlier version, the recovered version framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-14-0-inspiration-time-machine-history.webp" alt="A stack of HTML document versions arranged along a timeline with a step-back arrow returning to an earlier version, the recovered version shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>El historial de versiones HTML te deja comparar, recuperar y seguir avanzando: el borrador anterior nunca es una puerta de un solo sentido.</figcaption>
       </figure>
 
@@ -493,7 +493,7 @@ i18n:
       <p>Pular direto de um pensamento para um prompt longo fazia a exploração inicial parecer escorregadia — a ideia se movia rápido, mas o plano de trabalho real permanecia invisível, então a primeira execução de verdade era muitas vezes um chute sobre a sua própria intenção. <strong>O plan mode, com os fluxos de esboço do Excalidraw, dá primeiro a uma ideia tosca um lugar para pousar.</strong> Pense em tópicos, formas e próximos passos; dê forma ao conceito onde você possa vê-lo; e só então parta para uma construção completa.</p>
       <p>O ponto é que o meio bagunçado de uma ideia agora tem um lar dentro do Open Design em vez de morar na sua cabeça ou em uma aba de quadro branco separada. Você rascunha o plano, vê ele ficar parado, e começa a construção a partir de algo que você realmente consegue apontar.</p>
       <figure>
-        <img src="/blog/open-design-0-14-0-inspiration-time-machine-plan.webp" alt="A loose Excalidraw-style sketch of boxes and arrows resolving into a structured plan outline, the plan framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-14-0-inspiration-time-machine-plan.webp" alt="A loose Excalidraw-style sketch of boxes and arrows resolving into a structured plan outline, the plan shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>O plan mode e os fluxos de esboço do Excalidraw dão a uma ideia tosca um lugar para pousar antes de você partir para uma execução completa.</figcaption>
       </figure>
 
@@ -501,7 +501,7 @@ i18n:
       <p>O HTML gerado ou editado costumava parecer frágil: mude-o uma vez, e a forma anterior podia desaparecer junto. <strong>O histórico de versões de arquivos HTML torna a iteração mais segura</strong> — compare versões, recupere uma anterior, e continue avançando sem tratar cada edição como uma porta de mão única. O rascunho melhor que você tinha dez minutos atrás ainda está lá.</p>
       <p>Ao lado disso, <strong>o contexto do composer para de se esconder atrás da resposta.</strong> Quando um resultado parecia certo ou errado, costumava exigir chute demais para lembrar o que o modelo realmente viu. As fontes de contexto agora mostram o material que alimenta o composer e rastreiam essa trilha com mais clareza, então as edições de acompanhamento parecem fundamentadas em vez de nebulosas.</p>
       <figure>
-        <img src="/blog/open-design-0-14-0-inspiration-time-machine-history.webp" alt="A stack of HTML document versions arranged along a timeline with a step-back arrow returning to an earlier version, the recovered version framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-14-0-inspiration-time-machine-history.webp" alt="A stack of HTML document versions arranged along a timeline with a step-back arrow returning to an earlier version, the recovered version shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>O histórico de versões HTML deixa você comparar, recuperar e continuar avançando — o rascunho anterior nunca é uma porta de mão única.</figcaption>
       </figure>
 
@@ -561,7 +561,7 @@ i18n:
       <p>Saltare dritto da un pensiero a un prompt lungo faceva sembrare sfuggente l'esplorazione iniziale — l'idea si muoveva veloce, ma il piano di lavoro effettivo restava invisibile, così la prima esecuzione vera era spesso un tiro a indovinare sulla tua stessa intenzione. <strong>Il plan mode, con i flussi di schizzo di Excalidraw, dà prima a un'idea grezza un posto dove atterrare.</strong> Pensa per scalette, forme e passi successivi; dai forma al concetto dove puoi vederlo; e solo allora impegnati in una build completa.</p>
       <p>Il punto è che il caotico mezzo di un'idea ora ha una casa dentro Open Design invece di vivere nella tua testa o in una scheda lavagna separata. Abbozzi il piano, lo guardi fermarsi, e inizi la build da qualcosa che puoi davvero indicare.</p>
       <figure>
-        <img src="/blog/open-design-0-14-0-inspiration-time-machine-plan.webp" alt="A loose Excalidraw-style sketch of boxes and arrows resolving into a structured plan outline, the plan framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-14-0-inspiration-time-machine-plan.webp" alt="A loose Excalidraw-style sketch of boxes and arrows resolving into a structured plan outline, the plan shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>Il plan mode e i flussi di schizzo di Excalidraw danno a un'idea grezza un posto dove atterrare prima che tu ti impegni in un'esecuzione completa.</figcaption>
       </figure>
 
@@ -569,7 +569,7 @@ i18n:
       <p>L'HTML generato o modificato prima sembrava fragile: cambialo una volta, e la forma precedente poteva sparire con esso. <strong>La cronologia delle versioni dei file HTML rende l'iterazione più sicura</strong> — confronta le versioni, recuperane una precedente, e continua ad andare avanti senza trattare ogni modifica come una porta a senso unico. La bozza migliore che avevi dieci minuti fa è ancora lì.</p>
       <p>Accanto a questo, <strong>il contesto del composer smette di nascondersi dietro la risposta.</strong> Quando un risultato sembrava giusto o sbagliato, prima serviva troppo indovinare per ricordare cosa il modello avesse effettivamente visto. Le fonti di contesto ora mostrano il materiale che alimenta il composer e ne tracciano la scia più chiaramente, così le modifiche di follow-up sembrano fondate invece che sfocate.</p>
       <figure>
-        <img src="/blog/open-design-0-14-0-inspiration-time-machine-history.webp" alt="A stack of HTML document versions arranged along a timeline with a step-back arrow returning to an earlier version, the recovered version framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-14-0-inspiration-time-machine-history.webp" alt="A stack of HTML document versions arranged along a timeline with a step-back arrow returning to an earlier version, the recovered version shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>La cronologia delle versioni HTML ti lascia confrontare, recuperare e continuare ad andare avanti — la bozza precedente non è mai una porta a senso unico.</figcaption>
       </figure>
 
@@ -629,7 +629,7 @@ i18n:
       <p>Bir düşünceden doğrudan uzun bir isteme atlamak, erken keşfi kaygan hissettiriyordu — fikir hızlı hareket ediyordu ama asıl çalışma planı görünmez kalıyordu, bu yüzden ilk gerçek çalıştırma çoğu zaman kendi niyetiniz hakkında bir tahmindi. <strong>Plan mode, Excalidraw eskiz akışlarıyla birlikte, kaba bir fikre önce konacak bir yer verir.</strong> Ana hatlar, şekiller ve sonraki adımlarla düşünün; kavramı görebildiğiniz yerde şekillendirin; ve ancak o zaman tam bir yapıya girişin.</p>
       <p>Önemli olan şu: bir fikrin dağınık orta bölgesi artık kafanızın içinde ya da ayrı bir beyaz tahta sekmesinde yaşamak yerine Open Design içinde bir yuvaya sahip. Planı taslak olarak çizersiniz, onun yerinde durmasını izlersiniz ve yapıya gerçekten işaret edebileceğiniz bir şeyden başlarsınız.</p>
       <figure>
-        <img src="/blog/open-design-0-14-0-inspiration-time-machine-plan.webp" alt="A loose Excalidraw-style sketch of boxes and arrows resolving into a structured plan outline, the plan framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-14-0-inspiration-time-machine-plan.webp" alt="A loose Excalidraw-style sketch of boxes and arrows resolving into a structured plan outline, the plan shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>Plan mode ve Excalidraw eskiz akışları, tam bir çalıştırmaya girişmeden önce kaba bir fikre konacak bir yer verir.</figcaption>
       </figure>
 
@@ -637,7 +637,7 @@ i18n:
       <p>Üretilen veya düzenlenen HTML eskiden kırılgan hissettiriyordu: bir kez değiştirin, önceki biçim onunla birlikte kaybolabilirdi. <strong>HTML dosyası sürüm geçmişi yinelemeyi daha güvenli kılar</strong> — sürümleri karşılaştırın, daha eskisini geri getirin ve her düzenlemeyi tek yönlü bir kapı gibi ele almadan ilerlemeye devam edin. On dakika önce sahip olduğunuz daha iyi taslak hâlâ orada.</p>
       <p>Bunun yanı sıra, <strong>composer bağlamı cevabın arkasına saklanmayı bırakıyor.</strong> Bir sonuç doğru ya da yanlış göründüğünde, modelin gerçekte ne gördüğünü hatırlamak eskiden çok fazla tahmin gerektiriyordu. Bağlam kaynakları artık composer'ı besleyen materyali gösteriyor ve o izi daha net takip ediyor, böylece takip düzenlemeleri bulanık değil sağlam temelli hissettiriyor.</p>
       <figure>
-        <img src="/blog/open-design-0-14-0-inspiration-time-machine-history.webp" alt="A stack of HTML document versions arranged along a timeline with a step-back arrow returning to an earlier version, the recovered version framed inside a green selection box against a near-white editorial background" />
+        <img src="/blog/open-design-0-14-0-inspiration-time-machine-history.webp" alt="A stack of HTML document versions arranged along a timeline with a step-back arrow returning to an earlier version, the recovered version shown as a calm sage-green interface in a warm editorial illustration" />
         <figcaption>HTML sürüm geçmişi karşılaştırmanıza, geri getirmenize ve ilerlemeye devam etmenize olanak tanır — önceki taslak asla tek yönlü bir kapı değildir.</figcaption>
       </figure>
 
@@ -698,7 +698,7 @@ Jumping straight from a thought to a long prompt made early exploration feel sli
 The point is that the messy middle of an idea now has a home inside Open Design instead of living in your head or a separate whiteboard tab. You draft the plan, watch it hold still, and start the build from something you can actually point at.
 
 <figure>
-  <img src="/blog/open-design-0-14-0-inspiration-time-machine-plan.webp" alt="A loose Excalidraw-style sketch of boxes and arrows resolving into a structured plan outline, the plan framed inside a green selection box against a near-white editorial background" />
+  <img src="/blog/open-design-0-14-0-inspiration-time-machine-plan.webp" alt="A loose Excalidraw-style sketch of boxes and arrows resolving into a structured plan outline, the plan shown as a calm sage-green interface in a warm editorial illustration" />
   <figcaption>Plan mode and Excalidraw sketch flows give a rough idea somewhere to land before you commit to a full run.</figcaption>
 </figure>
 
@@ -709,7 +709,7 @@ Generated or edited HTML used to feel fragile: change it once, and the previous 
 Alongside it, **composer context stops hiding behind the answer.** When a result looked right or wrong, it used to take too much guessing to remember what the model actually saw. Context sources now show the material feeding the composer and track that trail more clearly, so follow-up edits feel grounded instead of fuzzy.
 
 <figure>
-  <img src="/blog/open-design-0-14-0-inspiration-time-machine-history.webp" alt="A stack of HTML document versions arranged along a timeline with a step-back arrow returning to an earlier version, the recovered version framed inside a green selection box against a near-white editorial background" />
+  <img src="/blog/open-design-0-14-0-inspiration-time-machine-history.webp" alt="A stack of HTML document versions arranged along a timeline with a step-back arrow returning to an earlier version, the recovered version shown as a calm sage-green interface in a warm editorial illustration" />
   <figcaption>HTML version history lets you compare, recover, and keep moving — the earlier draft is never a one-way door.</figcaption>
 </figure>
 
