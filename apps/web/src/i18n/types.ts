@@ -944,6 +944,9 @@ export interface Dict {
   // Desktop updater
   'updater.available': string;
   'updater.availableBody': string;
+  'updater.activeRunsTitle': string;
+  'updater.activeRunsBody': string;
+  'updater.activeRunsUnknownBody': string;
   'updater.checking': string;
   'updater.download': string;
   'updater.downloading': string;
@@ -968,6 +971,7 @@ export interface Dict {
   'updater.ready': string;
   'updater.readyGeneric': string;
   'updater.readyVersion': string;
+  'updater.restartAnyway': string;
   'updater.upToDate': string;
 
   // Post-update "what's new" card on the home surface. Release-configured

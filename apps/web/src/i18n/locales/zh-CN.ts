@@ -3906,6 +3906,9 @@ export const zhCN: Dict = {
   "notify.successBody": "一轮回答已经写完。",
   "notify.failureBody": "本轮任务出错，请查看错误信息。",
   "updater.available": "有可用更新",
+  "updater.activeRunsTitle": "Open Design 仍在执行任务",
+  "updater.activeRunsBody": "仍有 {count} 个任务正在运行。现在重启会中断这些任务。",
+  "updater.activeRunsUnknownBody": "Open Design 无法确认是否仍有任务运行。现在重启可能会中断正在进行的工作。",
   "updater.availableBody":
     "Open Design {version} 可用。下载安装完成后即可打开安装器。",
   "updater.checking": "正在检查更新",
@@ -3938,6 +3941,7 @@ export const zhCN: Dict = {
   "updater.readyVersion":
     "Open Design {version} 已就绪。Open Design 会关闭并打开安装器。",
   "updater.upToDate": "您已经是最新版本啦",
+  "updater.restartAnyway": "仍然重启",
 
   "whatsNew.cta": "看看有什么新功能",
   "whatsNew.dismissAria": "关闭更新亮点",
