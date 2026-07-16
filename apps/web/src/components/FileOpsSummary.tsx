@@ -3,9 +3,8 @@
  *
  * The first four files stay visible so artifacts are presented as results,
  * not hidden inside execution history. In larger batches only the remaining
- * files start collapsed; a changed result file also gets one direct "Open"
- * action that lifts the basename up to ProjectView so FileWorkspace focuses
- * the matching tab.
+ * files start collapsed. Each visible file row owns its own Open action so the
+ * header remains a pure disclosure target without a second, ambiguous button.
  *
  * The component is read-only over `events` — derivation lives in
  * `runtime/file-ops.ts` so the same logic is reachable from tests and
@@ -64,6 +63,9 @@ export function FileOpsSummary({
   // files, only rows after the fourth start hidden; expanding reveals the
   // remainder without making the entire result set disappear by default.
   const isCollapsible = entries.length > COLLAPSE_AFTER_ENTRY_COUNT;
+  const visibleEntries = isCollapsible && !expanded
+    ? entries.slice(0, COLLAPSE_AFTER_ENTRY_COUNT)
+    : entries;
 
   const counts = countFileOps(entries);
   const summaryParts: string[] = [];
@@ -72,19 +74,6 @@ export function FileOpsSummary({
   if (counts.delete > 0) summaryParts.push(`${t('tool.delete')} ${counts.delete}`);
   if (counts.read > 0) summaryParts.push(`${t('tool.read')} ${counts.read}`);
 
-  // Prefer the latest changed file as the result entry point. Read-only turns
-  // intentionally have no primary action: opening an arbitrary input would
-  // make the execution record look like a delivery card.
-  const primaryEntry = [...entries]
-    .reverse()
-    .find((entry) =>
-      !entry.ops.includes('delete') &&
-      (entry.ops.includes('write') || entry.ops.includes('edit')),
-    );
-  const canOpenPrimary =
-    !!primaryEntry &&
-    !!onRequestOpenFile &&
-    (projectFileNames ? projectFileNames.has(primaryEntry.path) : true);
   const header = (
     <>
       <span className="file-ops-icon" aria-hidden>
@@ -125,24 +114,12 @@ export function FileOpsSummary({
             {header}
           </div>
         )}
-        {canOpenPrimary && primaryEntry && isCollapsible && !expanded ? (
-          <button
-            type="button"
-            className="file-ops-primary-action"
-            onClick={() => onRequestOpenFile?.(primaryEntry.path)}
-            title={t('tool.openInTab', { name: primaryEntry.path })}
-            data-testid={`file-ops-primary-open-${primaryEntry.path}`}
-          >
-            {t('assistant.openFile')}
-          </button>
-        ) : null}
       </div>
       <ul className="file-ops-list" role="list">
-        {entries.map((entry, index) => (
+        {visibleEntries.map((entry) => (
           <FileOpRow
             key={entry.fullPath}
             entry={entry}
-            hidden={isCollapsible && !expanded && index >= COLLAPSE_AFTER_ENTRY_COUNT}
             projectFileNames={projectFileNames}
             onRequestOpenFile={onRequestOpenFile}
           />
@@ -154,12 +131,10 @@ export function FileOpsSummary({
 
 function FileOpRow({
   entry,
-  hidden,
   projectFileNames,
   onRequestOpenFile,
 }: {
   entry: FileOpEntry;
-  hidden?: boolean;
   projectFileNames?: Set<string> | undefined;
   onRequestOpenFile?: ((name: string) => void) | undefined;
 }) {
@@ -172,7 +147,6 @@ function FileOpRow({
     <li
       className={`file-ops-row file-ops-row--${entry.status}`}
       data-testid={`file-ops-row-${entry.path}`}
-      hidden={hidden}
     >
       <div className="file-ops-row-badges" aria-hidden>
         {entry.ops.map((op) => {

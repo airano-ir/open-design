@@ -99,13 +99,13 @@ describe('FileOpsSummary', () => {
 
     const toggle = screen.getByTestId('file-ops-toggle');
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
-    expect(screen.getByTestId('file-ops-row-a.ts')).not.toHaveAttribute('hidden');
-    expect(screen.getByTestId('file-ops-row-d.ts')).not.toHaveAttribute('hidden');
-    expect(screen.getByTestId('file-ops-row-e.ts')).toHaveAttribute('hidden');
+    expect(screen.getByTestId('file-ops-row-a.ts')).toBeTruthy();
+    expect(screen.getByTestId('file-ops-row-d.ts')).toBeTruthy();
+    expect(screen.queryByTestId('file-ops-row-e.ts')).toBeNull();
 
     fireEvent.click(toggle);
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
-    expect(screen.getByTestId('file-ops-row-e.ts')).not.toHaveAttribute('hidden');
+    expect(screen.getByTestId('file-ops-row-e.ts')).toBeTruthy();
   });
 
   it('shows the open button only for files that are present in the project file set', () => {
@@ -129,7 +129,7 @@ describe('FileOpsSummary', () => {
     expect(onRequestOpenFile).toHaveBeenCalledWith('a.ts');
   });
 
-  it('offers one direct result entry point while a large batch is collapsed', () => {
+  it('keeps the header free of a redundant open action', () => {
     const onRequestOpenFile = vi.fn();
     render(
       <FileOpsSummary
@@ -146,7 +146,8 @@ describe('FileOpsSummary', () => {
       />,
     );
 
-    fireEvent.click(screen.getByTestId('file-ops-primary-open-result.ts'));
+    expect(screen.queryByTestId('file-ops-primary-open-result.ts')).toBeNull();
+    fireEvent.click(screen.getByTestId('file-ops-row-open-result.ts'));
     expect(onRequestOpenFile).toHaveBeenCalledWith('result.ts');
     expect(screen.getByTestId('file-ops-toggle').getAttribute('aria-expanded')).toBe('false');
   });

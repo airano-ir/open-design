@@ -313,23 +313,6 @@
 .file-ops-toggle:hover { background: var(--bg-subtle); }
 .file-ops-toggle--static { cursor: default; }
 .file-ops-toggle--static:hover { background: transparent; }
-.file-ops-primary-action {
-  flex: 0 0 auto;
-  margin: 4px 6px 4px 0;
-  padding: 3px 8px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--bg-panel);
-  color: var(--text);
-  font-size: 11px;
-  cursor: pointer;
-  transition: color 120ms var(--ease-out), border-color 120ms var(--ease-out), background 120ms var(--ease-out);
-}
-.file-ops-primary-action:hover {
-  border-color: var(--accent);
-  background: var(--accent-tint);
-  color: var(--accent);
-}
 .file-ops-icon { display: inline-flex; color: var(--text-muted); }
 .file-ops-label {
   font-size: 10.5px;
