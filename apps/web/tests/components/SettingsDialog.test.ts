@@ -12,6 +12,7 @@ import {
   isValidApiBaseUrl,
   mergeProviderModelOptions,
   providerModelsCacheKey,
+  resolveSettingsAutosavePayload,
   sanitizeSettingsSavePayload,
   shouldEnableSettingsSave,
   shouldShowCustomModelInput,
@@ -1500,5 +1501,84 @@ describe('sanitizeSettingsSavePayload', () => {
     expect(sanitized.mode).toBe('daemon');
     expect(sanitized.agentId).toBe('claude-code');
     expect(sanitized.theme).toBe('system');
+  });
+});
+
+describe('resolveSettingsAutosavePayload', () => {
+  const activeDaemon: AppConfig = {
+    ...baseConfig,
+    mode: 'daemon',
+    agentId: 'claude-code',
+    apiKey: '',
+  };
+
+  it.each([
+    {
+      name: 'API key',
+      draft: {
+        ...activeDaemon,
+        mode: 'api' as const,
+        apiKey: '',
+      },
+    },
+    {
+      name: 'model',
+      draft: {
+        ...activeDaemon,
+        mode: 'api' as const,
+        apiKey: 'sk-ant-draft',
+        model: '',
+      },
+    },
+    {
+      name: 'base URL',
+      draft: {
+        ...activeDaemon,
+        mode: 'api' as const,
+        apiKey: 'sk-ant-draft',
+        baseUrl: '',
+      },
+    },
+  ])('keeps an incomplete $name in a provider draft', ({ draft }) => {
+    const payload = resolveSettingsAutosavePayload(draft, activeDaemon);
+
+    expect(payload.mode).toBe('daemon');
+    expect(payload.agentId).toBe('claude-code');
+    expect(payload).toMatchObject({
+      byokPendingProviderKey: expect.any(String),
+    });
+    expect(Object.values(payload.byokProviderConfigDrafts ?? {})).toContainEqual(
+      expect.objectContaining({
+        apiConfig: expect.objectContaining({
+          apiKey: draft.apiKey,
+          baseUrl: draft.baseUrl,
+          model: draft.model,
+        }),
+      }),
+    );
+  });
+
+  it('promotes a statically complete BYOK config to active', () => {
+    const complete: AppConfig = {
+      ...activeDaemon,
+      mode: 'api',
+      apiKey: 'sk-ant-complete',
+    };
+
+    expect(resolveSettingsAutosavePayload(complete, activeDaemon)).toBe(complete);
+  });
+
+  it('promotes a complete keyless local provider config to active', () => {
+    const local: AppConfig = {
+      ...activeDaemon,
+      mode: 'api',
+      apiProtocol: 'ollama',
+      apiKey: '',
+      baseUrl: 'http://localhost:11434',
+      model: 'llama3.2',
+      apiProviderBaseUrl: 'http://localhost:11434',
+    };
+
+    expect(resolveSettingsAutosavePayload(local, activeDaemon)).toBe(local);
   });
 });

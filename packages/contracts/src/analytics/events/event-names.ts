@@ -49,6 +49,7 @@ export type AnalyticsEventName =
   | 'settings_cli_test_result'
   | 'settings_byok_test_result'
   | 'settings_byok_models_fetch_result'
+  | 'byok_preflight_blocked'
   | 'settings_connector_auth_result'
   // AMR (hosted model) account auth result.
   | 'amr_auth_result'
@@ -106,4 +107,3 @@ export type TrackingPageName =
 // Alias kept for backwards-compatibility inside the contracts file; v2 wire
 // format uses the field name `page_name` for settings events too.
 export type TrackingSettingsPage = 'settings';
-

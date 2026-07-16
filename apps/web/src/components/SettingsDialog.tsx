@@ -19,6 +19,7 @@ import {
 import { getResolvedDeviceId } from '../analytics/client';
 import {
   trackSettingsAppearanceClick,
+  trackByokPreflightBlocked,
   trackSettingsByokModelsFetchResult,
   trackSettingsByokTestResult,
   trackSettingsCliTestResult,
@@ -159,6 +160,7 @@ import { ByokKeyField } from './byok/ByokKeyField';
 import { ByokModelField } from './byok/ByokModelField';
 import { ByokProviderBaseUrl } from './byok/ByokProviderBaseUrl';
 import { ByokProviderPicker } from './byok/ByokProviderPicker';
+import { byokPreflightBlockReason } from './byok/preflight';
 import {
   blockingByokDraftFields,
   blockingByokDraftIssues,
@@ -977,6 +979,77 @@ function byokProviderKeyForConfig(config: AppConfig): string {
   );
 }
 
+/**
+ * Keeps an incomplete BYOK form durable without promoting it to the active
+ * execution config. The selected provider's current fields are stored under
+ * `byokProviderConfigDrafts`; the last successfully persisted execution mode
+ * and BYOK projection stay active until the replacement is complete.
+ */
+export function resolveSettingsAutosavePayload(
+  draft: AppConfig,
+  active: AppConfig,
+): AppConfig {
+  if (draft.mode !== 'api') return draft;
+  if (byokPreflightBlockReason(draft) === null) {
+    if (!draft.byokPendingProviderKey) return draft;
+    return { ...draft, byokPendingProviderKey: undefined };
+  }
+
+  const draftKey = byokProviderKeyForConfig(draft);
+  const withCurrentDraft = persistByokProviderConfigDraft(
+    draft,
+    draftKey,
+    currentApiProtocolConfig(draft),
+  );
+  return {
+    ...withCurrentDraft,
+    byokPendingProviderKey: draftKey,
+    mode: active.mode,
+    apiKey: active.apiKey,
+    apiProtocol: active.apiProtocol,
+    apiVersion: active.apiVersion,
+    apiProviderBaseUrl: active.apiProviderBaseUrl,
+    apiProtocolConfigs: active.apiProtocolConfigs,
+    baseUrl: active.baseUrl,
+    model: active.model,
+    byokImageModel: active.byokImageModel,
+    byokVideoModel: active.byokVideoModel,
+    byokSpeechModel: active.byokSpeechModel,
+    byokSpeechVoice: active.byokSpeechVoice,
+    maxTokens: active.maxTokens,
+  };
+}
+
+function apiProtocolFromProviderDraftKey(draftKey: string): ApiProtocol | null {
+  const separator = draftKey.indexOf(':');
+  if (separator <= 0) return null;
+  const protocol = draftKey.slice(0, separator);
+  return API_PROTOCOL_TABS.some((tab) => tab.id === protocol)
+    ? (protocol as ApiProtocol)
+    : null;
+}
+
+function restorePendingByokProviderDraft(config: AppConfig): AppConfig {
+  const currentDraftKey = byokProviderKeyForConfig(config);
+  const candidateKeys = config.byokPendingProviderKey
+    ? [config.byokPendingProviderKey, currentDraftKey]
+    : [currentDraftKey];
+  for (const draftKey of candidateKeys) {
+    const draft = config.byokProviderConfigDrafts?.[draftKey];
+    const protocol = apiProtocolFromProviderDraftKey(draftKey);
+    if (!draft || !protocol) continue;
+    return applyApiProtocolConfig(
+      {
+        ...config,
+        maxTokens: draft.maxTokens,
+      },
+      protocol,
+      draft.apiConfig,
+    );
+  }
+  return config;
+}
+
 function applyApiProtocolConfig(
   config: AppConfig,
   protocol: ApiProtocol,
@@ -1290,6 +1363,7 @@ export function sanitizeSettingsSavePayload(
     apiVersion: initial.apiVersion,
     apiProtocolConfigs: initial.apiProtocolConfigs,
     byokProviderConfigDrafts: initial.byokProviderConfigDrafts,
+    byokPendingProviderKey: initial.byokPendingProviderKey,
     apiProviderBaseUrl: initial.apiProviderBaseUrl,
     baseUrl: initial.baseUrl,
     model: initial.model,
@@ -1358,12 +1432,16 @@ export function SettingsDialog({
   // Backfill the fixed-origin base URL on mount too, so a config persisted with
   // an empty baseUrl (e.g. selected AIHubMix before this resolution existed)
   // isn't stuck blocking the live model fetch until the user re-selects the tab.
-  const [cfg, setCfg] = useState<AppConfig>(() => ({
+  const normalizedInitialConfig: AppConfig = {
     ...initial,
     baseUrl: resolveFixedOriginBaseUrl(initial.apiProtocol ?? 'anthropic', initial.baseUrl),
-  }));
+  };
+  const initialFormConfig = initial.mode === 'api'
+    ? restorePendingByokProviderDraft(normalizedInitialConfig)
+    : normalizedInitialConfig;
+  const [cfg, setCfg] = useState<AppConfig>(() => initialFormConfig);
   const [maxTokensInput, setMaxTokensInput] = useState(
-    initial.maxTokens == null ? '' : String(initial.maxTokens),
+    initialFormConfig.maxTokens == null ? '' : String(initialFormConfig.maxTokens),
   );
   const [pendingMediaProviderEditIds, setPendingMediaProviderEditIds] = useState<
     ReadonlySet<string>
@@ -1931,6 +2009,9 @@ export function SettingsDialog({
           mode_before: modeBefore,
           mode_after: modeAfter,
         });
+      }
+      if (mode === 'api' && c.mode !== 'api') {
+        return restorePendingByokProviderDraft({ ...c, mode });
       }
       return { ...c, mode };
     });
@@ -3058,6 +3139,7 @@ export function SettingsDialog({
   const autosaveSavedTimerRef = useRef<number | null>(null);
   const autosaveRetryTimerRef = useRef<number | null>(null);
   const autosavePendingFlushRef = useRef(false);
+  const byokPreflightTrackingRef = useRef<string | null>(null);
   const autosaveLatestRef = useRef<AppConfig>(cfg);
   // Baseline used by the draft-only detector: the snapshot at the most
   // recent successful autosave (or the initial cfg on mount). Compared
@@ -3065,7 +3147,7 @@ export function SettingsDialog({
   // since last save are intentionally-stripped fields like the
   // Composio API key — in which case we must NOT flash "All changes
   // saved", because the draft has not actually been persisted.
-  const autosaveLastSavedRef = useRef<AppConfig>(cfg);
+  const autosaveLastSavedRef = useRef<AppConfig>(normalizedInitialConfig);
   const mediaProvidersChangeVersionRef = useRef(0);
   const lastSyncedMediaProvidersVersionRef = useRef(0);
   const [autosaveRetryTick, setAutosaveRetryTick] = useState(0);
@@ -3073,7 +3155,6 @@ export function SettingsDialog({
   useEffect(() => {
     if (autosaveSkipFirstRef.current) {
       autosaveSkipFirstRef.current = false;
-      autosaveLastSavedRef.current = cfg;
       return;
     }
     if (suppressNextAutosaveRef.current) {
@@ -3097,6 +3178,33 @@ export function SettingsDialog({
       autosavePendingFlushRef.current = false;
       autosaveTimerRef.current = null;
       const snapshot = autosaveLatestRef.current;
+      const preflightReason = snapshot.mode === 'api'
+        ? byokPreflightBlockReason(snapshot)
+        : null;
+      if (preflightReason) {
+        const providerId = byokProtocolToTracking(snapshot.apiProtocol) ?? 'unknown';
+        const activeExecutionMode = executionModeToTracking(autosaveLastSavedRef.current.mode);
+        const trackingKey = [
+          byokProviderKeyForConfig(snapshot),
+          preflightReason,
+          activeExecutionMode,
+        ].join(':');
+        if (byokPreflightTrackingRef.current !== trackingKey) {
+          byokPreflightTrackingRef.current = trackingKey;
+          trackByokPreflightBlocked(analytics.track, {
+            source: 'settings',
+            reason: preflightReason,
+            provider_id: providerId,
+            active_execution_mode: activeExecutionMode,
+          });
+        }
+      } else {
+        byokPreflightTrackingRef.current = null;
+      }
+      const persistedSnapshot = resolveSettingsAutosavePayload(
+        snapshot,
+        autosaveLastSavedRef.current,
+      );
       const mediaProvidersVersion = mediaProvidersChangeVersionRef.current;
       const persistOptions = {
         forceMediaProviderSync: mediaProvidersVersion > lastSyncedMediaProvidersVersionRef.current,
@@ -3112,7 +3220,7 @@ export function SettingsDialog({
       // hasn't changed.
       if (
         !persistOptions.forceMediaProviderSync
-        && isAutosaveDraftOnlyChange(snapshot, autosaveLastSavedRef.current)
+        && isAutosaveDraftOnlyChange(persistedSnapshot, autosaveLastSavedRef.current)
       ) {
         setAutosaveStatus('idle');
         return;
@@ -3120,11 +3228,11 @@ export function SettingsDialog({
       setAutosaveStatus('saving');
       void (async () => {
         try {
-          await onPersist(snapshot, persistOptions);
-          autosaveLastSavedRef.current = snapshot;
+          await onPersist(persistedSnapshot, persistOptions);
+          autosaveLastSavedRef.current = persistedSnapshot;
           lastSavedAppearanceRef.current = {
-            theme: snapshot.theme ?? 'system',
-            accentColor: resolveAccentColor(snapshot.accentColor),
+            theme: persistedSnapshot.theme ?? 'system',
+            accentColor: resolveAccentColor(persistedSnapshot.accentColor),
           };
           // If a newer edit landed while the request was in flight,
           // leave the status as 'pending' so the next debounce tick
@@ -3175,7 +3283,7 @@ export function SettingsDialog({
         autosaveTimerRef.current = null;
       }
     };
-  }, [cfg, onPersist, autosaveRetryTick]);
+  }, [analytics.track, cfg, onPersist, autosaveRetryTick]);
   // Flush any pending autosave on unmount so a fast-closing dialog
   // never strands an in-flight edit. We also clear the "Saved" toast
   // timer to avoid setState after unmount.
@@ -3187,7 +3295,11 @@ export function SettingsDialog({
         // the latest copy from the synchronous saveConfig call inside
         // onPersist.
         autosavePendingFlushRef.current = false;
-        void Promise.resolve(onPersist(autosaveLatestRef.current, {
+        const persistedSnapshot = resolveSettingsAutosavePayload(
+          autosaveLatestRef.current,
+          autosaveLastSavedRef.current,
+        );
+        void Promise.resolve(onPersist(persistedSnapshot, {
           forceMediaProviderSync: mediaProvidersVersion > lastSyncedMediaProvidersVersionRef.current,
         })).catch(() => undefined);
       }
@@ -3297,6 +3409,16 @@ export function SettingsDialog({
   const byokBlockingDraftIssues = useMemo(
     () => blockingByokDraftIssues(byokDraftValidation),
     [byokDraftValidation],
+  );
+  const byokActivationPreflightReason = useMemo(
+    () => byokPreflightBlockReason(cfg),
+    [
+      cfg.apiKey,
+      cfg.apiProtocol,
+      cfg.apiProviderBaseUrl,
+      cfg.baseUrl,
+      cfg.model,
+    ],
   );
   const apiKeyDraftInvalid = byokBlockingDraftIssues.some((issue) =>
     issue.field === 'api_key' && issue.code !== 'api_key_required'
@@ -5103,6 +5225,15 @@ export function SettingsDialog({
                   onTestProvider={() => handleTestProvider()}
                 />
               </div>
+              {byokActivationPreflightReason ? (
+                <p
+                  className="settings-test-status warn"
+                  role="status"
+                  data-testid="settings-byok-draft-notice"
+                >
+                  {t('settings.byokDraftNotice')}
+                </p>
+              ) : null}
               {byokPreconditionNotice && !byokPreconditionNotice.field ? (
                 <p
                   className="settings-test-status error"
