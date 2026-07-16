@@ -307,6 +307,7 @@ export function EntryNavRail({
       aria-label={t('entry.primaryNavAria')}
       aria-hidden={open ? undefined : true}
     >
+      <div className="entry-nav-rail__panel">
       <div className="entry-nav-rail__group">
         {context ? (
           <div className="entry-nav-rail__account">
@@ -714,6 +715,7 @@ export function EntryNavRail({
         <div className="entry-rail-actions">
           {footerExtra}
         </div>
+      </div>
       </div>
 
       <InviteDialog open={inviteOpen} onClose={() => setInviteOpen(false)} />
