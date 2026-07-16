@@ -1361,18 +1361,11 @@
   color: currentColor;
   font-weight: 600;
 }
-.app .task-activity .task-activity-elapsed,
-.app .task-activity .action-card-toggle .chev {
-  color: currentColor;
-  opacity: 0.72;
+.app .task-activity .task-activity-elapsed {
+  color: var(--text-muted);
 }
-.app .task-activity .task-activity-status {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  color: inherit;
-  border-color: currentColor;
-  background: transparent;
+.app .task-activity .action-card-toggle .chev {
+  color: var(--text-faint);
 }
 .app .task-activity .action-card-body {
   padding: 8px 0;
