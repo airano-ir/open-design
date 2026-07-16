@@ -596,6 +596,9 @@ function AssistantMessageImpl({
     () => splitTaskActivity(blocks),
     [blocks],
   );
+  const hasConclusion = contentBlocks.some(
+    (block) => block.kind === "text" && block.text.trim().length > 0,
+  );
   const fileOps = useMemo(() => deriveFileOps(displayEvents), [displayEvents]);
   const produced = message.producedFiles ?? [];
   const displayedProduced = useMemo(
@@ -872,6 +875,7 @@ function AssistantMessageImpl({
           <TaskActivityCard
             entries={taskActivity.entries}
             trailingThinking={taskActivity.trailingThinking}
+            hasConclusion={hasConclusion}
             runStreaming={streaming}
             runSucceeded={runSucceeded}
             runFailed={
@@ -3651,6 +3655,7 @@ function ToolGroupCard({
 function TaskActivityCard({
   entries,
   trailingThinking,
+  hasConclusion,
   runStreaming,
   runSucceeded,
   runFailed,
@@ -3663,6 +3668,7 @@ function TaskActivityCard({
 }: {
   entries: TaskActivityEntry[];
   trailingThinking: boolean;
+  hasConclusion: boolean;
   runStreaming: boolean;
   runSucceeded: boolean;
   runFailed: boolean;
@@ -3675,6 +3681,10 @@ function TaskActivityCard({
 }) {
   const t = useT();
   const [open, setOpen] = useState(false);
+  const shouldCollapse = hasConclusion || !runStreaming;
+  useEffect(() => {
+    if (shouldCollapse) setOpen(false);
+  }, [shouldCollapse]);
   const toolItems = entries
     .filter((entry): entry is Extract<TaskActivityEntry, { kind: "tool" }> => entry.kind === "tool")
     .map((entry) => entry.item);
@@ -3683,6 +3693,8 @@ function TaskActivityCard({
   const visibleEntries = entries.filter(
     (entry) => entry.kind !== "tool" || visibleTools.has(entry.item),
   );
+  const currentIndex = visibleEntries.length - 1;
+  const currentEntry = currentIndex >= 0 ? visibleEntries[currentIndex] : undefined;
   const running = runStreaming;
   const hasError =
     !runStreaming &&
@@ -3698,6 +3710,29 @@ function TaskActivityCard({
   const runState = running ? "running" : hasError ? "error" : "completed";
   const elapsed = useLiveElapsed(runStreaming, startedAt, endedAt, durationMs);
 
+  if (running && !hasConclusion && currentEntry) {
+    return (
+      <div
+        className="action-card task-activity task-activity-current"
+        data-run-state="running"
+        data-testid="task-activity-current"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <div
+          key={taskActivityEntryKey(currentEntry, currentIndex)}
+          className="task-activity-current-row"
+        >
+          <CurrentTaskActivityRow
+            entry={currentEntry}
+            projectFileNames={projectFileNames}
+            onRequestOpenFile={onRequestOpenFile}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`action-card task-activity${open ? " is-open" : ""}`}>
       <button
@@ -3708,6 +3743,11 @@ function TaskActivityCard({
         data-run-state={runState}
         data-testid="task-activity-toggle"
       >
+        {!running && !hasError ? (
+          <span className="task-activity-complete-icon" aria-hidden>
+            <Icon name="check" size={13} />
+          </span>
+        ) : null}
         <span className={`summary${running ? " shimmer-text" : ""}`}>{stateLabel}</span>
         {elapsed ? <span className="task-activity-elapsed">{elapsed}</span> : null}
         <span className="chev" aria-hidden>
@@ -3743,10 +3783,59 @@ function TaskActivityCard({
                 />
               );
             })}
+            {!running && !hasError ? (
+              <div className="task-activity-terminal" data-testid="task-activity-terminal">
+                <span className="task-activity-terminal-icon" aria-hidden>
+                  <Icon name="check" size={13} />
+                </span>
+                <span>{t("tool.done")}</span>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+function taskActivityEntryKey(entry: TaskActivityEntry, index: number): string {
+  if (entry.kind === "thinking") return `thinking-${index}`;
+  if (entry.kind === "live-tool") return `live-${entry.id}`;
+  return `tool-${entry.item.use.id || index}`;
+}
+
+function CurrentTaskActivityRow({
+  entry,
+  projectFileNames,
+  onRequestOpenFile,
+}: {
+  entry: TaskActivityEntry;
+  projectFileNames?: Set<string>;
+  onRequestOpenFile?: (name: string) => void;
+}) {
+  const t = useT();
+  if (entry.kind === "thinking") {
+    return (
+      <div className="task-activity-current-thinking">
+        <span className="op-status op-status-category" aria-hidden>
+          <Icon name="sparkles" size={14} />
+        </span>
+        <span className="op-title shimmer-text">{t("assistant.thinking")}</span>
+      </div>
+    );
+  }
+  if (entry.kind === "live-tool") {
+    return <LiveCodeBox name={entry.name} raw={entry.raw} />;
+  }
+  return (
+    <ToolCard
+      use={entry.item.use}
+      result={entry.item.result}
+      runStreaming
+      runSucceeded={false}
+      projectFileNames={projectFileNames}
+      onRequestOpenFile={onRequestOpenFile}
+    />
   );
 }
 
