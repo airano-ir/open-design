@@ -1927,6 +1927,8 @@ body.sub-page {
 .explore-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
+  /* Equal-height rows so every card lines up (CTA buttons on one line). */
+  grid-auto-rows: 1fr;
   gap: 14px;
 }
 @media (max-width: 1100px) {
@@ -1938,8 +1940,24 @@ body.sub-page {
 @media (max-width: 520px) {
   .explore-grid { grid-template-columns: 1fr; }
 }
+/* Each cell stretches to the row height and the card fills it, so the
+   internal `1fr` excerpt row absorbs the slack and the actions align. */
+.explore-cell {
+  display: flex;
+}
 .explore-cell[hidden] {
   display: none;
+}
+.explore-grid .tpl-card {
+  width: 100%;
+  height: 100%;
+}
+/* Clamp the description so one long card can't inflate every row. */
+.explore-grid .tpl-excerpt-body {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* Category tiles lead with an on-brand cover illustration. The cover
