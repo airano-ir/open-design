@@ -25,6 +25,16 @@ describe('message center client', () => {
     );
   });
 
+  it('fails fast when pagination cursors stop advancing', async () => {
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(Response.json({ messages: [{ id: 'new' }], nextCursor: 'stuck', unreadCount: 1 }))
+      .mockResolvedValueOnce(Response.json({ messages: [{ id: 'old' }], nextCursor: 'stuck', unreadCount: 1 })));
+    await expect(
+      pullMessageCenter({ locale: 'en', loggedIn: false, startedAt: '2026-07-16T00:00:00.000Z' }),
+    ).rejects.toThrow('Message Center pagination cursor did not advance');
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(2);
+  });
+
   it('uses the credential-scoped daemon route for logged-in pulls', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
       Response.json({ messages: [], nextCursor: null, unreadCount: 0 }),

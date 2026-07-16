@@ -23,6 +23,7 @@ const ANONYMOUS_PROXY = '/api/integrations/vela/api-proxy/api/v1/message-center'
 const WINDOW_KEY = 'open-design.message-center.anonymous-started-at.v1';
 const MESSAGES_KEY = 'open-design.message-center.anonymous-messages.v1';
 const READ_KEY = 'open-design.message-center.anonymous-read-ids.v1';
+const MAX_MESSAGE_CENTER_PAGES = 20;
 
 export function anonymousStartedAt(storage: Storage, now = new Date()): string {
   const existing = storage.getItem(WINDOW_KEY);
@@ -71,7 +72,12 @@ export async function pullMessageCenter(input: {
 }): Promise<MessageCenterMessage[]> {
   const messages: MessageCenterMessage[] = [];
   let cursor: string | null = null;
+  let pages = 0;
   do {
+    pages += 1;
+    if (pages > MAX_MESSAGE_CENTER_PAGES) {
+      throw new Error('Message Center pagination exceeded max pages');
+    }
     const query = new URLSearchParams({
       locale: apiLocale(input.locale),
       filter: input.filter ?? 'all',
@@ -86,6 +92,12 @@ export async function pullMessageCenter(input: {
     const response = await fetch(`${proxy}/messages?${query}`, { cache: 'no-store' });
     if (!response.ok) throw new Error(`Message Center sync failed: ${response.status}`);
     const page = (await response.json()) as MessageCenterPage;
+    if (!Array.isArray(page.messages)) {
+      throw new Error('Message Center page missing messages[]');
+    }
+    if (page.nextCursor && page.nextCursor === cursor) {
+      throw new Error('Message Center pagination cursor did not advance');
+    }
     messages.push(...page.messages);
     cursor = page.nextCursor;
   } while (cursor);

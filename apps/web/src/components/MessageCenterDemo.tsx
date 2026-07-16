@@ -45,7 +45,6 @@ export function MessageCenterDemo({ onOpenNotificationSettings }: Props) {
   const [loggedIn, setLoggedIn] = useState(false);
   const [syncError, setSyncError] = useState(false);
   const loggedInRef = useRef(false);
-  const authResolvedRef = useRef(false);
   const messagesRef = useRef<MessageCenterMessage[]>([]);
   const readIdsRef = useRef<Set<string>>(new Set());
   const pendingReadIdsRef = useRef<Set<string>>(new Set());
@@ -66,7 +65,6 @@ export function MessageCenterDemo({ onOpenNotificationSettings }: Props) {
     const requestId = syncRequestIdRef.current + 1;
     syncRequestIdRef.current = requestId;
     const account = await isAmrLoggedIn();
-    authResolvedRef.current = true;
     loggedInRef.current = account;
     setLoggedIn(account);
     const startedAt = anonymousStartedAt(window.localStorage);
@@ -93,9 +91,7 @@ export function MessageCenterDemo({ onOpenNotificationSettings }: Props) {
   }, [commitState, locale]);
 
   const resolveLoggedInForWrite = useCallback(async () => {
-    if (authResolvedRef.current) return loggedInRef.current;
     const account = await isAmrLoggedIn();
-    authResolvedRef.current = true;
     loggedInRef.current = account;
     setLoggedIn(account);
     return account;
@@ -104,6 +100,10 @@ export function MessageCenterDemo({ onOpenNotificationSettings }: Props) {
   const retrySync = useCallback(() => {
     void sync().catch(() => setSyncError(true));
   }, [sync]);
+
+  const invalidateSyncResponses = useCallback(() => {
+    syncRequestIdRef.current += 1;
+  }, []);
 
   useEffect(() => {
     anonymousStartedAt(window.localStorage);
@@ -168,6 +168,7 @@ export function MessageCenterDemo({ onOpenNotificationSettings }: Props) {
       pendingReadIdsRef.current = new Set(pendingReadIdsRef.current).add(messageId);
       clearAnonymousState(window.localStorage);
     }
+    invalidateSyncResponses();
     commitState(nextMessages, nextIds, { persistAnonymous: !account });
   };
 
@@ -181,6 +182,7 @@ export function MessageCenterDemo({ onOpenNotificationSettings }: Props) {
       pendingReadIdsRef.current = new Set(nextIds);
       clearAnonymousState(window.localStorage);
     }
+    invalidateSyncResponses();
     commitState(nextMessages, nextIds, { persistAnonymous: !account });
   };
 
