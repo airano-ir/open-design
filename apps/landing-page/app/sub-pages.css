@@ -1795,6 +1795,17 @@ body.sub-page {
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
+.plugins-stat-link {
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.plugins-stat-link a {
+  color: inherit;
+  text-decoration: none;
+}
+.plugins-stat-link:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
 .plugins-hero-cta {
   margin-top: 26px;
   display: flex;
@@ -1818,6 +1829,8 @@ body.sub-page {
 /* Explore-all section — dense real-plugin grid with filter chips. */
 .plugins-explore {
   width: 100%;
+  /* Cancel the global `section { padding: 130px 0 }` rule. */
+  padding: 0;
   margin: 8px 0 8px;
 }
 .plugins-explore .plugins-sec-head {
@@ -1925,7 +1938,10 @@ body.sub-page {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-  margin: 36px 0 56px;
+  /* Cancel the global `section { padding: 130px 0 }` (globals.css homepage
+     rule); this hub controls its own rhythm with margins. */
+  padding: 0;
+  margin: 28px 0 40px;
 }
 @media (max-width: 900px) {
   .plugins-tile-grid {

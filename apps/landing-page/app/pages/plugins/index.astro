@@ -41,10 +41,15 @@ const totalCount = templatesCount + skillsCount + systemsCount + craftCount;
 
 // Explore grid — real template cards (rich preview posters), featured first.
 const isFeatured = (p: BundledPluginRecord) => (p.tags ?? []).includes('featured');
+// Only surface HTML-based templates for now — hide media generators
+// (image / video / audio) so the grid stays focused on real HTML output.
+const MEDIA_CATEGORIES = new Set<PluginCategorySlug>(['image', 'video', 'audio']);
 const exploreItems = [...templatesSet]
-  .sort((a, b) => Number(isFeatured(b)) - Number(isFeatured(a)))
+  .map((rec) => ({ rec, category: categorizePlugin(bundledRecordOf(rec)) }))
+  .filter((it) => it.category !== null && !MEDIA_CATEGORIES.has(it.category))
+  .sort((a, b) => Number(isFeatured(b.rec)) - Number(isFeatured(a.rec)))
   .slice(0, 24)
-  .map((rec, idx) => ({ rec, idx, category: categorizePlugin(bundledRecordOf(rec)) }));
+  .map((it, idx) => ({ rec: it.rec, idx, category: it.category }));
 
 // Filter chips are the real template categories (slides / image / video …)
 // with clean i18n labels, so a click filters this grid in place.
@@ -91,7 +96,7 @@ const tiles = [
     <p class="lead">{pcopy.hubLead}</p>
     <ul class="plugins-stats">
       <li><strong>{totalCount}+</strong> {pcopy.hubUnitPlugins}</li>
-      <li>{pcopy.hubStatAgents}</li>
+      <li class="plugins-stat-link"><a href={href('/agents/')}>{pcopy.hubStatAgents} →</a></li>
     </ul>
     <div class="plugins-hero-cta">
       <a class="btn btn-primary" href={href('/download/')}>{pcopy.hubCtaDownload}</a>
