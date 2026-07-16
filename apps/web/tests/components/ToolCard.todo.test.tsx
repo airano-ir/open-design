@@ -8,7 +8,7 @@ import { TodoCard } from '../../src/components/ToolCard';
 describe('TodoCard completion disclosure', () => {
   afterEach(() => cleanup());
 
-  it('starts a fully completed checklist collapsed and lets users review its tasks', () => {
+  it('keeps a fully completed checklist to one non-expandable summary row', () => {
     const { container } = render(
       <TodoCard
         input={{
@@ -23,17 +23,12 @@ describe('TodoCard completion disclosure', () => {
       />,
     );
 
-    const toggle = container.querySelector<HTMLButtonElement>('button.op-todo-toggle');
-    expect(toggle?.textContent).toContain('3/3');
-    expect(toggle?.textContent).toContain('Done');
-    expect(toggle?.getAttribute('aria-expanded')).toBe('false');
+    const summary = container.querySelector('.op-todo-summary');
+    expect(summary?.textContent).toContain('3/3');
     expect(container.querySelector('.op-todo')).toHaveClass('op-todo-collapsed');
-    expect(container.querySelector('.accordion-collapsible')).not.toHaveClass('open');
-    expect(container.querySelectorAll('.todo-item')).toHaveLength(3);
-
-    fireEvent.click(toggle!);
-    expect(toggle?.getAttribute('aria-expanded')).toBe('true');
-    expect(container.querySelector('.accordion-collapsible')).toHaveClass('open');
+    expect(container.querySelector('.accordion-collapsible')).toBeNull();
+    expect(container.querySelector('.todo-list')).toBeNull();
+    expect(container.querySelector('button.op-todo-toggle')).toBeNull();
   });
 
   it('shows task-by-task progress until every task is complete', () => {

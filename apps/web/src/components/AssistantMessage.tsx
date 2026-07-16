@@ -1,5 +1,5 @@
 import { Fragment, memo, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { TodoCard, ToolCard } from "./ToolCard";
+import { ToolCard } from "./ToolCard";
 import { FileOpsSummary } from "./FileOpsSummary";
 import {
   renderMarkdown,
@@ -3551,21 +3551,6 @@ function ToolGroupCard({
   // render a stack of superseded cards. Collapse those retries to the latest
   // snapshot; every other tool passes through untouched.
   items = dedupeSnapshotToolRetries(items);
-
-  // ChatPane reserves one canonical TodoWrite position in the conversation.
-  // Render that task list directly instead of nesting its own disclosure
-  // inside the generic tool-group disclosure: the todo summary is the first
-  // interactive level, and it owns its completed/default-collapsed behavior.
-  if (items.length > 0 && items.every((item) => isTodoWriteToolName(item.use.name))) {
-    const latestTodo = items[items.length - 1]!;
-    return (
-      <TodoCard
-        input={latestTodo.use.input}
-        runStreaming={runStreaming}
-        runSucceeded={runSucceeded}
-      />
-    );
-  }
 
   const summary = summarizeGroup(items, t, runStreaming, runSucceeded);
   const running = runStreaming && items.some((it) => !it.result);
