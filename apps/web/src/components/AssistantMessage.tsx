@@ -3708,6 +3708,17 @@ function TaskActivityCard({
         data-run-state={runState}
         data-testid="task-activity-toggle"
       >
+        <span
+          className={`action-card-status task-activity-status ${running ? "op-status-running" : hasError ? "op-status-error" : "op-status-ok"}`}
+          aria-hidden
+        >
+          {running
+            ? <Icon name="spinner" size={14} />
+            : hasError
+              ? <Icon name="close" size={14} />
+              : <Icon name="check" size={14} />
+          }
+        </span>
         <span className={`summary${running ? " shimmer-text" : ""}`}>{stateLabel}</span>
         {elapsed ? <span className="task-activity-elapsed">{elapsed}</span> : null}
         <span className="chev" aria-hidden>
