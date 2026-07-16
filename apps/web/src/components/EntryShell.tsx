@@ -138,10 +138,7 @@ import {
 import { LanguageMenu } from './LanguageMenu';
 import { IntegrationsView, type IntegrationTab } from './IntegrationsView';
 import { InlineModelSwitcher } from './InlineModelSwitcher';
-import {
-  EntrySettingsMenu,
-  type EntrySettingsSection,
-} from './EntrySettingsMenu';
+import { type EntrySettingsSection } from './EntrySettingsMenu';
 import { NewProjectModal } from './NewProjectModal';
 import { ExtensionsMarketplace } from './PluginsView';
 import type { CreateInput, CreateTab, ImportClaudeDesignOutcome } from './NewProjectPanel';
@@ -1050,20 +1047,9 @@ export function EntryShell({
     return ok;
   }
 
-  const avatarMenu = (
-    <EntrySettingsMenu
-      config={config}
-      onThemeChange={onThemeChange}
-      onOpenSettings={onOpenSettings}
-      onTrackTriggerClick={() => {
-        trackHomeToolbarClick(analytics.track, {
-          page_name: 'home',
-          area: 'toolbar',
-          element: 'settings',
-        });
-      }}
-    />
-  );
+  // #5517 removes the entry top-bar settings cog: settings + theme toggle both
+  // live in the nav-rail account menu (EntryNavRail onOpenSettings/onToggleTheme),
+  // so the top strip no longer carries a redundant settings entry.
 
 
   if (view === 'onboarding') {
@@ -1173,7 +1159,6 @@ export function EntryShell({
               }
             />
             <WhatsNewPopup active={view === 'home'} />
-            {avatarMenu}
             {amrBalanceGateBlock ? (
               <AmrBalanceDialog
                 reason={amrBalanceGateBlock.reason}
