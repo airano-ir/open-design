@@ -41,7 +41,7 @@ describe('AssistantMessage tool status', () => {
     const activity = screen.getByTestId('task-activity-toggle');
     expect(activity.textContent).toContain('Done');
     expect(activity.getAttribute('data-run-state')).toBe('completed');
-    expect(activity.querySelector('.task-activity-complete-icon')).not.toBeNull();
+    expect(activity.querySelector('.task-activity-complete-icon')).toBeNull();
     expect(container.querySelector('[data-tool-category="terminal"]')).not.toBeNull();
     expect(container.querySelector('.op-status-error')).toBeNull();
   });
@@ -337,7 +337,7 @@ describe('AssistantMessage tool status', () => {
     const completedActivity = screen.getByTestId('task-activity-toggle');
     expect(completedActivity.getAttribute('aria-expanded')).toBe('false');
     expect(completedActivity.textContent).toContain('Done');
-    expect(completedActivity.querySelector('.task-activity-complete-icon')).not.toBeNull();
+    expect(completedActivity.querySelector('.task-activity-complete-icon')).toBeNull();
   });
 
   it('keeps the run state above the answer and groups thinking into the timeline', () => {
@@ -366,7 +366,10 @@ describe('AssistantMessage tool status', () => {
     const activityCard = activity.closest('.task-activity');
     expect(activityCard?.querySelector('.thinking-block')).not.toBeNull();
     expect(activityCard?.querySelector('[data-tool-category="eye"]')).not.toBeNull();
-    expect(screen.getByTestId('task-activity-terminal').textContent).toContain('done');
+    const terminal = screen.getByTestId('task-activity-terminal');
+    expect(terminal.textContent).toContain('done');
+    expect(terminal.querySelector('.op-status.op-status-category')).not.toBeNull();
+    expect(terminal.querySelector('.op-title')).not.toBeNull();
   });
 
   it('renders URLs in JSON-like status details without trailing structural characters', () => {
