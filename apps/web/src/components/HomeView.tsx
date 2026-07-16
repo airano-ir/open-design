@@ -2088,8 +2088,16 @@ export function HomeView({
     }
   }
 
+  // #5517: with no recent projects the home (logo + heading + composer)
+  // centers vertically instead of hugging the top, and the strip is skipped.
+  const recentProjectsEmpty = !projectsLoading && projects.length === 0;
+
   return (
-    <div className="home-view" data-testid="home-view" ref={homeViewRef}>
+    <div
+      className={`home-view${recentProjectsEmpty ? ' home-view--centered' : ''}`}
+      data-testid="home-view"
+      ref={homeViewRef}
+    >
       {isActive ? <AppWashKineticGrid clipBottomTo=".home-hero" /> : null}
       <HomeHero
         ref={inputRef}
@@ -2226,13 +2234,14 @@ export function HomeView({
         }
       />
 
+      {recentProjectsEmpty ? null : (
       <RecentProjectsStrip
         projects={projects}
         designSystems={designSystems}
         heading={t('recentProjects.title')}
         sharedProjectIds={homeSharedProjectIds}
         projectOwnerMemberIds={homeProjectOwnerMemberIds}
-        limit={7}
+        limit={1000}
         {...(projectsLoading !== undefined ? { loading: projectsLoading } : {})}
         onOpen={(id) => {
           // P0 ui_click area=recent_projects element=project_card — emit
@@ -2261,6 +2270,7 @@ export function HomeView({
         {...(onDuplicateProject ? { onDuplicate: onDuplicateProject } : {})}
         {...(onRenameProject ? { onRename: onRenameProject } : {})}
       />
+      )}
 
       <AnimatePresence>
         {detailsRecord ? (

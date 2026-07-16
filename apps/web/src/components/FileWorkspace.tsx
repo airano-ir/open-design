@@ -3813,10 +3813,13 @@ export function FileWorkspace({
                   </button>
                   {projectShareMenuOpen ? (
                     <div className="share-menu-popover chrome-unified-popover" role="menu">
+                      {/* The project-level popover only implements Share today.
+                          The Export / Send-to tabs were disabled placeholders
+                          (#5395) that read as broken buttons — hide them until
+                          the project-level flows exist; the FILE-level popover
+                          keeps its fully working three-tab set. */}
                       <div className="chrome-unified-tabs">
                         <button type="button" className="is-active">{t('fileViewer.unifiedShareTab')}</button>
-                        <button type="button" disabled>{t('fileViewer.unifiedExportTab')}</button>
-                        <button type="button" disabled>{t('fileViewer.unifiedSendTab')}</button>
                       </div>
                       <div className="chrome-unified-panel chrome-unified-panel--share">
                         <div className="chrome-share-card">
