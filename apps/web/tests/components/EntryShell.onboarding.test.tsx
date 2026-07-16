@@ -317,11 +317,10 @@ describe('EntryShell settings menu', () => {
     }) as typeof fetch;
     const props = renderHome();
 
-    await waitFor(() => {
-      expect(screen.getByText('1.2k online')).toBeTruthy();
-    });
-
-    fireEvent.click(screen.getByTestId('entry-settings-button'));
+    // #5517: with a cloud identity, settings lives in the nav-rail account
+    // menu; WITHOUT one (this render has no workspace context) the footer
+    // settings chip remains the entry, so it must stay clickable.
+    fireEvent.click(await screen.findByTestId('entry-settings-button'));
 
     expect(props.onOpenSettings).toHaveBeenCalledWith();
   });
@@ -507,7 +506,9 @@ describe('EntryShell Home submit handoff', () => {
 
     await waitFor(() => expect(onCreateProject).toHaveBeenCalledTimes(1));
     expect(submit.disabled).toBe(true);
-    expect(submit.textContent).toContain('Sending…');
+    // #5517: the submit is icon-only (spinner while sending) — assert the
+    // busy state through aria instead of the removed label text.
+    expect(submit.getAttribute('aria-busy')).toBe('true');
 
     resolveCreate(true);
     await waitFor(() => expect(submit.disabled).toBe(false));

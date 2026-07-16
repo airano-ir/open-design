@@ -127,6 +127,9 @@ describe('static prompt-example send pulse', () => {
       </I18nProvider>,
     );
 
+    // #5517 collapses the template card rail by default; expand it before
+    // reaching for the home-hero-rail-* chips.
+    fireEvent.click(await screen.findByTestId('home-hero-template-toggle'));
     // The chip's default plugin exists (so the chip binds) but no plugin
     // matches the example filter → fallback static prompt-example cards.
     fireEvent.click(await screen.findByTestId('home-hero-rail-prototype'));

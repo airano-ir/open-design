@@ -3101,8 +3101,36 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
             ) : null}
           </div>
         </div>
-        {/* #5517 removes the always-on working-dir row under the project
-            composer; the home composer's workdir picker remains the entry. */}
+        {/* Deliberate divergence from #5517 (its demo has no working-dir
+            concept): the workdir row is the ONLY entry for re-binding a
+            project's working directory / managing linked dirs mid-project,
+            so it stays. */}
+        {projectId ? (
+          <div className="composer-workdir-row">
+            <WorkingDirPicker
+              placement="up"
+              workingDir={workingDir}
+              invalid={workingDirMissing}
+              recentDirs={recentDirs}
+              onOpen={() => void checkWorkingDir()}
+              onPickDirectory={() => {
+                // Fire on the click itself (intent), matching the home
+                // composer's working_dir* elements so one dashboard counts the
+                // action across both surfaces.
+                trackComposerBar({ element: 'working_dir' });
+                void handlePickWorkingDir();
+              }}
+              onSelectRecent={(dir) => {
+                trackComposerBar({ element: 'working_dir_recent' });
+                void setWorkingDirFolder(dir);
+              }}
+              onClear={() => {
+                trackComposerBar({ element: 'working_dir_clear' });
+                void clearWorkingDir();
+              }}
+            />
+          </div>
+        ) : null}
         {uploadError ? <span className="composer-hint">{uploadError}</span> : null}
         {detailsRecord ? (
           <PluginDetailsModal

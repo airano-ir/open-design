@@ -923,8 +923,25 @@ export function EntryShell({
   // #5517: the GitHub/Discord/X/mail badges and the settings chip leave the
   // rail footer — socials live in the account menu's social row and settings
   // stays reachable through the account menu — so the footer reads as just
-  // the credits chip + account row.
-  const railFooterActions = null;
+  // the credits chip + account row. Without a cloud identity there is no
+  // account menu (the rail shows the brand logo instead), so the settings
+  // chip stays in the footer as the only settings entry for local/BYOK use.
+  const railFooterActions = workspaceContext ? null : (
+    <button
+      type="button"
+      className="entry-settings-chip od-tooltip"
+      onClick={() => onOpenSettings()}
+      data-tooltip={t('entry.openSettingsTitle')}
+      data-tooltip-placement="right"
+      aria-label={t('entry.openSettingsAria')}
+      data-testid="entry-settings-button"
+    >
+      <span className="entry-settings-chip__icon" aria-hidden>
+        <Icon name="settings" size={13} />
+      </span>
+      <span className="entry-settings-chip__label">{t('settings.title')}</span>
+    </button>
+  );
 
   // Drop the personalized recommendation. Fired when the user browses all
   // types, or as soon as they take any other concrete entry, so Home never

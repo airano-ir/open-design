@@ -826,6 +826,7 @@ describe('HomeView prompt handoff', () => {
     );
 
     await clearActiveTypeChip();
+    await openTemplateRail();
     fireEvent.click(await screen.findByTestId('home-hero-rail-prototype'));
 
     await waitFor(() => {
@@ -924,6 +925,7 @@ describe('HomeView prompt handoff', () => {
     );
 
     await clearActiveTypeChip();
+    await openTemplateRail();
     fireEvent.click(await screen.findByTestId('home-hero-rail-document'));
 
     await waitFor(() => {
@@ -992,6 +994,7 @@ describe('HomeView prompt handoff', () => {
     );
 
     await clearActiveTypeChip();
+    await openTemplateRail();
     fireEvent.click(await screen.findByTestId('home-hero-rail-prototype'));
 
     await waitFor(() => {
@@ -1053,6 +1056,7 @@ describe('HomeView prompt handoff', () => {
     );
 
     await clearActiveTypeChip();
+    await openTemplateRail();
     fireEvent.click(await screen.findByTestId('home-hero-rail-prototype'));
 
     // The personal default pre-selects, as before.
@@ -1116,6 +1120,7 @@ describe('HomeView prompt handoff', () => {
     );
 
     await clearActiveTypeChip();
+    await openTemplateRail();
     fireEvent.click(await screen.findByTestId('home-hero-rail-prototype'));
     // Card body opens preview; the Use button is what seeds the composer input.
     fireEvent.click(await screen.findByTestId('home-hero-plugin-preset-use-example-web-prototype'));
@@ -1213,6 +1218,7 @@ describe('HomeView prompt handoff', () => {
     );
 
     await clearActiveTypeChip();
+    await openTemplateRail();
     fireEvent.click(await screen.findByTestId('home-hero-rail-live-artifact'));
 
     await waitFor(() => {
@@ -1294,6 +1300,7 @@ describe('HomeView prompt handoff', () => {
     );
 
     await clearActiveTypeChip();
+    await openTemplateRail();
     fireEvent.click(await screen.findByTestId('home-hero-rail-live-artifact'));
 
     await waitFor(() => {
@@ -1364,6 +1371,7 @@ describe('HomeView prompt handoff', () => {
     );
 
     await clearActiveTypeChip();
+    await openTemplateRail();
     fireEvent.click(await screen.findByTestId('home-hero-rail-deck'));
 
     await waitFor(() => {
@@ -1418,6 +1426,7 @@ describe('HomeView prompt handoff', () => {
     await screen.findByTestId('home-hero-input');
     await setPromptAndSettle('Keep my current brief');
     await clearActiveTypeChip();
+    await openTemplateRail();
     fireEvent.click(await screen.findByTestId('home-hero-rail-prototype'));
 
     await waitFor(() => {
@@ -1467,6 +1476,7 @@ describe('HomeView prompt handoff', () => {
     );
 
     await clearActiveTypeChip();
+    await openTemplateRail();
     fireEvent.click(await screen.findByTestId('home-hero-rail-deck'));
     await waitFor(() => {
       expect(screen.getByTestId('home-hero-template-trigger').textContent).toContain('Slide deck');
@@ -1484,6 +1494,7 @@ describe('HomeView prompt handoff', () => {
     });
 
     await clearActiveTypeChip();
+    await openTemplateRail();
     fireEvent.click(await screen.findByTestId('home-hero-rail-prototype'));
     await waitFor(() => {
       expect(screen.getByTestId('home-hero-plugin-presets')).toBeTruthy();
@@ -2034,7 +2045,16 @@ async function clearActiveTypeChip() {
   fireEvent.keyDown(document, { key: 'Escape' });
 }
 
+// #5517 collapses the template card rail by default behind the
+// "Start with a template…" bar toggle; expand it before reaching for the
+// home-hero-rail-* cards (or the shortcuts trigger inside the rail body).
+async function openTemplateRail() {
+  const toggle = await screen.findByTestId('home-hero-template-toggle');
+  if (toggle.getAttribute('aria-expanded') !== 'true') fireEvent.click(toggle);
+}
+
 async function clickHomeShortcut(id: string) {
+  await openTemplateRail();
   const trigger = await screen.findByTestId('home-hero-shortcuts-trigger');
   await waitFor(() => expect((trigger as HTMLButtonElement).disabled).toBe(false));
   fireEvent.click(trigger);

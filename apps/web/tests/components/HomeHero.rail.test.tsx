@@ -102,9 +102,18 @@ function renderHero(overrides: Partial<React.ComponentProps<typeof HomeHero>> = 
   return { onPickChip, onPickPlugin, onPickExamplePlugin, onOpenPluginDetails, onClearActiveChip };
 }
 
+// #5517 collapses the template card rail by default behind the
+// "Start with a template…" bar toggle; expand it before reaching for the
+// home-hero-rail-* cards or the shortcuts trigger inside the rail body.
+function openTemplateRail() {
+  const toggle = screen.getByTestId('home-hero-template-toggle');
+  if (toggle.getAttribute('aria-expanded') !== 'true') fireEvent.click(toggle);
+}
+
 describe('HomeHero intent rail', () => {
   it('renders creation chips as composer tabs and collapses shortcuts behind More', () => {
     renderHero();
+    openTemplateRail();
     const tabs = screen.getByTestId('home-hero-type-tabs');
     for (const chip of HOME_HERO_CHIPS) {
       if (chip.group === 'create') {
@@ -140,6 +149,7 @@ describe('HomeHero intent rail', () => {
 
   it('forwards the matching chip descriptor when clicked', () => {
     const { onPickChip } = renderHero();
+    openTemplateRail();
     fireEvent.click(screen.getByTestId('home-hero-rail-image'));
     expect(onPickChip).toHaveBeenCalledTimes(1);
     expect(onPickChip).toHaveBeenCalledWith(findChip('image'));
@@ -153,20 +163,28 @@ describe('HomeHero intent rail', () => {
     expect(node.textContent).toContain('Video');
   });
 
-  it('keeps the blank project entry visible after a template is selected', () => {
+  it('offers the blank project entry in the template bar until a template is selected', () => {
+    // #5517: the standalone blank-project entry below the template section is
+    // gone — it now lives inside the template bar ("Start with a template… or
+    // start a blank project") and only while no create template is active.
     const onStartBlankProject = vi.fn();
-    renderHero({ activeChipId: 'deck', onStartBlankProject });
+    renderHero({ onStartBlankProject });
 
-    expect(screen.queryByTestId('home-hero-template-section')).toBeNull();
-    const promptExamples = screen.getByTestId('home-hero-prompt-examples');
+    const templateSection = screen.getByTestId('home-hero-template-section');
     const blankProject = screen.getByTestId('home-hero-blank-project');
     expect(blankProject.textContent).toContain('start a blank project');
-    expect(
-      promptExamples.compareDocumentPosition(blankProject) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+    expect(templateSection.contains(blankProject)).toBe(true);
+    expect(blankProject.closest('.home-hero__template-bar')).not.toBeNull();
 
     fireEvent.click(blankProject);
     expect(onStartBlankProject).toHaveBeenCalledTimes(1);
+
+    cleanup();
+    renderHero({ activeChipId: 'deck', onStartBlankProject });
+    // A selected template removes the whole template bar — and with it the
+    // blank-project entry.
+    expect(screen.queryByTestId('home-hero-template-section')).toBeNull();
+    expect(screen.queryByTestId('home-hero-blank-project')).toBeNull();
   });
 
   it('does not reserve an empty active-context row for a hidden chip-bound plugin', () => {
@@ -213,6 +231,7 @@ describe('HomeHero intent rail', () => {
     } as React.ComponentProps<typeof HomeHero>;
 
     const { rerender } = render(<HomeHero {...baseProps} activeChipId={null} />);
+    openTemplateRail();
 
     // Hover the Slide deck card → the footer pill previews it.
     fireEvent.mouseEnter(screen.getByTestId('home-hero-rail-deck'));
@@ -238,6 +257,7 @@ describe('HomeHero intent rail', () => {
     // drop the preview itself or it stays stuck on the hovered template.
     // (Reported: pill stayed on the picked template after Clear.)
     const { onClearActiveChip } = renderHero({ activeChipId: null });
+    openTemplateRail();
 
     fireEvent.mouseEnter(screen.getByTestId('home-hero-rail-deck'));
     expect(screen.getByTestId('home-hero-template-trigger').textContent).toContain('Slide deck');
@@ -481,6 +501,7 @@ describe('HomeHero intent rail', () => {
 
   it('disables every visible chip while a plugin apply is in flight', () => {
     renderHero({ pendingPluginId: 'od-figma-migration', pendingChipId: 'figma' });
+    openTemplateRail();
     for (const chip of HOME_HERO_CHIPS.filter((item) => item.group === 'create')) {
       const node = screen.getByTestId(`home-hero-rail-${chip.id}`);
       expect((node as HTMLButtonElement).disabled).toBe(true);
@@ -492,6 +513,7 @@ describe('HomeHero intent rail', () => {
 
   it('shows plugin authoring with the starter shortcuts after More opens', () => {
     renderHero();
+    openTemplateRail();
     fireEvent.click(screen.getByTestId('home-hero-shortcuts-trigger'));
     const createPluginGroup = screen
       .getByTestId('home-hero-rail-create-plugin')

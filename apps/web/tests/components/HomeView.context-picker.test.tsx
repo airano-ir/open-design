@@ -112,6 +112,14 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+// #5517 collapses the template card rail by default behind the
+// "Start with a template…" bar toggle; expand it before reaching for the
+// home-hero-rail-* chips.
+async function openTemplateRail() {
+  const toggle = await screen.findByTestId('home-hero-template-toggle');
+  if (toggle.getAttribute('aria-expanded') !== 'true') fireEvent.click(toggle);
+}
+
 describe('HomeView context picker', () => {
   it('stages pasted files on Home and submits them as first-turn context', async () => {
     const fetchMock = vi.fn<typeof fetch>(async (url) => {
@@ -335,6 +343,7 @@ describe('HomeView context picker', () => {
       />,
     );
 
+    await openTemplateRail();
     fireEvent.click(await screen.findByTestId('home-hero-rail-prototype'));
     await waitFor(() => {
       expect(screen.getByTestId('home-hero-template-trigger').textContent).toContain('Prototype');
@@ -415,6 +424,7 @@ describe('HomeView context picker', () => {
       expect(screen.getByTestId('home-hero-active-skill')).toBeTruthy();
     });
 
+    await openTemplateRail();
     fireEvent.click(await screen.findByTestId('home-hero-rail-prototype'));
     await waitFor(() => {
       expect(screen.getByTestId('home-hero-template-trigger').textContent).toContain('Prototype');

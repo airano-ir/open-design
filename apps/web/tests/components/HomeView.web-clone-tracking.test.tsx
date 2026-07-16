@@ -103,12 +103,21 @@ afterEach(() => {
   window.localStorage.clear();
 });
 
+// #5517 collapses the template card rail by default behind the
+// "Start with a template…" bar toggle; expand it before reaching for the
+// home-hero-rail-* chips.
+async function openTemplateRail() {
+  const toggle = await screen.findByTestId('home-hero-template-toggle');
+  if (toggle.getAttribute('aria-expanded') !== 'true') fireEvent.click(toggle);
+}
+
 describe('web-clone example-card tracking', () => {
   it('renders the Website-clone examples as text prompt cards (no plugin preview / no remix)', async () => {
     writeHomeGuideStage('done');
     stubPlugins();
     renderHome();
 
+    await openTemplateRail();
     fireEvent.click(await screen.findByTestId('home-hero-rail-web-clone'));
     // Text prompt cards (site variant: logo tile + bare domain), not plugin cards.
     const textCards = await screen.findAllByTestId('home-hero-prompt-example');
@@ -131,6 +140,7 @@ describe('web-clone example-card tracking', () => {
     stubPlugins();
     renderHome();
 
+    await openTemplateRail();
     fireEvent.click(await screen.findByTestId('home-hero-rail-web-clone'));
     const siteCards = await screen.findAllByTestId('home-hero-prompt-example');
     const domains = siteCards.map((c) => (c.textContent ?? '').trim());
@@ -146,6 +156,7 @@ describe('web-clone example-card tracking', () => {
     stubPlugins();
     renderHome();
 
+    await openTemplateRail();
     fireEvent.click(await screen.findByTestId('home-hero-rail-web-clone'));
     const textCards = await screen.findAllByTestId('home-hero-prompt-example');
     analyticsMocks.track.mockClear(); // ignore the chip-pick ui_click; assert the card event

@@ -59,12 +59,21 @@ afterEach(() => {
   window.localStorage.clear();
 });
 
+// #5517 collapses the template card rail by default behind the
+// "Start with a template…" bar toggle; the guide's chip pulse still arms on
+// mount, but the home-hero-rail-* chips only render once the rail is open.
+async function openTemplateRail() {
+  const toggle = await screen.findByTestId('home-hero-template-toggle');
+  if (toggle.getAttribute('aria-expanded') !== 'true') fireEvent.click(toggle);
+}
+
 describe('Home first-run guide trail', () => {
   it('pulses the Prototype chip for a fresh user and advances on chip pick', async () => {
     stubPluginsFetch();
     renderHome([]);
 
     expect(readHomeGuideStage()).toBe('chip');
+    await openTemplateRail();
     const chip = await screen.findByTestId('home-hero-rail-prototype');
     await waitFor(
       () => {
@@ -104,6 +113,7 @@ describe('Home first-run guide trail', () => {
       </I18nProvider>,
     );
 
+    await openTemplateRail();
     const chip = await screen.findByTestId('home-hero-rail-prototype');
     await new Promise((resolve) => setTimeout(resolve, 1200));
     // Unknown projects state: no pulse, and crucially the stage is NOT
@@ -129,6 +139,7 @@ describe('Home first-run guide trail', () => {
 
     // The user clicks a chip while projects are still loading — the stage
     // moves to 'card' before we know whether they are new.
+    await openTemplateRail();
     fireEvent.click(await screen.findByTestId('home-hero-rail-prototype'));
     expect(readHomeGuideStage()).toBe('card');
 
@@ -184,6 +195,7 @@ describe('Home first-run guide trail', () => {
     }));
     renderHome([]);
 
+    await openTemplateRail();
     fireEvent.click(await screen.findByTestId('home-hero-rail-prototype'));
     expect(readHomeGuideStage()).toBe('card');
 
@@ -202,6 +214,7 @@ describe('Home first-run guide trail', () => {
     stubPluginsFetch();
     renderHome([]);
 
+    await openTemplateRail();
     const chip = await screen.findByTestId('home-hero-rail-prototype');
     await new Promise((resolve) => setTimeout(resolve, 1200));
     expect(chip.className).not.toContain('home-hero__attention-sheen');

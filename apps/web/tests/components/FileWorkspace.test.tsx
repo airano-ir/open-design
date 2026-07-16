@@ -1007,7 +1007,9 @@ describe('FileWorkspace upload input', () => {
       />,
     );
 
-    expect(container.querySelector('.df-breadcrumb-current')?.textContent).toBe('All project files');
+    // #5517: the breadcrumb root falls back to designFiles.crumbs ("Project")
+    // instead of the removed workspace.allProjectFiles label.
+    expect(container.querySelector('.df-breadcrumb-current')?.textContent).toBe('Project');
     expect(screen.getByTestId('design-file-row-home.html')).toBeTruthy();
   });
 

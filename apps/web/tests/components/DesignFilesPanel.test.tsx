@@ -177,9 +177,10 @@ describe("DesignFilesPanel sections", () => {
     expect(onNewSketch).toHaveBeenCalledTimes(1);
     expect(onOpenBrowser).toHaveBeenCalledTimes(1);
     expect(onPaste).toHaveBeenCalledTimes(1);
+    // #5517 restores the upstream 粘贴/Paste wording for designFiles.paste.*.
     expect(
       screen.getByTestId("design-files-empty-create-document").textContent,
-    ).toContain("Create document");
+    ).toContain("Paste");
     expect(
       screen.queryByRole("button", { name: "Create new design system" }),
     ).toBeNull();
@@ -222,27 +223,14 @@ describe("DesignFilesPanel sections", () => {
     expect(row.querySelector('.df-row-size')?.textContent).toBe('4.0 KB');
   });
 
-  it("shows the upload hint in the footer while idle", () => {
+  // #5517 removed the always-on footer drop-hint strip and its rotating
+  // useful-info tip; drag & drop still works via the df-drop-overlay, which
+  // the drag-and-drop suite above covers.
+  it("renders no footer info strip", () => {
     renderPanel([file({ name: "page.html", kind: "html" })]);
 
-    expect(document.querySelector(".df-drop-hint")).toBeTruthy();
-    expect(document.querySelector(".df-useful-info")).toBeNull();
-  });
-
-  it("types out the first useful-info tip in the footer while the agent runs", async () => {
-    localStorage.setItem(VISUAL_STABILITY_STORAGE_KEY, "1");
-    renderPanel([file({ name: "page.html", kind: "html" })], { running: true });
-
+    expect(document.querySelector(".df-footer-info")).toBeNull();
     expect(document.querySelector(".df-drop-hint")).toBeNull();
-    expect(document.querySelector(".df-useful-info-label")?.textContent).toBe(
-      "Useful info",
-    );
-    // The tip types in character by character, so wait for the first word.
-    await waitFor(() =>
-      expect(
-        document.querySelector(".df-useful-info-tip")?.textContent,
-      ).toContain("Double-click"),
-    );
   });
 });
 

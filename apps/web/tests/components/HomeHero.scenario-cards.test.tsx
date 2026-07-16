@@ -70,9 +70,18 @@ function renderHero(overrides: Partial<React.ComponentProps<typeof HomeHero>> = 
   render(<HomeHero {...props} />);
 }
 
+// #5517 collapses the template card rail by default behind the
+// "Start with a template…" bar toggle; expand it before reaching for the
+// home-hero-rail-* scenario cards.
+function openTemplateRail() {
+  const toggle = screen.getByTestId('home-hero-template-toggle');
+  if (toggle.getAttribute('aria-expanded') !== 'true') fireEvent.click(toggle);
+}
+
 describe('HomeHero scenario cards', () => {
   it('renders each create scenario card with a title and a description', () => {
     renderHero();
+    openTemplateRail();
     const prototype = screen.getByTestId('home-hero-rail-prototype');
     expect(prototype.textContent).toContain('Prototype');
     expect(prototype.textContent).toContain('Interactive app mockups');
@@ -89,6 +98,7 @@ describe('HomeHero scenario cards', () => {
 
   it('adds the finer-grained scenarios as create cards routed to a scenario plugin', () => {
     renderHero();
+    openTemplateRail();
     for (const id of ['wireframe', 'mobile', 'document']) {
       const card = screen.getByTestId(`home-hero-rail-${id}`);
       const tabs = screen.getByTestId('home-hero-type-tabs');

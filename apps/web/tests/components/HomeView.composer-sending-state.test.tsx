@@ -94,7 +94,10 @@ describe('home composer sending state', () => {
     await waitFor(() => {
       expect(submit.disabled).toBe(true);
     });
-    expect(submit.textContent).toContain('Sending…');
+    // #5517 made the submit button icon-only (spinner while sending); the
+    // Sending… state now lives on the accessible name instead of a label span.
+    expect(submit.getAttribute('aria-label')).toBe('Sending…');
+    expect(submit.getAttribute('aria-busy')).toBe('true');
     expect(submit.className).toContain('is-sending');
 
     // A second click during the in-flight window must not start a second run.
@@ -128,7 +131,9 @@ describe('home composer sending state', () => {
     await waitFor(() => {
       expect(submit.disabled).toBe(false);
     });
-    expect(submit.textContent).toContain('Send');
+    // Icon-only button (#5517): the idle accessible name replaces the old
+    // visible Send label.
+    expect(submit.getAttribute('aria-label')).toBe('Run');
     expect(submit.className).not.toContain('is-sending');
     expect((await screen.findByRole('alert')).textContent).toMatch(/try again/i);
 
@@ -176,6 +181,9 @@ describe('home composer sending state', () => {
       </I18nProvider>,
     );
 
+    // #5517 collapses the template card rail by default; expand it before
+    // reaching for the home-hero-rail-* chips.
+    fireEvent.click(await screen.findByTestId('home-hero-template-toggle'));
     // Seeding through a fallback prompt-example card is what arms the
     // examplePromptContext marker.
     fireEvent.click(await screen.findByTestId('home-hero-rail-prototype'));
