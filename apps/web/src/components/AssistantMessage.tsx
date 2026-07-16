@@ -624,12 +624,6 @@ function AssistantMessageImpl({
     () => mergeProducedFilesIntoFileOps(fileOps, displayedProduced),
     [displayedProduced, fileOps],
   );
-  // The result section must contain artifacts, not inputs the agent merely
-  // inspected. Read/delete history remains available in the execution record.
-  const turnArtifactOps = useMemo(
-    () => turnFileOps.filter((entry) => entry.ops.includes('write') || entry.ops.includes('edit')),
-    [turnFileOps],
-  );
   // The single artifact the "next step" affordance anchors to: prefer the HTML
   // produced by THIS turn; if the final turn emitted none (a summary / continue
   // message) fall back to the most recently modified HTML in the project so
@@ -970,15 +964,15 @@ function AssistantMessageImpl({
             ].join(":")}
           />
         ) : null}
-        {turnArtifactOps.length > 0 ? (
+        {turnFileOps.length > 0 ? (
           <FileOpsSummary
-            entries={turnArtifactOps}
+            entries={turnFileOps}
             streaming={streaming}
             projectFileNames={projectFileNames}
             onRequestOpenFile={onRequestOpenFile}
           />
         ) : null}
-        {!streaming && turnArtifactOps.length === 0 && displayedProduced.length > 0 && projectId ? (
+        {!streaming && turnFileOps.length === 0 && displayedProduced.length > 0 && projectId ? (
           <ProducedFiles
             files={displayedProduced}
             projectId={projectId}
