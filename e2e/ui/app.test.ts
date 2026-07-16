@@ -1042,7 +1042,9 @@ async function runQuestionFormSubmitPersistenceFlow(
   const firstRunBody = (await firstRunRequestPromise).postDataJSON() as Record<string, unknown>;
   expectScenarioRunRequest(firstRunBody, entry);
 
-  const form = page.locator('.question-form').first();
+  const panel = page.getByTestId('questions-panel');
+  await expect(panel).toBeVisible();
+  const form = panel.locator('.question-form');
   await expect(form).toBeVisible();
 
   const toneQuestion = form.locator('.qf-field', { has: page.getByText('Visual tone') });
@@ -1050,7 +1052,9 @@ async function runQuestionFormSubmitPersistenceFlow(
   await toneQuestion.locator('label.qf-visual-card[title="Quiet SaaS"]').click();
   await expect(modern).toBeChecked();
 
-  await form.getByRole('button', { name: 'Send answers' }).click();
+  const continueButton = panel.getByRole('button', { name: /^Continue$/i });
+  await expect(continueButton).toBeEnabled();
+  await continueButton.click();
 
   const summary = page.getByTestId('question-form-summary');
   await expect(summary).toBeVisible();
@@ -1066,6 +1070,8 @@ async function runQuestionFormSubmitPersistenceFlow(
   const { messages } = (await messagesResponse.json()) as { messages: Array<{ role: string; content: string }> };
   const formAnswerMessage = messages.find((message) => message.role === 'user' && message.content.includes('[form answers — discovery]'));
   expect(formAnswerMessage).toBeTruthy();
+  expect(formAnswerMessage?.content).toContain('Editorial / magazine');
+  expect(formAnswerMessage?.content).toContain('Modern minimal');
 
   await page.reload();
   await expectWorkspaceReady(page);
