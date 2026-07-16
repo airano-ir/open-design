@@ -66,16 +66,17 @@ export function MessageCenterDemo({ onOpenNotificationSettings }: Props) {
     const startedAt = anonymousStartedAt(window.localStorage);
     const pulled = await pullMessageCenter({ locale, loggedIn: account, startedAt });
     if (requestId !== syncRequestIdRef.current) return;
-    const persistedReadIds = account ? readIdsRef.current : readAnonymousReadIds(window.localStorage);
     const serverReadIds = new Set(pulled.filter((message) => Boolean(message.readAt)).map((message) => message.id));
     if (account) {
       pendingReadIdsRef.current = new Set(
         [...pendingReadIdsRef.current].filter((messageId) => !serverReadIds.has(messageId)),
       );
     }
-    const overlayReadIds = account
-      ? new Set([...serverReadIds, ...pendingReadIdsRef.current])
-      : new Set([...serverReadIds, ...persistedReadIds]);
+    const overlayReadIds = new Set([
+      ...serverReadIds,
+      ...(account ? pendingReadIdsRef.current : []),
+      ...readIdsRef.current,
+    ]);
     const merged = pulled.map((message) => ({
       ...message,
       readAt: message.readAt ?? (overlayReadIds.has(message.id) ? new Date().toISOString() : null),
@@ -85,26 +86,31 @@ export function MessageCenterDemo({ onOpenNotificationSettings }: Props) {
     setSyncError(false);
   }, [commitState, locale]);
 
-  useEffect(() => {
-    const startedAt = anonymousStartedAt(window.localStorage);
-    void startedAt;
-    setMessages(readAnonymousMessages(window.localStorage));
-    setReadIds(readAnonymousReadIds(window.localStorage));
+  const retrySync = useCallback(() => {
     void sync().catch(() => setSyncError(true));
-    const interval = window.setInterval(() => void sync().catch(() => setSyncError(true)), 60_000);
+  }, [sync]);
+
+  useEffect(() => {
+    anonymousStartedAt(window.localStorage);
+    commitState(
+      readAnonymousMessages(window.localStorage),
+      readAnonymousReadIds(window.localStorage),
+    );
+    retrySync();
+    const interval = window.setInterval(retrySync, 60_000);
     const onVisibility = () => {
-      if (document.visibilityState === 'visible') void sync().catch(() => setSyncError(true));
+      if (document.visibilityState === 'visible') retrySync();
     };
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
       window.clearInterval(interval);
       document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, [sync]);
+  }, [commitState, retrySync]);
 
   useEffect(() => {
-    if (open) void sync().catch(() => setSyncError(true));
-  }, [open, sync]);
+    if (open) retrySync();
+  }, [open, retrySync]);
 
   const unreadCount = messages.filter((message) => !message.readAt).length;
   const visibleMessages = useMemo(
@@ -165,7 +171,17 @@ export function MessageCenterDemo({ onOpenNotificationSettings }: Props) {
     {open ? createPortal(<div className={styles.backdrop} data-testid="message-center-backdrop"><aside ref={panelRef} className={styles.panel} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} data-testid="message-center-dialog">
       <header className={styles.header}><div className={styles.headerCopy}><h2 id={titleId}>{t('messageCenter.title')}</h2><p>{t('messageCenter.subtitle')}</p></div><button type="button" className={styles.close} onClick={closePanel} aria-label={t('messageCenter.close')}><Icon name="close" size={15}/></button></header>
       <div className={styles.controls}><div className={styles.filters} role="group" aria-label={t('messageCenter.title')}>{FILTERS.map((item) => <button key={item.id} type="button" className={`${styles.filter}${filter === item.id ? ` ${styles.filterActive}` : ''}`} aria-pressed={filter === item.id} onClick={() => setFilter(item.id)}>{t(item.label)}{item.id === 'unread' && unreadCount > 0 ? <span className={styles.filterBadge} aria-hidden>{unreadBadgeLabel(unreadCount)}</span> : null}</button>)}</div><button type="button" className={styles.markAll} onClick={() => void markAllRead().catch(() => setSyncError(true))} disabled={unreadCount === 0}>{t('messageCenter.markAllRead')}</button></div>
-      <div className={styles.list} aria-live="polite">{syncError && messages.length === 0 ? <div className={styles.empty}><Icon name="bell" size={20}/><strong>{t('messageCenter.emptyAllTitle')}</strong><p>{t('messageCenter.emptyBody')}</p></div> : visibleMessages.length === 0 ? <div className={styles.empty}><Icon name="bell" size={20}/><strong>{emptyTitle}</strong><p>{t('messageCenter.emptyBody')}</p></div> : visibleMessages.map((message) => <MessageItem key={message.id} message={message} onRead={markRead} onError={() => setSyncError(true)}/>)}</div>
+      <div className={styles.list} aria-live="polite">
+        {syncError && messages.length > 0 ? (
+          <div className={styles.syncStatus} role="status">
+            <span>{t('settings.updateStatusFailed')}</span>
+            <button type="button" onClick={retrySync}>
+              {t('settings.updateRetry')}
+            </button>
+          </div>
+        ) : null}
+        {syncError && messages.length === 0 ? <div className={styles.empty}><Icon name="bell" size={20}/><strong>{t('messageCenter.emptyAllTitle')}</strong><p>{t('messageCenter.emptyBody')}</p></div> : visibleMessages.length === 0 ? <div className={styles.empty}><Icon name="bell" size={20}/><strong>{emptyTitle}</strong><p>{t('messageCenter.emptyBody')}</p></div> : visibleMessages.map((message) => <MessageItem key={message.id} message={message} onRead={markRead} onError={() => setSyncError(true)}/>)}
+      </div>
       <footer className={styles.footer}><p>{t('messageCenter.desktopSettingsHint')}</p>{onOpenNotificationSettings ? <Button variant="ghost" onClick={() => { closePanel(); onOpenNotificationSettings(); }}>{t('messageCenter.desktopSettings')}</Button> : null}</footer>
     </aside></div>, document.body) : null}
   </div>;

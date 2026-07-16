@@ -16,15 +16,17 @@ function mockFetch(
   options: {
     loggedIn?: boolean;
     messages?: MessageCenterMessage[];
+    onStatus?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+    onMessages?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
     onRead?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
   } = {},
 ) {
-  const { loggedIn = false, messages = defaultMessages, onRead } = options;
-  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+  const { loggedIn = false, messages = defaultMessages, onStatus, onMessages, onRead } = options;
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
-    if (url.includes('/status')) return Response.json({ loggedIn });
-    if (url.includes('/messages?')) return Response.json({ messages, nextCursor: null, unreadCount: 1 });
-    if (url.includes('/read')) return onRead ? onRead(input) : Response.json({ read: true, markedCount: 1 });
+    if (url.includes('/status')) return onStatus ? onStatus(input, init) : Response.json({ loggedIn });
+    if (url.includes('/messages?')) return onMessages ? onMessages(input, init) : Response.json({ messages, nextCursor: null, unreadCount: 1 });
+    if (url.includes('/read')) return onRead ? onRead(input, init) : Response.json({ read: true, markedCount: 1 });
     return new Response(null, { status: 404 });
   }));
 }
@@ -128,6 +130,37 @@ describe('MessageCenterDemo', () => {
     });
   });
 
+  it('hydrates cached anonymous state through the ref-backed source of truth', async () => {
+    const cachedMessages = [
+      { ...defaultMessages[0]!, id: 'release', title: 'Release update', readAt: null, ctaLabel: null, ctaUrl: null },
+      { ...defaultMessages[0]!, id: 'security', title: 'Security notice', readAt: null, ctaLabel: null, ctaUrl: null },
+    ] satisfies MessageCenterMessage[];
+    localStorage.setItem('open-design.message-center.anonymous-started-at.v1', '2026-07-16T00:00:00.000Z');
+    localStorage.setItem('open-design.message-center.anonymous-messages.v1', JSON.stringify(cachedMessages));
+    localStorage.setItem('open-design.message-center.anonymous-read-ids.v1', JSON.stringify([]));
+    mockFetch({
+      onMessages: async () => new Response(null, { status: 500 }),
+    });
+
+    renderMessageCenter();
+    await openCenter(2);
+    expect(screen.getByText('Release update')).toBeTruthy();
+    expect(screen.getByRole('status')).toHaveTextContent('Check failed. Please retry.');
+
+    fireEvent.click(screen.getByRole('button', { name: /Release update/ }));
+    await waitFor(() =>
+      expect(localStorage.getItem('open-design.message-center.anonymous-read-ids.v1')).toContain('release'),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mark all read' }));
+    await waitFor(() =>
+      expect(localStorage.getItem('open-design.message-center.anonymous-read-ids.v1')).toContain('security'),
+    );
+    expect(localStorage.getItem('open-design.message-center.anonymous-read-ids.v1')).toContain('release');
+    expect(localStorage.getItem('open-design.message-center.anonymous-read-ids.v1')).toContain('security');
+    expect(localStorage.getItem('open-design.message-center.anonymous-messages.v1')).toContain('Release update');
+  });
+
   it('reports mark-read failures without throwing an unhandled rejection', async () => {
     const rejection = new Error('mark-read failed');
     mockFetch({
@@ -145,6 +178,32 @@ describe('MessageCenterDemo', () => {
     await waitFor(() => expect(screen.getByText('Open Design 0.14 is available')).toBeTruthy());
     expect(unhandled).not.toHaveBeenCalled();
     window.removeEventListener('unhandledrejection', unhandled);
+  });
+
+  it('shows an inline sync error banner when mark-read fails with visible messages', async () => {
+    let readAttempts = 0;
+    mockFetch({
+      loggedIn: true,
+      onRead: async () => {
+        readAttempts += 1;
+        throw new Error('mark-read failed');
+      },
+    });
+    renderMessageCenter();
+    await openCenter();
+    await waitFor(() =>
+      expect(
+        vi.mocked(fetch).mock.calls.filter(([url]) => String(url).includes('/messages?')).length,
+      ).toBeGreaterThanOrEqual(2),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Open Design 0\.14 is available/ }));
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Check failed. Please retry.'));
+    expect(screen.getByText('Open Design 0.14 is available')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    await waitFor(() => expect(screen.queryByRole('status')).toBeNull());
+    expect(readAttempts).toBe(1);
   });
 
   it('hides CTA actions for non-http URLs', async () => {
