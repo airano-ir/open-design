@@ -289,7 +289,12 @@ describe('chat-log autoscroll when inline todo card grows', () => {
     await flushFrames();
 
     expect(document.querySelector('.chat-pinned-todo')).toBeNull();
-    expect(document.querySelector('.chat-log .op-card.op-todo')).not.toBeNull();
+    const todoCard = document.querySelector('.chat-log .op-card.op-todo');
+    expect(todoCard).not.toBeNull();
+    // The todo card owns the first disclosure level. It must not sit behind
+    // the generic tool-group accordion, otherwise its own 3/3 toggle is not
+    // the control users encounter in the chat transcript.
+    expect(todoCard?.closest('.action-card')).toBeNull();
     expect(screen.queryAllByText('Task 1').length).toBeGreaterThan(0);
   });
 
