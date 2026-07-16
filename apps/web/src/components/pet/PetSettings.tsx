@@ -510,9 +510,6 @@ export function PetSettings({ cfg, setCfg }: Props) {
               </span>
             ) : null}
           </span>
-          {p.description ? (
-            <span className="pet-codex-description">{p.description}</span>
-          ) : null}
         </div>
         <button
           type="button"
@@ -645,13 +642,6 @@ export function PetSettings({ cfg, setCfg }: Props) {
             </button>
           </div>
         </div>
-        <p className="hint pet-tabs-hint">
-          {activeTab === 'builtIn'
-            ? t('pet.tabBuiltInHint')
-            : activeTab === 'custom'
-              ? t('pet.tabCustomHint')
-              : t('pet.tabCommunityHint')}
-        </p>
       </div>
 
       {activeTab === 'builtIn' ? (

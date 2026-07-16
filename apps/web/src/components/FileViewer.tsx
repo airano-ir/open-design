@@ -77,7 +77,6 @@ import {
   exportProjectAsHtml,
   exportProjectAsPdf,
   exportProjectAsZip,
-  copyImageDataUrlToClipboard,
   exportReactComponentAsHtml,
   exportReactComponentAsZip,
   captureHostIframeSnapshot,
@@ -5071,6 +5070,9 @@ function HtmlViewer({
       const value = typeof next === 'function' ? (next as (p: boolean) => boolean)(prev) : next;
       if (value !== prev && !value) {
         setManualEditViewportWidth(null);
+        // Leaving edit mode clears the pin so the next session starts unlocked.
+        setManualEditPanelLocked(false);
+        setManualEditLockedPos(null);
       }
       return value;
     });
@@ -5177,8 +5179,17 @@ function HtmlViewer({
   const [manualEditHoverTarget, setManualEditHoverTarget] = useState<ManualEditTarget | null>(null);
   const [manualEditPageStylesOpen, setManualEditPageStylesOpen] = useState(false);
   const [manualEditPanelPosition, setManualEditPanelPosition] = useState<{ left: number; top: number } | null>(null);
+  // Pin/lock: while locked the panel is frozen at `manualEditLockedPos` — it
+  // can't be dragged AND it does not reposition when a different element is
+  // selected. The locked position survives selection changes (unlike the
+  // dragged `manualEditPanelPosition`, which the select/clear flow resets).
+  const [manualEditPanelLocked, setManualEditPanelLocked] = useState(false);
+  const [manualEditLockedPos, setManualEditLockedPos] = useState<{ left: number; top: number } | null>(null);
   const [manualEditDraftDirty, setManualEditDraftDirty] = useState(false);
   const selectedManualEditTargetIdRef = useRef<string | null>(null);
+  // Double-click detection: a rapid second click on the ALREADY-selected
+  // element dismisses the panel (the first selection of an element never does).
+  const manualEditReclickRef = useRef<{ id: string; at: number } | null>(null);
   const manualEditSelectionDraftRef = useRef<{ id: string; draft: ManualEditDraft } | null>(null);
   // Tracks the iframe's in-flight inline text edit. `finishManualEditTextSession`
   // posts the explicit finish and resolves only after the iframe acks AND the
@@ -5328,7 +5339,6 @@ function HtmlViewer({
   // (reset in openSaveAsTemplateModal) emits exactly one success/failed/
   // cancelled, whether it ends in a save or a modal dismiss.
   const templateExportResolvedRef = useRef(false);
-  const screenshotInFlightRef = useRef(false);
   const editScreenshotInFlightRef = useRef(false);
   const [screenshotFlight, setScreenshotFlight] = useState<
     { dataUrl: string; from: RectLike; to: RectLike; showFlash: boolean } | null
@@ -6051,6 +6061,18 @@ function HtmlViewer({
     return true;
   }, []);
 
+  // Live text preview for the panel's 文本 field, mirroring previewStyleToIframe:
+  // pushes the draft text to the iframe element so a newline shows immediately,
+  // not only after Save. The iframe reconciles this on save (inline commit /
+  // set-text) and on cancel (session restore, or the explicit revert below when
+  // the target was picked from the list with no inline session).
+  const previewTextToIframe = useCallback((id: string, value: string) => {
+    const win = iframeRef.current?.contentWindow;
+    if (!win) return false;
+    win.postMessage({ type: 'od-edit-preview-text', id, value }, '*');
+    return true;
+  }, []);
+
   function postSelectedManualEditTargetToIframe(id: string | null, target: HTMLIFrameElement | null = iframeRef.current) {
     const win = target?.contentWindow;
     if (!win) return;
@@ -6482,7 +6504,24 @@ function HtmlViewer({
       }
       if (data.type === 'od-edit-select') {
         setManualEditHoverTarget(null);
-        void selectManualEditTarget(data.target);
+        const target = data.target;
+        const now = Date.now();
+        // A click that lands on the element already open in the inspector is a
+        // "re-click"; two re-clicks within the double-click window dismiss the
+        // panel. The FIRST selection of an element is never a re-click, so
+        // double-clicking a fresh element just opens it (no flash-close).
+        const isReclickOnSelected = target.id === selectedManualEditTargetIdRef.current;
+        const isDoubleReclick =
+          isReclickOnSelected &&
+          manualEditReclickRef.current?.id === target.id &&
+          now - manualEditReclickRef.current.at < 350;
+        manualEditReclickRef.current = isReclickOnSelected ? { id: target.id, at: now } : null;
+        if (isDoubleReclick) {
+          manualEditReclickRef.current = null;
+          void dismissManualEditPanel();
+          return;
+        }
+        void selectManualEditTarget(target);
         return;
       }
       if (data.type === 'od-edit-hover') {
@@ -6894,6 +6933,24 @@ function HtmlViewer({
     else setManualEditPageStylesOpen(false);
   }
 
+  // Pin toggle: locking freezes the panel at its current on-screen position
+  // (read from the live DOM) so it stops following the selected element and
+  // can't be dragged. Unlocking clears the lock and any dragged position so the
+  // panel resumes following the selection and is draggable again.
+  function toggleManualEditPanelLock() {
+    setManualEditPanelLocked((prev) => {
+      const next = !prev;
+      if (next) {
+        const panel = document.querySelector('.manual-edit-right') as HTMLElement | null;
+        setManualEditLockedPos(panel ? { left: panel.offsetLeft, top: panel.offsetTop } : null);
+      } else {
+        setManualEditLockedPos(null);
+        setManualEditPanelPosition(null);
+      }
+      return next;
+    });
+  }
+
   function manualEditContentPatchForDraft(
     target: ManualEditTarget,
     draft: ManualEditDraft,
@@ -6991,6 +7048,17 @@ function HtmlViewer({
       if (!ok) return;
     }
     const refreshedBase = sourceRef.current ?? base;
+    // Revert any live text preview back to the snapshot text. A no-op when an
+    // inline session already restored it (same value); the load-bearing case is
+    // a list-picked target that never opened a session.
+    if (
+      (selectedManualEditTarget.kind === 'text'
+        || selectedManualEditTarget.kind === 'link'
+        || selectedManualEditTarget.kind === 'token')
+      && typeof snapshot.text === 'string'
+    ) {
+      previewTextToIframe(selectedManualEditTarget.id, snapshot.text);
+    }
     setManualEditDraft({
       ...snapshot,
       fullSource: refreshedBase,
@@ -7002,7 +7070,25 @@ function HtmlViewer({
   }
 
   async function cancelManualEditPanel() {
-    if (manualEditTextSessionIdRef.current) await finishManualEditTextSession(false);
+    if (manualEditTextSessionIdRef.current) {
+      // An inline session restores its own originalText on a non-committing
+      // finish, which also reverts any live text preview.
+      await finishManualEditTextSession(false);
+    } else if (
+      selectedManualEditTarget
+      && (selectedManualEditTarget.kind === 'text'
+        || selectedManualEditTarget.kind === 'link'
+        || selectedManualEditTarget.kind === 'token')
+    ) {
+      // No inline session (target picked from the list): revert any live text
+      // preview by re-pushing the element's source text.
+      const sourceText = readManualEditFields(sourceRef.current ?? '', selectedManualEditTarget.id).text
+        ?? selectedManualEditTarget.fields.text
+        ?? selectedManualEditTarget.text;
+      if (typeof sourceText === 'string') {
+        previewTextToIframe(selectedManualEditTarget.id, sourceText);
+      }
+    }
     if (selectedManualEditTarget) {
       void clearManualEditTargetSelection();
     } else {
@@ -8338,52 +8424,23 @@ function HtmlViewer({
     useUrlLoadPreview,
   ]);
 
-  const handleCopyScreenshot = useCallback(async () => {
-    fireArtifactToolbarClick('screenshot');
-    if (screenshotInFlightRef.current) return;
-    screenshotInFlightRef.current = true;
-    setExportToast({ message: t('fileViewer.screenshotCopying'), tone: 'loading' });
-    try {
-      const snap = await captureExportImageSnapshot();
-      if (!snap) {
-        setExportToast({ message: t('fileViewer.screenshotPreviewLoading'), tone: 'error' });
-        return;
-      }
-      const result = await copyImageDataUrlToClipboard(snap.dataUrl);
-      setExportToast(
-        result === 'copied'
-          ? { message: t('fileViewer.screenshotCopied'), tone: 'success' }
-          : {
-              message: t(
-                result === 'denied'
-                  ? 'fileViewer.screenshotClipboardDenied'
-                  : 'fileViewer.screenshotCaptureFailed',
-              ),
-              tone: 'error',
-            },
-      );
-    } catch (err) {
-      console.warn('[handleCopyScreenshot] failed:', err);
-      setExportToast({ message: t('fileViewer.screenshotCaptureFailed'), tone: 'error' });
-    } finally {
-      screenshotInFlightRef.current = false;
-    }
-  }, [captureExportImageSnapshot, t]);
-
-  // Quick edit-mode screenshot: capture the whole workspace exactly as the
-  // user sees it — preview content, the in-iframe guides/measurements, and the
-  // floating inspector panel — and stage it into the chat composer as a draft
-  // attachment (never auto-sends). Unlike captureExportImageSnapshot this must
-  // NOT hide the edit chrome; the guides are the point of the shot.
+  // Screenshot → chat: always available in preview. While editing it captures
+  // the whole workspace (preview + in-iframe guides/measurements + the floating
+  // inspector); otherwise it captures the clean preview. Either way the shot is
+  // staged into the chat composer as a draft attachment (never auto-sends).
   const handleManualEditScreenshotToChat = useCallback(async () => {
     if (editScreenshotInFlightRef.current) return;
     editScreenshotInFlightRef.current = true;
     try {
-      const workspaceEl = manualEditWorkspaceRef.current;
       const iframe = iframeRef.current;
-      if (!manualEditMode || !workspaceEl || !iframe) return;
+      // While editing, capture the whole workspace (preview + guides +
+      // inspector); otherwise capture just the clean preview. The fly-from
+      // region is the edit workspace when editing, else the visible preview.
+      const editWorkspaceEl = manualEditMode ? manualEditWorkspaceRef.current : null;
+      const sourceEl = editWorkspaceEl ?? iframe;
+      if (!sourceEl) return;
       const desktopHost = isOpenDesignHostAvailable();
-      const wsRect = workspaceEl.getBoundingClientRect();
+      const wsRect = sourceEl.getBoundingClientRect();
       const wsRectLike: RectLike = {
         left: wsRect.left,
         top: wsRect.top,
@@ -8399,36 +8456,44 @@ function HtmlViewer({
       // Let the button's tooltip/hover chrome dismiss before pixels are read.
       await waitForAnimationFrame();
       await waitForAnimationFrame();
-      // Reaching the toolbar cleared the hover guides — bring back the ones
-      // the user was just looking at, then wait for them to actually paint.
-      // (On a keyboard-triggered capture the hover may still be live; the
-      // bridge reports that via `live` so the post-capture clear is skipped.)
-      const { restored, live } = await requestManualEditGuidesRestore(iframe, { maxAgeMs: 4000 });
-      if (restored) {
-        await waitForAnimationFrame();
-        await waitForAnimationFrame();
-      }
-      // Desktop compositor grabs iframe + guides + host overlays in one shot;
-      // pure web composites the iframe snapshot with overlay rasterizations.
-      let snap = await captureHostRegionSnapshot(wsRectLike);
-      if (!snap) {
-        const iframeSnap = await requestPreviewSnapshotWithRetry(iframe);
-        if (iframeSnap) {
-          snap = await compositeManualEditWorkspace({
-            workspaceEl,
-            iframeEl: iframe,
-            iframeSnapshot: iframeSnap,
-          });
+      let dataUrl: string | null = null;
+      if (editWorkspaceEl && iframe) {
+        // Reaching the toolbar cleared the hover guides — bring back the ones
+        // the user was just looking at, then wait for them to actually paint.
+        // (On a keyboard-triggered capture the hover may still be live; the
+        // bridge reports that via `live` so the post-capture clear is skipped.)
+        const { restored, live } = await requestManualEditGuidesRestore(iframe, { maxAgeMs: 4000 });
+        if (restored) {
+          await waitForAnimationFrame();
+          await waitForAnimationFrame();
         }
+        // Desktop compositor grabs iframe + guides + host overlays in one shot;
+        // pure web composites the iframe snapshot with overlay rasterizations.
+        let snap = await captureHostRegionSnapshot(wsRectLike);
+        if (!snap) {
+          const iframeSnap = await requestPreviewSnapshotWithRetry(iframe);
+          if (iframeSnap) {
+            snap = await compositeManualEditWorkspace({
+              workspaceEl: editWorkspaceEl,
+              iframeEl: iframe,
+              iframeSnapshot: iframeSnap,
+            });
+          }
+        }
+        if (restored && !live) clearManualEditHover();
+        dataUrl = snap?.dataUrl ?? null;
+      } else {
+        // Not editing: capture the clean preview (no guides to restore).
+        const snap = await captureExportImageSnapshot();
+        dataUrl = snap?.dataUrl ?? null;
       }
-      if (restored && !live) clearManualEditHover();
-      if (!snap) {
+      if (!dataUrl) {
         setExportToast({ message: t('fileViewer.screenshotCaptureFailed'), tone: 'error' });
         return;
       }
-      const blob = await fetch(snap.dataUrl).then((response) => response.blob());
+      const blob = await fetch(dataUrl).then((response) => response.blob());
       const ts = new Date().toISOString().replace(/[:.]/g, '-');
-      const shot = new File([blob], `edit-screenshot-${ts}.png`, { type: 'image/png' });
+      const shot = new File([blob], `screenshot-${ts}.png`, { type: 'image/png' });
       const detail: AnnotationEventDetail = {
         file: shot,
         note: '',
@@ -8447,7 +8512,7 @@ function HtmlViewer({
         const toWidth = 120;
         const toHeight = Math.max(1, toWidth * (wsRect.height / Math.max(1, wsRect.width)));
         setScreenshotFlight({
-          dataUrl: snap.dataUrl,
+          dataUrl,
           from: wsRectLike,
           to: {
             left: composerRect.left + 16,
@@ -8464,7 +8529,7 @@ function HtmlViewer({
     } finally {
       editScreenshotInFlightRef.current = false;
     }
-  }, [manualEditMode, file.name, t]);
+  }, [manualEditMode, file.name, t, captureExportImageSnapshot]);
 
   // Double-tap Command hotkey for the edit-mode screenshot — host-focus half.
   // The edit bridge detects the same gesture when keyboard focus sits inside
@@ -8931,6 +8996,19 @@ function HtmlViewer({
         void selectManualEditTarget(target);
       }}
       onDraftChange={(draft) => {
+        // Live-preview a text change the moment it is typed (matching how style
+        // fields already preview), so newlines — which can only be added in the
+        // panel textarea, since inline editing commits on Enter — appear in the
+        // preview immediately instead of only after Save.
+        if (
+          selectedManualEditTarget
+          && draft.text !== manualEditDraft.text
+          && (selectedManualEditTarget.kind === 'text'
+            || selectedManualEditTarget.kind === 'link'
+            || selectedManualEditTarget.kind === 'token')
+        ) {
+          previewTextToIframe(selectedManualEditTarget.id, draft.text);
+        }
         setManualEditDraft(draft);
         setManualEditDraftDirty(Boolean(selectedManualEditTarget));
       }}
@@ -8965,15 +9043,25 @@ function HtmlViewer({
       }}
       floatingClassName={manualEditPageCardActive ? 'manual-edit-page-card' : undefined}
       floatingStyle={selectedManualEditTarget
-        ? {
-            ...manualEditFloatingPanelStyle(
+        ? (() => {
+            // Reuse the helper only for the size (width + height cap); the
+            // panel no longer anchors to the element. Default position is the
+            // top-right corner; a dragged or locked position moves it and wins.
+            const auto = manualEditFloatingPanelStyle(
               selectedManualEditTarget,
               overlayPreviewScale,
               previewBodySize,
-            ),
-            ...(manualEditPanelPosition ?? {}),
-          }
+            );
+            const frozen = manualEditPanelLocked && manualEditLockedPos
+              ? manualEditLockedPos
+              : manualEditPanelPosition;
+            return frozen
+              ? { width: auto.width, maxHeight: auto.maxHeight, left: frozen.left, top: frozen.top }
+              : { width: auto.width, maxHeight: auto.maxHeight, top: 12, right: 12 };
+          })()
         : { top: 12, right: 12, width: 320 }}
+      locked={manualEditPanelLocked}
+      onToggleLock={toggleManualEditPanelLock}
       onFloatingPositionChange={selectedManualEditTarget ? setManualEditPanelPosition : undefined}
       onPickImage={async (pickedFile) => {
         const result = await uploadProjectFiles(projectId, [pickedFile]);
@@ -9312,21 +9400,6 @@ function HtmlViewer({
           {showPreviewToolbarControls ? (
             <>
               {mode === 'preview' ? (
-                <button
-                  type="button"
-                  className="viewer-action viewer-action-icon od-tooltip"
-                  data-testid="screenshot-copy-button"
-                  data-tooltip={t('fileViewer.screenshot')}
-                  data-tooltip-placement="bottom"
-                  title={t('fileViewer.screenshot')}
-                  aria-label={t('fileViewer.screenshot')}
-                  disabled={viewerOnly}
-                  onClick={handleCopyScreenshot}
-                >
-                  <RemixIcon name="screenshot-2-line" size={15} />
-                </button>
-              ) : null}
-              {mode === 'preview' && manualEditMode ? (
                 <button
                   type="button"
                   className="viewer-action viewer-action-icon od-tooltip"

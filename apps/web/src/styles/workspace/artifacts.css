@@ -199,7 +199,8 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  /* Rows are separated by hairline dividers, not gaps between bordered cards. */
+  gap: 0;
 }
 .mcp-client-body {
   display: flex;
@@ -213,8 +214,9 @@
   flex-direction: column;
   gap: 8px;
   padding: 12px 14px;
+  /* Borderless: the panel fill alone separates the card from the page. */
   background: var(--bg-panel);
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: var(--radius-sm);
   line-height: 1.55;
 }
@@ -239,8 +241,9 @@
   flex-direction: column;
   gap: 12px;
   padding: 14px;
+  /* Borderless: the panel fill alone separates the card from the page. */
   background: var(--bg-panel);
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: var(--radius-sm);
 }
 .mcp-setup-card .ds-picker {
@@ -256,10 +259,16 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px;
-  background: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  /* Surfaceless rows split by hairline dividers instead of individual bordered
+     cards — no fill, no border, no radius; the last row drops its divider. */
+  padding: 14px 2px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--border-soft);
+  border-radius: 0;
+}
+.settings-about-list > div:last-child {
+  border-bottom: 0;
 }
 .settings-about-version-row {
   justify-content: space-between;
@@ -822,7 +831,9 @@
   margin-top: 12px;
   max-width: 760px;
   padding: 10px 12px;
-  background: var(--bg-subtle);
+  /* Lighter panel fill to match the provider cards above (was the darker
+     --bg-subtle). */
+  background: var(--bg-panel);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
 }
@@ -978,15 +989,16 @@
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  gap: 34px;
+  /* Section rhythm on the spacing scale (was an off-scale 34px). */
+  gap: var(--spacing-32);
   overflow-x: hidden;
 }
 .settings-general-block {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: var(--spacing-18);
   min-width: 0;
-  padding: 0 0 34px;
+  padding: 0 0 var(--spacing-32);
   border-bottom: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
 }
 .settings-general-block:last-child {
@@ -996,31 +1008,35 @@
 .settings-general-block-head {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--spacing-6);
 }
 .settings-general-block-head h3 {
   margin: 0;
   color: var(--text-strong);
-  font-size: 20px;
+  /* Sub-heading per the type spec: 16 / 600, line-height 125%. Matches the
+     界面语言 field label below so every section title reads at one level. */
+  font-size: var(--font-size-16);
   font-weight: 600;
-  letter-spacing: -0.01em;
+  line-height: 1.25;
 }
 .settings-general-block-head .hint {
   margin: 0;
   color: var(--text-muted);
+  font-size: var(--font-size-13);
+  line-height: 1.25;
 }
 .settings-general-field {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--spacing-12);
   min-width: 0;
 }
 .settings-general-label {
   display: block;
   color: var(--text-strong);
-  font-size: 14px;
+  font-size: var(--font-size-16);
   font-weight: 600;
-  line-height: 1.4;
+  line-height: 1.25;
 }
 .settings-general-select {
   position: relative;
@@ -1033,16 +1049,17 @@
   width: auto;
   max-width: min(420px, 100%);
   field-sizing: content;
-  height: 48px;
+  height: var(--spacing-48);
   appearance: none;
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--radius-md, 12px);
   background: color-mix(in srgb, var(--bg-subtle) 74%, var(--bg-panel));
   color: var(--text);
-  padding: 0 42px 0 16px;
+  padding: 0 var(--spacing-42) 0 var(--spacing-16);
   font: inherit;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: var(--font-size-14);
+  font-weight: 500;
+  line-height: 1.25;
   outline: 0;
   cursor: pointer;
   box-shadow: none;
@@ -1053,14 +1070,19 @@
 .settings-general-select select:focus-visible {
   border-color: var(--selected);
 }
-.settings-general-select svg {
+/* The chevron renders as an <i class="od-icon"> font glyph, not an <svg>, so
+   anchor it to the pill's right edge (inside the 42px right padding). */
+.settings-general-select svg,
+.settings-general-select .od-icon {
   position: absolute;
-  right: 13px;
+  right: var(--spacing-12);
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--text-muted);
   pointer-events: none;
 }
 .settings-general-block .settings-section {
-  gap: 16px;
+  gap: var(--spacing-16);
   min-width: 0;
 }
 .settings-general-block .settings-section-card {
@@ -1425,16 +1447,29 @@
   gap: 10px;
   min-width: 0;
 }
-.agent-group-rescan-btn {
+/* button.… specificity so it beats `button.icon-btn` (radius) in primitives. */
+button.agent-group-rescan-btn {
   min-width: 92px;
   min-height: 32px;
+  height: auto;
+  /* Gray capsule (matches the composer footer pill family). */
+  border-radius: var(--radius-pill);
+  border-color: transparent;
+  background: var(--bg-subtle);
+  color: var(--text);
+}
+button.agent-group-rescan-btn:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--bg-muted);
 }
 .agent-install-collapse {
   margin-top: 10px;
   padding: 10px 12px;
-  border: 1px solid var(--border-soft);
+  border: 1px solid transparent;
   border-radius: var(--radius-sm);
-  background: var(--bg-subtle);
+  /* Match the installed-agent cards above (--bg-panel) instead of the grayer
+     --bg-subtle, so the "installable" group reads as the same surface. */
+  background: var(--bg-panel);
 }
 .agent-install-collapse-summary {
   list-style: none;
@@ -1493,7 +1528,9 @@
   min-height: 64px;
   padding: 6px 10px;
   background: var(--bg-panel);
-  border: 1px solid var(--border);
+  /* Borderless: the panel fill + grid gaps delineate cards (transparent 1px
+     keeps geometry stable across states). */
+  border: 1px solid transparent;
   border-radius: var(--radius-sm);
   cursor: pointer;
   text-align: left;
@@ -1605,40 +1642,56 @@
   text-align: left;
   cursor: pointer;
 }
-.agent-card-test-btn {
-  align-self: stretch;
-  flex-shrink: 0;
-  min-width: 112px;
-  margin: 0;
-  padding: 0 18px;
-  border: 0;
-  border-left: 1px solid var(--border-soft);
-  border-radius: 0;
+/* The row is a bare <button>, so the global `button:hover` repaint in
+   primitives.css would wash `--bg-subtle` over the card's own fill. Selection
+   is the only state this row expresses; the test pill keeps its own hover.
+   Needs :not(:disabled) to out-specify that global rule. */
+.agent-card-select:hover:not(:disabled) {
   background: transparent;
-  color: var(--text);
-  font-weight: 600;
+  border-color: transparent;
 }
-.agent-card-test-btn:hover:not(:disabled) {
+/* Pill action, vertically centered against the agent icon (not a full-height
+   divider strip). Spec: outline pill, weight 500, medium size. The compound
+   selector out-specifies `button.icon-btn` (height/radius/padding base). */
+.agent-card-installed .agent-card-test-btn {
+  align-self: center;
+  flex-shrink: 0;
+  margin: 0 16px 0 4px;
+  padding: 0 18px;
+  height: 36px;
+  min-width: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill, 999px);
+  background: var(--bg-panel);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+}
+.agent-card-installed .agent-card-test-btn:hover:not(:disabled) {
   background: color-mix(in srgb, var(--accent-tint) 58%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
   color: var(--accent-strong);
 }
 .agent-card:hover:not(.disabled) {
-  border-color: var(--border-strong);
+  border-color: transparent;
 }
 .agent-card.active {
-  border-color: color-mix(in srgb, var(--accent) 36%, var(--border));
+  border-color: transparent;
   background: var(--bg-panel);
-  box-shadow:
-    0 1px 0 color-mix(in srgb, var(--bg-panel) 88%, transparent) inset,
-    0 10px 28px color-mix(in srgb, var(--text) 9%, transparent);
+  box-shadow: none;
 }
-.agent-card-installed.active .agent-card-main {
+/* One continuous fill for the whole active card — header + model config share
+   it, so there is no tone seam between the two halves (they are one module). */
+.agent-card-installed.active {
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--accent-tint) 32%, var(--bg-panel)),
-      color-mix(in srgb, var(--accent-tint) 10%, var(--bg-panel))
+      color-mix(in srgb, var(--accent-tint) 22%, var(--bg-panel)),
+      var(--bg-panel)
     );
+}
+.agent-card-installed.active .agent-card-main {
+  background: transparent;
 }
 .agent-card-installed.active .agent-card-select {
   min-height: 78px;
@@ -1660,8 +1713,19 @@
   cursor: not-allowed;
   opacity: 0.55;
 }
+/* Installable ("可安装") cards keep their brand logos in full color. A
+   parent `opacity` would multiply down onto the masked/`<img>` marks and
+   grey them out (and can't be undone by a child `opacity`), so the
+   "not installed" hint lives on the text tokens below instead — the logo
+   stays true to the brand. */
 .agent-card.disabled.agent-card-unavailable {
-  opacity: 0.72;
+  opacity: 1;
+}
+.agent-card.agent-card-unavailable .agent-card-name {
+  color: var(--text);
+}
+.agent-card.agent-card-unavailable .agent-card-description {
+  color: var(--text-muted);
 }
 /* Unavailable cards stack vertically: the logo/name/links live in a single
    top row, and any diagnostic reason gets its own full-width row underneath
@@ -1670,12 +1734,31 @@
   flex-direction: column;
   align-items: stretch;
   gap: 0;
+  /* White base card (theme-aware: --bg is #fff light / #202020 dark) so each
+     installable card reads as a clean surface on the group background. */
+  background: var(--bg);
 }
 .agent-card-unavailable-row {
   display: flex;
   align-items: center;
   gap: 10px;
   width: 100%;
+}
+/* All of an installable card's actions collapse into one horizontal bar at
+   the card's foot, fenced off from the logo/name/diagnostics above by a hair
+   divider. Docs + rescan read as quiet icon buttons; Install keeps its label
+   as the primary call-to-action and takes the right edge. */
+.agent-card-unavailable .agent-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-soft, var(--border));
+}
+.agent-card-unavailable .agent-card-footer .agent-card-link--ghost {
+  margin-left: auto;
 }
 .agent-card-actions {
   display: flex;
@@ -1725,6 +1808,10 @@
   justify-content: center;
   width: 26px;
   height: 26px;
+  /* Borderless: the rescan control is a <button>, which picks up the global
+     1px button border (primitives.css); drop it so docs + rescan read as
+     quiet icon buttons as intended. */
+  border: 0;
   border-radius: var(--radius-sm);
 }
 .agent-card-link--icon:hover {
@@ -2141,13 +2228,10 @@
   display: grid;
   gap: 9px;
   padding: 16px 24px 18px;
-  border-top: 1px solid color-mix(in srgb, var(--accent) 14%, var(--border-soft));
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--bg-subtle) 52%, var(--bg-panel)),
-      color-mix(in srgb, var(--bg-panel) 92%, var(--bg-subtle))
-    );
+  border-top: 0;
+  /* Transparent: the card owns one continuous fill (see the active-card rule),
+     so the header and this model section read as a single module with no seam. */
+  background: transparent;
 }
 .agent-card-config select,
 .agent-card-config input,
@@ -2166,7 +2250,8 @@
 */
 .settings-section-card {
   padding: 16px;
-  border: 1px solid var(--border-soft);
+  /* Borderless: the panel fill alone separates the card from the page. */
+  border: 0;
   border-radius: var(--radius-sm);
   background: var(--bg-panel);
 }
@@ -2258,6 +2343,16 @@
 .settings-section-byok input {
   background-color: var(--bg-panel);
 }
+/* Roomier field stack: every text box in this section shares one 40px box and
+   14px text. A fixed-height <input> centers its own text, so this needs no
+   padding/line-height pairing — unlike the picker below, which is a <button>.
+   `.settings-byok-key-input-wrap > input` still out-specifies the
+   padding-right that clears the show/hide toggle. */
+.settings-section-byok input {
+  height: 40px;
+  padding: 0 12px;
+  font-size: 14px;
+}
 .settings-section-byok .settings-base-url-readonly .field-row input[readonly] {
   background-color: var(--bg-panel);
   color: var(--text);
@@ -2322,13 +2417,32 @@
   color: var(--text);
   box-shadow: none;
 }
+/* Outline pill, sized to sit level with the 40px key input beside it. Stays
+   outline rather than filled so it never competes with this section's filled
+   "test connection" CTA; keeps the link's `--selected` text as its
+   affordance. Overrides `.field-label-link`'s 12px + hover underline. */
 .settings-section-byok .settings-byok-key-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  min-height: 28px;
+  height: 40px;
+  padding: 0 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill, 999px);
+  background: var(--bg-panel);
+  color: var(--selected);
+  font-size: 14px;
+  font-weight: 500;
   white-space: nowrap;
+  text-decoration: none;
+}
+.settings-section-byok .settings-byok-key-link:hover,
+.settings-section-byok .settings-byok-key-link:focus-visible {
+  border-color: color-mix(in srgb, var(--selected) 40%, var(--border));
+  background: color-mix(in srgb, var(--selected) 8%, var(--bg-panel));
+  color: var(--selected);
+  text-decoration: none;
 }
 .settings-section-byok .settings-byok-key-label,
 .settings-section-byok .settings-byok-field-label {
@@ -2452,7 +2566,7 @@
   align-items: center;
   gap: 8px;
   width: 100%;
-  min-height: 34px;
+  min-height: 40px;
   padding: 0 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -2482,6 +2596,21 @@
   box-shadow: var(--shadow-lg);
   overflow: hidden;
 }
+/* Settings agent model picker: flat popover (no elevation), the border alone
+   separates it from the page. */
+.model-select-searchable__popover.settings-model-popover {
+  box-shadow: none;
+}
+/* One 14px text size across this popover, matching the trigger that opens it.
+   Every rule here out-specifies an explicit size on the base class, so a
+   font-size on the popover root alone would not inherit through. The selected
+   row carries no size of its own, so it follows the label rule. */
+.settings-model-popover .model-select-searchable__option-label,
+.settings-model-popover .model-select-searchable__option-meta,
+.settings-model-popover .model-select-searchable__empty,
+.settings-model-popover .model-select-searchable__input {
+  font-size: 14px;
+}
 .model-select-searchable__search-row {
   padding: 0;
   border-bottom: 1px solid var(--border);
@@ -2507,6 +2636,10 @@
   border-radius: var(--radius);
   display: flex;
   flex-direction: column;
+  /* Column flex makes the cross axis horizontal, so the button base's
+     `align-items: center` would center each shrink-to-fit label and make
+     `text-align: left` above inert. */
+  align-items: flex-start;
   gap: 2px;
   color: var(--text);
   cursor: pointer;
@@ -2569,14 +2702,29 @@
   line-height: 1.35;
 }
 .settings-section-byok .model-select-searchable > .settings-model-select {
-  height: 34px;
+  height: 40px;
   min-height: auto;
-  padding: 7px 32px 7px 10px;
-  line-height: 18px;
+  /* Matches the 40px input box above: 9 + 20 + 9 + 2px border. This is a
+     block-display <button>, so the padding/line-height pair does the
+     vertical centering an <input> gets for free. */
+  padding: 9px 32px 9px 12px;
+  font-size: 14px;
+  line-height: 20px;
   background:
     var(--bg-panel)
     url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%2374716b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 5 6 8 9 5'/%3E%3C/svg%3E")
     no-repeat right 10px center / 12px 12px;
+}
+/* Agent-card picker: a taller box than the 32px `.inline-switcher__select`
+   default, at the same 14px as the options in the popover it opens (that
+   default would otherwise hold the selected value at 12px). `.settings-model-select`
+   makes this a block, so the padding + line-height pair (9 + 20 + 9 + 2px
+   border = 40px) does the vertical centering `align-items` would on the flex base. */
+.agent-model-select-wrap .model-select-searchable > .settings-model-select {
+  height: 40px;
+  padding: 9px 32px 9px 12px;
+  font-size: 14px;
+  line-height: 20px;
 }
 .settings-model-select--byok {
   min-width: min(420px, 100%);
@@ -2612,8 +2760,10 @@
 }
 .agent-cli-env {
   padding: 10px 12px;
-  border: 1px solid var(--border-soft);
+  border: 1px solid transparent;
   border-radius: var(--radius-sm);
+  /* Same surface as the "可安装" collapse (.agent-install-collapse, --bg-panel)
+     so the two folded sections read as one family. */
   background: var(--bg-panel);
 }
 .agent-cli-env-summary {
@@ -3418,6 +3568,16 @@
 }
 .toggle-row.disabled:hover,
 .toggle-row:disabled:hover { border-color: var(--border); }
+/* Critique-theater setting reads as a flat section row, not a filled card:
+   drop the panel background + border (incl. the .on tinted fill) so it sits
+   inline with the surrounding settings instead of looking like a module. */
+.toggle-row.critique-theater-toggle,
+.toggle-row.critique-theater-toggle:hover,
+.toggle-row.critique-theater-toggle.on {
+  padding-inline: 0;
+  background: transparent;
+  border-color: transparent;
+}
 .toggle-row-text {
   flex: 1;
   min-width: 0;
@@ -3459,7 +3619,9 @@
 .toggle-row.on .toggle-row-switch { background: var(--text); }
 .toggle-row.on .toggle-row-switch::after { transform: translateX(14px); }
 .critique-theater-toggle {
-  max-width: 720px;
+  /* Span the full section width so the switch sits flush at the right edge,
+     lined up with the "默认位置" button above it. */
+  max-width: none;
   margin-top: 14px;
 }
 .critique-theater-toggle .toggle-row-label {

@@ -953,6 +953,22 @@ export function buildManualEditBridge(enabled: boolean): string {
       applyPreviewStyles(ev.data.id, ev.data.styles || {}, ev.data.version);
       return;
     }
+    if (ev.data.type === 'od-edit-preview-text') {
+      // Live text preview from the host panel's 文本 textarea — the counterpart
+      // to od-edit-preview-style. Setting textContent on the (blurred, the host
+      // textarea holds focus) element mirrors exactly what the set-text patch
+      // will persist, so a newline typed in the panel shows immediately instead
+      // of only after Save. Guarded to text leaves (no element children) so it
+      // can never clobber nested markup — set-text rejects those anyway. When an
+      // inline session is live on the same element, updating its textContent is
+      // safe: the session commits the current textContent on save and restores
+      // its own originalText on cancel, so both paths still reconcile.
+      var ptEl = findById(ev.data.id || '');
+      if (ptEl && ptEl !== document.body && ptEl.children.length === 0) {
+        ptEl.textContent = String(ev.data.value == null ? '' : ev.data.value);
+      }
+      return;
+    }
     if (ev.data.type === 'od-edit-text-finish') {
       finishActiveTextEdit(ev.data.commit !== false);
       return;

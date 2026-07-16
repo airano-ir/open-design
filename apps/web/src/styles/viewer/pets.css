@@ -76,6 +76,24 @@
   align-items: center;
   gap: 6px;
 }
+/* Match the "默认位置" pill so the two right-aligned action buttons read as one
+   style — same grey capsule, border, radius, size, and weight. */
+.pet-wake-controls .seg-btn {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.pet-wake-controls .seg-btn:not(.active) {
+  background: var(--bg-subtle);
+}
+.pet-wake-controls .seg-btn span {
+  font-size: 12px;
+  font-weight: 600;
+  color: inherit;
+}
 .pet-source-head {
   margin-top: 14px;
   display: grid;

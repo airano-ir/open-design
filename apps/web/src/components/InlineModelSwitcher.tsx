@@ -559,9 +559,12 @@ export function InlineModelSwitcher({
         : t('inlineSwitcher.modelDefault')
       : config.model.trim() || t('inlineSwitcher.modelDefault');
 
-  // Compact home chip is icon-only — it surfaces the active agent's brand mark
-  // and opens the agent picker; label/tooltip fall back to the agent name.
-  const chipAgentId = currentAgent?.id ?? config.agentId ?? 'claude';
+  // Compact home chip surfaces the selected model name + a connection-status
+  // dot; label/tooltip fall back to the agent name. In CLI mode the agent's
+  // `available` flag is the connection signal (reachable on PATH); API/BYOK is
+  // a user-configured endpoint, treated as connected.
+  const chipConnected =
+    config.mode === 'daemon' ? currentAgent?.available === true : true;
   const chipAgentLabel = currentAgent
     ? displayAgentName(currentAgent)
     : t('inlineSwitcher.chipTitle');
@@ -620,19 +623,42 @@ export function InlineModelSwitcher({
             aria-hidden="true"
           />
         ) : null}
-        <span className="inline-switcher__chip-icon" aria-hidden="true">
-          {compact ? (
-            <AgentIcon id={chipAgentId} size={20} />
-          ) : config.mode === 'daemon' && currentAgent ? (
-            <AgentIcon id={currentAgent.id} size={18} />
-          ) : (
-            <span className="inline-switcher__byok-glyph">
-              <Icon name="link" size={14} />
-            </span>
-          )}
-        </span>
-        {compact ? null : (
+        {compact ? (
           <>
+            {/* Same agent logo (with the BYOK link-glyph fallback) the full
+                chip leads with, so the compact pill still says which agent the
+                model belongs to. */}
+            <span className="inline-switcher__chip-icon" aria-hidden="true">
+              {config.mode === 'daemon' && currentAgent ? (
+                <AgentIcon id={currentAgent.id} size={18} />
+              ) : (
+                <span className="inline-switcher__byok-glyph">
+                  <Icon name="link" size={14} />
+                </span>
+              )}
+            </span>
+            {/* Divider sits right after the agent logo; the status dot then
+                leads the model name so the dot reads as part of the model
+                label rather than trailing the logo. */}
+            <span className="inline-switcher__chip-divider" aria-hidden="true" />
+            <span
+              className="inline-switcher__chip-conn"
+              data-connected={chipConnected ? 'true' : 'false'}
+              aria-hidden="true"
+            />
+            <span className="inline-switcher__chip-model-name">{chipModel}</span>
+          </>
+        ) : (
+          <>
+            <span className="inline-switcher__chip-icon" aria-hidden="true">
+              {config.mode === 'daemon' && currentAgent ? (
+                <AgentIcon id={currentAgent.id} size={18} />
+              ) : (
+                <span className="inline-switcher__byok-glyph">
+                  <Icon name="link" size={14} />
+                </span>
+              )}
+            </span>
             <span className="inline-switcher__chip-text">
               <span className="inline-switcher__chip-mode">{chipMode}</span>
               <span className="inline-switcher__chip-sep" aria-hidden="true">
@@ -724,7 +750,52 @@ export function InlineModelSwitcher({
             </div>
           )}
 
-          {compact || config.mode === 'daemon' ? (
+          {compact ? (
+            // Compact home popover: a plain list of the CURRENT agent's model
+            // names (no header, no agent icons) — switching agents lives in
+            // the execution settings entry below.
+            <div className="inline-switcher__row">
+              {currentAgent && (currentAgent.models?.length ?? 0) > 0 ? (
+                <div className="inline-switcher__agent-grid" role="radiogroup">
+                  {(currentAgent.models ?? []).map((m) => {
+                    const active = currentModelId === m.id;
+                    return (
+                      <div key={m.id} className="inline-switcher__agent-row">
+                        <button
+                          type="button"
+                          role="radio"
+                          aria-checked={active}
+                          className={
+                            'inline-switcher__agent' + (active ? ' is-active' : '')
+                          }
+                          data-testid={`inline-model-switcher-compact-model-${m.id}`}
+                          onClick={() => {
+                            trackExecutionSettingsPopoverClick(analytics.track, {
+                              page_name: 'home',
+                              area: 'execution_settings_popover',
+                              element: 'model_dropdown',
+                              execution_mode: 'local_cli',
+                              model_id: modelIdForTracking(m.id),
+                            });
+                            onAgentModelChange?.(currentAgent.id, { model: m.id });
+                            setOpen(false);
+                          }}
+                        >
+                          <span className="inline-switcher__agent-name">
+                            {m.label}
+                          </span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <span className="inline-switcher__hint">
+                  {t('inlineSwitcher.openSettingsForModel')}
+                </span>
+              )}
+            </div>
+          ) : config.mode === 'daemon' ? (
             <>
               <div className="inline-switcher__row">
                 <span className="inline-switcher__label">

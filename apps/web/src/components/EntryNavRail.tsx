@@ -17,7 +17,7 @@ import { PlanBadge, planBadgeTierForLabel } from './PlanBadge';
 import { Icon } from './Icon';
 import { useT } from '../i18n';
 import { LIBRARY_UI_VISIBLE } from '../features/libraryUi';
-import { GITHUB_REPO_URL } from './useGithubStars';
+import { GITHUB_REPO_URL, GITHUB_STARS_FALLBACK_LABEL, formatStars, useGithubStars } from './useGithubStars';
 
 const REPO_URL = 'https://github.com/nexu-io/open-design';
 const GITHUB_HELP_URL = `${REPO_URL}/issues/new`;
@@ -102,6 +102,7 @@ export function EntryNavRail({ view, onViewChange, onNewProject, open, onClose, 
   const homeLabel = t('entry.navHome');
   const isHome = view === 'home';
   const [accountOpen, setAccountOpen] = useState(false);
+  const githubStars = useGithubStars();
   const [teamOpen, setTeamOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [createTeamOpen, setCreateTeamOpen] = useState(false);
@@ -229,12 +230,6 @@ export function EntryNavRail({ view, onViewChange, onNewProject, open, onClose, 
                     <Icon name="chevron-right" size={14} />
                   </span>
                 </div>
-                <div className="entry-nav-rail__menu-credits-row">
-                  <span className="entry-nav-rail__menu-credits-label">
-                    <Icon name="battery-charge" size={14} /> 附加积分
-                  </span>
-                  <span className="entry-nav-rail__menu-credits-value">0</span>
-                </div>
               </div>
             ) : null}
             <button
@@ -272,11 +267,14 @@ export function EntryNavRail({ view, onViewChange, onNewProject, open, onClose, 
                 role="menuitem"
                 href={GITHUB_REPO_URL}
                 {...externalLinkProps}
-                aria-label="GitHub"
-                title="GitHub"
+                aria-label={`GitHub · ${githubStars == null ? GITHUB_STARS_FALLBACK_LABEL : formatStars(githubStars)} stars`}
+                title={`GitHub · ${githubStars == null ? GITHUB_STARS_FALLBACK_LABEL : formatStars(githubStars)} stars`}
                 onClick={() => setAccountOpen(false)}
               >
                 <Icon name="github-filled" size={15} />
+                <span className="entry-nav-rail__menu-social-count">
+                  {githubStars == null ? GITHUB_STARS_FALLBACK_LABEL : formatStars(githubStars)}
+                </span>
               </a>
               <a
                 className="entry-nav-rail__menu-social-btn"
@@ -350,12 +348,12 @@ export function EntryNavRail({ view, onViewChange, onNewProject, open, onClose, 
         </div>
         <NavButton
           active={isHome}
-          ariaLabel="Recents"
-          tooltip="最近"
+          ariaLabel="Home"
+          tooltip="首页"
           onClick={() => selectView('home')}
           testId="entry-nav-home"
         >
-          <Icon name="file-history-filled" size={18} />
+          <Icon name="home" size={16} />
         </NavButton>
         <NavButton
           active={view === 'community'}
@@ -364,7 +362,7 @@ export function EntryNavRail({ view, onViewChange, onNewProject, open, onClose, 
           onClick={() => selectView('community')}
           testId="entry-nav-community"
         >
-          <Icon name="globe-filled" size={18} />
+          <Icon name="globe" size={16} />
         </NavButton>
 
         {cloudWorkspace ? (
@@ -454,7 +452,7 @@ export function EntryNavRail({ view, onViewChange, onNewProject, open, onClose, 
               onClick={() => selectView('drafts')}
               testId="entry-nav-drafts"
             >
-              <Icon name="file-filled" size={18} />
+              <Icon name="file" size={16} />
             </NavButton>
             <NavButton
               active={view === 'all-projects'}
@@ -463,7 +461,7 @@ export function EntryNavRail({ view, onViewChange, onNewProject, open, onClose, 
               onClick={() => selectView('all-projects')}
               testId="entry-nav-all-projects"
             >
-              <Icon name="grid-filled" size={18} />
+              <Icon name="grid" size={16} />
             </NavButton>
             <NavButton
               active={view === 'design-systems'}
@@ -472,7 +470,7 @@ export function EntryNavRail({ view, onViewChange, onNewProject, open, onClose, 
               onClick={() => selectView('design-systems')}
               testId="entry-nav-design-systems"
             >
-              <Icon name="palette-filled" size={18} />
+              <Icon name="palette" size={16} />
             </NavButton>
             <NavButton
               active={view === 'plugins'}
@@ -481,7 +479,7 @@ export function EntryNavRail({ view, onViewChange, onNewProject, open, onClose, 
               onClick={() => selectView('plugins')}
               testId="entry-nav-plugins"
             >
-              <Icon name="puzzle-filled" size={18} />
+              <Icon name="puzzle" size={16} />
             </NavButton>
           </div>
         ) : null}
@@ -495,7 +493,7 @@ export function EntryNavRail({ view, onViewChange, onNewProject, open, onClose, 
               onClick={() => selectView('members')}
               testId="entry-nav-members"
             >
-              <Icon name="users-filled" size={18} />
+              <Icon name="users" size={16} />
             </NavButton>
             <NavButton
               active={view === 'dashboard'}
@@ -504,7 +502,7 @@ export function EntryNavRail({ view, onViewChange, onNewProject, open, onClose, 
               onClick={() => selectView('dashboard')}
               testId="entry-nav-dashboard"
             >
-              <Icon name="dashboard-filled" size={18} />
+              <Icon name="dashboard" size={16} />
             </NavButton>
             {canOwnWorkspace ? (
               <NavButton
@@ -514,7 +512,7 @@ export function EntryNavRail({ view, onViewChange, onNewProject, open, onClose, 
                 onClick={() => selectView('workspace-settings')}
                 testId="entry-nav-workspace-settings"
               >
-                <Icon name="settings-filled" size={18} />
+                <Icon name="settings" size={16} />
               </NavButton>
             ) : null}
           </>
@@ -530,7 +528,7 @@ export function EntryNavRail({ view, onViewChange, onNewProject, open, onClose, 
               onClick={() => selectView('design-systems')}
               testId="entry-nav-design-systems"
             >
-              <Icon name="palette-filled" size={18} />
+              <Icon name="palette" size={16} />
             </NavButton>
             <NavButton
               active={view === 'plugins'}
@@ -539,7 +537,7 @@ export function EntryNavRail({ view, onViewChange, onNewProject, open, onClose, 
               onClick={() => selectView('plugins')}
               testId="entry-nav-plugins"
             >
-              <Icon name="puzzle-filled" size={18} />
+              <Icon name="puzzle" size={16} />
             </NavButton>
           </>
         ) : null}

@@ -2097,13 +2097,13 @@
 }
 .composer-run-glyph {
   display: block;
-  flex: 0 0 24px;
-  width: 24px;
-  height: 24px;
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
   pointer-events: none;
-  /* Now a looping video (same as the send button) — fill the 24px circle. */
-  object-fit: cover;
-  border-radius: 50%;
+  /* Self-animating matrix-loader SVG: show the whole square grid (no circular
+     crop) so the corner cells and their bloom aren't clipped. */
+  object-fit: contain;
 }
 .composer-hint {
   font-size: 12px;

@@ -4,15 +4,20 @@ export type IconName =
   | 'alert-triangle'
   | 'arrow-left'
   | 'arrow-up'
+  | 'artboard'
   | 'attach'
+  | 'bar-chart-box'
   | 'bell'
   | 'blocks'
+  | 'brain'
   | 'globe-filled'
+  | 'file-history'
   | 'file-history-filled'
   | 'puzzle-filled'
   | 'file-filled'
   | 'grid-filled'
   | 'share-filled'
+  | 'dashboard'
   | 'dashboard-filled'
   | 'check'
   | 'chevron-down'
@@ -105,6 +110,7 @@ export type IconName =
   | 'users'
   | 'users-filled'
   | 'trash'
+  | 'video-ai'
   | 'volume'
   | 'zoom-in'
   | 'zoom-out';
@@ -119,17 +125,22 @@ const REMIX_ICON: Record<IconName, string> = {
   'alert-triangle': 'error-warning-line',
   'arrow-left': 'arrow-left-line',
   'arrow-up': 'arrow-up-line',
+  artboard: 'artboard-2-line',
   attach: 'attachment-2',
+  'bar-chart-box': 'bar-chart-box-line',
   bell: 'notification-3-line',
   blocks: 'layout-grid-line',
   'globe-filled': 'global-fill',
+  'file-history': 'file-history-line',
   'file-history-filled': 'file-history-fill',
   'puzzle-filled': 'puzzle-fill',
   'file-filled': 'file-fill',
   'grid-filled': 'grid-fill',
   'share-filled': 'share-forward-fill',
+  dashboard: 'dashboard-line',
   'dashboard-filled': 'dashboard-fill',
   check: 'check-line',
+  brain: 'brain-line',
   'chevron-down': 'arrow-down-s-line',
   'chevron-left': 'arrow-left-s-line',
   'chevron-right': 'arrow-right-s-line',
@@ -220,6 +231,7 @@ const REMIX_ICON: Record<IconName, string> = {
   tweaks: 'sound-module-line',
   upload: 'upload-2-line',
   trash: 'delete-bin-line',
+  'video-ai': 'video-ai-line',
   volume: 'volume-up-line',
   'zoom-in': 'zoom-in-line',
   'zoom-out': 'zoom-out-line',

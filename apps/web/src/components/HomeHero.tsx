@@ -38,6 +38,7 @@ import { useAnalytics } from '../analytics/provider';
 import { trackHomeChatComposerClick } from '../analytics/events';
 import {
   chipsForGroup,
+  HOME_APPLY_TEMPLATE_EVENT,
   orderedCreateChips,
   type ChipGroup,
   type HomeHeroChip,
@@ -636,6 +637,20 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
     () => orderedCreateChips().filter((chip) => chip.action.kind === 'apply-scenario'),
     [],
   );
+  // The workspace tabs-bar "+" fan picks templates from outside the hero:
+  // apply the handed-off chip exactly as if it was clicked here. Deliberately
+  // depless (re-subscribes each render) so the listener always sees the
+  // current handlers without threading them through refs.
+  useEffect(() => {
+    function onApplyTemplate(event: Event) {
+      const chipId = (event as CustomEvent<{ chipId?: string }>).detail?.chipId;
+      if (!chipId) return;
+      const chip = templateChips.find((item) => item.id === chipId);
+      if (chip) handlePickTaskChip(chip);
+    }
+    window.addEventListener(HOME_APPLY_TEMPLATE_EVENT, onApplyTemplate);
+    return () => window.removeEventListener(HOME_APPLY_TEMPLATE_EVENT, onApplyTemplate);
+  });
   const activeExamplePlugins = useMemo(
     () =>
       activeChipId
@@ -1730,63 +1745,6 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
       ) : null}
       </div>
 
-      {activeCreateChip ? null : (
-        <div
-          className={`home-hero__template-section${templatesExpanded ? ' is-expanded' : ''}`}
-          data-testid="home-hero-template-section"
-        >
-          <div className="home-hero__template-bar">
-            <button
-              type="button"
-              className={`home-hero__template-toggle${templatesExpanded ? ' is-open' : ''}`}
-              aria-expanded={templatesExpanded}
-              onClick={() => setTemplatesExpanded((v) => !v)}
-            >
-              {t('homeHero.startWithTemplate')}
-              <Icon name="chevron-down" size={14} aria-hidden />
-            </button>
-            <span className="home-hero__template-or">or</span>
-            {onStartBlankProject ? (
-              <button
-                type="button"
-                className="home-hero__blank-project"
-                data-testid="home-hero-blank-project"
-                onClick={onStartBlankProject}
-              >
-                创建一个空白项目
-                <Icon name="chevron-right" size={14} aria-hidden />
-              </button>
-            ) : null}
-          </div>
-          {templatesExpanded ? (
-            <RailGroup
-              group="create"
-              activeChipId={activeChipId}
-              pendingChipId={pendingChipId}
-              pendingPluginId={pendingPluginId}
-              pluginsLoading={pluginsLoading}
-              onPickChip={handlePickTaskChip}
-              variant="tabs"
-              pulseChipId={guidePulseChipId}
-              onHoverChip={setPreviewTemplateId}
-            >
-              <ShortcutsMenu
-                activeChipId={activeChipId}
-                pendingChipId={pendingChipId}
-                pendingPluginId={pendingPluginId}
-                pluginsLoading={pluginsLoading}
-                open={shortcutsOpen}
-                refNode={shortcutsMenuRef}
-                onOpenChange={setShortcutsOpen}
-                onPickChip={(chip) => {
-                  setShortcutsOpen(false);
-                  handlePickTaskChip(chip);
-                }}
-              />
-            </RailGroup>
-          ) : null}
-        </div>
-      )}
 
       {activeSubChips.length > 0 && isSubChipParent(activeChipId) ? (
         <SubTypeRow

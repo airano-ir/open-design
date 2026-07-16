@@ -169,7 +169,6 @@ import {
   notificationPermission,
   playSound,
   requestNotificationPermission,
-  showCompletionNotification,
 } from '../utils/notifications';
 
 export type SettingsSection =
@@ -3119,9 +3118,6 @@ export function SettingsDialog({
               </div>
             </div>
           </label>
-          <p className="hint agent-model-row-hint">
-            {t('settings.modelPickerLiveHint')}
-          </p>
         </div>
       );
     }
@@ -3177,12 +3173,6 @@ export function SettingsDialog({
       modelSource === 'live'
         ? t('settings.modelSourceLive')
         : t('settings.modelSourceFallback');
-    const modelSourceHint =
-      modelSource === 'live'
-        ? selected.supportsCustomModel === false
-          ? t('settings.modelPickerLiveCatalogOnlyHint')
-          : t('settings.modelPickerLiveHint')
-        : t('settings.modelPickerFallbackHint');
     return (
       <div className="agent-card-config">
         {hasModels ? (
@@ -3200,12 +3190,13 @@ export function SettingsDialog({
               <div className="agent-model-select-wrap">
                 <SearchableModelSelect
                   className="inline-switcher__select settings-model-select"
+                  popoverClassName="settings-model-popover"
                   value={selectValue}
                   aria-label={t('settings.modelPicker')}
                   searchPlaceholder={t('designs.searchPlaceholder')}
                   searchInputTestId={`settings-agent-model-search-${selected.id}`}
                   popoverTestId={`settings-agent-model-popover-${selected.id}`}
-                  minSearchableOptions={5}
+                  minSearchableOptions={Number.POSITIVE_INFINITY}
                   popoverMinWidth={340}
                   models={selected.models!}
                   onChange={(nextValue) => {
@@ -3239,9 +3230,6 @@ export function SettingsDialog({
                 />
               </div>
             </label>
-            <p className="hint agent-model-row-hint">
-              {modelSourceHint}
-            </p>
           </>
         ) : null}
         {customActive ? (
@@ -3436,7 +3424,6 @@ export function SettingsDialog({
                   <Icon name="search" size={14} />
                   <input type="search" placeholder="搜索设置..." readOnly />
                 </label>
-                <span className="settings-page-nav-group">个人</span>
               </div>
             ) : null}
             <button
@@ -3444,7 +3431,7 @@ export function SettingsDialog({
               className={`settings-nav-item${activeSection === 'execution' ? ' active' : ''}`}
               onClick={() => setActiveSection('execution')}
             >
-              <Icon name="sliders-filled" size={18} />
+              <Icon name="sliders" size={18} />
               <span>
                 <strong>{t('settings.envConfigure')}</strong>
                 <small>{`${t('settings.localCli')} / ${t('settings.modeApiMeta')}`}</small>
@@ -3455,7 +3442,7 @@ export function SettingsDialog({
               className={`settings-nav-item${activeSection === 'general' ? ' active' : ''}`}
               onClick={() => setActiveSection('general')}
             >
-              <Icon name="settings-filled" size={18} />
+              <Icon name="settings" size={18} />
               <span>
                 <strong>通用</strong>
                 <small>语言、外观与个性化</small>
@@ -3466,7 +3453,7 @@ export function SettingsDialog({
               className={`settings-nav-item${activeSection === 'instructions' ? ' active' : ''}`}
               onClick={() => setActiveSection('instructions')}
             >
-              <Icon name="edit-filled" size={18} />
+              <Icon name="edit" size={18} />
               <span>
                 <strong>{t('settings.instructionsTitle')}</strong>
                 <small>{t('settings.instructionsNavSub')}</small>
@@ -3477,7 +3464,7 @@ export function SettingsDialog({
               className={`settings-nav-item${activeSection === 'memory' ? ' active' : ''}`}
               onClick={() => setActiveSection('memory')}
             >
-              <Icon name="history-filled" size={18} />
+              <Icon name="brain" size={18} />
               <span>
                 <strong>{t('settings.memory')}</strong>
                 <small>{t('settings.memoryHint')}</small>
@@ -3488,7 +3475,7 @@ export function SettingsDialog({
               className={`settings-nav-item${activeSection === 'media' ? ' active' : ''}`}
               onClick={() => setActiveSection('media')}
             >
-              <Icon name="image-filled" size={18} />
+              <Icon name="image" size={18} />
               <span>
                 <strong>{t('settings.mediaProviders')}</strong>
                 <small>Image / video / audio</small>
@@ -3499,7 +3486,7 @@ export function SettingsDialog({
               className={`settings-nav-item${activeSection === 'integrations' ? ' active' : ''}`}
               onClick={() => setActiveSection('integrations')}
             >
-              <Icon name="link-filled" size={18} />
+              <Icon name="puzzle" size={18} />
               <span>
                 <strong>{t('settings.mcpServerTitle')}</strong>
                 <small>{t('settings.mcpServerHint')}</small>
@@ -3510,7 +3497,7 @@ export function SettingsDialog({
               className={`settings-nav-item${activeSection === 'privacy' ? ' active' : ''}`}
               onClick={() => setActiveSection('privacy')}
             >
-              <Icon name="eye-filled" size={18} />
+              <Icon name="eye" size={18} />
               <span>
                 <strong>{t('settings.privacy')}</strong>
                 <small>{t('settings.privacyHint')}</small>
@@ -3521,7 +3508,7 @@ export function SettingsDialog({
               className={`settings-nav-item${activeSection === 'about' ? ' active' : ''}`}
               onClick={() => setActiveSection('about')}
             >
-              <Icon name="settings-filled" size={18} />
+              <Icon name="settings" size={18} />
               <span>
                 <strong>{t('settings.about')}</strong>
                 <small>{t('settings.aboutHint')}</small>
@@ -3557,16 +3544,11 @@ export function SettingsDialog({
                     <Icon name="chevron-down" size={14} />
                   </label>
                 </div>
-                <div className="settings-general-field">
-                  <span className="settings-general-label">主题</span>
-                  <AppearanceSection cfg={cfg} setCfg={setCfg} />
-                </div>
               </div>
 
               <div className="settings-general-block">
                 <div className="settings-general-block-head">
                   <h3>系统偏好</h3>
-                  <p className="hint">完成提示音、浏览器通知和任务状态提醒。</p>
                 </div>
                 <NotificationsSection cfg={cfg} setCfg={setCfg} />
               </div>
@@ -3574,7 +3556,6 @@ export function SettingsDialog({
               <div className="settings-general-block">
                 <div className="settings-general-block-head">
                   <h3>{t('pet.navTitle')}</h3>
-                  <p className="hint">{t('pet.navHint')}</p>
                 </div>
                 <PetSettings cfg={cfg} setCfg={setCfg} />
               </div>
@@ -3582,7 +3563,6 @@ export function SettingsDialog({
               <div className="settings-general-block">
                 <div className="settings-general-block-head">
                   <h3>{t('settings.projectLocations')}</h3>
-                  <p className="hint">{t('settings.projectLocationsHint')}</p>
                 </div>
                 <ProjectLocationsSection cfg={cfg} setCfg={setCfg} onProjectsRefresh={onProjectsRefresh} />
               </div>
@@ -4222,7 +4202,6 @@ export function SettingsDialog({
                         {unavailableAgents.map((a) => {
                           const installUrl = sanitizeHttpsUrl(a.installUrl);
                           const docsUrl = sanitizeHttpsUrl(a.docsUrl);
-                          const hasLinks = Boolean(installUrl || docsUrl);
                           const description = AGENT_SHORT_DESCRIPTIONS[a.id];
                           const agentName = displayAgentName(a);
                           const diagnosticHandlers = diagnosticHandlersForAgent(a);
@@ -4246,56 +4225,67 @@ export function SettingsDialog({
                                     </div>
                                   ) : null}
                                 </div>
-                                {hasLinks ? (
-                                  <div className="agent-card-actions agent-card-actions--inline">
-                                    {docsUrl ? (
-                                      <a
-                                        href={docsUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="agent-card-link agent-card-link--muted agent-card-link--icon"
-                                        onClick={markAgentInstallIntent}
-                                        title={t('settings.agentInstall.docs')}
-                                        aria-label={t('settings.agentInstall.docs')}
-                                      >
-                                        <Icon name="file" size={15} />
-                                      </a>
-                                    ) : null}
-                                    {installUrl ? (
-                                      <a
-                                        href={installUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="agent-card-link agent-card-link--ghost"
-                                        onClick={(event) => {
-                                          markAgentInstallIntent();
-                                          if (a.id === 'amr') {
-                                            event.currentTarget.href = attributedAmrSettingsUrl(
-                                              installUrl,
-                                              'settings_amr_install',
-                                            );
-                                          }
-                                        }}
-                                      >
-                                        {t('settings.agentInstall.install')}
-                                      </a>
-                                    ) : null}
-                                  </div>
-                                ) : null}
                               </div>
                               {/* Why is it unavailable? not-on-path vs a broken
                                   shim vs a bad *_BIN override each get a
-                                  distinct, actionable line. It spans the full
-                                  card width on its own row below the
-                                  logo/name/links so it never crowds the inline
-                                  Docs/Install actions. */}
+                                  distinct, actionable line, full-width below the
+                                  logo/name. Rendered message-only: the fix
+                                  actions are hoisted into the shared footer bar
+                                  so every control lives on one row. */}
                               {(a.diagnostics ?? []).map((diagnostic, i) => (
                                 <AgentDiagnosticRow
                                   key={`${diagnostic.reason}-${i}`}
                                   diagnostic={diagnostic}
-                                  handlers={diagnosticHandlers}
                                 />
                               ))}
+                              {/* Every action for the card collapses into one
+                                  horizontal bar at the foot, fenced from the
+                                  content above by a hair divider: Docs + Rescan
+                                  as quiet icon buttons, Install as the primary
+                                  labelled CTA holding the right edge. */}
+                              <div className="agent-card-footer">
+                                {docsUrl ? (
+                                  <a
+                                    href={docsUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="agent-card-link agent-card-link--muted agent-card-link--icon"
+                                    onClick={markAgentInstallIntent}
+                                    title={t('settings.agentInstall.docs')}
+                                    aria-label={t('settings.agentInstall.docs')}
+                                  >
+                                    <Icon name="file" size={15} />
+                                  </a>
+                                ) : null}
+                                <button
+                                  type="button"
+                                  className="agent-card-link agent-card-link--muted agent-card-link--icon"
+                                  onClick={() => diagnosticHandlers.onRescan?.()}
+                                  title={t('settings.rescan')}
+                                  aria-label={t('settings.rescan')}
+                                >
+                                  <Icon name="reload" size={15} />
+                                </button>
+                                {installUrl ? (
+                                  <a
+                                    href={installUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="agent-card-link agent-card-link--ghost"
+                                    onClick={(event) => {
+                                      markAgentInstallIntent();
+                                      if (a.id === 'amr') {
+                                        event.currentTarget.href = attributedAmrSettingsUrl(
+                                          installUrl,
+                                          'settings_amr_install',
+                                        );
+                                      }
+                                    }}
+                                  >
+                                    {t('settings.agentInstall.install')}
+                                  </a>
+                                ) : null}
+                              </div>
                             </div>
                           );
                         })}
@@ -7439,8 +7429,6 @@ function IntegrationsSection() {
           style={{
             padding: '10px 12px',
             background: 'var(--bg-subtle)',
-            border: '1px solid var(--border)',
-            borderLeft: '3px solid var(--border-strong)',
             borderRadius: 6,
             fontSize: 13,
             lineHeight: 1.5,
@@ -7652,7 +7640,6 @@ function NotificationsSection({
   const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>(
     () => notificationPermission(),
   );
-  const [testStatus, setTestStatus] = useState<ReturnType<typeof testNotificationStatusText> | null>(null);
 
   const updateNotif = (
     patch: Partial<NonNullable<AppConfig['notifications']>>,
@@ -7713,15 +7700,6 @@ function NotificationsSection({
     }
   };
 
-  const sendTestNotification = async () => {
-    const result = await showCompletionNotification({
-      status: 'succeeded',
-      title: t('notify.successTitle'),
-      body: t('notify.successBody'),
-    });
-    setPermission(notificationPermission());
-    setTestStatus(testNotificationStatusText(result));
-  };
 
   return (
     <section className="settings-section">
@@ -7742,7 +7720,6 @@ function NotificationsSection({
               </div>
             </div>
           </div>
-          <p className="hint settings-notify-card-hint">{t('settings.notifyCompletionSoundHint')}</p>
         </div>
 
         {notif.soundEnabled ? (
@@ -7822,7 +7799,6 @@ function NotificationsSection({
               </div>
             </div>
           </div>
-          <p className="hint settings-notify-card-hint">{t('settings.notifyDesktopHint')}</p>
         </div>
         {permission === 'unsupported' ? (
           <p className="hint">{t('settings.notifyDesktopUnsupported')}</p>
@@ -7830,35 +7806,7 @@ function NotificationsSection({
         {permission === 'denied' ? (
           <p className="hint">{t('settings.notifyDesktopBlocked')}</p>
         ) : null}
-        {notif.desktopEnabled && permission === 'granted' ? (
-          <>
-            <Button variant="ghost" onClick={() => {
-              trackSettingsNotificationsClick(analytics.track, {
-                page_name: 'settings',
-                area: 'notifications',
-                element: 'send_test',
-              });
-              void sendTestNotification();
-            }}>
-              {t('settings.notifyTest')}
-            </Button>
-            {testStatus ? <p className="hint" role="status">{t(testStatus)}</p> : null}
-          </>
-        ) : null}
       </div>
     </section>
   );
-}
-
-function testNotificationStatusText(
-  result: Awaited<ReturnType<typeof showCompletionNotification>>,
-):
-  | 'settings.notifyTestSent'
-  | 'settings.notifyDesktopBlocked'
-  | 'settings.notifyDesktopUnsupported'
-  | 'settings.notifyTestFailed' {
-  if (result === 'shown') return 'settings.notifyTestSent';
-  if (result === 'permission-denied') return 'settings.notifyDesktopBlocked';
-  if (result === 'unsupported') return 'settings.notifyDesktopUnsupported';
-  return 'settings.notifyTestFailed';
 }

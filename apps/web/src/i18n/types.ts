@@ -2969,6 +2969,9 @@ export interface Dict {
   'manualEdit.focusSlides': string;
   'manualEdit.showPanels': string;
   'manualEdit.parameters': string;
+  'manualEdit.referenceValues': string;
+  'manualEdit.referenceValuesEmpty': string;
+  'manualEdit.referenceValuesLoading': string;
   'manualEdit.opacity': string;
   'manualEdit.fontFamily': string;
   'manualEdit.borderColor': string;

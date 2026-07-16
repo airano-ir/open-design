@@ -3857,13 +3857,6 @@ function ConversationRow({
       >
         {displayTitle}
       </button>
-      <span
-        className="chat-conv-item-meta"
-        data-testid={`conversation-meta-${conversation.id}`}
-      >
-        {messageCount !== null ? `${compactCount(messageCount)} msg · ` : ''}
-        {conversationMetaLabel(conversation, t)}
-      </span>
       <button
         type="button"
         className="chat-conv-item-del"

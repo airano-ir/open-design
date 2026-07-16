@@ -1368,6 +1368,11 @@
   justify-self: center;
   opacity: 0.75;
 }
+/* Custom inline-SVG nav glyphs carry .od-icon so they track the font icons:
+   full opacity by default (not the 0.75 above), text-strong when active. */
+.settings-nav-item svg.od-icon {
+  opacity: 1;
+}
 /* Selected item: the filled Remix glyph uses the spec's strongest
    text/icon tone (#202020 light / #fafafa dark via --text-strong) at full
    opacity. */
@@ -1399,6 +1404,9 @@
   z-index: 1;
   min-width: 0;
   min-height: 0;
+  /* Hide the overlay scrollbar (the dark bar) — content still scrolls. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   /* Top inset matches `.settings-sidebar`'s `padding-top: 16` so the first
      content row (the Local CLI / BYOK pill) sits level with the first
      sidebar nav-item across the gutter. */
@@ -1409,6 +1417,9 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+.settings-content::-webkit-scrollbar {
+  display: none;
 }
 .settings-page-shell .settings-content {
   grid-column: 2;
@@ -1518,7 +1529,12 @@
   line-height: 1;
   min-width: 0;
 }
-.seg-btn:hover:not(:disabled):not(.active) { color: var(--text); }
+/* The global button:hover paints a border-strong outline + bg-subtle fill; the
+   seg control is deliberately borderless, so keep the border transparent on
+   hover and preserve each state's own fill (white for the active tab). */
+.seg-btn:hover:not(:disabled) { border-color: transparent; }
+.seg-btn:hover:not(:disabled):not(.active) { color: var(--text); background: transparent; }
+.seg-btn.active:hover:not(:disabled) { background: var(--bg-panel); }
 .seg-btn.active {
   background: var(--bg-panel);
   border-color: transparent;
@@ -1646,6 +1662,9 @@
 }
 
 .settings-section { display: flex; flex-direction: column; gap: 12px; }
+/* Hide the scroll bar on settings panels while keeping them scrollable. */
+.settings-section { scrollbar-width: none; }
+.settings-section::-webkit-scrollbar { width: 0; height: 0; display: none; }
 .project-locations-section { gap: 14px; }
 .project-location-card,
 .project-location-edit {
@@ -1654,20 +1673,21 @@
   gap: 8px;
   align-items: center;
   min-height: 58px;
-  padding: 8px 10px;
-  border: 1px solid var(--border);
+  /* Flush horizontally so the row's content — path on the left, the
+     "default location" pill on the right — lines up with the section edges
+     (and the flush pet grid / toggles above), instead of being inset by the
+     old 10px card padding which pushed the pill in from the right edge. */
+  padding: 8px 0;
+  /* Surfaceless: no border or fill — the path text + action button sit
+     directly on the page. */
+  border: 0;
   border-radius: var(--radius-sm);
-  background: var(--bg-panel);
-  transition: border-color 120ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 120ms cubic-bezier(0.23, 1, 0.32, 1), background 120ms cubic-bezier(0.23, 1, 0.32, 1);
-}
-.project-location-card:hover,
-.project-location-edit:hover {
-  border-color: var(--border-strong);
+  background: transparent;
+  transition: box-shadow 120ms cubic-bezier(0.23, 1, 0.32, 1), background 120ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 .project-location-card.is-default,
 .project-location-edit.is-default {
-  border-color: var(--border-strong);
-  background: color-mix(in srgb, var(--bg-subtle) 42%, var(--bg-panel));
+  background: transparent;
   box-shadow: none;
 }
 .project-location-card code {
@@ -1676,6 +1696,9 @@
   color: var(--text-muted);
   font-size: 12px;
   word-break: break-all;
+  /* Plain text on the page — drop the inline-code grey fill/padding. */
+  background: transparent;
+  padding: 0;
 }
 .project-location-default-control span {
   border: 1px solid var(--border);
@@ -1728,7 +1751,25 @@
   color: var(--text-muted);
   font-size: 12px;
 }
-.project-location-add { align-self: flex-start; }
+/* Text + icon button (not a bare icon): the shared .icon-btn base zeroes
+   padding and pins a 36px square min-width, which crams the label. Selector
+   carries .icon-btn too so it out-specifies `button.icon-btn` — restore proper
+   horizontal padding, size to content, and make it a full pill so the whole
+   "添加文件夹…" label shows without clipping. */
+.icon-btn.project-location-add {
+  align-self: flex-start;
+  width: auto;
+  min-width: 0;
+  padding: 0 var(--spacing-16);
+  gap: var(--spacing-6);
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+}
+/* When it rides the built-in row's right cell (in place of the old "默认位置"
+   pill), center it vertically like the rest of the row. */
+.project-location-card .project-location-add { align-self: center; }
 @media (max-width: 720px) {
   .project-location-edit { grid-template-columns: 1fr; align-items: stretch; }
   .project-location-default-control { justify-self: start; }

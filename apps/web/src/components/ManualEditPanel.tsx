@@ -49,16 +49,12 @@ export function ManualEditPanel({
   tokenSuggestionsLoading = false,
   onApplyTokenSuggestion,
   onInspectValueSelect,
-  searchQuery = '',
-  searchResults = [],
-  searchLoading = false,
-  onSearchQueryChange,
-  onRunSearch,
-  onOpenSearchResult,
   pageStylesEnabled = true,
   floatingStyle,
   floatingClassName,
   onFloatingPositionChange,
+  locked = false,
+  onToggleLock,
 }: {
   targets: ManualEditTarget[];
   selectedTarget: ManualEditTarget | null;
@@ -89,6 +85,10 @@ export function ManualEditPanel({
   floatingStyle?: CSSProperties;
   floatingClassName?: string;
   onFloatingPositionChange?: (position: { left: number; top: number }) => void;
+  /** When true the panel is pinned: no dragging, and it does not reposition
+   *  when a different element is selected. Owned by the parent. */
+  locked?: boolean;
+  onToggleLock?: () => void;
   onError: (message: string) => void;
   onClearSelection: () => void;
   onExit?: () => void;
@@ -100,6 +100,10 @@ export function ManualEditPanel({
 }) {
   const t = useT();
   const [uploadingImage, setUploadingImage] = useState(false);
+  // Pin toggle: draggable (pin pulled out) vs locked/fixed (pin pushed in).
+  // The lock lives in the parent so it can ALSO freeze the panel's position —
+  // a locked panel never follows the selected element.
+  const dragEnabled = !locked;
   const selectedTargetRef = useRef<ManualEditTarget | null>(selectedTarget);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const targetForInspector = selectedTarget;
@@ -139,8 +143,17 @@ export function ManualEditPanel({
     onStyleChange?.(targetForInspector.id, normalized.styles, label);
   };
 
-  const startPanelDrag = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    if (!onFloatingPositionChange) return;
+  // Drag the whole floating panel: a pointer-down anywhere on it starts the
+  // move UNLESS it lands on an interactive control (input / button / field /
+  // the HTML box / …), so the user can still select and edit inside the panel
+  // normally. Only "empty" chrome — the titlebar, section headers, gaps —
+  // initiates a drag.
+  const DRAG_IGNORE_SELECTOR =
+    'input, textarea, select, button, a[href], label, [contenteditable], [role="button"], [role="slider"], [role="combobox"], [role="textbox"]';
+  const startPanelDrag = (event: ReactPointerEvent<HTMLElement>) => {
+    if (!onFloatingPositionChange || !dragEnabled || event.button !== 0) return;
+    const origin = event.target as HTMLElement | null;
+    if (origin?.closest(DRAG_IGNORE_SELECTOR)) return;
     event.preventDefault();
     event.stopPropagation();
     const panel = event.currentTarget.closest('.manual-edit-right') as HTMLElement | null;
@@ -156,6 +169,10 @@ export function ManualEditPanel({
     const maxLeft = Math.max(pad, parentRect.width - panelRect.width - pad);
     const maxTop = Math.max(pad, parentRect.height - panelRect.height - pad);
     const ownerDocument = panel.ownerDocument;
+    const prevCursor = ownerDocument.body.style.cursor;
+    const prevUserSelect = ownerDocument.body.style.userSelect;
+    ownerDocument.body.style.cursor = 'grabbing';
+    ownerDocument.body.style.userSelect = 'none';
     const move = (moveEvent: PointerEvent) => {
       onFloatingPositionChange({
         left: clamp(startLeft + moveEvent.clientX - startX, pad, maxLeft),
@@ -163,6 +180,8 @@ export function ManualEditPanel({
       });
     };
     const up = () => {
+      ownerDocument.body.style.cursor = prevCursor;
+      ownerDocument.body.style.userSelect = prevUserSelect;
       ownerDocument.removeEventListener('pointermove', move);
       ownerDocument.removeEventListener('pointerup', up);
       ownerDocument.removeEventListener('pointercancel', up);
@@ -177,17 +196,29 @@ export function ManualEditPanel({
       className={`manual-edit-right${floatingStyle ? ' manual-edit-floating' : ''}${floatingClassName ? ` ${floatingClassName}` : ''}`}
       style={floatingStyle}
     >
-      <section className="manual-edit-modal cc-panel">
+      <section
+        className={`manual-edit-modal cc-panel${floatingStyle && !dragEnabled ? ' is-drag-locked' : ''}`}
+        onPointerDown={floatingStyle ? startPanelDrag : undefined}
+      >
         <div className="manual-edit-titlebar">
           {floatingStyle ? (
             <button
               type="button"
-              className="manual-edit-drag-handle"
+              className={`manual-edit-drag-handle${dragEnabled ? ' is-draggable' : ' is-locked'}`}
+              onClick={() => onToggleLock?.()}
+              aria-pressed={dragEnabled}
               aria-label={t('manualEdit.movePanel')}
               title={t('manualEdit.movePanel')}
-              onPointerDown={startPanelDrag}
             >
-              <span aria-hidden />
+              {dragEnabled ? (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                  <path d="M13.8273 1.69L22.3126 10.1753L20.8984 11.5895L20.1913 10.8824L15.9486 15.125L15.2415 18.6606L13.8273 20.0748L9.58466 15.8321L4.63492 20.7819L3.2207 19.3677L8.17045 14.4179L3.92781 10.1753L5.34202 8.76107L8.87756 8.05396L13.1202 3.81132L12.4131 3.10422L13.8273 1.69ZM14.5344 5.22554L9.86358 9.89637L7.0417 10.4607L13.5418 16.9609L14.1062 14.139L18.7771 9.46818L14.5344 5.22554Z" />
+                </svg>
+              ) : (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                  <path d="M18 3V5H17V11L19 14V16H13V23H11V16H5V14L7 11V5H6V3H18Z" />
+                </svg>
+              )}
             </button>
           ) : null}
           <span title={panelTitle}>{panelTitle}</span>
@@ -199,7 +230,7 @@ export function ManualEditPanel({
               title={t('manualEdit.closePanel')}
               onClick={onExit}
             >
-              <Icon name="close" size={16} />
+              <Icon name="close" size={14} />
             </button>
           ) : null}
         </div>
@@ -216,27 +247,10 @@ export function ManualEditPanel({
                 styles={draft.styles}
                 onChange={changeTargetStyle}
                 onApply={(styles) => applyTargetStyles(styles, `Style: ${targetForInspector.label}`)}
-              />
-              <InspectInspector
-                target={targetForInspector}
-                onValueSelect={onInspectValueSelect}
-              />
-              <TokenSuggestions
-                suggestions={tokenSuggestions}
-                loading={tokenSuggestionsLoading}
-                onApply={(suggestion) => {
-                  const key = suggestionPropToManualStyle(suggestion.prop);
-                  if (!key) return;
-                  onApplyTokenSuggestion?.(key, suggestion.value);
-                }}
-              />
-              <ProjectSearch
-                query={searchQuery}
-                results={searchResults}
-                loading={searchLoading}
-                onQueryChange={onSearchQueryChange}
-                onRun={onRunSearch}
-                onOpen={onOpenSearchResult}
+                tokenSuggestions={tokenSuggestions}
+                tokenSuggestionsLoading={tokenSuggestionsLoading}
+                onApplyTokenSuggestion={onApplyTokenSuggestion}
+                onInspectValueSelect={onInspectValueSelect}
               />
             </>
           ) : !targetForInspector ? (
@@ -461,239 +475,6 @@ function readableManualEditTargetName(target: ManualEditTarget): string {
   if (target.kind === 'image') return 'Image';
   if (target.kind === 'link') return 'Link';
   return 'Text';
-}
-
-function InspectInspector({
-  target,
-  onValueSelect,
-}: {
-  target: ManualEditTarget;
-  onValueSelect?: (prop: ProjectDesignTokenSuggestionProp, value: string) => void;
-}) {
-  const summary = target.computedSummary;
-  const rect = target.rect;
-  const valueRows = inspectValueRows(target);
-  return (
-    <div className="cc-inspector manual-edit-inspect-inspector">
-      <Section title="INSPECT">
-        <div className="manual-edit-kv-grid">
-          <span>Tag</span><strong>{target.tagName}</strong>
-          <span>Size</span><strong>{Math.round(rect.width)} x {Math.round(rect.height)}</strong>
-          <span>Display</span><strong>{summary?.display || 'n/a'}</strong>
-          <span>Position</span><strong>{summary?.position || 'n/a'}</strong>
-        </div>
-        {valueRows.length > 0 ? (
-          <div className="manual-edit-param-list">
-            {valueRows.map((item) => (
-              <button
-                key={item.prop}
-                type="button"
-                className="manual-edit-param-row"
-                onClick={() => onValueSelect?.(item.prop, item.value)}
-                title={`Find similar ${item.prop}: ${item.value}`}
-              >
-                <span>{item.label}</span>
-                <code>{item.value}</code>
-              </button>
-            ))}
-          </div>
-        ) : null}
-      </Section>
-    </div>
-  );
-}
-
-function inspectValueRows(target: ManualEditTarget): Array<{ prop: ProjectDesignTokenSuggestionProp; label: string; value: string }> {
-  const summary = target.computedSummary;
-  const styles = target.styles;
-  const rows: Array<{ prop: ProjectDesignTokenSuggestionProp; label: string; value: string | undefined }> = [
-    { prop: 'color', label: 'Text', value: styles.color || summary?.color },
-    { prop: 'backgroundColor', label: 'Background', value: styles.backgroundColor || summary?.backgroundColor },
-    { prop: 'borderColor', label: 'Border', value: styles.borderColor || summary?.borderColor },
-    { prop: 'fontFamily', label: 'Font', value: styles.fontFamily || summary?.fontFamily },
-    { prop: 'fontSize', label: 'Size', value: styles.fontSize || summary?.fontSize },
-    { prop: 'fontWeight', label: 'Weight', value: styles.fontWeight || summary?.fontWeight },
-    { prop: 'lineHeight', label: 'Line', value: styles.lineHeight || summary?.lineHeight },
-    { prop: 'letterSpacing', label: 'Tracking', value: styles.letterSpacing || summary?.letterSpacing },
-    { prop: 'width', label: 'Width', value: styles.width || String(Math.round(target.rect.width)) + 'px' },
-    { prop: 'height', label: 'Height', value: styles.height || String(Math.round(target.rect.height)) + 'px' },
-    { prop: 'gap', label: 'Gap', value: styles.gap },
-    { prop: 'padding', label: 'Padding', value: styles.padding || summary?.padding || styles.paddingTop },
-    { prop: 'margin', label: 'Margin', value: styles.margin || summary?.margin || styles.marginTop },
-    { prop: 'borderRadius', label: 'Radius', value: styles.borderRadius || summary?.borderRadius },
-    { prop: 'borderWidth', label: 'Stroke', value: styles.borderTopWidth || styles.borderRightWidth || styles.borderBottomWidth || styles.borderLeftWidth },
-  ];
-  return rows
-    .map((item) => ({ ...item, value: (item.value ?? '').trim() }))
-    .filter((item) => item.value.length > 0 && item.value !== 'rgba(0, 0, 0, 0)' && item.value !== 'transparent');
-}
-
-function LayoutActions({
-  target,
-  onApply,
-}: {
-  target: ManualEditTarget;
-  onApply: (styles: Partial<ManualEditStyles>, label: string) => void;
-}) {
-  const isTextLike = target.kind === 'text' || target.kind === 'link' || target.kind === 'token';
-  return (
-    <div className="cc-inspector manual-edit-layout-actions">
-      <Section title="LAYOUT">
-        {isTextLike ? (
-          <IconButtonGroup label="Text align">
-            {(['left', 'center', 'right', 'justify'] as const).map((align) => (
-              <button key={align} type="button" className="cc-chip-btn" onClick={() => onApply({ textAlign: align }, `Align text ${align}`)}>
-                {align}
-              </button>
-            ))}
-          </IconButtonGroup>
-        ) : null}
-        {target.isLayoutContainer ? (
-          <>
-            <IconButtonGroup label="Justify">
-              {(['flex-start', 'center', 'flex-end', 'space-between'] as const).map((value) => (
-                <button key={value} type="button" className="cc-chip-btn" onClick={() => onApply({ justifyContent: value }, `Justify ${value}`)}>
-                  {shortFlexLabel(value)}
-                </button>
-              ))}
-            </IconButtonGroup>
-            <IconButtonGroup label="Items">
-              {(['stretch', 'flex-start', 'center', 'flex-end', 'baseline'] as const).map((value) => (
-                <button key={value} type="button" className="cc-chip-btn" onClick={() => onApply({ alignItems: value }, `Align items ${value}`)}>
-                  {shortFlexLabel(value)}
-                </button>
-              ))}
-            </IconButtonGroup>
-          </>
-        ) : null}
-        <IconButtonGroup label="Self">
-          <button type="button" className="cc-chip-btn" onClick={() => onApply({ marginLeft: 'auto', marginRight: 'auto' }, 'Center element')}>
-            center
-          </button>
-          <button type="button" className="cc-chip-btn" onClick={() => onApply({ width: '100%' }, 'Fill width')}>
-            fill
-          </button>
-        </IconButtonGroup>
-      </Section>
-    </div>
-  );
-}
-
-function TokenSuggestions({
-  suggestions,
-  loading,
-  onApply,
-}: {
-  suggestions: ProjectDesignTokenSuggestion[];
-  loading: boolean;
-  onApply: (suggestion: ProjectDesignTokenSuggestion) => void;
-}) {
-  return (
-    <div className="cc-inspector manual-edit-token-suggestions">
-      <Section title="TOKENS">
-        {loading ? <p className="cc-section-hint">Scanning project tokens...</p> : null}
-        {!loading && suggestions.length === 0 ? <p className="cc-section-hint">No similar token values found.</p> : null}
-        {suggestions.slice(0, 8).map((suggestion) => (
-          <button
-            key={`${suggestion.prop}-${suggestion.token}-${suggestion.sourceFile}-${suggestion.line}`}
-            type="button"
-            className="manual-edit-token-row"
-            onClick={() => onApply(suggestion)}
-            title={`${suggestion.sourceFile}:${suggestion.line}`}
-          >
-            <span>
-              <strong>{suggestion.token}</strong>
-              <em>{suggestion.prop} · {suggestion.matchReason}</em>
-            </span>
-            <code>{suggestion.value}</code>
-          </button>
-        ))}
-      </Section>
-    </div>
-  );
-}
-
-function ProjectSearch({
-  query,
-  results,
-  loading,
-  onQueryChange,
-  onRun,
-  onOpen,
-}: {
-  query: string;
-  results: ManualEditSearchResult[];
-  loading: boolean;
-  onQueryChange?: (query: string) => void;
-  onRun?: () => void;
-  onOpen?: (result: ManualEditSearchResult) => void;
-}) {
-  return (
-    <div className="cc-inspector manual-edit-project-search">
-      <Section title="SEARCH">
-        <div className="manual-edit-search-row">
-          <input
-            value={query}
-            placeholder="Search project"
-            onChange={(event) => onQueryChange?.(event.currentTarget.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') onRun?.();
-            }}
-          />
-          <button type="button" className="cc-action-btn compact" disabled={loading || !query.trim()} onClick={onRun}>
-            {loading ? '...' : 'Go'}
-          </button>
-        </div>
-        {results.slice(0, 8).map((result) => (
-          <button
-            key={`${result.file}-${result.line}-${result.snippet}`}
-            type="button"
-            className="manual-edit-search-result"
-            onClick={() => onOpen?.(result)}
-            title={`${result.file}:${result.line}`}
-          >
-            <strong>{result.file}:{result.line}</strong>
-            <span>{result.snippet}</span>
-          </button>
-        ))}
-      </Section>
-    </div>
-  );
-}
-
-function IconButtonGroup({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="manual-edit-button-group">
-      <span>{label}</span>
-      <div>{children}</div>
-    </div>
-  );
-}
-
-function shortFlexLabel(value: string): string {
-  if (value === 'flex-start') return 'start';
-  if (value === 'flex-end') return 'end';
-  if (value === 'space-between') return 'between';
-  return value;
-}
-
-function suggestionPropToManualStyle(prop: ProjectDesignTokenSuggestion['prop']): keyof ManualEditStyles | null {
-  const map: Partial<Record<ProjectDesignTokenSuggestion['prop'], keyof ManualEditStyles>> = {
-    color: 'color',
-    backgroundColor: 'backgroundColor',
-    borderColor: 'borderColor',
-    fontFamily: 'fontFamily',
-    fontSize: 'fontSize',
-    fontWeight: 'fontWeight',
-    lineHeight: 'lineHeight',
-    letterSpacing: 'letterSpacing',
-    gap: 'gap',
-    padding: 'padding',
-    margin: 'margin',
-    borderRadius: 'borderRadius',
-    borderWidth: 'borderTopWidth',
-  };
-  return map[prop] ?? null;
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -933,11 +714,72 @@ function styleLabel(key: keyof ManualEditStyles): string {
   return key.replace(/[A-Z]/g, (match) => ` ${match.toLowerCase()}`);
 }
 
-function StyleInspector({ target, styles, onChange, onApply }: {
+// Which style keys have project-token reference values, and the suggestion prop
+// the daemon indexes them under. Keys absent here (opacity, textAlign, flex*,
+// alignItems…) show no reference strip. Border sides collapse to `borderWidth`;
+// padding/margin sides collapse to their shorthand prop.
+const STYLE_TO_SUGGESTION_PROP: Partial<Record<keyof ManualEditStyles, ProjectDesignTokenSuggestionProp>> = {
+  color: 'color',
+  backgroundColor: 'backgroundColor',
+  borderColor: 'borderColor',
+  fontFamily: 'fontFamily',
+  fontSize: 'fontSize',
+  fontWeight: 'fontWeight',
+  lineHeight: 'lineHeight',
+  letterSpacing: 'letterSpacing',
+  width: 'width',
+  height: 'height',
+  gap: 'gap',
+  borderRadius: 'borderRadius',
+  borderTopWidth: 'borderWidth',
+  padding: 'padding',
+  paddingTop: 'padding',
+  paddingRight: 'padding',
+  paddingBottom: 'padding',
+  paddingLeft: 'padding',
+  margin: 'margin',
+  marginTop: 'margin',
+  marginRight: 'margin',
+  marginBottom: 'margin',
+  marginLeft: 'margin',
+};
+
+// Applying a suggestion writes back to a real style key. `borderWidth` targets
+// `borderTopWidth` (the parent's apply handler fans it to all four sides).
+const SUGGESTION_TO_STYLE_KEY: Record<ProjectDesignTokenSuggestionProp, keyof ManualEditStyles> = {
+  color: 'color',
+  backgroundColor: 'backgroundColor',
+  borderColor: 'borderColor',
+  fontFamily: 'fontFamily',
+  fontSize: 'fontSize',
+  fontWeight: 'fontWeight',
+  lineHeight: 'lineHeight',
+  letterSpacing: 'letterSpacing',
+  width: 'width',
+  height: 'height',
+  gap: 'gap',
+  padding: 'padding',
+  margin: 'margin',
+  borderRadius: 'borderRadius',
+  borderWidth: 'borderTopWidth',
+};
+
+const COLOR_SUGGESTION_PROPS: ReadonlySet<ProjectDesignTokenSuggestionProp> = new Set([
+  'color', 'backgroundColor', 'borderColor',
+]);
+
+function StyleInspector({
+  target, styles, onChange, onApply,
+  tokenSuggestions = [], tokenSuggestionsLoading = false, onApplyTokenSuggestion, onInspectValueSelect,
+}: {
   target: ManualEditTarget;
   styles: ManualEditStyles;
   onChange: (key: keyof ManualEditStyles, value: string) => void;
   onApply: (styles: Partial<ManualEditStyles>) => void;
+  tokenSuggestions?: ProjectDesignTokenSuggestion[];
+  tokenSuggestionsLoading?: boolean;
+  onApplyTokenSuggestion?: (prop: keyof ManualEditStyles, value: string) => void;
+  onInspectValueSelect?: (prop: ProjectDesignTokenSuggestionProp, value: string) => void;
 }) {
   const t = useT();
   const u = (key: keyof ManualEditStyles, value: string) => onChange(key, value);
@@ -946,50 +788,68 @@ function StyleInspector({ target, styles, onChange, onApply }: {
   const widthPlaceholder = styles.width ? '' : `${Math.round(target.rect.width)}px`;
   const heightPlaceholder = styles.height ? '' : `${Math.round(target.rect.height)}px`;
 
+  // Which field is focused → drives the reference-values strip below the list.
+  const [activeField, setActiveField] = useState<{ key: keyof ManualEditStyles; label: string } | null>(null);
+  // Reset when the selected element changes (this component persists across selections).
+  useEffect(() => { setActiveField(null); }, [target.id]);
+
+  const activate = (key: keyof ManualEditStyles, label: string) => {
+    setActiveField({ key, label });
+    const prop = STYLE_TO_SUGGESTION_PROP[key];
+    if (!prop || !onInspectValueSelect) return;
+    const summaryValue = (summary as Partial<Record<string, string>> | undefined)?.[key];
+    const current = (styles[key] || summaryValue || '').trim();
+    if (current) onInspectValueSelect(prop, current);
+  };
+
+  const activeProp = activeField ? STYLE_TO_SUGGESTION_PROP[activeField.key] : undefined;
+  const activeSuggestions = activeProp ? tokenSuggestions.filter((s) => s.prop === activeProp) : [];
+  const activeIsColor = activeProp ? COLOR_SUGGESTION_PROPS.has(activeProp) : false;
+
   return (
     <div className="cc-inspector">
       <Section title={t('manualEdit.parameters')}>
-        <ColorRow label={t('manualEdit.textColor')} value={styles.color} placeholder={summary?.color} onChange={(v) => u('color', v)} />
-        <ColorRow label={t('manualEdit.background')} value={styles.backgroundColor} placeholder={summary?.backgroundColor} onChange={(v) => u('backgroundColor', v)} />
-        <UnitRow label={t('manualEdit.opacity')} value={styles.opacity} placeholder="1" onChange={(v) => u('opacity', v)} unit="" />
-        <FontRow label={t('manualEdit.fontFamily')} value={styles.fontFamily} placeholder={summary?.fontFamily} onChange={(v) => u('fontFamily', v)} />
+        <ColorRow label={t('manualEdit.textColor')} value={styles.color} placeholder={summary?.color} onChange={(v) => u('color', v)} onFocus={() => activate('color', t('manualEdit.textColor'))} />
+        <ColorRow label={t('manualEdit.background')} value={styles.backgroundColor} placeholder={summary?.backgroundColor} onChange={(v) => u('backgroundColor', v)} onFocus={() => activate('backgroundColor', t('manualEdit.background'))} />
+        <UnitRow label={t('manualEdit.opacity')} value={styles.opacity} placeholder="1" onChange={(v) => u('opacity', v)} unit="" onFocus={() => activate('opacity', t('manualEdit.opacity'))} />
+        <FontRow label={t('manualEdit.fontFamily')} value={styles.fontFamily} placeholder={summary?.fontFamily} onChange={(v) => u('fontFamily', v)} onFocus={() => activate('fontFamily', t('manualEdit.fontFamily'))} />
         <PairRow>
-          <UnitRow label={t('manualEdit.fontSize')} value={styles.fontSize} placeholder={summary?.fontSize} onChange={(v) => u('fontSize', v)} unit="px" autoUnit />
-          <DropdownRow label={t('manualEdit.weight')} value={styles.fontWeight} onChange={(v) => u('fontWeight', v)} options={WEIGHT_OPTS} placeholder={summary?.fontWeight} />
+          <UnitRow label={t('manualEdit.fontSize')} value={styles.fontSize} placeholder={summary?.fontSize} onChange={(v) => u('fontSize', v)} unit="px" autoUnit onFocus={() => activate('fontSize', t('manualEdit.fontSize'))} />
+          <DropdownRow label={t('manualEdit.weight')} value={styles.fontWeight} onChange={(v) => u('fontWeight', v)} options={WEIGHT_OPTS} placeholder={summary?.fontWeight} onFocus={() => activate('fontWeight', t('manualEdit.weight'))} />
         </PairRow>
-        <UnitRow label={t('manualEdit.radius')} value={styles.borderRadius} placeholder={summary?.borderRadius} onChange={(v) => u('borderRadius', v)} unit="px" autoUnit />
+        <UnitRow label={t('manualEdit.radius')} value={styles.borderRadius} placeholder={summary?.borderRadius} onChange={(v) => u('borderRadius', v)} unit="px" autoUnit onFocus={() => activate('borderRadius', t('manualEdit.radius'))} />
         <PairRow>
-          <ColorRow label={t('manualEdit.borderColor')} value={styles.borderColor} placeholder={summary?.borderColor} onChange={(v) => u('borderColor', v)} />
+          <ColorRow label={t('manualEdit.borderColor')} value={styles.borderColor} placeholder={summary?.borderColor} onChange={(v) => u('borderColor', v)} onFocus={() => activate('borderColor', t('manualEdit.borderColor'))} />
           <UnitRow label={t('manualEdit.borderWidth')} value={styles.borderTopWidth} onChange={(v) => onApply({
             borderTopWidth: v,
             borderRightWidth: v,
             borderBottomWidth: v,
             borderLeftWidth: v,
-          })} unit="px" autoUnit />
+          })} unit="px" autoUnit onFocus={() => activate('borderTopWidth', t('manualEdit.borderWidth'))} />
         </PairRow>
         <PairRow>
-          <UnitRow label={t('manualEdit.width')} value={styles.width} placeholder={widthPlaceholder} onChange={(v) => u('width', v)} unit="px" autoUnit />
-          <UnitRow label={t('manualEdit.height')} value={styles.height} placeholder={heightPlaceholder} onChange={(v) => u('height', v)} unit="px" autoUnit />
+          <UnitRow label={t('manualEdit.width')} value={styles.width} placeholder={widthPlaceholder} onChange={(v) => u('width', v)} unit="px" autoUnit onFocus={() => activate('width', t('manualEdit.width'))} />
+          <UnitRow label={t('manualEdit.height')} value={styles.height} placeholder={heightPlaceholder} onChange={(v) => u('height', v)} unit="px" autoUnit onFocus={() => activate('height', t('manualEdit.height'))} />
         </PairRow>
 
         <QuadRow label={t('manualEdit.padding')} axes={{
           t: t('manualEdit.sideTop'), r: t('manualEdit.sideRight'), b: t('manualEdit.sideBottom'), l: t('manualEdit.sideLeft'),
         }} values={{
           t: styles.paddingTop, r: styles.paddingRight, b: styles.paddingBottom, l: styles.paddingLeft,
-        }} onChange={(side, value) => u(sideToProp('padding', side), value)} />
+        }} onChange={(side, value) => u(sideToProp('padding', side), value)} onFocus={() => activate('padding', t('manualEdit.padding'))} />
 
         <QuadRow label={t('manualEdit.margin')} axes={{
           t: t('manualEdit.sideTop'), r: t('manualEdit.sideRight'), b: t('manualEdit.sideBottom'), l: t('manualEdit.sideLeft'),
         }} values={{
           t: styles.marginTop, r: styles.marginRight, b: styles.marginBottom, l: styles.marginLeft,
-        }} onChange={(side, value) => u(sideToProp('margin', side), value)} />
+        }} onChange={(side, value) => u(sideToProp('margin', side), value)} onFocus={() => activate('margin', t('manualEdit.margin'))} />
 
         <PairRow>
           <DropdownRow label={t('manualEdit.layoutDirection')} value={styles.flexDirection} onChange={(v) => u('flexDirection', v)} options={layoutDirectionOptions(t)} disabled={layoutDisabled} />
           <DropdownRow label={t('manualEdit.distribution')} value={styles.justifyContent} onChange={(v) => u('justifyContent', v)} options={justifyOptions(t)} disabled={layoutDisabled} />
         </PairRow>
         <PairRow>
-          <UnitRow label={t('manualEdit.gap')} value={styles.gap} onChange={(v) => u('gap', v)} unit="px" autoUnit disabled={layoutDisabled} />
+          <UnitRow label={t('manualEdit.gap')} value={styles.gap} onChange={(v) => u('gap', v)} unit="px" autoUnit disabled={layoutDisabled} onFocus={() => activate('gap', t('manualEdit.gap'))} />
           {layoutDisabled ? (
             // Non-flex/grid targets still get a live alignment dropdown — it
             // drives text-align (left / center / right) instead of the flex
@@ -1001,6 +861,38 @@ function StyleInspector({ target, styles, onChange, onApply }: {
         </PairRow>
         {layoutDisabled ? <p className="cc-section-hint">{t('manualEdit.layoutUnavailable')}</p> : null}
       </Section>
+
+      {activeField && activeProp ? (
+        <div className="cc-suggest">
+          <div className="cc-suggest-head">
+            <span>{t('manualEdit.referenceValues')}</span>
+            <em>{activeField.label}</em>
+          </div>
+          {tokenSuggestionsLoading ? (
+            <div className="cc-suggest-empty">{t('manualEdit.referenceValuesLoading')}</div>
+          ) : activeSuggestions.length === 0 ? (
+            <div className="cc-suggest-empty">{t('manualEdit.referenceValuesEmpty')}</div>
+          ) : (
+            <div className="cc-suggest-list">
+              {activeSuggestions.map((suggestion, index) => (
+                <button
+                  key={`${suggestion.token}-${suggestion.value}-${index}`}
+                  type="button"
+                  className="cc-suggest-chip"
+                  title={`${suggestion.matchReason} · ${suggestion.sourceFile}:${suggestion.line}`}
+                  onClick={() => onApplyTokenSuggestion?.(SUGGESTION_TO_STYLE_KEY[suggestion.prop], suggestion.value)}
+                >
+                  {activeIsColor ? (
+                    <span className="cc-suggest-swatch" style={{ background: suggestion.value }} aria-hidden />
+                  ) : null}
+                  <span className="cc-suggest-token">{suggestion.token}</span>
+                  <span className="cc-suggest-val">{suggestion.value}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -1063,9 +955,9 @@ function PairRow({ children }: { children: ReactNode }) {
   return <div className="cc-pair">{children}</div>;
 }
 
-function UnitRow({ label, value, onChange, unit, autoUnit, disabled, placeholder }: {
+function UnitRow({ label, value, onChange, unit, autoUnit, disabled, placeholder, onFocus }: {
   label: string; value: string; onChange: (v: string) => void;
-  unit: string; autoUnit?: boolean; disabled?: boolean; placeholder?: string;
+  unit: string; autoUnit?: boolean; disabled?: boolean; placeholder?: string; onFocus?: () => void;
 }) {
   const display = unit === 'px' ? stripPxUnit(value) : value;
   const step = unit === 'px' ? 1 : 0.1;
@@ -1090,24 +982,26 @@ function UnitRow({ label, value, onChange, unit, autoUnit, disabled, placeholder
       <span className="cc-label">{label}</span>
       <span className="cc-value">
         <button type="button" className="cc-step" disabled={!canStep} aria-label={`${label} decrease`} onClick={() => stepBy(-1)}>−</button>
-        <input value={display} placeholder={placeholder ? stripPxUnit(placeholder) : ''} disabled={disabled} onChange={(e) => onChange(valueFromDisplay(e.currentTarget.value))} onBlur={(e) => handle(e.currentTarget.value)} />
+        <input value={display} placeholder={placeholder ? stripPxUnit(placeholder) : ''} disabled={disabled} onFocus={onFocus} onChange={(e) => onChange(valueFromDisplay(e.currentTarget.value))} onBlur={(e) => handle(e.currentTarget.value)} />
         <button type="button" className="cc-step" disabled={!canStep} aria-label={`${label} increase`} onClick={() => stepBy(1)}>+</button>
-        {unit ? <em className="cc-unit">{unit}</em> : null}
+        {/* px is implied for length fields — the unit is stored internally but
+            not shown as a trailing label. Any non-px unit still renders. */}
+        {unit && unit !== 'px' ? <em className="cc-unit">{unit}</em> : null}
       </span>
     </label>
   );
 }
 
-function DropdownRow({ label, value, onChange, options, placeholder, disabled }: {
+function DropdownRow({ label, value, onChange, options, placeholder, disabled, onFocus }: {
   label: string; value: string; onChange: (v: string) => void;
-  options: ReadonlyArray<DropdownOption>; placeholder?: string; disabled?: boolean;
+  options: ReadonlyArray<DropdownOption>; placeholder?: string; disabled?: boolean; onFocus?: () => void;
 }) {
   const optionValues = options.map(dropdownOptionValue);
   return (
     <label className="cc-row">
       <span className="cc-label">{label}</span>
       <span className="cc-value cc-select">
-        <select value={value} disabled={disabled} onChange={(e) => onChange(e.currentTarget.value)}>
+        <select value={value} disabled={disabled} onFocus={onFocus} onChange={(e) => onChange(e.currentTarget.value)}>
           {!optionValues.includes(value) && value ? <option value={value}>{value}</option> : null}
           {options.map((opt) => {
             const optionValue = dropdownOptionValue(opt);
@@ -1129,11 +1023,12 @@ function dropdownOptionLabel(option: DropdownOption, placeholder?: string): stri
   return option.label;
 }
 
-function FontRow({ label, value, placeholder, onChange }: {
+function FontRow({ label, value, placeholder, onChange, onFocus }: {
   label: string;
   value: string;
   placeholder?: string;
   onChange: (v: string) => void;
+  onFocus?: () => void;
 }) {
   const normalizedValue = normalizeFontFamilyForSelect(value);
   const customValue = normalizedValue === value ? value : '';
@@ -1141,7 +1036,7 @@ function FontRow({ label, value, placeholder, onChange }: {
     <label className="cc-row">
       <span className="cc-label">{label}</span>
       <span className="cc-value cc-select">
-        <select value={normalizedValue} onChange={(event) => onChange(event.currentTarget.value)}>
+        <select value={normalizedValue} onFocus={onFocus} onChange={(event) => onChange(event.currentTarget.value)}>
           {!normalizedValue && placeholder ? <option value="">{fontFamilyLabel(placeholder)}</option> : null}
           {customValue && !FONT_OPTS.some((option) => option.value === customValue) ? (
             <option value={customValue}>{fontFamilyLabel(customValue)}</option>
@@ -1182,8 +1077,8 @@ function parseFontFamilies(value: string): string[] {
     .filter(Boolean);
 }
 
-function ColorRow({ label, value, placeholder, onChange, compact }: {
-  label: string; value: string; placeholder?: string; onChange: (v: string) => void; compact?: boolean;
+function ColorRow({ label, value, placeholder, onChange, compact, onFocus }: {
+  label: string; value: string; placeholder?: string; onChange: (v: string) => void; compact?: boolean; onFocus?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLSpanElement | null>(null);
@@ -1204,7 +1099,7 @@ function ColorRow({ label, value, placeholder, onChange, compact }: {
         <button type="button" className="cc-swatch" style={{ background: value || 'transparent' }}
           onClick={() => setOpen((v) => !v)} aria-label={`Pick ${label}`} />
         <input value={value} placeholder={placeholder || '#000000'}
-          onChange={(e) => onChange(e.currentTarget.value)} onFocus={() => setOpen(true)} />
+          onChange={(e) => onChange(e.currentTarget.value)} onFocus={() => { setOpen(true); onFocus?.(); }} />
         {open ? (
           <div className="cc-color-popover">
             <div className="cc-color-grid">
@@ -1222,10 +1117,11 @@ function ColorRow({ label, value, placeholder, onChange, compact }: {
   );
 }
 
-function QuadRow({ label, axes, values, onChange }: {
+function QuadRow({ label, axes, values, onChange, onFocus }: {
   label: string; values: { t: string; r: string; b: string; l: string };
   axes?: { t: string; r: string; b: string; l: string };
   onChange: (side: 't' | 'r' | 'b' | 'l', value: string) => void;
+  onFocus?: () => void;
 }) {
   const [open, setOpen] = useState(true);
   const allEqualValue = (() => {
@@ -1233,10 +1129,11 @@ function QuadRow({ label, axes, values, onChange }: {
     return v === values.r && v === values.b && v === values.l ? v : null;
   })();
   return (
-    <div className="cc-quad">
+    // React onFocus bubbles, so any focused cell input activates the row.
+    <div className="cc-quad" onFocus={onFocus}>
       <button type="button" className="cc-quad-head" onClick={() => setOpen((v) => !v)}>
         <span>{label}</span>
-        {!open && allEqualValue !== null ? <em>{allEqualValue || '0 px'}</em> : <span className="cc-chevron-small">{open ? '▾' : '▸'}</span>}
+        {!open && allEqualValue !== null ? <em>{stripPxUnit(allEqualValue) || '0'}</em> : <span className="cc-chevron-small">{open ? '▾' : '▸'}</span>}
       </button>
       {open ? (
         <div className="cc-quad-grid">
@@ -1275,7 +1172,6 @@ function QuadCell({ axis, value, onChange }: { axis: string; value: string; onCh
           if (next !== value) onChange(next);
         }} />
       <button type="button" className="cc-step cc-step-quad" disabled={!canStep} aria-label={`${axis} increase`} onClick={() => stepBy(1)}>+</button>
-      <em className="cc-quad-unit">px</em>
     </span>
   );
 }

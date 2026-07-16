@@ -5,6 +5,12 @@ import { navigate, type EntryHomeView, type Route } from '../router';
 import type { Project } from '../types';
 import { Icon, type IconName } from './Icon';
 import { ENTRY_RAIL_TOGGLE_EVENT } from './EntryShell';
+import {
+  HOME_APPLY_TEMPLATE_EVENT,
+  orderedCreateChips,
+  type HomeHeroChip,
+} from './home-hero/chips';
+import { homeHeroChipLabel } from './home-hero/chip-labels';
 import { useGlideIndicator } from '../hooks/useGlideIndicator';
 import { useLiquidGlass } from '../hooks/useLiquidGlass';
 
@@ -421,37 +427,37 @@ function normalizeSearch(value: string): string {
   return value.trim().toLocaleLowerCase();
 }
 
-interface HoverPreviewState {
-  tabId: string;
-  anchorLeft: number;
-  anchorRight: number;
-  anchorBottom: number;
-  anchorWidth: number;
-}
 
-const HOVER_PREVIEW_DELAY_MS = 380;
 
 export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false }: Props) {
   const t = useT();
   const [state, setState] = useState<WorkspaceTabsState>(() => initialTabsState(route));
   const [tabsMenuOpen, setTabsMenuOpen] = useState(false);
   const [radialMenu, setRadialMenu] = useState<{ x: number; y: number } | null>(null);
+  const [radialHoverId, setRadialHoverId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!radialMenu) setRadialHoverId(null);
+  }, [radialMenu]);
   useEffect(() => {
     if (!radialMenu) return;
+    // Uniform page blur: filter on the shell blurs every descendant equally
+    // (backdrop-filter on the scrim sampled composited layers unevenly).
+    document.documentElement.classList.add('od-radial-open');
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setRadialMenu(null);
     };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    return () => {
+      document.documentElement.classList.remove('od-radial-open');
+      window.removeEventListener('keydown', onKey);
+    };
   }, [radialMenu]);
   const [query, setQuery] = useState('');
-  const [hoverPreview, setHoverPreview] = useState<HoverPreviewState | null>(null);
   const [tabsOverflowing, setTabsOverflowing] = useState(false);
   const stripRef = useRef<HTMLDivElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
-  const hoverTimerRef = useRef<number | null>(null);
   const previousOnboardingCompletedRef = useRef(onboardingCompleted);
   const resetEntryToHomeAfterOnboardingRef = useRef(false);
   const dragSuppressClickRef = useRef(false);
@@ -513,11 +519,20 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
     [state.tabs, tabsOverflowing],
   );
   const activeChromeTab = state.tabs.find((tab) => tab.id === state.activeTabId);
+  // Home view: the active pinned entry tab renders only the sidebar toggle, so
+  // the glide pill must not park its filled "active tab" surface over it.
+  const activeIsHomeRailToggle =
+    activeChromeTab?.kind === 'entry' && activeChromeTab.view === 'home';
   useGlideIndicator({
     containerRef: stripRef,
     indicatorRef: glideRef,
     pillRef: glidePillRef,
-    activeSelector: '.workspace-tab.is-active',
+    // On Home, target a never-matching selector so the glide pill fades out
+    // over the toggle instead of filling it. (jsdom-safe — no `:has()` in
+    // querySelector.)
+    activeSelector: activeIsHomeRailToggle
+      ? '.workspace-tab.is-active.__no-glide__'
+      : '.workspace-tab.is-active',
     activeKey: state.activeTabId,
     layoutKey: tabsLayoutKey,
     frozen: draggingTabId !== null,
@@ -535,33 +550,6 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
   // both the "+" button and the Cmd/Ctrl+T shortcut from one place.
   const onboardingActive = route.kind === 'home' && route.view === 'onboarding';
 
-  function clearHoverTimer() {
-    if (hoverTimerRef.current !== null) {
-      window.clearTimeout(hoverTimerRef.current);
-      hoverTimerRef.current = null;
-    }
-  }
-
-  function scheduleHoverPreview(tabId: string, element: HTMLElement) {
-    clearHoverTimer();
-    hoverTimerRef.current = window.setTimeout(() => {
-      const rect = element.getBoundingClientRect();
-      setHoverPreview({
-        tabId,
-        anchorLeft: rect.left,
-        anchorRight: rect.right,
-        anchorBottom: rect.bottom,
-        anchorWidth: rect.width,
-      });
-    }, HOVER_PREVIEW_DELAY_MS);
-  }
-
-  function dismissHoverPreview() {
-    clearHoverTimer();
-    setHoverPreview(null);
-  }
-
-  useEffect(() => () => clearHoverTimer(), []);
 
   const projectById = useMemo(
     () => new Map(projects.map((project) => [project.id, project])),
@@ -830,7 +818,6 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
       activeTabId: tab.id,
     }));
     setTabsMenuOpen(false);
-    dismissHoverPreview();
     navigate(routeForTab(tab));
   }
 
@@ -873,17 +860,48 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
     activateTab(tab);
   }
 
-  // Corner-anchored radial fan menu on the "+" button (structure borrowed
-  // from a quarter-pie corner menu): sectors sweep down-left from the
-  // button, each one an entry-view shortcut.
-  const RADIAL_SIZE = 264;
+  // Corner-anchored radial fan menu on the "+" button: three concentric bands
+  // sweep down-left from the button (the pivot at the top-right corner),
+  // carrying the composer Template picker's icons. Each band is a ring split
+  // into angular wedges — 3 / 4 / 3 from the inner band outward (10 total).
+  // Picking a wedge opens the home tab with that template applied to the hero.
+  const RADIAL_SIZE = 300;
   const RADIAL_PAD = 24;
-  const RADIAL_ACTIONS: Array<{ label: string; view: EntryHomeView }> = [
-    { label: '首页', view: 'home' },
-    { label: '全部项目', view: 'all-projects' },
-    { label: '设计体系', view: 'design-systems' },
-    { label: 'Community', view: 'community' },
-  ];
+  const RADIAL_R_IN = 56;
+  const RADIAL_R_OUT = 264;
+  const RADIAL_BANDS = [3, 4, 3];
+  const RADIAL_START = 96; // fan start angle (screen degrees) …
+  const RADIAL_SWEEP = 78; // … total arc, fanning toward the left
+  const RADIAL_GAP = 0; // wedges abut; hairline strokes are the dividers
+  const RADIAL_CX = RADIAL_SIZE - RADIAL_PAD;
+  const RADIAL_CY = RADIAL_PAD;
+
+  function radialBandRadius(band: number): number {
+    return RADIAL_R_IN + ((RADIAL_R_OUT - RADIAL_R_IN) * band) / RADIAL_BANDS.length;
+  }
+
+  // Per-template placement across the bands, aligned to template order.
+  const radialSlots = useMemo(() => {
+    const chips = orderedCreateChips().filter((chip) => chip.action.kind === 'apply-scenario');
+    const slots: Array<{ chip: HomeHeroChip; band: number; seg: number; segCount: number }> = [];
+    let cursor = 0;
+    RADIAL_BANDS.forEach((count, band) => {
+      const isLast = band === RADIAL_BANDS.length - 1;
+      const remaining = Math.max(chips.length - cursor, 0);
+      const take = isLast ? remaining : Math.min(count, remaining);
+      for (let seg = 0; seg < take; seg += 1) {
+        const chip = chips[cursor + seg];
+        if (chip) slots.push({ chip, band, seg, segCount: take });
+      }
+      cursor += take;
+    });
+    return slots;
+  }, []);
+
+  function radialWedgeAngles(seg: number, segCount: number): [number, number] {
+    const step = RADIAL_SWEEP / segCount;
+    return [RADIAL_START + seg * step + RADIAL_GAP / 2, RADIAL_START + (seg + 1) * step - RADIAL_GAP / 2];
+  }
 
   function radialSectorPath(cx: number, cy: number, a1: number, a2: number, r0: number, r1: number): string {
     const rad = (a: number) => (a * Math.PI) / 180;
@@ -904,10 +922,15 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
     setRadialMenu(null);
   }
 
-  function openRadialMenu(event: React.MouseEvent<HTMLButtonElement>) {
-    if (onboardingActive) return;
-    const rect = event.currentTarget.getBoundingClientRect();
-    setRadialMenu((cur) => (cur ? null : { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }));
+  function openTemplateFromRadial(chip: HomeHeroChip) {
+    openEntryView('home');
+    // Hand the pick to the hero once the home tab has mounted/activated —
+    // HomeHero applies the chip exactly as if its own picker was clicked.
+    window.setTimeout(() => {
+      window.dispatchEvent(
+        new CustomEvent(HOME_APPLY_TEMPLATE_EVENT, { detail: { chipId: chip.id } }),
+      );
+    }, 50);
   }
 
   function createNewTab() {
@@ -934,7 +957,6 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
   }
 
   function closeTab(tabId: string) {
-    dismissHoverPreview();
     const normalized = normalizeTabsState(state);
     const closingIndex = normalized.tabs.findIndex((tab) => tab.id === tabId);
     if (closingIndex < 0) return;
@@ -961,7 +983,6 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
   }
 
   function reorderTab(sourceId: string, targetId: string, edge: TabDropEdge) {
-    dismissHoverPreview();
     setTabsMenuOpen(false);
     setState((current) => {
       const normalized = normalizeTabsState(current);
@@ -1016,7 +1037,6 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
       event.preventDefault();
       return;
     }
-    dismissHoverPreview();
     dragSuppressClickRef.current = true;
     draggingTabIdRef.current = tabId;
     dragHapticTargetRef.current = `${tabId}:self`;
@@ -1127,77 +1147,82 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
               data-workspace-tab-id={tab.id}
               role="tab"
               aria-selected={active}
-              aria-describedby={hoverPreview?.tabId === tab.id ? 'workspace-tab-preview' : undefined}
               draggable={!isPinned && state.tabs.length > 1}
               onDragStart={(event) => handleTabDragStart(tab.id, event)}
               onDragEnd={handleTabDragEnd}
-              onMouseEnter={(event) => scheduleHoverPreview(tab.id, event.currentTarget)}
-              onMouseLeave={dismissHoverPreview}
             >
-              <button
-                type="button"
-                className="workspace-tab__main"
-                onClick={() => openTab(tab)}
-                onFocus={(event) => scheduleHoverPreview(tab.id, event.currentTarget.parentElement ?? event.currentTarget)}
-                onBlur={dismissHoverPreview}
-              >
-                <span className="workspace-tab__icon" aria-hidden>
-                  {/* Icon matches the 13px label size (icons pair with the
-                      adjacent text size). */}
-                  <Icon name={display.icon} size={14} />
-                </span>
-                <span className="workspace-tab__label">{display.title}</span>
-              </button>
-              {isPinned ? (
-                active ? (
-                  <>
-                  <span className="workspace-tab__divider" aria-hidden />
-                  <button
-                    type="button"
-                    className="workspace-tab__rail-toggle od-tooltip"
-                    aria-label="展开/收起侧栏"
-                    title="展开/收起侧栏"
-                    data-tooltip="侧栏"
-                    data-tooltip-placement="bottom"
-                    data-testid="workspace-home-rail-toggle"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      window.dispatchEvent(new CustomEvent(ENTRY_RAIL_TOGGLE_EVENT));
-                    }}
-                  >
-                    <Icon name="panel-left" size={14} />
-                  </button>
-                  </>
-                ) : null
-              ) : (
+              {isPinned && active && tab.view === 'home' ? (
+                /* Home view only: the pinned tab is the sidebar toggle — a Home
+                   button would be redundant since you are already home. */
                 <button
                   type="button"
-                  className="workspace-tab__close od-tooltip"
-                  aria-label={t('common.close')}
-                  title={t('common.close')}
-                  data-tooltip={t('common.close')}
+                  className="workspace-tab__rail-toggle od-tooltip"
+                  aria-label="展开/收起侧栏"
+                  title="展开/收起侧栏"
+                  data-tooltip="侧栏"
                   data-tooltip-placement="bottom"
-                  onClick={() => closeTab(tab.id)}
+                  data-testid="workspace-home-rail-toggle"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    window.dispatchEvent(new CustomEvent(ENTRY_RAIL_TOGGLE_EVENT));
+                  }}
                 >
-                  <Icon name="close" size={14} />
+                  <Icon name="panel-left" size={14} />
                 </button>
+              ) : isPinned && active ? (
+                /* Any other entry section (settings / all-projects / community /
+                   design-systems …): show the Home icon; clicking returns home. */
+                <button
+                  type="button"
+                  className="workspace-tab__rail-toggle od-tooltip"
+                  aria-label="返回首页"
+                  title="返回首页"
+                  data-tooltip="首页"
+                  data-tooltip-placement="bottom"
+                  data-testid="workspace-home-nav"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    openTab(tab);
+                  }}
+                >
+                  <Icon name="home" size={14} />
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="workspace-tab__main"
+                    onClick={() => openTab(tab)}
+                  >
+                    <span className="workspace-tab__icon" aria-hidden>
+                      {/* Icon matches the 13px label size (icons pair with the
+                          adjacent text size). */}
+                      <Icon name={display.icon} size={14} />
+                    </span>
+                    <span className="workspace-tab__label">{display.title}</span>
+                  </button>
+                  {!isPinned ? (
+                    <button
+                      type="button"
+                      className="workspace-tab__close od-tooltip"
+                      aria-label={t('common.close')}
+                      title={t('common.close')}
+                      data-tooltip={t('common.close')}
+                      data-tooltip-placement="bottom"
+                      onClick={() => closeTab(tab.id)}
+                    >
+                      <Icon name="close" size={14} />
+                    </button>
+                  ) : null}
+                </>
               )}
             </div>
           );
         })}
-        <button
-          type="button"
-          className="workspace-tabs-new-btn od-tooltip"
-          onClick={openRadialMenu}
-          title="New tab"
-          data-tooltip="New tab"
-          data-tooltip-placement="bottom"
-          aria-label="New tab"
-          data-testid="workspace-tabs-new-tab"
-          disabled={onboardingActive}
-        >
-          <Icon name="plus" size={14} />
-        </button>
+        {/* Top-right "+" and its radial template menu removed per request:
+            the button and its openRadialMenu entry point are gone, so the
+            radial can no longer be opened. (New tab is still reachable via
+            Cmd/Ctrl+T.) */}
       </div>
       <div className="workspace-tabs-actions" ref={menuRef}>
         {/* Tab search removed for the demo. */}
@@ -1277,102 +1302,68 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
       </div>
       {radialMenu ? createPortal(
         <div className="workspace-radial-layer" onMouseDown={() => setRadialMenu(null)}>
-          <svg
+          <div
             className="workspace-radial-menu"
-            style={{ left: radialMenu.x - (RADIAL_SIZE - RADIAL_PAD), top: radialMenu.y - RADIAL_PAD }}
-            width={RADIAL_SIZE}
-            height={RADIAL_SIZE}
-            viewBox={`0 0 ${RADIAL_SIZE} ${RADIAL_SIZE}`}
+            style={{ left: radialMenu.x - (RADIAL_SIZE - RADIAL_PAD), top: radialMenu.y - RADIAL_PAD, width: RADIAL_SIZE, height: RADIAL_SIZE }}
             onMouseDown={(event) => event.stopPropagation()}
           >
-            {RADIAL_ACTIONS.map((action, index) => {
-              const cx = RADIAL_SIZE - RADIAL_PAD;
-              const cy = RADIAL_PAD;
-              const start = 98;
-              const span = 68 / RADIAL_ACTIONS.length;
-              const gap = 2.4;
-              const a1 = start + index * span + gap / 2;
-              const a2 = start + (index + 1) * span - gap / 2;
+            <svg width={RADIAL_SIZE} height={RADIAL_SIZE} viewBox={`0 0 ${RADIAL_SIZE} ${RADIAL_SIZE}`}>
+              {radialSlots.map((slot) => {
+                const [a1, a2] = radialWedgeAngles(slot.seg, slot.segCount);
+                const r0 = radialBandRadius(slot.band);
+                const r1 = radialBandRadius(slot.band + 1);
+                const isHover = slot.chip.id === radialHoverId;
+                return (
+                  <path
+                    key={slot.chip.id}
+                    className={`workspace-radial-sector-path${isHover ? ' is-hover' : ''}`}
+                    d={radialSectorPath(RADIAL_CX, RADIAL_CY, a1, a2, r0, r1)}
+                    role="menuitem"
+                    aria-label={homeHeroChipLabel(slot.chip.id, t)}
+                    data-testid={`workspace-radial-template-${slot.chip.id}`}
+                    onMouseEnter={() => setRadialHoverId(slot.chip.id)}
+                    onMouseLeave={() => setRadialHoverId((v) => (v === slot.chip.id ? null : v))}
+                    onClick={() => openTemplateFromRadial(slot.chip)}
+                  />
+                );
+              })}
+            </svg>
+            {radialSlots.map((slot) => {
+              const [a1, a2] = radialWedgeAngles(slot.seg, slot.segCount);
               const mid = (a1 + a2) / 2;
-              const labelR = 158;
-              const lx = cx + labelR * Math.cos((mid * Math.PI) / 180);
-              const ly = cy + labelR * Math.sin((mid * Math.PI) / 180);
+              const rmid = (radialBandRadius(slot.band) + radialBandRadius(slot.band + 1)) / 2;
+              const ix = RADIAL_CX + rmid * Math.cos((mid * Math.PI) / 180);
+              const iy = RADIAL_CY + rmid * Math.sin((mid * Math.PI) / 180);
+              const isHover = slot.chip.id === radialHoverId;
               return (
-                <g
-                  key={action.view}
-                  className="workspace-radial-sector"
-                  role="menuitem"
-                  onClick={() => openEntryView(action.view)}
+                <span
+                  key={slot.chip.id}
+                  className={`workspace-radial-icon-btn${isHover ? ' is-hover' : ''}`}
+                  aria-hidden
+                  style={{ left: ix, top: iy }}
+                  title={homeHeroChipLabel(slot.chip.id, t)}
                 >
-                  <path d={radialSectorPath(cx, cy, a1, a2, 52, 224)} />
-                  <text x={lx} y={ly} textAnchor="middle" dominantBaseline="middle">
-                    {action.label}
-                  </text>
-                </g>
+                  <Icon name={slot.chip.icon} size={17} />
+                </span>
               );
             })}
-          </svg>
+          </div>
+          <button
+            type="button"
+            className="workspace-radial-close"
+            style={{ left: radialMenu.x, top: radialMenu.y }}
+            aria-label="关闭菜单"
+            title="关闭"
+            onMouseDown={(event) => event.stopPropagation()}
+            onClick={() => setRadialMenu(null)}
+          >
+            <Icon name="plus" size={16} />
+          </button>
         </div>,
         document.body,
       ) : null}
-      {hoverPreview && typeof document !== 'undefined' && !tabsMenuOpen
-        ? createPortal(
-            (() => {
-              const previewTab = state.tabs.find((tab) => tab.id === hoverPreview.tabId);
-              if (!previewTab) return null;
-              const previewDisplay = displayTabById.get(previewTab.id)
-                ?? displayTabFor(previewTab, projectById, t);
-              const previewDetail = describePreviewDetail(previewTab, projectById);
-              const previewWidth = Math.max(220, Math.round(hoverPreview.anchorWidth));
-              const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1024;
-              const left = Math.max(
-                0,
-                Math.min(viewportWidth - previewWidth, hoverPreview.anchorLeft),
-              );
-              return (
-                <div
-                  id="workspace-tab-preview"
-                  className="workspace-tab-preview"
-                  role="tooltip"
-                  style={{ left, top: hoverPreview.anchorBottom + 6, width: previewWidth }}
-                >
-                  <div className="workspace-tab-preview__icon" aria-hidden>
-                    <Icon name={previewDisplay.icon} size={16} />
-                  </div>
-                  <div className="workspace-tab-preview__text">
-                    <div className="workspace-tab-preview__title">{previewDisplay.title}</div>
-                    <div className="workspace-tab-preview__meta">{previewDisplay.meta}</div>
-                    {previewDetail ? (
-                      <div className="workspace-tab-preview__detail">{previewDetail}</div>
-                    ) : null}
-                  </div>
-                </div>
-              );
-            })(),
-            document.body,
-          )
-        : null}
     </header>
   );
-}
-
-function describePreviewDetail(
-  tab: WorkspaceChromeTab,
-  projectById: Map<string, Project>,
-): string | null {
-  if (tab.kind === 'project') {
-    if (tab.fileName) return tab.fileName;
-    const project = projectById.get(tab.projectId);
-    const brief = project?.pendingPrompt?.trim() || project?.customInstructions?.trim();
-    if (brief) {
-      return brief.length > 120 ? `${brief.slice(0, 117)}…` : brief;
-    }
-    return null;
-  }
-  if (tab.kind === 'marketplace') {
-    return tab.pluginId ? tab.pluginId : null;
-  }
-  return null;
 }
 
 function displayTabFor(

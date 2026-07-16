@@ -1,158 +1,158 @@
 import type { Dict } from '../types';
 
 export const ar: Dict = {
-  'chat.amrCard.switchTitle': 'فشل استدعاء النموذج — تم إيقاف هذه المهمة مؤقتًا',
-  'chat.amrCard.switchBody': 'بدِّل إلى خدمة نماذج AMR الرسمية من Open Design — لا حاجة لإعداد مفتاح API. بعد تسجيل الدخول والتفويض والشحن، ستُعاد محاولة هذه المهمة تلقائيًا.',
-  'chat.amrCard.chipOfficial': 'استضافة رسمية',
-  'chat.amrCard.chipNoKey': 'بدون مفتاح API',
-  'chat.amrCard.chipAutoRetry': 'إعادة المحاولة تلقائيًا بعد تسجيل الدخول',
-  'chat.amrCard.switchCta': 'التبديل إلى AMR وإعادة المحاولة',
-  'chat.amrError.authMessage': 'حساب AMR الخاص بك لم يتم تفويضه بعد. فوِّضه وستُعاد محاولة هذه المهمة تلقائيًا.',
-  'chat.amrError.balanceMessage': 'نفد رصيد AMR الخاص بك. اشحن للاستمرار في هذه المهمة.',
-  'chat.amrError.authorizeCta': 'تفويض وإعادة المحاولة',
-  'chat.amrError.rechargeCta': 'شحن AMR',
-  'chat.antigravityError.launchTerminalCta': 'تسجيل الدخول عبر الطرفية',
-  'chat.antigravityError.launchSwitchModelCta': 'تبديل النموذج في الطرفية',
-  'chat.connectionDropped': 'انقطع الاتصال بخدمة النموذج قبل اكتمال الاستجابة — عادةً بسبب شبكة أو وكيل (proxy) غير مستقر. يرجى إعادة المحاولة.',
-  'chat.runError.title.authRequired': 'مطلوب التفويض',
-  'chat.runError.title.balance': 'الرصيد غير كافٍ',
-  'chat.runError.title.connectionDropped': 'انقطع الاتصال',
-  'chat.runError.title.signInRequired': 'تسجيل الدخول مطلوب',
-  'chat.runError.title.rateLimited': 'تم بلوغ حد الاستخدام',
-  'chat.runError.title.generic': 'فشلت المهمة',
-  'chat.runError.signInMessage.amr': 'لم يتم تسجيل دخول وكيل Open Design بعد — سجّل الدخول لبدء استخدامه.',
-  'chat.runError.signInMessage.other': '{agent} لم يسجّل الدخول. تحقق من حالة تسجيل الدخول محليًا. نوصي بوكيل Open Design — أكثر ثباتًا وأفضل قيمة.',
-  'chat.runError.agentFallback': 'الوكيل',
-  'chat.runError.sourceLabel': 'مصدر الخطأ',
-  'chat.runError.sourceExpandAria': 'توسيع مصدر الخطأ',
-  'chat.runError.sourceCollapseAria': 'طي مصدر الخطأ',
-  'common.cancel': 'إلغاء',
-  'chat.selectFromLibrary': 'استيراد من المكتبة',
-  'chat.importFigma': 'استيراد من Figma',
-  'designFiles.library.label': 'استيراد من المكتبة',
-  'designFiles.library.title': 'استيراد من المكتبة',
-  'libraryPicker.title': 'استيراد من المكتبة',
-  'libraryPicker.searchPlaceholder': 'البحث في المكتبة…',
-  'libraryPicker.empty': 'لا توجد عناصر في مكتبتك بعد',
-  'libraryPicker.allKinds': 'الكل',
-  'libraryPicker.add': 'استيراد',
-  'libraryPicker.loading': 'جارٍ التحميل…',
-  'common.save': 'حفظ',
-  'common.close': 'إغلاق',
-  'common.clear': 'مسح',
-  'common.delete': 'حذف',
-  'common.rename': 'إعادة تسمية',
-  'common.edit': 'تعديل',
-  'common.preview': 'معاينة',
-  'common.share': 'مشاركة',
-  'common.search': 'بحث',
-  'common.searchEllipsis': 'بحث...',
-  'common.loading': 'جاري التحميل...',
-  'common.all': 'الكل',
-  'common.none': 'لا شيء',
-  'common.default': 'افتراضي',
-  'common.installed': 'مثبت',
-  'common.notInstalled': 'غير مثبت',
-  'common.active': 'نشط',
-  'common.offline': 'غير متصل',
-  'common.selected': 'محدد',
-  'common.create': 'إنشاء',
-  'common.openPreview': 'فتح المعاينة',
-  'common.exitFullscreen': 'الخروج من ملء الشاشة',
-  'common.fullscreen': 'ملء الشاشة',
-  'common.openInNewTab': 'فتح في علامة تبويب جديدة',
-  'common.exportPdf': 'تصدير كـ PDF',
-  'common.exportZip': 'تحميل كـ zip.',
-  'common.exportHtml': 'تصدير كـ HTML مستقل',
-  'common.exportImage': 'تصدير كصورة',
-  'common.exportImageFailed': 'فشل التقاط الصورة. يرجى المحاولة مرة أخرى أو استخدام أداة لقطة الشاشة في المتصفح.',
-  'common.justNow': 'الآن',
-  'common.minutesAgo': 'منذ {n} دقيقة',
-  'common.hoursAgo': 'منذ {n} ساعة',
-  'common.daysAgo': 'منذ {n} يوم',
-  'common.weeksAgo': 'قبل {n} أسبوع',
-  'common.now': 'الآن',
-  'common.minutesShort': '{n} د',
-  'common.hoursShort': '{n} سا',
-  'common.daysShort': '{n} ي',
-  'common.untitled': 'بدون عنوان',
-  'plugins.availableDetails.provenance': 'المصدر',
-  'plugins.availableDetails.provenanceLine': 'من {source} · {trust} · {resolved}',
-  'plugins.availableDetails.provenanceLineWithIntegrity': 'من {source} · {trust} · {resolved} · {integrity}',
-  'plugins.availableDetails.install': 'تثبيت',
-  'plugins.availableDetails.version': 'الإصدار',
-  'plugins.availableDetails.pluginVersion': 'إصدار الإضافة',
-  'plugins.availableDetails.copyInstallCommand': 'نسخ أمر التثبيت',
-  'plugins.availableDetails.copied': 'تم النسخ',
-  'plugins.availableDetails.deprecatedPrefix': 'مهمَل: {message}',
-  'plugins.availableDetails.deprecatedFallback': 'تم وضع علامة على هذا الإصدار كمهمَل.',
-  'plugins.availableDetails.yanked': 'تم السحب.',
-  'plugins.availableDetails.yankedWithReason': 'تم السحب: {reason}',
-  'plugins.availableDetails.versionDeprecatedSuffix': ' (مهمَل)',
-  'plugins.availableDetails.versionYankedSuffix': ' (مسحوب)',
-  'plugins.availableDetails.ref': 'المرجع',
+  'chat.amrCard.switchTitle': 'ÙØ´Ù Ø§Ø³ØªØ¯Ø¹Ø§Ø¡ Ø§ÙÙÙÙØ°Ø¬ â ØªÙ Ø¥ÙÙØ§Ù ÙØ°Ù Ø§ÙÙÙÙØ© ÙØ¤ÙØªÙØ§',
+  'chat.amrCard.switchBody': 'Ø¨Ø¯ÙÙÙ Ø¥ÙÙ Ø®Ø¯ÙØ© ÙÙØ§Ø°Ø¬ AMR Ø§ÙØ±Ø³ÙÙØ© ÙÙ Open Design â ÙØ§ Ø­Ø§Ø¬Ø© ÙØ¥Ø¹Ø¯Ø§Ø¯ ÙÙØªØ§Ø­ API. Ø¨Ø¹Ø¯ ØªØ³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙ ÙØ§ÙØªÙÙÙØ¶ ÙØ§ÙØ´Ø­ÙØ Ø³ØªÙØ¹Ø§Ø¯ ÙØ­Ø§ÙÙØ© ÙØ°Ù Ø§ÙÙÙÙØ© ØªÙÙØ§Ø¦ÙÙØ§.',
+  'chat.amrCard.chipOfficial': 'Ø§Ø³ØªØ¶Ø§ÙØ© Ø±Ø³ÙÙØ©',
+  'chat.amrCard.chipNoKey': 'Ø¨Ø¯ÙÙ ÙÙØªØ§Ø­ API',
+  'chat.amrCard.chipAutoRetry': 'Ø¥Ø¹Ø§Ø¯Ø© Ø§ÙÙØ­Ø§ÙÙØ© ØªÙÙØ§Ø¦ÙÙØ§ Ø¨Ø¹Ø¯ ØªØ³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙ',
+  'chat.amrCard.switchCta': 'Ø§ÙØªØ¨Ø¯ÙÙ Ø¥ÙÙ AMR ÙØ¥Ø¹Ø§Ø¯Ø© Ø§ÙÙØ­Ø§ÙÙØ©',
+  'chat.amrError.authMessage': 'Ø­Ø³Ø§Ø¨ AMR Ø§ÙØ®Ø§Øµ Ø¨Ù ÙÙ ÙØªÙ ØªÙÙÙØ¶Ù Ø¨Ø¹Ø¯. ÙÙÙÙØ¶Ù ÙØ³ØªÙØ¹Ø§Ø¯ ÙØ­Ø§ÙÙØ© ÙØ°Ù Ø§ÙÙÙÙØ© ØªÙÙØ§Ø¦ÙÙØ§.',
+  'chat.amrError.balanceMessage': 'ÙÙØ¯ Ø±ØµÙØ¯ AMR Ø§ÙØ®Ø§Øµ Ø¨Ù. Ø§Ø´Ø­Ù ÙÙØ§Ø³ØªÙØ±Ø§Ø± ÙÙ ÙØ°Ù Ø§ÙÙÙÙØ©.',
+  'chat.amrError.authorizeCta': 'ØªÙÙÙØ¶ ÙØ¥Ø¹Ø§Ø¯Ø© Ø§ÙÙØ­Ø§ÙÙØ©',
+  'chat.amrError.rechargeCta': 'Ø´Ø­Ù AMR',
+  'chat.antigravityError.launchTerminalCta': 'ØªØ³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙ Ø¹Ø¨Ø± Ø§ÙØ·Ø±ÙÙØ©',
+  'chat.antigravityError.launchSwitchModelCta': 'ØªØ¨Ø¯ÙÙ Ø§ÙÙÙÙØ°Ø¬ ÙÙ Ø§ÙØ·Ø±ÙÙØ©',
+  'chat.connectionDropped': 'Ø§ÙÙØ·Ø¹ Ø§ÙØ§ØªØµØ§Ù Ø¨Ø®Ø¯ÙØ© Ø§ÙÙÙÙØ°Ø¬ ÙØ¨Ù Ø§ÙØªÙØ§Ù Ø§ÙØ§Ø³ØªØ¬Ø§Ø¨Ø© â Ø¹Ø§Ø¯Ø©Ù Ø¨Ø³Ø¨Ø¨ Ø´Ø¨ÙØ© Ø£Ù ÙÙÙÙ (proxy) ØºÙØ± ÙØ³ØªÙØ±. ÙØ±Ø¬Ù Ø¥Ø¹Ø§Ø¯Ø© Ø§ÙÙØ­Ø§ÙÙØ©.',
+  'chat.runError.title.authRequired': 'ÙØ·ÙÙØ¨ Ø§ÙØªÙÙÙØ¶',
+  'chat.runError.title.balance': 'Ø§ÙØ±ØµÙØ¯ ØºÙØ± ÙØ§ÙÙ',
+  'chat.runError.title.connectionDropped': 'Ø§ÙÙØ·Ø¹ Ø§ÙØ§ØªØµØ§Ù',
+  'chat.runError.title.signInRequired': 'ØªØ³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙ ÙØ·ÙÙØ¨',
+  'chat.runError.title.rateLimited': 'ØªÙ Ø¨ÙÙØº Ø­Ø¯ Ø§ÙØ§Ø³ØªØ®Ø¯Ø§Ù',
+  'chat.runError.title.generic': 'ÙØ´ÙØª Ø§ÙÙÙÙØ©',
+  'chat.runError.signInMessage.amr': 'ÙÙ ÙØªÙ ØªØ³Ø¬ÙÙ Ø¯Ø®ÙÙ ÙÙÙÙ Open Design Ø¨Ø¹Ø¯ â Ø³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙ ÙØ¨Ø¯Ø¡ Ø§Ø³ØªØ®Ø¯Ø§ÙÙ.',
+  'chat.runError.signInMessage.other': '{agent} ÙÙ ÙØ³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙ. ØªØ­ÙÙ ÙÙ Ø­Ø§ÙØ© ØªØ³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙ ÙØ­ÙÙÙØ§. ÙÙØµÙ Ø¨ÙÙÙÙ Open Design â Ø£ÙØ«Ø± Ø«Ø¨Ø§ØªÙØ§ ÙØ£ÙØ¶Ù ÙÙÙØ©.',
+  'chat.runError.agentFallback': 'Ø§ÙÙÙÙÙ',
+  'chat.runError.sourceLabel': 'ÙØµØ¯Ø± Ø§ÙØ®Ø·Ø£',
+  'chat.runError.sourceExpandAria': 'ØªÙØ³ÙØ¹ ÙØµØ¯Ø± Ø§ÙØ®Ø·Ø£',
+  'chat.runError.sourceCollapseAria': 'Ø·Ù ÙØµØ¯Ø± Ø§ÙØ®Ø·Ø£',
+  'common.cancel': 'Ø¥ÙØºØ§Ø¡',
+  'chat.selectFromLibrary': 'Ø§Ø³ØªÙØ±Ø§Ø¯ ÙÙ Ø§ÙÙÙØªØ¨Ø©',
+  'chat.importFigma': 'Ø§Ø³ØªÙØ±Ø§Ø¯ ÙÙ Figma',
+  'designFiles.library.label': 'Ø§Ø³ØªÙØ±Ø§Ø¯ ÙÙ Ø§ÙÙÙØªØ¨Ø©',
+  'designFiles.library.title': 'Ø§Ø³ØªÙØ±Ø§Ø¯ ÙÙ Ø§ÙÙÙØªØ¨Ø©',
+  'libraryPicker.title': 'Ø§Ø³ØªÙØ±Ø§Ø¯ ÙÙ Ø§ÙÙÙØªØ¨Ø©',
+  'libraryPicker.searchPlaceholder': 'Ø§ÙØ¨Ø­Ø« ÙÙ Ø§ÙÙÙØªØ¨Ø©â¦',
+  'libraryPicker.empty': 'ÙØ§ ØªÙØ¬Ø¯ Ø¹ÙØ§ØµØ± ÙÙ ÙÙØªØ¨ØªÙ Ø¨Ø¹Ø¯',
+  'libraryPicker.allKinds': 'Ø§ÙÙÙ',
+  'libraryPicker.add': 'Ø§Ø³ØªÙØ±Ø§Ø¯',
+  'libraryPicker.loading': 'Ø¬Ø§Ø±Ù Ø§ÙØªØ­ÙÙÙâ¦',
+  'common.save': 'Ø­ÙØ¸',
+  'common.close': 'Ø¥ØºÙØ§Ù',
+  'common.clear': 'ÙØ³Ø­',
+  'common.delete': 'Ø­Ø°Ù',
+  'common.rename': 'Ø¥Ø¹Ø§Ø¯Ø© ØªØ³ÙÙØ©',
+  'common.edit': 'ØªØ¹Ø¯ÙÙ',
+  'common.preview': 'ÙØ¹Ø§ÙÙØ©',
+  'common.share': 'ÙØ´Ø§Ø±ÙØ©',
+  'common.search': 'Ø¨Ø­Ø«',
+  'common.searchEllipsis': 'Ø¨Ø­Ø«...',
+  'common.loading': 'Ø¬Ø§Ø±Ù Ø§ÙØªØ­ÙÙÙ...',
+  'common.all': 'Ø§ÙÙÙ',
+  'common.none': 'ÙØ§ Ø´ÙØ¡',
+  'common.default': 'Ø§ÙØªØ±Ø§Ø¶Ù',
+  'common.installed': 'ÙØ«Ø¨Øª',
+  'common.notInstalled': 'ØºÙØ± ÙØ«Ø¨Øª',
+  'common.active': 'ÙØ´Ø·',
+  'common.offline': 'ØºÙØ± ÙØªØµÙ',
+  'common.selected': 'ÙØ­Ø¯Ø¯',
+  'common.create': 'Ø¥ÙØ´Ø§Ø¡',
+  'common.openPreview': 'ÙØªØ­ Ø§ÙÙØ¹Ø§ÙÙØ©',
+  'common.exitFullscreen': 'Ø§ÙØ®Ø±ÙØ¬ ÙÙ ÙÙØ¡ Ø§ÙØ´Ø§Ø´Ø©',
+  'common.fullscreen': 'ÙÙØ¡ Ø§ÙØ´Ø§Ø´Ø©',
+  'common.openInNewTab': 'ÙØªØ­ ÙÙ Ø¹ÙØ§ÙØ© ØªØ¨ÙÙØ¨ Ø¬Ø¯ÙØ¯Ø©',
+  'common.exportPdf': 'ØªØµØ¯ÙØ± ÙÙ PDF',
+  'common.exportZip': 'ØªØ­ÙÙÙ ÙÙ zip.',
+  'common.exportHtml': 'ØªØµØ¯ÙØ± ÙÙ HTML ÙØ³ØªÙÙ',
+  'common.exportImage': 'ØªØµØ¯ÙØ± ÙØµÙØ±Ø©',
+  'common.exportImageFailed': 'ÙØ´Ù Ø§ÙØªÙØ§Ø· Ø§ÙØµÙØ±Ø©. ÙØ±Ø¬Ù Ø§ÙÙØ­Ø§ÙÙØ© ÙØ±Ø© Ø£Ø®Ø±Ù Ø£Ù Ø§Ø³ØªØ®Ø¯Ø§Ù Ø£Ø¯Ø§Ø© ÙÙØ·Ø© Ø§ÙØ´Ø§Ø´Ø© ÙÙ Ø§ÙÙØªØµÙØ­.',
+  'common.justNow': 'Ø§ÙØ¢Ù',
+  'common.minutesAgo': 'ÙÙØ° {n} Ø¯ÙÙÙØ©',
+  'common.hoursAgo': 'ÙÙØ° {n} Ø³Ø§Ø¹Ø©',
+  'common.daysAgo': 'ÙÙØ° {n} ÙÙÙ',
+  'common.weeksAgo': 'ÙØ¨Ù {n} Ø£Ø³Ø¨ÙØ¹',
+  'common.now': 'Ø§ÙØ¢Ù',
+  'common.minutesShort': '{n} Ø¯',
+  'common.hoursShort': '{n} Ø³Ø§',
+  'common.daysShort': '{n} Ù',
+  'common.untitled': 'Ø¨Ø¯ÙÙ Ø¹ÙÙØ§Ù',
+  'plugins.availableDetails.provenance': 'Ø§ÙÙØµØ¯Ø±',
+  'plugins.availableDetails.provenanceLine': 'ÙÙ {source} Â· {trust} Â· {resolved}',
+  'plugins.availableDetails.provenanceLineWithIntegrity': 'ÙÙ {source} Â· {trust} Â· {resolved} Â· {integrity}',
+  'plugins.availableDetails.install': 'ØªØ«Ø¨ÙØª',
+  'plugins.availableDetails.version': 'Ø§ÙØ¥ØµØ¯Ø§Ø±',
+  'plugins.availableDetails.pluginVersion': 'Ø¥ØµØ¯Ø§Ø± Ø§ÙØ¥Ø¶Ø§ÙØ©',
+  'plugins.availableDetails.copyInstallCommand': 'ÙØ³Ø® Ø£ÙØ± Ø§ÙØªØ«Ø¨ÙØª',
+  'plugins.availableDetails.copied': 'ØªÙ Ø§ÙÙØ³Ø®',
+  'plugins.availableDetails.deprecatedPrefix': 'ÙÙÙÙÙ: {message}',
+  'plugins.availableDetails.deprecatedFallback': 'ØªÙ ÙØ¶Ø¹ Ø¹ÙØ§ÙØ© Ø¹ÙÙ ÙØ°Ø§ Ø§ÙØ¥ØµØ¯Ø§Ø± ÙÙÙÙÙÙ.',
+  'plugins.availableDetails.yanked': 'ØªÙ Ø§ÙØ³Ø­Ø¨.',
+  'plugins.availableDetails.yankedWithReason': 'ØªÙ Ø§ÙØ³Ø­Ø¨: {reason}',
+  'plugins.availableDetails.versionDeprecatedSuffix': ' (ÙÙÙÙÙ)',
+  'plugins.availableDetails.versionYankedSuffix': ' (ÙØ³Ø­ÙØ¨)',
+  'plugins.availableDetails.ref': 'Ø§ÙÙØ±Ø¬Ø¹',
   'plugins.availableDetails.integrity': 'Integrity',
-  'plugins.availableDetails.permissions': 'الأذونات',
-  'plugins.availableDetails.capabilitySummary': 'ملخص الإمكانات',
-  'plugins.actions.copyInstallCommand': 'نسخ أمر التثبيت',
-  'plugins.actions.copyPluginId': 'نسخ معرّف الإضافة',
-  'plugins.actions.copyReadmeBadge': 'نسخ شارة README',
-  'plugins.actions.openSourceGithub': 'فتح المصدر على GitHub',
-  'plugins.actions.openSource': 'فتح المصدر',
-  'plugins.actions.openHomepage': 'فتح الصفحة الرئيسية',
-  'plugins.actions.openMarketplace': 'فتح في السوق',
+  'plugins.availableDetails.permissions': 'Ø§ÙØ£Ø°ÙÙØ§Øª',
+  'plugins.availableDetails.capabilitySummary': 'ÙÙØ®Øµ Ø§ÙØ¥ÙÙØ§ÙØ§Øª',
+  'plugins.actions.copyInstallCommand': 'ÙØ³Ø® Ø£ÙØ± Ø§ÙØªØ«Ø¨ÙØª',
+  'plugins.actions.copyPluginId': 'ÙØ³Ø® ÙØ¹Ø±ÙÙ Ø§ÙØ¥Ø¶Ø§ÙØ©',
+  'plugins.actions.copyReadmeBadge': 'ÙØ³Ø® Ø´Ø§Ø±Ø© README',
+  'plugins.actions.openSourceGithub': 'ÙØªØ­ Ø§ÙÙØµØ¯Ø± Ø¹ÙÙ GitHub',
+  'plugins.actions.openSource': 'ÙØªØ­ Ø§ÙÙØµØ¯Ø±',
+  'plugins.actions.openHomepage': 'ÙØªØ­ Ø§ÙØµÙØ­Ø© Ø§ÙØ±Ø¦ÙØ³ÙØ©',
+  'plugins.actions.openMarketplace': 'ÙØªØ­ ÙÙ Ø§ÙØ³ÙÙ',
   'app.brand': 'Open Design',
-  'app.brandPill': 'معاينة البحث',
-  'app.brandSubtitle': 'بواسطة Nexu Labs',
-  'app.welcomeLoading': 'جاري تحميل مساحة العمل...',
+  'app.brandPill': 'ÙØ¹Ø§ÙÙØ© Ø§ÙØ¨Ø­Ø«',
+  'app.brandSubtitle': 'Ø¨ÙØ§Ø³Ø·Ø© Nexu Labs',
+  'app.welcomeLoading': 'Ø¬Ø§Ø±Ù ØªØ­ÙÙÙ ÙØ³Ø§Ø­Ø© Ø§ÙØ¹ÙÙ...',
   'settings.welcomeKicker': '',
-  'settings.welcomeTitle': 'مرحبًا بك في Open Design',
+  'settings.welcomeTitle': 'ÙØ±Ø­Ø¨ÙØ§ Ø¨Ù ÙÙ Open Design',
   'settings.welcomeSubtitle': '',
-  'settings.onboardingCreateTitle': 'ابدأ من ملخص',
-  'settings.onboardingCreateBody': 'صِف الموقع أو التطبيق أو العرض التقديمي أو الصورة أو الفيديو الذي تريده. سيُنشئ Open Design مشروعًا ويُبقي العمل قابلاً للتحرير.',
-  'settings.onboardingMemoryTitle': 'حفظ سياق العمل',
-  'settings.onboardingMemoryBody': 'أضِف التفضيلات وحقائق المشروع والقواعد المتكررة حتى تلتقط المحادثات المستقبلية السياق الصحيح.',
-  'settings.onboardingMemoryCalloutTitle': 'محفوظ في الذاكرة الخاصة بك',
-  'settings.onboardingMemoryCalloutBody': 'تُغذّي هذه الإجابات ملف الذاكرة الخاص بك. يعيد Open Design استخدامه في كل مهمة — ويستمر في التعلّم أثناء عملك.',
-  'settings.onboardingMemoryBenefitIntent': 'يفهم ما تقصده من طلب قصير',
-  'settings.onboardingMemoryBenefitFewerQuestions': 'يتخطّى أسئلة الإعداد المتكررة',
-  'settings.onboardingMemoryBenefitPersonalized': 'يُكيّف المخرجات وفق دورك وجمهورك وذوقك',
-  'settings.onboardingSystemsTitle': 'أحضِر نظام التصميم الخاص بك',
-  'settings.onboardingSystemsBody': 'اختر أو أنشئ نظام علامة تجارية حتى يتبع العمل المُولَّد الألوان والطباعة ولغة المنتج الحقيقية.',
-  'settings.onboardingExecutionTitle': 'اختر طريقة تشغيل التوليد',
-  'settings.onboardingExecutionBody': 'CLI رسمي بإعداد بنقرة واحدة وإعدادات افتراضية جاهزة للاستخدام. استخدم مفتاحًا واحدًا للاختيار من بين العديد من النماذج بأسعار أفضل.',
-  'settings.onboardingAmrCloudBenefitOfficial': 'موصى به رسميًا',
-  'settings.onboardingAmrCloudBenefitReady': 'بلا نشر',
-  'settings.onboardingAmrCloudBenefitModels': 'يدعم Claude Opus 4.8',
-  'settings.onboardingAmrCloudBenefitPricing': 'حزمة SOTA',
-  'settings.onboardingAmrCloudUpcomingLabel': 'قريبًا',
-  'settings.onboardingAmrCloudUpcomingImageVideo': 'الصور والفيديو',
-  'settings.onboardingAmrCloudUpcomingSkills': 'Skills كثيرة',
-  'settings.onboardingAmrCloudUpcomingRouting': 'توجيه ذكي',
+  'settings.onboardingCreateTitle': 'Ø§Ø¨Ø¯Ø£ ÙÙ ÙÙØ®Øµ',
+  'settings.onboardingCreateBody': 'ØµÙÙ Ø§ÙÙÙÙØ¹ Ø£Ù Ø§ÙØªØ·Ø¨ÙÙ Ø£Ù Ø§ÙØ¹Ø±Ø¶ Ø§ÙØªÙØ¯ÙÙÙ Ø£Ù Ø§ÙØµÙØ±Ø© Ø£Ù Ø§ÙÙÙØ¯ÙÙ Ø§ÙØ°Ù ØªØ±ÙØ¯Ù. Ø³ÙÙÙØ´Ø¦ Open Design ÙØ´Ø±ÙØ¹ÙØ§ ÙÙÙØ¨ÙÙ Ø§ÙØ¹ÙÙ ÙØ§Ø¨ÙØ§Ù ÙÙØªØ­Ø±ÙØ±.',
+  'settings.onboardingMemoryTitle': 'Ø­ÙØ¸ Ø³ÙØ§Ù Ø§ÙØ¹ÙÙ',
+  'settings.onboardingMemoryBody': 'Ø£Ø¶ÙÙ Ø§ÙØªÙØ¶ÙÙØ§Øª ÙØ­ÙØ§Ø¦Ù Ø§ÙÙØ´Ø±ÙØ¹ ÙØ§ÙÙÙØ§Ø¹Ø¯ Ø§ÙÙØªÙØ±Ø±Ø© Ø­ØªÙ ØªÙØªÙØ· Ø§ÙÙØ­Ø§Ø¯Ø«Ø§Øª Ø§ÙÙØ³ØªÙØ¨ÙÙØ© Ø§ÙØ³ÙØ§Ù Ø§ÙØµØ­ÙØ­.',
+  'settings.onboardingMemoryCalloutTitle': 'ÙØ­ÙÙØ¸ ÙÙ Ø§ÙØ°Ø§ÙØ±Ø© Ø§ÙØ®Ø§ØµØ© Ø¨Ù',
+  'settings.onboardingMemoryCalloutBody': 'ØªÙØºØ°ÙÙ ÙØ°Ù Ø§ÙØ¥Ø¬Ø§Ø¨Ø§Øª ÙÙÙ Ø§ÙØ°Ø§ÙØ±Ø© Ø§ÙØ®Ø§Øµ Ø¨Ù. ÙØ¹ÙØ¯ Open Design Ø§Ø³ØªØ®Ø¯Ø§ÙÙ ÙÙ ÙÙ ÙÙÙØ© â ÙÙØ³ØªÙØ± ÙÙ Ø§ÙØªØ¹ÙÙÙ Ø£Ø«ÙØ§Ø¡ Ø¹ÙÙÙ.',
+  'settings.onboardingMemoryBenefitIntent': 'ÙÙÙÙ ÙØ§ ØªÙØµØ¯Ù ÙÙ Ø·ÙØ¨ ÙØµÙØ±',
+  'settings.onboardingMemoryBenefitFewerQuestions': 'ÙØªØ®Ø·ÙÙ Ø£Ø³Ø¦ÙØ© Ø§ÙØ¥Ø¹Ø¯Ø§Ø¯ Ø§ÙÙØªÙØ±Ø±Ø©',
+  'settings.onboardingMemoryBenefitPersonalized': 'ÙÙÙÙÙÙ Ø§ÙÙØ®Ø±Ø¬Ø§Øª ÙÙÙ Ø¯ÙØ±Ù ÙØ¬ÙÙÙØ±Ù ÙØ°ÙÙÙ',
+  'settings.onboardingSystemsTitle': 'Ø£Ø­Ø¶ÙØ± ÙØ¸Ø§Ù Ø§ÙØªØµÙÙÙ Ø§ÙØ®Ø§Øµ Ø¨Ù',
+  'settings.onboardingSystemsBody': 'Ø§Ø®ØªØ± Ø£Ù Ø£ÙØ´Ø¦ ÙØ¸Ø§Ù Ø¹ÙØ§ÙØ© ØªØ¬Ø§Ø±ÙØ© Ø­ØªÙ ÙØªØ¨Ø¹ Ø§ÙØ¹ÙÙ Ø§ÙÙÙÙÙÙÙØ¯ Ø§ÙØ£ÙÙØ§Ù ÙØ§ÙØ·Ø¨Ø§Ø¹Ø© ÙÙØºØ© Ø§ÙÙÙØªØ¬ Ø§ÙØ­ÙÙÙÙØ©.',
+  'settings.onboardingExecutionTitle': 'Ø§Ø®ØªØ± Ø·Ø±ÙÙØ© ØªØ´ØºÙÙ Ø§ÙØªÙÙÙØ¯',
+  'settings.onboardingExecutionBody': 'CLI Ø±Ø³ÙÙ Ø¨Ø¥Ø¹Ø¯Ø§Ø¯ Ø¨ÙÙØ±Ø© ÙØ§Ø­Ø¯Ø© ÙØ¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø§ÙØªØ±Ø§Ø¶ÙØ© Ø¬Ø§ÙØ²Ø© ÙÙØ§Ø³ØªØ®Ø¯Ø§Ù. Ø§Ø³ØªØ®Ø¯Ù ÙÙØªØ§Ø­ÙØ§ ÙØ§Ø­Ø¯ÙØ§ ÙÙØ§Ø®ØªÙØ§Ø± ÙÙ Ø¨ÙÙ Ø§ÙØ¹Ø¯ÙØ¯ ÙÙ Ø§ÙÙÙØ§Ø°Ø¬ Ø¨Ø£Ø³Ø¹Ø§Ø± Ø£ÙØ¶Ù.',
+  'settings.onboardingAmrCloudBenefitOfficial': 'ÙÙØµÙ Ø¨Ù Ø±Ø³ÙÙÙØ§',
+  'settings.onboardingAmrCloudBenefitReady': 'Ø¨ÙØ§ ÙØ´Ø±',
+  'settings.onboardingAmrCloudBenefitModels': 'ÙØ¯Ø¹Ù Claude Opus 4.8',
+  'settings.onboardingAmrCloudBenefitPricing': 'Ø­Ø²ÙØ© SOTA',
+  'settings.onboardingAmrCloudUpcomingLabel': 'ÙØ±ÙØ¨ÙØ§',
+  'settings.onboardingAmrCloudUpcomingImageVideo': 'Ø§ÙØµÙØ± ÙØ§ÙÙÙØ¯ÙÙ',
+  'settings.onboardingAmrCloudUpcomingSkills': 'Skills ÙØ«ÙØ±Ø©',
+  'settings.onboardingAmrCloudUpcomingRouting': 'ØªÙØ¬ÙÙ Ø°ÙÙ',
   'settings.onboardingAmrModelSourceLabel': 'AMR CLI',
-  'settings.onboardingAmrCloudAuthorizeAction': 'تخويل AMR',
-  'settings.onboardingAmrCloudAuthorizedAction': 'تم التخويل',
+  'settings.onboardingAmrCloudAuthorizeAction': 'ØªØ®ÙÙÙ AMR',
+  'settings.onboardingAmrCloudAuthorizedAction': 'ØªÙ Ø§ÙØªØ®ÙÙÙ',
   'settings.onboardingStepConnect': 'Connect',
-  'settings.onboardingStepDesignSystem': 'إنشاء نظام تصميم',
+  'settings.onboardingStepDesignSystem': 'Ø¥ÙØ´Ø§Ø¡ ÙØ¸Ø§Ù ØªØµÙÙÙ',
   'settings.onboardingStepProfile': 'About you',
-  'settings.onboardingStepNewsletter': 'ابقَ على اطلاع',
-  'settings.onboardingNewsletterTitle': 'ابقَ على اطلاع',
-  'settings.onboardingNewsletterBody': 'احصل على تحديثات المنتج والقوالب الجديدة وأنظمة التصميم وأنشطة السفراء في بريدك. اختياري — يمكنك التخطي.',
+  'settings.onboardingStepNewsletter': 'Ø§Ø¨ÙÙ Ø¹ÙÙ Ø§Ø·ÙØ§Ø¹',
+  'settings.onboardingNewsletterTitle': 'Ø§Ø¨ÙÙ Ø¹ÙÙ Ø§Ø·ÙØ§Ø¹',
+  'settings.onboardingNewsletterBody': 'Ø§Ø­ØµÙ Ø¹ÙÙ ØªØ­Ø¯ÙØ«Ø§Øª Ø§ÙÙÙØªØ¬ ÙØ§ÙÙÙØ§ÙØ¨ Ø§ÙØ¬Ø¯ÙØ¯Ø© ÙØ£ÙØ¸ÙØ© Ø§ÙØªØµÙÙÙ ÙØ£ÙØ´Ø·Ø© Ø§ÙØ³ÙØ±Ø§Ø¡ ÙÙ Ø¨Ø±ÙØ¯Ù. Ø§Ø®ØªÙØ§Ø±Ù â ÙÙÙÙÙ Ø§ÙØªØ®Ø·Ù.',
   'settings.onboardingConnectTitle': 'Choose a runtime',
   'settings.onboardingConnectBody': '',
-  'settings.onboardingCloudTitle': 'تسجيل الدخول إلى Open Design',
-  'settings.onboardingCloudBody': 'سجّل الدخول وابدأ التصميم فورًا باستخدام الذكاء الاصطناعي السحابي، دون أي إعداد معقّد.',
-  'settings.onboardingCloudSignIn': 'تسجيل الدخول إلى Open Design Cloud',
-  'settings.onboardingCloudContinue': 'متابعة (تم تسجيل الدخول)',
-  'settings.onboardingCloudAlternative': 'استخدم واجهة سطر أوامر محلية أو مفتاح API الخاص بك',
-  'settings.onboardingCloudRights': 'جميع الحقوق محفوظة.',
-  'settings.onboardingCloudOr': 'أو',
-  'settings.onboardingGateTooltipNoRuntime': 'الخطوات التالية تعمل بالذكاء الاصطناعي — اختر طريقة تشغيل للمتابعة.',
-  'settings.onboardingGateTooltipAmr': 'الخطوات التالية تعمل بالذكاء الاصطناعي — سجّل الدخول إلى Open Design AMR للمتابعة.',
-  'settings.onboardingGateTooltipLocal': 'الخطوات التالية تعمل بالذكاء الاصطناعي — اختر CLI محليًا متاحًا للمتابعة.',
-  'settings.onboardingGateTooltipByok': 'الخطوات التالية تعمل بالذكاء الاصطناعي — أضف مفتاح النموذج واختبره للمتابعة.',
+  'settings.onboardingCloudTitle': 'ØªØ³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙ Ø¥ÙÙ Open Design',
+  'settings.onboardingCloudBody': 'Ø³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙ ÙØ§Ø¨Ø¯Ø£ Ø§ÙØªØµÙÙÙ ÙÙØ±ÙØ§ Ø¨Ø§Ø³ØªØ®Ø¯Ø§Ù Ø§ÙØ°ÙØ§Ø¡ Ø§ÙØ§ØµØ·ÙØ§Ø¹Ù Ø§ÙØ³Ø­Ø§Ø¨ÙØ Ø¯ÙÙ Ø£Ù Ø¥Ø¹Ø¯Ø§Ø¯ ÙØ¹ÙÙØ¯.',
+  'settings.onboardingCloudSignIn': 'ØªØ³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙ Ø¥ÙÙ Open Design Cloud',
+  'settings.onboardingCloudContinue': 'ÙØªØ§Ø¨Ø¹Ø© (ØªÙ ØªØ³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙ)',
+  'settings.onboardingCloudAlternative': 'Ø§Ø³ØªØ®Ø¯Ù ÙØ§Ø¬ÙØ© Ø³Ø·Ø± Ø£ÙØ§ÙØ± ÙØ­ÙÙØ© Ø£Ù ÙÙØªØ§Ø­ API Ø§ÙØ®Ø§Øµ Ø¨Ù',
+  'settings.onboardingCloudRights': 'Ø¬ÙÙØ¹ Ø§ÙØ­ÙÙÙ ÙØ­ÙÙØ¸Ø©.',
+  'settings.onboardingCloudOr': 'Ø£Ù',
+  'settings.onboardingGateTooltipNoRuntime': 'Ø§ÙØ®Ø·ÙØ§Øª Ø§ÙØªØ§ÙÙØ© ØªØ¹ÙÙ Ø¨Ø§ÙØ°ÙØ§Ø¡ Ø§ÙØ§ØµØ·ÙØ§Ø¹Ù â Ø§Ø®ØªØ± Ø·Ø±ÙÙØ© ØªØ´ØºÙÙ ÙÙÙØªØ§Ø¨Ø¹Ø©.',
+  'settings.onboardingGateTooltipAmr': 'Ø§ÙØ®Ø·ÙØ§Øª Ø§ÙØªØ§ÙÙØ© ØªØ¹ÙÙ Ø¨Ø§ÙØ°ÙØ§Ø¡ Ø§ÙØ§ØµØ·ÙØ§Ø¹Ù â Ø³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙ Ø¥ÙÙ Open Design AMR ÙÙÙØªØ§Ø¨Ø¹Ø©.',
+  'settings.onboardingGateTooltipLocal': 'Ø§ÙØ®Ø·ÙØ§Øª Ø§ÙØªØ§ÙÙØ© ØªØ¹ÙÙ Ø¨Ø§ÙØ°ÙØ§Ø¡ Ø§ÙØ§ØµØ·ÙØ§Ø¹Ù â Ø§Ø®ØªØ± CLI ÙØ­ÙÙÙØ§ ÙØªØ§Ø­ÙØ§ ÙÙÙØªØ§Ø¨Ø¹Ø©.',
+  'settings.onboardingGateTooltipByok': 'Ø§ÙØ®Ø·ÙØ§Øª Ø§ÙØªØ§ÙÙØ© ØªØ¹ÙÙ Ø¨Ø§ÙØ°ÙØ§Ø¡ Ø§ÙØ§ØµØ·ÙØ§Ø¹Ù â Ø£Ø¶Ù ÙÙØªØ§Ø­ Ø§ÙÙÙÙØ°Ø¬ ÙØ§Ø®ØªØ¨Ø±Ù ÙÙÙØªØ§Ø¨Ø¹Ø©.',
   'settings.onboardingRecommended': 'Recommended',
-  'settings.onboardingAmrCloudOfficialBadge': 'رسمي',
+  'settings.onboardingAmrCloudOfficialBadge': 'Ø±Ø³ÙÙ',
   'settings.onboardingLocalTitle': 'Local coding agent',
   'settings.onboardingLocalBody': 'Use an installed CLI such as Claude Code, Codex, Cursor, Gemini, or OpenCode.',
   'settings.onboardingLocalAction': 'Open CLI settings',
@@ -188,418 +188,418 @@ export const ar: Dict = {
   'settings.onboardingOrgGrowth': 'Growth company (51-200)',
   'settings.onboardingOrgMidMarket': 'Mid-market (201-1000)',
   'settings.onboardingOrgEnterprise': 'Enterprise (1000+)',
-  'settings.onboardingRolePm': '📋 Product manager',
-  'settings.onboardingRoleDesigner': '🎨 Designer',
-  'settings.onboardingRoleEngineer': '💻 Engineer',
-  'settings.onboardingRoleMarketing': '📣 Marketing',
-  'settings.onboardingRoleAgency': '📣 وكالة تسويق',
-  'settings.onboardingRoleGrowth': '📈 Growth',
-  'settings.onboardingRoleOps': '⚙️ Operations',
-  'settings.onboardingRoleFounder': '🚀 Founder / executive',
-  'settings.onboardingRoleStudent': '🎓 Student / educator',
-  'settings.onboardingRoleOther': '✨ Other',
-  'settings.onboardingUseProduct': '🎨 Product design',
-  'settings.onboardingUseDesignSystem': '🧩 Design system',
-  'settings.onboardingUsePrototype': '📱 Prototype / app UI',
-  'settings.onboardingUseLanding': '🌐 Landing pages',
-  'settings.onboardingUseAds': '📣 Ads / social content',
-  'settings.onboardingUseDashboard': '📊 Dashboards / internal tools',
-  'settings.onboardingUseDeck': '🖥️ Presentation / deck',
-  'settings.onboardingUseMarketing': '📈 Marketing / growth',
-  'settings.onboardingUseEngineering': '🤝 Engineering handoff',
-  'settings.onboardingUseAgency': '💼 Agency / client work',
-  'settings.onboardingSourceGithub': '🐙 GitHub',
-  'settings.onboardingSourceFriend': '👥 Friend or coworker',
-  'settings.onboardingSourceSocial': '📱 Social media',
-  'settings.onboardingSourceProductHunt': '🅿️ Product Hunt',
-  'settings.onboardingSourceCommunity': '💬 Design / AI community',
-  'settings.onboardingSourceYoutube': '▶️ YouTube',
-  'settings.onboardingSourceBlog': '📰 Blog or newsletter',
-  'settings.onboardingSourceAiTool': '✨ AI tool recommendation',
-  'settings.onboardingSourceSearch': '🔍 Search',
-  'settings.onboardingSourceEvent': '🎤 Event or community',
+  'settings.onboardingRolePm': 'ð Product manager',
+  'settings.onboardingRoleDesigner': 'ð¨ Designer',
+  'settings.onboardingRoleEngineer': 'ð» Engineer',
+  'settings.onboardingRoleMarketing': 'ð£ Marketing',
+  'settings.onboardingRoleAgency': 'ð£ ÙÙØ§ÙØ© ØªØ³ÙÙÙ',
+  'settings.onboardingRoleGrowth': 'ð Growth',
+  'settings.onboardingRoleOps': 'âï¸ Operations',
+  'settings.onboardingRoleFounder': 'ð Founder / executive',
+  'settings.onboardingRoleStudent': 'ð Student / educator',
+  'settings.onboardingRoleOther': 'â¨ Other',
+  'settings.onboardingUseProduct': 'ð¨ Product design',
+  'settings.onboardingUseDesignSystem': 'ð§© Design system',
+  'settings.onboardingUsePrototype': 'ð± Prototype / app UI',
+  'settings.onboardingUseLanding': 'ð Landing pages',
+  'settings.onboardingUseAds': 'ð£ Ads / social content',
+  'settings.onboardingUseDashboard': 'ð Dashboards / internal tools',
+  'settings.onboardingUseDeck': 'ð¥ï¸ Presentation / deck',
+  'settings.onboardingUseMarketing': 'ð Marketing / growth',
+  'settings.onboardingUseEngineering': 'ð¤ Engineering handoff',
+  'settings.onboardingUseAgency': 'ð¼ Agency / client work',
+  'settings.onboardingSourceGithub': 'ð GitHub',
+  'settings.onboardingSourceFriend': 'ð¥ Friend or coworker',
+  'settings.onboardingSourceSocial': 'ð± Social media',
+  'settings.onboardingSourceProductHunt': 'ð¿ï¸ Product Hunt',
+  'settings.onboardingSourceCommunity': 'ð¬ Design / AI community',
+  'settings.onboardingSourceYoutube': 'â¶ï¸ YouTube',
+  'settings.onboardingSourceBlog': 'ð° Blog or newsletter',
+  'settings.onboardingSourceAiTool': 'â¨ AI tool recommendation',
+  'settings.onboardingSourceSearch': 'ð Search',
+  'settings.onboardingSourceEvent': 'ð¤ Event or community',
   'settings.onboardingBack': 'Back',
   'settings.onboardingContinue': 'Continue',
   'settings.onboardingFinish': 'Finish setup',
-  'settings.kicker': 'الإعدادات',
-  'settings.title': 'وضع التنفيذ',
-  'settings.subtitle': 'اختر بين CLI المحلي و BYOK.',
-  'settings.modeAria': 'وضع التنفيذ',
-  'settings.protocolAria': 'بروتوكول API',
-  'settings.modeDaemon': 'CLI محلي',
-  'settings.modeDaemonHelp': 'التشغيل عبر واجهة CLI على جهازك',
-  'settings.modeDaemonOffline': 'البرنامج الخفي لا يعمل',
-  'settings.modeDaemonOfflineMeta': 'غير متصل',
-  'settings.modeDaemonInstalledMeta': '{count} مثبت',
-  'settings.modeApi': 'مزود API',
+  'settings.kicker': 'Ø§ÙØ¥Ø¹Ø¯Ø§Ø¯Ø§Øª',
+  'settings.title': 'ÙØ¶Ø¹ Ø§ÙØªÙÙÙØ°',
+  'settings.subtitle': 'Ø§Ø®ØªØ± Ø¨ÙÙ CLI Ø§ÙÙØ­ÙÙ Ù BYOK.',
+  'settings.modeAria': 'ÙØ¶Ø¹ Ø§ÙØªÙÙÙØ°',
+  'settings.protocolAria': 'Ø¨Ø±ÙØªÙÙÙÙ API',
+  'settings.modeDaemon': 'CLI ÙØ­ÙÙ',
+  'settings.modeDaemonHelp': 'Ø§ÙØªØ´ØºÙÙ Ø¹Ø¨Ø± ÙØ§Ø¬ÙØ© CLI Ø¹ÙÙ Ø¬ÙØ§Ø²Ù',
+  'settings.modeDaemonOffline': 'Ø§ÙØ¨Ø±ÙØ§ÙØ¬ Ø§ÙØ®ÙÙ ÙØ§ ÙØ¹ÙÙ',
+  'settings.modeDaemonOfflineMeta': 'ØºÙØ± ÙØªØµÙ',
+  'settings.modeDaemonInstalledMeta': '{count} ÙØ«Ø¨Øª',
+  'settings.modeApi': 'ÙØ²ÙØ¯ API',
   'settings.modeApiMeta': 'BYOK',
-  'settings.byokNoFileToolsNotice': 'لا يمكن لـ BYOK قراءة ملفات المشروع أو الكتابة فيها أو تعديلها. استخدم Local CLI عندما تحتاج إلى تغييرات في الكود.',
-  'settings.codeAgent': 'وكيل الكود',
-  'settings.codeAgentHint': 'تم اكتشافه عبر مسح PATH الخاص بك. اختر واجهة CLI التي تريد أن تمر الأجيال عبرها.',
-  'settings.rescan': '↻ إعادة المسح',
-  'settings.rescanTitle': 'إعادة مسح PATH',
-  'settings.rescanRunning': 'جارٍ المسح...',
-  'settings.rescanSuccess': 'اكتمل المسح. {count} متاح.',
-  'settings.designSystemRenameFailed': 'فشلت إعادة التسمية. تحقق من البرنامج الخفي وحاول مرة أخرى.',
-  'settings.rescanFailed': 'فشل المسح. تحقق من البرنامج الخفي وحاول مرة أخرى.',
-  'settings.test': 'اختبار',
-  'settings.testTitle': 'أرسل مطالبة اختبار صغيرة للتحقق من الاتصال',
-  'settings.testRunning': 'جاري اختبار الاتصال…',
-  'settings.byokReadyToTest': 'جاهز للاختبار',
-  'settings.testCancel': 'إلغاء',
-  'settings.testRetry': 'إعادة الاختبار',
-  'settings.required': 'مطلوب',
-  'settings.testMissingFields': 'املأ {fields} لاختبار الاتصال.',
-  'settings.testSuccessApi': 'تم الاتصال. رد خلال {ms} مللي ثانية — \'{sample}\'',
-  'settings.testSuccessCli': 'رد {agentName} خلال {ms} مللي ثانية — \'{sample}\'',
-  'settings.testAuthFailed': 'فشلت المصادقة. تحقق من مفتاح الـ API.',
-  'settings.testForbidden': 'الوصول ممنوع. تحقق من الحساب أو المنطقة أو المؤسسة.',
-  'settings.testNotFoundModel': 'لم يتم العثور على النموذج \'{model}\' في هذه النقطة.',
-  'settings.testInvalidModelId': 'معرّف النموذج \'{model}\' غير صالح. يجب أن يبدأ المعرّف المخصص بحرف أو رقم وألا يحتوي على مسافات.',
-  'settings.testInvalidBaseUrl': 'Base URL غير صالح أو يتعذر الوصول إليه.',
-  'settings.testRateLimited': 'حد المزود معدّل الاختبار. التكوين يبدو صالحاً.',
-  'settings.testUpstream': 'أعاد المزود {status}. حاول مرة أخرى بعد قليل.',
-  'settings.testTimeout': 'انتهت مهلة الاختبار بعد {ms} مللي ثانية.',
-  'settings.testAgentMissing': '{agentName} غير مثبت أو ليس في PATH.',
-  'settings.testAgentSpawn': 'تعذّر تشغيل {agentName}: {detail}.',
-  'settings.testUnknown': 'فشل الاختبار: {detail}',
-  'settings.agentInstall.install': 'تثبيت',
-  'settings.agentInstall.docs': 'الوثائق',
-  'settings.agentInstall.pathHint': 'إذا ثبّتّ CLI باستخدام npm أو Homebrew وما زال يظهر كغير مثبت، فتأكد من أن مجلد bin للأداة موجود في PATH الذي يرثه daemon الخاص بـ Open Design (قد يختلف PATH بين Terminal وتطبيقات GUI على macOS). راجع QUICKSTART.md (قسم "Local agent CLI and PATH").',
-  'settings.agentInstall.stepOpenLinks': 'افتح رابط التثبيت أو الوثائق للوكيل الذي تفضله.',
-  'settings.agentInstall.stepAuth': 'أكمِل المصادقة في CLI الخاص بالمزوّد (تسجيل الدخول أو إضافة بيانات اعتماد API) قبل العودة إلى Open Design.',
-  'settings.agentInstall.stepRescan': 'انقر إعادة المسح في هذا القسم.',
-  'settings.agentInstall.stepSelect': 'اختر بطاقة الوكيل عندما يظهر كأنه مثبت.',
-  'settings.noAgentsDetected': 'لم يتم اكتشاف أي وكلاء بعد. قم بتثبيت Claude Code أو Codex أو Devin أو Gemini CLI أو OpenCode أو Cursor Agent أو Qwen أو GitHub Copilot CLI، ثم اضغط على إعادة المسح.',
-  'settings.agentInstalledGroup': 'واجهات CLI لديك ({count})',
-  'settings.agentInstallGroup': 'متاحة للتثبيت ({count})',
-  'settings.agentAuthRequired': 'المصادقة مطلوبة',
-  'settings.agentAuthUnknown': 'حالة المصادقة غير معروفة',
+  'settings.byokNoFileToolsNotice': 'ÙØ§ ÙÙÙÙ ÙÙ BYOK ÙØ±Ø§Ø¡Ø© ÙÙÙØ§Øª Ø§ÙÙØ´Ø±ÙØ¹ Ø£Ù Ø§ÙÙØªØ§Ø¨Ø© ÙÙÙØ§ Ø£Ù ØªØ¹Ø¯ÙÙÙØ§. Ø§Ø³ØªØ®Ø¯Ù Local CLI Ø¹ÙØ¯ÙØ§ ØªØ­ØªØ§Ø¬ Ø¥ÙÙ ØªØºÙÙØ±Ø§Øª ÙÙ Ø§ÙÙÙØ¯.',
+  'settings.codeAgent': 'ÙÙÙÙ Ø§ÙÙÙØ¯',
+  'settings.codeAgentHint': 'ØªÙ Ø§ÙØªØ´Ø§ÙÙ Ø¹Ø¨Ø± ÙØ³Ø­ PATH Ø§ÙØ®Ø§Øµ Ø¨Ù. Ø§Ø®ØªØ± ÙØ§Ø¬ÙØ© CLI Ø§ÙØªÙ ØªØ±ÙØ¯ Ø£Ù ØªÙØ± Ø§ÙØ£Ø¬ÙØ§Ù Ø¹Ø¨Ø±ÙØ§.',
+  'settings.rescan': 'â» Ø¥Ø¹Ø§Ø¯Ø© Ø§ÙÙØ³Ø­',
+  'settings.rescanTitle': 'Ø¥Ø¹Ø§Ø¯Ø© ÙØ³Ø­ PATH',
+  'settings.rescanRunning': 'Ø¬Ø§Ø±Ù Ø§ÙÙØ³Ø­...',
+  'settings.rescanSuccess': 'Ø§ÙØªÙÙ Ø§ÙÙØ³Ø­. {count} ÙØªØ§Ø­.',
+  'settings.designSystemRenameFailed': 'ÙØ´ÙØª Ø¥Ø¹Ø§Ø¯Ø© Ø§ÙØªØ³ÙÙØ©. ØªØ­ÙÙ ÙÙ Ø§ÙØ¨Ø±ÙØ§ÙØ¬ Ø§ÙØ®ÙÙ ÙØ­Ø§ÙÙ ÙØ±Ø© Ø£Ø®Ø±Ù.',
+  'settings.rescanFailed': 'ÙØ´Ù Ø§ÙÙØ³Ø­. ØªØ­ÙÙ ÙÙ Ø§ÙØ¨Ø±ÙØ§ÙØ¬ Ø§ÙØ®ÙÙ ÙØ­Ø§ÙÙ ÙØ±Ø© Ø£Ø®Ø±Ù.',
+  'settings.test': 'Ø§Ø®ØªØ¨Ø§Ø±',
+  'settings.testTitle': 'Ø£Ø±Ø³Ù ÙØ·Ø§ÙØ¨Ø© Ø§Ø®ØªØ¨Ø§Ø± ØµØºÙØ±Ø© ÙÙØªØ­ÙÙ ÙÙ Ø§ÙØ§ØªØµØ§Ù',
+  'settings.testRunning': 'Ø¬Ø§Ø±Ù Ø§Ø®ØªØ¨Ø§Ø± Ø§ÙØ§ØªØµØ§Ùâ¦',
+  'settings.byokReadyToTest': 'Ø¬Ø§ÙØ² ÙÙØ§Ø®ØªØ¨Ø§Ø±',
+  'settings.testCancel': 'Ø¥ÙØºØ§Ø¡',
+  'settings.testRetry': 'Ø¥Ø¹Ø§Ø¯Ø© Ø§ÙØ§Ø®ØªØ¨Ø§Ø±',
+  'settings.required': 'ÙØ·ÙÙØ¨',
+  'settings.testMissingFields': 'Ø§ÙÙØ£ {fields} ÙØ§Ø®ØªØ¨Ø§Ø± Ø§ÙØ§ØªØµØ§Ù.',
+  'settings.testSuccessApi': 'ØªÙ Ø§ÙØ§ØªØµØ§Ù. Ø±Ø¯ Ø®ÙØ§Ù {ms} ÙÙÙÙ Ø«Ø§ÙÙØ© â \'{sample}\'',
+  'settings.testSuccessCli': 'Ø±Ø¯ {agentName} Ø®ÙØ§Ù {ms} ÙÙÙÙ Ø«Ø§ÙÙØ© â \'{sample}\'',
+  'settings.testAuthFailed': 'ÙØ´ÙØª Ø§ÙÙØµØ§Ø¯ÙØ©. ØªØ­ÙÙ ÙÙ ÙÙØªØ§Ø­ Ø§ÙÙ API.',
+  'settings.testForbidden': 'Ø§ÙÙØµÙÙ ÙÙÙÙØ¹. ØªØ­ÙÙ ÙÙ Ø§ÙØ­Ø³Ø§Ø¨ Ø£Ù Ø§ÙÙÙØ·ÙØ© Ø£Ù Ø§ÙÙØ¤Ø³Ø³Ø©.',
+  'settings.testNotFoundModel': 'ÙÙ ÙØªÙ Ø§ÙØ¹Ø«ÙØ± Ø¹ÙÙ Ø§ÙÙÙÙØ°Ø¬ \'{model}\' ÙÙ ÙØ°Ù Ø§ÙÙÙØ·Ø©.',
+  'settings.testInvalidModelId': 'ÙØ¹Ø±ÙÙ Ø§ÙÙÙÙØ°Ø¬ \'{model}\' ØºÙØ± ØµØ§ÙØ­. ÙØ¬Ø¨ Ø£Ù ÙØ¨Ø¯Ø£ Ø§ÙÙØ¹Ø±ÙÙ Ø§ÙÙØ®ØµØµ Ø¨Ø­Ø±Ù Ø£Ù Ø±ÙÙ ÙØ£ÙØ§ ÙØ­ØªÙÙ Ø¹ÙÙ ÙØ³Ø§ÙØ§Øª.',
+  'settings.testInvalidBaseUrl': 'Base URL ØºÙØ± ØµØ§ÙØ­ Ø£Ù ÙØªØ¹Ø°Ø± Ø§ÙÙØµÙÙ Ø¥ÙÙÙ.',
+  'settings.testRateLimited': 'Ø­Ø¯ Ø§ÙÙØ²ÙØ¯ ÙØ¹Ø¯ÙÙ Ø§ÙØ§Ø®ØªØ¨Ø§Ø±. Ø§ÙØªÙÙÙÙ ÙØ¨Ø¯Ù ØµØ§ÙØ­Ø§Ù.',
+  'settings.testUpstream': 'Ø£Ø¹Ø§Ø¯ Ø§ÙÙØ²ÙØ¯ {status}. Ø­Ø§ÙÙ ÙØ±Ø© Ø£Ø®Ø±Ù Ø¨Ø¹Ø¯ ÙÙÙÙ.',
+  'settings.testTimeout': 'Ø§ÙØªÙØª ÙÙÙØ© Ø§ÙØ§Ø®ØªØ¨Ø§Ø± Ø¨Ø¹Ø¯ {ms} ÙÙÙÙ Ø«Ø§ÙÙØ©.',
+  'settings.testAgentMissing': '{agentName} ØºÙØ± ÙØ«Ø¨Øª Ø£Ù ÙÙØ³ ÙÙ PATH.',
+  'settings.testAgentSpawn': 'ØªØ¹Ø°ÙØ± ØªØ´ØºÙÙ {agentName}: {detail}.',
+  'settings.testUnknown': 'ÙØ´Ù Ø§ÙØ§Ø®ØªØ¨Ø§Ø±: {detail}',
+  'settings.agentInstall.install': 'ØªØ«Ø¨ÙØª',
+  'settings.agentInstall.docs': 'Ø§ÙÙØ«Ø§Ø¦Ù',
+  'settings.agentInstall.pathHint': 'Ø¥Ø°Ø§ Ø«Ø¨ÙØªÙ CLI Ø¨Ø§Ø³ØªØ®Ø¯Ø§Ù npm Ø£Ù Homebrew ÙÙØ§ Ø²Ø§Ù ÙØ¸ÙØ± ÙØºÙØ± ÙØ«Ø¨ØªØ ÙØªØ£ÙØ¯ ÙÙ Ø£Ù ÙØ¬ÙØ¯ bin ÙÙØ£Ø¯Ø§Ø© ÙÙØ¬ÙØ¯ ÙÙ PATH Ø§ÙØ°Ù ÙØ±Ø«Ù daemon Ø§ÙØ®Ø§Øµ Ø¨Ù Open Design (ÙØ¯ ÙØ®ØªÙÙ PATH Ø¨ÙÙ Terminal ÙØªØ·Ø¨ÙÙØ§Øª GUI Ø¹ÙÙ macOS). Ø±Ø§Ø¬Ø¹ QUICKSTART.md (ÙØ³Ù "Local agent CLI and PATH").',
+  'settings.agentInstall.stepOpenLinks': 'Ø§ÙØªØ­ Ø±Ø§Ø¨Ø· Ø§ÙØªØ«Ø¨ÙØª Ø£Ù Ø§ÙÙØ«Ø§Ø¦Ù ÙÙÙÙÙÙ Ø§ÙØ°Ù ØªÙØ¶ÙÙ.',
+  'settings.agentInstall.stepAuth': 'Ø£ÙÙÙÙ Ø§ÙÙØµØ§Ø¯ÙØ© ÙÙ CLI Ø§ÙØ®Ø§Øµ Ø¨Ø§ÙÙØ²ÙÙØ¯ (ØªØ³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙ Ø£Ù Ø¥Ø¶Ø§ÙØ© Ø¨ÙØ§ÙØ§Øª Ø§Ø¹ØªÙØ§Ø¯ API) ÙØ¨Ù Ø§ÙØ¹ÙØ¯Ø© Ø¥ÙÙ Open Design.',
+  'settings.agentInstall.stepRescan': 'Ø§ÙÙØ± Ø¥Ø¹Ø§Ø¯Ø© Ø§ÙÙØ³Ø­ ÙÙ ÙØ°Ø§ Ø§ÙÙØ³Ù.',
+  'settings.agentInstall.stepSelect': 'Ø§Ø®ØªØ± Ø¨Ø·Ø§ÙØ© Ø§ÙÙÙÙÙ Ø¹ÙØ¯ÙØ§ ÙØ¸ÙØ± ÙØ£ÙÙ ÙØ«Ø¨Øª.',
+  'settings.noAgentsDetected': 'ÙÙ ÙØªÙ Ø§ÙØªØ´Ø§Ù Ø£Ù ÙÙÙØ§Ø¡ Ø¨Ø¹Ø¯. ÙÙ Ø¨ØªØ«Ø¨ÙØª Claude Code Ø£Ù Codex Ø£Ù Devin Ø£Ù Gemini CLI Ø£Ù OpenCode Ø£Ù Cursor Agent Ø£Ù Qwen Ø£Ù GitHub Copilot CLIØ Ø«Ù Ø§Ø¶ØºØ· Ø¹ÙÙ Ø¥Ø¹Ø§Ø¯Ø© Ø§ÙÙØ³Ø­.',
+  'settings.agentInstalledGroup': 'ÙØ§Ø¬ÙØ§Øª CLI ÙØ¯ÙÙ ({count})',
+  'settings.agentInstallGroup': 'ÙØªØ§Ø­Ø© ÙÙØªØ«Ø¨ÙØª ({count})',
+  'settings.agentAuthRequired': 'Ø§ÙÙØµØ§Ø¯ÙØ© ÙØ·ÙÙØ¨Ø©',
+  'settings.agentAuthUnknown': 'Ø­Ø§ÙØ© Ø§ÙÙØµØ§Ø¯ÙØ© ØºÙØ± ÙØ¹Ø±ÙÙØ©',
   'settings.amrCloud': 'Open Design AMR',
-  'settings.amrAuthorize': 'تفويض',
-  'settings.amrBenefitOfficial': 'رسمي',
-  'settings.amrBenefitLowerPrice': 'تكلفة أقل',
-  'settings.amrBenefitManyModels': 'نماذج متعددة',
-  'settings.amrPromoBonus': 'مكافأة محدودة: +100%',
-  'settings.amrSignInToContinue': 'سجّل الدخول للمتابعة',
-  'settings.amrSignIn': 'تسجيل الدخول',
-  'settings.amrSignedIn': 'تم تسجيل الدخول',
+  'settings.amrAuthorize': 'ØªÙÙÙØ¶',
+  'settings.amrBenefitOfficial': 'Ø±Ø³ÙÙ',
+  'settings.amrBenefitLowerPrice': 'ØªÙÙÙØ© Ø£ÙÙ',
+  'settings.amrBenefitManyModels': 'ÙÙØ§Ø°Ø¬ ÙØªØ¹Ø¯Ø¯Ø©',
+  'settings.amrPromoBonus': 'ÙÙØ§ÙØ£Ø© ÙØ­Ø¯ÙØ¯Ø©: +100%',
+  'settings.amrSignInToContinue': 'Ø³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙ ÙÙÙØªØ§Ø¨Ø¹Ø©',
+  'settings.amrSignIn': 'ØªØ³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙ',
+  'settings.amrSignedIn': 'ØªÙ ØªØ³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙ',
   'settings.amrWalletBalance': 'Wallet balance',
   'settings.amrWalletUnavailable': 'Balance temporarily unavailable',
   'settings.amrWalletUpdatedAt': 'Updated {time}',
   'settings.amrWalletCached': 'cached',
   'settings.amrWalletRefresh': 'Refresh',
   'settings.amrWalletRefreshTitle': 'Refresh AMR wallet balance',
-  'settings.amrNotSignedIn': 'لم يتم تسجيل الدخول',
-  'settings.amrSigningIn': 'جارٍ تسجيل الدخول…',
-  'settings.amrActivationHint': 'لم تُفتح صفحة تسجيل الدخول؟ اضغط الزر أدناه لإعادة فتحها.',
-  'settings.amrActivationBrowserFailed': 'تعذّر فتح المتصفح تلقائيًا. افتح صفحة تسجيل الدخول أدناه للمتابعة.',
-  'settings.amrActivationOpen': 'فتح صفحة تسجيل الدخول',
-  'settings.amrCancelSignIn': 'إلغاء تسجيل الدخول',
-  'settings.amrAccountStatus': 'حالة حساب AMR',
-  'settings.amrConsole': 'وحدة تحكّم AMR',
-  'settings.amrLoginErrorCompact': 'فشل تسجيل الدخول إلى AMR.',
-  'settings.advanced': 'متقدّم',
-  'settings.amrLogin': 'تسجيل الدخول',
-  'settings.amrLogout': 'تسجيل الخروج',
-  'settings.amrLoggingIn': 'جارٍ تسجيل الدخول…',
-  'settings.amrLoggingOut': 'جارٍ تسجيل الخروج…',
-  'settings.amrLoggedInAs': 'تم تسجيل الدخول باسم {email}',
-  'settings.amrLoggedInWithPlan': 'تم تسجيل الدخول باسم {email} · {plan}',
-  'settings.amrLoggedInPill': 'تم تسجيل الدخول',
-  'settings.amrNotLoggedIn': 'لم يتم تسجيل الدخول',
+  'settings.amrNotSignedIn': 'ÙÙ ÙØªÙ ØªØ³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙ',
+  'settings.amrSigningIn': 'Ø¬Ø§Ø±Ù ØªØ³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙâ¦',
+  'settings.amrActivationHint': 'ÙÙ ØªÙÙØªØ­ ØµÙØ­Ø© ØªØ³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙØ Ø§Ø¶ØºØ· Ø§ÙØ²Ø± Ø£Ø¯ÙØ§Ù ÙØ¥Ø¹Ø§Ø¯Ø© ÙØªØ­ÙØ§.',
+  'settings.amrActivationBrowserFailed': 'ØªØ¹Ø°ÙØ± ÙØªØ­ Ø§ÙÙØªØµÙØ­ ØªÙÙØ§Ø¦ÙÙØ§. Ø§ÙØªØ­ ØµÙØ­Ø© ØªØ³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙ Ø£Ø¯ÙØ§Ù ÙÙÙØªØ§Ø¨Ø¹Ø©.',
+  'settings.amrActivationOpen': 'ÙØªØ­ ØµÙØ­Ø© ØªØ³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙ',
+  'settings.amrCancelSignIn': 'Ø¥ÙØºØ§Ø¡ ØªØ³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙ',
+  'settings.amrAccountStatus': 'Ø­Ø§ÙØ© Ø­Ø³Ø§Ø¨ AMR',
+  'settings.amrConsole': 'ÙØ­Ø¯Ø© ØªØ­ÙÙÙ AMR',
+  'settings.amrLoginErrorCompact': 'ÙØ´Ù ØªØ³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙ Ø¥ÙÙ AMR.',
+  'settings.advanced': 'ÙØªÙØ¯ÙÙ',
+  'settings.amrLogin': 'ØªØ³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙ',
+  'settings.amrLogout': 'ØªØ³Ø¬ÙÙ Ø§ÙØ®Ø±ÙØ¬',
+  'settings.amrLoggingIn': 'Ø¬Ø§Ø±Ù ØªØ³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙâ¦',
+  'settings.amrLoggingOut': 'Ø¬Ø§Ø±Ù ØªØ³Ø¬ÙÙ Ø§ÙØ®Ø±ÙØ¬â¦',
+  'settings.amrLoggedInAs': 'ØªÙ ØªØ³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙ Ø¨Ø§Ø³Ù {email}',
+  'settings.amrLoggedInWithPlan': 'ØªÙ ØªØ³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙ Ø¨Ø§Ø³Ù {email} Â· {plan}',
+  'settings.amrLoggedInPill': 'ØªÙ ØªØ³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙ',
+  'settings.amrNotLoggedIn': 'ÙÙ ÙØªÙ ØªØ³Ø¬ÙÙ Ø§ÙØ¯Ø®ÙÙ',
   'settings.apiSection': 'Anthropic API',
-  'settings.quickFillProvider': 'ملء المزوّد سريعًا',
-  'settings.providerPreset': 'إعداد البوابة المسبق',
-  'settings.protocolGroupProtocols': 'البروتوكولات',
-  'settings.protocolGroupGateways': 'البوابات',
-  'settings.customProvider': 'مزوّد مخصص',
-  'settings.apiKey': 'مفتاح API',
-  'settings.apiKeyGetLink': 'الحصول على المفتاح ↗',
-  'settings.showKey': 'إظهار المفتاح',
-  'settings.hideKey': 'إخفاء المفتاح',
-  'settings.show': 'إظهار',
-  'settings.hide': 'إخفاء',
-  'settings.model': 'النموذج',
-  'settings.apiKeyInvalid': 'API key غير صالح.',
-  'settings.apiKeyCleaned': 'تمت إزالة المسافات الزائدة من API key.',
-  'settings.modelsLoadedFromAccount': '✓ تم تحميل {count} نموذج من حسابك.',
-  'settings.modelsLoadedCount': '✓ تم تحميل {count} نموذج.',
-  'settings.modelSourceAccount': 'من حسابك',
-  'settings.modelSourceSuggested': 'مُقترح',
-  'settings.fetchModels': 'جلب النماذج',
-  'settings.fetchModelsTitle': 'جلب النماذج المتاحة من هذا المزوّد',
-  'settings.fetchModelsRunning': 'جارٍ جلب النماذج…',
-  'settings.fetchModelsMissingFields': 'املأ {fields} لجلب النماذج.',
-  'settings.fetchModelsInvalidBaseUrl': 'أدخل Base URL صالحًا لجلب النماذج.',
-  'settings.fetchModelsUnsupportedAzure': 'يستخدم Azure OpenAI أسماء عمليات النشر، لذا فإن اكتشاف النماذج غير متاح هنا.',
-  'settings.fetchModelsUnsupportedOllama': 'اكتشاف نماذج Ollama Cloud غير متاح بعد. اختر نموذجًا أو اكتبه.',
-  'settings.fetchModelsSuccess': 'تم جلب {count} نموذجًا.',
-  'settings.fetchModelsEmpty': 'لم يتم إرجاع أي نماذج نصية متوافقة.',
-  'settings.fetchModelsUnsupported': 'اكتشاف النماذج غير متاح لهذا البروتوكول.',
-  'settings.fetchModelsFailed': 'تعذّر جلب النماذج: {detail}',
-  'settings.suggestedModelsHint': 'هذه نماذج مقترحة لهذا البروتوكول. قد يدعم مزوّدك نماذج مختلفة.',
-  'settings.baseUrl': 'رابط القاعدة',
-  'settings.baseUrlInvalid': 'استخدم رابط http:// أو https:// عامًا.',
-  'settings.baseUrlCustomize': 'تخصيص',
-  'settings.baseUrlDefaultHint': 'نقطة النهاية الافتراضية. عادة لا تحتاج إلى تغييرها.',
-  'settings.azureBaseUrlPlaceholder': 'ألصق عنوان URL لنقطة نهاية Azure',
-  'settings.azureBaseUrlHint': 'يمكنك العثور على هذا في بوابة Azure ← المورد الخاص بك ← Endpoint.',
-  'settings.azureDeploymentModel': 'اسم النشر',
-  'settings.azureCustomDeploymentName': 'اسم نشر مخصّص',
-  'settings.azureDeploymentModelHint': 'في Azure OpenAI، يُستخدم هذا الحقل كاسم النشر في /openai/deployments/<model>. أدخل اسم النشر الذي أنشأته في Azure.',
-  'settings.azureModelFetchHint': 'أدخل اسم النشر من مورد Azure الخاص بك. لا يمكن جلب عمليات نشر Azure تلقائيًا.',
-  'settings.apiVersion': 'إصدار API',
-  'settings.byokImageModel': 'نموذج إنشاء الصور',
-  'settings.byokVideoModel': 'نموذج إنشاء الفيديو',
-  'settings.byokVideoI2vHint': 'نموذج صورة-إلى-فيديو: مطلوب صورة مرجعية (يُستخدم أحدث صورة في المشروع تلقائيًا إن لم تحددها)',
-  'settings.byokSpeechModel': 'نموذج توليد الصوت',
-  'settings.byokSpeechVoice': 'صوت الكلام',
-  'settings.byokModelDefaultOption': 'افتراضي',
-  'settings.maxTokens': 'أقصى عدد من الرموز (اختياري)',
-  'settings.maxTokensHint': 'الحد الأقصى لطول الاستجابة. لكل نموذج قيمة افتراضية؛ اتركها فارغة لاستخدامها، أو أدخل رقماً للتجاوز.',
-  'settings.apiHint': 'تُرسل الطلبات عبر وكيل daemon المحلي إلى Base URL الذي تحدده. يُحفظ المفتاح في هذا المتصفح فقط ويُرسل مع طلبات المزود.',
-  'settings.skipForNow': 'تخطي الآن',
-  'settings.getStarted': 'ابدأ الآن',
-  'settings.envConfigure': 'وضع التنفيذ',
-  'settings.localCli': 'CLI محلي',
+  'settings.quickFillProvider': 'ÙÙØ¡ Ø§ÙÙØ²ÙÙØ¯ Ø³Ø±ÙØ¹ÙØ§',
+  'settings.providerPreset': 'Ø¥Ø¹Ø¯Ø§Ø¯ Ø§ÙØ¨ÙØ§Ø¨Ø© Ø§ÙÙØ³Ø¨Ù',
+  'settings.protocolGroupProtocols': 'Ø§ÙØ¨Ø±ÙØªÙÙÙÙØ§Øª',
+  'settings.protocolGroupGateways': 'Ø§ÙØ¨ÙØ§Ø¨Ø§Øª',
+  'settings.customProvider': 'ÙØ²ÙÙØ¯ ÙØ®ØµØµ',
+  'settings.apiKey': 'ÙÙØªØ§Ø­ API',
+  'settings.apiKeyGetLink': 'Ø§ÙØ­ØµÙÙ Ø¹ÙÙ Ø§ÙÙÙØªØ§Ø­ â',
+  'settings.showKey': 'Ø¥Ø¸ÙØ§Ø± Ø§ÙÙÙØªØ§Ø­',
+  'settings.hideKey': 'Ø¥Ø®ÙØ§Ø¡ Ø§ÙÙÙØªØ§Ø­',
+  'settings.show': 'Ø¥Ø¸ÙØ§Ø±',
+  'settings.hide': 'Ø¥Ø®ÙØ§Ø¡',
+  'settings.model': 'Ø§ÙÙÙÙØ°Ø¬',
+  'settings.apiKeyInvalid': 'API key ØºÙØ± ØµØ§ÙØ­.',
+  'settings.apiKeyCleaned': 'ØªÙØª Ø¥Ø²Ø§ÙØ© Ø§ÙÙØ³Ø§ÙØ§Øª Ø§ÙØ²Ø§Ø¦Ø¯Ø© ÙÙ API key.',
+  'settings.modelsLoadedFromAccount': 'â ØªÙ ØªØ­ÙÙÙ {count} ÙÙÙØ°Ø¬ ÙÙ Ø­Ø³Ø§Ø¨Ù.',
+  'settings.modelsLoadedCount': 'â ØªÙ ØªØ­ÙÙÙ {count} ÙÙÙØ°Ø¬.',
+  'settings.modelSourceAccount': 'ÙÙ Ø­Ø³Ø§Ø¨Ù',
+  'settings.modelSourceSuggested': 'ÙÙÙØªØ±Ø­',
+  'settings.fetchModels': 'Ø¬ÙØ¨ Ø§ÙÙÙØ§Ø°Ø¬',
+  'settings.fetchModelsTitle': 'Ø¬ÙØ¨ Ø§ÙÙÙØ§Ø°Ø¬ Ø§ÙÙØªØ§Ø­Ø© ÙÙ ÙØ°Ø§ Ø§ÙÙØ²ÙÙØ¯',
+  'settings.fetchModelsRunning': 'Ø¬Ø§Ø±Ù Ø¬ÙØ¨ Ø§ÙÙÙØ§Ø°Ø¬â¦',
+  'settings.fetchModelsMissingFields': 'Ø§ÙÙØ£ {fields} ÙØ¬ÙØ¨ Ø§ÙÙÙØ§Ø°Ø¬.',
+  'settings.fetchModelsInvalidBaseUrl': 'Ø£Ø¯Ø®Ù Base URL ØµØ§ÙØ­ÙØ§ ÙØ¬ÙØ¨ Ø§ÙÙÙØ§Ø°Ø¬.',
+  'settings.fetchModelsUnsupportedAzure': 'ÙØ³ØªØ®Ø¯Ù Azure OpenAI Ø£Ø³ÙØ§Ø¡ Ø¹ÙÙÙØ§Øª Ø§ÙÙØ´Ø±Ø ÙØ°Ø§ ÙØ¥Ù Ø§ÙØªØ´Ø§Ù Ø§ÙÙÙØ§Ø°Ø¬ ØºÙØ± ÙØªØ§Ø­ ÙÙØ§.',
+  'settings.fetchModelsUnsupportedOllama': 'Ø§ÙØªØ´Ø§Ù ÙÙØ§Ø°Ø¬ Ollama Cloud ØºÙØ± ÙØªØ§Ø­ Ø¨Ø¹Ø¯. Ø§Ø®ØªØ± ÙÙÙØ°Ø¬ÙØ§ Ø£Ù Ø§ÙØªØ¨Ù.',
+  'settings.fetchModelsSuccess': 'ØªÙ Ø¬ÙØ¨ {count} ÙÙÙØ°Ø¬ÙØ§.',
+  'settings.fetchModelsEmpty': 'ÙÙ ÙØªÙ Ø¥Ø±Ø¬Ø§Ø¹ Ø£Ù ÙÙØ§Ø°Ø¬ ÙØµÙØ© ÙØªÙØ§ÙÙØ©.',
+  'settings.fetchModelsUnsupported': 'Ø§ÙØªØ´Ø§Ù Ø§ÙÙÙØ§Ø°Ø¬ ØºÙØ± ÙØªØ§Ø­ ÙÙØ°Ø§ Ø§ÙØ¨Ø±ÙØªÙÙÙÙ.',
+  'settings.fetchModelsFailed': 'ØªØ¹Ø°ÙØ± Ø¬ÙØ¨ Ø§ÙÙÙØ§Ø°Ø¬: {detail}',
+  'settings.suggestedModelsHint': 'ÙØ°Ù ÙÙØ§Ø°Ø¬ ÙÙØªØ±Ø­Ø© ÙÙØ°Ø§ Ø§ÙØ¨Ø±ÙØªÙÙÙÙ. ÙØ¯ ÙØ¯Ø¹Ù ÙØ²ÙÙØ¯Ù ÙÙØ§Ø°Ø¬ ÙØ®ØªÙÙØ©.',
+  'settings.baseUrl': 'Ø±Ø§Ø¨Ø· Ø§ÙÙØ§Ø¹Ø¯Ø©',
+  'settings.baseUrlInvalid': 'Ø§Ø³ØªØ®Ø¯Ù Ø±Ø§Ø¨Ø· http:// Ø£Ù https:// Ø¹Ø§ÙÙØ§.',
+  'settings.baseUrlCustomize': 'ØªØ®ØµÙØµ',
+  'settings.baseUrlDefaultHint': 'ÙÙØ·Ø© Ø§ÙÙÙØ§ÙØ© Ø§ÙØ§ÙØªØ±Ø§Ø¶ÙØ©. Ø¹Ø§Ø¯Ø© ÙØ§ ØªØ­ØªØ§Ø¬ Ø¥ÙÙ ØªØºÙÙØ±ÙØ§.',
+  'settings.azureBaseUrlPlaceholder': 'Ø£ÙØµÙ Ø¹ÙÙØ§Ù URL ÙÙÙØ·Ø© ÙÙØ§ÙØ© Azure',
+  'settings.azureBaseUrlHint': 'ÙÙÙÙÙ Ø§ÙØ¹Ø«ÙØ± Ø¹ÙÙ ÙØ°Ø§ ÙÙ Ø¨ÙØ§Ø¨Ø© Azure â Ø§ÙÙÙØ±Ø¯ Ø§ÙØ®Ø§Øµ Ø¨Ù â Endpoint.',
+  'settings.azureDeploymentModel': 'Ø§Ø³Ù Ø§ÙÙØ´Ø±',
+  'settings.azureCustomDeploymentName': 'Ø§Ø³Ù ÙØ´Ø± ÙØ®ØµÙØµ',
+  'settings.azureDeploymentModelHint': 'ÙÙ Azure OpenAIØ ÙÙØ³ØªØ®Ø¯Ù ÙØ°Ø§ Ø§ÙØ­ÙÙ ÙØ§Ø³Ù Ø§ÙÙØ´Ø± ÙÙ /openai/deployments/<model>. Ø£Ø¯Ø®Ù Ø§Ø³Ù Ø§ÙÙØ´Ø± Ø§ÙØ°Ù Ø£ÙØ´Ø£ØªÙ ÙÙ Azure.',
+  'settings.azureModelFetchHint': 'Ø£Ø¯Ø®Ù Ø§Ø³Ù Ø§ÙÙØ´Ø± ÙÙ ÙÙØ±Ø¯ Azure Ø§ÙØ®Ø§Øµ Ø¨Ù. ÙØ§ ÙÙÙÙ Ø¬ÙØ¨ Ø¹ÙÙÙØ§Øª ÙØ´Ø± Azure ØªÙÙØ§Ø¦ÙÙØ§.',
+  'settings.apiVersion': 'Ø¥ØµØ¯Ø§Ø± API',
+  'settings.byokImageModel': 'ÙÙÙØ°Ø¬ Ø¥ÙØ´Ø§Ø¡ Ø§ÙØµÙØ±',
+  'settings.byokVideoModel': 'ÙÙÙØ°Ø¬ Ø¥ÙØ´Ø§Ø¡ Ø§ÙÙÙØ¯ÙÙ',
+  'settings.byokVideoI2vHint': 'ÙÙÙØ°Ø¬ ØµÙØ±Ø©-Ø¥ÙÙ-ÙÙØ¯ÙÙ: ÙØ·ÙÙØ¨ ØµÙØ±Ø© ÙØ±Ø¬Ø¹ÙØ© (ÙÙØ³ØªØ®Ø¯Ù Ø£Ø­Ø¯Ø« ØµÙØ±Ø© ÙÙ Ø§ÙÙØ´Ø±ÙØ¹ ØªÙÙØ§Ø¦ÙÙØ§ Ø¥Ù ÙÙ ØªØ­Ø¯Ø¯ÙØ§)',
+  'settings.byokSpeechModel': 'ÙÙÙØ°Ø¬ ØªÙÙÙØ¯ Ø§ÙØµÙØª',
+  'settings.byokSpeechVoice': 'ØµÙØª Ø§ÙÙÙØ§Ù',
+  'settings.byokModelDefaultOption': 'Ø§ÙØªØ±Ø§Ø¶Ù',
+  'settings.maxTokens': 'Ø£ÙØµÙ Ø¹Ø¯Ø¯ ÙÙ Ø§ÙØ±ÙÙØ² (Ø§Ø®ØªÙØ§Ø±Ù)',
+  'settings.maxTokensHint': 'Ø§ÙØ­Ø¯ Ø§ÙØ£ÙØµÙ ÙØ·ÙÙ Ø§ÙØ§Ø³ØªØ¬Ø§Ø¨Ø©. ÙÙÙ ÙÙÙØ°Ø¬ ÙÙÙØ© Ø§ÙØªØ±Ø§Ø¶ÙØ©Ø Ø§ØªØ±ÙÙØ§ ÙØ§Ø±ØºØ© ÙØ§Ø³ØªØ®Ø¯Ø§ÙÙØ§Ø Ø£Ù Ø£Ø¯Ø®Ù Ø±ÙÙØ§Ù ÙÙØªØ¬Ø§ÙØ².',
+  'settings.apiHint': 'ØªÙØ±Ø³Ù Ø§ÙØ·ÙØ¨Ø§Øª Ø¹Ø¨Ø± ÙÙÙÙ daemon Ø§ÙÙØ­ÙÙ Ø¥ÙÙ Base URL Ø§ÙØ°Ù ØªØ­Ø¯Ø¯Ù. ÙÙØ­ÙØ¸ Ø§ÙÙÙØªØ§Ø­ ÙÙ ÙØ°Ø§ Ø§ÙÙØªØµÙØ­ ÙÙØ· ÙÙÙØ±Ø³Ù ÙØ¹ Ø·ÙØ¨Ø§Øª Ø§ÙÙØ²ÙØ¯.',
+  'settings.skipForNow': 'ØªØ®Ø·Ù Ø§ÙØ¢Ù',
+  'settings.getStarted': 'Ø§Ø¨Ø¯Ø£ Ø§ÙØ¢Ù',
+  'settings.envConfigure': 'ÙØ¶Ø¹ Ø§ÙØªÙÙÙØ°',
+  'settings.localCli': 'CLI ÙØ­ÙÙ',
   'settings.anthropicApi': 'Anthropic API',
-  'settings.noAgentSelected': 'لم يتم اختيار وكيل',
-  'settings.language': 'اللغة',
-  'settings.languageHint': 'تغيير لغة الواجهة. تحفظ في المتصفح.',
-  'settings.appearance': 'المظهر',
-  'settings.appearanceHint': 'اختر الفاتح، الداكن، أو اتبع إعدادات النظام.',
-  'settings.themeSystem': 'النظام',
-  'settings.themeLight': 'فاتح',
-  'settings.themeDark': 'داكن',
-  'settings.agentModelHead': 'النموذج لـ:',
-  'settings.modelPicker': 'النموذج',
-  'settings.modelSourceLive': 'مباشر من CLI',
-  'settings.modelSourceFallback': 'القائمة المضمنة',
-  'settings.reasoningPicker': 'جهد التفكير',
-  'settings.modelPickerHint': 'يتم جلبه من CLI عندما يعرض أمر `models`. "الافتراضي" يترك الخيار لإعدادات CLI؛ "مخصص..." يسمح لك بكتابة أي معرف نموذج يقبله CLI.',
-  'settings.modelPickerLiveHint': 'تم تحديث النماذج من CLI المثبت. لا يزال الخيار الافتراضي يستخدم إعدادات CLI.',
-  'settings.modelPickerLiveCatalogOnlyHint': 'تم تحديث النماذج من CLI المثبت.',
-  'settings.modelPickerFallbackHint': 'يتم عرض الإعدادات الافتراضية المضمنة. انقر على إعادة المسح لجلب النماذج المباشرة من CLI.',
-  'settings.cliEnvTitle': 'متقدّم: الوكيل والمسارات المخصّصة',
-  'settings.cliEnvHint': 'استخدم هذه الخيارات لتجاوز بيئة CLI المحدّد: مفاتيح API، وعناوين base URL للوكيل، ومجلدات home المخصّصة، أو مسارات تنفيذ غير قياسية. عند عدم ضبط base URL، يستخدم CLI نقطة النهاية الافتراضية الخاصة به. تبقى الأسرار في إعدادات التطبيق المحلية ولا يراها سوى CLI المحدّد.',
-  'settings.cliEnvClaudeConfigDir': 'دليل إعدادات Claude Code',
-  'settings.cliEnvClaudeBaseUrl': 'Base URL لوكيل Claude',
-  'settings.cliEnvClaudeApiKey': 'مفتاح API لـ Claude CLI',
-  'settings.cliEnvCodexHome': 'مجلد Codex الرئيسي',
-  'settings.cliEnvCodexBin': 'مسار ملف Codex التنفيذي',
-  'settings.cliEnvCodexBaseUrl': 'Base URL لوكيل Codex/OpenAI',
-  'settings.cliEnvCodexApiKey': 'مفتاح API لـ Codex/OpenAI CLI',
-  'settings.modelCustom': 'مخصص (اكتب أدناه)...',
-  'settings.modelCustomLabel': 'معرف النموذج المخصص',
-  'settings.modelCustomPlaceholder': 'مثلاً: anthropic/claude-sonnet-4-6',
-  'settings.mediaProviders': 'مزودو الوسائط',
-  'settings.mediaProvidersHint': 'مفاتيح API لإنشاء الصور والفيديو والصوت. تخزن محلياً وتزامن مع البرنامج الخفي المحلي.',
-  'settings.mcpServerTitle': 'خادم MCP',
-  'settings.mcpServerHint': 'كشف Open Design كخادم MCP لوكيل البرمجة الخاص بك.',
-  'settings.externalMcpTitle': 'MCP خارجي',
-  'settings.externalMcpHint': 'أضف أدوات MCP من خدمات خارجية (Higgsfield، GitHub، …).',
-  'settings.mediaProviderApiKey': 'مفتاح API',
-  'settings.mediaProviderBaseUrl': 'رابط القاعدة',
-  'settings.mediaProviderConfigured': 'تم التكوين',
-  'settings.mediaProviderUnset': 'غير محدد',
-  'settings.mediaProviderClear': 'مسح',
-  'settings.mediaProviderClearConfirm': 'مسح إعدادات {name} المحفوظة؟ ستحتاج إلى إدخالها مرة أخرى لاستخدام {name}.',
-  'settings.mediaProviderPlaceholder': 'الصق مفتاح API',
-  'settings.mediaProviderBaseUrlPlaceholder': 'تجاوز رابط القاعدة الافتراضي',
-  'settings.mediaProviderReload': 'إعادة التحميل من الـ daemon المحلي',
-  'settings.mediaProviderReloadError': 'تعذر إعادة تحميل إعدادات موفري الوسائط من الـ daemon المحلي.',
-  'settings.mediaProviderReloadSuccess': 'تمت إعادة تحميل إعدادات موفري الوسائط من الـ daemon المحلي.',
-  'settings.mediaProviderLoadError': 'تعذر تحميل إعدادات موفري الوسائط من الـ daemon المحلي. سيُستخدم مؤقتًا ما هو محفوظ في المتصفح.',
-  'settings.mediaProviderComingSoonHint': 'نحن نتتبع هذه المزودات في خارطة الطريق؛ لم يقم البرنامج الخفي بشحن عميل بعد، لذا لا يوجد شيء لتكوينه.',
-  'settings.privacy': 'الخصوصية',
-  'settings.privacyHint': 'البيانات التي تتم مشاركتها مع فريق Open Design',
-  'settings.privacyConsentKicker': 'ساعدنا في تحسين Open Design',
-  'settings.privacyConsentLead': 'يمكن لـ Open Design مشاركة بيانات الاستخدام مع فريقنا لمساعدتنا على التحسين. يشمل ذلك:',
-  'settings.privacyConsentFooter': 'يمكنك تغيير هذه الخيارات في أي وقت من الإعدادات ← الخصوصية.',
-  'settings.privacyConsentShare': 'مشاركة بيانات الاستخدام',
-  'settings.privacyConsentDecline': 'عدم المشاركة',
-  'settings.privacyConsentAccept': 'فهمت',
-  'settings.privacyConsentBannerFooter': 'مشاركة البيانات مفعّلة افتراضيًا. يمكنك إيقافها في أي وقت من الإعدادات ← الخصوصية.',
-  'settings.privacyConsentPolicyLink': 'اقرأ سياسة الخصوصية',
-  'settings.privacyMetrics': 'مقاييس مجهولة المصدر',
-  'settings.privacyMetricsHint': 'عدد مرات التشغيل، واستخدام Token، ومعدل الأخطاء، والمدة. بدون أي مطالبات، وبدون أي بيانات للمشروع.',
-  'settings.privacyContent': 'محتوى المحادثة والأدوات',
-  'settings.privacyContentHint': 'المطالبات، وردود المساعد، ومدخلات/مخرجات الأدوات، وملفات السياق الكامل اللازمة لمراجعة الجودة. تتم إزالة الأسرار قبل الإرسال.',
-  'settings.privacyInstallationId': 'المُعرّف المجهول',
-  'settings.privacyOptedOut': 'تم إلغاء الاشتراك',
-  'settings.privacyDataDeletion': 'حذف بياناتي',
-  'settings.privacyDataDeletionHint': 'يُجدّد مُعرّفك المجهول ويوقف الإرسال. تنتهي صلاحية الآثار الحالية وفقًا لسياسة الاحتفاظ لدينا.',
-  'settings.about': 'حول',
-  'settings.aboutHint': 'تفاصيل النسخة ووقت التشغيل',
-  'settings.appVersion': 'النسخة',
-  'settings.appChannel': 'القناة',
-  'settings.appRuntime': 'وقت التشغيل',
-  'settings.appPlatform': 'المنصة',
-  'settings.appArchitecture': 'المعمارية',
-  'settings.runtimePackaged': 'تطبيق معبأ',
-  'settings.runtimeDevelopment': 'تطوير',
-  'settings.versionUnavailable': 'تفاصيل النسخة غير متوفرة بينما البرنامج الخفي غير متصل.',
-  'settings.installLatest': 'تثبيت الأحدث',
-  'settings.alreadyLatest': 'أنت تستخدم أحدث إصدار',
-  'settings.mcpTitle': 'خادم MCP',
-  'settings.mcpHint': 'اسمح لوكلاء البرمجة (Cursor، Claude Code، VS Code…) بقراءة مشاريع Open Design الخاصة بك مباشرةً.',
-  'settings.mcpDaemonError': 'تعذّر الوصول إلى الـ daemon المحلي لتحديد مسارات التثبيت ({error}). تأكد من أن Open Design قيد التشغيل، ثم أعد فتح هذه اللوحة.',
-  'settings.mcpBuildDaemon': 'قم ببناء الـ daemon أولًا.',
-  'settings.mcpNodeMissing': 'ملف Node التنفيذي مفقود.',
-  'settings.mcpBuildHint': 'الملف apps/daemon/dist/cli.js مفقود. شغّل `pnpm --filter @open-design/daemon build` ثم حدّث.',
-  'settings.mcpMethodCli': 'أمر CLI',
-  'settings.mcpInstructionCli': 'شغّل هذا في الـ terminal لديك.',
-  'settings.mcpMethodToml': 'إعداد TOML',
-  'settings.mcpInstructionCodex': 'أضف هذا الجدول إلى {path}. يتم مشاركة الإعداد نفسه بين Codex CLI وامتداد Codex IDE.',
-  'settings.mcpMethodOneClick': 'تثبيت بنقرة واحدة',
-  'settings.mcpInstructionCursor': 'انقر على "Install in Cursor" للتثبيت عبر مربع حوار للموافقة، أو ادمج ملف JSON هذا في {path}.',
-  'settings.mcpDeeplinkInstallCursor': 'التثبيت في Cursor',
-  'settings.mcpMethodJson': 'إعداد JSON',
-  'settings.mcpInstructionCopilot': 'افتح Command Palette ({shortcut})، وشغّل "MCP: Open User Configuration"، ثم ادمج ملف JSON هذا. يجب أن يكون Copilot Chat في وضع Agent حتى تظهر الأدوات.',
-  'settings.mcpInstructionAntigravity': 'في Antigravity: قائمة "..." في لوحة الوكيل ← MCP Servers ← Manage MCP Servers ← View raw config. ادمج هذا الـ JSON.',
-  'settings.mcpInstructionZed': 'افتح إعدادات Zed ({shortcut}) وادمج هذا في الكائن ذي المستوى الأعلى. يستخدم Zed "context_servers" وليس "mcpServers".',
-  'settings.mcpInstructionWindsurf': 'افتح {path} (أو استخدم أيقونة MCPs في Cascade ← Configure) وادمج:',
-  'settings.mcpCopyAria': 'نسخ مقتطف إعداد MCP',
-  'settings.mcpResolvingFailed': '# فشل تحديد المسارات، راجع الخطأ أعلاه',
-  'settings.mcpLoadingPaths': '# جارٍ تحميل مسارات التثبيت من الخدمة المحلية…',
-  'settings.mcpCopied': 'تم النسخ',
-  'settings.mcpCopy': 'نسخ',
-  'settings.mcpCursorApproval': 'يُظهر Cursor مربع حوار للموافقة قبل كتابة الإعداد.',
-  'settings.mcpCodexOneClickInstall': 'التثبيت في Codex',
-  'settings.mcpCodexOneClickUninstall': 'الإزالة من Codex',
-  'settings.mcpCodexOneClickUnavailable': 'لم يُعثر على Codex CLI في PATH — ثبّت Codex أو الصق المقتطف يدويًا.',
-  'settings.mcpCodexInstallSuccess': 'تم التثبيت. أعد تشغيل Codex لتحميل الخادم الجديد.',
-  'settings.mcpCodexUninstallSuccess': 'تمت الإزالة من Codex.',
-  'settings.mcpCodexBusy': 'جارٍ العمل…',
-  'settings.mcpCodexInstallError': 'فشلت العملية: {error}',
-  'settings.mcpRestartNote': 'أعد تشغيل عميلك لالتقاط الخادم الجديد.',
-  'settings.mcpRestartDetail': 'معظم المحررات تُحمّل خوادم MCP عند بدء التشغيل فقط. في Cursor / VS Code / Antigravity / Windsurf يمكنك تشغيل `Developer: Reload Window` من Command Palette بدلًا من إعادة التشغيل الكاملة. أما Zed و Claude Code فيحتاجان إلى الإغلاق وإعادة الفتح.',
-  'settings.mcpCapabilitiesTitle': 'ما يستطيع Agent القيام به',
-  'settings.mcpCapabilityRead': 'قراءة أي ملف في المشروع أو البحث فيه (HTML، JSX، CSS، JSON، SVG، Markdown).',
-  'settings.mcpCapabilityPull': 'سحب حزمة تصميم في استدعاء واحد: ملف الإدخال إضافةً إلى كل متغير CSS ومكوّن وخط يشير إليه.',
-  'settings.mcpCapabilityDefault': 'الاعتماد افتراضيًا على المشروع والملف المفتوحَين في Open Design، حتى تتمكن من قول "ابنِ هذا في تطبيقي" دون إعادة تحديد التصميم المقصود.',
-  'settings.mcpRunningNote': 'يجب أن يكون Open Design قيد التشغيل حتى تنجح استدعاءات أدوات MCP. إذا بدأت تشغيل وكيل البرمجة قبل فتح Open Design، فأعد تشغيل الـ Agent ليتمكن من الوصول إلى الـ daemon النشط.',
-  'entry.tabDesigns': 'التصاميم',
-  'entry.tabTemplates': 'قوالب',
-  'entry.tabDesignSystems': 'أنظمة التصميم',
-  'entry.tabConnectors': 'الموصلات',
-  'entry.openSettingsTitle': 'الإعدادات',
-  'entry.openSettingsAria': 'فتح الإعدادات',
-  'entry.discordLabel': 'انضم إلى Discord',
-  'entry.discordAria': 'انضم إلى Discord الخاص بـ Open Design',
-  'entry.discordAriaWithOnline': 'انضم إلى Discord الخاص بـ Open Design - {online}',
-  'entry.discordOnlineLabel': '{count} متصل',
-  'entry.followXLabel': 'تابع @OpenDesignHQ على X',
+  'settings.noAgentSelected': 'ÙÙ ÙØªÙ Ø§Ø®ØªÙØ§Ø± ÙÙÙÙ',
+  'settings.language': 'Ø§ÙÙØºØ©',
+  'settings.languageHint': 'ØªØºÙÙØ± ÙØºØ© Ø§ÙÙØ§Ø¬ÙØ©. ØªØ­ÙØ¸ ÙÙ Ø§ÙÙØªØµÙØ­.',
+  'settings.appearance': 'Ø§ÙÙØ¸ÙØ±',
+  'settings.appearanceHint': 'Ø§Ø®ØªØ± Ø§ÙÙØ§ØªØ­Ø Ø§ÙØ¯Ø§ÙÙØ Ø£Ù Ø§ØªØ¨Ø¹ Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø§ÙÙØ¸Ø§Ù.',
+  'settings.themeSystem': 'Ø§ÙÙØ¸Ø§Ù',
+  'settings.themeLight': 'ÙØ§ØªØ­',
+  'settings.themeDark': 'Ø¯Ø§ÙÙ',
+  'settings.agentModelHead': 'Ø§ÙÙÙÙØ°Ø¬ ÙÙ:',
+  'settings.modelPicker': 'Ø§ÙÙÙÙØ°Ø¬',
+  'settings.modelSourceLive': 'ÙØ¨Ø§Ø´Ø± ÙÙ CLI',
+  'settings.modelSourceFallback': 'Ø§ÙÙØ§Ø¦ÙØ© Ø§ÙÙØ¶ÙÙØ©',
+  'settings.reasoningPicker': 'Ø¬ÙØ¯ Ø§ÙØªÙÙÙØ±',
+  'settings.modelPickerHint': 'ÙØªÙ Ø¬ÙØ¨Ù ÙÙ CLI Ø¹ÙØ¯ÙØ§ ÙØ¹Ø±Ø¶ Ø£ÙØ± `models`. "Ø§ÙØ§ÙØªØ±Ø§Ø¶Ù" ÙØªØ±Ù Ø§ÙØ®ÙØ§Ø± ÙØ¥Ø¹Ø¯Ø§Ø¯Ø§Øª CLIØ "ÙØ®ØµØµ..." ÙØ³ÙØ­ ÙÙ Ø¨ÙØªØ§Ø¨Ø© Ø£Ù ÙØ¹Ø±Ù ÙÙÙØ°Ø¬ ÙÙØ¨ÙÙ CLI.',
+  'settings.modelPickerLiveHint': 'ØªÙ ØªØ­Ø¯ÙØ« Ø§ÙÙÙØ§Ø°Ø¬ ÙÙ CLI Ø§ÙÙØ«Ø¨Øª. ÙØ§ ÙØ²Ø§Ù Ø§ÙØ®ÙØ§Ø± Ø§ÙØ§ÙØªØ±Ø§Ø¶Ù ÙØ³ØªØ®Ø¯Ù Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª CLI.',
+  'settings.modelPickerLiveCatalogOnlyHint': 'ØªÙ ØªØ­Ø¯ÙØ« Ø§ÙÙÙØ§Ø°Ø¬ ÙÙ CLI Ø§ÙÙØ«Ø¨Øª.',
+  'settings.modelPickerFallbackHint': 'ÙØªÙ Ø¹Ø±Ø¶ Ø§ÙØ¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø§ÙØ§ÙØªØ±Ø§Ø¶ÙØ© Ø§ÙÙØ¶ÙÙØ©. Ø§ÙÙØ± Ø¹ÙÙ Ø¥Ø¹Ø§Ø¯Ø© Ø§ÙÙØ³Ø­ ÙØ¬ÙØ¨ Ø§ÙÙÙØ§Ø°Ø¬ Ø§ÙÙØ¨Ø§Ø´Ø±Ø© ÙÙ CLI.',
+  'settings.cliEnvTitle': 'ÙØªÙØ¯ÙÙ: Ø§ÙÙÙÙÙ ÙØ§ÙÙØ³Ø§Ø±Ø§Øª Ø§ÙÙØ®ØµÙØµØ©',
+  'settings.cliEnvHint': 'Ø§Ø³ØªØ®Ø¯Ù ÙØ°Ù Ø§ÙØ®ÙØ§Ø±Ø§Øª ÙØªØ¬Ø§ÙØ² Ø¨ÙØ¦Ø© CLI Ø§ÙÙØ­Ø¯ÙØ¯: ÙÙØ§ØªÙØ­ APIØ ÙØ¹ÙØ§ÙÙÙ base URL ÙÙÙÙÙÙØ ÙÙØ¬ÙØ¯Ø§Øª home Ø§ÙÙØ®ØµÙØµØ©Ø Ø£Ù ÙØ³Ø§Ø±Ø§Øª ØªÙÙÙØ° ØºÙØ± ÙÙØ§Ø³ÙØ©. Ø¹ÙØ¯ Ø¹Ø¯Ù Ø¶Ø¨Ø· base URLØ ÙØ³ØªØ®Ø¯Ù CLI ÙÙØ·Ø© Ø§ÙÙÙØ§ÙØ© Ø§ÙØ§ÙØªØ±Ø§Ø¶ÙØ© Ø§ÙØ®Ø§ØµØ© Ø¨Ù. ØªØ¨ÙÙ Ø§ÙØ£Ø³Ø±Ø§Ø± ÙÙ Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø§ÙØªØ·Ø¨ÙÙ Ø§ÙÙØ­ÙÙØ© ÙÙØ§ ÙØ±Ø§ÙØ§ Ø³ÙÙ CLI Ø§ÙÙØ­Ø¯ÙØ¯.',
+  'settings.cliEnvClaudeConfigDir': 'Ø¯ÙÙÙ Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Claude Code',
+  'settings.cliEnvClaudeBaseUrl': 'Base URL ÙÙÙÙÙ Claude',
+  'settings.cliEnvClaudeApiKey': 'ÙÙØªØ§Ø­ API ÙÙ Claude CLI',
+  'settings.cliEnvCodexHome': 'ÙØ¬ÙØ¯ Codex Ø§ÙØ±Ø¦ÙØ³Ù',
+  'settings.cliEnvCodexBin': 'ÙØ³Ø§Ø± ÙÙÙ Codex Ø§ÙØªÙÙÙØ°Ù',
+  'settings.cliEnvCodexBaseUrl': 'Base URL ÙÙÙÙÙ Codex/OpenAI',
+  'settings.cliEnvCodexApiKey': 'ÙÙØªØ§Ø­ API ÙÙ Codex/OpenAI CLI',
+  'settings.modelCustom': 'ÙØ®ØµØµ (Ø§ÙØªØ¨ Ø£Ø¯ÙØ§Ù)...',
+  'settings.modelCustomLabel': 'ÙØ¹Ø±Ù Ø§ÙÙÙÙØ°Ø¬ Ø§ÙÙØ®ØµØµ',
+  'settings.modelCustomPlaceholder': 'ÙØ«ÙØ§Ù: anthropic/claude-sonnet-4-6',
+  'settings.mediaProviders': 'ÙØ²ÙØ¯Ù Ø§ÙÙØ³Ø§Ø¦Ø·',
+  'settings.mediaProvidersHint': 'ÙÙØ§ØªÙØ­ API ÙØ¥ÙØ´Ø§Ø¡ Ø§ÙØµÙØ± ÙØ§ÙÙÙØ¯ÙÙ ÙØ§ÙØµÙØª. ØªØ®Ø²Ù ÙØ­ÙÙØ§Ù ÙØªØ²Ø§ÙÙ ÙØ¹ Ø§ÙØ¨Ø±ÙØ§ÙØ¬ Ø§ÙØ®ÙÙ Ø§ÙÙØ­ÙÙ.',
+  'settings.mcpServerTitle': 'Ø®Ø§Ø¯Ù MCP',
+  'settings.mcpServerHint': 'ÙØ´Ù Open Design ÙØ®Ø§Ø¯Ù MCP ÙÙÙÙÙ Ø§ÙØ¨Ø±ÙØ¬Ø© Ø§ÙØ®Ø§Øµ Ø¨Ù.',
+  'settings.externalMcpTitle': 'MCP Ø®Ø§Ø±Ø¬Ù',
+  'settings.externalMcpHint': 'Ø£Ø¶Ù Ø£Ø¯ÙØ§Øª MCP ÙÙ Ø®Ø¯ÙØ§Øª Ø®Ø§Ø±Ø¬ÙØ© (HiggsfieldØ GitHubØ â¦).',
+  'settings.mediaProviderApiKey': 'ÙÙØªØ§Ø­ API',
+  'settings.mediaProviderBaseUrl': 'Ø±Ø§Ø¨Ø· Ø§ÙÙØ§Ø¹Ø¯Ø©',
+  'settings.mediaProviderConfigured': 'ØªÙ Ø§ÙØªÙÙÙÙ',
+  'settings.mediaProviderUnset': 'ØºÙØ± ÙØ­Ø¯Ø¯',
+  'settings.mediaProviderClear': 'ÙØ³Ø­',
+  'settings.mediaProviderClearConfirm': 'ÙØ³Ø­ Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª {name} Ø§ÙÙØ­ÙÙØ¸Ø©Ø Ø³ØªØ­ØªØ§Ø¬ Ø¥ÙÙ Ø¥Ø¯Ø®Ø§ÙÙØ§ ÙØ±Ø© Ø£Ø®Ø±Ù ÙØ§Ø³ØªØ®Ø¯Ø§Ù {name}.',
+  'settings.mediaProviderPlaceholder': 'Ø§ÙØµÙ ÙÙØªØ§Ø­ API',
+  'settings.mediaProviderBaseUrlPlaceholder': 'ØªØ¬Ø§ÙØ² Ø±Ø§Ø¨Ø· Ø§ÙÙØ§Ø¹Ø¯Ø© Ø§ÙØ§ÙØªØ±Ø§Ø¶Ù',
+  'settings.mediaProviderReload': 'Ø¥Ø¹Ø§Ø¯Ø© Ø§ÙØªØ­ÙÙÙ ÙÙ Ø§ÙÙ daemon Ø§ÙÙØ­ÙÙ',
+  'settings.mediaProviderReloadError': 'ØªØ¹Ø°Ø± Ø¥Ø¹Ø§Ø¯Ø© ØªØ­ÙÙÙ Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª ÙÙÙØ±Ù Ø§ÙÙØ³Ø§Ø¦Ø· ÙÙ Ø§ÙÙ daemon Ø§ÙÙØ­ÙÙ.',
+  'settings.mediaProviderReloadSuccess': 'ØªÙØª Ø¥Ø¹Ø§Ø¯Ø© ØªØ­ÙÙÙ Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª ÙÙÙØ±Ù Ø§ÙÙØ³Ø§Ø¦Ø· ÙÙ Ø§ÙÙ daemon Ø§ÙÙØ­ÙÙ.',
+  'settings.mediaProviderLoadError': 'ØªØ¹Ø°Ø± ØªØ­ÙÙÙ Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª ÙÙÙØ±Ù Ø§ÙÙØ³Ø§Ø¦Ø· ÙÙ Ø§ÙÙ daemon Ø§ÙÙØ­ÙÙ. Ø³ÙÙØ³ØªØ®Ø¯Ù ÙØ¤ÙØªÙØ§ ÙØ§ ÙÙ ÙØ­ÙÙØ¸ ÙÙ Ø§ÙÙØªØµÙØ­.',
+  'settings.mediaProviderComingSoonHint': 'ÙØ­Ù ÙØªØªØ¨Ø¹ ÙØ°Ù Ø§ÙÙØ²ÙØ¯Ø§Øª ÙÙ Ø®Ø§Ø±Ø·Ø© Ø§ÙØ·Ø±ÙÙØ ÙÙ ÙÙÙ Ø§ÙØ¨Ø±ÙØ§ÙØ¬ Ø§ÙØ®ÙÙ Ø¨Ø´Ø­Ù Ø¹ÙÙÙ Ø¨Ø¹Ø¯Ø ÙØ°Ø§ ÙØ§ ÙÙØ¬Ø¯ Ø´ÙØ¡ ÙØªÙÙÙÙÙ.',
+  'settings.privacy': 'Ø§ÙØ®ØµÙØµÙØ©',
+  'settings.privacyHint': 'Ø§ÙØ¨ÙØ§ÙØ§Øª Ø§ÙØªÙ ØªØªÙ ÙØ´Ø§Ø±ÙØªÙØ§ ÙØ¹ ÙØ±ÙÙ Open Design',
+  'settings.privacyConsentKicker': 'Ø³Ø§Ø¹Ø¯ÙØ§ ÙÙ ØªØ­Ø³ÙÙ Open Design',
+  'settings.privacyConsentLead': 'ÙÙÙÙ ÙÙ Open Design ÙØ´Ø§Ø±ÙØ© Ø¨ÙØ§ÙØ§Øª Ø§ÙØ§Ø³ØªØ®Ø¯Ø§Ù ÙØ¹ ÙØ±ÙÙÙØ§ ÙÙØ³Ø§Ø¹Ø¯ØªÙØ§ Ø¹ÙÙ Ø§ÙØªØ­Ø³ÙÙ. ÙØ´ÙÙ Ø°ÙÙ:',
+  'settings.privacyConsentFooter': 'ÙÙÙÙÙ ØªØºÙÙØ± ÙØ°Ù Ø§ÙØ®ÙØ§Ø±Ø§Øª ÙÙ Ø£Ù ÙÙØª ÙÙ Ø§ÙØ¥Ø¹Ø¯Ø§Ø¯Ø§Øª â Ø§ÙØ®ØµÙØµÙØ©.',
+  'settings.privacyConsentShare': 'ÙØ´Ø§Ø±ÙØ© Ø¨ÙØ§ÙØ§Øª Ø§ÙØ§Ø³ØªØ®Ø¯Ø§Ù',
+  'settings.privacyConsentDecline': 'Ø¹Ø¯Ù Ø§ÙÙØ´Ø§Ø±ÙØ©',
+  'settings.privacyConsentAccept': 'ÙÙÙØª',
+  'settings.privacyConsentBannerFooter': 'ÙØ´Ø§Ø±ÙØ© Ø§ÙØ¨ÙØ§ÙØ§Øª ÙÙØ¹ÙÙØ© Ø§ÙØªØ±Ø§Ø¶ÙÙØ§. ÙÙÙÙÙ Ø¥ÙÙØ§ÙÙØ§ ÙÙ Ø£Ù ÙÙØª ÙÙ Ø§ÙØ¥Ø¹Ø¯Ø§Ø¯Ø§Øª â Ø§ÙØ®ØµÙØµÙØ©.',
+  'settings.privacyConsentPolicyLink': 'Ø§ÙØ±Ø£ Ø³ÙØ§Ø³Ø© Ø§ÙØ®ØµÙØµÙØ©',
+  'settings.privacyMetrics': 'ÙÙØ§ÙÙØ³ ÙØ¬ÙÙÙØ© Ø§ÙÙØµØ¯Ø±',
+  'settings.privacyMetricsHint': 'Ø¹Ø¯Ø¯ ÙØ±Ø§Øª Ø§ÙØªØ´ØºÙÙØ ÙØ§Ø³ØªØ®Ø¯Ø§Ù TokenØ ÙÙØ¹Ø¯Ù Ø§ÙØ£Ø®Ø·Ø§Ø¡Ø ÙØ§ÙÙØ¯Ø©. Ø¨Ø¯ÙÙ Ø£Ù ÙØ·Ø§ÙØ¨Ø§ØªØ ÙØ¨Ø¯ÙÙ Ø£Ù Ø¨ÙØ§ÙØ§Øª ÙÙÙØ´Ø±ÙØ¹.',
+  'settings.privacyContent': 'ÙØ­ØªÙÙ Ø§ÙÙØ­Ø§Ø¯Ø«Ø© ÙØ§ÙØ£Ø¯ÙØ§Øª',
+  'settings.privacyContentHint': 'Ø§ÙÙØ·Ø§ÙØ¨Ø§ØªØ ÙØ±Ø¯ÙØ¯ Ø§ÙÙØ³Ø§Ø¹Ø¯Ø ÙÙØ¯Ø®ÙØ§Øª/ÙØ®Ø±Ø¬Ø§Øª Ø§ÙØ£Ø¯ÙØ§ØªØ ÙÙÙÙØ§Øª Ø§ÙØ³ÙØ§Ù Ø§ÙÙØ§ÙÙ Ø§ÙÙØ§Ø²ÙØ© ÙÙØ±Ø§Ø¬Ø¹Ø© Ø§ÙØ¬ÙØ¯Ø©. ØªØªÙ Ø¥Ø²Ø§ÙØ© Ø§ÙØ£Ø³Ø±Ø§Ø± ÙØ¨Ù Ø§ÙØ¥Ø±Ø³Ø§Ù.',
+  'settings.privacyInstallationId': 'Ø§ÙÙÙØ¹Ø±ÙÙ Ø§ÙÙØ¬ÙÙÙ',
+  'settings.privacyOptedOut': 'ØªÙ Ø¥ÙØºØ§Ø¡ Ø§ÙØ§Ø´ØªØ±Ø§Ù',
+  'settings.privacyDataDeletion': 'Ø­Ø°Ù Ø¨ÙØ§ÙØ§ØªÙ',
+  'settings.privacyDataDeletionHint': 'ÙÙØ¬Ø¯ÙØ¯ ÙÙØ¹Ø±ÙÙÙ Ø§ÙÙØ¬ÙÙÙ ÙÙÙÙÙ Ø§ÙØ¥Ø±Ø³Ø§Ù. ØªÙØªÙÙ ØµÙØ§Ø­ÙØ© Ø§ÙØ¢Ø«Ø§Ø± Ø§ÙØ­Ø§ÙÙØ© ÙÙÙÙØ§ ÙØ³ÙØ§Ø³Ø© Ø§ÙØ§Ø­ØªÙØ§Ø¸ ÙØ¯ÙÙØ§.',
+  'settings.about': 'Ø­ÙÙ',
+  'settings.aboutHint': 'ØªÙØ§ØµÙÙ Ø§ÙÙØ³Ø®Ø© ÙÙÙØª Ø§ÙØªØ´ØºÙÙ',
+  'settings.appVersion': 'Ø§ÙÙØ³Ø®Ø©',
+  'settings.appChannel': 'Ø§ÙÙÙØ§Ø©',
+  'settings.appRuntime': 'ÙÙØª Ø§ÙØªØ´ØºÙÙ',
+  'settings.appPlatform': 'Ø§ÙÙÙØµØ©',
+  'settings.appArchitecture': 'Ø§ÙÙØ¹ÙØ§Ø±ÙØ©',
+  'settings.runtimePackaged': 'ØªØ·Ø¨ÙÙ ÙØ¹Ø¨Ø£',
+  'settings.runtimeDevelopment': 'ØªØ·ÙÙØ±',
+  'settings.versionUnavailable': 'ØªÙØ§ØµÙÙ Ø§ÙÙØ³Ø®Ø© ØºÙØ± ÙØªÙÙØ±Ø© Ø¨ÙÙÙØ§ Ø§ÙØ¨Ø±ÙØ§ÙØ¬ Ø§ÙØ®ÙÙ ØºÙØ± ÙØªØµÙ.',
+  'settings.installLatest': 'ØªØ«Ø¨ÙØª Ø§ÙØ£Ø­Ø¯Ø«',
+  'settings.alreadyLatest': 'Ø£ÙØª ØªØ³ØªØ®Ø¯Ù Ø£Ø­Ø¯Ø« Ø¥ØµØ¯Ø§Ø±',
+  'settings.mcpTitle': 'Ø®Ø§Ø¯Ù MCP',
+  'settings.mcpHint': 'Ø§Ø³ÙØ­ ÙÙÙÙØ§Ø¡ Ø§ÙØ¨Ø±ÙØ¬Ø© (CursorØ Claude CodeØ VS Codeâ¦) Ø¨ÙØ±Ø§Ø¡Ø© ÙØ´Ø§Ø±ÙØ¹ Open Design Ø§ÙØ®Ø§ØµØ© Ø¨Ù ÙØ¨Ø§Ø´Ø±Ø©Ù.',
+  'settings.mcpDaemonError': 'ØªØ¹Ø°ÙØ± Ø§ÙÙØµÙÙ Ø¥ÙÙ Ø§ÙÙ daemon Ø§ÙÙØ­ÙÙ ÙØªØ­Ø¯ÙØ¯ ÙØ³Ø§Ø±Ø§Øª Ø§ÙØªØ«Ø¨ÙØª ({error}). ØªØ£ÙØ¯ ÙÙ Ø£Ù Open Design ÙÙØ¯ Ø§ÙØªØ´ØºÙÙØ Ø«Ù Ø£Ø¹Ø¯ ÙØªØ­ ÙØ°Ù Ø§ÙÙÙØ­Ø©.',
+  'settings.mcpBuildDaemon': 'ÙÙ Ø¨Ø¨ÙØ§Ø¡ Ø§ÙÙ daemon Ø£ÙÙÙØ§.',
+  'settings.mcpNodeMissing': 'ÙÙÙ Node Ø§ÙØªÙÙÙØ°Ù ÙÙÙÙØ¯.',
+  'settings.mcpBuildHint': 'Ø§ÙÙÙÙ apps/daemon/dist/cli.js ÙÙÙÙØ¯. Ø´ØºÙÙ `pnpm --filter @open-design/daemon build` Ø«Ù Ø­Ø¯ÙØ«.',
+  'settings.mcpMethodCli': 'Ø£ÙØ± CLI',
+  'settings.mcpInstructionCli': 'Ø´ØºÙÙ ÙØ°Ø§ ÙÙ Ø§ÙÙ terminal ÙØ¯ÙÙ.',
+  'settings.mcpMethodToml': 'Ø¥Ø¹Ø¯Ø§Ø¯ TOML',
+  'settings.mcpInstructionCodex': 'Ø£Ø¶Ù ÙØ°Ø§ Ø§ÙØ¬Ø¯ÙÙ Ø¥ÙÙ {path}. ÙØªÙ ÙØ´Ø§Ø±ÙØ© Ø§ÙØ¥Ø¹Ø¯Ø§Ø¯ ÙÙØ³Ù Ø¨ÙÙ Codex CLI ÙØ§ÙØªØ¯Ø§Ø¯ Codex IDE.',
+  'settings.mcpMethodOneClick': 'ØªØ«Ø¨ÙØª Ø¨ÙÙØ±Ø© ÙØ§Ø­Ø¯Ø©',
+  'settings.mcpInstructionCursor': 'Ø§ÙÙØ± Ø¹ÙÙ "Install in Cursor" ÙÙØªØ«Ø¨ÙØª Ø¹Ø¨Ø± ÙØ±Ø¨Ø¹ Ø­ÙØ§Ø± ÙÙÙÙØ§ÙÙØ©Ø Ø£Ù Ø§Ø¯ÙØ¬ ÙÙÙ JSON ÙØ°Ø§ ÙÙ {path}.',
+  'settings.mcpDeeplinkInstallCursor': 'Ø§ÙØªØ«Ø¨ÙØª ÙÙ Cursor',
+  'settings.mcpMethodJson': 'Ø¥Ø¹Ø¯Ø§Ø¯ JSON',
+  'settings.mcpInstructionCopilot': 'Ø§ÙØªØ­ Command Palette ({shortcut})Ø ÙØ´ØºÙÙ "MCP: Open User Configuration"Ø Ø«Ù Ø§Ø¯ÙØ¬ ÙÙÙ JSON ÙØ°Ø§. ÙØ¬Ø¨ Ø£Ù ÙÙÙÙ Copilot Chat ÙÙ ÙØ¶Ø¹ Agent Ø­ØªÙ ØªØ¸ÙØ± Ø§ÙØ£Ø¯ÙØ§Øª.',
+  'settings.mcpInstructionAntigravity': 'ÙÙ Antigravity: ÙØ§Ø¦ÙØ© "..." ÙÙ ÙÙØ­Ø© Ø§ÙÙÙÙÙ â MCP Servers â Manage MCP Servers â View raw config. Ø§Ø¯ÙØ¬ ÙØ°Ø§ Ø§ÙÙ JSON.',
+  'settings.mcpInstructionZed': 'Ø§ÙØªØ­ Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Zed ({shortcut}) ÙØ§Ø¯ÙØ¬ ÙØ°Ø§ ÙÙ Ø§ÙÙØ§Ø¦Ù Ø°Ù Ø§ÙÙØ³ØªÙÙ Ø§ÙØ£Ø¹ÙÙ. ÙØ³ØªØ®Ø¯Ù Zed "context_servers" ÙÙÙØ³ "mcpServers".',
+  'settings.mcpInstructionWindsurf': 'Ø§ÙØªØ­ {path} (Ø£Ù Ø§Ø³ØªØ®Ø¯Ù Ø£ÙÙÙÙØ© MCPs ÙÙ Cascade â Configure) ÙØ§Ø¯ÙØ¬:',
+  'settings.mcpCopyAria': 'ÙØ³Ø® ÙÙØªØ·Ù Ø¥Ø¹Ø¯Ø§Ø¯ MCP',
+  'settings.mcpResolvingFailed': '# ÙØ´Ù ØªØ­Ø¯ÙØ¯ Ø§ÙÙØ³Ø§Ø±Ø§ØªØ Ø±Ø§Ø¬Ø¹ Ø§ÙØ®Ø·Ø£ Ø£Ø¹ÙØ§Ù',
+  'settings.mcpLoadingPaths': '# Ø¬Ø§Ø±Ù ØªØ­ÙÙÙ ÙØ³Ø§Ø±Ø§Øª Ø§ÙØªØ«Ø¨ÙØª ÙÙ Ø§ÙØ®Ø¯ÙØ© Ø§ÙÙØ­ÙÙØ©â¦',
+  'settings.mcpCopied': 'ØªÙ Ø§ÙÙØ³Ø®',
+  'settings.mcpCopy': 'ÙØ³Ø®',
+  'settings.mcpCursorApproval': 'ÙÙØ¸ÙØ± Cursor ÙØ±Ø¨Ø¹ Ø­ÙØ§Ø± ÙÙÙÙØ§ÙÙØ© ÙØ¨Ù ÙØªØ§Ø¨Ø© Ø§ÙØ¥Ø¹Ø¯Ø§Ø¯.',
+  'settings.mcpCodexOneClickInstall': 'Ø§ÙØªØ«Ø¨ÙØª ÙÙ Codex',
+  'settings.mcpCodexOneClickUninstall': 'Ø§ÙØ¥Ø²Ø§ÙØ© ÙÙ Codex',
+  'settings.mcpCodexOneClickUnavailable': 'ÙÙ ÙÙØ¹Ø«Ø± Ø¹ÙÙ Codex CLI ÙÙ PATH â Ø«Ø¨ÙØª Codex Ø£Ù Ø§ÙØµÙ Ø§ÙÙÙØªØ·Ù ÙØ¯ÙÙÙØ§.',
+  'settings.mcpCodexInstallSuccess': 'ØªÙ Ø§ÙØªØ«Ø¨ÙØª. Ø£Ø¹Ø¯ ØªØ´ØºÙÙ Codex ÙØªØ­ÙÙÙ Ø§ÙØ®Ø§Ø¯Ù Ø§ÙØ¬Ø¯ÙØ¯.',
+  'settings.mcpCodexUninstallSuccess': 'ØªÙØª Ø§ÙØ¥Ø²Ø§ÙØ© ÙÙ Codex.',
+  'settings.mcpCodexBusy': 'Ø¬Ø§Ø±Ù Ø§ÙØ¹ÙÙâ¦',
+  'settings.mcpCodexInstallError': 'ÙØ´ÙØª Ø§ÙØ¹ÙÙÙØ©: {error}',
+  'settings.mcpRestartNote': 'Ø£Ø¹Ø¯ ØªØ´ØºÙÙ Ø¹ÙÙÙÙ ÙØ§ÙØªÙØ§Ø· Ø§ÙØ®Ø§Ø¯Ù Ø§ÙØ¬Ø¯ÙØ¯.',
+  'settings.mcpRestartDetail': 'ÙØ¹Ø¸Ù Ø§ÙÙØ­Ø±Ø±Ø§Øª ØªÙØ­ÙÙÙ Ø®ÙØ§Ø¯Ù MCP Ø¹ÙØ¯ Ø¨Ø¯Ø¡ Ø§ÙØªØ´ØºÙÙ ÙÙØ·. ÙÙ Cursor / VS Code / Antigravity / Windsurf ÙÙÙÙÙ ØªØ´ØºÙÙ `Developer: Reload Window` ÙÙ Command Palette Ø¨Ø¯ÙÙØ§ ÙÙ Ø¥Ø¹Ø§Ø¯Ø© Ø§ÙØªØ´ØºÙÙ Ø§ÙÙØ§ÙÙØ©. Ø£ÙØ§ Zed Ù Claude Code ÙÙØ­ØªØ§Ø¬Ø§Ù Ø¥ÙÙ Ø§ÙØ¥ØºÙØ§Ù ÙØ¥Ø¹Ø§Ø¯Ø© Ø§ÙÙØªØ­.',
+  'settings.mcpCapabilitiesTitle': 'ÙØ§ ÙØ³ØªØ·ÙØ¹ Agent Ø§ÙÙÙØ§Ù Ø¨Ù',
+  'settings.mcpCapabilityRead': 'ÙØ±Ø§Ø¡Ø© Ø£Ù ÙÙÙ ÙÙ Ø§ÙÙØ´Ø±ÙØ¹ Ø£Ù Ø§ÙØ¨Ø­Ø« ÙÙÙ (HTMLØ JSXØ CSSØ JSONØ SVGØ Markdown).',
+  'settings.mcpCapabilityPull': 'Ø³Ø­Ø¨ Ø­Ø²ÙØ© ØªØµÙÙÙ ÙÙ Ø§Ø³ØªØ¯Ø¹Ø§Ø¡ ÙØ§Ø­Ø¯: ÙÙÙ Ø§ÙØ¥Ø¯Ø®Ø§Ù Ø¥Ø¶Ø§ÙØ©Ù Ø¥ÙÙ ÙÙ ÙØªØºÙØ± CSS ÙÙÙÙÙÙ ÙØ®Ø· ÙØ´ÙØ± Ø¥ÙÙÙ.',
+  'settings.mcpCapabilityDefault': 'Ø§ÙØ§Ø¹ØªÙØ§Ø¯ Ø§ÙØªØ±Ø§Ø¶ÙÙØ§ Ø¹ÙÙ Ø§ÙÙØ´Ø±ÙØ¹ ÙØ§ÙÙÙÙ Ø§ÙÙÙØªÙØ­ÙÙÙ ÙÙ Open DesignØ Ø­ØªÙ ØªØªÙÙÙ ÙÙ ÙÙÙ "Ø§Ø¨ÙÙ ÙØ°Ø§ ÙÙ ØªØ·Ø¨ÙÙÙ" Ø¯ÙÙ Ø¥Ø¹Ø§Ø¯Ø© ØªØ­Ø¯ÙØ¯ Ø§ÙØªØµÙÙÙ Ø§ÙÙÙØµÙØ¯.',
+  'settings.mcpRunningNote': 'ÙØ¬Ø¨ Ø£Ù ÙÙÙÙ Open Design ÙÙØ¯ Ø§ÙØªØ´ØºÙÙ Ø­ØªÙ ØªÙØ¬Ø­ Ø§Ø³ØªØ¯Ø¹Ø§Ø¡Ø§Øª Ø£Ø¯ÙØ§Øª MCP. Ø¥Ø°Ø§ Ø¨Ø¯Ø£Øª ØªØ´ØºÙÙ ÙÙÙÙ Ø§ÙØ¨Ø±ÙØ¬Ø© ÙØ¨Ù ÙØªØ­ Open DesignØ ÙØ£Ø¹Ø¯ ØªØ´ØºÙÙ Ø§ÙÙ Agent ÙÙØªÙÙÙ ÙÙ Ø§ÙÙØµÙÙ Ø¥ÙÙ Ø§ÙÙ daemon Ø§ÙÙØ´Ø·.',
+  'entry.tabDesigns': 'Ø§ÙØªØµØ§ÙÙÙ',
+  'entry.tabTemplates': 'ÙÙØ§ÙØ¨',
+  'entry.tabDesignSystems': 'Ø£ÙØ¸ÙØ© Ø§ÙØªØµÙÙÙ',
+  'entry.tabConnectors': 'Ø§ÙÙÙØµÙØ§Øª',
+  'entry.openSettingsTitle': 'Ø§ÙØ¥Ø¹Ø¯Ø§Ø¯Ø§Øª',
+  'entry.openSettingsAria': 'ÙØªØ­ Ø§ÙØ¥Ø¹Ø¯Ø§Ø¯Ø§Øª',
+  'entry.discordLabel': 'Ø§ÙØ¶Ù Ø¥ÙÙ Discord',
+  'entry.discordAria': 'Ø§ÙØ¶Ù Ø¥ÙÙ Discord Ø§ÙØ®Ø§Øµ Ø¨Ù Open Design',
+  'entry.discordAriaWithOnline': 'Ø§ÙØ¶Ù Ø¥ÙÙ Discord Ø§ÙØ®Ø§Øµ Ø¨Ù Open Design - {online}',
+  'entry.discordOnlineLabel': '{count} ÙØªØµÙ',
+  'entry.followXLabel': 'ØªØ§Ø¨Ø¹ @OpenDesignHQ Ø¹ÙÙ X',
   'entry.followThreadsLabel': 'Follow Open Design on Threads',
   'entry.youtubeLabel': 'Open Design on YouTube',
-  'entry.resizeAria': 'تغيير حجم الشريط الجانبي',
-  'entry.loadingWorkspace': 'جاري تحميل مساحة العمل...',
-  'entry.useEverywhereTitle': 'استخدمه في كل مكان',
-  'entry.useEverywhereAria': 'افتح دليل «استخدمه في كل مكان» (CLI، MCP، HTTP، Skills)',
-  'entry.navExpand': 'توسيع الشريط الجانبي',
-  'entry.navCollapse': 'طي الشريط الجانبي',
-  'entry.navNewProject': 'مشروع جديد',
-  'entry.navHome': 'الرئيسية',
-  'entry.navProjects': 'المشاريع',
-  'entry.navTasks': 'الأتمتة',
-  'entry.navPlugins': 'الإضافات',
-  'entry.navDesignSystems': 'أنظمة التصميم',
-  'entry.navBrands': 'حزمة العلامة التجارية',
-  'entry.navIntegrations': 'عمليات الدمج',
-  'workspaceTabs.project': 'المشروع',
-  'workspaceTabs.pluginDetails': 'تفاصيل الإضافة',
-  'workspaceTabs.marketplace': 'المتجر',
-  'homeHero.title': 'ماذا ستصمّم اليوم؟',
-  'homeHero.startWithTemplate': 'ابدأ بقالب…',
-  'homeHero.startBlankProject': '…أو ابدأ مشروعًا فارغًا',
-  'homeHero.templatePicker.label': 'قالب',
-  'homeHero.templatePicker.searchPlaceholder': 'البحث في القوالب',
-  'homeHero.templatePicker.projectTypes': 'أنواع المشاريع',
-  'homeHero.templatesScrollHint': 'مرّر لأعلى لاستكشاف المزيد من القوالب',
-  'homeHero.templatesCollapse': 'طيّ القوالب',
-  'homeHero.subtitlePrefix': 'البديل مفتوح المصدر لـ Claude Design.',
-  'homeHero.placeholder': 'صِف ما تريد إنشاءه…',
-  'homeHero.placeholderActive': 'عدّل الاستعلام المثال أو اكتب استعلامك الخاص…',
-  'homeHero.carousel.hint': 'أرفق ملفًا، أو اربط نظام التصميم الخاص بك، أو صف ما تريد إنشاءه',
-  'homeHero.carousel.onePageBrief': 'كتابة موجز مشروع من صفحة واحدة',
-  'homeHero.carousel.notesToDeck': 'تحويل ملاحظاتي إلى عرض تقديمي',
-  'homeHero.carousel.signupFlow': 'تصميم نموذج لتدفق التسجيل',
-  'homeHero.carousel.improveBrief': 'تحسين موجز مشروع موجود',
-  'homeHero.carousel.loadingAnimation': 'إنشاء رسم متحرك للتحميل',
-  'homeHero.carousel.teamUpdateSlides': 'تصميم شرائح لتحديث الفريق',
-  'homeHero.carousel.ordersDashboard': 'إنشاء نموذج أولي للوحة تتبع الطلبات',
-  'homeHero.carousel.productDetail': 'تنسيق صفحة تفاصيل المنتج',
-  'homeHero.carousel.caseStudy': 'وضع مخطط لدراسة حالة',
-  'homeHero.carousel.landingIntro': 'تصميم مقدمة قصيرة لصفحة هبوط',
-  'homeHero.carousel.pitchDeck': 'إنشاء عرض تقديمي ترويجي لمنتج جديد',
-  'homeHero.carousel.appIdea': 'وصف فكرة تطبيق',
-  'homeHero.carousel.landingLayout': 'رسم تخطيط لصفحة هبوط',
-  'homeHero.skills': 'المهارات',
-  'homeHero.addMenu': 'إضافة سياق',
-  'homeHero.addPlugin': 'إضافة مكوّن إضافي',
-  'homeHero.addConnectors': 'إضافة موصّلات',
-  'homeHero.addMcp': 'إضافة خادم MCP',
-  'homeHero.noPlugins': 'لا توجد مكوّنات إضافية مثبّتة',
-  'homeHero.noMcp': 'لا توجد خوادم MCP',
-  'homeHero.noConnectors': 'لا توجد موصّلات متصلة',
-  'homeHero.applying': 'جارٍ التطبيق…',
-  'homeHero.pluginTitle': 'الإضافة: {title}',
-  'homeHero.pluginPrefix': 'الإضافة: {title}',
-  'homeHero.skillPrefix': 'المهارة: {title}',
-  'homeHero.removePlugin': 'إزالة الإضافة',
-  'homeHero.removePluginAria': 'إزالة الإضافة {title}',
-  'homeHero.clearActivePlugin': 'مسح الإضافة النشطة',
-  'homeHero.clearActiveSkill': 'مسح المهارة النشطة',
-  'homeHero.contextItemsResolved': 'تم حلّ {n} من عناصر السياق',
-  'homeHero.removeFile': 'إزالة الملف',
-  'homeHero.contextSearchResults': 'نتائج بحث السياق',
-  'homeHero.contextSurfaces': 'أسطح السياق',
-  'homeHero.loadingContext': 'جارٍ تحميل السياق…',
-  'homeHero.noResults': 'لا توجد نتائج لـ "{query}".',
-  'homeHero.searchPrompt': 'ابحث في الملفات والإضافات والمهارات وخوادم MCP والموصّلات.',
-  'homeHero.parameters': '{n} معامل',
-  'homeHero.details': 'التفاصيل',
-  'homeHero.toRun': 'للتشغيل',
-  'homeHero.forNewLine': 'لسطر جديد',
-  'homeHero.run': 'تشغيل',
-  'homeHero.typeSomethingToRun': 'اكتب شيئًا لتشغيله',
-  'homeHero.promptExamples': 'أمثلة',
-  'homeHero.footer.designSystem': 'النمط',
-  'homeHero.footer.autoDesignSystem': 'تلقائي',
-  'homeHero.footer.autoDesignSystemSummary': 'يطابق تلقائياً نظام التصميم والأسلوب البصري الأنسب للموجه الحالي.',
-  'homeHero.footer.ratio': 'النسبة',
-  'homeHero.footer.duration': 'المدة',
-  'homeHero.footer.resolution': 'الدقة',
-  'homeHero.footer.speakerNotes': 'الملاحظات',
-  'homeHero.footer.noSpeakerNotes': 'بلا ملاحظات',
-  'homeHero.footer.availableCount': '{n} متاح',
-  'homeHero.footer.noMatches': 'لا توجد تطابقات',
-  'homeHero.moreShortcuts': 'المزيد',
-  'homeHero.railAria': 'اختر فئة مشروع أو اختصار بداية',
-  'homeHero.subTypeAria': 'اختر نوعًا فرعيًا',
-  'homeHero.confirmReplaceTitle': 'استبدال الموجّه الحالي؟',
-  'homeHero.confirmReplaceBody': 'سيؤدي استخدام {title} إلى استبدال النص الموجود حاليًا في حقل الإدخال.',
-  'homeHero.confirmReplace': 'استبدال',
-  'homeHero.chip.prototype': 'نموذج أولي',
-  'homeHero.chip.liveArtifact': 'عنصر حيّ',
-  'homeHero.chip.deck': 'عرض شرائح',
-  'homeHero.chip.image': 'صورة',
-  'homeHero.chip.video': 'فيديو',
+  'entry.resizeAria': 'ØªØºÙÙØ± Ø­Ø¬Ù Ø§ÙØ´Ø±ÙØ· Ø§ÙØ¬Ø§ÙØ¨Ù',
+  'entry.loadingWorkspace': 'Ø¬Ø§Ø±Ù ØªØ­ÙÙÙ ÙØ³Ø§Ø­Ø© Ø§ÙØ¹ÙÙ...',
+  'entry.useEverywhereTitle': 'Ø§Ø³ØªØ®Ø¯ÙÙ ÙÙ ÙÙ ÙÙØ§Ù',
+  'entry.useEverywhereAria': 'Ø§ÙØªØ­ Ø¯ÙÙÙ Â«Ø§Ø³ØªØ®Ø¯ÙÙ ÙÙ ÙÙ ÙÙØ§ÙÂ» (CLIØ MCPØ HTTPØ Skills)',
+  'entry.navExpand': 'ØªÙØ³ÙØ¹ Ø§ÙØ´Ø±ÙØ· Ø§ÙØ¬Ø§ÙØ¨Ù',
+  'entry.navCollapse': 'Ø·Ù Ø§ÙØ´Ø±ÙØ· Ø§ÙØ¬Ø§ÙØ¨Ù',
+  'entry.navNewProject': 'ÙØ´Ø±ÙØ¹ Ø¬Ø¯ÙØ¯',
+  'entry.navHome': 'Ø§ÙØ±Ø¦ÙØ³ÙØ©',
+  'entry.navProjects': 'Ø§ÙÙØ´Ø§Ø±ÙØ¹',
+  'entry.navTasks': 'Ø§ÙØ£ØªÙØªØ©',
+  'entry.navPlugins': 'Ø§ÙØ¥Ø¶Ø§ÙØ§Øª',
+  'entry.navDesignSystems': 'Ø£ÙØ¸ÙØ© Ø§ÙØªØµÙÙÙ',
+  'entry.navBrands': 'Ø­Ø²ÙØ© Ø§ÙØ¹ÙØ§ÙØ© Ø§ÙØªØ¬Ø§Ø±ÙØ©',
+  'entry.navIntegrations': 'Ø¹ÙÙÙØ§Øª Ø§ÙØ¯ÙØ¬',
+  'workspaceTabs.project': 'Ø§ÙÙØ´Ø±ÙØ¹',
+  'workspaceTabs.pluginDetails': 'ØªÙØ§ØµÙÙ Ø§ÙØ¥Ø¶Ø§ÙØ©',
+  'workspaceTabs.marketplace': 'Ø§ÙÙØªØ¬Ø±',
+  'homeHero.title': 'ÙØ§Ø°Ø§ Ø³ØªØµÙÙÙ Ø§ÙÙÙÙØ',
+  'homeHero.startWithTemplate': 'Ø§Ø¨Ø¯Ø£ Ø¨ÙØ§ÙØ¨â¦',
+  'homeHero.startBlankProject': 'â¦Ø£Ù Ø§Ø¨Ø¯Ø£ ÙØ´Ø±ÙØ¹ÙØ§ ÙØ§Ø±ØºÙØ§',
+  'homeHero.templatePicker.label': 'ÙØ§ÙØ¨',
+  'homeHero.templatePicker.searchPlaceholder': 'Ø§ÙØ¨Ø­Ø« ÙÙ Ø§ÙÙÙØ§ÙØ¨',
+  'homeHero.templatePicker.projectTypes': 'Ø£ÙÙØ§Ø¹ Ø§ÙÙØ´Ø§Ø±ÙØ¹',
+  'homeHero.templatesScrollHint': 'ÙØ±ÙØ± ÙØ£Ø¹ÙÙ ÙØ§Ø³ØªÙØ´Ø§Ù Ø§ÙÙØ²ÙØ¯ ÙÙ Ø§ÙÙÙØ§ÙØ¨',
+  'homeHero.templatesCollapse': 'Ø·ÙÙ Ø§ÙÙÙØ§ÙØ¨',
+  'homeHero.subtitlePrefix': 'Ø§ÙØ¨Ø¯ÙÙ ÙÙØªÙØ­ Ø§ÙÙØµØ¯Ø± ÙÙ Claude Design.',
+  'homeHero.placeholder': 'ØµÙÙ ÙØ§ ØªØ±ÙØ¯ Ø¥ÙØ´Ø§Ø¡Ùâ¦',
+  'homeHero.placeholderActive': 'Ø¹Ø¯ÙÙ Ø§ÙØ§Ø³ØªØ¹ÙØ§Ù Ø§ÙÙØ«Ø§Ù Ø£Ù Ø§ÙØªØ¨ Ø§Ø³ØªØ¹ÙØ§ÙÙ Ø§ÙØ®Ø§Øµâ¦',
+  'homeHero.carousel.hint': 'Ø£Ø±ÙÙ ÙÙÙÙØ§Ø Ø£Ù Ø§Ø±Ø¨Ø· ÙØ¸Ø§Ù Ø§ÙØªØµÙÙÙ Ø§ÙØ®Ø§Øµ Ø¨ÙØ Ø£Ù ØµÙ ÙØ§ ØªØ±ÙØ¯ Ø¥ÙØ´Ø§Ø¡Ù',
+  'homeHero.carousel.onePageBrief': 'ÙØªØ§Ø¨Ø© ÙÙØ¬Ø² ÙØ´Ø±ÙØ¹ ÙÙ ØµÙØ­Ø© ÙØ§Ø­Ø¯Ø©',
+  'homeHero.carousel.notesToDeck': 'ØªØ­ÙÙÙ ÙÙØ§Ø­Ø¸Ø§ØªÙ Ø¥ÙÙ Ø¹Ø±Ø¶ ØªÙØ¯ÙÙÙ',
+  'homeHero.carousel.signupFlow': 'ØªØµÙÙÙ ÙÙÙØ°Ø¬ ÙØªØ¯ÙÙ Ø§ÙØªØ³Ø¬ÙÙ',
+  'homeHero.carousel.improveBrief': 'ØªØ­Ø³ÙÙ ÙÙØ¬Ø² ÙØ´Ø±ÙØ¹ ÙÙØ¬ÙØ¯',
+  'homeHero.carousel.loadingAnimation': 'Ø¥ÙØ´Ø§Ø¡ Ø±Ø³Ù ÙØªØ­Ø±Ù ÙÙØªØ­ÙÙÙ',
+  'homeHero.carousel.teamUpdateSlides': 'ØªØµÙÙÙ Ø´Ø±Ø§Ø¦Ø­ ÙØªØ­Ø¯ÙØ« Ø§ÙÙØ±ÙÙ',
+  'homeHero.carousel.ordersDashboard': 'Ø¥ÙØ´Ø§Ø¡ ÙÙÙØ°Ø¬ Ø£ÙÙÙ ÙÙÙØ­Ø© ØªØªØ¨Ø¹ Ø§ÙØ·ÙØ¨Ø§Øª',
+  'homeHero.carousel.productDetail': 'ØªÙØ³ÙÙ ØµÙØ­Ø© ØªÙØ§ØµÙÙ Ø§ÙÙÙØªØ¬',
+  'homeHero.carousel.caseStudy': 'ÙØ¶Ø¹ ÙØ®Ø·Ø· ÙØ¯Ø±Ø§Ø³Ø© Ø­Ø§ÙØ©',
+  'homeHero.carousel.landingIntro': 'ØªØµÙÙÙ ÙÙØ¯ÙØ© ÙØµÙØ±Ø© ÙØµÙØ­Ø© ÙØ¨ÙØ·',
+  'homeHero.carousel.pitchDeck': 'Ø¥ÙØ´Ø§Ø¡ Ø¹Ø±Ø¶ ØªÙØ¯ÙÙÙ ØªØ±ÙÙØ¬Ù ÙÙÙØªØ¬ Ø¬Ø¯ÙØ¯',
+  'homeHero.carousel.appIdea': 'ÙØµÙ ÙÙØ±Ø© ØªØ·Ø¨ÙÙ',
+  'homeHero.carousel.landingLayout': 'Ø±Ø³Ù ØªØ®Ø·ÙØ· ÙØµÙØ­Ø© ÙØ¨ÙØ·',
+  'homeHero.skills': 'Ø§ÙÙÙØ§Ø±Ø§Øª',
+  'homeHero.addMenu': 'Ø¥Ø¶Ø§ÙØ© Ø³ÙØ§Ù',
+  'homeHero.addPlugin': 'Ø¥Ø¶Ø§ÙØ© ÙÙÙÙÙ Ø¥Ø¶Ø§ÙÙ',
+  'homeHero.addConnectors': 'Ø¥Ø¶Ø§ÙØ© ÙÙØµÙÙØ§Øª',
+  'homeHero.addMcp': 'Ø¥Ø¶Ø§ÙØ© Ø®Ø§Ø¯Ù MCP',
+  'homeHero.noPlugins': 'ÙØ§ ØªÙØ¬Ø¯ ÙÙÙÙÙØ§Øª Ø¥Ø¶Ø§ÙÙØ© ÙØ«Ø¨ÙØªØ©',
+  'homeHero.noMcp': 'ÙØ§ ØªÙØ¬Ø¯ Ø®ÙØ§Ø¯Ù MCP',
+  'homeHero.noConnectors': 'ÙØ§ ØªÙØ¬Ø¯ ÙÙØµÙÙØ§Øª ÙØªØµÙØ©',
+  'homeHero.applying': 'Ø¬Ø§Ø±Ù Ø§ÙØªØ·Ø¨ÙÙâ¦',
+  'homeHero.pluginTitle': 'Ø§ÙØ¥Ø¶Ø§ÙØ©: {title}',
+  'homeHero.pluginPrefix': 'Ø§ÙØ¥Ø¶Ø§ÙØ©: {title}',
+  'homeHero.skillPrefix': 'Ø§ÙÙÙØ§Ø±Ø©: {title}',
+  'homeHero.removePlugin': 'Ø¥Ø²Ø§ÙØ© Ø§ÙØ¥Ø¶Ø§ÙØ©',
+  'homeHero.removePluginAria': 'Ø¥Ø²Ø§ÙØ© Ø§ÙØ¥Ø¶Ø§ÙØ© {title}',
+  'homeHero.clearActivePlugin': 'ÙØ³Ø­ Ø§ÙØ¥Ø¶Ø§ÙØ© Ø§ÙÙØ´Ø·Ø©',
+  'homeHero.clearActiveSkill': 'ÙØ³Ø­ Ø§ÙÙÙØ§Ø±Ø© Ø§ÙÙØ´Ø·Ø©',
+  'homeHero.contextItemsResolved': 'ØªÙ Ø­ÙÙ {n} ÙÙ Ø¹ÙØ§ØµØ± Ø§ÙØ³ÙØ§Ù',
+  'homeHero.removeFile': 'Ø¥Ø²Ø§ÙØ© Ø§ÙÙÙÙ',
+  'homeHero.contextSearchResults': 'ÙØªØ§Ø¦Ø¬ Ø¨Ø­Ø« Ø§ÙØ³ÙØ§Ù',
+  'homeHero.contextSurfaces': 'Ø£Ø³Ø·Ø­ Ø§ÙØ³ÙØ§Ù',
+  'homeHero.loadingContext': 'Ø¬Ø§Ø±Ù ØªØ­ÙÙÙ Ø§ÙØ³ÙØ§Ùâ¦',
+  'homeHero.noResults': 'ÙØ§ ØªÙØ¬Ø¯ ÙØªØ§Ø¦Ø¬ ÙÙ "{query}".',
+  'homeHero.searchPrompt': 'Ø§Ø¨Ø­Ø« ÙÙ Ø§ÙÙÙÙØ§Øª ÙØ§ÙØ¥Ø¶Ø§ÙØ§Øª ÙØ§ÙÙÙØ§Ø±Ø§Øª ÙØ®ÙØ§Ø¯Ù MCP ÙØ§ÙÙÙØµÙÙØ§Øª.',
+  'homeHero.parameters': '{n} ÙØ¹Ø§ÙÙ',
+  'homeHero.details': 'Ø§ÙØªÙØ§ØµÙÙ',
+  'homeHero.toRun': 'ÙÙØªØ´ØºÙÙ',
+  'homeHero.forNewLine': 'ÙØ³Ø·Ø± Ø¬Ø¯ÙØ¯',
+  'homeHero.run': 'ØªØ´ØºÙÙ',
+  'homeHero.typeSomethingToRun': 'Ø§ÙØªØ¨ Ø´ÙØ¦ÙØ§ ÙØªØ´ØºÙÙÙ',
+  'homeHero.promptExamples': 'Ø£ÙØ«ÙØ©',
+  'homeHero.footer.designSystem': 'Ø§ÙÙÙØ·',
+  'homeHero.footer.autoDesignSystem': 'ØªÙÙØ§Ø¦Ù',
+  'homeHero.footer.autoDesignSystemSummary': 'ÙØ·Ø§Ø¨Ù ØªÙÙØ§Ø¦ÙØ§Ù ÙØ¸Ø§Ù Ø§ÙØªØµÙÙÙ ÙØ§ÙØ£Ø³ÙÙØ¨ Ø§ÙØ¨ØµØ±Ù Ø§ÙØ£ÙØ³Ø¨ ÙÙÙÙØ¬Ù Ø§ÙØ­Ø§ÙÙ.',
+  'homeHero.footer.ratio': 'Ø§ÙÙØ³Ø¨Ø©',
+  'homeHero.footer.duration': 'Ø§ÙÙØ¯Ø©',
+  'homeHero.footer.resolution': 'Ø§ÙØ¯ÙØ©',
+  'homeHero.footer.speakerNotes': 'Ø§ÙÙÙØ§Ø­Ø¸Ø§Øª',
+  'homeHero.footer.noSpeakerNotes': 'Ø¨ÙØ§ ÙÙØ§Ø­Ø¸Ø§Øª',
+  'homeHero.footer.availableCount': '{n} ÙØªØ§Ø­',
+  'homeHero.footer.noMatches': 'ÙØ§ ØªÙØ¬Ø¯ ØªØ·Ø§Ø¨ÙØ§Øª',
+  'homeHero.moreShortcuts': 'Ø§ÙÙØ²ÙØ¯',
+  'homeHero.railAria': 'Ø§Ø®ØªØ± ÙØ¦Ø© ÙØ´Ø±ÙØ¹ Ø£Ù Ø§Ø®ØªØµØ§Ø± Ø¨Ø¯Ø§ÙØ©',
+  'homeHero.subTypeAria': 'Ø§Ø®ØªØ± ÙÙØ¹ÙØ§ ÙØ±Ø¹ÙÙØ§',
+  'homeHero.confirmReplaceTitle': 'Ø§Ø³ØªØ¨Ø¯Ø§Ù Ø§ÙÙÙØ¬ÙÙ Ø§ÙØ­Ø§ÙÙØ',
+  'homeHero.confirmReplaceBody': 'Ø³ÙØ¤Ø¯Ù Ø§Ø³ØªØ®Ø¯Ø§Ù {title} Ø¥ÙÙ Ø§Ø³ØªØ¨Ø¯Ø§Ù Ø§ÙÙØµ Ø§ÙÙÙØ¬ÙØ¯ Ø­Ø§ÙÙÙØ§ ÙÙ Ø­ÙÙ Ø§ÙØ¥Ø¯Ø®Ø§Ù.',
+  'homeHero.confirmReplace': 'Ø§Ø³ØªØ¨Ø¯Ø§Ù',
+  'homeHero.chip.prototype': 'ÙÙÙØ°Ø¬ Ø£ÙÙÙ',
+  'homeHero.chip.liveArtifact': 'Ø¹ÙØµØ± Ø­ÙÙ',
+  'homeHero.chip.deck': 'Ø¹Ø±Ø¶ Ø´Ø±Ø§Ø¦Ø­',
+  'homeHero.chip.image': 'ØµÙØ±Ø©',
+  'homeHero.chip.video': 'ÙÙØ¯ÙÙ',
   'homeHero.chip.hyperframes': 'HyperFrames',
-  'homeHero.chip.audio': 'صوت',
-  'homeHero.chip.createBrandKit': 'إنشاء حزمة العلامة التجارية',
-  'homeHero.chip.createPlugin': 'إنشاء إضافة',
-  'homeHero.chip.figma': 'من Figma',
-  'homeHero.chip.folder': 'من مجلد',
-  'homeHero.chip.template': 'من قالب',
-  'homeHero.chip.liveArtifactHint': 'أنشئ عنصرًا تفاعليًا بـ HTML/CSS/JS يمكنك معاينته مباشرة.',
-  'homeHero.chip.hyperframesHint': 'صمّم حركة قائمة على HTML: تسميات توضيحية، ومرئيات تتفاعل مع الصوت، وانتقالات بين المشاهد.',
-  'homeHero.chip.createBrandKitHint': 'استخرج حزمة علامة تجارية من موقع ويب ثم طبّقها في أي محادثة.',
-  'homeHero.chip.createPluginHint': 'أنشئ إضافة Open Design قابلة لإعادة الاستخدام وأضِفها إلى إضافاتي.',
-  'homeHero.chip.figmaHint': 'رحّل إطار Figma إلى نظام التصميم النشط.',
-  'homeHero.chip.folderHint': 'استورد مجلدًا محليًا موجودًا وتابع التحرير.',
-  'homeHero.chip.templateHint': 'ابدأ من قالب مُضمّن.',
+  'homeHero.chip.audio': 'ØµÙØª',
+  'homeHero.chip.createBrandKit': 'Ø¥ÙØ´Ø§Ø¡ Ø­Ø²ÙØ© Ø§ÙØ¹ÙØ§ÙØ© Ø§ÙØªØ¬Ø§Ø±ÙØ©',
+  'homeHero.chip.createPlugin': 'Ø¥ÙØ´Ø§Ø¡ Ø¥Ø¶Ø§ÙØ©',
+  'homeHero.chip.figma': 'ÙÙ Figma',
+  'homeHero.chip.folder': 'ÙÙ ÙØ¬ÙØ¯',
+  'homeHero.chip.template': 'ÙÙ ÙØ§ÙØ¨',
+  'homeHero.chip.liveArtifactHint': 'Ø£ÙØ´Ø¦ Ø¹ÙØµØ±ÙØ§ ØªÙØ§Ø¹ÙÙÙØ§ Ø¨Ù HTML/CSS/JS ÙÙÙÙÙ ÙØ¹Ø§ÙÙØªÙ ÙØ¨Ø§Ø´Ø±Ø©.',
+  'homeHero.chip.hyperframesHint': 'ØµÙÙÙ Ø­Ø±ÙØ© ÙØ§Ø¦ÙØ© Ø¹ÙÙ HTML: ØªØ³ÙÙØ§Øª ØªÙØ¶ÙØ­ÙØ©Ø ÙÙØ±Ø¦ÙØ§Øª ØªØªÙØ§Ø¹Ù ÙØ¹ Ø§ÙØµÙØªØ ÙØ§ÙØªÙØ§ÙØ§Øª Ø¨ÙÙ Ø§ÙÙØ´Ø§ÙØ¯.',
+  'homeHero.chip.createBrandKitHint': 'Ø§Ø³ØªØ®Ø±Ø¬ Ø­Ø²ÙØ© Ø¹ÙØ§ÙØ© ØªØ¬Ø§Ø±ÙØ© ÙÙ ÙÙÙØ¹ ÙÙØ¨ Ø«Ù Ø·Ø¨ÙÙÙØ§ ÙÙ Ø£Ù ÙØ­Ø§Ø¯Ø«Ø©.',
+  'homeHero.chip.createPluginHint': 'Ø£ÙØ´Ø¦ Ø¥Ø¶Ø§ÙØ© Open Design ÙØ§Ø¨ÙØ© ÙØ¥Ø¹Ø§Ø¯Ø© Ø§ÙØ§Ø³ØªØ®Ø¯Ø§Ù ÙØ£Ø¶ÙÙÙØ§ Ø¥ÙÙ Ø¥Ø¶Ø§ÙØ§ØªÙ.',
+  'homeHero.chip.figmaHint': 'Ø±Ø­ÙÙ Ø¥Ø·Ø§Ø± Figma Ø¥ÙÙ ÙØ¸Ø§Ù Ø§ÙØªØµÙÙÙ Ø§ÙÙØ´Ø·.',
+  'homeHero.chip.folderHint': 'Ø§Ø³ØªÙØ±Ø¯ ÙØ¬ÙØ¯ÙØ§ ÙØ­ÙÙÙØ§ ÙÙØ¬ÙØ¯ÙØ§ ÙØªØ§Ø¨Ø¹ Ø§ÙØªØ­Ø±ÙØ±.',
+  'homeHero.chip.templateHint': 'Ø§Ø¨Ø¯Ø£ ÙÙ ÙØ§ÙØ¨ ÙÙØ¶ÙÙÙ.',
   'homeHero.chip.wireframe': 'Wireframe',
   'homeHero.chip.mobile': 'Mobile app',
   'homeHero.chip.document': 'Document',
@@ -618,7 +618,7 @@ export const ar: Dict = {
   'homeHero.chip.wireframeNext': 'Open a chat that sketches lo-fi screens and flows to validate structure first.',
   'homeHero.chip.mobileNext': 'Open a chat that lays out mobile screens for iOS and Android.',
   'homeHero.chip.deckNext': 'Open a chat that builds a slide deck you can present and export.',
-  'homeHero.chip.documentNext': 'Open a chat that drafts a polished document — resume, report, or PDF.',
+  'homeHero.chip.documentNext': 'Open a chat that drafts a polished document â resume, report, or PDF.',
   'homeHero.chip.imageNext': 'Open a chat that generates on-brand images you can iterate on.',
   'homeHero.chip.videoNext': 'Open a chat that produces a short video you can refine.',
   'homeHero.chip.audioNext': 'Open a chat that creates voiceover, music, or sound effects.',
@@ -629,33 +629,33 @@ export const ar: Dict = {
   'homeWorkingDir.recentEmpty': 'No recent folders',
   'homeWorkingDir.clear': 'Remove working directory',
   'homeWorkingDir.hint': 'Let the agent read this local folder (not imported into Design Files)',
-  'homeWorkingDir.missing': 'This working folder no longer exists — pick another',
-  'homeWorkingDir.applyFailed': 'Couldn\'t set the working directory — the folder may no longer exist',
-  'workingDirPicker.title': 'مجلد',
-  'workingDirPicker.homeTitle': 'محفوظ في التخزين المحلي — انقر لاختيار مجلد',
-  'workingDirPicker.processing': 'جارٍ المعالجة…',
-  'workingDirPicker.select': 'التخزين المحلي',
-  'workingDirPicker.clearAria': 'مسح دليل العمل',
-  'workingDirPicker.replaceFailed': 'تعذّر استبدال دليل العمل',
-  'workingDirPicker.unavailable': 'منتقي المجلدات غير متاح في هذه النسخة. شغّل تطبيق سطح المكتب لاختيار مجلد.',
-  'workingDirPicker.openUnavailable': 'افتح هذا المشروع في تطبيق سطح المكتب لإظهار المجلد.',
-  'workingDirPicker.openFailed': 'تعذّر إظهار هذا المجلد',
-  'workingDirPicker.showInFileManager': 'إظهار في مدير الملفات',
-  'workingDirPicker.replace': 'اختيار مجلد…',
-  'workingDirPicker.recent': 'الأدلّة الأخيرة',
-  'workingDirPicker.defaultLabel': 'التخزين المحلي',
-  'handoff.toTarget': 'التسليم إلى {target}',
-  'handoff.openInTarget': 'فتح في {target}',
-  'handoff.openAction': 'فتح',
-  'handoff.menuTitle': 'الفتح في أي محرر؟',
-  'handoff.action': 'تسليم',
-  'handoff.fallbackTitle': 'لم يُعثر على محررات في $PATH - يُفتح في {target}',
-  'handoff.chooseTargetAria': 'اختر وجهة التسليم',
-  'handoff.optionsAria': 'خيارات التسليم',
-  'handoff.editorSection': 'الفتح باستخدام محرر',
-  'handoff.cliSection': 'نسخ لاستخدام CLI',
-  'handoff.clickOpen': 'انقر للفتح',
-  'handoff.framework': 'إطار عمل الكود',
+  'homeWorkingDir.missing': 'This working folder no longer exists â pick another',
+  'homeWorkingDir.applyFailed': 'Couldn\'t set the working directory â the folder may no longer exist',
+  'workingDirPicker.title': 'ÙØ¬ÙØ¯',
+  'workingDirPicker.homeTitle': 'ÙØ­ÙÙØ¸ ÙÙ Ø§ÙØªØ®Ø²ÙÙ Ø§ÙÙØ­ÙÙ â Ø§ÙÙØ± ÙØ§Ø®ØªÙØ§Ø± ÙØ¬ÙØ¯',
+  'workingDirPicker.processing': 'Ø¬Ø§Ø±Ù Ø§ÙÙØ¹Ø§ÙØ¬Ø©â¦',
+  'workingDirPicker.select': 'Ø§ÙØªØ®Ø²ÙÙ Ø§ÙÙØ­ÙÙ',
+  'workingDirPicker.clearAria': 'ÙØ³Ø­ Ø¯ÙÙÙ Ø§ÙØ¹ÙÙ',
+  'workingDirPicker.replaceFailed': 'ØªØ¹Ø°ÙØ± Ø§Ø³ØªØ¨Ø¯Ø§Ù Ø¯ÙÙÙ Ø§ÙØ¹ÙÙ',
+  'workingDirPicker.unavailable': 'ÙÙØªÙÙ Ø§ÙÙØ¬ÙØ¯Ø§Øª ØºÙØ± ÙØªØ§Ø­ ÙÙ ÙØ°Ù Ø§ÙÙØ³Ø®Ø©. Ø´ØºÙÙ ØªØ·Ø¨ÙÙ Ø³Ø·Ø­ Ø§ÙÙÙØªØ¨ ÙØ§Ø®ØªÙØ§Ø± ÙØ¬ÙØ¯.',
+  'workingDirPicker.openUnavailable': 'Ø§ÙØªØ­ ÙØ°Ø§ Ø§ÙÙØ´Ø±ÙØ¹ ÙÙ ØªØ·Ø¨ÙÙ Ø³Ø·Ø­ Ø§ÙÙÙØªØ¨ ÙØ¥Ø¸ÙØ§Ø± Ø§ÙÙØ¬ÙØ¯.',
+  'workingDirPicker.openFailed': 'ØªØ¹Ø°ÙØ± Ø¥Ø¸ÙØ§Ø± ÙØ°Ø§ Ø§ÙÙØ¬ÙØ¯',
+  'workingDirPicker.showInFileManager': 'Ø¥Ø¸ÙØ§Ø± ÙÙ ÙØ¯ÙØ± Ø§ÙÙÙÙØ§Øª',
+  'workingDirPicker.replace': 'Ø§Ø®ØªÙØ§Ø± ÙØ¬ÙØ¯â¦',
+  'workingDirPicker.recent': 'Ø§ÙØ£Ø¯ÙÙØ© Ø§ÙØ£Ø®ÙØ±Ø©',
+  'workingDirPicker.defaultLabel': 'Ø§ÙØªØ®Ø²ÙÙ Ø§ÙÙØ­ÙÙ',
+  'handoff.toTarget': 'Ø§ÙØªØ³ÙÙÙ Ø¥ÙÙ {target}',
+  'handoff.openInTarget': 'ÙØªØ­ ÙÙ {target}',
+  'handoff.openAction': 'ÙØªØ­',
+  'handoff.menuTitle': 'Ø§ÙÙØªØ­ ÙÙ Ø£Ù ÙØ­Ø±Ø±Ø',
+  'handoff.action': 'ØªØ³ÙÙÙ',
+  'handoff.fallbackTitle': 'ÙÙ ÙÙØ¹Ø«Ø± Ø¹ÙÙ ÙØ­Ø±Ø±Ø§Øª ÙÙ $PATH - ÙÙÙØªØ­ ÙÙ {target}',
+  'handoff.chooseTargetAria': 'Ø§Ø®ØªØ± ÙØ¬ÙØ© Ø§ÙØªØ³ÙÙÙ',
+  'handoff.optionsAria': 'Ø®ÙØ§Ø±Ø§Øª Ø§ÙØªØ³ÙÙÙ',
+  'handoff.editorSection': 'Ø§ÙÙØªØ­ Ø¨Ø§Ø³ØªØ®Ø¯Ø§Ù ÙØ­Ø±Ø±',
+  'handoff.cliSection': 'ÙØ³Ø® ÙØ§Ø³ØªØ®Ø¯Ø§Ù CLI',
+  'handoff.clickOpen': 'Ø§ÙÙØ± ÙÙÙØªØ­',
+  'handoff.framework': 'Ø¥Ø·Ø§Ø± Ø¹ÙÙ Ø§ÙÙÙØ¯',
   'handoff.framework.react': 'React',
   'handoff.framework.vue': 'Vue.js',
   'handoff.framework.svelte': 'Svelte',
@@ -667,857 +667,857 @@ export const ar: Dict = {
   'handoff.frameworkPrompt.svelte': 'Svelte',
   'handoff.frameworkPrompt.solid': 'SolidJS',
   'handoff.frameworkPrompt.next': 'Next.js / React',
-  'handoff.frameworkPrompt.vanilla': 'JavaScript و HTML و CSS الأساسية',
-  'handoff.amrWebsite': 'فتح موقع AMR',
-  'handoff.copyPrompt': 'نسخ الموجّه',
-  'handoff.copyPromptForTarget': 'نسخ الموجّه لـ {target}',
-  'handoff.copied': 'تم النسخ',
-  'handoff.projectPathUnavailable': 'لا يزال مسار المشروع قيد التحميل. حاول مرة أخرى بعد لحظة.',
-  'handoff.copyFailed': 'تم حظر الكتابة إلى الحافظة. حاول مرة أخرى بعد لحظة.',
-  'handoff.promptIntro': 'المتابعة من مجلد مشروع Open Design المحلي هذا:',
-  'handoff.promptTarget': 'الوجهة',
+  'handoff.frameworkPrompt.vanilla': 'JavaScript Ù HTML Ù CSS Ø§ÙØ£Ø³Ø§Ø³ÙØ©',
+  'handoff.amrWebsite': 'ÙØªØ­ ÙÙÙØ¹ AMR',
+  'handoff.copyPrompt': 'ÙØ³Ø® Ø§ÙÙÙØ¬ÙÙ',
+  'handoff.copyPromptForTarget': 'ÙØ³Ø® Ø§ÙÙÙØ¬ÙÙ ÙÙ {target}',
+  'handoff.copied': 'ØªÙ Ø§ÙÙØ³Ø®',
+  'handoff.projectPathUnavailable': 'ÙØ§ ÙØ²Ø§Ù ÙØ³Ø§Ø± Ø§ÙÙØ´Ø±ÙØ¹ ÙÙØ¯ Ø§ÙØªØ­ÙÙÙ. Ø­Ø§ÙÙ ÙØ±Ø© Ø£Ø®Ø±Ù Ø¨Ø¹Ø¯ ÙØ­Ø¸Ø©.',
+  'handoff.copyFailed': 'ØªÙ Ø­Ø¸Ø± Ø§ÙÙØªØ§Ø¨Ø© Ø¥ÙÙ Ø§ÙØ­Ø§ÙØ¸Ø©. Ø­Ø§ÙÙ ÙØ±Ø© Ø£Ø®Ø±Ù Ø¨Ø¹Ø¯ ÙØ­Ø¸Ø©.',
+  'handoff.promptIntro': 'Ø§ÙÙØªØ§Ø¨Ø¹Ø© ÙÙ ÙØ¬ÙØ¯ ÙØ´Ø±ÙØ¹ Open Design Ø§ÙÙØ­ÙÙ ÙØ°Ø§:',
+  'handoff.promptTarget': 'Ø§ÙÙØ¬ÙØ©',
   'handoff.promptCli': 'CLI',
-  'handoff.promptStepsLead': 'أنت تتولّى المهمة الآن في {cli}. يُرجى:',
-  'handoff.promptReadFiles': 'ادخل إلى هذا الدليل أو اقرأه أولاً. أعطِ الأولوية لـ DESIGN.md و README وملفات HTML/CSS/JS الموجودة والأصول و package.json إن وُجد.',
-  'handoff.promptKeepDesign': 'حافظ على التصميم المرئي الحالي والتخطيط والتفاعلات والأصول. لا تتوقف عند مرحلة التخطيط.',
-  'handoff.promptProduceCode': 'أنشئ أو عدّل كود {framework} قابل للتشغيل فعليًا. إذا كان للمشروع بالفعل حزمة تقنية أوضح، فأشر إلى التعارض وأبقِ النتيجة قابلة للتشغيل.',
-  'handoff.promptVerify': 'اختم بإخباري بأوامر التشغيل والمعاينة والتحقق.',
-  'handoff.promptCommandHint': 'للبدء من دليل المشروع، استخدم:',
-  'handoff.promptProject': 'المشروع',
-  'handoff.promptProjectId': 'معرّف المشروع',
-  'handoff.notInstalled': 'غير مُثبَّت',
-  'handoff.notDetectedTitle': '{target} - لم يُكتشف في $PATH',
-  'designSystemPicker.select': 'اختر نظام التصميم',
-  'designSystemPicker.loading': 'جارٍ تحميل أنظمة التصميم…',
-  'designSystemPicker.searchPlaceholder': 'البحث في أنظمة التصميم (العنوان / الفئة / الملخص)',
-  'designSystemPicker.searchCompactPlaceholder': 'البحث في أنظمة التصميم',
-  'designSystemPicker.noneTitle': 'بدون نظام تصميم',
-  'designSystemPicker.noneSummary': 'دع النموذج يختار بحرية',
-  'designSystemPicker.empty': 'لا توجد أنظمة تصميم مطابقة',
-  'designSystemPicker.openPreview': 'فتح المعاينة',
-  'designSystemPicker.loadingPreview': 'جارٍ تحميل المعاينة…',
-  'designSystemPicker.noPreview': 'لا توجد صفحة معاينة. افتح أنظمة التصميم لعرض المعاينة الكاملة.',
-  'designSystemPicker.previewHint': 'مرّر المؤشر فوق نظام تصميم لمعاينته',
-  'designSystemPicker.fullscreenAria': 'معاينة {title} بملء الشاشة',
-  'designSystemPicker.closeFullscreen': 'إغلاق معاينة ملء الشاشة',
-  'designSystemPicker.closeEsc': 'إغلاق (Esc)',
-  'designSystemPicker.previewFrameTitle': 'معاينة {title}',
-  'designSystemPicker.fullscreenFrameTitle': 'معاينة {title} بملء الشاشة',
-  'recentProjects.title': 'المشاريع الأخيرة',
-  'recentProjects.viewAll': 'عرض الكل',
-  'recentProjects.empty': 'لا توجد مشاريع بعد — اكتب موجّهًا لبدء مشروع.',
-  'pluginsHome.title': 'المجتمع',
-  'pluginsHome.subtitle': 'سير عمل Open Design جاهز للاستخدام ومرفق بهذا التشغيل. اختر واحدًا لتحميل موجّه بدء، أو تصفّح السجل للمزيد.',
-  'pluginsHome.browseRegistry': 'تصفح السجل',
-  'pluginsHome.count': '{filtered} من {total}',
-  'pluginsHome.loadingCatalog': 'جارٍ تحميل الكتالوج…',
-  'pluginsHome.emptyCatalog': 'الكتالوج فارغ. تأتي الإضافات المُجمَّعة مع Open Design ومن المفترض أن تظهر هنا تلقائيًا — جرّب إعادة تشغيل الـ daemon إذا استمرت هذه المشكلة.',
-  'pluginsHome.emptyFiltered': 'لا توجد إضافات تطابق عوامل التصفية الحالية.',
-  'pluginsHome.clearFilters': 'مسح عوامل التصفية',
-  'pluginsHome.modeAria': 'وضع الإضافات',
-  'pluginsHome.featured': 'محفوظ',
-  'pluginsHome.totalInCatalog': '{n} في الكتالوج',
-  'pluginsHome.categoryFilterAria': 'تصفية حسب الفئة',
-  'pluginsHome.subcategoryFilterAria': 'تصفية حسب الفئة الفرعية لـ {label}',
-  'pluginsHome.allCategory': 'كل {label}',
-  'pluginsHome.searchPlaceholder': 'البحث عن الإضافات…',
-  'pluginsHome.searchAria': 'البحث في الإضافات',
-  'pluginsHome.clearSearch': 'مسح البحث',
-  'pluginsHome.facet.import': 'استيراد',
-  'pluginsHome.facet.create': 'إنشاء',
-  'pluginsHome.facet.export': 'تصدير',
-  'pluginsHome.facet.share': 'مشاركة',
-  'pluginsHome.facet.deploy': 'نشر',
-  'pluginsHome.facet.refine': 'تحسين',
-  'pluginsHome.facet.extend': 'توسيع',
+  'handoff.promptStepsLead': 'Ø£ÙØª ØªØªÙÙÙÙ Ø§ÙÙÙÙØ© Ø§ÙØ¢Ù ÙÙ {cli}. ÙÙØ±Ø¬Ù:',
+  'handoff.promptReadFiles': 'Ø§Ø¯Ø®Ù Ø¥ÙÙ ÙØ°Ø§ Ø§ÙØ¯ÙÙÙ Ø£Ù Ø§ÙØ±Ø£Ù Ø£ÙÙØ§Ù. Ø£Ø¹Ø·Ù Ø§ÙØ£ÙÙÙÙØ© ÙÙ DESIGN.md Ù README ÙÙÙÙØ§Øª HTML/CSS/JS Ø§ÙÙÙØ¬ÙØ¯Ø© ÙØ§ÙØ£ØµÙÙ Ù package.json Ø¥Ù ÙÙØ¬Ø¯.',
+  'handoff.promptKeepDesign': 'Ø­Ø§ÙØ¸ Ø¹ÙÙ Ø§ÙØªØµÙÙÙ Ø§ÙÙØ±Ø¦Ù Ø§ÙØ­Ø§ÙÙ ÙØ§ÙØªØ®Ø·ÙØ· ÙØ§ÙØªÙØ§Ø¹ÙØ§Øª ÙØ§ÙØ£ØµÙÙ. ÙØ§ ØªØªÙÙÙ Ø¹ÙØ¯ ÙØ±Ø­ÙØ© Ø§ÙØªØ®Ø·ÙØ·.',
+  'handoff.promptProduceCode': 'Ø£ÙØ´Ø¦ Ø£Ù Ø¹Ø¯ÙÙ ÙÙØ¯ {framework} ÙØ§Ø¨Ù ÙÙØªØ´ØºÙÙ ÙØ¹ÙÙÙØ§. Ø¥Ø°Ø§ ÙØ§Ù ÙÙÙØ´Ø±ÙØ¹ Ø¨Ø§ÙÙØ¹Ù Ø­Ø²ÙØ© ØªÙÙÙØ© Ø£ÙØ¶Ø­Ø ÙØ£Ø´Ø± Ø¥ÙÙ Ø§ÙØªØ¹Ø§Ø±Ø¶ ÙØ£Ø¨ÙÙ Ø§ÙÙØªÙØ¬Ø© ÙØ§Ø¨ÙØ© ÙÙØªØ´ØºÙÙ.',
+  'handoff.promptVerify': 'Ø§Ø®ØªÙ Ø¨Ø¥Ø®Ø¨Ø§Ø±Ù Ø¨Ø£ÙØ§ÙØ± Ø§ÙØªØ´ØºÙÙ ÙØ§ÙÙØ¹Ø§ÙÙØ© ÙØ§ÙØªØ­ÙÙ.',
+  'handoff.promptCommandHint': 'ÙÙØ¨Ø¯Ø¡ ÙÙ Ø¯ÙÙÙ Ø§ÙÙØ´Ø±ÙØ¹Ø Ø§Ø³ØªØ®Ø¯Ù:',
+  'handoff.promptProject': 'Ø§ÙÙØ´Ø±ÙØ¹',
+  'handoff.promptProjectId': 'ÙØ¹Ø±ÙÙ Ø§ÙÙØ´Ø±ÙØ¹',
+  'handoff.notInstalled': 'ØºÙØ± ÙÙØ«Ø¨ÙÙØª',
+  'handoff.notDetectedTitle': '{target} - ÙÙ ÙÙÙØªØ´Ù ÙÙ $PATH',
+  'designSystemPicker.select': 'Ø§Ø®ØªØ± ÙØ¸Ø§Ù Ø§ÙØªØµÙÙÙ',
+  'designSystemPicker.loading': 'Ø¬Ø§Ø±Ù ØªØ­ÙÙÙ Ø£ÙØ¸ÙØ© Ø§ÙØªØµÙÙÙâ¦',
+  'designSystemPicker.searchPlaceholder': 'Ø§ÙØ¨Ø­Ø« ÙÙ Ø£ÙØ¸ÙØ© Ø§ÙØªØµÙÙÙ (Ø§ÙØ¹ÙÙØ§Ù / Ø§ÙÙØ¦Ø© / Ø§ÙÙÙØ®Øµ)',
+  'designSystemPicker.searchCompactPlaceholder': 'Ø§ÙØ¨Ø­Ø« ÙÙ Ø£ÙØ¸ÙØ© Ø§ÙØªØµÙÙÙ',
+  'designSystemPicker.noneTitle': 'Ø¨Ø¯ÙÙ ÙØ¸Ø§Ù ØªØµÙÙÙ',
+  'designSystemPicker.noneSummary': 'Ø¯Ø¹ Ø§ÙÙÙÙØ°Ø¬ ÙØ®ØªØ§Ø± Ø¨Ø­Ø±ÙØ©',
+  'designSystemPicker.empty': 'ÙØ§ ØªÙØ¬Ø¯ Ø£ÙØ¸ÙØ© ØªØµÙÙÙ ÙØ·Ø§Ø¨ÙØ©',
+  'designSystemPicker.openPreview': 'ÙØªØ­ Ø§ÙÙØ¹Ø§ÙÙØ©',
+  'designSystemPicker.loadingPreview': 'Ø¬Ø§Ø±Ù ØªØ­ÙÙÙ Ø§ÙÙØ¹Ø§ÙÙØ©â¦',
+  'designSystemPicker.noPreview': 'ÙØ§ ØªÙØ¬Ø¯ ØµÙØ­Ø© ÙØ¹Ø§ÙÙØ©. Ø§ÙØªØ­ Ø£ÙØ¸ÙØ© Ø§ÙØªØµÙÙÙ ÙØ¹Ø±Ø¶ Ø§ÙÙØ¹Ø§ÙÙØ© Ø§ÙÙØ§ÙÙØ©.',
+  'designSystemPicker.previewHint': 'ÙØ±ÙØ± Ø§ÙÙØ¤Ø´Ø± ÙÙÙ ÙØ¸Ø§Ù ØªØµÙÙÙ ÙÙØ¹Ø§ÙÙØªÙ',
+  'designSystemPicker.fullscreenAria': 'ÙØ¹Ø§ÙÙØ© {title} Ø¨ÙÙØ¡ Ø§ÙØ´Ø§Ø´Ø©',
+  'designSystemPicker.closeFullscreen': 'Ø¥ØºÙØ§Ù ÙØ¹Ø§ÙÙØ© ÙÙØ¡ Ø§ÙØ´Ø§Ø´Ø©',
+  'designSystemPicker.closeEsc': 'Ø¥ØºÙØ§Ù (Esc)',
+  'designSystemPicker.previewFrameTitle': 'ÙØ¹Ø§ÙÙØ© {title}',
+  'designSystemPicker.fullscreenFrameTitle': 'ÙØ¹Ø§ÙÙØ© {title} Ø¨ÙÙØ¡ Ø§ÙØ´Ø§Ø´Ø©',
+  'recentProjects.title': 'Ø§ÙÙØ´Ø§Ø±ÙØ¹ Ø§ÙØ£Ø®ÙØ±Ø©',
+  'recentProjects.viewAll': 'Ø¹Ø±Ø¶ Ø§ÙÙÙ',
+  'recentProjects.empty': 'ÙØ§ ØªÙØ¬Ø¯ ÙØ´Ø§Ø±ÙØ¹ Ø¨Ø¹Ø¯ â Ø§ÙØªØ¨ ÙÙØ¬ÙÙÙØ§ ÙØ¨Ø¯Ø¡ ÙØ´Ø±ÙØ¹.',
+  'pluginsHome.title': 'Ø§ÙÙØ¬ØªÙØ¹',
+  'pluginsHome.subtitle': 'Ø³ÙØ± Ø¹ÙÙ Open Design Ø¬Ø§ÙØ² ÙÙØ§Ø³ØªØ®Ø¯Ø§Ù ÙÙØ±ÙÙ Ø¨ÙØ°Ø§ Ø§ÙØªØ´ØºÙÙ. Ø§Ø®ØªØ± ÙØ§Ø­Ø¯ÙØ§ ÙØªØ­ÙÙÙ ÙÙØ¬ÙÙ Ø¨Ø¯Ø¡Ø Ø£Ù ØªØµÙÙØ­ Ø§ÙØ³Ø¬Ù ÙÙÙØ²ÙØ¯.',
+  'pluginsHome.browseRegistry': 'ØªØµÙØ­ Ø§ÙØ³Ø¬Ù',
+  'pluginsHome.count': '{filtered} ÙÙ {total}',
+  'pluginsHome.loadingCatalog': 'Ø¬Ø§Ø±Ù ØªØ­ÙÙÙ Ø§ÙÙØªØ§ÙÙØ¬â¦',
+  'pluginsHome.emptyCatalog': 'Ø§ÙÙØªØ§ÙÙØ¬ ÙØ§Ø±Øº. ØªØ£ØªÙ Ø§ÙØ¥Ø¶Ø§ÙØ§Øª Ø§ÙÙÙØ¬ÙÙÙØ¹Ø© ÙØ¹ Open Design ÙÙÙ Ø§ÙÙÙØªØ±Ø¶ Ø£Ù ØªØ¸ÙØ± ÙÙØ§ ØªÙÙØ§Ø¦ÙÙØ§ â Ø¬Ø±ÙØ¨ Ø¥Ø¹Ø§Ø¯Ø© ØªØ´ØºÙÙ Ø§ÙÙ daemon Ø¥Ø°Ø§ Ø§Ø³ØªÙØ±Øª ÙØ°Ù Ø§ÙÙØ´ÙÙØ©.',
+  'pluginsHome.emptyFiltered': 'ÙØ§ ØªÙØ¬Ø¯ Ø¥Ø¶Ø§ÙØ§Øª ØªØ·Ø§Ø¨Ù Ø¹ÙØ§ÙÙ Ø§ÙØªØµÙÙØ© Ø§ÙØ­Ø§ÙÙØ©.',
+  'pluginsHome.clearFilters': 'ÙØ³Ø­ Ø¹ÙØ§ÙÙ Ø§ÙØªØµÙÙØ©',
+  'pluginsHome.modeAria': 'ÙØ¶Ø¹ Ø§ÙØ¥Ø¶Ø§ÙØ§Øª',
+  'pluginsHome.featured': 'ÙØ­ÙÙØ¸',
+  'pluginsHome.totalInCatalog': '{n} ÙÙ Ø§ÙÙØªØ§ÙÙØ¬',
+  'pluginsHome.categoryFilterAria': 'ØªØµÙÙØ© Ø­Ø³Ø¨ Ø§ÙÙØ¦Ø©',
+  'pluginsHome.subcategoryFilterAria': 'ØªØµÙÙØ© Ø­Ø³Ø¨ Ø§ÙÙØ¦Ø© Ø§ÙÙØ±Ø¹ÙØ© ÙÙ {label}',
+  'pluginsHome.allCategory': 'ÙÙ {label}',
+  'pluginsHome.searchPlaceholder': 'Ø§ÙØ¨Ø­Ø« Ø¹Ù Ø§ÙØ¥Ø¶Ø§ÙØ§Øªâ¦',
+  'pluginsHome.searchAria': 'Ø§ÙØ¨Ø­Ø« ÙÙ Ø§ÙØ¥Ø¶Ø§ÙØ§Øª',
+  'pluginsHome.clearSearch': 'ÙØ³Ø­ Ø§ÙØ¨Ø­Ø«',
+  'pluginsHome.facet.import': 'Ø§Ø³ØªÙØ±Ø§Ø¯',
+  'pluginsHome.facet.create': 'Ø¥ÙØ´Ø§Ø¡',
+  'pluginsHome.facet.export': 'ØªØµØ¯ÙØ±',
+  'pluginsHome.facet.share': 'ÙØ´Ø§Ø±ÙØ©',
+  'pluginsHome.facet.deploy': 'ÙØ´Ø±',
+  'pluginsHome.facet.refine': 'ØªØ­Ø³ÙÙ',
+  'pluginsHome.facet.extend': 'ØªÙØ³ÙØ¹',
   'pluginsHome.facet.figma': 'Figma',
   'pluginsHome.facet.github': 'GitHub',
-  'pluginsHome.facet.codeFolder': 'كود / مجلد',
+  'pluginsHome.facet.codeFolder': 'ÙÙØ¯ / ÙØ¬ÙØ¯',
   'pluginsHome.facet.url': 'URL',
-  'pluginsHome.facet.screenshot': 'لقطة شاشة',
+  'pluginsHome.facet.screenshot': 'ÙÙØ·Ø© Ø´Ø§Ø´Ø©',
   'pluginsHome.facet.pdf': 'PDF',
   'pluginsHome.facet.pptx': 'PPTX',
   'pluginsHome.facet.framer': 'Framer',
   'pluginsHome.facet.webflow': 'Webflow',
-  'pluginsHome.facet.slides': 'شرائح',
-  'pluginsHome.facet.publicLink': 'رابط عام',
+  'pluginsHome.facet.slides': 'Ø´Ø±Ø§Ø¦Ø­',
+  'pluginsHome.facet.publicLink': 'Ø±Ø§Ø¨Ø· Ø¹Ø§Ù',
   'pluginsHome.facet.githubPr': 'GitHub PR',
   'pluginsHome.facet.githubGist': 'GitHub Gist',
-  'pluginsHome.subfacet.business-dashboards': 'لوحات المعلومات',
-  'pluginsHome.subfacet.app-prototypes': 'تطبيقات',
-  'pluginsHome.subfacet.landing-marketing': 'صفحات هبوط / تسويق',
-  'pluginsHome.subfacet.developer-tools': 'أدوات المطورين',
-  'pluginsHome.subfacet.docs-reports': 'مستندات / تقارير',
-  'pluginsHome.subfacet.brand-design': 'علامة / تصميم',
-  'pluginsHome.subfacet.pitch-business': 'عرض / أعمال',
-  'pluginsHome.subfacet.course-training': 'دورات / تدريب',
-  'pluginsHome.subfacet.reports-briefings': 'تقارير / موجزات',
-  'pluginsHome.subfacet.product-sales': 'منتج / مبيعات',
-  'pluginsHome.subfacet.engineering-talks': 'محاضرات تقنية',
-  'pluginsHome.subfacet.creative-decks': 'عروض إبداعية',
-  'pluginsHome.subfacet.ui-product-mockups': 'واجهات / نماذج منتج',
-  'pluginsHome.subfacet.brand-visuals': 'علامة / شعار',
-  'pluginsHome.subfacet.storyboards-motion-refs': 'قصص مصورة',
-  'pluginsHome.subfacet.social-content': 'سوشيال / محتوى',
-  'pluginsHome.subfacet.avatar-portrait': 'صورة رمزية / بورتريه',
-  'pluginsHome.subfacet.illustration-style': 'رسوم / أسلوب',
-  'pluginsHome.subfacet.motion-effects': 'حركة / مؤثرات',
-  'pluginsHome.subfacet.social-short-form': 'سوشيال / فيديو قصير',
-  'pluginsHome.subfacet.marketing-product': 'تسويق / منتج',
-  'pluginsHome.subfacet.data-explainers': 'بيانات / شروحات',
-  'pluginsHome.subfacet.cinematic-story': 'سينمائي / قصة',
-  'pluginsView.lede': 'تصفّح سير العمل المثبّتة، واكتشف إدخالات السجل، وأدر المصادر، وجهّز الإضافات لتوزيعها على الفريق.',
-  'pluginsView.importPlugin': 'استيراد إضافة',
-  'pluginsView.agentContext': 'سياق الـ Agent',
-  'pluginsView.summaryAria': 'ملخص الإضافة',
-  'pluginsView.areasAria': 'مجالات الإضافة',
-  'pluginsView.loading': 'جارٍ تحميل الإضافات…',
-  'pluginsView.tab.installed': 'مثبّت',
-  'pluginsView.tab.available': 'متاح',
-  'pluginsView.tab.sources': 'المصادر',
-  'pluginsView.tab.team': 'الفريق',
-  'pluginsView.tabHint.installed': 'إضافاتك',
-  'pluginsView.tabHint.available': 'من المصادر',
-  'pluginsView.tabHint.sources': 'الكتالوجات',
-  'pluginsView.tabHint.team': 'المؤسسات',
-  'pluginsView.installedTitle': 'الإضافات المثبّتة',
-  'pluginsView.installedSubtitle': 'الإضافات التي قمت باستيرادها أو تثبيتها من مصادر المتجر.',
-  'pluginsView.installedEmpty': 'لا توجد إضافات مستخدم مثبّتة بعد. استخدم إنشاء / استيراد أو ثبّت إدخالاً متاحاً.',
-  'pluginsView.availableTitle': 'متاح من المصادر',
-  'pluginsView.availableSubtitle': 'إدخالات الكتالوج المكتشفة من المتاجر المُهيّأة.',
-  'pluginsView.availableFiltersAria': 'عوامل تصفية الإضافات المتاحة',
-  'pluginsView.searchAvailableAria': 'البحث في الإضافات المتاحة',
-  'pluginsView.searchAvailablePlaceholder': 'البحث في الإضافات المتاحة',
-  'pluginsView.clearAvailableSearch': 'مسح بحث الإضافات المتاحة',
-  'pluginsView.source': 'المصدر',
-  'pluginsView.availableEmptyInstalled': 'لا توجد إدخالات متاحة بعد. تُزال إدخالات الكتالوج المثبّتة من المتاح؛ ألغِ تثبيت أحدها لإتاحته من جديد.',
-  'pluginsView.availableEmptyFiltered': 'لا توجد إدخالات متاحة تطابق عوامل التصفية الخاصة بك.',
-  'pluginsView.availableEmptyNoSources': 'لا توجد إدخالات متاحة بعد. أضف مصدراً في علامة تبويب المصادر.',
-  'pluginsView.installing': 'جارٍ التثبيت…',
-  'pluginsView.install': 'تثبيت',
-  'pluginsView.sourcesTitle': 'مصادر السجل',
-  'pluginsView.sourcesSubtitle': 'كتالوجات السوق التي تغذّي إدخالات الإضافات المتاحة.',
-  'pluginsView.sourceUrl': 'عنوان URL المصدر',
-  'pluginsView.defaultTrust': 'الثقة الافتراضية',
-  'pluginsView.trust.restricted': 'مقيّد',
-  'pluginsView.trust.trusted': 'موثوق',
-  'pluginsView.trust.official': 'رسمي',
-  'pluginsView.adding': 'جارٍ الإضافة…',
-  'pluginsView.addSource': 'إضافة مصدر',
-  'pluginsView.sourcesEmpty': 'لم يتم تكوين أي مصادر سجلّ بعد.',
-  'pluginsView.pluginsCount': '{n} إضافة',
-  'pluginsView.catalogVersion': 'كتالوج الإصدار v{version}',
-  'pluginsView.trustFor': 'الثقة في {name}',
-  'pluginsView.refreshing': 'جارٍ التحديث…',
-  'pluginsView.removing': 'جارٍ الإزالة…',
-  'pluginsView.teamTitle': 'أسواق الفِرق الخاصة',
-  'pluginsView.teamBody': 'هذه المنطقة مخصّصة لكتالوجات المؤسسات والفِرق، وسياسات الثقة الخاصة، وعناصر التحكم المشتركة بدورة حياة الإضافات.',
-  'pluginCard.details': 'التفاصيل',
-  'pluginCard.use': 'استخدام',
-  'pluginCard.useWithQuery': 'استخدام مع استعلام',
-  'pluginCard.applying': 'جارٍ التطبيق…',
-  'pluginCard.publish': 'نشر',
-  'pluginCard.contribute': 'المساهمة',
-  'pluginCard.starting': 'جارٍ البدء…',
-  'pluginCard.detailsAria': 'عرض تفاصيل {title}',
-  'pluginCard.chooseUseAria': 'اختر كيفية استخدام {title}',
-  'pluginCard.useOptionsAria': 'خيارات استخدام {title}',
-  'pluginCard.shareAria': 'مشاركة {title}',
-  'pluginCard.publishAria': 'نشر {title} كمستودع GitHub',
-  'pluginCard.publishTitle': 'نشر الإضافة كمستودع GitHub',
-  'pluginCard.contributeAria': 'المساهمة بـ {title} في Open Design',
-  'pluginCard.contributeTitle': 'المساهمة بالإضافة في Open Design عبر طلب سحب (PR)',
-  'skillPluginCandidate.createForMe': 'إنشاء إضافة/قالب',
-  'skillPluginCandidate.contributeToMain': 'المساهمة في open-design',
-  'skillPluginCandidate.repoDescription': 'يبدو أن هذا المستودع يمكن أن يعمل كإضافة.',
-  'integrations.kicker': 'التكامل',
-  'integrations.lede': 'اربط الأنظمة الخارجية، وأدخِل أدوات MCP إلى حلقة الـ Agent الخاصة بك، واستخدم Open Design من بيئات تطوير وبرامج نصية وعمليات أتمتة أخرى.',
-  'integrations.agentReady': 'جاهز للـ Agent',
-  'integrations.areasAria': 'مجالات التكامل',
+  'pluginsHome.subfacet.business-dashboards': 'ÙÙØ­Ø§Øª Ø§ÙÙØ¹ÙÙÙØ§Øª',
+  'pluginsHome.subfacet.app-prototypes': 'ØªØ·Ø¨ÙÙØ§Øª',
+  'pluginsHome.subfacet.landing-marketing': 'ØµÙØ­Ø§Øª ÙØ¨ÙØ· / ØªØ³ÙÙÙ',
+  'pluginsHome.subfacet.developer-tools': 'Ø£Ø¯ÙØ§Øª Ø§ÙÙØ·ÙØ±ÙÙ',
+  'pluginsHome.subfacet.docs-reports': 'ÙØ³ØªÙØ¯Ø§Øª / ØªÙØ§Ø±ÙØ±',
+  'pluginsHome.subfacet.brand-design': 'Ø¹ÙØ§ÙØ© / ØªØµÙÙÙ',
+  'pluginsHome.subfacet.pitch-business': 'Ø¹Ø±Ø¶ / Ø£Ø¹ÙØ§Ù',
+  'pluginsHome.subfacet.course-training': 'Ø¯ÙØ±Ø§Øª / ØªØ¯Ø±ÙØ¨',
+  'pluginsHome.subfacet.reports-briefings': 'ØªÙØ§Ø±ÙØ± / ÙÙØ¬Ø²Ø§Øª',
+  'pluginsHome.subfacet.product-sales': 'ÙÙØªØ¬ / ÙØ¨ÙØ¹Ø§Øª',
+  'pluginsHome.subfacet.engineering-talks': 'ÙØ­Ø§Ø¶Ø±Ø§Øª ØªÙÙÙØ©',
+  'pluginsHome.subfacet.creative-decks': 'Ø¹Ø±ÙØ¶ Ø¥Ø¨Ø¯Ø§Ø¹ÙØ©',
+  'pluginsHome.subfacet.ui-product-mockups': 'ÙØ§Ø¬ÙØ§Øª / ÙÙØ§Ø°Ø¬ ÙÙØªØ¬',
+  'pluginsHome.subfacet.brand-visuals': 'Ø¹ÙØ§ÙØ© / Ø´Ø¹Ø§Ø±',
+  'pluginsHome.subfacet.storyboards-motion-refs': 'ÙØµØµ ÙØµÙØ±Ø©',
+  'pluginsHome.subfacet.social-content': 'Ø³ÙØ´ÙØ§Ù / ÙØ­ØªÙÙ',
+  'pluginsHome.subfacet.avatar-portrait': 'ØµÙØ±Ø© Ø±ÙØ²ÙØ© / Ø¨ÙØ±ØªØ±ÙÙ',
+  'pluginsHome.subfacet.illustration-style': 'Ø±Ø³ÙÙ / Ø£Ø³ÙÙØ¨',
+  'pluginsHome.subfacet.motion-effects': 'Ø­Ø±ÙØ© / ÙØ¤Ø«Ø±Ø§Øª',
+  'pluginsHome.subfacet.social-short-form': 'Ø³ÙØ´ÙØ§Ù / ÙÙØ¯ÙÙ ÙØµÙØ±',
+  'pluginsHome.subfacet.marketing-product': 'ØªØ³ÙÙÙ / ÙÙØªØ¬',
+  'pluginsHome.subfacet.data-explainers': 'Ø¨ÙØ§ÙØ§Øª / Ø´Ø±ÙØ­Ø§Øª',
+  'pluginsHome.subfacet.cinematic-story': 'Ø³ÙÙÙØ§Ø¦Ù / ÙØµØ©',
+  'pluginsView.lede': 'ØªØµÙÙØ­ Ø³ÙØ± Ø§ÙØ¹ÙÙ Ø§ÙÙØ«Ø¨ÙØªØ©Ø ÙØ§ÙØªØ´Ù Ø¥Ø¯Ø®Ø§ÙØ§Øª Ø§ÙØ³Ø¬ÙØ ÙØ£Ø¯Ø± Ø§ÙÙØµØ§Ø¯Ø±Ø ÙØ¬ÙÙØ² Ø§ÙØ¥Ø¶Ø§ÙØ§Øª ÙØªÙØ²ÙØ¹ÙØ§ Ø¹ÙÙ Ø§ÙÙØ±ÙÙ.',
+  'pluginsView.importPlugin': 'Ø§Ø³ØªÙØ±Ø§Ø¯ Ø¥Ø¶Ø§ÙØ©',
+  'pluginsView.agentContext': 'Ø³ÙØ§Ù Ø§ÙÙ Agent',
+  'pluginsView.summaryAria': 'ÙÙØ®Øµ Ø§ÙØ¥Ø¶Ø§ÙØ©',
+  'pluginsView.areasAria': 'ÙØ¬Ø§ÙØ§Øª Ø§ÙØ¥Ø¶Ø§ÙØ©',
+  'pluginsView.loading': 'Ø¬Ø§Ø±Ù ØªØ­ÙÙÙ Ø§ÙØ¥Ø¶Ø§ÙØ§Øªâ¦',
+  'pluginsView.tab.installed': 'ÙØ«Ø¨ÙØª',
+  'pluginsView.tab.available': 'ÙØªØ§Ø­',
+  'pluginsView.tab.sources': 'Ø§ÙÙØµØ§Ø¯Ø±',
+  'pluginsView.tab.team': 'Ø§ÙÙØ±ÙÙ',
+  'pluginsView.tabHint.installed': 'Ø¥Ø¶Ø§ÙØ§ØªÙ',
+  'pluginsView.tabHint.available': 'ÙÙ Ø§ÙÙØµØ§Ø¯Ø±',
+  'pluginsView.tabHint.sources': 'Ø§ÙÙØªØ§ÙÙØ¬Ø§Øª',
+  'pluginsView.tabHint.team': 'Ø§ÙÙØ¤Ø³Ø³Ø§Øª',
+  'pluginsView.installedTitle': 'Ø§ÙØ¥Ø¶Ø§ÙØ§Øª Ø§ÙÙØ«Ø¨ÙØªØ©',
+  'pluginsView.installedSubtitle': 'Ø§ÙØ¥Ø¶Ø§ÙØ§Øª Ø§ÙØªÙ ÙÙØª Ø¨Ø§Ø³ØªÙØ±Ø§Ø¯ÙØ§ Ø£Ù ØªØ«Ø¨ÙØªÙØ§ ÙÙ ÙØµØ§Ø¯Ø± Ø§ÙÙØªØ¬Ø±.',
+  'pluginsView.installedEmpty': 'ÙØ§ ØªÙØ¬Ø¯ Ø¥Ø¶Ø§ÙØ§Øª ÙØ³ØªØ®Ø¯Ù ÙØ«Ø¨ÙØªØ© Ø¨Ø¹Ø¯. Ø§Ø³ØªØ®Ø¯Ù Ø¥ÙØ´Ø§Ø¡ / Ø§Ø³ØªÙØ±Ø§Ø¯ Ø£Ù Ø«Ø¨ÙØª Ø¥Ø¯Ø®Ø§ÙØ§Ù ÙØªØ§Ø­Ø§Ù.',
+  'pluginsView.availableTitle': 'ÙØªØ§Ø­ ÙÙ Ø§ÙÙØµØ§Ø¯Ø±',
+  'pluginsView.availableSubtitle': 'Ø¥Ø¯Ø®Ø§ÙØ§Øª Ø§ÙÙØªØ§ÙÙØ¬ Ø§ÙÙÙØªØ´ÙØ© ÙÙ Ø§ÙÙØªØ§Ø¬Ø± Ø§ÙÙÙÙÙÙØ£Ø©.',
+  'pluginsView.availableFiltersAria': 'Ø¹ÙØ§ÙÙ ØªØµÙÙØ© Ø§ÙØ¥Ø¶Ø§ÙØ§Øª Ø§ÙÙØªØ§Ø­Ø©',
+  'pluginsView.searchAvailableAria': 'Ø§ÙØ¨Ø­Ø« ÙÙ Ø§ÙØ¥Ø¶Ø§ÙØ§Øª Ø§ÙÙØªØ§Ø­Ø©',
+  'pluginsView.searchAvailablePlaceholder': 'Ø§ÙØ¨Ø­Ø« ÙÙ Ø§ÙØ¥Ø¶Ø§ÙØ§Øª Ø§ÙÙØªØ§Ø­Ø©',
+  'pluginsView.clearAvailableSearch': 'ÙØ³Ø­ Ø¨Ø­Ø« Ø§ÙØ¥Ø¶Ø§ÙØ§Øª Ø§ÙÙØªØ§Ø­Ø©',
+  'pluginsView.source': 'Ø§ÙÙØµØ¯Ø±',
+  'pluginsView.availableEmptyInstalled': 'ÙØ§ ØªÙØ¬Ø¯ Ø¥Ø¯Ø®Ø§ÙØ§Øª ÙØªØ§Ø­Ø© Ø¨Ø¹Ø¯. ØªÙØ²Ø§Ù Ø¥Ø¯Ø®Ø§ÙØ§Øª Ø§ÙÙØªØ§ÙÙØ¬ Ø§ÙÙØ«Ø¨ÙØªØ© ÙÙ Ø§ÙÙØªØ§Ø­Ø Ø£ÙØºÙ ØªØ«Ø¨ÙØª Ø£Ø­Ø¯ÙØ§ ÙØ¥ØªØ§Ø­ØªÙ ÙÙ Ø¬Ø¯ÙØ¯.',
+  'pluginsView.availableEmptyFiltered': 'ÙØ§ ØªÙØ¬Ø¯ Ø¥Ø¯Ø®Ø§ÙØ§Øª ÙØªØ§Ø­Ø© ØªØ·Ø§Ø¨Ù Ø¹ÙØ§ÙÙ Ø§ÙØªØµÙÙØ© Ø§ÙØ®Ø§ØµØ© Ø¨Ù.',
+  'pluginsView.availableEmptyNoSources': 'ÙØ§ ØªÙØ¬Ø¯ Ø¥Ø¯Ø®Ø§ÙØ§Øª ÙØªØ§Ø­Ø© Ø¨Ø¹Ø¯. Ø£Ø¶Ù ÙØµØ¯Ø±Ø§Ù ÙÙ Ø¹ÙØ§ÙØ© ØªØ¨ÙÙØ¨ Ø§ÙÙØµØ§Ø¯Ø±.',
+  'pluginsView.installing': 'Ø¬Ø§Ø±Ù Ø§ÙØªØ«Ø¨ÙØªâ¦',
+  'pluginsView.install': 'ØªØ«Ø¨ÙØª',
+  'pluginsView.sourcesTitle': 'ÙØµØ§Ø¯Ø± Ø§ÙØ³Ø¬Ù',
+  'pluginsView.sourcesSubtitle': 'ÙØªØ§ÙÙØ¬Ø§Øª Ø§ÙØ³ÙÙ Ø§ÙØªÙ ØªØºØ°ÙÙ Ø¥Ø¯Ø®Ø§ÙØ§Øª Ø§ÙØ¥Ø¶Ø§ÙØ§Øª Ø§ÙÙØªØ§Ø­Ø©.',
+  'pluginsView.sourceUrl': 'Ø¹ÙÙØ§Ù URL Ø§ÙÙØµØ¯Ø±',
+  'pluginsView.defaultTrust': 'Ø§ÙØ«ÙØ© Ø§ÙØ§ÙØªØ±Ø§Ø¶ÙØ©',
+  'pluginsView.trust.restricted': 'ÙÙÙÙØ¯',
+  'pluginsView.trust.trusted': 'ÙÙØ«ÙÙ',
+  'pluginsView.trust.official': 'Ø±Ø³ÙÙ',
+  'pluginsView.adding': 'Ø¬Ø§Ø±Ù Ø§ÙØ¥Ø¶Ø§ÙØ©â¦',
+  'pluginsView.addSource': 'Ø¥Ø¶Ø§ÙØ© ÙØµØ¯Ø±',
+  'pluginsView.sourcesEmpty': 'ÙÙ ÙØªÙ ØªÙÙÙÙ Ø£Ù ÙØµØ§Ø¯Ø± Ø³Ø¬ÙÙ Ø¨Ø¹Ø¯.',
+  'pluginsView.pluginsCount': '{n} Ø¥Ø¶Ø§ÙØ©',
+  'pluginsView.catalogVersion': 'ÙØªØ§ÙÙØ¬ Ø§ÙØ¥ØµØ¯Ø§Ø± v{version}',
+  'pluginsView.trustFor': 'Ø§ÙØ«ÙØ© ÙÙ {name}',
+  'pluginsView.refreshing': 'Ø¬Ø§Ø±Ù Ø§ÙØªØ­Ø¯ÙØ«â¦',
+  'pluginsView.removing': 'Ø¬Ø§Ø±Ù Ø§ÙØ¥Ø²Ø§ÙØ©â¦',
+  'pluginsView.teamTitle': 'Ø£Ø³ÙØ§Ù Ø§ÙÙÙØ±Ù Ø§ÙØ®Ø§ØµØ©',
+  'pluginsView.teamBody': 'ÙØ°Ù Ø§ÙÙÙØ·ÙØ© ÙØ®ØµÙØµØ© ÙÙØªØ§ÙÙØ¬Ø§Øª Ø§ÙÙØ¤Ø³Ø³Ø§Øª ÙØ§ÙÙÙØ±ÙØ ÙØ³ÙØ§Ø³Ø§Øª Ø§ÙØ«ÙØ© Ø§ÙØ®Ø§ØµØ©Ø ÙØ¹ÙØ§ØµØ± Ø§ÙØªØ­ÙÙ Ø§ÙÙØ´ØªØ±ÙØ© Ø¨Ø¯ÙØ±Ø© Ø­ÙØ§Ø© Ø§ÙØ¥Ø¶Ø§ÙØ§Øª.',
+  'pluginCard.details': 'Ø§ÙØªÙØ§ØµÙÙ',
+  'pluginCard.use': 'Ø§Ø³ØªØ®Ø¯Ø§Ù',
+  'pluginCard.useWithQuery': 'Ø§Ø³ØªØ®Ø¯Ø§Ù ÙØ¹ Ø§Ø³ØªØ¹ÙØ§Ù',
+  'pluginCard.applying': 'Ø¬Ø§Ø±Ù Ø§ÙØªØ·Ø¨ÙÙâ¦',
+  'pluginCard.publish': 'ÙØ´Ø±',
+  'pluginCard.contribute': 'Ø§ÙÙØ³Ø§ÙÙØ©',
+  'pluginCard.starting': 'Ø¬Ø§Ø±Ù Ø§ÙØ¨Ø¯Ø¡â¦',
+  'pluginCard.detailsAria': 'Ø¹Ø±Ø¶ ØªÙØ§ØµÙÙ {title}',
+  'pluginCard.chooseUseAria': 'Ø§Ø®ØªØ± ÙÙÙÙØ© Ø§Ø³ØªØ®Ø¯Ø§Ù {title}',
+  'pluginCard.useOptionsAria': 'Ø®ÙØ§Ø±Ø§Øª Ø§Ø³ØªØ®Ø¯Ø§Ù {title}',
+  'pluginCard.shareAria': 'ÙØ´Ø§Ø±ÙØ© {title}',
+  'pluginCard.publishAria': 'ÙØ´Ø± {title} ÙÙØ³ØªÙØ¯Ø¹ GitHub',
+  'pluginCard.publishTitle': 'ÙØ´Ø± Ø§ÙØ¥Ø¶Ø§ÙØ© ÙÙØ³ØªÙØ¯Ø¹ GitHub',
+  'pluginCard.contributeAria': 'Ø§ÙÙØ³Ø§ÙÙØ© Ø¨Ù {title} ÙÙ Open Design',
+  'pluginCard.contributeTitle': 'Ø§ÙÙØ³Ø§ÙÙØ© Ø¨Ø§ÙØ¥Ø¶Ø§ÙØ© ÙÙ Open Design Ø¹Ø¨Ø± Ø·ÙØ¨ Ø³Ø­Ø¨ (PR)',
+  'skillPluginCandidate.createForMe': 'Ø¥ÙØ´Ø§Ø¡ Ø¥Ø¶Ø§ÙØ©/ÙØ§ÙØ¨',
+  'skillPluginCandidate.contributeToMain': 'Ø§ÙÙØ³Ø§ÙÙØ© ÙÙ open-design',
+  'skillPluginCandidate.repoDescription': 'ÙØ¨Ø¯Ù Ø£Ù ÙØ°Ø§ Ø§ÙÙØ³ØªÙØ¯Ø¹ ÙÙÙÙ Ø£Ù ÙØ¹ÙÙ ÙØ¥Ø¶Ø§ÙØ©.',
+  'integrations.kicker': 'Ø§ÙØªÙØ§ÙÙ',
+  'integrations.lede': 'Ø§Ø±Ø¨Ø· Ø§ÙØ£ÙØ¸ÙØ© Ø§ÙØ®Ø§Ø±Ø¬ÙØ©Ø ÙØ£Ø¯Ø®ÙÙ Ø£Ø¯ÙØ§Øª MCP Ø¥ÙÙ Ø­ÙÙØ© Ø§ÙÙ Agent Ø§ÙØ®Ø§ØµØ© Ø¨ÙØ ÙØ§Ø³ØªØ®Ø¯Ù Open Design ÙÙ Ø¨ÙØ¦Ø§Øª ØªØ·ÙÙØ± ÙØ¨Ø±Ø§ÙØ¬ ÙØµÙØ© ÙØ¹ÙÙÙØ§Øª Ø£ØªÙØªØ© Ø£Ø®Ø±Ù.',
+  'integrations.agentReady': 'Ø¬Ø§ÙØ² ÙÙÙ Agent',
+  'integrations.areasAria': 'ÙØ¬Ø§ÙØ§Øª Ø§ÙØªÙØ§ÙÙ',
   'integrations.tabLabel.mcp': 'MCP',
-  'integrations.tabLabel.skills': 'المهارات',
-  'integrations.tabHint.mcp': 'الأدوات الخارجية',
-  'integrations.tabHint.connectors': 'الحسابات وواجهات API',
-  'integrations.tabHint.useEverywhere': 'CLI وHTTP وMCP',
-  'integrations.skillsTitle': 'تكاملات المهارات',
-  'integrations.skillsBody': 'يجري نقل إدارة التكامل على مستوى المهارات من فرع آخر. هذا التبويب محجوز لكي يكون إعداد MCP والموصِّلات والمهارات المستقبلية ضمن مسار التكامل نفسه.',
-  'mcpClient.title': 'خوادم MCP الخارجية',
-  'mcpClient.subtitle': 'أدوات الطرف الثالث الخاصة بـ Agent البرمجة لديك.',
-  'mcpClient.addServer': 'إضافة خادم',
-  'mcpClient.emptyTitle': 'لم يتم تكوين أي خوادم MCP.',
-  'mcpClient.emptyBody': 'انقر على "إضافة خادم" للبدء — اختر قالبًا (Higgsfield OpenClaw، Pollinations، Allyson، Imagician، EdgeOne Pages، GitHub، Filesystem…) أو قم بإعداد خادم stdio / HTTP مخصص.',
-  'mcpClient.saveChanges': 'حفظ التغييرات',
-  'mcpClient.storedAt': 'مخزَّن في',
-  'mcpClient.daemonError': 'تعذّر الوصول إلى الخدمة المحلية. تأكّد من أن Open Design قيد التشغيل، ثم أعِد فتح هذه اللوحة.',
-  'mcpClient.saveFailed': 'فشل الحفظ. تحقّق من أن الخدمة قيد التشغيل وحاول مرة أخرى.',
-  'useEverywhere.modalAria': 'استخدم Open Design في كل مكان',
-  'useEverywhere.modalTitle': 'استخدم Open Design في كل مكان',
-  'useEverywhere.modalSubtitle': 'أدرِج Open Design في أي IDE أو Agent أو سكربت — CLI وHTTP وMCP وSkills. استخدم “Copy guide for an agent” والصقه في Claude Code أو Codex أو Cursor أو openclaw أو hermes لإعداد كل شيء.',
-  'useEverywhere.closeAria': 'إغلاق الاستخدام في كل مكان',
-  'useEverywhere.closeTitle': 'إغلاق (Esc)',
-  'useEverywhere.tabsAria': 'واجهات التكامل',
-  'useEverywhere.footStrong': 'تسليم بنقرة واحدة.',
-  'useEverywhere.footBody': 'ينسخ دليلًا منظّمًا بصيغة markdown يمكن لـ Agent الخاص بك التصرف بناءً عليه فورًا — التثبيت والتحقق والاستخدام.',
-  'useEverywhere.configureMcp': 'تكوين خادم MCP',
-  'useEverywhere.copyGuide': 'نسخ الدليل لـ Agent',
-  'useEverywhere.copy': 'نسخ',
-  'useEverywhere.copied': 'تم النسخ',
-  'useEverywhere.copyFailed': 'فشل النسخ',
-  'useEverywhere.copySnippetAria': 'نسخ المقتطف: {label}',
-  'useEverywhere.section.overview.tab': 'نظرة عامة',
-  'useEverywhere.section.overview.heading': 'يعمل Open Design أينما يعمل الـ Agent الخاص بك',
-  'useEverywhere.section.overview.intro': 'Open Design أكثر من مجرد نافذة — إنه daemon محلي ذو صلاحيات (`od`) إضافةً إلى سجل Skills + Design-Systems + Atoms. بمجرد تشغيله على جهازك، يمكن لأي Agent برمجي (Claude Code، Codex، Cursor، OpenCode/openclaw، Hermes، السكربت الخاص بك) أن يقود عمليات التوليد ويفحص المشاريع وينتج مخرجات التصميم عبر أربعة أسطح قابلة للتبادل.',
-  'useEverywhere.section.overview.bullet1': 'CLI — `od <command>` للسكربتات بلا واجهة، وCI، وأتمتة الـ shell.',
-  'useEverywhere.section.overview.bullet2': 'خادم MCP — يربط Open Design كخادم Model Context Protocol بحيث يمكن لأي Agent يدعم MCP سرد المهارات وتشغيل السيناريوهات وقراءة المخرجات.',
-  'useEverywhere.section.overview.bullet3': 'HTTP API — نقاط نهاية REST + SSE على `http://127.0.0.1:7456/api/*`؛ نفس السطح الذي تستخدمه واجهة الويب.',
-  'useEverywhere.section.overview.bullet4': 'Skills — حزم `SKILL.md` جاهزة للاستخدام (متوافقة مع Claude) يمكن لأي Agent موجود مسبقًا على الـ PATH استدعاؤها دون الحاجة إلى Open Design على الإطلاق.',
-  'useEverywhere.section.overview.bullet5': 'المخرجات القياسية — أنشئ مشاريع HTML حقيقية انطلاقًا من Skills، والإضافات الافتراضية المُجمَّعة، وأمثلة إضافات المجتمع قبل بدء تشغيل الـ daemon.',
-  'useEverywhere.section.overview.snippet1': 'تشغيل الـ daemon (وواجهة الويب) محليًا',
-  'useEverywhere.section.overview.snippet2': 'تأكّد من إمكانية الوصول إليه',
-  'useEverywhere.section.overview.snippet3': 'استيراد العناصر القياسية قبل الإقلاع',
-  'useEverywhere.section.overview.footer': 'يكتب الـ daemon إلى `./.od/` (محلي للمشروع) افتراضيًا. عيّن `OD_DATA_DIR=~/.open-design` لمشاركة البيانات عبر المشاريع.',
-  'useEverywhere.section.cli.tab': 'CLI · od',
-  'useEverywhere.section.cli.heading': 'تشغيل Open Design من أي shell',
-  'useEverywhere.section.cli.intro': 'يُشحن الملف التنفيذي `od` مع الـ daemon وهو نفس الملف الثنائي الذي يستخدمه Claude Code / Codex عند تشغيل عملية توليد. معظم الأوامر الفرعية هي عملاء بسطاء يرسلون POST إلى الـ daemon المحلي، لذا فهي تعمل بالطريقة نفسها سواء شغّلته عبر `pnpm tools-dev` أو كتطبيق مُحزَّم.',
-  'useEverywhere.section.cli.bullet1': '`od` (بدون وسائط) — يُقلِع الـ daemon ويفتح واجهة الويب.',
-  'useEverywhere.section.cli.bullet2': '`od media generate ...` — أنتِج بايتات الصورة / الفيديو / الصوت عبر بروتوكول الوسائط الموحّد.',
-  'useEverywhere.section.cli.bullet3': '`od run ...` — ابدأ تشغيل مشروع انطلاقًا من موجّه + مهارة.',
-  'useEverywhere.section.cli.bullet4': '`od plugin install <source>` / `od plugin apply <id>` — ثبِّت وطبِّق إضافات المجتمع.',
-  'useEverywhere.section.cli.bullet5': '`od skills list` / `od design-systems list` — افحص ما هو متاح محليًا.',
-  'useEverywhere.section.cli.bullet6': '`od status` / `od doctor` — تحقق من سلامة الـ daemon واكتشف أدوات Agent CLI على الـ PATH الخاص بك.',
-  'useEverywhere.section.cli.snippet1': 'توليد صورة (يُفوَّض إلى مزوّد الوسائط المُهيّأ)',
-  'useEverywhere.section.cli.snippet2': 'تشغيل ملحق سيناريو بدون واجهة وبثّ الأحداث كأسطر JSON',
-  'useEverywhere.section.cli.snippet3': 'جرد المهارات وأنظمة التصميم المتاحة محليًا',
-  'useEverywhere.section.cli.snippet4': 'التحقّق من العناصر المُهيّأة عبر الـ CLI',
-  'useEverywhere.section.cli.snippet5': 'التحقق من البيئة + الـ Agents المكتشفة (Claude، Codex، Cursor، …)',
-  'useEverywhere.section.cli.footer': 'تقبل جميع الأوامر الفرعية `--daemon-url http://127.0.0.1:<port>` لاستهداف daemon معيّن قيد التشغيل — مفيد عند تشغيل نسخة ثانية معزولة للاختبارات.',
-  'useEverywhere.section.mcp.tab': 'خادم MCP',
-  'useEverywhere.section.mcp.heading': 'اجعل Open Design متاحًا كخادم MCP لأي coding agent',
-  'useEverywhere.section.mcp.intro': 'يأتي Open Design مع خادم Model Context Protocol (`od mcp`) يتيح لأي عميل يدعم MCP — Cursor، Claude Code، Antigravity، VS Code Copilot Chat، openclaw، hermes — اكتشاف أدوات Open Design (سرد المهارات، عرض المعاينات، توليد الوسائط، تشغيل الإضافات) دون استخدام الـ shell يدويًا. ينشر الـ daemon مقتطف تثبيت جاهزًا للصق عبر `GET /api/mcp/install-info` لكل عميل رئيسي.',
-  'useEverywhere.section.mcp.bullet1': 'نقل Stdio — لا منفذ إضافي، يُشغِّل العميل `od mcp` مباشرةً.',
-  'useEverywhere.section.mcp.bullet2': 'يكتشف تلقائيًا عنوان URL للـ daemon النشط عبر مقبس حالة IPC المحلي عند تشغيله كـ sidecar.',
-  'useEverywhere.section.mcp.bullet3': 'يرجع إلى `--daemon-url http://127.0.0.1:<port>` للتثبيتات العادية بحيث تجد عملية MCP دائمًا daemon قيد التشغيل.',
-  'useEverywhere.section.mcp.bullet4': 'يثبّت `OD_DATA_DIR` بحيث تكتب عملية MCP المُنشأة إلى المكان نفسه الذي يستخدمه الـ daemon بالفعل (يتجنّب EPERM في حزم تطبيقات macOS المُحزَّمة).',
-  'useEverywhere.section.mcp.snippet1': 'إعداد عميل MCP عام (يعمل في Cursor، Claude Code، Codex، …)',
-  'useEverywhere.section.mcp.snippet2': 'أو: اطلب من الـ daemon المقتطف المُخصّص لتثبيتك',
-  'useEverywhere.section.mcp.snippet3': 'متغيّر MCP للعناصر الحية (قراءة وتحديث لوحات المعلومات)',
-  'useEverywhere.section.mcp.footer': 'في تطبيق Open Design، افتح الإعدادات → التكاملات لنسخ أمر تثبيت خاص بكل عميل (Cursor، Claude Code، Antigravity، VS Code) بدلًا من تحرير JSON يدويًا.',
-  'useEverywhere.section.http.tab': 'واجهة برمجة تطبيقات HTTP',
-  'useEverywhere.section.http.heading': 'نفس واجهة REST + SSE التي تستخدمها واجهة الويب',
-  'useEverywhere.section.http.intro': 'يخدم الـ daemon المحلي واجهة HTTP API على `http://127.0.0.1:7456` (المنفذ قابل للتهيئة). كل نقطة نهاية تستدعيها واجهة الويب متاحة أيضًا للنصوص البرمجية الخاصة بك. تُصدر نقاط نهاية البثّ (أدوار المحادثة، عمليات تشغيل المشاريع) أحداث Server-Sent Events بأنواع العقود الموجودة في `@open-design/contracts`.',
-  'useEverywhere.section.http.bullet1': '`GET /api/health` — حيوية الـ daemon.',
-  'useEverywhere.section.http.bullet2': '`GET /api/skills` و`GET /api/design-systems` — السجلات المتاحة.',
-  'useEverywhere.section.http.bullet3': '`GET /api/projects` و`POST /api/projects` — سرد المشاريع وإنشاؤها (يُرجِع POST المشروع + المحادثة الأولى).',
-  'useEverywhere.section.http.bullet4': '`GET /api/projects/:id/chat` — تدفق SSE لأحداث Agent الخاصة بمحادثة.',
-  'useEverywhere.section.http.bullet5': '`POST /api/plugins/:id/apply` — اربط إضافة مثبّتة واحصل على استعلام المثال المعروض + مدخلاته.',
-  'useEverywhere.section.http.bullet6': '`GET /api/agents` — أدوات Agent البرمجية المكتشفة على الـ PATH الخاص بك.',
-  'useEverywhere.section.http.snippet1': 'عرض المهارات المُثبّتة (سيستخدمها الـ Agent كقوالب)',
-  'useEverywhere.section.http.snippet2': 'إنشاء مشروع من موجّه (تدفّق كامل من جانب الخادم)',
-  'useEverywhere.section.http.snippet3': 'بثّ دور محادثة (SSE — كل سطر متوافق مع JSON-Lines)',
-  'useEverywhere.section.http.footer': 'تتوفر أنواع TypeScript خالصة لكل طلب/استجابة في `@open-design/contracts` — استوردها في سكربتك للحصول على إكمال تلقائي كامل دون تهيئة مُولِّد.',
-  'useEverywhere.section.skills.tab': 'المهارات والوضع بدون واجهة',
-  'useEverywhere.section.skills.heading': 'مهارات Skills جاهزة للاستخدام لأي Agent — حتى دون تشغيل Open Design',
-  'useEverywhere.section.skills.intro': 'المهارة هي دليل يحتوي على `SKILL.md` متوافق مع Claude (مقدّمة YAML + متن). يوسّع Open Design التنسيق بفضاء الأسماء `od:` (`mode`، `preview`، `design_system`، `inputs`، …) بحيث يمكن استخدام المخرَج نفسه داخل Open Design ومن قِبل Agent عادي مثل Claude Code أو Codex أو openclaw أو hermes. يتّبع الاكتشاف سلسلة أولوية بحيث يمكن للمشاريع تجاوز مهاراتها الخاصة.',
-  'useEverywhere.section.skills.bullet1': 'الاكتشاف: `./.claude/skills/` → `./skills/` → `~/.claude/skills/` (تفوز المشاريع).',
-  'useEverywhere.section.skills.bullet2': 'اربط مهارة واحدة بروابط رمزية في مشاريع متعددة لمشاركتها دون نسخ.',
-  'useEverywhere.section.skills.bullet3': 'يمكن لكل مهارة أن تعلن عن الموصّلات والذرّات ومتطلبات نظام التصميم ومثال مخرجات `preview` للمعرض.',
-  'useEverywhere.section.skills.bullet4': 'بدون واجهة: يمكن لأي Agent يحتوي على `od` في الـ PATH الخاص به استدعاء `od skills list` ثم تشغيل أي مهارة؛ الـ daemon اختياري للتدفقات للقراءة فقط.',
-  'useEverywhere.section.skills.bullet5': '`pnpm seed:test-projects` يختبر شكل العنصر نفسه مع أمثلة الملحقات الافتراضية وأمثلة ملحقات المجتمع، ثم يخزّن مشاريع `index.html` الناتجة كبيانات اختبار قابلة لإعادة الاستخدام.',
-  'useEverywhere.section.skills.snippet1': 'SKILL.md بحدّه الأدنى (front matter متوافق مع Claude + إضافات Open Design)',
-  'useEverywhere.section.skills.snippet2': 'ربط مهارة مشتركة برابط رمزي في مشروع (بأسلوب cc-switch)',
-  'useEverywhere.section.skills.snippet3': 'بدون واجهة: عرض المهارات التي يراها الـ daemon الآن',
-  'useEverywhere.section.skills.snippet4': 'حزمة تجهيزات العناصر بدون واجهة',
-  'useEverywhere.section.skills.footer': 'المواصفات: يغطّي `docs/skills-protocol.md` و`docs/agent-adapters.md` كامل واجهة المحوّل (Claude Code، Codex، Cursor، الـ Agents الداعمة لـ MCP، خيار BYOK API الاحتياطي) واستراتيجيات حقن المهارات لكل محوّل.',
-  'tasks.kicker': 'مساحة عمل الأتمتة',
-  'tasks.comingSoon': 'قريبًا',
-  'tasks.lede': 'تحوّل عمليات الأتمتة الموجّهات إلى عمل دائم: يشغّلها Orbit، وتُبقيها الروتينات قائمة، وتقرّر الجداول متى تنطلق، وتُظهر العناصر الحية ما الذي تغيّر.',
-  'tasks.newAutomation': 'أتمتة جديدة',
-  'tasks.previewNote': 'واجهة معاينة فقط. إعدادات Orbit متاحة اليوم؛ أما الروتينات والجداول وربط العناصر الحية فستظهر مع دمج فروع الواجهة الخلفية.',
-  'tasks.primitivesAria': 'أساسيات الأتمتة',
+  'integrations.tabLabel.skills': 'Ø§ÙÙÙØ§Ø±Ø§Øª',
+  'integrations.tabHint.mcp': 'Ø§ÙØ£Ø¯ÙØ§Øª Ø§ÙØ®Ø§Ø±Ø¬ÙØ©',
+  'integrations.tabHint.connectors': 'Ø§ÙØ­Ø³Ø§Ø¨Ø§Øª ÙÙØ§Ø¬ÙØ§Øª API',
+  'integrations.tabHint.useEverywhere': 'CLI ÙHTTP ÙMCP',
+  'integrations.skillsTitle': 'ØªÙØ§ÙÙØ§Øª Ø§ÙÙÙØ§Ø±Ø§Øª',
+  'integrations.skillsBody': 'ÙØ¬Ø±Ù ÙÙÙ Ø¥Ø¯Ø§Ø±Ø© Ø§ÙØªÙØ§ÙÙ Ø¹ÙÙ ÙØ³ØªÙÙ Ø§ÙÙÙØ§Ø±Ø§Øª ÙÙ ÙØ±Ø¹ Ø¢Ø®Ø±. ÙØ°Ø§ Ø§ÙØªØ¨ÙÙØ¨ ÙØ­Ø¬ÙØ² ÙÙÙ ÙÙÙÙ Ø¥Ø¹Ø¯Ø§Ø¯ MCP ÙØ§ÙÙÙØµÙÙÙØ§Øª ÙØ§ÙÙÙØ§Ø±Ø§Øª Ø§ÙÙØ³ØªÙØ¨ÙÙØ© Ø¶ÙÙ ÙØ³Ø§Ø± Ø§ÙØªÙØ§ÙÙ ÙÙØ³Ù.',
+  'mcpClient.title': 'Ø®ÙØ§Ø¯Ù MCP Ø§ÙØ®Ø§Ø±Ø¬ÙØ©',
+  'mcpClient.subtitle': 'Ø£Ø¯ÙØ§Øª Ø§ÙØ·Ø±Ù Ø§ÙØ«Ø§ÙØ« Ø§ÙØ®Ø§ØµØ© Ø¨Ù Agent Ø§ÙØ¨Ø±ÙØ¬Ø© ÙØ¯ÙÙ.',
+  'mcpClient.addServer': 'Ø¥Ø¶Ø§ÙØ© Ø®Ø§Ø¯Ù',
+  'mcpClient.emptyTitle': 'ÙÙ ÙØªÙ ØªÙÙÙÙ Ø£Ù Ø®ÙØ§Ø¯Ù MCP.',
+  'mcpClient.emptyBody': 'Ø§ÙÙØ± Ø¹ÙÙ "Ø¥Ø¶Ø§ÙØ© Ø®Ø§Ø¯Ù" ÙÙØ¨Ø¯Ø¡ â Ø§Ø®ØªØ± ÙØ§ÙØ¨ÙØ§ (Higgsfield OpenClawØ PollinationsØ AllysonØ ImagicianØ EdgeOne PagesØ GitHubØ Filesystemâ¦) Ø£Ù ÙÙ Ø¨Ø¥Ø¹Ø¯Ø§Ø¯ Ø®Ø§Ø¯Ù stdio / HTTP ÙØ®ØµØµ.',
+  'mcpClient.saveChanges': 'Ø­ÙØ¸ Ø§ÙØªØºÙÙØ±Ø§Øª',
+  'mcpClient.storedAt': 'ÙØ®Ø²ÙÙÙ ÙÙ',
+  'mcpClient.daemonError': 'ØªØ¹Ø°ÙØ± Ø§ÙÙØµÙÙ Ø¥ÙÙ Ø§ÙØ®Ø¯ÙØ© Ø§ÙÙØ­ÙÙØ©. ØªØ£ÙÙØ¯ ÙÙ Ø£Ù Open Design ÙÙØ¯ Ø§ÙØªØ´ØºÙÙØ Ø«Ù Ø£Ø¹ÙØ¯ ÙØªØ­ ÙØ°Ù Ø§ÙÙÙØ­Ø©.',
+  'mcpClient.saveFailed': 'ÙØ´Ù Ø§ÙØ­ÙØ¸. ØªØ­ÙÙÙ ÙÙ Ø£Ù Ø§ÙØ®Ø¯ÙØ© ÙÙØ¯ Ø§ÙØªØ´ØºÙÙ ÙØ­Ø§ÙÙ ÙØ±Ø© Ø£Ø®Ø±Ù.',
+  'useEverywhere.modalAria': 'Ø§Ø³ØªØ®Ø¯Ù Open Design ÙÙ ÙÙ ÙÙØ§Ù',
+  'useEverywhere.modalTitle': 'Ø§Ø³ØªØ®Ø¯Ù Open Design ÙÙ ÙÙ ÙÙØ§Ù',
+  'useEverywhere.modalSubtitle': 'Ø£Ø¯Ø±ÙØ¬ Open Design ÙÙ Ø£Ù IDE Ø£Ù Agent Ø£Ù Ø³ÙØ±Ø¨Øª â CLI ÙHTTP ÙMCP ÙSkills. Ø§Ø³ØªØ®Ø¯Ù âCopy guide for an agentâ ÙØ§ÙØµÙÙ ÙÙ Claude Code Ø£Ù Codex Ø£Ù Cursor Ø£Ù openclaw Ø£Ù hermes ÙØ¥Ø¹Ø¯Ø§Ø¯ ÙÙ Ø´ÙØ¡.',
+  'useEverywhere.closeAria': 'Ø¥ØºÙØ§Ù Ø§ÙØ§Ø³ØªØ®Ø¯Ø§Ù ÙÙ ÙÙ ÙÙØ§Ù',
+  'useEverywhere.closeTitle': 'Ø¥ØºÙØ§Ù (Esc)',
+  'useEverywhere.tabsAria': 'ÙØ§Ø¬ÙØ§Øª Ø§ÙØªÙØ§ÙÙ',
+  'useEverywhere.footStrong': 'ØªØ³ÙÙÙ Ø¨ÙÙØ±Ø© ÙØ§Ø­Ø¯Ø©.',
+  'useEverywhere.footBody': 'ÙÙØ³Ø® Ø¯ÙÙÙÙØ§ ÙÙØ¸ÙÙÙØ§ Ø¨ØµÙØºØ© markdown ÙÙÙÙ ÙÙ Agent Ø§ÙØ®Ø§Øµ Ø¨Ù Ø§ÙØªØµØ±Ù Ø¨ÙØ§Ø¡Ù Ø¹ÙÙÙ ÙÙØ±ÙØ§ â Ø§ÙØªØ«Ø¨ÙØª ÙØ§ÙØªØ­ÙÙ ÙØ§ÙØ§Ø³ØªØ®Ø¯Ø§Ù.',
+  'useEverywhere.configureMcp': 'ØªÙÙÙÙ Ø®Ø§Ø¯Ù MCP',
+  'useEverywhere.copyGuide': 'ÙØ³Ø® Ø§ÙØ¯ÙÙÙ ÙÙ Agent',
+  'useEverywhere.copy': 'ÙØ³Ø®',
+  'useEverywhere.copied': 'ØªÙ Ø§ÙÙØ³Ø®',
+  'useEverywhere.copyFailed': 'ÙØ´Ù Ø§ÙÙØ³Ø®',
+  'useEverywhere.copySnippetAria': 'ÙØ³Ø® Ø§ÙÙÙØªØ·Ù: {label}',
+  'useEverywhere.section.overview.tab': 'ÙØ¸Ø±Ø© Ø¹Ø§ÙØ©',
+  'useEverywhere.section.overview.heading': 'ÙØ¹ÙÙ Open Design Ø£ÙÙÙØ§ ÙØ¹ÙÙ Ø§ÙÙ Agent Ø§ÙØ®Ø§Øµ Ø¨Ù',
+  'useEverywhere.section.overview.intro': 'Open Design Ø£ÙØ«Ø± ÙÙ ÙØ¬Ø±Ø¯ ÙØ§ÙØ°Ø© â Ø¥ÙÙ daemon ÙØ­ÙÙ Ø°Ù ØµÙØ§Ø­ÙØ§Øª (`od`) Ø¥Ø¶Ø§ÙØ©Ù Ø¥ÙÙ Ø³Ø¬Ù Skills + Design-Systems + Atoms. Ø¨ÙØ¬Ø±Ø¯ ØªØ´ØºÙÙÙ Ø¹ÙÙ Ø¬ÙØ§Ø²ÙØ ÙÙÙÙ ÙØ£Ù Agent Ø¨Ø±ÙØ¬Ù (Claude CodeØ CodexØ CursorØ OpenCode/openclawØ HermesØ Ø§ÙØ³ÙØ±Ø¨Øª Ø§ÙØ®Ø§Øµ Ø¨Ù) Ø£Ù ÙÙÙØ¯ Ø¹ÙÙÙØ§Øª Ø§ÙØªÙÙÙØ¯ ÙÙÙØ­Øµ Ø§ÙÙØ´Ø§Ø±ÙØ¹ ÙÙÙØªØ¬ ÙØ®Ø±Ø¬Ø§Øª Ø§ÙØªØµÙÙÙ Ø¹Ø¨Ø± Ø£Ø±Ø¨Ø¹Ø© Ø£Ø³Ø·Ø­ ÙØ§Ø¨ÙØ© ÙÙØªØ¨Ø§Ø¯Ù.',
+  'useEverywhere.section.overview.bullet1': 'CLI â `od <command>` ÙÙØ³ÙØ±Ø¨ØªØ§Øª Ø¨ÙØ§ ÙØ§Ø¬ÙØ©Ø ÙCIØ ÙØ£ØªÙØªØ© Ø§ÙÙ shell.',
+  'useEverywhere.section.overview.bullet2': 'Ø®Ø§Ø¯Ù MCP â ÙØ±Ø¨Ø· Open Design ÙØ®Ø§Ø¯Ù Model Context Protocol Ø¨Ø­ÙØ« ÙÙÙÙ ÙØ£Ù Agent ÙØ¯Ø¹Ù MCP Ø³Ø±Ø¯ Ø§ÙÙÙØ§Ø±Ø§Øª ÙØªØ´ØºÙÙ Ø§ÙØ³ÙÙØ§Ø±ÙÙÙØ§Øª ÙÙØ±Ø§Ø¡Ø© Ø§ÙÙØ®Ø±Ø¬Ø§Øª.',
+  'useEverywhere.section.overview.bullet3': 'HTTP API â ÙÙØ§Ø· ÙÙØ§ÙØ© REST + SSE Ø¹ÙÙ `http://127.0.0.1:7456/api/*`Ø ÙÙØ³ Ø§ÙØ³Ø·Ø­ Ø§ÙØ°Ù ØªØ³ØªØ®Ø¯ÙÙ ÙØ§Ø¬ÙØ© Ø§ÙÙÙØ¨.',
+  'useEverywhere.section.overview.bullet4': 'Skills â Ø­Ø²Ù `SKILL.md` Ø¬Ø§ÙØ²Ø© ÙÙØ§Ø³ØªØ®Ø¯Ø§Ù (ÙØªÙØ§ÙÙØ© ÙØ¹ Claude) ÙÙÙÙ ÙØ£Ù Agent ÙÙØ¬ÙØ¯ ÙØ³Ø¨ÙÙØ§ Ø¹ÙÙ Ø§ÙÙ PATH Ø§Ø³ØªØ¯Ø¹Ø§Ø¤ÙØ§ Ø¯ÙÙ Ø§ÙØ­Ø§Ø¬Ø© Ø¥ÙÙ Open Design Ø¹ÙÙ Ø§ÙØ¥Ø·ÙØ§Ù.',
+  'useEverywhere.section.overview.bullet5': 'Ø§ÙÙØ®Ø±Ø¬Ø§Øª Ø§ÙÙÙØ§Ø³ÙØ© â Ø£ÙØ´Ø¦ ÙØ´Ø§Ø±ÙØ¹ HTML Ø­ÙÙÙÙØ© Ø§ÙØ·ÙØ§ÙÙØ§ ÙÙ SkillsØ ÙØ§ÙØ¥Ø¶Ø§ÙØ§Øª Ø§ÙØ§ÙØªØ±Ø§Ø¶ÙØ© Ø§ÙÙÙØ¬ÙÙÙØ¹Ø©Ø ÙØ£ÙØ«ÙØ© Ø¥Ø¶Ø§ÙØ§Øª Ø§ÙÙØ¬ØªÙØ¹ ÙØ¨Ù Ø¨Ø¯Ø¡ ØªØ´ØºÙÙ Ø§ÙÙ daemon.',
+  'useEverywhere.section.overview.snippet1': 'ØªØ´ØºÙÙ Ø§ÙÙ daemon (ÙÙØ§Ø¬ÙØ© Ø§ÙÙÙØ¨) ÙØ­ÙÙÙØ§',
+  'useEverywhere.section.overview.snippet2': 'ØªØ£ÙÙØ¯ ÙÙ Ø¥ÙÙØ§ÙÙØ© Ø§ÙÙØµÙÙ Ø¥ÙÙÙ',
+  'useEverywhere.section.overview.snippet3': 'Ø§Ø³ØªÙØ±Ø§Ø¯ Ø§ÙØ¹ÙØ§ØµØ± Ø§ÙÙÙØ§Ø³ÙØ© ÙØ¨Ù Ø§ÙØ¥ÙÙØ§Ø¹',
+  'useEverywhere.section.overview.footer': 'ÙÙØªØ¨ Ø§ÙÙ daemon Ø¥ÙÙ `./.od/` (ÙØ­ÙÙ ÙÙÙØ´Ø±ÙØ¹) Ø§ÙØªØ±Ø§Ø¶ÙÙØ§. Ø¹ÙÙÙ `OD_DATA_DIR=~/.open-design` ÙÙØ´Ø§Ø±ÙØ© Ø§ÙØ¨ÙØ§ÙØ§Øª Ø¹Ø¨Ø± Ø§ÙÙØ´Ø§Ø±ÙØ¹.',
+  'useEverywhere.section.cli.tab': 'CLI Â· od',
+  'useEverywhere.section.cli.heading': 'ØªØ´ØºÙÙ Open Design ÙÙ Ø£Ù shell',
+  'useEverywhere.section.cli.intro': 'ÙÙØ´Ø­Ù Ø§ÙÙÙÙ Ø§ÙØªÙÙÙØ°Ù `od` ÙØ¹ Ø§ÙÙ daemon ÙÙÙ ÙÙØ³ Ø§ÙÙÙÙ Ø§ÙØ«ÙØ§Ø¦Ù Ø§ÙØ°Ù ÙØ³ØªØ®Ø¯ÙÙ Claude Code / Codex Ø¹ÙØ¯ ØªØ´ØºÙÙ Ø¹ÙÙÙØ© ØªÙÙÙØ¯. ÙØ¹Ø¸Ù Ø§ÙØ£ÙØ§ÙØ± Ø§ÙÙØ±Ø¹ÙØ© ÙÙ Ø¹ÙÙØ§Ø¡ Ø¨Ø³Ø·Ø§Ø¡ ÙØ±Ø³ÙÙÙ POST Ø¥ÙÙ Ø§ÙÙ daemon Ø§ÙÙØ­ÙÙØ ÙØ°Ø§ ÙÙÙ ØªØ¹ÙÙ Ø¨Ø§ÙØ·Ø±ÙÙØ© ÙÙØ³ÙØ§ Ø³ÙØ§Ø¡ Ø´ØºÙÙØªÙ Ø¹Ø¨Ø± `pnpm tools-dev` Ø£Ù ÙØªØ·Ø¨ÙÙ ÙÙØ­Ø²ÙÙÙ.',
+  'useEverywhere.section.cli.bullet1': '`od` (Ø¨Ø¯ÙÙ ÙØ³Ø§Ø¦Ø·) â ÙÙÙÙÙØ¹ Ø§ÙÙ daemon ÙÙÙØªØ­ ÙØ§Ø¬ÙØ© Ø§ÙÙÙØ¨.',
+  'useEverywhere.section.cli.bullet2': '`od media generate ...` â Ø£ÙØªÙØ¬ Ø¨Ø§ÙØªØ§Øª Ø§ÙØµÙØ±Ø© / Ø§ÙÙÙØ¯ÙÙ / Ø§ÙØµÙØª Ø¹Ø¨Ø± Ø¨Ø±ÙØªÙÙÙÙ Ø§ÙÙØ³Ø§Ø¦Ø· Ø§ÙÙÙØ­ÙØ¯.',
+  'useEverywhere.section.cli.bullet3': '`od run ...` â Ø§Ø¨Ø¯Ø£ ØªØ´ØºÙÙ ÙØ´Ø±ÙØ¹ Ø§ÙØ·ÙØ§ÙÙØ§ ÙÙ ÙÙØ¬ÙÙ + ÙÙØ§Ø±Ø©.',
+  'useEverywhere.section.cli.bullet4': '`od plugin install <source>` / `od plugin apply <id>` â Ø«Ø¨ÙÙØª ÙØ·Ø¨ÙÙÙ Ø¥Ø¶Ø§ÙØ§Øª Ø§ÙÙØ¬ØªÙØ¹.',
+  'useEverywhere.section.cli.bullet5': '`od skills list` / `od design-systems list` â Ø§ÙØ­Øµ ÙØ§ ÙÙ ÙØªØ§Ø­ ÙØ­ÙÙÙØ§.',
+  'useEverywhere.section.cli.bullet6': '`od status` / `od doctor` â ØªØ­ÙÙ ÙÙ Ø³ÙØ§ÙØ© Ø§ÙÙ daemon ÙØ§ÙØªØ´Ù Ø£Ø¯ÙØ§Øª Agent CLI Ø¹ÙÙ Ø§ÙÙ PATH Ø§ÙØ®Ø§Øµ Ø¨Ù.',
+  'useEverywhere.section.cli.snippet1': 'ØªÙÙÙØ¯ ØµÙØ±Ø© (ÙÙÙÙÙÙØ¶ Ø¥ÙÙ ÙØ²ÙÙØ¯ Ø§ÙÙØ³Ø§Ø¦Ø· Ø§ÙÙÙÙÙÙØ£)',
+  'useEverywhere.section.cli.snippet2': 'ØªØ´ØºÙÙ ÙÙØ­Ù Ø³ÙÙØ§Ø±ÙÙ Ø¨Ø¯ÙÙ ÙØ§Ø¬ÙØ© ÙØ¨Ø«Ù Ø§ÙØ£Ø­Ø¯Ø§Ø« ÙØ£Ø³Ø·Ø± JSON',
+  'useEverywhere.section.cli.snippet3': 'Ø¬Ø±Ø¯ Ø§ÙÙÙØ§Ø±Ø§Øª ÙØ£ÙØ¸ÙØ© Ø§ÙØªØµÙÙÙ Ø§ÙÙØªØ§Ø­Ø© ÙØ­ÙÙÙØ§',
+  'useEverywhere.section.cli.snippet4': 'Ø§ÙØªØ­ÙÙÙ ÙÙ Ø§ÙØ¹ÙØ§ØµØ± Ø§ÙÙÙÙÙÙØ£Ø© Ø¹Ø¨Ø± Ø§ÙÙ CLI',
+  'useEverywhere.section.cli.snippet5': 'Ø§ÙØªØ­ÙÙ ÙÙ Ø§ÙØ¨ÙØ¦Ø© + Ø§ÙÙ Agents Ø§ÙÙÙØªØ´ÙØ© (ClaudeØ CodexØ CursorØ â¦)',
+  'useEverywhere.section.cli.footer': 'ØªÙØ¨Ù Ø¬ÙÙØ¹ Ø§ÙØ£ÙØ§ÙØ± Ø§ÙÙØ±Ø¹ÙØ© `--daemon-url http://127.0.0.1:<port>` ÙØ§Ø³ØªÙØ¯Ø§Ù daemon ÙØ¹ÙÙÙ ÙÙØ¯ Ø§ÙØªØ´ØºÙÙ â ÙÙÙØ¯ Ø¹ÙØ¯ ØªØ´ØºÙÙ ÙØ³Ø®Ø© Ø«Ø§ÙÙØ© ÙØ¹Ø²ÙÙØ© ÙÙØ§Ø®ØªØ¨Ø§Ø±Ø§Øª.',
+  'useEverywhere.section.mcp.tab': 'Ø®Ø§Ø¯Ù MCP',
+  'useEverywhere.section.mcp.heading': 'Ø§Ø¬Ø¹Ù Open Design ÙØªØ§Ø­ÙØ§ ÙØ®Ø§Ø¯Ù MCP ÙØ£Ù coding agent',
+  'useEverywhere.section.mcp.intro': 'ÙØ£ØªÙ Open Design ÙØ¹ Ø®Ø§Ø¯Ù Model Context Protocol (`od mcp`) ÙØªÙØ­ ÙØ£Ù Ø¹ÙÙÙ ÙØ¯Ø¹Ù MCP â CursorØ Claude CodeØ AntigravityØ VS Code Copilot ChatØ openclawØ hermes â Ø§ÙØªØ´Ø§Ù Ø£Ø¯ÙØ§Øª Open Design (Ø³Ø±Ø¯ Ø§ÙÙÙØ§Ø±Ø§ØªØ Ø¹Ø±Ø¶ Ø§ÙÙØ¹Ø§ÙÙØ§ØªØ ØªÙÙÙØ¯ Ø§ÙÙØ³Ø§Ø¦Ø·Ø ØªØ´ØºÙÙ Ø§ÙØ¥Ø¶Ø§ÙØ§Øª) Ø¯ÙÙ Ø§Ø³ØªØ®Ø¯Ø§Ù Ø§ÙÙ shell ÙØ¯ÙÙÙØ§. ÙÙØ´Ø± Ø§ÙÙ daemon ÙÙØªØ·Ù ØªØ«Ø¨ÙØª Ø¬Ø§ÙØ²ÙØ§ ÙÙØµÙ Ø¹Ø¨Ø± `GET /api/mcp/install-info` ÙÙÙ Ø¹ÙÙÙ Ø±Ø¦ÙØ³Ù.',
+  'useEverywhere.section.mcp.bullet1': 'ÙÙÙ Stdio â ÙØ§ ÙÙÙØ° Ø¥Ø¶Ø§ÙÙØ ÙÙØ´ØºÙÙÙ Ø§ÙØ¹ÙÙÙ `od mcp` ÙØ¨Ø§Ø´Ø±Ø©Ù.',
+  'useEverywhere.section.mcp.bullet2': 'ÙÙØªØ´Ù ØªÙÙØ§Ø¦ÙÙØ§ Ø¹ÙÙØ§Ù URL ÙÙÙ daemon Ø§ÙÙØ´Ø· Ø¹Ø¨Ø± ÙÙØ¨Ø³ Ø­Ø§ÙØ© IPC Ø§ÙÙØ­ÙÙ Ø¹ÙØ¯ ØªØ´ØºÙÙÙ ÙÙ sidecar.',
+  'useEverywhere.section.mcp.bullet3': 'ÙØ±Ø¬Ø¹ Ø¥ÙÙ `--daemon-url http://127.0.0.1:<port>` ÙÙØªØ«Ø¨ÙØªØ§Øª Ø§ÙØ¹Ø§Ø¯ÙØ© Ø¨Ø­ÙØ« ØªØ¬Ø¯ Ø¹ÙÙÙØ© MCP Ø¯Ø§Ø¦ÙÙØ§ daemon ÙÙØ¯ Ø§ÙØªØ´ØºÙÙ.',
+  'useEverywhere.section.mcp.bullet4': 'ÙØ«Ø¨ÙØª `OD_DATA_DIR` Ø¨Ø­ÙØ« ØªÙØªØ¨ Ø¹ÙÙÙØ© MCP Ø§ÙÙÙÙØ´Ø£Ø© Ø¥ÙÙ Ø§ÙÙÙØ§Ù ÙÙØ³Ù Ø§ÙØ°Ù ÙØ³ØªØ®Ø¯ÙÙ Ø§ÙÙ daemon Ø¨Ø§ÙÙØ¹Ù (ÙØªØ¬ÙÙØ¨ EPERM ÙÙ Ø­Ø²Ù ØªØ·Ø¨ÙÙØ§Øª macOS Ø§ÙÙÙØ­Ø²ÙÙÙØ©).',
+  'useEverywhere.section.mcp.snippet1': 'Ø¥Ø¹Ø¯Ø§Ø¯ Ø¹ÙÙÙ MCP Ø¹Ø§Ù (ÙØ¹ÙÙ ÙÙ CursorØ Claude CodeØ CodexØ â¦)',
+  'useEverywhere.section.mcp.snippet2': 'Ø£Ù: Ø§Ø·ÙØ¨ ÙÙ Ø§ÙÙ daemon Ø§ÙÙÙØªØ·Ù Ø§ÙÙÙØ®ØµÙØµ ÙØªØ«Ø¨ÙØªÙ',
+  'useEverywhere.section.mcp.snippet3': 'ÙØªØºÙÙØ± MCP ÙÙØ¹ÙØ§ØµØ± Ø§ÙØ­ÙØ© (ÙØ±Ø§Ø¡Ø© ÙØªØ­Ø¯ÙØ« ÙÙØ­Ø§Øª Ø§ÙÙØ¹ÙÙÙØ§Øª)',
+  'useEverywhere.section.mcp.footer': 'ÙÙ ØªØ·Ø¨ÙÙ Open DesignØ Ø§ÙØªØ­ Ø§ÙØ¥Ø¹Ø¯Ø§Ø¯Ø§Øª â Ø§ÙØªÙØ§ÙÙØ§Øª ÙÙØ³Ø® Ø£ÙØ± ØªØ«Ø¨ÙØª Ø®Ø§Øµ Ø¨ÙÙ Ø¹ÙÙÙ (CursorØ Claude CodeØ AntigravityØ VS Code) Ø¨Ø¯ÙÙØ§ ÙÙ ØªØ­Ø±ÙØ± JSON ÙØ¯ÙÙÙØ§.',
+  'useEverywhere.section.http.tab': 'ÙØ§Ø¬ÙØ© Ø¨Ø±ÙØ¬Ø© ØªØ·Ø¨ÙÙØ§Øª HTTP',
+  'useEverywhere.section.http.heading': 'ÙÙØ³ ÙØ§Ø¬ÙØ© REST + SSE Ø§ÙØªÙ ØªØ³ØªØ®Ø¯ÙÙØ§ ÙØ§Ø¬ÙØ© Ø§ÙÙÙØ¨',
+  'useEverywhere.section.http.intro': 'ÙØ®Ø¯Ù Ø§ÙÙ daemon Ø§ÙÙØ­ÙÙ ÙØ§Ø¬ÙØ© HTTP API Ø¹ÙÙ `http://127.0.0.1:7456` (Ø§ÙÙÙÙØ° ÙØ§Ø¨Ù ÙÙØªÙÙØ¦Ø©). ÙÙ ÙÙØ·Ø© ÙÙØ§ÙØ© ØªØ³ØªØ¯Ø¹ÙÙØ§ ÙØ§Ø¬ÙØ© Ø§ÙÙÙØ¨ ÙØªØ§Ø­Ø© Ø£ÙØ¶ÙØ§ ÙÙÙØµÙØµ Ø§ÙØ¨Ø±ÙØ¬ÙØ© Ø§ÙØ®Ø§ØµØ© Ø¨Ù. ØªÙØµØ¯Ø± ÙÙØ§Ø· ÙÙØ§ÙØ© Ø§ÙØ¨Ø«Ù (Ø£Ø¯ÙØ§Ø± Ø§ÙÙØ­Ø§Ø¯Ø«Ø©Ø Ø¹ÙÙÙØ§Øª ØªØ´ØºÙÙ Ø§ÙÙØ´Ø§Ø±ÙØ¹) Ø£Ø­Ø¯Ø§Ø« Server-Sent Events Ø¨Ø£ÙÙØ§Ø¹ Ø§ÙØ¹ÙÙØ¯ Ø§ÙÙÙØ¬ÙØ¯Ø© ÙÙ `@open-design/contracts`.',
+  'useEverywhere.section.http.bullet1': '`GET /api/health` â Ø­ÙÙÙØ© Ø§ÙÙ daemon.',
+  'useEverywhere.section.http.bullet2': '`GET /api/skills` Ù`GET /api/design-systems` â Ø§ÙØ³Ø¬ÙØ§Øª Ø§ÙÙØªØ§Ø­Ø©.',
+  'useEverywhere.section.http.bullet3': '`GET /api/projects` Ù`POST /api/projects` â Ø³Ø±Ø¯ Ø§ÙÙØ´Ø§Ø±ÙØ¹ ÙØ¥ÙØ´Ø§Ø¤ÙØ§ (ÙÙØ±Ø¬ÙØ¹ POST Ø§ÙÙØ´Ø±ÙØ¹ + Ø§ÙÙØ­Ø§Ø¯Ø«Ø© Ø§ÙØ£ÙÙÙ).',
+  'useEverywhere.section.http.bullet4': '`GET /api/projects/:id/chat` â ØªØ¯ÙÙ SSE ÙØ£Ø­Ø¯Ø§Ø« Agent Ø§ÙØ®Ø§ØµØ© Ø¨ÙØ­Ø§Ø¯Ø«Ø©.',
+  'useEverywhere.section.http.bullet5': '`POST /api/plugins/:id/apply` â Ø§Ø±Ø¨Ø· Ø¥Ø¶Ø§ÙØ© ÙØ«Ø¨ÙØªØ© ÙØ§Ø­ØµÙ Ø¹ÙÙ Ø§Ø³ØªØ¹ÙØ§Ù Ø§ÙÙØ«Ø§Ù Ø§ÙÙØ¹Ø±ÙØ¶ + ÙØ¯Ø®ÙØ§ØªÙ.',
+  'useEverywhere.section.http.bullet6': '`GET /api/agents` â Ø£Ø¯ÙØ§Øª Agent Ø§ÙØ¨Ø±ÙØ¬ÙØ© Ø§ÙÙÙØªØ´ÙØ© Ø¹ÙÙ Ø§ÙÙ PATH Ø§ÙØ®Ø§Øµ Ø¨Ù.',
+  'useEverywhere.section.http.snippet1': 'Ø¹Ø±Ø¶ Ø§ÙÙÙØ§Ø±Ø§Øª Ø§ÙÙÙØ«Ø¨ÙØªØ© (Ø³ÙØ³ØªØ®Ø¯ÙÙØ§ Ø§ÙÙ Agent ÙÙÙØ§ÙØ¨)',
+  'useEverywhere.section.http.snippet2': 'Ø¥ÙØ´Ø§Ø¡ ÙØ´Ø±ÙØ¹ ÙÙ ÙÙØ¬ÙÙ (ØªØ¯ÙÙÙ ÙØ§ÙÙ ÙÙ Ø¬Ø§ÙØ¨ Ø§ÙØ®Ø§Ø¯Ù)',
+  'useEverywhere.section.http.snippet3': 'Ø¨Ø«Ù Ø¯ÙØ± ÙØ­Ø§Ø¯Ø«Ø© (SSE â ÙÙ Ø³Ø·Ø± ÙØªÙØ§ÙÙ ÙØ¹ JSON-Lines)',
+  'useEverywhere.section.http.footer': 'ØªØªÙÙØ± Ø£ÙÙØ§Ø¹ TypeScript Ø®Ø§ÙØµØ© ÙÙÙ Ø·ÙØ¨/Ø§Ø³ØªØ¬Ø§Ø¨Ø© ÙÙ `@open-design/contracts` â Ø§Ø³ØªÙØ±Ø¯ÙØ§ ÙÙ Ø³ÙØ±Ø¨ØªÙ ÙÙØ­ØµÙÙ Ø¹ÙÙ Ø¥ÙÙØ§Ù ØªÙÙØ§Ø¦Ù ÙØ§ÙÙ Ø¯ÙÙ ØªÙÙØ¦Ø© ÙÙÙÙÙÙØ¯.',
+  'useEverywhere.section.skills.tab': 'Ø§ÙÙÙØ§Ø±Ø§Øª ÙØ§ÙÙØ¶Ø¹ Ø¨Ø¯ÙÙ ÙØ§Ø¬ÙØ©',
+  'useEverywhere.section.skills.heading': 'ÙÙØ§Ø±Ø§Øª Skills Ø¬Ø§ÙØ²Ø© ÙÙØ§Ø³ØªØ®Ø¯Ø§Ù ÙØ£Ù Agent â Ø­ØªÙ Ø¯ÙÙ ØªØ´ØºÙÙ Open Design',
+  'useEverywhere.section.skills.intro': 'Ø§ÙÙÙØ§Ø±Ø© ÙÙ Ø¯ÙÙÙ ÙØ­ØªÙÙ Ø¹ÙÙ `SKILL.md` ÙØªÙØ§ÙÙ ÙØ¹ Claude (ÙÙØ¯ÙÙØ© YAML + ÙØªÙ). ÙÙØ³ÙØ¹ Open Design Ø§ÙØªÙØ³ÙÙ Ø¨ÙØ¶Ø§Ø¡ Ø§ÙØ£Ø³ÙØ§Ø¡ `od:` (`mode`Ø `preview`Ø `design_system`Ø `inputs`Ø â¦) Ø¨Ø­ÙØ« ÙÙÙÙ Ø§Ø³ØªØ®Ø¯Ø§Ù Ø§ÙÙØ®Ø±ÙØ¬ ÙÙØ³Ù Ø¯Ø§Ø®Ù Open Design ÙÙÙ ÙÙØ¨Ù Agent Ø¹Ø§Ø¯Ù ÙØ«Ù Claude Code Ø£Ù Codex Ø£Ù openclaw Ø£Ù hermes. ÙØªÙØ¨Ø¹ Ø§ÙØ§ÙØªØ´Ø§Ù Ø³ÙØ³ÙØ© Ø£ÙÙÙÙØ© Ø¨Ø­ÙØ« ÙÙÙÙ ÙÙÙØ´Ø§Ø±ÙØ¹ ØªØ¬Ø§ÙØ² ÙÙØ§Ø±Ø§ØªÙØ§ Ø§ÙØ®Ø§ØµØ©.',
+  'useEverywhere.section.skills.bullet1': 'Ø§ÙØ§ÙØªØ´Ø§Ù: `./.claude/skills/` â `./skills/` â `~/.claude/skills/` (ØªÙÙØ² Ø§ÙÙØ´Ø§Ø±ÙØ¹).',
+  'useEverywhere.section.skills.bullet2': 'Ø§Ø±Ø¨Ø· ÙÙØ§Ø±Ø© ÙØ§Ø­Ø¯Ø© Ø¨Ø±ÙØ§Ø¨Ø· Ø±ÙØ²ÙØ© ÙÙ ÙØ´Ø§Ø±ÙØ¹ ÙØªØ¹Ø¯Ø¯Ø© ÙÙØ´Ø§Ø±ÙØªÙØ§ Ø¯ÙÙ ÙØ³Ø®.',
+  'useEverywhere.section.skills.bullet3': 'ÙÙÙÙ ÙÙÙ ÙÙØ§Ø±Ø© Ø£Ù ØªØ¹ÙÙ Ø¹Ù Ø§ÙÙÙØµÙÙØ§Øª ÙØ§ÙØ°Ø±ÙØ§Øª ÙÙØªØ·ÙØ¨Ø§Øª ÙØ¸Ø§Ù Ø§ÙØªØµÙÙÙ ÙÙØ«Ø§Ù ÙØ®Ø±Ø¬Ø§Øª `preview` ÙÙÙØ¹Ø±Ø¶.',
+  'useEverywhere.section.skills.bullet4': 'Ø¨Ø¯ÙÙ ÙØ§Ø¬ÙØ©: ÙÙÙÙ ÙØ£Ù Agent ÙØ­ØªÙÙ Ø¹ÙÙ `od` ÙÙ Ø§ÙÙ PATH Ø§ÙØ®Ø§Øµ Ø¨Ù Ø§Ø³ØªØ¯Ø¹Ø§Ø¡ `od skills list` Ø«Ù ØªØ´ØºÙÙ Ø£Ù ÙÙØ§Ø±Ø©Ø Ø§ÙÙ daemon Ø§Ø®ØªÙØ§Ø±Ù ÙÙØªØ¯ÙÙØ§Øª ÙÙÙØ±Ø§Ø¡Ø© ÙÙØ·.',
+  'useEverywhere.section.skills.bullet5': '`pnpm seed:test-projects` ÙØ®ØªØ¨Ø± Ø´ÙÙ Ø§ÙØ¹ÙØµØ± ÙÙØ³Ù ÙØ¹ Ø£ÙØ«ÙØ© Ø§ÙÙÙØ­ÙØ§Øª Ø§ÙØ§ÙØªØ±Ø§Ø¶ÙØ© ÙØ£ÙØ«ÙØ© ÙÙØ­ÙØ§Øª Ø§ÙÙØ¬ØªÙØ¹Ø Ø«Ù ÙØ®Ø²ÙÙ ÙØ´Ø§Ø±ÙØ¹ `index.html` Ø§ÙÙØ§ØªØ¬Ø© ÙØ¨ÙØ§ÙØ§Øª Ø§Ø®ØªØ¨Ø§Ø± ÙØ§Ø¨ÙØ© ÙØ¥Ø¹Ø§Ø¯Ø© Ø§ÙØ§Ø³ØªØ®Ø¯Ø§Ù.',
+  'useEverywhere.section.skills.snippet1': 'SKILL.md Ø¨Ø­Ø¯ÙÙ Ø§ÙØ£Ø¯ÙÙ (front matter ÙØªÙØ§ÙÙ ÙØ¹ Claude + Ø¥Ø¶Ø§ÙØ§Øª Open Design)',
+  'useEverywhere.section.skills.snippet2': 'Ø±Ø¨Ø· ÙÙØ§Ø±Ø© ÙØ´ØªØ±ÙØ© Ø¨Ø±Ø§Ø¨Ø· Ø±ÙØ²Ù ÙÙ ÙØ´Ø±ÙØ¹ (Ø¨Ø£Ø³ÙÙØ¨ cc-switch)',
+  'useEverywhere.section.skills.snippet3': 'Ø¨Ø¯ÙÙ ÙØ§Ø¬ÙØ©: Ø¹Ø±Ø¶ Ø§ÙÙÙØ§Ø±Ø§Øª Ø§ÙØªÙ ÙØ±Ø§ÙØ§ Ø§ÙÙ daemon Ø§ÙØ¢Ù',
+  'useEverywhere.section.skills.snippet4': 'Ø­Ø²ÙØ© ØªØ¬ÙÙØ²Ø§Øª Ø§ÙØ¹ÙØ§ØµØ± Ø¨Ø¯ÙÙ ÙØ§Ø¬ÙØ©',
+  'useEverywhere.section.skills.footer': 'Ø§ÙÙÙØ§ØµÙØ§Øª: ÙØºØ·ÙÙ `docs/skills-protocol.md` Ù`docs/agent-adapters.md` ÙØ§ÙÙ ÙØ§Ø¬ÙØ© Ø§ÙÙØ­ÙÙÙ (Claude CodeØ CodexØ CursorØ Ø§ÙÙ Agents Ø§ÙØ¯Ø§Ø¹ÙØ© ÙÙ MCPØ Ø®ÙØ§Ø± BYOK API Ø§ÙØ§Ø­ØªÙØ§Ø·Ù) ÙØ§Ø³ØªØ±Ø§ØªÙØ¬ÙØ§Øª Ø­ÙÙ Ø§ÙÙÙØ§Ø±Ø§Øª ÙÙÙ ÙØ­ÙÙÙ.',
+  'tasks.kicker': 'ÙØ³Ø§Ø­Ø© Ø¹ÙÙ Ø§ÙØ£ØªÙØªØ©',
+  'tasks.comingSoon': 'ÙØ±ÙØ¨ÙØ§',
+  'tasks.lede': 'ØªØ­ÙÙÙ Ø¹ÙÙÙØ§Øª Ø§ÙØ£ØªÙØªØ© Ø§ÙÙÙØ¬ÙÙØ§Øª Ø¥ÙÙ Ø¹ÙÙ Ø¯Ø§Ø¦Ù: ÙØ´ØºÙÙÙØ§ OrbitØ ÙØªÙØ¨ÙÙÙØ§ Ø§ÙØ±ÙØªÙÙØ§Øª ÙØ§Ø¦ÙØ©Ø ÙØªÙØ±ÙØ± Ø§ÙØ¬Ø¯Ø§ÙÙ ÙØªÙ ØªÙØ·ÙÙØ ÙØªÙØ¸ÙØ± Ø§ÙØ¹ÙØ§ØµØ± Ø§ÙØ­ÙØ© ÙØ§ Ø§ÙØ°Ù ØªØºÙÙØ±.',
+  'tasks.newAutomation': 'Ø£ØªÙØªØ© Ø¬Ø¯ÙØ¯Ø©',
+  'tasks.previewNote': 'ÙØ§Ø¬ÙØ© ÙØ¹Ø§ÙÙØ© ÙÙØ·. Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Orbit ÙØªØ§Ø­Ø© Ø§ÙÙÙÙØ Ø£ÙØ§ Ø§ÙØ±ÙØªÙÙØ§Øª ÙØ§ÙØ¬Ø¯Ø§ÙÙ ÙØ±Ø¨Ø· Ø§ÙØ¹ÙØ§ØµØ± Ø§ÙØ­ÙØ© ÙØ³ØªØ¸ÙØ± ÙØ¹ Ø¯ÙØ¬ ÙØ±ÙØ¹ Ø§ÙÙØ§Ø¬ÙØ© Ø§ÙØ®ÙÙÙØ©.',
+  'tasks.primitivesAria': 'Ø£Ø³Ø§Ø³ÙØ§Øª Ø§ÙØ£ØªÙØªØ©',
   'tasks.primitive.orbit.title': 'Orbit',
-  'tasks.primitive.orbit.body': 'بيئة تشغيل دائمة لعمل الـ Agent الطويل الأمد أو المتكرر.',
-  'tasks.primitive.orbit.enabled': 'تم تفعيل الملخّص اليومي',
-  'tasks.primitive.orbit.manualOnly': 'يدوي فقط',
-  'tasks.primitive.routines.title': 'الروتينات',
-  'tasks.primitive.routines.body': 'تعريفات مهام دائمة تستمر بعد انتهاء محادثة واحدة.',
-  'tasks.primitive.routines.meta': 'غلاف المنتج جاهز',
-  'tasks.primitive.schedules.title': 'الجداول',
-  'tasks.primitive.schedules.body': 'مُشغّلات زمنية أو قائمة على الأحداث تقرّر متى ينبغي تشغيل روتين ما.',
-  'tasks.primitive.schedules.meta': 'الفرع قيد الانتظار',
-  'tasks.primitive.liveArtifacts.title': 'العناصر الحية',
-  'tasks.primitive.liveArtifacts.body': 'تقارير وملاحظات تستمر في التحديث أثناء عمل الـ Agent.',
-  'tasks.primitive.liveArtifacts.meta': 'نموذج المعاينة',
-  'tasks.listAria': 'قائمة عمليات الأتمتة',
-  'tasks.routinesAndRuns': '{n} روتينات وعمليات تشغيل',
-  'tasks.filtersAria': 'عوامل تصفية الأتمتة',
-  'tasks.filter.scheduled': 'مُجدوَل',
-  'tasks.filter.running': 'قيد التشغيل',
-  'tasks.filter.done': 'تم',
-  'tasks.configurationAria': 'إعداد الأتمتة',
-  'tasks.slot.trigger': 'المُشغِّل',
-  'tasks.slot.pattern': 'النمط',
-  'tasks.slot.runtime': 'وقت التشغيل',
-  'tasks.slot.output': 'المُخرَجات',
-  'tasks.liveArtifact': 'مُخرَج حي',
-  'tasks.viewProgress': 'عرض التقدّم',
-  'tasks.pause': 'إيقاف مؤقت',
-  'tasks.runNow': 'تشغيل الآن',
-  'tasks.openArtifact': 'فتح المُخرَج',
-  'tasks.status.dailyAt': 'يوميًا · {time}',
-  'tasks.status.pausedManual': 'متوقّف مؤقتًا · يدوي فقط',
-  'tasks.sample.orbit.title': 'ملخّص موصّل Orbit Daily',
-  'tasks.sample.orbit.metaEnabled': 'تمت جدولة موجز الموصّل',
-  'tasks.sample.orbit.metaDisabled': 'افتح إعدادات Orbit للتفعيل',
-  'tasks.sample.orbit.previewEnabled': 'orbit_daily.html · مخرَج مباشر',
-  'tasks.sample.orbit.previewDisabled': 'لا يوجد تشغيل مجدوَل',
-  'tasks.sample.orbit.triggerEnabled': 'الجدولة · يوميًا في {time}',
-  'tasks.sample.orbit.triggerDisabled': 'يدوي · تشغيل عند الطلب',
-  'tasks.sample.orbit.pattern': 'روتين · ملخّص الموصِّلات',
-  'tasks.sample.orbit.runtime': 'Orbit · مجدول عبر الـ daemon',
-  'tasks.sample.orbit.output': 'مخرَج مباشر · تقرير قابل للتحديث',
-  'tasks.sample.orbit.artifactMetaEnabled': 'يتم التحديث بعد كل تشغيل',
-  'tasks.sample.orbit.artifactMetaDisabled': 'في انتظار الجدولة',
-  'tasks.sample.orbit.body1': '# ملخّص نشاط Orbit Daily',
-  'tasks.sample.orbit.body2': 'الموصِّلات المفحوصة · النجاحات والتخطّيات والإخفاقات',
-  'tasks.sample.orbit.body3': 'تتحوّل أبرز النقاط إلى مُخرَج حي قابل للتحديث.',
-  'tasks.sample.mcp.title': 'بحث في بدائل MCP',
-  'tasks.sample.mcp.status': 'قيد التشغيل في orbit · ساعتان و14 دقيقة',
-  'tasks.sample.mcp.meta': 'تمت معالجة 14 / 30 مصدرًا',
-  'tasks.sample.mcp.preview': 'research_notes.md · مباشر',
-  'tasks.sample.mcp.trigger': 'يدوي · لمرة واحدة',
-  'tasks.sample.mcp.pattern': 'موجّه بحث معمّق',
-  'tasks.sample.mcp.runtime': 'عن بُعد · دائم',
-  'tasks.sample.mcp.output': 'تقرير مباشر · يتحدّث تلقائيًا',
-  'tasks.sample.mcp.artifactMeta': 'تم التحديث قبل 12 ثانية',
-  'tasks.sample.mcp.body1': '# بدائل MCP - نتائج أولية',
-  'tasks.sample.mcp.body2': 'تمت مراجعة 14 مصدرًا · 3 مرشّحين في القائمة المختصرة',
-  'tasks.sample.mcp.body3': '## القائمة المختصرة',
-  'tasks.sample.mcp.body4': '- مخطّطات استدعاء الأدوات عبر JSON-RPC...',
-  'tasks.sample.mcp.body5': '- بروتوكولات Agent المعتمدة على gRPC...',
-  'tasks.sample.weekly.title': 'الموجز الأسبوعي للفريق',
-  'tasks.sample.weekly.status': 'التالي: الإثنين 9:00 صباحًا',
-  'tasks.sample.weekly.meta': 'يحدّث مستند الفريق الأسبوعي',
-  'tasks.sample.weekly.preview': 'team_weekly.md · المخرَج التالي',
-  'tasks.sample.weekly.trigger': 'الجدولة · أسبوعيًا',
-  'tasks.sample.weekly.pattern': 'روتين · ملخّص الفريق',
-  'tasks.sample.weekly.runtime': 'عن بُعد · متكرر',
-  'tasks.sample.weekly.output': 'مُخرَج حي · markdown',
-  'tasks.sample.weekly.artifactMeta': 'آخر تحديث قبل 4 أيام',
-  'tasks.sample.weekly.body1': '# أسبوع الفريق',
-  'tasks.sample.weekly.body2': '## قيد التنفيذ',
-  'tasks.sample.weekly.body3': '- دورة دمج نظام التصميم',
-  'tasks.sample.weekly.body4': '- مراجعة جودة الموصّلات',
-  'tasks.sample.weekly.body5': '## المخاطر',
-  'tasks.sample.pr.title': 'تذكير بمراجعة PR',
-  'tasks.sample.pr.status': 'عند PR جديد · شُغّل قبل 23 د',
-  'tasks.sample.pr.meta': 'يرسل رسالة مباشرة عبر Slack',
-  'tasks.sample.pr.preview': 'نجح آخر تسليم',
-  'tasks.sample.pr.trigger': 'حدث · PR جديد',
-  'tasks.sample.pr.pattern': 'روتين · إشعار',
-  'tasks.sample.pr.runtime': 'محلي · تشغيل سريع',
-  'tasks.sample.pr.output': 'رسالة · رسالة Slack مباشرة',
-  'tasks.sample.pr.artifactMeta': 'آخر تشغيل قبل 23 دقيقة',
-  'tasks.sample.pr.body1': 'تم فتح PR #184 للمراجعة',
-  'tasks.sample.pr.body2': 'المراجعون المطابقون: design-platform، web-runtime',
-  'tasks.sample.pr.body3': 'التسليم: تم إرسال رسالة Slack المباشرة',
-  'tasks.sample.meeting.title': 'التحضير لما قبل الاجتماع',
-  'tasks.sample.meeting.status': 'غدًا · 10:00 صباحًا',
-  'tasks.sample.meeting.meta': 'لمرة واحدة · يرسل ملخصًا',
-  'tasks.sample.meeting.preview': 'meeting_brief.md · في قائمة الانتظار',
-  'tasks.sample.meeting.trigger': 'مجدول · لمرة واحدة',
-  'tasks.sample.meeting.pattern': 'موجّه الإحاطة',
-  'tasks.sample.meeting.runtime': 'عن بُعد · محدود',
-  'tasks.sample.meeting.output': 'مُخرَج + رسالة',
-  'tasks.sample.meeting.artifactMeta': 'في قائمة انتظار التوليد',
-  'tasks.sample.meeting.body1': '# موجز الاجتماع',
-  'tasks.sample.meeting.body2': 'مصدر جدول الأعمال: حدث التقويم + المستندات المرتبطة',
-  'tasks.sample.meeting.body3': 'ستتضمّن المُخرَجات القرارات والعوائق والأسئلة.',
-  'tasks.sample.candidate.title': 'تتبّع المرشّحين',
-  'tasks.sample.candidate.status': 'فشل · يحتاج إلى انتباه',
-  'tasks.sample.candidate.meta': 'انتهت صلاحية المصادقة',
-  'tasks.sample.candidate.preview': 'أعد ربط Greenhouse للاستئناف',
-  'tasks.sample.candidate.trigger': 'مجدول · يومي',
-  'tasks.sample.candidate.pattern': 'روتين · مزامنة المتقدمين',
-  'tasks.sample.candidate.runtime': 'عن بُعد · متكرر',
-  'tasks.sample.candidate.output': 'مُخرَج حي · جدول',
-  'tasks.sample.candidate.artifactMeta': 'متوقف مؤقتًا حتى استعادة المصادقة',
-  'tasks.sample.candidate.body1': '# مسار المرشّحين',
-  'tasks.sample.candidate.body2': 'آخر مزامنة ناجحة: قبل يومين',
-  'tasks.sample.candidate.body3': 'إجراء مطلوب: أعد ربط حساب المصدر.',
-  'routines.title': 'الأتمتة',
-  'routines.subtitle': 'عمليات أتمتة مجدوَلة تعمل دون إشراف.',
-  'routines.newAutomation': 'أتمتة جديدة',
-  'routines.loading': 'جارٍ التحميل…',
-  'routines.empty': 'لا توجد أتمتة بعد.',
-  'routines.emptyHint': 'انقر على أتمتة جديدة لجدولة تشغيل Agent غير مراقب.',
-  'routines.runHistoryLoading': 'جارٍ تحميل عمليات التشغيل…',
-  'routines.runHistoryEmpty': 'لا توجد عمليات تشغيل بعد.',
-  'routines.fieldName': 'الاسم',
-  'routines.fieldNamePlaceholder': 'الإحاطة الصباحية',
-  'routines.fieldPrompt': 'الموجّه',
-  'routines.fieldPromptPlaceholder': 'اجلب نشاط GitHub وLinear ليوم أمس ولخّص ما تغيّر.',
-  'routines.fieldSchedule': 'الجدول الزمني',
-  'routines.fieldMinute': 'الدقيقة من كل ساعة',
-  'routines.fieldTime': 'الوقت',
-  'routines.fieldTimezone': 'المنطقة الزمنية',
-  'routines.fieldsetProject': 'المشروع',
-  'routines.kind.hourly': 'كل ساعة',
-  'routines.kind.daily': 'يوميًا',
-  'routines.kind.weekdays': 'أيام الأسبوع',
-  'routines.kind.weekly': 'أسبوعيًا',
-  'routines.weekday.short.0': 'الأحد',
-  'routines.weekday.short.1': 'الإثنين',
-  'routines.weekday.short.2': 'الثلاثاء',
-  'routines.weekday.short.3': 'الأربعاء',
-  'routines.weekday.short.4': 'الخميس',
-  'routines.weekday.short.5': 'الجمعة',
-  'routines.weekday.short.6': 'السبت',
-  'routines.weekday.long.0': 'الأحد',
-  'routines.weekday.long.1': 'الإثنين',
-  'routines.weekday.long.2': 'الثلاثاء',
-  'routines.weekday.long.3': 'الأربعاء',
-  'routines.weekday.long.4': 'الخميس',
-  'routines.weekday.long.5': 'الجمعة',
-  'routines.weekday.long.6': 'السبت',
+  'tasks.primitive.orbit.body': 'Ø¨ÙØ¦Ø© ØªØ´ØºÙÙ Ø¯Ø§Ø¦ÙØ© ÙØ¹ÙÙ Ø§ÙÙ Agent Ø§ÙØ·ÙÙÙ Ø§ÙØ£ÙØ¯ Ø£Ù Ø§ÙÙØªÙØ±Ø±.',
+  'tasks.primitive.orbit.enabled': 'ØªÙ ØªÙØ¹ÙÙ Ø§ÙÙÙØ®ÙØµ Ø§ÙÙÙÙÙ',
+  'tasks.primitive.orbit.manualOnly': 'ÙØ¯ÙÙ ÙÙØ·',
+  'tasks.primitive.routines.title': 'Ø§ÙØ±ÙØªÙÙØ§Øª',
+  'tasks.primitive.routines.body': 'ØªØ¹Ø±ÙÙØ§Øª ÙÙØ§Ù Ø¯Ø§Ø¦ÙØ© ØªØ³ØªÙØ± Ø¨Ø¹Ø¯ Ø§ÙØªÙØ§Ø¡ ÙØ­Ø§Ø¯Ø«Ø© ÙØ§Ø­Ø¯Ø©.',
+  'tasks.primitive.routines.meta': 'ØºÙØ§Ù Ø§ÙÙÙØªØ¬ Ø¬Ø§ÙØ²',
+  'tasks.primitive.schedules.title': 'Ø§ÙØ¬Ø¯Ø§ÙÙ',
+  'tasks.primitive.schedules.body': 'ÙÙØ´ØºÙÙØ§Øª Ø²ÙÙÙØ© Ø£Ù ÙØ§Ø¦ÙØ© Ø¹ÙÙ Ø§ÙØ£Ø­Ø¯Ø§Ø« ØªÙØ±ÙØ± ÙØªÙ ÙÙØ¨ØºÙ ØªØ´ØºÙÙ Ø±ÙØªÙÙ ÙØ§.',
+  'tasks.primitive.schedules.meta': 'Ø§ÙÙØ±Ø¹ ÙÙØ¯ Ø§ÙØ§ÙØªØ¸Ø§Ø±',
+  'tasks.primitive.liveArtifacts.title': 'Ø§ÙØ¹ÙØ§ØµØ± Ø§ÙØ­ÙØ©',
+  'tasks.primitive.liveArtifacts.body': 'ØªÙØ§Ø±ÙØ± ÙÙÙØ§Ø­Ø¸Ø§Øª ØªØ³ØªÙØ± ÙÙ Ø§ÙØªØ­Ø¯ÙØ« Ø£Ø«ÙØ§Ø¡ Ø¹ÙÙ Ø§ÙÙ Agent.',
+  'tasks.primitive.liveArtifacts.meta': 'ÙÙÙØ°Ø¬ Ø§ÙÙØ¹Ø§ÙÙØ©',
+  'tasks.listAria': 'ÙØ§Ø¦ÙØ© Ø¹ÙÙÙØ§Øª Ø§ÙØ£ØªÙØªØ©',
+  'tasks.routinesAndRuns': '{n} Ø±ÙØªÙÙØ§Øª ÙØ¹ÙÙÙØ§Øª ØªØ´ØºÙÙ',
+  'tasks.filtersAria': 'Ø¹ÙØ§ÙÙ ØªØµÙÙØ© Ø§ÙØ£ØªÙØªØ©',
+  'tasks.filter.scheduled': 'ÙÙØ¬Ø¯ÙÙÙ',
+  'tasks.filter.running': 'ÙÙØ¯ Ø§ÙØªØ´ØºÙÙ',
+  'tasks.filter.done': 'ØªÙ',
+  'tasks.configurationAria': 'Ø¥Ø¹Ø¯Ø§Ø¯ Ø§ÙØ£ØªÙØªØ©',
+  'tasks.slot.trigger': 'Ø§ÙÙÙØ´ØºÙÙÙ',
+  'tasks.slot.pattern': 'Ø§ÙÙÙØ·',
+  'tasks.slot.runtime': 'ÙÙØª Ø§ÙØªØ´ØºÙÙ',
+  'tasks.slot.output': 'Ø§ÙÙÙØ®Ø±ÙØ¬Ø§Øª',
+  'tasks.liveArtifact': 'ÙÙØ®Ø±ÙØ¬ Ø­Ù',
+  'tasks.viewProgress': 'Ø¹Ø±Ø¶ Ø§ÙØªÙØ¯ÙÙ',
+  'tasks.pause': 'Ø¥ÙÙØ§Ù ÙØ¤ÙØª',
+  'tasks.runNow': 'ØªØ´ØºÙÙ Ø§ÙØ¢Ù',
+  'tasks.openArtifact': 'ÙØªØ­ Ø§ÙÙÙØ®Ø±ÙØ¬',
+  'tasks.status.dailyAt': 'ÙÙÙÙÙØ§ Â· {time}',
+  'tasks.status.pausedManual': 'ÙØªÙÙÙÙ ÙØ¤ÙØªÙØ§ Â· ÙØ¯ÙÙ ÙÙØ·',
+  'tasks.sample.orbit.title': 'ÙÙØ®ÙØµ ÙÙØµÙÙ Orbit Daily',
+  'tasks.sample.orbit.metaEnabled': 'ØªÙØª Ø¬Ø¯ÙÙØ© ÙÙØ¬Ø² Ø§ÙÙÙØµÙÙ',
+  'tasks.sample.orbit.metaDisabled': 'Ø§ÙØªØ­ Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Orbit ÙÙØªÙØ¹ÙÙ',
+  'tasks.sample.orbit.previewEnabled': 'orbit_daily.html Â· ÙØ®Ø±ÙØ¬ ÙØ¨Ø§Ø´Ø±',
+  'tasks.sample.orbit.previewDisabled': 'ÙØ§ ÙÙØ¬Ø¯ ØªØ´ØºÙÙ ÙØ¬Ø¯ÙÙÙ',
+  'tasks.sample.orbit.triggerEnabled': 'Ø§ÙØ¬Ø¯ÙÙØ© Â· ÙÙÙÙÙØ§ ÙÙ {time}',
+  'tasks.sample.orbit.triggerDisabled': 'ÙØ¯ÙÙ Â· ØªØ´ØºÙÙ Ø¹ÙØ¯ Ø§ÙØ·ÙØ¨',
+  'tasks.sample.orbit.pattern': 'Ø±ÙØªÙÙ Â· ÙÙØ®ÙØµ Ø§ÙÙÙØµÙÙÙØ§Øª',
+  'tasks.sample.orbit.runtime': 'Orbit Â· ÙØ¬Ø¯ÙÙ Ø¹Ø¨Ø± Ø§ÙÙ daemon',
+  'tasks.sample.orbit.output': 'ÙØ®Ø±ÙØ¬ ÙØ¨Ø§Ø´Ø± Â· ØªÙØ±ÙØ± ÙØ§Ø¨Ù ÙÙØªØ­Ø¯ÙØ«',
+  'tasks.sample.orbit.artifactMetaEnabled': 'ÙØªÙ Ø§ÙØªØ­Ø¯ÙØ« Ø¨Ø¹Ø¯ ÙÙ ØªØ´ØºÙÙ',
+  'tasks.sample.orbit.artifactMetaDisabled': 'ÙÙ Ø§ÙØªØ¸Ø§Ø± Ø§ÙØ¬Ø¯ÙÙØ©',
+  'tasks.sample.orbit.body1': '# ÙÙØ®ÙØµ ÙØ´Ø§Ø· Orbit Daily',
+  'tasks.sample.orbit.body2': 'Ø§ÙÙÙØµÙÙÙØ§Øª Ø§ÙÙÙØ­ÙØµØ© Â· Ø§ÙÙØ¬Ø§Ø­Ø§Øª ÙØ§ÙØªØ®Ø·ÙÙØ§Øª ÙØ§ÙØ¥Ø®ÙØ§ÙØ§Øª',
+  'tasks.sample.orbit.body3': 'ØªØªØ­ÙÙÙ Ø£Ø¨Ø±Ø² Ø§ÙÙÙØ§Ø· Ø¥ÙÙ ÙÙØ®Ø±ÙØ¬ Ø­Ù ÙØ§Ø¨Ù ÙÙØªØ­Ø¯ÙØ«.',
+  'tasks.sample.mcp.title': 'Ø¨Ø­Ø« ÙÙ Ø¨Ø¯Ø§Ø¦Ù MCP',
+  'tasks.sample.mcp.status': 'ÙÙØ¯ Ø§ÙØªØ´ØºÙÙ ÙÙ orbit Â· Ø³Ø§Ø¹ØªØ§Ù Ù14 Ø¯ÙÙÙØ©',
+  'tasks.sample.mcp.meta': 'ØªÙØª ÙØ¹Ø§ÙØ¬Ø© 14 / 30 ÙØµØ¯Ø±ÙØ§',
+  'tasks.sample.mcp.preview': 'research_notes.md Â· ÙØ¨Ø§Ø´Ø±',
+  'tasks.sample.mcp.trigger': 'ÙØ¯ÙÙ Â· ÙÙØ±Ø© ÙØ§Ø­Ø¯Ø©',
+  'tasks.sample.mcp.pattern': 'ÙÙØ¬ÙÙ Ø¨Ø­Ø« ÙØ¹ÙÙÙ',
+  'tasks.sample.mcp.runtime': 'Ø¹Ù Ø¨ÙØ¹Ø¯ Â· Ø¯Ø§Ø¦Ù',
+  'tasks.sample.mcp.output': 'ØªÙØ±ÙØ± ÙØ¨Ø§Ø´Ø± Â· ÙØªØ­Ø¯ÙØ« ØªÙÙØ§Ø¦ÙÙØ§',
+  'tasks.sample.mcp.artifactMeta': 'ØªÙ Ø§ÙØªØ­Ø¯ÙØ« ÙØ¨Ù 12 Ø«Ø§ÙÙØ©',
+  'tasks.sample.mcp.body1': '# Ø¨Ø¯Ø§Ø¦Ù MCP - ÙØªØ§Ø¦Ø¬ Ø£ÙÙÙØ©',
+  'tasks.sample.mcp.body2': 'ØªÙØª ÙØ±Ø§Ø¬Ø¹Ø© 14 ÙØµØ¯Ø±ÙØ§ Â· 3 ÙØ±Ø´ÙØ­ÙÙ ÙÙ Ø§ÙÙØ§Ø¦ÙØ© Ø§ÙÙØ®ØªØµØ±Ø©',
+  'tasks.sample.mcp.body3': '## Ø§ÙÙØ§Ø¦ÙØ© Ø§ÙÙØ®ØªØµØ±Ø©',
+  'tasks.sample.mcp.body4': '- ÙØ®Ø·ÙØ·Ø§Øª Ø§Ø³ØªØ¯Ø¹Ø§Ø¡ Ø§ÙØ£Ø¯ÙØ§Øª Ø¹Ø¨Ø± JSON-RPC...',
+  'tasks.sample.mcp.body5': '- Ø¨Ø±ÙØªÙÙÙÙØ§Øª Agent Ø§ÙÙØ¹ØªÙØ¯Ø© Ø¹ÙÙ gRPC...',
+  'tasks.sample.weekly.title': 'Ø§ÙÙÙØ¬Ø² Ø§ÙØ£Ø³Ø¨ÙØ¹Ù ÙÙÙØ±ÙÙ',
+  'tasks.sample.weekly.status': 'Ø§ÙØªØ§ÙÙ: Ø§ÙØ¥Ø«ÙÙÙ 9:00 ØµØ¨Ø§Ø­ÙØ§',
+  'tasks.sample.weekly.meta': 'ÙØ­Ø¯ÙØ« ÙØ³ØªÙØ¯ Ø§ÙÙØ±ÙÙ Ø§ÙØ£Ø³Ø¨ÙØ¹Ù',
+  'tasks.sample.weekly.preview': 'team_weekly.md Â· Ø§ÙÙØ®Ø±ÙØ¬ Ø§ÙØªØ§ÙÙ',
+  'tasks.sample.weekly.trigger': 'Ø§ÙØ¬Ø¯ÙÙØ© Â· Ø£Ø³Ø¨ÙØ¹ÙÙØ§',
+  'tasks.sample.weekly.pattern': 'Ø±ÙØªÙÙ Â· ÙÙØ®ÙØµ Ø§ÙÙØ±ÙÙ',
+  'tasks.sample.weekly.runtime': 'Ø¹Ù Ø¨ÙØ¹Ø¯ Â· ÙØªÙØ±Ø±',
+  'tasks.sample.weekly.output': 'ÙÙØ®Ø±ÙØ¬ Ø­Ù Â· markdown',
+  'tasks.sample.weekly.artifactMeta': 'Ø¢Ø®Ø± ØªØ­Ø¯ÙØ« ÙØ¨Ù 4 Ø£ÙØ§Ù',
+  'tasks.sample.weekly.body1': '# Ø£Ø³Ø¨ÙØ¹ Ø§ÙÙØ±ÙÙ',
+  'tasks.sample.weekly.body2': '## ÙÙØ¯ Ø§ÙØªÙÙÙØ°',
+  'tasks.sample.weekly.body3': '- Ø¯ÙØ±Ø© Ø¯ÙØ¬ ÙØ¸Ø§Ù Ø§ÙØªØµÙÙÙ',
+  'tasks.sample.weekly.body4': '- ÙØ±Ø§Ø¬Ø¹Ø© Ø¬ÙØ¯Ø© Ø§ÙÙÙØµÙÙØ§Øª',
+  'tasks.sample.weekly.body5': '## Ø§ÙÙØ®Ø§Ø·Ø±',
+  'tasks.sample.pr.title': 'ØªØ°ÙÙØ± Ø¨ÙØ±Ø§Ø¬Ø¹Ø© PR',
+  'tasks.sample.pr.status': 'Ø¹ÙØ¯ PR Ø¬Ø¯ÙØ¯ Â· Ø´ÙØºÙÙ ÙØ¨Ù 23 Ø¯',
+  'tasks.sample.pr.meta': 'ÙØ±Ø³Ù Ø±Ø³Ø§ÙØ© ÙØ¨Ø§Ø´Ø±Ø© Ø¹Ø¨Ø± Slack',
+  'tasks.sample.pr.preview': 'ÙØ¬Ø­ Ø¢Ø®Ø± ØªØ³ÙÙÙ',
+  'tasks.sample.pr.trigger': 'Ø­Ø¯Ø« Â· PR Ø¬Ø¯ÙØ¯',
+  'tasks.sample.pr.pattern': 'Ø±ÙØªÙÙ Â· Ø¥Ø´Ø¹Ø§Ø±',
+  'tasks.sample.pr.runtime': 'ÙØ­ÙÙ Â· ØªØ´ØºÙÙ Ø³Ø±ÙØ¹',
+  'tasks.sample.pr.output': 'Ø±Ø³Ø§ÙØ© Â· Ø±Ø³Ø§ÙØ© Slack ÙØ¨Ø§Ø´Ø±Ø©',
+  'tasks.sample.pr.artifactMeta': 'Ø¢Ø®Ø± ØªØ´ØºÙÙ ÙØ¨Ù 23 Ø¯ÙÙÙØ©',
+  'tasks.sample.pr.body1': 'ØªÙ ÙØªØ­ PR #184 ÙÙÙØ±Ø§Ø¬Ø¹Ø©',
+  'tasks.sample.pr.body2': 'Ø§ÙÙØ±Ø§Ø¬Ø¹ÙÙ Ø§ÙÙØ·Ø§Ø¨ÙÙÙ: design-platformØ web-runtime',
+  'tasks.sample.pr.body3': 'Ø§ÙØªØ³ÙÙÙ: ØªÙ Ø¥Ø±Ø³Ø§Ù Ø±Ø³Ø§ÙØ© Slack Ø§ÙÙØ¨Ø§Ø´Ø±Ø©',
+  'tasks.sample.meeting.title': 'Ø§ÙØªØ­Ø¶ÙØ± ÙÙØ§ ÙØ¨Ù Ø§ÙØ§Ø¬ØªÙØ§Ø¹',
+  'tasks.sample.meeting.status': 'ØºØ¯ÙØ§ Â· 10:00 ØµØ¨Ø§Ø­ÙØ§',
+  'tasks.sample.meeting.meta': 'ÙÙØ±Ø© ÙØ§Ø­Ø¯Ø© Â· ÙØ±Ø³Ù ÙÙØ®ØµÙØ§',
+  'tasks.sample.meeting.preview': 'meeting_brief.md Â· ÙÙ ÙØ§Ø¦ÙØ© Ø§ÙØ§ÙØªØ¸Ø§Ø±',
+  'tasks.sample.meeting.trigger': 'ÙØ¬Ø¯ÙÙ Â· ÙÙØ±Ø© ÙØ§Ø­Ø¯Ø©',
+  'tasks.sample.meeting.pattern': 'ÙÙØ¬ÙÙ Ø§ÙØ¥Ø­Ø§Ø·Ø©',
+  'tasks.sample.meeting.runtime': 'Ø¹Ù Ø¨ÙØ¹Ø¯ Â· ÙØ­Ø¯ÙØ¯',
+  'tasks.sample.meeting.output': 'ÙÙØ®Ø±ÙØ¬ + Ø±Ø³Ø§ÙØ©',
+  'tasks.sample.meeting.artifactMeta': 'ÙÙ ÙØ§Ø¦ÙØ© Ø§ÙØªØ¸Ø§Ø± Ø§ÙØªÙÙÙØ¯',
+  'tasks.sample.meeting.body1': '# ÙÙØ¬Ø² Ø§ÙØ§Ø¬ØªÙØ§Ø¹',
+  'tasks.sample.meeting.body2': 'ÙØµØ¯Ø± Ø¬Ø¯ÙÙ Ø§ÙØ£Ø¹ÙØ§Ù: Ø­Ø¯Ø« Ø§ÙØªÙÙÙÙ + Ø§ÙÙØ³ØªÙØ¯Ø§Øª Ø§ÙÙØ±ØªØ¨Ø·Ø©',
+  'tasks.sample.meeting.body3': 'Ø³ØªØªØ¶ÙÙÙ Ø§ÙÙÙØ®Ø±ÙØ¬Ø§Øª Ø§ÙÙØ±Ø§Ø±Ø§Øª ÙØ§ÙØ¹ÙØ§Ø¦Ù ÙØ§ÙØ£Ø³Ø¦ÙØ©.',
+  'tasks.sample.candidate.title': 'ØªØªØ¨ÙØ¹ Ø§ÙÙØ±Ø´ÙØ­ÙÙ',
+  'tasks.sample.candidate.status': 'ÙØ´Ù Â· ÙØ­ØªØ§Ø¬ Ø¥ÙÙ Ø§ÙØªØ¨Ø§Ù',
+  'tasks.sample.candidate.meta': 'Ø§ÙØªÙØª ØµÙØ§Ø­ÙØ© Ø§ÙÙØµØ§Ø¯ÙØ©',
+  'tasks.sample.candidate.preview': 'Ø£Ø¹Ø¯ Ø±Ø¨Ø· Greenhouse ÙÙØ§Ø³ØªØ¦ÙØ§Ù',
+  'tasks.sample.candidate.trigger': 'ÙØ¬Ø¯ÙÙ Â· ÙÙÙÙ',
+  'tasks.sample.candidate.pattern': 'Ø±ÙØªÙÙ Â· ÙØ²Ø§ÙÙØ© Ø§ÙÙØªÙØ¯ÙÙÙ',
+  'tasks.sample.candidate.runtime': 'Ø¹Ù Ø¨ÙØ¹Ø¯ Â· ÙØªÙØ±Ø±',
+  'tasks.sample.candidate.output': 'ÙÙØ®Ø±ÙØ¬ Ø­Ù Â· Ø¬Ø¯ÙÙ',
+  'tasks.sample.candidate.artifactMeta': 'ÙØªÙÙÙ ÙØ¤ÙØªÙØ§ Ø­ØªÙ Ø§Ø³ØªØ¹Ø§Ø¯Ø© Ø§ÙÙØµØ§Ø¯ÙØ©',
+  'tasks.sample.candidate.body1': '# ÙØ³Ø§Ø± Ø§ÙÙØ±Ø´ÙØ­ÙÙ',
+  'tasks.sample.candidate.body2': 'Ø¢Ø®Ø± ÙØ²Ø§ÙÙØ© ÙØ§Ø¬Ø­Ø©: ÙØ¨Ù ÙÙÙÙÙ',
+  'tasks.sample.candidate.body3': 'Ø¥Ø¬Ø±Ø§Ø¡ ÙØ·ÙÙØ¨: Ø£Ø¹Ø¯ Ø±Ø¨Ø· Ø­Ø³Ø§Ø¨ Ø§ÙÙØµØ¯Ø±.',
+  'routines.title': 'Ø§ÙØ£ØªÙØªØ©',
+  'routines.subtitle': 'Ø¹ÙÙÙØ§Øª Ø£ØªÙØªØ© ÙØ¬Ø¯ÙÙÙØ© ØªØ¹ÙÙ Ø¯ÙÙ Ø¥Ø´Ø±Ø§Ù.',
+  'routines.newAutomation': 'Ø£ØªÙØªØ© Ø¬Ø¯ÙØ¯Ø©',
+  'routines.loading': 'Ø¬Ø§Ø±Ù Ø§ÙØªØ­ÙÙÙâ¦',
+  'routines.empty': 'ÙØ§ ØªÙØ¬Ø¯ Ø£ØªÙØªØ© Ø¨Ø¹Ø¯.',
+  'routines.emptyHint': 'Ø§ÙÙØ± Ø¹ÙÙ Ø£ØªÙØªØ© Ø¬Ø¯ÙØ¯Ø© ÙØ¬Ø¯ÙÙØ© ØªØ´ØºÙÙ Agent ØºÙØ± ÙØ±Ø§ÙØ¨.',
+  'routines.runHistoryLoading': 'Ø¬Ø§Ø±Ù ØªØ­ÙÙÙ Ø¹ÙÙÙØ§Øª Ø§ÙØªØ´ØºÙÙâ¦',
+  'routines.runHistoryEmpty': 'ÙØ§ ØªÙØ¬Ø¯ Ø¹ÙÙÙØ§Øª ØªØ´ØºÙÙ Ø¨Ø¹Ø¯.',
+  'routines.fieldName': 'Ø§ÙØ§Ø³Ù',
+  'routines.fieldNamePlaceholder': 'Ø§ÙØ¥Ø­Ø§Ø·Ø© Ø§ÙØµØ¨Ø§Ø­ÙØ©',
+  'routines.fieldPrompt': 'Ø§ÙÙÙØ¬ÙÙ',
+  'routines.fieldPromptPlaceholder': 'Ø§Ø¬ÙØ¨ ÙØ´Ø§Ø· GitHub ÙLinear ÙÙÙÙ Ø£ÙØ³ ÙÙØ®ÙØµ ÙØ§ ØªØºÙÙØ±.',
+  'routines.fieldSchedule': 'Ø§ÙØ¬Ø¯ÙÙ Ø§ÙØ²ÙÙÙ',
+  'routines.fieldMinute': 'Ø§ÙØ¯ÙÙÙØ© ÙÙ ÙÙ Ø³Ø§Ø¹Ø©',
+  'routines.fieldTime': 'Ø§ÙÙÙØª',
+  'routines.fieldTimezone': 'Ø§ÙÙÙØ·ÙØ© Ø§ÙØ²ÙÙÙØ©',
+  'routines.fieldsetProject': 'Ø§ÙÙØ´Ø±ÙØ¹',
+  'routines.kind.hourly': 'ÙÙ Ø³Ø§Ø¹Ø©',
+  'routines.kind.daily': 'ÙÙÙÙÙØ§',
+  'routines.kind.weekdays': 'Ø£ÙØ§Ù Ø§ÙØ£Ø³Ø¨ÙØ¹',
+  'routines.kind.weekly': 'Ø£Ø³Ø¨ÙØ¹ÙÙØ§',
+  'routines.weekday.short.0': 'Ø§ÙØ£Ø­Ø¯',
+  'routines.weekday.short.1': 'Ø§ÙØ¥Ø«ÙÙÙ',
+  'routines.weekday.short.2': 'Ø§ÙØ«ÙØ§Ø«Ø§Ø¡',
+  'routines.weekday.short.3': 'Ø§ÙØ£Ø±Ø¨Ø¹Ø§Ø¡',
+  'routines.weekday.short.4': 'Ø§ÙØ®ÙÙØ³',
+  'routines.weekday.short.5': 'Ø§ÙØ¬ÙØ¹Ø©',
+  'routines.weekday.short.6': 'Ø§ÙØ³Ø¨Øª',
+  'routines.weekday.long.0': 'Ø§ÙØ£Ø­Ø¯',
+  'routines.weekday.long.1': 'Ø§ÙØ¥Ø«ÙÙÙ',
+  'routines.weekday.long.2': 'Ø§ÙØ«ÙØ§Ø«Ø§Ø¡',
+  'routines.weekday.long.3': 'Ø§ÙØ£Ø±Ø¨Ø¹Ø§Ø¡',
+  'routines.weekday.long.4': 'Ø§ÙØ®ÙÙØ³',
+  'routines.weekday.long.5': 'Ø§ÙØ¬ÙØ¹Ø©',
+  'routines.weekday.long.6': 'Ø§ÙØ³Ø¨Øª',
   'routines.timeAm': 'AM',
   'routines.timePm': 'PM',
-  'routines.describe.hourly': 'يعمل كل ساعة عند :{minute}',
-  'routines.describe.daily': 'يعمل يوميًا في {time} {tz}',
-  'routines.describe.weekdays': 'يعمل من الإثنين إلى الجمعة في {time} {tz}',
-  'routines.describe.weekly': 'يعمل كل {day} في {time} {tz}',
-  'routines.modeCreate': 'إنشاء مشروع جديد في كل تشغيل',
-  'routines.modeCreateHint': 'مساحة عمل جديدة ومعزولة لكل تشغيل.',
-  'routines.modeReuse': 'إعادة استخدام مشروع موجود',
-  'routines.modeReuseHint': 'يظهر كل تشغيل كمحادثة جديدة داخل المشروع.',
-  'routines.pickProject': '— اختر مشروعًا —',
-  'routines.targetReuse': '→ {project}',
-  'routines.targetCreate': '← مشروع جديد في كل تشغيل',
-  'routines.tagPaused': 'موقوف مؤقتًا',
-  'routines.metaNext': 'التالي: {when}',
-  'routines.metaLast': 'الأخير:',
-  'routines.triggerManual': 'يدوي',
-  'routines.triggerScheduled': 'مجدول',
-  'routines.openProject': 'فتح المشروع',
-  'routines.openProjectTitle': 'افتح المشروع الذي كتب إليه هذا التشغيل',
-  'routines.runNow': 'التشغيل الآن',
-  'routines.edit': 'تحرير',
-  'routines.pause': 'إيقاف مؤقت',
-  'routines.resume': 'استئناف',
-  'routines.history': 'السجل',
-  'routines.hideHistory': 'إخفاء السجل',
-  'routines.delete': 'حذف',
-  'routines.deleteTitle': 'حذف هذه الأتمتة',
-  'routines.cancel': 'إلغاء',
-  'routines.save': 'حفظ',
-  'routines.saving': 'جارٍ الحفظ…',
-  'routines.create': 'إنشاء',
-  'routines.creating': 'جارٍ الإنشاء…',
-  'routines.status.queued': 'في قائمة الانتظار',
-  'routines.status.running': 'قيد التشغيل',
-  'routines.status.succeeded': 'نجح',
-  'routines.status.failed': 'فشل',
-  'routines.status.canceled': 'أُلغي',
-  'routines.confirmDelete': 'حذف هذه الأتمتة؟ سيتم الاحتفاظ بعمليات التشغيل السابقة ومشاريعها.',
-  'routines.errorPickProject': 'اختر مشروعًا لإعادة استخدامه، أو بدّل إلى “إنشاء مشروع جديد في كل تشغيل”',
-  'routines.errorAgentEmptyOutput': 'أكمل الـ Agent دون إنتاج أي مُخرَج. ربما أرجع النموذج أو المزوّد استجابة فارغة — تحقّق من سجلات الـ Agent بحثًا عن أخطاء المصدر.',
-  'entry.helpAria': 'المساعدة',
-  'entry.helpMenuAria': 'قائمة المساعدة',
-  'entry.helpGetHelp': 'احصل على مساعدة على GitHub',
-  'entry.helpSubmitFeature': 'اقترح ميزة',
-  'entry.helpWhatsNew': 'الجديد',
-  'entry.helpDownloadDesktop': 'تنزيل تطبيق سطح المكتب',
-  'entry.githubStarLabel': 'نجمة',
-  'entry.githubStarTitle': 'انقر لمنحنا نجمة على GitHub',
-  'entry.githubStarAria': 'منح Open Design نجمة على GitHub',
-  'entry.tabImageTemplates': 'قوالب الصور',
-  'entry.tabVideoTemplates': 'قوالب الفيديو',
-  'promptTemplates.searchPlaceholder': 'بحث في القوالب...',
-  'promptTemplates.countLabel': '{n} نتائج',
-  'promptTemplates.emptyImage': 'لم يتم تثبيت قوالب صور بعد.',
-  'promptTemplates.emptyVideo': 'لم يتم تثبيت قوالب فيديو بعد.',
-  'promptTemplates.emptyNoMatch': 'لا توجد قوالب تطابق بحثك.',
-  'promptTemplates.attributionFooter': 'مقتبس من مكتبات الأوامر العامة. كل بطاقة تشير إلى المؤلف الأصلي.',
-  'promptTemplates.openPreviewTitle': 'فتح الأمر والمعاينة',
-  'promptTemplates.sourcePrefix': 'المصدر:',
-  'promptTemplates.fetchError': 'تعذر تحميل جسم هذا القالب.',
-  'promptTemplates.promptLabel': 'جسم الأمر',
-  'promptTemplates.copyPrompt': 'نسخ الأمر',
-  'promptTemplates.copyDone': 'تم النسخ!',
-  'promptTemplates.modelHint': 'النموذج المقترح: {model}',
-  'promptTemplates.openSource': 'عرض الأصلي',
-  'promptTemplates.openFullscreen': 'فتح معاينة بملء الشاشة',
-  'promptTemplates.closeFullscreen': 'إغلاق معاينة بملء الشاشة',
-  'promptTemplates.allSources': 'جميع المصادر',
-  'promptTemplates.sourceFilterAria': 'تصفية حسب المصدر',
-  'promptTemplates.retry': 'إعادة المحاولة',
-  'connectors.title': 'الموصلات',
-  'connectors.subtitle': 'مصادر بيانات محلية وقادمة يمكنها تشغيل العناصر الحية.',
-  'connectors.account': 'الحساب',
-  'connectors.noAccount': 'غير متصل',
-  'connectors.tools': 'الأدوات',
-  'connectors.connect': 'اتصال',
-  'connectors.disconnect': 'قطع الاتصال',
-  'connectors.authorizationPending': 'بانتظار التفويض...',
-  'connectors.authorizationPendingHint': 'أكمل التفويض في النافذة المفتوحة.',
-  'connectors.cancelAuthorization': 'إلغاء',
-  'connectors.configure': 'إعداد',
-  'connectors.unavailable': 'غير متاح',
-  'connectors.phaseStubTitle': 'واجهات الموصلات ستصل في المرحلة 3؛ هذه مجرد واجهة معاينة.',
-  'connectors.statusAvailable': 'متاح',
-  'connectors.statusConnected': 'متصل',
-  'connectors.statusError': 'خطأ',
-  'connectors.statusDisabled': 'معطل',
-  'connectors.gateTitle': 'أضف مفتاح Composio API للمتابعة',
-  'connectors.gateBody': 'الصق المفتاح أعلاه واضغط حفظ المفتاح لتحميل التكاملات المتاحة.',
-  'connectors.aboutLabel': 'حول',
-  'connectors.detailsLabel': 'التفاصيل',
-  'connectors.statusLabel': 'الحالة',
-  'connectors.category.aiAgents': 'وكلاء AI',
-  'connectors.category.aiInfrastructure': 'بنية AI التحتية',
-  'connectors.category.accounting': 'المحاسبة',
-  'connectors.category.admin': 'الإدارة',
-  'connectors.category.advertising': 'الإعلانات',
-  'connectors.category.analytics': 'التحليلات',
-  'connectors.category.automation': 'الأتمتة',
+  'routines.describe.hourly': 'ÙØ¹ÙÙ ÙÙ Ø³Ø§Ø¹Ø© Ø¹ÙØ¯ :{minute}',
+  'routines.describe.daily': 'ÙØ¹ÙÙ ÙÙÙÙÙØ§ ÙÙ {time} {tz}',
+  'routines.describe.weekdays': 'ÙØ¹ÙÙ ÙÙ Ø§ÙØ¥Ø«ÙÙÙ Ø¥ÙÙ Ø§ÙØ¬ÙØ¹Ø© ÙÙ {time} {tz}',
+  'routines.describe.weekly': 'ÙØ¹ÙÙ ÙÙ {day} ÙÙ {time} {tz}',
+  'routines.modeCreate': 'Ø¥ÙØ´Ø§Ø¡ ÙØ´Ø±ÙØ¹ Ø¬Ø¯ÙØ¯ ÙÙ ÙÙ ØªØ´ØºÙÙ',
+  'routines.modeCreateHint': 'ÙØ³Ø§Ø­Ø© Ø¹ÙÙ Ø¬Ø¯ÙØ¯Ø© ÙÙØ¹Ø²ÙÙØ© ÙÙÙ ØªØ´ØºÙÙ.',
+  'routines.modeReuse': 'Ø¥Ø¹Ø§Ø¯Ø© Ø§Ø³ØªØ®Ø¯Ø§Ù ÙØ´Ø±ÙØ¹ ÙÙØ¬ÙØ¯',
+  'routines.modeReuseHint': 'ÙØ¸ÙØ± ÙÙ ØªØ´ØºÙÙ ÙÙØ­Ø§Ø¯Ø«Ø© Ø¬Ø¯ÙØ¯Ø© Ø¯Ø§Ø®Ù Ø§ÙÙØ´Ø±ÙØ¹.',
+  'routines.pickProject': 'â Ø§Ø®ØªØ± ÙØ´Ø±ÙØ¹ÙØ§ â',
+  'routines.targetReuse': 'â {project}',
+  'routines.targetCreate': 'â ÙØ´Ø±ÙØ¹ Ø¬Ø¯ÙØ¯ ÙÙ ÙÙ ØªØ´ØºÙÙ',
+  'routines.tagPaused': 'ÙÙÙÙÙ ÙØ¤ÙØªÙØ§',
+  'routines.metaNext': 'Ø§ÙØªØ§ÙÙ: {when}',
+  'routines.metaLast': 'Ø§ÙØ£Ø®ÙØ±:',
+  'routines.triggerManual': 'ÙØ¯ÙÙ',
+  'routines.triggerScheduled': 'ÙØ¬Ø¯ÙÙ',
+  'routines.openProject': 'ÙØªØ­ Ø§ÙÙØ´Ø±ÙØ¹',
+  'routines.openProjectTitle': 'Ø§ÙØªØ­ Ø§ÙÙØ´Ø±ÙØ¹ Ø§ÙØ°Ù ÙØªØ¨ Ø¥ÙÙÙ ÙØ°Ø§ Ø§ÙØªØ´ØºÙÙ',
+  'routines.runNow': 'Ø§ÙØªØ´ØºÙÙ Ø§ÙØ¢Ù',
+  'routines.edit': 'ØªØ­Ø±ÙØ±',
+  'routines.pause': 'Ø¥ÙÙØ§Ù ÙØ¤ÙØª',
+  'routines.resume': 'Ø§Ø³ØªØ¦ÙØ§Ù',
+  'routines.history': 'Ø§ÙØ³Ø¬Ù',
+  'routines.hideHistory': 'Ø¥Ø®ÙØ§Ø¡ Ø§ÙØ³Ø¬Ù',
+  'routines.delete': 'Ø­Ø°Ù',
+  'routines.deleteTitle': 'Ø­Ø°Ù ÙØ°Ù Ø§ÙØ£ØªÙØªØ©',
+  'routines.cancel': 'Ø¥ÙØºØ§Ø¡',
+  'routines.save': 'Ø­ÙØ¸',
+  'routines.saving': 'Ø¬Ø§Ø±Ù Ø§ÙØ­ÙØ¸â¦',
+  'routines.create': 'Ø¥ÙØ´Ø§Ø¡',
+  'routines.creating': 'Ø¬Ø§Ø±Ù Ø§ÙØ¥ÙØ´Ø§Ø¡â¦',
+  'routines.status.queued': 'ÙÙ ÙØ§Ø¦ÙØ© Ø§ÙØ§ÙØªØ¸Ø§Ø±',
+  'routines.status.running': 'ÙÙØ¯ Ø§ÙØªØ´ØºÙÙ',
+  'routines.status.succeeded': 'ÙØ¬Ø­',
+  'routines.status.failed': 'ÙØ´Ù',
+  'routines.status.canceled': 'Ø£ÙÙØºÙ',
+  'routines.confirmDelete': 'Ø­Ø°Ù ÙØ°Ù Ø§ÙØ£ØªÙØªØ©Ø Ø³ÙØªÙ Ø§ÙØ§Ø­ØªÙØ§Ø¸ Ø¨Ø¹ÙÙÙØ§Øª Ø§ÙØªØ´ØºÙÙ Ø§ÙØ³Ø§Ø¨ÙØ© ÙÙØ´Ø§Ø±ÙØ¹ÙØ§.',
+  'routines.errorPickProject': 'Ø§Ø®ØªØ± ÙØ´Ø±ÙØ¹ÙØ§ ÙØ¥Ø¹Ø§Ø¯Ø© Ø§Ø³ØªØ®Ø¯Ø§ÙÙØ Ø£Ù Ø¨Ø¯ÙÙ Ø¥ÙÙ âØ¥ÙØ´Ø§Ø¡ ÙØ´Ø±ÙØ¹ Ø¬Ø¯ÙØ¯ ÙÙ ÙÙ ØªØ´ØºÙÙâ',
+  'routines.errorAgentEmptyOutput': 'Ø£ÙÙÙ Ø§ÙÙ Agent Ø¯ÙÙ Ø¥ÙØªØ§Ø¬ Ø£Ù ÙÙØ®Ø±ÙØ¬. Ø±Ø¨ÙØ§ Ø£Ø±Ø¬Ø¹ Ø§ÙÙÙÙØ°Ø¬ Ø£Ù Ø§ÙÙØ²ÙÙØ¯ Ø§Ø³ØªØ¬Ø§Ø¨Ø© ÙØ§Ø±ØºØ© â ØªØ­ÙÙÙ ÙÙ Ø³Ø¬ÙØ§Øª Ø§ÙÙ Agent Ø¨Ø­Ø«ÙØ§ Ø¹Ù Ø£Ø®Ø·Ø§Ø¡ Ø§ÙÙØµØ¯Ø±.',
+  'entry.helpAria': 'Ø§ÙÙØ³Ø§Ø¹Ø¯Ø©',
+  'entry.helpMenuAria': 'ÙØ§Ø¦ÙØ© Ø§ÙÙØ³Ø§Ø¹Ø¯Ø©',
+  'entry.helpGetHelp': 'Ø§Ø­ØµÙ Ø¹ÙÙ ÙØ³Ø§Ø¹Ø¯Ø© Ø¹ÙÙ GitHub',
+  'entry.helpSubmitFeature': 'Ø§ÙØªØ±Ø­ ÙÙØ²Ø©',
+  'entry.helpWhatsNew': 'Ø§ÙØ¬Ø¯ÙØ¯',
+  'entry.helpDownloadDesktop': 'ØªÙØ²ÙÙ ØªØ·Ø¨ÙÙ Ø³Ø·Ø­ Ø§ÙÙÙØªØ¨',
+  'entry.githubStarLabel': 'ÙØ¬ÙØ©',
+  'entry.githubStarTitle': 'Ø§ÙÙØ± ÙÙÙØ­ÙØ§ ÙØ¬ÙØ© Ø¹ÙÙ GitHub',
+  'entry.githubStarAria': 'ÙÙØ­ Open Design ÙØ¬ÙØ© Ø¹ÙÙ GitHub',
+  'entry.tabImageTemplates': 'ÙÙØ§ÙØ¨ Ø§ÙØµÙØ±',
+  'entry.tabVideoTemplates': 'ÙÙØ§ÙØ¨ Ø§ÙÙÙØ¯ÙÙ',
+  'promptTemplates.searchPlaceholder': 'Ø¨Ø­Ø« ÙÙ Ø§ÙÙÙØ§ÙØ¨...',
+  'promptTemplates.countLabel': '{n} ÙØªØ§Ø¦Ø¬',
+  'promptTemplates.emptyImage': 'ÙÙ ÙØªÙ ØªØ«Ø¨ÙØª ÙÙØ§ÙØ¨ ØµÙØ± Ø¨Ø¹Ø¯.',
+  'promptTemplates.emptyVideo': 'ÙÙ ÙØªÙ ØªØ«Ø¨ÙØª ÙÙØ§ÙØ¨ ÙÙØ¯ÙÙ Ø¨Ø¹Ø¯.',
+  'promptTemplates.emptyNoMatch': 'ÙØ§ ØªÙØ¬Ø¯ ÙÙØ§ÙØ¨ ØªØ·Ø§Ø¨Ù Ø¨Ø­Ø«Ù.',
+  'promptTemplates.attributionFooter': 'ÙÙØªØ¨Ø³ ÙÙ ÙÙØªØ¨Ø§Øª Ø§ÙØ£ÙØ§ÙØ± Ø§ÙØ¹Ø§ÙØ©. ÙÙ Ø¨Ø·Ø§ÙØ© ØªØ´ÙØ± Ø¥ÙÙ Ø§ÙÙØ¤ÙÙ Ø§ÙØ£ØµÙÙ.',
+  'promptTemplates.openPreviewTitle': 'ÙØªØ­ Ø§ÙØ£ÙØ± ÙØ§ÙÙØ¹Ø§ÙÙØ©',
+  'promptTemplates.sourcePrefix': 'Ø§ÙÙØµØ¯Ø±:',
+  'promptTemplates.fetchError': 'ØªØ¹Ø°Ø± ØªØ­ÙÙÙ Ø¬Ø³Ù ÙØ°Ø§ Ø§ÙÙØ§ÙØ¨.',
+  'promptTemplates.promptLabel': 'Ø¬Ø³Ù Ø§ÙØ£ÙØ±',
+  'promptTemplates.copyPrompt': 'ÙØ³Ø® Ø§ÙØ£ÙØ±',
+  'promptTemplates.copyDone': 'ØªÙ Ø§ÙÙØ³Ø®!',
+  'promptTemplates.modelHint': 'Ø§ÙÙÙÙØ°Ø¬ Ø§ÙÙÙØªØ±Ø­: {model}',
+  'promptTemplates.openSource': 'Ø¹Ø±Ø¶ Ø§ÙØ£ØµÙÙ',
+  'promptTemplates.openFullscreen': 'ÙØªØ­ ÙØ¹Ø§ÙÙØ© Ø¨ÙÙØ¡ Ø§ÙØ´Ø§Ø´Ø©',
+  'promptTemplates.closeFullscreen': 'Ø¥ØºÙØ§Ù ÙØ¹Ø§ÙÙØ© Ø¨ÙÙØ¡ Ø§ÙØ´Ø§Ø´Ø©',
+  'promptTemplates.allSources': 'Ø¬ÙÙØ¹ Ø§ÙÙØµØ§Ø¯Ø±',
+  'promptTemplates.sourceFilterAria': 'ØªØµÙÙØ© Ø­Ø³Ø¨ Ø§ÙÙØµØ¯Ø±',
+  'promptTemplates.retry': 'Ø¥Ø¹Ø§Ø¯Ø© Ø§ÙÙØ­Ø§ÙÙØ©',
+  'connectors.title': 'Ø§ÙÙÙØµÙØ§Øª',
+  'connectors.subtitle': 'ÙØµØ§Ø¯Ø± Ø¨ÙØ§ÙØ§Øª ÙØ­ÙÙØ© ÙÙØ§Ø¯ÙØ© ÙÙÙÙÙØ§ ØªØ´ØºÙÙ Ø§ÙØ¹ÙØ§ØµØ± Ø§ÙØ­ÙØ©.',
+  'connectors.account': 'Ø§ÙØ­Ø³Ø§Ø¨',
+  'connectors.noAccount': 'ØºÙØ± ÙØªØµÙ',
+  'connectors.tools': 'Ø§ÙØ£Ø¯ÙØ§Øª',
+  'connectors.connect': 'Ø§ØªØµØ§Ù',
+  'connectors.disconnect': 'ÙØ·Ø¹ Ø§ÙØ§ØªØµØ§Ù',
+  'connectors.authorizationPending': 'Ø¨Ø§ÙØªØ¸Ø§Ø± Ø§ÙØªÙÙÙØ¶...',
+  'connectors.authorizationPendingHint': 'Ø£ÙÙÙ Ø§ÙØªÙÙÙØ¶ ÙÙ Ø§ÙÙØ§ÙØ°Ø© Ø§ÙÙÙØªÙØ­Ø©.',
+  'connectors.cancelAuthorization': 'Ø¥ÙØºØ§Ø¡',
+  'connectors.configure': 'Ø¥Ø¹Ø¯Ø§Ø¯',
+  'connectors.unavailable': 'ØºÙØ± ÙØªØ§Ø­',
+  'connectors.phaseStubTitle': 'ÙØ§Ø¬ÙØ§Øª Ø§ÙÙÙØµÙØ§Øª Ø³ØªØµÙ ÙÙ Ø§ÙÙØ±Ø­ÙØ© 3Ø ÙØ°Ù ÙØ¬Ø±Ø¯ ÙØ§Ø¬ÙØ© ÙØ¹Ø§ÙÙØ©.',
+  'connectors.statusAvailable': 'ÙØªØ§Ø­',
+  'connectors.statusConnected': 'ÙØªØµÙ',
+  'connectors.statusError': 'Ø®Ø·Ø£',
+  'connectors.statusDisabled': 'ÙØ¹Ø·Ù',
+  'connectors.gateTitle': 'Ø£Ø¶Ù ÙÙØªØ§Ø­ Composio API ÙÙÙØªØ§Ø¨Ø¹Ø©',
+  'connectors.gateBody': 'Ø§ÙØµÙ Ø§ÙÙÙØªØ§Ø­ Ø£Ø¹ÙØ§Ù ÙØ§Ø¶ØºØ· Ø­ÙØ¸ Ø§ÙÙÙØªØ§Ø­ ÙØªØ­ÙÙÙ Ø§ÙØªÙØ§ÙÙØ§Øª Ø§ÙÙØªØ§Ø­Ø©.',
+  'connectors.aboutLabel': 'Ø­ÙÙ',
+  'connectors.detailsLabel': 'Ø§ÙØªÙØ§ØµÙÙ',
+  'connectors.statusLabel': 'Ø§ÙØ­Ø§ÙØ©',
+  'connectors.category.aiAgents': 'ÙÙÙØ§Ø¡ AI',
+  'connectors.category.aiInfrastructure': 'Ø¨ÙÙØ© AI Ø§ÙØªØ­ØªÙØ©',
+  'connectors.category.accounting': 'Ø§ÙÙØ­Ø§Ø³Ø¨Ø©',
+  'connectors.category.admin': 'Ø§ÙØ¥Ø¯Ø§Ø±Ø©',
+  'connectors.category.advertising': 'Ø§ÙØ¥Ø¹ÙØ§ÙØ§Øª',
+  'connectors.category.analytics': 'Ø§ÙØªØ­ÙÙÙØ§Øª',
+  'connectors.category.automation': 'Ø§ÙØ£ØªÙØªØ©',
   'connectors.category.cms': 'CMS',
   'connectors.category.crm': 'CRM',
-  'connectors.category.calendar': 'التقويم',
-  'connectors.category.commerce': 'التجارة',
-  'connectors.category.communication': 'التواصل',
-  'connectors.category.contacts': 'جهات الاتصال',
-  'connectors.category.dataPlatform': 'منصة البيانات',
-  'connectors.category.database': 'قاعدة البيانات',
-  'connectors.category.design': 'التصميم',
-  'connectors.category.developer': 'أدوات المطورين',
-  'connectors.category.documentation': 'التوثيق',
+  'connectors.category.calendar': 'Ø§ÙØªÙÙÙÙ',
+  'connectors.category.commerce': 'Ø§ÙØªØ¬Ø§Ø±Ø©',
+  'connectors.category.communication': 'Ø§ÙØªÙØ§ØµÙ',
+  'connectors.category.contacts': 'Ø¬ÙØ§Øª Ø§ÙØ§ØªØµØ§Ù',
+  'connectors.category.dataPlatform': 'ÙÙØµØ© Ø§ÙØ¨ÙØ§ÙØ§Øª',
+  'connectors.category.database': 'ÙØ§Ø¹Ø¯Ø© Ø§ÙØ¨ÙØ§ÙØ§Øª',
+  'connectors.category.design': 'Ø§ÙØªØµÙÙÙ',
+  'connectors.category.developer': 'Ø£Ø¯ÙØ§Øª Ø§ÙÙØ·ÙØ±ÙÙ',
+  'connectors.category.documentation': 'Ø§ÙØªÙØ«ÙÙ',
   'connectors.category.erp': 'ERP',
-  'connectors.category.education': 'التعليم',
-  'connectors.category.email': 'البريد الإلكتروني',
-  'connectors.category.events': 'الأحداث',
-  'connectors.category.fieldService': 'الخدمة الميدانية',
-  'connectors.category.finance': 'المالية',
-  'connectors.category.fitness': 'اللياقة',
-  'connectors.category.forms': 'النماذج',
-  'connectors.category.gaming': 'الألعاب',
-  'connectors.category.hr': 'الموارد البشرية',
-  'connectors.category.hospitality': 'الضيافة',
+  'connectors.category.education': 'Ø§ÙØªØ¹ÙÙÙ',
+  'connectors.category.email': 'Ø§ÙØ¨Ø±ÙØ¯ Ø§ÙØ¥ÙÙØªØ±ÙÙÙ',
+  'connectors.category.events': 'Ø§ÙØ£Ø­Ø¯Ø§Ø«',
+  'connectors.category.fieldService': 'Ø§ÙØ®Ø¯ÙØ© Ø§ÙÙÙØ¯Ø§ÙÙØ©',
+  'connectors.category.finance': 'Ø§ÙÙØ§ÙÙØ©',
+  'connectors.category.fitness': 'Ø§ÙÙÙØ§ÙØ©',
+  'connectors.category.forms': 'Ø§ÙÙÙØ§Ø°Ø¬',
+  'connectors.category.gaming': 'Ø§ÙØ£ÙØ¹Ø§Ø¨',
+  'connectors.category.hr': 'Ø§ÙÙÙØ§Ø±Ø¯ Ø§ÙØ¨Ø´Ø±ÙØ©',
+  'connectors.category.hospitality': 'Ø§ÙØ¶ÙØ§ÙØ©',
   'connectors.category.itsm': 'ITSM',
-  'connectors.category.integration': 'التكامل',
-  'connectors.category.localization': 'التوطين',
-  'connectors.category.logistics': 'اللوجستيات',
-  'connectors.category.maps': 'الخرائط',
-  'connectors.category.marketing': 'التسويق',
-  'connectors.category.media': 'الوسائط',
-  'connectors.category.meetings': 'الاجتماعات',
-  'connectors.category.nonprofit': 'غير ربحي',
-  'connectors.category.observability': 'قابلية المراقبة',
-  'connectors.category.payments': 'المدفوعات',
-  'connectors.category.personal': 'شخصي',
-  'connectors.category.presentations': 'العروض التقديمية',
-  'connectors.category.procurement': 'المشتريات',
-  'connectors.category.product': 'المنتج',
-  'connectors.category.productivity': 'الإنتاجية',
-  'connectors.category.projectManagement': 'إدارة المشاريع',
-  'connectors.category.recruiting': 'التوظيف',
-  'connectors.category.research': 'البحث',
-  'connectors.category.salesIntelligence': 'ذكاء المبيعات',
-  'connectors.category.scheduling': 'الجدولة',
-  'connectors.category.search': 'البحث',
-  'connectors.category.security': 'الأمان',
-  'connectors.category.signing': 'التوقيع',
-  'connectors.category.social': 'اجتماعي',
-  'connectors.category.spreadsheets': 'جداول البيانات',
-  'connectors.category.storage': 'التخزين',
-  'connectors.category.support': 'الدعم',
-  'connectors.category.surveys': 'الاستبيانات',
-  'connectors.category.tasks': 'المهام',
-  'connectors.category.timeTracking': 'تتبع الوقت',
-  'connectors.category.video': 'الفيديو',
-  'connectors.category.whiteboard': 'السبورة',
-  'connectors.categoryLabel': 'الفئة',
-  'connectors.providerLabel': 'المزوّد',
-  'connectors.toolsSection': 'الأدوات',
-  'connectors.toolsLoading': 'جارٍ تحميل الأدوات…',
-  'connectors.noToolsAvailable': 'لا توجد أدوات متاحة بعد. بعد الاتصال ستظهر إمكانات هذا التكامل.',
-  'connectors.toolDetailsUnavailable': 'تفاصيل الأدوات غير متوفرة، لكن هذا الموصّل يُبلّغ عن {n} أداة.',
-  'connectors.loadMoreTools': 'تحميل المزيد من الأدوات',
-  'connectors.openDetailsAria': 'فتح تفاصيل {name}',
-  'connectors.toolsBadgeNone': 'لا أدوات',
-  'connectors.toolsBadgeOne': '{n} أداة',
-  'connectors.toolsBadgeMany': '{n} أدوات',
-  'connectors.searchPlaceholder': 'ابحث في الموصلات…',
-  'connectors.searchAriaLabel': 'ابحث في الموصلات حسب الاسم أو المزوّد أو الأداة',
-  'connectors.searchClear': 'مسح البحث',
-  'connectors.emptyNoMatchTitle': 'لا توجد موصلات تطابق “{query}”',
-  'connectors.emptyNoMatchBody': 'جرّب كلمة مفتاحية أخرى أو امسح البحث لعرض القائمة الكاملة.',
-  'connectors.emptyNoMatchAction': 'مسح البحث',
-  'newproj.tabPrototype': 'نموذج أولي',
-  'newproj.tabLiveArtifact': 'عنصر مباشر',
-  'newproj.tabDeck': 'عرض تقديمي',
-  'newproj.tabTemplate': 'من قالب',
-  'newproj.tabMedia': 'الوسائط',
-  'newproj.tabOther': 'آخر',
-  'newproj.titlePrototype': 'نموذج أولي جديد',
-  'newproj.titleLiveArtifact': 'عنصر مباشر جديد',
-  'newproj.titleDeck': 'عرض تقديمي جديد',
-  'newproj.titleTemplate': 'ابدأ من قالب',
-  'newproj.titleImage': 'صورة جديدة',
-  'newproj.titleVideo': 'فيديو جديد',
-  'newproj.titleAudio': 'صوت جديد',
-  'newproj.titleMedia': 'وسائط جديدة',
-  'newproj.titleOther': 'مشروع جديد',
-  'newproj.namePlaceholder': 'اسم المشروع',
-  'newproj.fidelityLabel': 'الدقة',
-  'newproj.fidelityWireframe': 'رسم تخطيطي',
-  'newproj.fidelityHigh': 'دقة عالية',
-  'newproj.toggleSpeakerNotes': 'استخدم ملاحظات المتحدث',
-  'newproj.toggleSpeakerNotesHint': 'نص أقل على الشرائح - احتفظ بنقاط الحديث في الملاحظات.',
-  'newproj.toggleAnimations': 'تضمين الرسوم المتحركة',
-  'newproj.toggleAnimationsHint': 'أضف الحركة (دخول، تحويم، انتقالات) فوق القالب.',
-  'newproj.targetPlatformsLabel': 'المنصات المستهدفة',
-  'newproj.targetPlatformsHint': 'اختر واحدة أو أكثر. الويب المتجاوب يغطي نقاط توقف المتصفح فقط؛ أضف iOS أو Android أو تطبيق الجهاز اللوحي أو تطبيق سطح المكتب للحصول على نسخ أصلية متعددة المنصات.',
-  'newproj.platform.responsive.label': 'ويب متجاوب',
-  'newproj.platform.responsive.hint': 'تجربة ويب واحدة مُهيّأة لمتصفحات سطح المكتب والجهاز اللوحي والجوال',
-  'newproj.platform.webDesktop.label': 'ويب سطح المكتب',
-  'newproj.platform.webDesktop.hint': 'منتج أو صفحة هبوط يعتمد على المتصفح أولاً',
-  'newproj.platform.mobileIos.label': 'تطبيق iOS',
-  'newproj.platform.mobileIos.hint': 'إطارات iPhone وقواعد تفاعل iOS',
-  'newproj.platform.mobileAndroid.label': 'تطبيق Android',
-  'newproj.platform.mobileAndroid.hint': 'إطارات Pixel وقواعد تفاعل Material',
-  'newproj.platform.tablet.label': 'تطبيق الجهاز اللوحي',
-  'newproj.platform.tablet.hint': 'تجربة جهاز لوحي بأسلوب أصلي مع عروض مقسّمة',
-  'newproj.platform.desktopApp.label': 'تطبيق سطح المكتب',
-  'newproj.platform.desktopApp.hint': 'واجهة تطبيق macOS/Windows',
-  'newproj.surfaceOptionsLabel': 'الأسطح المصاحبة',
-  'newproj.includeLandingPage': 'تضمين صفحة هبوط',
-  'newproj.includeLandingPageHint': 'أضف صفحة تسويقية متجاوبة للإعلانات أو قوائم الانتظار أو حملات الإطلاق أو تنزيلات التطبيق أو شرح المنتج.',
-  'newproj.includeOsWidgets': 'تضمين عناصر واجهة نظام التشغيل',
-  'newproj.includeOsWidgetsHint': 'أضف عناصر واجهة أصلية للمنصة على الشاشة الرئيسية أو شاشة القفل أو الوصول السريع لتطبيقات الجوال/الجهاز اللوحي.',
-  'newproj.includeOsWidgetsDisabledHint': 'متاح عند اختيار تطبيق iOS أو Android أو الجهاز اللوحي كمنصة مستهدفة.',
-  'newproj.templateLabel': 'القالب',
-  'newproj.noTemplatesTitle': 'لا توجد قوالب بعد',
-  'newproj.noTemplatesBody': 'افتح أي مشروع، ثم استخدم قائمة المشاركة داخل عارض الملفات لتحويله إلى قالب. ستظهر القوالب هنا.',
-  'newproj.savedTemplate': 'قالب محفوظ',
-  'newproj.fileSingular': 'ملف',
-  'newproj.filePlural': 'ملفات',
-  'newproj.create': 'إنشاء',
-  'newproj.locationLabel': 'حفظ في',
-  'newproj.locationDefault': 'مشاريع Open Design',
-  'newproj.locationExternalBase': 'قاعدة خارجية',
-  'newproj.createLiveArtifact': 'إنشاء عنصر مباشر',
-  'newproj.createFromTemplate': 'إنشاء من قالب',
-  'newproj.createDisabledTitle': 'احفظ مشروعاً كقالب أولاً (قائمة المشاركة داخل أي مشروع).',
-  'newproj.importClaudeZip': 'استيراد ZIP من Claude Design',
-  'newproj.importClaudeZipTitle': 'استيراد تصدير .zip من Claude Design',
-  'newproj.importingClaudeZip': 'جاري الاستيراد...',
-  'newproj.privacyFooter': 'أنت فقط من يمكنه رؤية مشروعك افتراضياً.',
-  'newproj.designSystem': 'نظام التصميم',
-  'newproj.dsNoneFreeform': 'لا يوجد - شكل حر',
-  'newproj.dsNoneSubtitleEmpty': 'لا توجد رموز نظام، اختر لوحة الألوان الخاصة بك',
-  'newproj.dsNoneSubtitleSelected': 'تخطي رموز النظام. يختار الوكيل لوحة الألوان الخاصة به.',
-  'newproj.dsCategoryFallback': 'نظام التصميم',
-  'newproj.dsSearch': 'بحث في أنظمة التصميم...',
-  'newproj.dsModeAria': 'وضع الاختيار',
-  'newproj.dsModeSingle': 'فردي',
-  'newproj.dsModeMulti': 'متعدد',
-  'newproj.dsNoneTitle': 'لا يوجد - شكل حر',
-  'newproj.dsNoneSub': 'تخطي رموز النظام. يختار الوكيل لوحة الألوان الخاصة به.',
-  'newproj.dsEmpty': 'لا توجد أنظمة تصميم تطابق "{query}".',
-  'newproj.dsFootSingular': 'للإلهام فقط.',
-  'newproj.dsFootPlural': 'للإلهام فقط.',
-  'newproj.dsFootClear': 'مسح',
-  'newproj.dsBadgeDefault': 'افتراضي',
-  'newproj.dsPrimaryFallback': 'أساسي',
-  'newproj.surfaceImage': 'صورة',
-  'newproj.surfaceVideo': 'فيديو',
-  'newproj.surfaceAudio': 'صوت',
-  'newproj.modelLabel': 'النموذج',
-  'newproj.modelSearch': 'بحث في النماذج…',
-  'newproj.modelEmpty': 'لا توجد نماذج مطابقة.',
-  'newproj.modelRecommended': 'موصى به',
-  'newproj.modelMissingTitle': 'اختر نموذجًا',
-  'newproj.modelMissingSub': 'اختر النموذج المسؤول عن هذا السياق.',
-  'newproj.aspectLabel': 'الأبعاد',
-  'newproj.videoLengthLabel': 'الطول',
-  'newproj.videoLengthSeconds': '{n} ثا',
-  'newproj.audioKindLabel': 'نوع الصوت',
-  'newproj.audioKindMusic': 'موسيقى',
-  'newproj.audioKindSpeech': 'كلام / TTS',
-  'newproj.audioKindSfx': 'تأثيرات صوتية',
-  'newproj.audioDurationLabel': 'المدة',
-  'newproj.audioDurationSeconds': '{n} ثا',
-  'newproj.voiceLabel': 'الصوت',
-  'newproj.voicePlaceholder': 'معرف صوت المزود، اختياري',
-  'newproj.connectorsLabel': 'الموصلات',
-  'newproj.connectorsHint': 'مصادر البيانات التي يمكن لهذا العنصر استخدامها.',
-  'newproj.connectorsEmptyTitle': 'لا توجد موصلات مُعدّة',
-  'newproj.connectorsEmptyBody': 'صِل مصدر بيانات حتى يستخدم العنصر الحي بيانات حقيقية بدل العناصر النائبة.',
-  'newproj.connectorsEmptyCta': 'إعداد الموصلات ←',
-  'newproj.connectorsLoading': 'جارٍ تحميل الموصلات…',
-  'newproj.connectorsCountOne': '{n} متصل',
-  'newproj.connectorsCountMany': '{n} متصل',
-  'newproj.connectorsManage': 'إدارة',
-  'newproj.promptTemplateLabel': 'قالب مرجعي',
-  'newproj.promptTemplateNoneTitle': 'لا يوجد - اكتب خاصتك',
-  'newproj.promptTemplateNoneSub': 'تخطي المعرض، صف موجزك الخاص',
-  'newproj.promptTemplateRefSub': 'قالب مرجعي',
-  'newproj.promptTemplateSearch': 'بحث في القوالب...',
-  'newproj.promptTemplateEmpty': 'لم يتم تثبيت قوالب لهذه السطح بعد.',
-  'newproj.promptTemplateBodyLabel': 'الأمر (يمكنك ضبطه)',
-  'newproj.promptTemplateOptimizeHint': 'عدل أي شيء - تغييراتك تنتقل إلى موجز الوكيل.',
-  'newproj.promptTemplateBodyEmpty': 'جسم فارغ - لن يحصل الوكيل على مرجع قالب.',
-  'newproj.deleteTemplateTitle': 'حذف القالب',
-  'newproj.deleteTemplateConfirm': 'هل تريد حذف "{name}"؟ لا يمكن التراجع عن هذا الإجراء.',
-  'newproj.deleteTemplateConfirmCta': 'حذف القالب',
-  'newproj.deleteTemplateError': 'تعذر حذف هذا القالب. يرجى المحاولة مرة أخرى.',
-  'designs.subRecent': 'الأخيرة',
-  'designs.subYours': 'تصاميمك',
-  'designs.filterAria': 'تصفية المشاريع',
-  'designs.searchPlaceholder': 'بحث...',
-  'designs.emptyNoProjects': 'لا توجد مشاريع بعد.',
-  'designs.emptyNoMatch': 'لا توجد مشاريع تطابق بحثك.',
-  'designs.deleteTitle': 'حذف المشروع',
-  'designs.deleteConfirm': 'هل تريد حذف "{name}"؟',
-  'designs.cardFreeform': 'شكل حر',
-  'designs.badgeLive': 'مباشر',
-  'designs.liveArtifactBadgesAria': 'شارات العناصر المباشرة',
-  'designs.liveCount': '{n} مباشر',
-  'designs.statusLive': 'عنصر مباشر',
-  'designs.statusArchived': 'مؤرشف',
-  'designs.statusError': 'خطأ',
-  'designs.statusRefreshing': 'جارٍ التحديث…',
-  'designs.statusRefreshFailed': 'فشل التحديث',
-  'designs.statusRefreshed': 'تم التحديث',
-  'designs.status.notStarted': 'لم يبدأ',
-  'designs.status.queued': 'في الانتظار',
-  'designs.status.running': 'جاري التشغيل',
-  'designs.status.awaitingInput': 'يحتاج مدخلات',
-  'designs.status.succeeded': 'اكتمل',
-  'designs.status.published': 'تم النشر',
-  'designs.status.failed': 'فشل',
-  'designs.status.canceled': 'ملغى',
-  'designs.viewToggleAria': 'وضع العرض',
-  'designs.viewGrid': 'عرض الشبكة',
-  'designs.viewKanban': 'عرض اللوحة',
-  'designs.kanbanEmptyColumn': 'لا توجد تصاميم',
-  'designs.deleteAria': 'حذف المشروع {name}',
-  'designs.menuMore': 'المزيد من الإجراءات',
-  'designs.menuRename': 'إعادة تسمية',
-  'designs.menuDelete': 'حذف',
-  'designs.renamePrompt': 'اسم جديد لـ "{name}"',
-  'designs.selectMode': 'تحديد',
-  'designs.cancelSelect': 'إلغاء',
-  'designs.deleteSelected': 'حذف المحدد',
-  'designs.selectedCount': 'تم تحديد {n}',
-  'designs.deleteSelectedConfirm': 'حذف {n} مشروع؟',
-  'designs.deleteSelectedSuccess': 'تم حذف {n} مشروع بنجاح.',
-  'designs.deleteSelectedPartial': 'تم حذف {deleted} مشروع؛ فشل {failed}.',
-  'designs.tagPrototype': 'نموذج أولي',
-  'designs.tagLiveArtifact': 'عنصر مباشر',
-  'designs.tagSlide': 'شريحة',
-  'designs.tagMedia': 'وسائط',
-  'designs.renameTitle': 'إعادة تسمية المشروع',
+  'connectors.category.integration': 'Ø§ÙØªÙØ§ÙÙ',
+  'connectors.category.localization': 'Ø§ÙØªÙØ·ÙÙ',
+  'connectors.category.logistics': 'Ø§ÙÙÙØ¬Ø³ØªÙØ§Øª',
+  'connectors.category.maps': 'Ø§ÙØ®Ø±Ø§Ø¦Ø·',
+  'connectors.category.marketing': 'Ø§ÙØªØ³ÙÙÙ',
+  'connectors.category.media': 'Ø§ÙÙØ³Ø§Ø¦Ø·',
+  'connectors.category.meetings': 'Ø§ÙØ§Ø¬ØªÙØ§Ø¹Ø§Øª',
+  'connectors.category.nonprofit': 'ØºÙØ± Ø±Ø¨Ø­Ù',
+  'connectors.category.observability': 'ÙØ§Ø¨ÙÙØ© Ø§ÙÙØ±Ø§ÙØ¨Ø©',
+  'connectors.category.payments': 'Ø§ÙÙØ¯ÙÙØ¹Ø§Øª',
+  'connectors.category.personal': 'Ø´Ø®ØµÙ',
+  'connectors.category.presentations': 'Ø§ÙØ¹Ø±ÙØ¶ Ø§ÙØªÙØ¯ÙÙÙØ©',
+  'connectors.category.procurement': 'Ø§ÙÙØ´ØªØ±ÙØ§Øª',
+  'connectors.category.product': 'Ø§ÙÙÙØªØ¬',
+  'connectors.category.productivity': 'Ø§ÙØ¥ÙØªØ§Ø¬ÙØ©',
+  'connectors.category.projectManagement': 'Ø¥Ø¯Ø§Ø±Ø© Ø§ÙÙØ´Ø§Ø±ÙØ¹',
+  'connectors.category.recruiting': 'Ø§ÙØªÙØ¸ÙÙ',
+  'connectors.category.research': 'Ø§ÙØ¨Ø­Ø«',
+  'connectors.category.salesIntelligence': 'Ø°ÙØ§Ø¡ Ø§ÙÙØ¨ÙØ¹Ø§Øª',
+  'connectors.category.scheduling': 'Ø§ÙØ¬Ø¯ÙÙØ©',
+  'connectors.category.search': 'Ø§ÙØ¨Ø­Ø«',
+  'connectors.category.security': 'Ø§ÙØ£ÙØ§Ù',
+  'connectors.category.signing': 'Ø§ÙØªÙÙÙØ¹',
+  'connectors.category.social': 'Ø§Ø¬ØªÙØ§Ø¹Ù',
+  'connectors.category.spreadsheets': 'Ø¬Ø¯Ø§ÙÙ Ø§ÙØ¨ÙØ§ÙØ§Øª',
+  'connectors.category.storage': 'Ø§ÙØªØ®Ø²ÙÙ',
+  'connectors.category.support': 'Ø§ÙØ¯Ø¹Ù',
+  'connectors.category.surveys': 'Ø§ÙØ§Ø³ØªØ¨ÙØ§ÙØ§Øª',
+  'connectors.category.tasks': 'Ø§ÙÙÙØ§Ù',
+  'connectors.category.timeTracking': 'ØªØªØ¨Ø¹ Ø§ÙÙÙØª',
+  'connectors.category.video': 'Ø§ÙÙÙØ¯ÙÙ',
+  'connectors.category.whiteboard': 'Ø§ÙØ³Ø¨ÙØ±Ø©',
+  'connectors.categoryLabel': 'Ø§ÙÙØ¦Ø©',
+  'connectors.providerLabel': 'Ø§ÙÙØ²ÙÙØ¯',
+  'connectors.toolsSection': 'Ø§ÙØ£Ø¯ÙØ§Øª',
+  'connectors.toolsLoading': 'Ø¬Ø§Ø±Ù ØªØ­ÙÙÙ Ø§ÙØ£Ø¯ÙØ§Øªâ¦',
+  'connectors.noToolsAvailable': 'ÙØ§ ØªÙØ¬Ø¯ Ø£Ø¯ÙØ§Øª ÙØªØ§Ø­Ø© Ø¨Ø¹Ø¯. Ø¨Ø¹Ø¯ Ø§ÙØ§ØªØµØ§Ù Ø³ØªØ¸ÙØ± Ø¥ÙÙØ§ÙØ§Øª ÙØ°Ø§ Ø§ÙØªÙØ§ÙÙ.',
+  'connectors.toolDetailsUnavailable': 'ØªÙØ§ØµÙÙ Ø§ÙØ£Ø¯ÙØ§Øª ØºÙØ± ÙØªÙÙØ±Ø©Ø ÙÙÙ ÙØ°Ø§ Ø§ÙÙÙØµÙÙ ÙÙØ¨ÙÙØº Ø¹Ù {n} Ø£Ø¯Ø§Ø©.',
+  'connectors.loadMoreTools': 'ØªØ­ÙÙÙ Ø§ÙÙØ²ÙØ¯ ÙÙ Ø§ÙØ£Ø¯ÙØ§Øª',
+  'connectors.openDetailsAria': 'ÙØªØ­ ØªÙØ§ØµÙÙ {name}',
+  'connectors.toolsBadgeNone': 'ÙØ§ Ø£Ø¯ÙØ§Øª',
+  'connectors.toolsBadgeOne': '{n} Ø£Ø¯Ø§Ø©',
+  'connectors.toolsBadgeMany': '{n} Ø£Ø¯ÙØ§Øª',
+  'connectors.searchPlaceholder': 'Ø§Ø¨Ø­Ø« ÙÙ Ø§ÙÙÙØµÙØ§Øªâ¦',
+  'connectors.searchAriaLabel': 'Ø§Ø¨Ø­Ø« ÙÙ Ø§ÙÙÙØµÙØ§Øª Ø­Ø³Ø¨ Ø§ÙØ§Ø³Ù Ø£Ù Ø§ÙÙØ²ÙÙØ¯ Ø£Ù Ø§ÙØ£Ø¯Ø§Ø©',
+  'connectors.searchClear': 'ÙØ³Ø­ Ø§ÙØ¨Ø­Ø«',
+  'connectors.emptyNoMatchTitle': 'ÙØ§ ØªÙØ¬Ø¯ ÙÙØµÙØ§Øª ØªØ·Ø§Ø¨Ù â{query}â',
+  'connectors.emptyNoMatchBody': 'Ø¬Ø±ÙØ¨ ÙÙÙØ© ÙÙØªØ§Ø­ÙØ© Ø£Ø®Ø±Ù Ø£Ù Ø§ÙØ³Ø­ Ø§ÙØ¨Ø­Ø« ÙØ¹Ø±Ø¶ Ø§ÙÙØ§Ø¦ÙØ© Ø§ÙÙØ§ÙÙØ©.',
+  'connectors.emptyNoMatchAction': 'ÙØ³Ø­ Ø§ÙØ¨Ø­Ø«',
+  'newproj.tabPrototype': 'ÙÙÙØ°Ø¬ Ø£ÙÙÙ',
+  'newproj.tabLiveArtifact': 'Ø¹ÙØµØ± ÙØ¨Ø§Ø´Ø±',
+  'newproj.tabDeck': 'Ø¹Ø±Ø¶ ØªÙØ¯ÙÙÙ',
+  'newproj.tabTemplate': 'ÙÙ ÙØ§ÙØ¨',
+  'newproj.tabMedia': 'Ø§ÙÙØ³Ø§Ø¦Ø·',
+  'newproj.tabOther': 'Ø¢Ø®Ø±',
+  'newproj.titlePrototype': 'ÙÙÙØ°Ø¬ Ø£ÙÙÙ Ø¬Ø¯ÙØ¯',
+  'newproj.titleLiveArtifact': 'Ø¹ÙØµØ± ÙØ¨Ø§Ø´Ø± Ø¬Ø¯ÙØ¯',
+  'newproj.titleDeck': 'Ø¹Ø±Ø¶ ØªÙØ¯ÙÙÙ Ø¬Ø¯ÙØ¯',
+  'newproj.titleTemplate': 'Ø§Ø¨Ø¯Ø£ ÙÙ ÙØ§ÙØ¨',
+  'newproj.titleImage': 'ØµÙØ±Ø© Ø¬Ø¯ÙØ¯Ø©',
+  'newproj.titleVideo': 'ÙÙØ¯ÙÙ Ø¬Ø¯ÙØ¯',
+  'newproj.titleAudio': 'ØµÙØª Ø¬Ø¯ÙØ¯',
+  'newproj.titleMedia': 'ÙØ³Ø§Ø¦Ø· Ø¬Ø¯ÙØ¯Ø©',
+  'newproj.titleOther': 'ÙØ´Ø±ÙØ¹ Ø¬Ø¯ÙØ¯',
+  'newproj.namePlaceholder': 'Ø§Ø³Ù Ø§ÙÙØ´Ø±ÙØ¹',
+  'newproj.fidelityLabel': 'Ø§ÙØ¯ÙØ©',
+  'newproj.fidelityWireframe': 'Ø±Ø³Ù ØªØ®Ø·ÙØ·Ù',
+  'newproj.fidelityHigh': 'Ø¯ÙØ© Ø¹Ø§ÙÙØ©',
+  'newproj.toggleSpeakerNotes': 'Ø§Ø³ØªØ®Ø¯Ù ÙÙØ§Ø­Ø¸Ø§Øª Ø§ÙÙØªØ­Ø¯Ø«',
+  'newproj.toggleSpeakerNotesHint': 'ÙØµ Ø£ÙÙ Ø¹ÙÙ Ø§ÙØ´Ø±Ø§Ø¦Ø­ - Ø§Ø­ØªÙØ¸ Ø¨ÙÙØ§Ø· Ø§ÙØ­Ø¯ÙØ« ÙÙ Ø§ÙÙÙØ§Ø­Ø¸Ø§Øª.',
+  'newproj.toggleAnimations': 'ØªØ¶ÙÙÙ Ø§ÙØ±Ø³ÙÙ Ø§ÙÙØªØ­Ø±ÙØ©',
+  'newproj.toggleAnimationsHint': 'Ø£Ø¶Ù Ø§ÙØ­Ø±ÙØ© (Ø¯Ø®ÙÙØ ØªØ­ÙÙÙØ Ø§ÙØªÙØ§ÙØ§Øª) ÙÙÙ Ø§ÙÙØ§ÙØ¨.',
+  'newproj.targetPlatformsLabel': 'Ø§ÙÙÙØµØ§Øª Ø§ÙÙØ³ØªÙØ¯ÙØ©',
+  'newproj.targetPlatformsHint': 'Ø§Ø®ØªØ± ÙØ§Ø­Ø¯Ø© Ø£Ù Ø£ÙØ«Ø±. Ø§ÙÙÙØ¨ Ø§ÙÙØªØ¬Ø§ÙØ¨ ÙØºØ·Ù ÙÙØ§Ø· ØªÙÙÙ Ø§ÙÙØªØµÙØ­ ÙÙØ·Ø Ø£Ø¶Ù iOS Ø£Ù Android Ø£Ù ØªØ·Ø¨ÙÙ Ø§ÙØ¬ÙØ§Ø² Ø§ÙÙÙØ­Ù Ø£Ù ØªØ·Ø¨ÙÙ Ø³Ø·Ø­ Ø§ÙÙÙØªØ¨ ÙÙØ­ØµÙÙ Ø¹ÙÙ ÙØ³Ø® Ø£ØµÙÙØ© ÙØªØ¹Ø¯Ø¯Ø© Ø§ÙÙÙØµØ§Øª.',
+  'newproj.platform.responsive.label': 'ÙÙØ¨ ÙØªØ¬Ø§ÙØ¨',
+  'newproj.platform.responsive.hint': 'ØªØ¬Ø±Ø¨Ø© ÙÙØ¨ ÙØ§Ø­Ø¯Ø© ÙÙÙÙÙØ£Ø© ÙÙØªØµÙØ­Ø§Øª Ø³Ø·Ø­ Ø§ÙÙÙØªØ¨ ÙØ§ÙØ¬ÙØ§Ø² Ø§ÙÙÙØ­Ù ÙØ§ÙØ¬ÙØ§Ù',
+  'newproj.platform.webDesktop.label': 'ÙÙØ¨ Ø³Ø·Ø­ Ø§ÙÙÙØªØ¨',
+  'newproj.platform.webDesktop.hint': 'ÙÙØªØ¬ Ø£Ù ØµÙØ­Ø© ÙØ¨ÙØ· ÙØ¹ØªÙØ¯ Ø¹ÙÙ Ø§ÙÙØªØµÙØ­ Ø£ÙÙØ§Ù',
+  'newproj.platform.mobileIos.label': 'ØªØ·Ø¨ÙÙ iOS',
+  'newproj.platform.mobileIos.hint': 'Ø¥Ø·Ø§Ø±Ø§Øª iPhone ÙÙÙØ§Ø¹Ø¯ ØªÙØ§Ø¹Ù iOS',
+  'newproj.platform.mobileAndroid.label': 'ØªØ·Ø¨ÙÙ Android',
+  'newproj.platform.mobileAndroid.hint': 'Ø¥Ø·Ø§Ø±Ø§Øª Pixel ÙÙÙØ§Ø¹Ø¯ ØªÙØ§Ø¹Ù Material',
+  'newproj.platform.tablet.label': 'ØªØ·Ø¨ÙÙ Ø§ÙØ¬ÙØ§Ø² Ø§ÙÙÙØ­Ù',
+  'newproj.platform.tablet.hint': 'ØªØ¬Ø±Ø¨Ø© Ø¬ÙØ§Ø² ÙÙØ­Ù Ø¨Ø£Ø³ÙÙØ¨ Ø£ØµÙÙ ÙØ¹ Ø¹Ø±ÙØ¶ ÙÙØ³ÙÙØ©',
+  'newproj.platform.desktopApp.label': 'ØªØ·Ø¨ÙÙ Ø³Ø·Ø­ Ø§ÙÙÙØªØ¨',
+  'newproj.platform.desktopApp.hint': 'ÙØ§Ø¬ÙØ© ØªØ·Ø¨ÙÙ macOS/Windows',
+  'newproj.surfaceOptionsLabel': 'Ø§ÙØ£Ø³Ø·Ø­ Ø§ÙÙØµØ§Ø­Ø¨Ø©',
+  'newproj.includeLandingPage': 'ØªØ¶ÙÙÙ ØµÙØ­Ø© ÙØ¨ÙØ·',
+  'newproj.includeLandingPageHint': 'Ø£Ø¶Ù ØµÙØ­Ø© ØªØ³ÙÙÙÙØ© ÙØªØ¬Ø§ÙØ¨Ø© ÙÙØ¥Ø¹ÙØ§ÙØ§Øª Ø£Ù ÙÙØ§Ø¦Ù Ø§ÙØ§ÙØªØ¸Ø§Ø± Ø£Ù Ø­ÙÙØ§Øª Ø§ÙØ¥Ø·ÙØ§Ù Ø£Ù ØªÙØ²ÙÙØ§Øª Ø§ÙØªØ·Ø¨ÙÙ Ø£Ù Ø´Ø±Ø­ Ø§ÙÙÙØªØ¬.',
+  'newproj.includeOsWidgets': 'ØªØ¶ÙÙÙ Ø¹ÙØ§ØµØ± ÙØ§Ø¬ÙØ© ÙØ¸Ø§Ù Ø§ÙØªØ´ØºÙÙ',
+  'newproj.includeOsWidgetsHint': 'Ø£Ø¶Ù Ø¹ÙØ§ØµØ± ÙØ§Ø¬ÙØ© Ø£ØµÙÙØ© ÙÙÙÙØµØ© Ø¹ÙÙ Ø§ÙØ´Ø§Ø´Ø© Ø§ÙØ±Ø¦ÙØ³ÙØ© Ø£Ù Ø´Ø§Ø´Ø© Ø§ÙÙÙÙ Ø£Ù Ø§ÙÙØµÙÙ Ø§ÙØ³Ø±ÙØ¹ ÙØªØ·Ø¨ÙÙØ§Øª Ø§ÙØ¬ÙØ§Ù/Ø§ÙØ¬ÙØ§Ø² Ø§ÙÙÙØ­Ù.',
+  'newproj.includeOsWidgetsDisabledHint': 'ÙØªØ§Ø­ Ø¹ÙØ¯ Ø§Ø®ØªÙØ§Ø± ØªØ·Ø¨ÙÙ iOS Ø£Ù Android Ø£Ù Ø§ÙØ¬ÙØ§Ø² Ø§ÙÙÙØ­Ù ÙÙÙØµØ© ÙØ³ØªÙØ¯ÙØ©.',
+  'newproj.templateLabel': 'Ø§ÙÙØ§ÙØ¨',
+  'newproj.noTemplatesTitle': 'ÙØ§ ØªÙØ¬Ø¯ ÙÙØ§ÙØ¨ Ø¨Ø¹Ø¯',
+  'newproj.noTemplatesBody': 'Ø§ÙØªØ­ Ø£Ù ÙØ´Ø±ÙØ¹Ø Ø«Ù Ø§Ø³ØªØ®Ø¯Ù ÙØ§Ø¦ÙØ© Ø§ÙÙØ´Ø§Ø±ÙØ© Ø¯Ø§Ø®Ù Ø¹Ø§Ø±Ø¶ Ø§ÙÙÙÙØ§Øª ÙØªØ­ÙÙÙÙ Ø¥ÙÙ ÙØ§ÙØ¨. Ø³ØªØ¸ÙØ± Ø§ÙÙÙØ§ÙØ¨ ÙÙØ§.',
+  'newproj.savedTemplate': 'ÙØ§ÙØ¨ ÙØ­ÙÙØ¸',
+  'newproj.fileSingular': 'ÙÙÙ',
+  'newproj.filePlural': 'ÙÙÙØ§Øª',
+  'newproj.create': 'Ø¥ÙØ´Ø§Ø¡',
+  'newproj.locationLabel': 'Ø­ÙØ¸ ÙÙ',
+  'newproj.locationDefault': 'ÙØ´Ø§Ø±ÙØ¹ Open Design',
+  'newproj.locationExternalBase': 'ÙØ§Ø¹Ø¯Ø© Ø®Ø§Ø±Ø¬ÙØ©',
+  'newproj.createLiveArtifact': 'Ø¥ÙØ´Ø§Ø¡ Ø¹ÙØµØ± ÙØ¨Ø§Ø´Ø±',
+  'newproj.createFromTemplate': 'Ø¥ÙØ´Ø§Ø¡ ÙÙ ÙØ§ÙØ¨',
+  'newproj.createDisabledTitle': 'Ø§Ø­ÙØ¸ ÙØ´Ø±ÙØ¹Ø§Ù ÙÙØ§ÙØ¨ Ø£ÙÙØ§Ù (ÙØ§Ø¦ÙØ© Ø§ÙÙØ´Ø§Ø±ÙØ© Ø¯Ø§Ø®Ù Ø£Ù ÙØ´Ø±ÙØ¹).',
+  'newproj.importClaudeZip': 'Ø§Ø³ØªÙØ±Ø§Ø¯ ZIP ÙÙ Claude Design',
+  'newproj.importClaudeZipTitle': 'Ø§Ø³ØªÙØ±Ø§Ø¯ ØªØµØ¯ÙØ± .zip ÙÙ Claude Design',
+  'newproj.importingClaudeZip': 'Ø¬Ø§Ø±Ù Ø§ÙØ§Ø³ØªÙØ±Ø§Ø¯...',
+  'newproj.privacyFooter': 'Ø£ÙØª ÙÙØ· ÙÙ ÙÙÙÙÙ Ø±Ø¤ÙØ© ÙØ´Ø±ÙØ¹Ù Ø§ÙØªØ±Ø§Ø¶ÙØ§Ù.',
+  'newproj.designSystem': 'ÙØ¸Ø§Ù Ø§ÙØªØµÙÙÙ',
+  'newproj.dsNoneFreeform': 'ÙØ§ ÙÙØ¬Ø¯ - Ø´ÙÙ Ø­Ø±',
+  'newproj.dsNoneSubtitleEmpty': 'ÙØ§ ØªÙØ¬Ø¯ Ø±ÙÙØ² ÙØ¸Ø§ÙØ Ø§Ø®ØªØ± ÙÙØ­Ø© Ø§ÙØ£ÙÙØ§Ù Ø§ÙØ®Ø§ØµØ© Ø¨Ù',
+  'newproj.dsNoneSubtitleSelected': 'ØªØ®Ø·Ù Ø±ÙÙØ² Ø§ÙÙØ¸Ø§Ù. ÙØ®ØªØ§Ø± Ø§ÙÙÙÙÙ ÙÙØ­Ø© Ø§ÙØ£ÙÙØ§Ù Ø§ÙØ®Ø§ØµØ© Ø¨Ù.',
+  'newproj.dsCategoryFallback': 'ÙØ¸Ø§Ù Ø§ÙØªØµÙÙÙ',
+  'newproj.dsSearch': 'Ø¨Ø­Ø« ÙÙ Ø£ÙØ¸ÙØ© Ø§ÙØªØµÙÙÙ...',
+  'newproj.dsModeAria': 'ÙØ¶Ø¹ Ø§ÙØ§Ø®ØªÙØ§Ø±',
+  'newproj.dsModeSingle': 'ÙØ±Ø¯Ù',
+  'newproj.dsModeMulti': 'ÙØªØ¹Ø¯Ø¯',
+  'newproj.dsNoneTitle': 'ÙØ§ ÙÙØ¬Ø¯ - Ø´ÙÙ Ø­Ø±',
+  'newproj.dsNoneSub': 'ØªØ®Ø·Ù Ø±ÙÙØ² Ø§ÙÙØ¸Ø§Ù. ÙØ®ØªØ§Ø± Ø§ÙÙÙÙÙ ÙÙØ­Ø© Ø§ÙØ£ÙÙØ§Ù Ø§ÙØ®Ø§ØµØ© Ø¨Ù.',
+  'newproj.dsEmpty': 'ÙØ§ ØªÙØ¬Ø¯ Ø£ÙØ¸ÙØ© ØªØµÙÙÙ ØªØ·Ø§Ø¨Ù "{query}".',
+  'newproj.dsFootSingular': 'ÙÙØ¥ÙÙØ§Ù ÙÙØ·.',
+  'newproj.dsFootPlural': 'ÙÙØ¥ÙÙØ§Ù ÙÙØ·.',
+  'newproj.dsFootClear': 'ÙØ³Ø­',
+  'newproj.dsBadgeDefault': 'Ø§ÙØªØ±Ø§Ø¶Ù',
+  'newproj.dsPrimaryFallback': 'Ø£Ø³Ø§Ø³Ù',
+  'newproj.surfaceImage': 'ØµÙØ±Ø©',
+  'newproj.surfaceVideo': 'ÙÙØ¯ÙÙ',
+  'newproj.surfaceAudio': 'ØµÙØª',
+  'newproj.modelLabel': 'Ø§ÙÙÙÙØ°Ø¬',
+  'newproj.modelSearch': 'Ø¨Ø­Ø« ÙÙ Ø§ÙÙÙØ§Ø°Ø¬â¦',
+  'newproj.modelEmpty': 'ÙØ§ ØªÙØ¬Ø¯ ÙÙØ§Ø°Ø¬ ÙØ·Ø§Ø¨ÙØ©.',
+  'newproj.modelRecommended': 'ÙÙØµÙ Ø¨Ù',
+  'newproj.modelMissingTitle': 'Ø§Ø®ØªØ± ÙÙÙØ°Ø¬ÙØ§',
+  'newproj.modelMissingSub': 'Ø§Ø®ØªØ± Ø§ÙÙÙÙØ°Ø¬ Ø§ÙÙØ³Ø¤ÙÙ Ø¹Ù ÙØ°Ø§ Ø§ÙØ³ÙØ§Ù.',
+  'newproj.aspectLabel': 'Ø§ÙØ£Ø¨Ø¹Ø§Ø¯',
+  'newproj.videoLengthLabel': 'Ø§ÙØ·ÙÙ',
+  'newproj.videoLengthSeconds': '{n} Ø«Ø§',
+  'newproj.audioKindLabel': 'ÙÙØ¹ Ø§ÙØµÙØª',
+  'newproj.audioKindMusic': 'ÙÙØ³ÙÙÙ',
+  'newproj.audioKindSpeech': 'ÙÙØ§Ù / TTS',
+  'newproj.audioKindSfx': 'ØªØ£Ø«ÙØ±Ø§Øª ØµÙØªÙØ©',
+  'newproj.audioDurationLabel': 'Ø§ÙÙØ¯Ø©',
+  'newproj.audioDurationSeconds': '{n} Ø«Ø§',
+  'newproj.voiceLabel': 'Ø§ÙØµÙØª',
+  'newproj.voicePlaceholder': 'ÙØ¹Ø±Ù ØµÙØª Ø§ÙÙØ²ÙØ¯Ø Ø§Ø®ØªÙØ§Ø±Ù',
+  'newproj.connectorsLabel': 'Ø§ÙÙÙØµÙØ§Øª',
+  'newproj.connectorsHint': 'ÙØµØ§Ø¯Ø± Ø§ÙØ¨ÙØ§ÙØ§Øª Ø§ÙØªÙ ÙÙÙÙ ÙÙØ°Ø§ Ø§ÙØ¹ÙØµØ± Ø§Ø³ØªØ®Ø¯Ø§ÙÙØ§.',
+  'newproj.connectorsEmptyTitle': 'ÙØ§ ØªÙØ¬Ø¯ ÙÙØµÙØ§Øª ÙÙØ¹Ø¯ÙØ©',
+  'newproj.connectorsEmptyBody': 'ØµÙÙ ÙØµØ¯Ø± Ø¨ÙØ§ÙØ§Øª Ø­ØªÙ ÙØ³ØªØ®Ø¯Ù Ø§ÙØ¹ÙØµØ± Ø§ÙØ­Ù Ø¨ÙØ§ÙØ§Øª Ø­ÙÙÙÙØ© Ø¨Ø¯Ù Ø§ÙØ¹ÙØ§ØµØ± Ø§ÙÙØ§Ø¦Ø¨Ø©.',
+  'newproj.connectorsEmptyCta': 'Ø¥Ø¹Ø¯Ø§Ø¯ Ø§ÙÙÙØµÙØ§Øª â',
+  'newproj.connectorsLoading': 'Ø¬Ø§Ø±Ù ØªØ­ÙÙÙ Ø§ÙÙÙØµÙØ§Øªâ¦',
+  'newproj.connectorsCountOne': '{n} ÙØªØµÙ',
+  'newproj.connectorsCountMany': '{n} ÙØªØµÙ',
+  'newproj.connectorsManage': 'Ø¥Ø¯Ø§Ø±Ø©',
+  'newproj.promptTemplateLabel': 'ÙØ§ÙØ¨ ÙØ±Ø¬Ø¹Ù',
+  'newproj.promptTemplateNoneTitle': 'ÙØ§ ÙÙØ¬Ø¯ - Ø§ÙØªØ¨ Ø®Ø§ØµØªÙ',
+  'newproj.promptTemplateNoneSub': 'ØªØ®Ø·Ù Ø§ÙÙØ¹Ø±Ø¶Ø ØµÙ ÙÙØ¬Ø²Ù Ø§ÙØ®Ø§Øµ',
+  'newproj.promptTemplateRefSub': 'ÙØ§ÙØ¨ ÙØ±Ø¬Ø¹Ù',
+  'newproj.promptTemplateSearch': 'Ø¨Ø­Ø« ÙÙ Ø§ÙÙÙØ§ÙØ¨...',
+  'newproj.promptTemplateEmpty': 'ÙÙ ÙØªÙ ØªØ«Ø¨ÙØª ÙÙØ§ÙØ¨ ÙÙØ°Ù Ø§ÙØ³Ø·Ø­ Ø¨Ø¹Ø¯.',
+  'newproj.promptTemplateBodyLabel': 'Ø§ÙØ£ÙØ± (ÙÙÙÙÙ Ø¶Ø¨Ø·Ù)',
+  'newproj.promptTemplateOptimizeHint': 'Ø¹Ø¯Ù Ø£Ù Ø´ÙØ¡ - ØªØºÙÙØ±Ø§ØªÙ ØªÙØªÙÙ Ø¥ÙÙ ÙÙØ¬Ø² Ø§ÙÙÙÙÙ.',
+  'newproj.promptTemplateBodyEmpty': 'Ø¬Ø³Ù ÙØ§Ø±Øº - ÙÙ ÙØ­ØµÙ Ø§ÙÙÙÙÙ Ø¹ÙÙ ÙØ±Ø¬Ø¹ ÙØ§ÙØ¨.',
+  'newproj.deleteTemplateTitle': 'Ø­Ø°Ù Ø§ÙÙØ§ÙØ¨',
+  'newproj.deleteTemplateConfirm': 'ÙÙ ØªØ±ÙØ¯ Ø­Ø°Ù "{name}"Ø ÙØ§ ÙÙÙÙ Ø§ÙØªØ±Ø§Ø¬Ø¹ Ø¹Ù ÙØ°Ø§ Ø§ÙØ¥Ø¬Ø±Ø§Ø¡.',
+  'newproj.deleteTemplateConfirmCta': 'Ø­Ø°Ù Ø§ÙÙØ§ÙØ¨',
+  'newproj.deleteTemplateError': 'ØªØ¹Ø°Ø± Ø­Ø°Ù ÙØ°Ø§ Ø§ÙÙØ§ÙØ¨. ÙØ±Ø¬Ù Ø§ÙÙØ­Ø§ÙÙØ© ÙØ±Ø© Ø£Ø®Ø±Ù.',
+  'designs.subRecent': 'Ø§ÙØ£Ø®ÙØ±Ø©',
+  'designs.subYours': 'ØªØµØ§ÙÙÙÙ',
+  'designs.filterAria': 'ØªØµÙÙØ© Ø§ÙÙØ´Ø§Ø±ÙØ¹',
+  'designs.searchPlaceholder': 'Ø¨Ø­Ø«...',
+  'designs.emptyNoProjects': 'ÙØ§ ØªÙØ¬Ø¯ ÙØ´Ø§Ø±ÙØ¹ Ø¨Ø¹Ø¯.',
+  'designs.emptyNoMatch': 'ÙØ§ ØªÙØ¬Ø¯ ÙØ´Ø§Ø±ÙØ¹ ØªØ·Ø§Ø¨Ù Ø¨Ø­Ø«Ù.',
+  'designs.deleteTitle': 'Ø­Ø°Ù Ø§ÙÙØ´Ø±ÙØ¹',
+  'designs.deleteConfirm': 'ÙÙ ØªØ±ÙØ¯ Ø­Ø°Ù "{name}"Ø',
+  'designs.cardFreeform': 'Ø´ÙÙ Ø­Ø±',
+  'designs.badgeLive': 'ÙØ¨Ø§Ø´Ø±',
+  'designs.liveArtifactBadgesAria': 'Ø´Ø§Ø±Ø§Øª Ø§ÙØ¹ÙØ§ØµØ± Ø§ÙÙØ¨Ø§Ø´Ø±Ø©',
+  'designs.liveCount': '{n} ÙØ¨Ø§Ø´Ø±',
+  'designs.statusLive': 'Ø¹ÙØµØ± ÙØ¨Ø§Ø´Ø±',
+  'designs.statusArchived': 'ÙØ¤Ø±Ø´Ù',
+  'designs.statusError': 'Ø®Ø·Ø£',
+  'designs.statusRefreshing': 'Ø¬Ø§Ø±Ù Ø§ÙØªØ­Ø¯ÙØ«â¦',
+  'designs.statusRefreshFailed': 'ÙØ´Ù Ø§ÙØªØ­Ø¯ÙØ«',
+  'designs.statusRefreshed': 'ØªÙ Ø§ÙØªØ­Ø¯ÙØ«',
+  'designs.status.notStarted': 'ÙÙ ÙØ¨Ø¯Ø£',
+  'designs.status.queued': 'ÙÙ Ø§ÙØ§ÙØªØ¸Ø§Ø±',
+  'designs.status.running': 'Ø¬Ø§Ø±Ù Ø§ÙØªØ´ØºÙÙ',
+  'designs.status.awaitingInput': 'ÙØ­ØªØ§Ø¬ ÙØ¯Ø®ÙØ§Øª',
+  'designs.status.succeeded': 'Ø§ÙØªÙÙ',
+  'designs.status.published': 'ØªÙ Ø§ÙÙØ´Ø±',
+  'designs.status.failed': 'ÙØ´Ù',
+  'designs.status.canceled': 'ÙÙØºÙ',
+  'designs.viewToggleAria': 'ÙØ¶Ø¹ Ø§ÙØ¹Ø±Ø¶',
+  'designs.viewGrid': 'Ø¹Ø±Ø¶ Ø§ÙØ´Ø¨ÙØ©',
+  'designs.viewKanban': 'Ø¹Ø±Ø¶ Ø§ÙÙÙØ­Ø©',
+  'designs.kanbanEmptyColumn': 'ÙØ§ ØªÙØ¬Ø¯ ØªØµØ§ÙÙÙ',
+  'designs.deleteAria': 'Ø­Ø°Ù Ø§ÙÙØ´Ø±ÙØ¹ {name}',
+  'designs.menuMore': 'Ø§ÙÙØ²ÙØ¯ ÙÙ Ø§ÙØ¥Ø¬Ø±Ø§Ø¡Ø§Øª',
+  'designs.menuRename': 'Ø¥Ø¹Ø§Ø¯Ø© ØªØ³ÙÙØ©',
+  'designs.menuDelete': 'Ø­Ø°Ù',
+  'designs.renamePrompt': 'Ø§Ø³Ù Ø¬Ø¯ÙØ¯ ÙÙ "{name}"',
+  'designs.selectMode': 'ØªØ­Ø¯ÙØ¯',
+  'designs.cancelSelect': 'Ø¥ÙØºØ§Ø¡',
+  'designs.deleteSelected': 'Ø­Ø°Ù Ø§ÙÙØ­Ø¯Ø¯',
+  'designs.selectedCount': 'ØªÙ ØªØ­Ø¯ÙØ¯ {n}',
+  'designs.deleteSelectedConfirm': 'Ø­Ø°Ù {n} ÙØ´Ø±ÙØ¹Ø',
+  'designs.deleteSelectedSuccess': 'ØªÙ Ø­Ø°Ù {n} ÙØ´Ø±ÙØ¹ Ø¨ÙØ¬Ø§Ø­.',
+  'designs.deleteSelectedPartial': 'ØªÙ Ø­Ø°Ù {deleted} ÙØ´Ø±ÙØ¹Ø ÙØ´Ù {failed}.',
+  'designs.tagPrototype': 'ÙÙÙØ°Ø¬ Ø£ÙÙÙ',
+  'designs.tagLiveArtifact': 'Ø¹ÙØµØ± ÙØ¨Ø§Ø´Ø±',
+  'designs.tagSlide': 'Ø´Ø±ÙØ­Ø©',
+  'designs.tagMedia': 'ÙØ³Ø§Ø¦Ø·',
+  'designs.renameTitle': 'Ø¥Ø¹Ø§Ø¯Ø© ØªØ³ÙÙØ© Ø§ÙÙØ´Ø±ÙØ¹',
   'designs.renameSave': 'OK',
-  'designs.renameCancel': 'إلغاء',
-  'examples.typeLabel': 'النوع',
-  'examples.surfaceLabel': 'السطح',
-  'examples.surfaceWeb': 'ويب',
-  'examples.surfaceImage': 'صورة',
-  'examples.surfaceVideo': 'فيديو',
-  'examples.surfaceAudio': 'صوت',
-  'examples.scenarioLabel': 'السيناريو',
-  'examples.modeAll': 'الكل',
-  'examples.modePrototypeDesktop': 'نماذج أولية · سطح المكتب',
-  'examples.modePrototypeMobile': 'نماذج أولية · الجوال',
-  'examples.modeDeck': 'شرائح',
-  'examples.modeDocument': 'مستندات وقوالب',
+  'designs.renameCancel': 'Ø¥ÙØºØ§Ø¡',
+  'examples.typeLabel': 'Ø§ÙÙÙØ¹',
+  'examples.surfaceLabel': 'Ø§ÙØ³Ø·Ø­',
+  'examples.surfaceWeb': 'ÙÙØ¨',
+  'examples.surfaceImage': 'ØµÙØ±Ø©',
+  'examples.surfaceVideo': 'ÙÙØ¯ÙÙ',
+  'examples.surfaceAudio': 'ØµÙØª',
+  'examples.scenarioLabel': 'Ø§ÙØ³ÙÙØ§Ø±ÙÙ',
+  'examples.modeAll': 'Ø§ÙÙÙ',
+  'examples.modePrototypeDesktop': 'ÙÙØ§Ø°Ø¬ Ø£ÙÙÙØ© Â· Ø³Ø·Ø­ Ø§ÙÙÙØªØ¨',
+  'examples.modePrototypeMobile': 'ÙÙØ§Ø°Ø¬ Ø£ÙÙÙØ© Â· Ø§ÙØ¬ÙØ§Ù',
+  'examples.modeDeck': 'Ø´Ø±Ø§Ø¦Ø­',
+  'examples.modeDocument': 'ÙØ³ØªÙØ¯Ø§Øª ÙÙÙØ§ÙØ¨',
   'examples.modeOrbit': 'Orbit',
-  'examples.modeLive': 'مباشر',
-  'examples.scenarioGeneral': 'عام',
-  'examples.scenarioEngineering': 'هندسة',
-  'examples.scenarioProduct': 'منتج',
-  'examples.scenarioDesign': 'تصميم',
-  'examples.scenarioMarketing': 'تسويق',
-  'examples.scenarioSales': 'مبيعات',
-  'examples.scenarioFinance': 'مالية',
-  'examples.scenarioHr': 'موارد بشرية',
-  'examples.scenarioOperations': 'عمليات',
-  'examples.scenarioSupport': 'دعم',
-  'examples.scenarioLegal': 'قانوني',
-  'examples.scenarioEducation': 'تعليم',
-  'examples.scenarioPersonal': 'شخصي',
-  'examples.searchPlaceholder': 'بحث في الأمثلة...',
-  'examples.searchAria': 'بحث في الأمثلة بالاسم',
-  'examples.emptyNoSkills': 'لا توجد مهارات متوفرة. هل البرنامج الخفي يعمل؟',
-  'examples.emptyNoMatch': 'لا توجد أمثلة تطابق هذه الفلاتر.',
-  'examples.openPreview': '⤢ فتح المعاينة',
-  'examples.loadingPreview': 'جاري تحميل المعاينة...',
-  'examples.hoverPreview': 'حوم للمعاينة',
-  'examples.usePrompt': 'استخدم هذا الأمر',
-  'examples.previewModalTitle': 'فتح المعاينة الكاملة (نافذة)',
-  'examples.shareTitle': 'مشاركة هذا المثال',
-  'examples.shareLoadFirst': 'حوم لتحميل المعاينة أولاً',
-  'examples.unavailablePlaceholder': 'لا توجد معاينة {kind} مرفقة — افتح لمعرفة المزيد',
-  'examples.shareUnavailable': 'لا توجد معاينة {kind} مرفقة للمشاركة',
-  'examples.shareMenu': 'مشاركة ▾',
-  'examples.exportPdfAllSlides': 'تصدير كـ PDF (كل الشرائح)',
-  'examples.exportPptxLocked': 'تصدير كـ PPTX... (افتح القالب أولاً)',
-  'examples.tagSlideDeck': 'عرض تقديمي',
-  'examples.tagTemplate': 'قالب',
-  'examples.tagDesignSystem': 'نظام تصميم',
-  'examples.tagMobilePrototype': 'نموذج أولي للجوال',
-  'examples.tagDesktopPrototype': 'نموذج أولي لسطح المكتب',
-  'examples.tagImage': 'صورة',
-  'examples.tagVideo': 'فيديو',
-  'examples.tagAudio': 'صوت',
-  'examples.previewLabel': 'معاينة',
-  'ds.surfaceLabel': 'السطح',
-  'ds.surfaceWeb': 'ويب',
-  'ds.surfaceImage': 'صورة',
-  'ds.surfaceVideo': 'فيديو',
-  'ds.surfaceAudio': 'صوت',
-  'ds.searchPlaceholder': 'بحث في أنظمة التصميم...',
-  'ds.emptyNoMatch': 'لا توجد أنظمة تصميم تطابق بحثك.',
-  'ds.badgeDefault': 'افتراضي',
-  'ds.preview': 'معاينة',
-  'ds.previewTitle': 'معاينة نظام التصميم',
-  'ds.categoryAll': 'الكل',
-  'ds.categoryUncategorized': 'غير مصنف',
-  'ds.showcase': 'عرض',
-  'ds.tokens': 'الرموز',
+  'examples.modeLive': 'ÙØ¨Ø§Ø´Ø±',
+  'examples.scenarioGeneral': 'Ø¹Ø§Ù',
+  'examples.scenarioEngineering': 'ÙÙØ¯Ø³Ø©',
+  'examples.scenarioProduct': 'ÙÙØªØ¬',
+  'examples.scenarioDesign': 'ØªØµÙÙÙ',
+  'examples.scenarioMarketing': 'ØªØ³ÙÙÙ',
+  'examples.scenarioSales': 'ÙØ¨ÙØ¹Ø§Øª',
+  'examples.scenarioFinance': 'ÙØ§ÙÙØ©',
+  'examples.scenarioHr': 'ÙÙØ§Ø±Ø¯ Ø¨Ø´Ø±ÙØ©',
+  'examples.scenarioOperations': 'Ø¹ÙÙÙØ§Øª',
+  'examples.scenarioSupport': 'Ø¯Ø¹Ù',
+  'examples.scenarioLegal': 'ÙØ§ÙÙÙÙ',
+  'examples.scenarioEducation': 'ØªØ¹ÙÙÙ',
+  'examples.scenarioPersonal': 'Ø´Ø®ØµÙ',
+  'examples.searchPlaceholder': 'Ø¨Ø­Ø« ÙÙ Ø§ÙØ£ÙØ«ÙØ©...',
+  'examples.searchAria': 'Ø¨Ø­Ø« ÙÙ Ø§ÙØ£ÙØ«ÙØ© Ø¨Ø§ÙØ§Ø³Ù',
+  'examples.emptyNoSkills': 'ÙØ§ ØªÙØ¬Ø¯ ÙÙØ§Ø±Ø§Øª ÙØªÙÙØ±Ø©. ÙÙ Ø§ÙØ¨Ø±ÙØ§ÙØ¬ Ø§ÙØ®ÙÙ ÙØ¹ÙÙØ',
+  'examples.emptyNoMatch': 'ÙØ§ ØªÙØ¬Ø¯ Ø£ÙØ«ÙØ© ØªØ·Ø§Ø¨Ù ÙØ°Ù Ø§ÙÙÙØ§ØªØ±.',
+  'examples.openPreview': 'â¤¢ ÙØªØ­ Ø§ÙÙØ¹Ø§ÙÙØ©',
+  'examples.loadingPreview': 'Ø¬Ø§Ø±Ù ØªØ­ÙÙÙ Ø§ÙÙØ¹Ø§ÙÙØ©...',
+  'examples.hoverPreview': 'Ø­ÙÙ ÙÙÙØ¹Ø§ÙÙØ©',
+  'examples.usePrompt': 'Ø§Ø³ØªØ®Ø¯Ù ÙØ°Ø§ Ø§ÙØ£ÙØ±',
+  'examples.previewModalTitle': 'ÙØªØ­ Ø§ÙÙØ¹Ø§ÙÙØ© Ø§ÙÙØ§ÙÙØ© (ÙØ§ÙØ°Ø©)',
+  'examples.shareTitle': 'ÙØ´Ø§Ø±ÙØ© ÙØ°Ø§ Ø§ÙÙØ«Ø§Ù',
+  'examples.shareLoadFirst': 'Ø­ÙÙ ÙØªØ­ÙÙÙ Ø§ÙÙØ¹Ø§ÙÙØ© Ø£ÙÙØ§Ù',
+  'examples.unavailablePlaceholder': 'ÙØ§ ØªÙØ¬Ø¯ ÙØ¹Ø§ÙÙØ© {kind} ÙØ±ÙÙØ© â Ø§ÙØªØ­ ÙÙØ¹Ø±ÙØ© Ø§ÙÙØ²ÙØ¯',
+  'examples.shareUnavailable': 'ÙØ§ ØªÙØ¬Ø¯ ÙØ¹Ø§ÙÙØ© {kind} ÙØ±ÙÙØ© ÙÙÙØ´Ø§Ø±ÙØ©',
+  'examples.shareMenu': 'ÙØ´Ø§Ø±ÙØ© â¾',
+  'examples.exportPdfAllSlides': 'ØªØµØ¯ÙØ± ÙÙ PDF (ÙÙ Ø§ÙØ´Ø±Ø§Ø¦Ø­)',
+  'examples.exportPptxLocked': 'ØªØµØ¯ÙØ± ÙÙ PPTX... (Ø§ÙØªØ­ Ø§ÙÙØ§ÙØ¨ Ø£ÙÙØ§Ù)',
+  'examples.tagSlideDeck': 'Ø¹Ø±Ø¶ ØªÙØ¯ÙÙÙ',
+  'examples.tagTemplate': 'ÙØ§ÙØ¨',
+  'examples.tagDesignSystem': 'ÙØ¸Ø§Ù ØªØµÙÙÙ',
+  'examples.tagMobilePrototype': 'ÙÙÙØ°Ø¬ Ø£ÙÙÙ ÙÙØ¬ÙØ§Ù',
+  'examples.tagDesktopPrototype': 'ÙÙÙØ°Ø¬ Ø£ÙÙÙ ÙØ³Ø·Ø­ Ø§ÙÙÙØªØ¨',
+  'examples.tagImage': 'ØµÙØ±Ø©',
+  'examples.tagVideo': 'ÙÙØ¯ÙÙ',
+  'examples.tagAudio': 'ØµÙØª',
+  'examples.previewLabel': 'ÙØ¹Ø§ÙÙØ©',
+  'ds.surfaceLabel': 'Ø§ÙØ³Ø·Ø­',
+  'ds.surfaceWeb': 'ÙÙØ¨',
+  'ds.surfaceImage': 'ØµÙØ±Ø©',
+  'ds.surfaceVideo': 'ÙÙØ¯ÙÙ',
+  'ds.surfaceAudio': 'ØµÙØª',
+  'ds.searchPlaceholder': 'Ø¨Ø­Ø« ÙÙ Ø£ÙØ¸ÙØ© Ø§ÙØªØµÙÙÙ...',
+  'ds.emptyNoMatch': 'ÙØ§ ØªÙØ¬Ø¯ Ø£ÙØ¸ÙØ© ØªØµÙÙÙ ØªØ·Ø§Ø¨Ù Ø¨Ø­Ø«Ù.',
+  'ds.badgeDefault': 'Ø§ÙØªØ±Ø§Ø¶Ù',
+  'ds.preview': 'ÙØ¹Ø§ÙÙØ©',
+  'ds.previewTitle': 'ÙØ¹Ø§ÙÙØ© ÙØ¸Ø§Ù Ø§ÙØªØµÙÙÙ',
+  'ds.categoryAll': 'Ø§ÙÙÙ',
+  'ds.categoryUncategorized': 'ØºÙØ± ÙØµÙÙ',
+  'ds.showcase': 'Ø¹Ø±Ø¶',
+  'ds.tokens': 'Ø§ÙØ±ÙÙØ²',
   'ds.specToggle': 'DESIGN.md',
-  'ds.specLoading': 'جاري تحميل DESIGN.md...',
-  'avatar.title': 'الحساب والإعدادات',
-  'avatar.localCli': 'CLI محلي',
+  'ds.specLoading': 'Ø¬Ø§Ø±Ù ØªØ­ÙÙÙ DESIGN.md...',
+  'avatar.title': 'Ø§ÙØ­Ø³Ø§Ø¨ ÙØ§ÙØ¥Ø¹Ø¯Ø§Ø¯Ø§Øª',
+  'avatar.localCli': 'CLI ÙØ­ÙÙ',
   'avatar.anthropicApi': 'Anthropic API',
-  'avatar.useLocal': 'استخدام CLI محلي',
-  'avatar.useApi': 'استخدام API · BYOK',
-  'avatar.codeAgent': 'وكيل الكود',
-  'avatar.rescan': 'إعادة مسح PATH',
-  'avatar.amrConsole': 'حساب AMR',
-  'avatar.amrConsoleMeta': 'الرصيد وإعادة الشحن',
-  'avatar.settings': 'الإعدادات',
-  'avatar.backToProjects': 'العودة للمشاريع',
-  'avatar.metaActive': 'نشط',
-  'avatar.metaOffline': 'غير متصل',
-  'avatar.metaSelected': 'محدد',
-  'avatar.noAgentSelected': 'لم يتم اختيار وكيل',
-  'avatar.modelSection': 'النموذج',
-  'avatar.modelLabel': 'النموذج',
-  'avatar.reasoningLabel': 'التفكير',
-  'avatar.customSuffix': '(مخصص)',
-  'socialShare.openDesignSection': 'مشاركة Open Design',
-  'socialShare.openDesignTitle': 'Open Design على GitHub',
-  'socialShare.openDesignText': 'Open Design هي مساحة عمل مفتوحة المصدر لإنشاء عناصر التصميم وتحريرها ونشرها وتسليمها.',
+  'avatar.useLocal': 'Ø§Ø³ØªØ®Ø¯Ø§Ù CLI ÙØ­ÙÙ',
+  'avatar.useApi': 'Ø§Ø³ØªØ®Ø¯Ø§Ù API Â· BYOK',
+  'avatar.codeAgent': 'ÙÙÙÙ Ø§ÙÙÙØ¯',
+  'avatar.rescan': 'Ø¥Ø¹Ø§Ø¯Ø© ÙØ³Ø­ PATH',
+  'avatar.amrConsole': 'Ø­Ø³Ø§Ø¨ AMR',
+  'avatar.amrConsoleMeta': 'Ø§ÙØ±ØµÙØ¯ ÙØ¥Ø¹Ø§Ø¯Ø© Ø§ÙØ´Ø­Ù',
+  'avatar.settings': 'Ø§ÙØ¥Ø¹Ø¯Ø§Ø¯Ø§Øª',
+  'avatar.backToProjects': 'Ø§ÙØ¹ÙØ¯Ø© ÙÙÙØ´Ø§Ø±ÙØ¹',
+  'avatar.metaActive': 'ÙØ´Ø·',
+  'avatar.metaOffline': 'ØºÙØ± ÙØªØµÙ',
+  'avatar.metaSelected': 'ÙØ­Ø¯Ø¯',
+  'avatar.noAgentSelected': 'ÙÙ ÙØªÙ Ø§Ø®ØªÙØ§Ø± ÙÙÙÙ',
+  'avatar.modelSection': 'Ø§ÙÙÙÙØ°Ø¬',
+  'avatar.modelLabel': 'Ø§ÙÙÙÙØ°Ø¬',
+  'avatar.reasoningLabel': 'Ø§ÙØªÙÙÙØ±',
+  'avatar.customSuffix': '(ÙØ®ØµØµ)',
+  'socialShare.openDesignSection': 'ÙØ´Ø§Ø±ÙØ© Open Design',
+  'socialShare.openDesignTitle': 'Open Design Ø¹ÙÙ GitHub',
+  'socialShare.openDesignText': 'Open Design ÙÙ ÙØ³Ø§Ø­Ø© Ø¹ÙÙ ÙÙØªÙØ­Ø© Ø§ÙÙØµØ¯Ø± ÙØ¥ÙØ´Ø§Ø¡ Ø¹ÙØ§ØµØ± Ø§ÙØªØµÙÙÙ ÙØªØ­Ø±ÙØ±ÙØ§ ÙÙØ´Ø±ÙØ§ ÙØªØ³ÙÙÙÙØ§.',
   'socialShare.openDesignCopyText': '{text}\n{url}',
-  'socialShare.projectSection': 'المشاركة الاجتماعية',
-  'socialShare.publishPageTitle': 'نشر صفحة المشاركة',
-  'socialShare.publishPageSubtitle': 'انشر هذه المعاينة حتى يمكن مشاركتها على منصات التواصل الاجتماعي.',
-  'socialShare.projectTitle': '{title} · Open Design',
-  'socialShare.projectText': 'تم الإنشاء باستخدام Open Design: {title}. اعرض العنصر المنشور وامنح نجمة للمستودع: {repo}',
-  'socialShare.projectCopyText': 'تم الإنشاء باستخدام Open Design: {title}\n{url}\nمستودع Open Design: {repo}',
-  'socialShare.deployFirst': 'انشر ثم شارك…',
-  'socialShare.copied': 'تم النسخ',
+  'socialShare.projectSection': 'Ø§ÙÙØ´Ø§Ø±ÙØ© Ø§ÙØ§Ø¬ØªÙØ§Ø¹ÙØ©',
+  'socialShare.publishPageTitle': 'ÙØ´Ø± ØµÙØ­Ø© Ø§ÙÙØ´Ø§Ø±ÙØ©',
+  'socialShare.publishPageSubtitle': 'Ø§ÙØ´Ø± ÙØ°Ù Ø§ÙÙØ¹Ø§ÙÙØ© Ø­ØªÙ ÙÙÙÙ ÙØ´Ø§Ø±ÙØªÙØ§ Ø¹ÙÙ ÙÙØµØ§Øª Ø§ÙØªÙØ§ØµÙ Ø§ÙØ§Ø¬ØªÙØ§Ø¹Ù.',
+  'socialShare.projectTitle': '{title} Â· Open Design',
+  'socialShare.projectText': 'ØªÙ Ø§ÙØ¥ÙØ´Ø§Ø¡ Ø¨Ø§Ø³ØªØ®Ø¯Ø§Ù Open Design: {title}. Ø§Ø¹Ø±Ø¶ Ø§ÙØ¹ÙØµØ± Ø§ÙÙÙØ´ÙØ± ÙØ§ÙÙØ­ ÙØ¬ÙØ© ÙÙÙØ³ØªÙØ¯Ø¹: {repo}',
+  'socialShare.projectCopyText': 'ØªÙ Ø§ÙØ¥ÙØ´Ø§Ø¡ Ø¨Ø§Ø³ØªØ®Ø¯Ø§Ù Open Design: {title}\n{url}\nÙØ³ØªÙØ¯Ø¹ Open Design: {repo}',
+  'socialShare.deployFirst': 'Ø§ÙØ´Ø± Ø«Ù Ø´Ø§Ø±Ùâ¦',
+  'socialShare.copied': 'ØªÙ Ø§ÙÙØ³Ø®',
   'socialShare.platform.x': 'X',
   'socialShare.platform.linkedin': 'LinkedIn',
   'socialShare.platform.facebook': 'Facebook',
@@ -1527,437 +1527,437 @@ export const ar: Dict = {
   'socialShare.platform.weibo': 'Weibo',
   'socialShare.platform.line': 'LINE',
   'socialShare.platform.instagram': 'Instagram',
-  'socialShare.platform.xiaohongshu': 'شياو هونغ شو',
-  'inlineSwitcher.chipTitle': 'تبديل CLI / النموذج',
-  'inlineSwitcher.chipCli': 'CLI محلي',
+  'socialShare.platform.xiaohongshu': 'Ø´ÙØ§Ù ÙÙÙØº Ø´Ù',
+  'inlineSwitcher.chipTitle': 'ØªØ¨Ø¯ÙÙ CLI / Ø§ÙÙÙÙØ°Ø¬',
+  'inlineSwitcher.chipCli': 'CLI ÙØ­ÙÙ',
   'inlineSwitcher.chipByok': 'BYOK',
-  'inlineSwitcher.modelDefault': 'افتراضي',
-  'inlineSwitcher.noAgent': 'لا يوجد عميل',
-  'inlineSwitcher.modeLabel': 'الوضع',
-  'inlineSwitcher.agentLabel': 'عميل',
-  'inlineSwitcher.providerLabel': 'المزود',
-  'inlineSwitcher.modelLabel': 'النموذج',
-  'inlineSwitcher.useCli': 'استخدام CLI محلي',
-  'inlineSwitcher.useByok': 'استخدام مفتاح API الخاص بك',
-  'inlineSwitcher.daemonOffline': 'الخادم غير متصل — افتح الإعدادات',
-  'inlineSwitcher.noAgentsDetected': 'لم يتم العثور على CLI في PATH',
-  'inlineSwitcher.openSettingsForModel': 'قم بإعداد المزود في الإعدادات',
-  'inlineSwitcher.missingApiKey': 'مفتاح API غير محدد — افتح الإعدادات لإضافته.',
-  'inlineSwitcher.openFullSettings': 'فتح إعدادات التنفيذ',
-  'inlineSwitcher.customSuffix': '(مخصص)',
-  'project.backToProjects': 'العودة للمشاريع',
-  'project.brandReadyTitle': 'نظام تصميم {name} جاهز',
-  'project.brandReadyTitleGeneric': 'نظام التصميم جاهز',
-  'project.brandReadyCta': 'معاينة في أنظمة التصميم',
-  'project.brandReadyDismiss': 'تجاهل',
+  'inlineSwitcher.modelDefault': 'Ø§ÙØªØ±Ø§Ø¶Ù',
+  'inlineSwitcher.noAgent': 'ÙØ§ ÙÙØ¬Ø¯ Ø¹ÙÙÙ',
+  'inlineSwitcher.modeLabel': 'Ø§ÙÙØ¶Ø¹',
+  'inlineSwitcher.agentLabel': 'Ø¹ÙÙÙ',
+  'inlineSwitcher.providerLabel': 'Ø§ÙÙØ²ÙØ¯',
+  'inlineSwitcher.modelLabel': 'Ø§ÙÙÙÙØ°Ø¬',
+  'inlineSwitcher.useCli': 'Ø§Ø³ØªØ®Ø¯Ø§Ù CLI ÙØ­ÙÙ',
+  'inlineSwitcher.useByok': 'Ø§Ø³ØªØ®Ø¯Ø§Ù ÙÙØªØ§Ø­ API Ø§ÙØ®Ø§Øµ Ø¨Ù',
+  'inlineSwitcher.daemonOffline': 'Ø§ÙØ®Ø§Ø¯Ù ØºÙØ± ÙØªØµÙ â Ø§ÙØªØ­ Ø§ÙØ¥Ø¹Ø¯Ø§Ø¯Ø§Øª',
+  'inlineSwitcher.noAgentsDetected': 'ÙÙ ÙØªÙ Ø§ÙØ¹Ø«ÙØ± Ø¹ÙÙ CLI ÙÙ PATH',
+  'inlineSwitcher.openSettingsForModel': 'ÙÙ Ø¨Ø¥Ø¹Ø¯Ø§Ø¯ Ø§ÙÙØ²ÙØ¯ ÙÙ Ø§ÙØ¥Ø¹Ø¯Ø§Ø¯Ø§Øª',
+  'inlineSwitcher.missingApiKey': 'ÙÙØªØ§Ø­ API ØºÙØ± ÙØ­Ø¯Ø¯ â Ø§ÙØªØ­ Ø§ÙØ¥Ø¹Ø¯Ø§Ø¯Ø§Øª ÙØ¥Ø¶Ø§ÙØªÙ.',
+  'inlineSwitcher.openFullSettings': 'ÙØªØ­ Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø§ÙØªÙÙÙØ°',
+  'inlineSwitcher.customSuffix': '(ÙØ®ØµØµ)',
+  'project.backToProjects': 'Ø§ÙØ¹ÙØ¯Ø© ÙÙÙØ´Ø§Ø±ÙØ¹',
+  'project.brandReadyTitle': 'ÙØ¸Ø§Ù ØªØµÙÙÙ {name} Ø¬Ø§ÙØ²',
+  'project.brandReadyTitleGeneric': 'ÙØ¸Ø§Ù Ø§ÙØªØµÙÙÙ Ø¬Ø§ÙØ²',
+  'project.brandReadyCta': 'ÙØ¹Ø§ÙÙØ© ÙÙ Ø£ÙØ¸ÙØ© Ø§ÙØªØµÙÙÙ',
+  'project.brandReadyDismiss': 'ØªØ¬Ø§ÙÙ',
   'project.brandReadyRefineHint': 'Automatic extraction can miss details. Refine it before using this system broadly.',
   'project.brandReadyAiOptimize': 'AI Optimize',
   'project.brandReadyEditManually': 'Edit manually',
-  'project.brandReadyPreviewOpened': 'تم فتح معاينة نظام التصميم.',
-  'project.metaFreeform': 'شكل حر',
-  'project.customInstructions': 'تعليمات المشروع',
-  'project.customInstructionsPlaceholder': 'تعليمات لهذا المشروع (تُحقَن في كل رسالة)…',
-  'project.resizeChatPanel': 'تغيير حجم لوحة الدردشة',
-  'project.instructionsActive': 'نشط — مُضمَّن في كل رسالة',
+  'project.brandReadyPreviewOpened': 'ØªÙ ÙØªØ­ ÙØ¹Ø§ÙÙØ© ÙØ¸Ø§Ù Ø§ÙØªØµÙÙÙ.',
+  'project.metaFreeform': 'Ø´ÙÙ Ø­Ø±',
+  'project.customInstructions': 'ØªØ¹ÙÙÙØ§Øª Ø§ÙÙØ´Ø±ÙØ¹',
+  'project.customInstructionsPlaceholder': 'ØªØ¹ÙÙÙØ§Øª ÙÙØ°Ø§ Ø§ÙÙØ´Ø±ÙØ¹ (ØªÙØ­ÙÙÙ ÙÙ ÙÙ Ø±Ø³Ø§ÙØ©)â¦',
+  'project.resizeChatPanel': 'ØªØºÙÙØ± Ø­Ø¬Ù ÙÙØ­Ø© Ø§ÙØ¯Ø±Ø¯Ø´Ø©',
+  'project.instructionsActive': 'ÙØ´Ø· â ÙÙØ¶ÙÙÙÙ ÙÙ ÙÙ Ø±Ø³Ø§ÙØ©',
   'project.missing': 'This project has been deleted or no longer exists.',
-  'chat.tabChat': 'دردشة',
-  'chat.tabComments': 'تعليقات',
-  'chat.commentsSoon': 'التعليقات - قريباً',
-  'chat.comments.attached': 'مرفق بالدردشة',
-  'chat.comments.emptyAttached': 'لا توجد تعليقات مرفقة.',
-  'chat.comments.saved': 'تعليقات محفوظة',
-  'chat.comments.emptySaved': 'لا توجد تعليقات محفوظة.',
-  'chat.comments.add': 'إضافة',
-  'chat.comments.addAll': 'إضافة الكل',
-  'chat.comments.remove': 'إزالة',
-  'chat.comments.placeholder': 'علق على هذا العنصر...',
-  'chat.comments.addSend': 'إضافة وإرسال',
-  'chat.comments.updateSend': 'تحديث وإرسال',
-  'chat.comments.removeAttachment': 'إزالة مرفق التعليق',
-  'chat.comments.removeAttachmentAria': 'إزالة مرفق التعليق لـ {name}',
-  'chat.comments.comment': 'تعليق',
-  'chat.comments.sendToChat': 'إرسال إلى المحادثة',
-  'chat.comments.sending': 'جارٍ الإرسال…',
-  'chat.comments.edit': 'تحرير',
-  'chat.comments.select': 'تحديد',
-  'chat.comments.selectAll': 'تحديد الكل',
-  'chat.comments.deselect': 'إلغاء التحديد',
-  'chat.comments.nSelected': '{n} محدد',
-  'chat.comments.pin': 'تثبيت',
-  'chat.comments.addNote': 'إضافة ملاحظة',
-  'chat.comments.savedToast': 'تم حفظ التعليق',
-  'chat.comments.pinSavedToast': 'تم حفظ التثبيت',
+  'chat.tabChat': 'Ø¯Ø±Ø¯Ø´Ø©',
+  'chat.tabComments': 'ØªØ¹ÙÙÙØ§Øª',
+  'chat.commentsSoon': 'Ø§ÙØªØ¹ÙÙÙØ§Øª - ÙØ±ÙØ¨Ø§Ù',
+  'chat.comments.attached': 'ÙØ±ÙÙ Ø¨Ø§ÙØ¯Ø±Ø¯Ø´Ø©',
+  'chat.comments.emptyAttached': 'ÙØ§ ØªÙØ¬Ø¯ ØªØ¹ÙÙÙØ§Øª ÙØ±ÙÙØ©.',
+  'chat.comments.saved': 'ØªØ¹ÙÙÙØ§Øª ÙØ­ÙÙØ¸Ø©',
+  'chat.comments.emptySaved': 'ÙØ§ ØªÙØ¬Ø¯ ØªØ¹ÙÙÙØ§Øª ÙØ­ÙÙØ¸Ø©.',
+  'chat.comments.add': 'Ø¥Ø¶Ø§ÙØ©',
+  'chat.comments.addAll': 'Ø¥Ø¶Ø§ÙØ© Ø§ÙÙÙ',
+  'chat.comments.remove': 'Ø¥Ø²Ø§ÙØ©',
+  'chat.comments.placeholder': 'Ø¹ÙÙ Ø¹ÙÙ ÙØ°Ø§ Ø§ÙØ¹ÙØµØ±...',
+  'chat.comments.addSend': 'Ø¥Ø¶Ø§ÙØ© ÙØ¥Ø±Ø³Ø§Ù',
+  'chat.comments.updateSend': 'ØªØ­Ø¯ÙØ« ÙØ¥Ø±Ø³Ø§Ù',
+  'chat.comments.removeAttachment': 'Ø¥Ø²Ø§ÙØ© ÙØ±ÙÙ Ø§ÙØªØ¹ÙÙÙ',
+  'chat.comments.removeAttachmentAria': 'Ø¥Ø²Ø§ÙØ© ÙØ±ÙÙ Ø§ÙØªØ¹ÙÙÙ ÙÙ {name}',
+  'chat.comments.comment': 'ØªØ¹ÙÙÙ',
+  'chat.comments.sendToChat': 'Ø¥Ø±Ø³Ø§Ù Ø¥ÙÙ Ø§ÙÙØ­Ø§Ø¯Ø«Ø©',
+  'chat.comments.sending': 'Ø¬Ø§Ø±Ù Ø§ÙØ¥Ø±Ø³Ø§Ùâ¦',
+  'chat.comments.edit': 'ØªØ­Ø±ÙØ±',
+  'chat.comments.select': 'ØªØ­Ø¯ÙØ¯',
+  'chat.comments.selectAll': 'ØªØ­Ø¯ÙØ¯ Ø§ÙÙÙ',
+  'chat.comments.deselect': 'Ø¥ÙØºØ§Ø¡ Ø§ÙØªØ­Ø¯ÙØ¯',
+  'chat.comments.nSelected': '{n} ÙØ­Ø¯Ø¯',
+  'chat.comments.pin': 'ØªØ«Ø¨ÙØª',
+  'chat.comments.addNote': 'Ø¥Ø¶Ø§ÙØ© ÙÙØ§Ø­Ø¸Ø©',
+  'chat.comments.savedToast': 'ØªÙ Ø­ÙØ¸ Ø§ÙØªØ¹ÙÙÙ',
+  'chat.comments.pinSavedToast': 'ØªÙ Ø­ÙØ¸ Ø§ÙØªØ«Ø¨ÙØª',
   'chat.comments.pinAtCoords': 'at {x}, {y}',
-  'chat.comments.capturedItems': '{n} عنصر ملتقط',
-  'chat.comments.clear': 'مسح',
-  'chat.comments.targetImage': 'صورة',
-  'chat.comments.targetControl': 'عنصر تحكم',
-  'chat.comments.targetLink': 'رابط',
-  'chat.comments.targetText': 'نص',
-  'chat.comments.targetSection': 'قسم',
-  'chat.comments.targetPage': 'صفحة',
-  'chat.comments.targetArea': 'منطقة',
-  'chat.annotationNotePlaceholder': 'أضف ملاحظة لهذه العلامة',
-  'chat.annotationAttachImage': 'إرفاق صورة',
-  'chat.annotationAttachedImages': 'الصور المرفقة',
-  'chat.annotationAttachedRemove': 'إزالة آخر صورة',
-  'chat.annotationAddToInput': 'إضافة إلى الإدخال',
-  'chat.annotationAddingToInput': 'جارٍ الإضافة...',
-  'chat.annotationQueue': 'قائمة الانتظار',
-  'chat.annotationQueueing': 'جارٍ الإضافة إلى قائمة الانتظار...',
-  'chat.annotationSending': 'جارٍ الإرسال...',
-  'chat.annotationSendDisabledReason': 'هناك مهمة قيد التشغيل حاليًا',
-  'chat.annotationPreviewMissing': 'تعذّر التقاط المعاينة. يُرجى المحاولة مرة أخرى.',
-  'chat.annotationPreviewMissingInk': 'تعذّر التقاط المعاينة. حاول مرة أخرى لتجنّب إرسال الحبر فقط.',
-  'chat.annotationSentWithoutScreenshot': 'تعذّر التقاط المعاينة. تم إرسال التعليق التوضيحي بدون لقطة شاشة.',
-  'chat.annotationTimeout': 'انتهت مهلة إرسال التعليق التوضيحي. يُرجى المحاولة مرة أخرى.',
-  'chat.annotationFailed': 'فشل إرسال التعليق التوضيحي. يُرجى المحاولة مرة أخرى.',
-  'chat.annotationProjectCreateFailed': 'تعذّر إنشاء مشروع، لذا لم يتم إرسال التعليق التوضيحي.',
-  'chat.annotationUploadFailed': 'فشل رفع المرفق. يُرجى المحاولة مرة أخرى.',
-  'chat.conversationsTitle': 'المحادثات',
-  'chat.conversationsAria': 'سجل المحادثات',
-  'chat.newConversation': 'محادثة جديدة',
-  'chat.newConversationsTitle': 'محادثة جديدة',
-  'chat.conversationsHeading': 'المحادثات',
-  'chat.new': 'جديد',
-  'chat.emptyConversations': 'لا توجد محادثات بعد.',
-  'chat.deleteConversation': 'حذف المحادثة',
-  'chat.renameConversationLabel': 'إعادة تسمية "{title}"',
-  'chat.deleteConversationConfirm': 'هل تريد حذف "{title}"؟ سيؤدي هذا لإزالة رسائلها.',
-  'chat.untitledConversation': 'محادثة بدون عنوان',
-  'chat.forkedConversationTitle': 'تفرع {title}',
-  'chat.forkConversationFailed': 'تعذر تفرع هذه المحادثة.',
-  'chat.startTitle': 'ابدأ محادثة',
-  'chat.startHint': 'صِف ما تريد إنشاءه، أو ابدأ من أحد هذه الأمثلة:',
+  'chat.comments.capturedItems': '{n} Ø¹ÙØµØ± ÙÙØªÙØ·',
+  'chat.comments.clear': 'ÙØ³Ø­',
+  'chat.comments.targetImage': 'ØµÙØ±Ø©',
+  'chat.comments.targetControl': 'Ø¹ÙØµØ± ØªØ­ÙÙ',
+  'chat.comments.targetLink': 'Ø±Ø§Ø¨Ø·',
+  'chat.comments.targetText': 'ÙØµ',
+  'chat.comments.targetSection': 'ÙØ³Ù',
+  'chat.comments.targetPage': 'ØµÙØ­Ø©',
+  'chat.comments.targetArea': 'ÙÙØ·ÙØ©',
+  'chat.annotationNotePlaceholder': 'Ø£Ø¶Ù ÙÙØ§Ø­Ø¸Ø© ÙÙØ°Ù Ø§ÙØ¹ÙØ§ÙØ©',
+  'chat.annotationAttachImage': 'Ø¥Ø±ÙØ§Ù ØµÙØ±Ø©',
+  'chat.annotationAttachedImages': 'Ø§ÙØµÙØ± Ø§ÙÙØ±ÙÙØ©',
+  'chat.annotationAttachedRemove': 'Ø¥Ø²Ø§ÙØ© Ø¢Ø®Ø± ØµÙØ±Ø©',
+  'chat.annotationAddToInput': 'Ø¥Ø¶Ø§ÙØ© Ø¥ÙÙ Ø§ÙØ¥Ø¯Ø®Ø§Ù',
+  'chat.annotationAddingToInput': 'Ø¬Ø§Ø±Ù Ø§ÙØ¥Ø¶Ø§ÙØ©...',
+  'chat.annotationQueue': 'ÙØ§Ø¦ÙØ© Ø§ÙØ§ÙØªØ¸Ø§Ø±',
+  'chat.annotationQueueing': 'Ø¬Ø§Ø±Ù Ø§ÙØ¥Ø¶Ø§ÙØ© Ø¥ÙÙ ÙØ§Ø¦ÙØ© Ø§ÙØ§ÙØªØ¸Ø§Ø±...',
+  'chat.annotationSending': 'Ø¬Ø§Ø±Ù Ø§ÙØ¥Ø±Ø³Ø§Ù...',
+  'chat.annotationSendDisabledReason': 'ÙÙØ§Ù ÙÙÙØ© ÙÙØ¯ Ø§ÙØªØ´ØºÙÙ Ø­Ø§ÙÙÙØ§',
+  'chat.annotationPreviewMissing': 'ØªØ¹Ø°ÙØ± Ø§ÙØªÙØ§Ø· Ø§ÙÙØ¹Ø§ÙÙØ©. ÙÙØ±Ø¬Ù Ø§ÙÙØ­Ø§ÙÙØ© ÙØ±Ø© Ø£Ø®Ø±Ù.',
+  'chat.annotationPreviewMissingInk': 'ØªØ¹Ø°ÙØ± Ø§ÙØªÙØ§Ø· Ø§ÙÙØ¹Ø§ÙÙØ©. Ø­Ø§ÙÙ ÙØ±Ø© Ø£Ø®Ø±Ù ÙØªØ¬ÙÙØ¨ Ø¥Ø±Ø³Ø§Ù Ø§ÙØ­Ø¨Ø± ÙÙØ·.',
+  'chat.annotationSentWithoutScreenshot': 'ØªØ¹Ø°ÙØ± Ø§ÙØªÙØ§Ø· Ø§ÙÙØ¹Ø§ÙÙØ©. ØªÙ Ø¥Ø±Ø³Ø§Ù Ø§ÙØªØ¹ÙÙÙ Ø§ÙØªÙØ¶ÙØ­Ù Ø¨Ø¯ÙÙ ÙÙØ·Ø© Ø´Ø§Ø´Ø©.',
+  'chat.annotationTimeout': 'Ø§ÙØªÙØª ÙÙÙØ© Ø¥Ø±Ø³Ø§Ù Ø§ÙØªØ¹ÙÙÙ Ø§ÙØªÙØ¶ÙØ­Ù. ÙÙØ±Ø¬Ù Ø§ÙÙØ­Ø§ÙÙØ© ÙØ±Ø© Ø£Ø®Ø±Ù.',
+  'chat.annotationFailed': 'ÙØ´Ù Ø¥Ø±Ø³Ø§Ù Ø§ÙØªØ¹ÙÙÙ Ø§ÙØªÙØ¶ÙØ­Ù. ÙÙØ±Ø¬Ù Ø§ÙÙØ­Ø§ÙÙØ© ÙØ±Ø© Ø£Ø®Ø±Ù.',
+  'chat.annotationProjectCreateFailed': 'ØªØ¹Ø°ÙØ± Ø¥ÙØ´Ø§Ø¡ ÙØ´Ø±ÙØ¹Ø ÙØ°Ø§ ÙÙ ÙØªÙ Ø¥Ø±Ø³Ø§Ù Ø§ÙØªØ¹ÙÙÙ Ø§ÙØªÙØ¶ÙØ­Ù.',
+  'chat.annotationUploadFailed': 'ÙØ´Ù Ø±ÙØ¹ Ø§ÙÙØ±ÙÙ. ÙÙØ±Ø¬Ù Ø§ÙÙØ­Ø§ÙÙØ© ÙØ±Ø© Ø£Ø®Ø±Ù.',
+  'chat.conversationsTitle': 'Ø§ÙÙØ­Ø§Ø¯Ø«Ø§Øª',
+  'chat.conversationsAria': 'Ø³Ø¬Ù Ø§ÙÙØ­Ø§Ø¯Ø«Ø§Øª',
+  'chat.newConversation': 'ÙØ­Ø§Ø¯Ø«Ø© Ø¬Ø¯ÙØ¯Ø©',
+  'chat.newConversationsTitle': 'ÙØ­Ø§Ø¯Ø«Ø© Ø¬Ø¯ÙØ¯Ø©',
+  'chat.conversationsHeading': 'Ø§ÙÙØ­Ø§Ø¯Ø«Ø§Øª',
+  'chat.new': 'Ø¬Ø¯ÙØ¯',
+  'chat.emptyConversations': 'ÙØ§ ØªÙØ¬Ø¯ ÙØ­Ø§Ø¯Ø«Ø§Øª Ø¨Ø¹Ø¯.',
+  'chat.deleteConversation': 'Ø­Ø°Ù Ø§ÙÙØ­Ø§Ø¯Ø«Ø©',
+  'chat.renameConversationLabel': 'Ø¥Ø¹Ø§Ø¯Ø© ØªØ³ÙÙØ© "{title}"',
+  'chat.deleteConversationConfirm': 'ÙÙ ØªØ±ÙØ¯ Ø­Ø°Ù "{title}"Ø Ø³ÙØ¤Ø¯Ù ÙØ°Ø§ ÙØ¥Ø²Ø§ÙØ© Ø±Ø³Ø§Ø¦ÙÙØ§.',
+  'chat.untitledConversation': 'ÙØ­Ø§Ø¯Ø«Ø© Ø¨Ø¯ÙÙ Ø¹ÙÙØ§Ù',
+  'chat.forkedConversationTitle': 'ØªÙØ±Ø¹ {title}',
+  'chat.forkConversationFailed': 'ØªØ¹Ø°Ø± ØªÙØ±Ø¹ ÙØ°Ù Ø§ÙÙØ­Ø§Ø¯Ø«Ø©.',
+  'chat.startTitle': 'Ø§Ø¨Ø¯Ø£ ÙØ­Ø§Ø¯Ø«Ø©',
+  'chat.startHint': 'ØµÙÙ ÙØ§ ØªØ±ÙØ¯ Ø¥ÙØ´Ø§Ø¡ÙØ Ø£Ù Ø§Ø¨Ø¯Ø£ ÙÙ Ø£Ø­Ø¯ ÙØ°Ù Ø§ÙØ£ÙØ«ÙØ©:',
   'chat.brandBrowserAssistDesktopOnly': 'Browser assist needs the desktop app so Open Design can read the live browser page.',
   'chat.brandBrowserAssistReadFailed': 'Could not read the browser page. Make sure the brand site is open and fully loaded.',
   'chat.brandBrowserAssistMessage': 'Open Design needs browser assist to finish this brand extraction. Clear the page in the Browser tab, then confirm below.',
-  'brandEnrichment.title': "تحسين بالذكاء الاصطناعي",
-  'brandEnrichment.body': "سيشغل Open Design عملية استخراج أعمق في الخلفية، ويطبق مهارات نظام التصميم المناسبة تلقائياً، ويحدث هذا النظام في مكانه. قد يستغرق ذلك 10-20 دقيقة؛ يمكنك متابعة العمل.",
-  'brandEnrichment.cta': "تحسين بالذكاء الاصطناعي",
-  'brandEnrichment.busy': "بدء التحسين بالذكاء الاصطناعي...",
-  'brandExtractionTranscript.sourceDesignMd': 'DESIGN.md الملصق',
-  'brandExtractionTranscript.user': 'استخرج نظام تصميم من {source}.',
-  'brandExtractionTranscript.doneTitle': 'اكتمل الاستخراج البرمجي لـ {name}.',
-  'brandExtractionTranscript.doneBody': 'أنشأت وسجلت نظام التصميم {designSystemId} من {source}. أصبح جاهزاً للمعاينة ويمكن استخدامه الآن في تصاميم جديدة.',
-  'brandExtractionTranscript.next': 'بعد ذلك، يمكنك تشغيل تحسين الذكاء الاصطناعي لاستخراج أعمق، أو إنشاء تصميم جديد بهذا النظام.',
-  'chat.fillInputTitle': 'اضغط لملء المدخلات',
-  'chat.jumpToLatest': 'انتقال للأحدث',
-  'chat.scrollToLatest': 'التمرير للأحدث',
-  'chat.messageRail.aria': 'التنقل بين رسائل المستخدم',
-  'chat.messageRail.jumpAria': 'الانتقال إلى رسالة المستخدم {index}',
-  'chat.messageRail.empty': '(لا يوجد محتوى)',
-  'chat.you': 'أنت',
-  'chat.openFile': 'فتح {name}',
-  'chat.copyPrompt': 'نسخ الأمر',
-  'chat.copyErrorDiagnostic': 'نسخ تشخيصات الخطأ',
-  'chat.copyDone': 'تم النسخ!',
-  'chat.inspect.noEditableTargets': 'لم يُعثر على نصوص قابلة للتحرير أو أهداف نمط.',
-  'chat.inspect.noCommentTargets': 'لم يُعثر على نصوص قابلة للتعليق أو أهداف مرئية.',
-  'chat.inspect.editHint': 'حدّد نصًا أو هدف نمط في المعاينة لتحريره.',
-  'chat.inspect.commentHint': 'حدّد نصًا أو منطقة في المعاينة للتعليق عليها.',
-  'chat.composerPlaceholder': 'صِف ما تريد إنشاءه…',
-  'chat.activeFileEditingLabel': 'جارٍ التحرير',
-  'chat.activeFilePlaceholder': 'اطلب من Open Design تعديل {file}...',
-  'chat.designArtifactsShowMore': 'عرض {count} ملفات تصميم إضافية',
-  'chat.mode.chat.label': 'اسأل',
-  'chat.mode.chat.title': 'وضع السؤال',
-  'chat.mode.chat.summary': 'للإجابات السريعة، التعديلات، التخطيط، والنقاش من دون افتراض إنشاء ملف تصميم.',
-  'chat.mode.chat.solves': 'استخدمه لتوضيح الأفكار، تحسين المطالبات، مقارنة الخيارات، أو السؤال عن عمل موجود.',
-  'chat.mode.chat.query1': 'لخص هذه المسودة وحدد الفجوات.',
-  'chat.mode.chat.query2': 'ساعدني في اختيار أفضل بنية لصفحة الهبوط هذه.',
-  'chat.mode.chat.query3': 'راجع هذا التصميم واقترح تحسينات عملية.',
-  'chat.mode.design.label': 'التصميم',
-  'chat.mode.design.title': 'وضع Design',
-  'chat.mode.design.summary': 'لإنشاء أو تعديل مخرجات تصميم ملموسة مثل الصفحات، النماذج، القطع الحية، العروض، الصور، الفيديو، HyperFrames، الصوت، لوحات البيانات، وملفات المشروع.',
-  'chat.mode.design.solves': 'استخدمه عندما تريد من Open Design إنشاء ملفات، تحديث مساحة العمل، أو تحويل موجز إلى مخرجات متعددة الوسائط جاهزة.',
-  'chat.mode.design.query1': 'أنشئ صفحة هبوط لإطلاق منتج ونموذج HyperFrames من هذا الموجز.',
-  'chat.mode.design.query2': 'اصنع عرضا استثماريا من 10 شرائح مع ملاحظات للمتحدث.',
-  'chat.mode.design.query3': 'ولّد أفكار صور وفيديو وصوت لهذه الحملة.',
-  'chat.mode.cardBestFor': 'الأفضل لـ',
-  'chat.mode.cardTry': 'جرب أن تسأل',
-  'chat.composerHint': '⌘/Ctrl + Enter للإرسال · اذكر الهدف والمحتوى والأسلوب والتنسيق',
-  'chat.cliSettingsTitle': 'إعدادات CLI والنموذج',
-  'chat.cliSettingsAria': 'فتح إعدادات CLI والنموذج',
-  'chat.attachTitle': 'إرفاق ملفات (أو الصق / اسحب)',
+  'brandEnrichment.title': "ØªØ­Ø³ÙÙ Ø¨Ø§ÙØ°ÙØ§Ø¡ Ø§ÙØ§ØµØ·ÙØ§Ø¹Ù",
+  'brandEnrichment.body': "Ø³ÙØ´ØºÙ Open Design Ø¹ÙÙÙØ© Ø§Ø³ØªØ®Ø±Ø§Ø¬ Ø£Ø¹ÙÙ ÙÙ Ø§ÙØ®ÙÙÙØ©Ø ÙÙØ·Ø¨Ù ÙÙØ§Ø±Ø§Øª ÙØ¸Ø§Ù Ø§ÙØªØµÙÙÙ Ø§ÙÙÙØ§Ø³Ø¨Ø© ØªÙÙØ§Ø¦ÙØ§ÙØ ÙÙØ­Ø¯Ø« ÙØ°Ø§ Ø§ÙÙØ¸Ø§Ù ÙÙ ÙÙØ§ÙÙ. ÙØ¯ ÙØ³ØªØºØ±Ù Ø°ÙÙ 10-20 Ø¯ÙÙÙØ©Ø ÙÙÙÙÙ ÙØªØ§Ø¨Ø¹Ø© Ø§ÙØ¹ÙÙ.",
+  'brandEnrichment.cta': "ØªØ­Ø³ÙÙ Ø¨Ø§ÙØ°ÙØ§Ø¡ Ø§ÙØ§ØµØ·ÙØ§Ø¹Ù",
+  'brandEnrichment.busy': "Ø¨Ø¯Ø¡ Ø§ÙØªØ­Ø³ÙÙ Ø¨Ø§ÙØ°ÙØ§Ø¡ Ø§ÙØ§ØµØ·ÙØ§Ø¹Ù...",
+  'brandExtractionTranscript.sourceDesignMd': 'DESIGN.md Ø§ÙÙÙØµÙ',
+  'brandExtractionTranscript.user': 'Ø§Ø³ØªØ®Ø±Ø¬ ÙØ¸Ø§Ù ØªØµÙÙÙ ÙÙ {source}.',
+  'brandExtractionTranscript.doneTitle': 'Ø§ÙØªÙÙ Ø§ÙØ§Ø³ØªØ®Ø±Ø§Ø¬ Ø§ÙØ¨Ø±ÙØ¬Ù ÙÙ {name}.',
+  'brandExtractionTranscript.doneBody': 'Ø£ÙØ´Ø£Øª ÙØ³Ø¬ÙØª ÙØ¸Ø§Ù Ø§ÙØªØµÙÙÙ {designSystemId} ÙÙ {source}. Ø£ØµØ¨Ø­ Ø¬Ø§ÙØ²Ø§Ù ÙÙÙØ¹Ø§ÙÙØ© ÙÙÙÙÙ Ø§Ø³ØªØ®Ø¯Ø§ÙÙ Ø§ÙØ¢Ù ÙÙ ØªØµØ§ÙÙÙ Ø¬Ø¯ÙØ¯Ø©.',
+  'brandExtractionTranscript.next': 'Ø¨Ø¹Ø¯ Ø°ÙÙØ ÙÙÙÙÙ ØªØ´ØºÙÙ ØªØ­Ø³ÙÙ Ø§ÙØ°ÙØ§Ø¡ Ø§ÙØ§ØµØ·ÙØ§Ø¹Ù ÙØ§Ø³ØªØ®Ø±Ø§Ø¬ Ø£Ø¹ÙÙØ Ø£Ù Ø¥ÙØ´Ø§Ø¡ ØªØµÙÙÙ Ø¬Ø¯ÙØ¯ Ø¨ÙØ°Ø§ Ø§ÙÙØ¸Ø§Ù.',
+  'chat.fillInputTitle': 'Ø§Ø¶ØºØ· ÙÙÙØ¡ Ø§ÙÙØ¯Ø®ÙØ§Øª',
+  'chat.jumpToLatest': 'Ø§ÙØªÙØ§Ù ÙÙØ£Ø­Ø¯Ø«',
+  'chat.scrollToLatest': 'Ø§ÙØªÙØ±ÙØ± ÙÙØ£Ø­Ø¯Ø«',
+  'chat.messageRail.aria': 'Ø§ÙØªÙÙÙ Ø¨ÙÙ Ø±Ø³Ø§Ø¦Ù Ø§ÙÙØ³ØªØ®Ø¯Ù',
+  'chat.messageRail.jumpAria': 'Ø§ÙØ§ÙØªÙØ§Ù Ø¥ÙÙ Ø±Ø³Ø§ÙØ© Ø§ÙÙØ³ØªØ®Ø¯Ù {index}',
+  'chat.messageRail.empty': '(ÙØ§ ÙÙØ¬Ø¯ ÙØ­ØªÙÙ)',
+  'chat.you': 'Ø£ÙØª',
+  'chat.openFile': 'ÙØªØ­ {name}',
+  'chat.copyPrompt': 'ÙØ³Ø® Ø§ÙØ£ÙØ±',
+  'chat.copyErrorDiagnostic': 'ÙØ³Ø® ØªØ´Ø®ÙØµØ§Øª Ø§ÙØ®Ø·Ø£',
+  'chat.copyDone': 'ØªÙ Ø§ÙÙØ³Ø®!',
+  'chat.inspect.noEditableTargets': 'ÙÙ ÙÙØ¹Ø«Ø± Ø¹ÙÙ ÙØµÙØµ ÙØ§Ø¨ÙØ© ÙÙØªØ­Ø±ÙØ± Ø£Ù Ø£ÙØ¯Ø§Ù ÙÙØ·.',
+  'chat.inspect.noCommentTargets': 'ÙÙ ÙÙØ¹Ø«Ø± Ø¹ÙÙ ÙØµÙØµ ÙØ§Ø¨ÙØ© ÙÙØªØ¹ÙÙÙ Ø£Ù Ø£ÙØ¯Ø§Ù ÙØ±Ø¦ÙØ©.',
+  'chat.inspect.editHint': 'Ø­Ø¯ÙØ¯ ÙØµÙØ§ Ø£Ù ÙØ¯Ù ÙÙØ· ÙÙ Ø§ÙÙØ¹Ø§ÙÙØ© ÙØªØ­Ø±ÙØ±Ù.',
+  'chat.inspect.commentHint': 'Ø­Ø¯ÙØ¯ ÙØµÙØ§ Ø£Ù ÙÙØ·ÙØ© ÙÙ Ø§ÙÙØ¹Ø§ÙÙØ© ÙÙØªØ¹ÙÙÙ Ø¹ÙÙÙØ§.',
+  'chat.composerPlaceholder': 'ØµÙÙ ÙØ§ ØªØ±ÙØ¯ Ø¥ÙØ´Ø§Ø¡Ùâ¦',
+  'chat.activeFileEditingLabel': 'Ø¬Ø§Ø±Ù Ø§ÙØªØ­Ø±ÙØ±',
+  'chat.activeFilePlaceholder': 'Ø§Ø·ÙØ¨ ÙÙ Open Design ØªØ¹Ø¯ÙÙ {file}...',
+  'chat.designArtifactsShowMore': 'Ø¹Ø±Ø¶ {count} ÙÙÙØ§Øª ØªØµÙÙÙ Ø¥Ø¶Ø§ÙÙØ©',
+  'chat.mode.chat.label': 'Ø§Ø³Ø£Ù',
+  'chat.mode.chat.title': 'ÙØ¶Ø¹ Ø§ÙØ³Ø¤Ø§Ù',
+  'chat.mode.chat.summary': 'ÙÙØ¥Ø¬Ø§Ø¨Ø§Øª Ø§ÙØ³Ø±ÙØ¹Ø©Ø Ø§ÙØªØ¹Ø¯ÙÙØ§ØªØ Ø§ÙØªØ®Ø·ÙØ·Ø ÙØ§ÙÙÙØ§Ø´ ÙÙ Ø¯ÙÙ Ø§ÙØªØ±Ø§Ø¶ Ø¥ÙØ´Ø§Ø¡ ÙÙÙ ØªØµÙÙÙ.',
+  'chat.mode.chat.solves': 'Ø§Ø³ØªØ®Ø¯ÙÙ ÙØªÙØ¶ÙØ­ Ø§ÙØ£ÙÙØ§Ø±Ø ØªØ­Ø³ÙÙ Ø§ÙÙØ·Ø§ÙØ¨Ø§ØªØ ÙÙØ§Ø±ÙØ© Ø§ÙØ®ÙØ§Ø±Ø§ØªØ Ø£Ù Ø§ÙØ³Ø¤Ø§Ù Ø¹Ù Ø¹ÙÙ ÙÙØ¬ÙØ¯.',
+  'chat.mode.chat.query1': 'ÙØ®Øµ ÙØ°Ù Ø§ÙÙØ³ÙØ¯Ø© ÙØ­Ø¯Ø¯ Ø§ÙÙØ¬ÙØ§Øª.',
+  'chat.mode.chat.query2': 'Ø³Ø§Ø¹Ø¯ÙÙ ÙÙ Ø§Ø®ØªÙØ§Ø± Ø£ÙØ¶Ù Ø¨ÙÙØ© ÙØµÙØ­Ø© Ø§ÙÙØ¨ÙØ· ÙØ°Ù.',
+  'chat.mode.chat.query3': 'Ø±Ø§Ø¬Ø¹ ÙØ°Ø§ Ø§ÙØªØµÙÙÙ ÙØ§ÙØªØ±Ø­ ØªØ­Ø³ÙÙØ§Øª Ø¹ÙÙÙØ©.',
+  'chat.mode.design.label': 'Ø§ÙØªØµÙÙÙ',
+  'chat.mode.design.title': 'ÙØ¶Ø¹ Design',
+  'chat.mode.design.summary': 'ÙØ¥ÙØ´Ø§Ø¡ Ø£Ù ØªØ¹Ø¯ÙÙ ÙØ®Ø±Ø¬Ø§Øª ØªØµÙÙÙ ÙÙÙÙØ³Ø© ÙØ«Ù Ø§ÙØµÙØ­Ø§ØªØ Ø§ÙÙÙØ§Ø°Ø¬Ø Ø§ÙÙØ·Ø¹ Ø§ÙØ­ÙØ©Ø Ø§ÙØ¹Ø±ÙØ¶Ø Ø§ÙØµÙØ±Ø Ø§ÙÙÙØ¯ÙÙØ HyperFramesØ Ø§ÙØµÙØªØ ÙÙØ­Ø§Øª Ø§ÙØ¨ÙØ§ÙØ§ØªØ ÙÙÙÙØ§Øª Ø§ÙÙØ´Ø±ÙØ¹.',
+  'chat.mode.design.solves': 'Ø§Ø³ØªØ®Ø¯ÙÙ Ø¹ÙØ¯ÙØ§ ØªØ±ÙØ¯ ÙÙ Open Design Ø¥ÙØ´Ø§Ø¡ ÙÙÙØ§ØªØ ØªØ­Ø¯ÙØ« ÙØ³Ø§Ø­Ø© Ø§ÙØ¹ÙÙØ Ø£Ù ØªØ­ÙÙÙ ÙÙØ¬Ø² Ø¥ÙÙ ÙØ®Ø±Ø¬Ø§Øª ÙØªØ¹Ø¯Ø¯Ø© Ø§ÙÙØ³Ø§Ø¦Ø· Ø¬Ø§ÙØ²Ø©.',
+  'chat.mode.design.query1': 'Ø£ÙØ´Ø¦ ØµÙØ­Ø© ÙØ¨ÙØ· ÙØ¥Ø·ÙØ§Ù ÙÙØªØ¬ ÙÙÙÙØ°Ø¬ HyperFrames ÙÙ ÙØ°Ø§ Ø§ÙÙÙØ¬Ø².',
+  'chat.mode.design.query2': 'Ø§ØµÙØ¹ Ø¹Ø±Ø¶Ø§ Ø§Ø³ØªØ«ÙØ§Ø±ÙØ§ ÙÙ 10 Ø´Ø±Ø§Ø¦Ø­ ÙØ¹ ÙÙØ§Ø­Ø¸Ø§Øª ÙÙÙØªØ­Ø¯Ø«.',
+  'chat.mode.design.query3': 'ÙÙÙØ¯ Ø£ÙÙØ§Ø± ØµÙØ± ÙÙÙØ¯ÙÙ ÙØµÙØª ÙÙØ°Ù Ø§ÙØ­ÙÙØ©.',
+  'chat.mode.cardBestFor': 'Ø§ÙØ£ÙØ¶Ù ÙÙ',
+  'chat.mode.cardTry': 'Ø¬Ø±Ø¨ Ø£Ù ØªØ³Ø£Ù',
+  'chat.composerHint': 'â/Ctrl + Enter ÙÙØ¥Ø±Ø³Ø§Ù Â· Ø§Ø°ÙØ± Ø§ÙÙØ¯Ù ÙØ§ÙÙØ­ØªÙÙ ÙØ§ÙØ£Ø³ÙÙØ¨ ÙØ§ÙØªÙØ³ÙÙ',
+  'chat.cliSettingsTitle': 'Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª CLI ÙØ§ÙÙÙÙØ°Ø¬',
+  'chat.cliSettingsAria': 'ÙØªØ­ Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª CLI ÙØ§ÙÙÙÙØ°Ø¬',
+  'chat.attachTitle': 'Ø¥Ø±ÙØ§Ù ÙÙÙØ§Øª (Ø£Ù Ø§ÙØµÙ / Ø§Ø³Ø­Ø¨)',
   'chat.addContextTitle': 'Add context',
-  'chat.attachAria': 'إرفاق ملفات',
-  'chat.importTitle': 'استيراد المصادر (قريباً)',
-  'chat.importLabel': 'استيراد',
-  'chat.importComingSoon': 'قريباً',
-  'chat.importSoon': 'قريباً',
-  'chat.importFig': 'رفع ملف .fig',
-  'chat.importGitHub': 'ربط GitHub',
-  'chat.importWeb': 'جلب عنصر ويب',
-  'chat.importFolder': 'ربط مجلد كود',
-  'chat.importSkills': 'المهارات وأنظمة التصميم',
-  'chat.importProject': 'الإشارة إلى مشروع آخر',
-  'chat.importDesignSystemHeader': 'اختر نظام تصميم',
-  'chat.importDesignSystemBack': 'رجوع',
-  'chat.importDesignSystemSearch': 'البحث في أنظمة التصميم…',
-  'chat.importDesignSystemEmpty': 'لا توجد أنظمة تصميم تطابق "{query}"',
-  'chat.importDesignSystemNone': 'لا شيء — حر',
-  'chat.importDesignSystemNoneSub': 'لا تربط بنظام في هذه الجولة',
-  'chat.importDesignSystemActive': 'نشط',
-  'chat.importDesignSystemSwitched': 'تم تبديل نظام التصميم إلى {title}',
-  'chat.importDesignSystemFailed': 'تعذر تبديل نظام التصميم. حاول مرة أخرى.',
-  'chat.importDesignSystemLoadFailed': 'تعذّر تحميل أنظمة التصميم.',
-  'browserUse.title': 'الإلهام',
-  'browserUse.summary': '{count} إجراء على الويب، مع إعطاء الأولوية لاستخراج الأصول، ولغة التصميم، والحركة، والفحوصات البصرية، وبنية المكوّنات.',
-  'browserUse.searchAria': 'البحث عن الإلهام',
-  'browserUse.searchPlaceholder': 'ابحث عن لقطات الشاشة والخطوط والألوان وإمكانية الوصول...',
-  'browserUse.empty': 'لا يوجد إلهام مطابق',
-  'browserUse.unavailable': 'الإلهام غير متاح هنا',
-  'browserUse.added': 'تمت الإضافة إلى أداة الإنشاء',
-  'browserUse.category.assets': 'استخراج الأصول',
-  'browserUse.category.tokens': 'لغة التصميم',
-  'browserUse.category.motion': 'الحركة',
-  'browserUse.category.visual': 'الفحوصات المرئية',
-  'browserUse.category.structure': 'المكوّنات',
-  'browserUse.category.project': 'تشغيل المشروع',
-  'browserUse.category.general': 'عام',
-  'browserUse.input.none': 'لا يوجد إدخال',
-  'browserUse.input.assetKind': 'kind: images | svgs | media | fonts، limit=200',
-  'browserUse.input.optionalSelector': 'محدِّد اختياري',
-  'browserUse.input.requirementSelector': 'متطلَّب، محدِّد اختياري',
-  'browserUse.input.selectorOptional': 'محدِّد اختياري',
+  'chat.attachAria': 'Ø¥Ø±ÙØ§Ù ÙÙÙØ§Øª',
+  'chat.importTitle': 'Ø§Ø³ØªÙØ±Ø§Ø¯ Ø§ÙÙØµØ§Ø¯Ø± (ÙØ±ÙØ¨Ø§Ù)',
+  'chat.importLabel': 'Ø§Ø³ØªÙØ±Ø§Ø¯',
+  'chat.importComingSoon': 'ÙØ±ÙØ¨Ø§Ù',
+  'chat.importSoon': 'ÙØ±ÙØ¨Ø§Ù',
+  'chat.importFig': 'Ø±ÙØ¹ ÙÙÙ .fig',
+  'chat.importGitHub': 'Ø±Ø¨Ø· GitHub',
+  'chat.importWeb': 'Ø¬ÙØ¨ Ø¹ÙØµØ± ÙÙØ¨',
+  'chat.importFolder': 'Ø±Ø¨Ø· ÙØ¬ÙØ¯ ÙÙØ¯',
+  'chat.importSkills': 'Ø§ÙÙÙØ§Ø±Ø§Øª ÙØ£ÙØ¸ÙØ© Ø§ÙØªØµÙÙÙ',
+  'chat.importProject': 'Ø§ÙØ¥Ø´Ø§Ø±Ø© Ø¥ÙÙ ÙØ´Ø±ÙØ¹ Ø¢Ø®Ø±',
+  'chat.importDesignSystemHeader': 'Ø§Ø®ØªØ± ÙØ¸Ø§Ù ØªØµÙÙÙ',
+  'chat.importDesignSystemBack': 'Ø±Ø¬ÙØ¹',
+  'chat.importDesignSystemSearch': 'Ø§ÙØ¨Ø­Ø« ÙÙ Ø£ÙØ¸ÙØ© Ø§ÙØªØµÙÙÙâ¦',
+  'chat.importDesignSystemEmpty': 'ÙØ§ ØªÙØ¬Ø¯ Ø£ÙØ¸ÙØ© ØªØµÙÙÙ ØªØ·Ø§Ø¨Ù "{query}"',
+  'chat.importDesignSystemNone': 'ÙØ§ Ø´ÙØ¡ â Ø­Ø±',
+  'chat.importDesignSystemNoneSub': 'ÙØ§ ØªØ±Ø¨Ø· Ø¨ÙØ¸Ø§Ù ÙÙ ÙØ°Ù Ø§ÙØ¬ÙÙØ©',
+  'chat.importDesignSystemActive': 'ÙØ´Ø·',
+  'chat.importDesignSystemSwitched': 'ØªÙ ØªØ¨Ø¯ÙÙ ÙØ¸Ø§Ù Ø§ÙØªØµÙÙÙ Ø¥ÙÙ {title}',
+  'chat.importDesignSystemFailed': 'ØªØ¹Ø°Ø± ØªØ¨Ø¯ÙÙ ÙØ¸Ø§Ù Ø§ÙØªØµÙÙÙ. Ø­Ø§ÙÙ ÙØ±Ø© Ø£Ø®Ø±Ù.',
+  'chat.importDesignSystemLoadFailed': 'ØªØ¹Ø°ÙØ± ØªØ­ÙÙÙ Ø£ÙØ¸ÙØ© Ø§ÙØªØµÙÙÙ.',
+  'browserUse.title': 'Ø§ÙØ¥ÙÙØ§Ù',
+  'browserUse.summary': '{count} Ø¥Ø¬Ø±Ø§Ø¡ Ø¹ÙÙ Ø§ÙÙÙØ¨Ø ÙØ¹ Ø¥Ø¹Ø·Ø§Ø¡ Ø§ÙØ£ÙÙÙÙØ© ÙØ§Ø³ØªØ®Ø±Ø§Ø¬ Ø§ÙØ£ØµÙÙØ ÙÙØºØ© Ø§ÙØªØµÙÙÙØ ÙØ§ÙØ­Ø±ÙØ©Ø ÙØ§ÙÙØ­ÙØµØ§Øª Ø§ÙØ¨ØµØ±ÙØ©Ø ÙØ¨ÙÙØ© Ø§ÙÙÙÙÙÙØ§Øª.',
+  'browserUse.searchAria': 'Ø§ÙØ¨Ø­Ø« Ø¹Ù Ø§ÙØ¥ÙÙØ§Ù',
+  'browserUse.searchPlaceholder': 'Ø§Ø¨Ø­Ø« Ø¹Ù ÙÙØ·Ø§Øª Ø§ÙØ´Ø§Ø´Ø© ÙØ§ÙØ®Ø·ÙØ· ÙØ§ÙØ£ÙÙØ§Ù ÙØ¥ÙÙØ§ÙÙØ© Ø§ÙÙØµÙÙ...',
+  'browserUse.empty': 'ÙØ§ ÙÙØ¬Ø¯ Ø¥ÙÙØ§Ù ÙØ·Ø§Ø¨Ù',
+  'browserUse.unavailable': 'Ø§ÙØ¥ÙÙØ§Ù ØºÙØ± ÙØªØ§Ø­ ÙÙØ§',
+  'browserUse.added': 'ØªÙØª Ø§ÙØ¥Ø¶Ø§ÙØ© Ø¥ÙÙ Ø£Ø¯Ø§Ø© Ø§ÙØ¥ÙØ´Ø§Ø¡',
+  'browserUse.category.assets': 'Ø§Ø³ØªØ®Ø±Ø§Ø¬ Ø§ÙØ£ØµÙÙ',
+  'browserUse.category.tokens': 'ÙØºØ© Ø§ÙØªØµÙÙÙ',
+  'browserUse.category.motion': 'Ø§ÙØ­Ø±ÙØ©',
+  'browserUse.category.visual': 'Ø§ÙÙØ­ÙØµØ§Øª Ø§ÙÙØ±Ø¦ÙØ©',
+  'browserUse.category.structure': 'Ø§ÙÙÙÙÙÙØ§Øª',
+  'browserUse.category.project': 'ØªØ´ØºÙÙ Ø§ÙÙØ´Ø±ÙØ¹',
+  'browserUse.category.general': 'Ø¹Ø§Ù',
+  'browserUse.input.none': 'ÙØ§ ÙÙØ¬Ø¯ Ø¥Ø¯Ø®Ø§Ù',
+  'browserUse.input.assetKind': 'kind: images | svgs | media | fontsØ limit=200',
+  'browserUse.input.optionalSelector': 'ÙØ­Ø¯ÙÙØ¯ Ø§Ø®ØªÙØ§Ø±Ù',
+  'browserUse.input.requirementSelector': 'ÙØªØ·ÙÙÙØ¨Ø ÙØ­Ø¯ÙÙØ¯ Ø§Ø®ØªÙØ§Ø±Ù',
+  'browserUse.input.selectorOptional': 'ÙØ­Ø¯ÙÙØ¯ Ø§Ø®ØªÙØ§Ø±Ù',
   'browserUse.input.scaleOne': 'scale=1',
-  'browserUse.input.selectorScaleTwo': 'محدِّد، scale=2',
-  'browserUse.input.gridOverlay': '12 عمودًا، بحد أقصى 1200، فجوة 24',
+  'browserUse.input.selectorScaleTwo': 'ÙØ­Ø¯ÙÙØ¯Ø scale=2',
+  'browserUse.input.gridOverlay': '12 Ø¹ÙÙØ¯ÙØ§Ø Ø¨Ø­Ø¯ Ø£ÙØµÙ 1200Ø ÙØ¬ÙØ© 24',
   'browserUse.input.bodySelector': 'selector=\'body\'',
-  'browserUse.input.navigate': 'URL أو نطاق أو مصطلحات بحث',
-  'browserUse.input.selector': 'محدِّد',
-  'browserUse.input.selectorText': 'محدِّد ونص',
-  'browserUse.input.scroll': 'بكسلات، أعلى، أسفل، أو صفحة',
-  'browserUse.input.terminalRun': 'أمر، مهلة 120 ثانية',
-  'browserUse.input.command': 'أمر',
+  'browserUse.input.navigate': 'URL Ø£Ù ÙØ·Ø§Ù Ø£Ù ÙØµØ·ÙØ­Ø§Øª Ø¨Ø­Ø«',
+  'browserUse.input.selector': 'ÙØ­Ø¯ÙÙØ¯',
+  'browserUse.input.selectorText': 'ÙØ­Ø¯ÙÙØ¯ ÙÙØµ',
+  'browserUse.input.scroll': 'Ø¨ÙØ³ÙØ§ØªØ Ø£Ø¹ÙÙØ Ø£Ø³ÙÙØ Ø£Ù ØµÙØ­Ø©',
+  'browserUse.input.terminalRun': 'Ø£ÙØ±Ø ÙÙÙØ© 120 Ø«Ø§ÙÙØ©',
+  'browserUse.input.command': 'Ø£ÙØ±',
   'browserUse.input.maxChars': 'maxChars=8000',
   'browserUse.input.custom': '{input}',
-  'browserUse.action.extract_logo.output': 'أفضل المرشحين للشعار من الترويسة، والتنقُّل، وأسماء الفئات، والموضع، وصورة OG، مع الرجوع إلى أيقونة favicon.',
-  'browserUse.action.list_images.output': 'جميع صور img وsrcset وsource وصور الخلفية في CSS مع الأبعاد والنص البديل.',
-  'browserUse.action.download_assets.output': 'مجلد الأصول المنزّلة بالإضافة إلى _manifest.json مع دعم referer وملفات تعريف الارتباط.',
-  'browserUse.action.extract_svgs.output': 'ملفات SVG المضمّنة والملفات المرتبطة ‎.svg محفوظة كملفات SVG منفردة.',
-  'browserUse.action.optimize_svgs.output': 'ملفات SVG مُحسَّنة بالإضافة إلى نسبة الضغط.',
-  'browserUse.action.extract_colors.output': 'لوحة ألوان مُرجَّحة بالإضافة إلى متغيرات ألوان CSS ضمن ‎:root كـ palette.json وpalette.html.',
-  'browserUse.action.extract_fonts.output': 'أبرز عائلات الخطوط والأحجام والأوزان وقواعد ‎@font-face كـ typography.json.',
-  'browserUse.action.extract_design_tokens.output': 'نصف القطر والظل والتباعد ومتغيرات CSS كـ tokens.json.',
-  'browserUse.action.extract_type_scale.output': 'سلّم أحجام الخط للعناوين والنص والأزرار مع الحجم والوزن وارتفاع السطر والنسب.',
-  'browserUse.action.extract_buttons.output': 'مكتبة أنماط أزرار خالية من التكرار كـ buttons.html وbuttons.json.',
-  'browserUse.action.extract_grid_system.output': 'حاويات Grid وflex والاتجاه والفجوات والأعمدة والعروض القصوى كـ layout.json.',
-  'browserUse.action.extract_breakpoints.output': 'نقاط التوقف المتجاوبة لاستعلامات الوسائط كـ breakpoints.json.',
-  'browserUse.action.extract_gradients.output': 'تدرّجات CSS كـ gradients.css وgradients.json ومعاينة HTML.',
-  'browserUse.action.extract_shadows.output': 'ظلال الصناديق وظلال النصوص والظلال المُسقَطة كـ shadows.json بالإضافة إلى معاينة.',
-  'browserUse.action.extract_easings.output': 'دوال تخفيف الانتقالات والحركات كـ easings.json.',
-  'browserUse.action.export_tokens.output': 'tokens.css وtokens.scss وtailwind.theme.js وstyle-dictionary.tokens.json.',
-  'browserUse.action.extract_animations.output': 'قواعد ‎@keyframes والانتقال والتحويل، ومكتبات الحركة المكتشفة، وmotion.css، وmotion.json.',
-  'browserUse.action.validate_view.output': 'مسارات لقطات الشاشة بالإضافة إلى مشكلات مرئية وتخطيطية مُهيكلة.',
-  'browserUse.action.audit_layout.output': 'عيوب التخطيط بما في ذلك الفائض، والحدود، والتداخل، والنص المقصوص كـ audit.json.',
-  'browserUse.action.audit_accessibility.output': 'مشكلات إمكانية الوصول مع المحدِّدات والتسميات والأدوار والتركيز والتباين ولقطات الشاشة حيثما كان مفيدًا.',
-  'browserUse.action.responsive_screenshots.output': 'لقطات شاشة للهاتف 390، والجهاز اللوحي 834، وسطح المكتب 1440.',
-  'browserUse.action.screenshot_full.output': 'لقطة شاشة للصفحة كاملةً تتجاوز منطقة العرض.',
-  'browserUse.action.screenshot_element.output': 'لقطة شاشة لعنصر واحد بدقة 2x افتراضيًا.',
-  'browserUse.action.screenshot_with_grid.output': 'لقطة شاشة مع تراكب شبكة التخطيط.',
-  'browserUse.action.screenshot_dark_mode.output': 'لقطة شاشة مع ‎prefers-color-scheme: dark.',
-  'browserUse.action.generate_styleguide.output': 'دليل أنماط من صفحة واحدة يتضمّن الألوان وسلّم أحجام الخط ونصف القطر والظلال.',
-  'browserUse.action.extract_html.output': 'HTML نظيف ومكتفٍ ذاتيًا دون سمات script أو noscript أو أحداث مضمّنة.',
-  'browserUse.action.extract_component_inventory.output': 'أنماط المكوّنات المتكررة والمحدِّدات والأعداد ولقطات الشاشة.',
-  'browserUse.action.extract_copy.output': 'العناوين، ودعوات اتخاذ الإجراء، والنص الأساسي، والأوصاف كـ copy.md وcopy.json.',
-  'browserUse.action.extract_nav.output': 'التنقُّل الأساسي وروابط التذييل كـ sitemap.md وnav.json.',
-  'browserUse.action.extract_forms.output': 'حقول النموذج والتسميات وتلميحات التحقق وإجراءات الإرسال كـ forms.json.',
-  'browserUse.action.run_project.output': 'عنوان URL لخادم التطوير المكتشف مفتوحًا في علامة تبويب Browser.',
-  'browserUse.action.detect_project.output': 'إطار العمل، ومدير الحزم، وأمر التثبيت، وأمر التطوير، والمنفذ.',
-  'browserUse.action.page_info.output': 'URL، والعنوان، والوصف، وصورة OG، ولون السمة، وأيقونة favicon، ومنطقة العرض.',
-  'browserUse.action.snapshot.output': 'ما يصل إلى 120 عنصرًا مرئيًا تفاعليًا ونصيًا مع الوسم والتسمية وhref والإحداثيات.',
-  'browserUse.action.navigate.output': 'افتح الصفحة وأعد page_info.',
-  'browserUse.action.click.output': 'انقر على أول عنصر مطابق بعد تمريره إلى نطاق العرض.',
-  'browserUse.action.type_text.output': 'املأ حقل إدخال وأرسل حدثي input وchange.',
-  'browserUse.action.scroll.output': 'موضع التمرير الحالي والأقصى.',
-  'browserUse.action.extract_og_metadata.output': 'عنوان Meta، الوصف، الـ URL الأساسي (canonical)، بطاقات OG/Twitter، صورة التواصل الاجتماعي، ولون السمة.',
-  'browserUse.action.terminal_run.output': 'stdout وstderr ورمز الخروج.',
-  'browserUse.action.terminal_run_background.output': 'معرّف المهمة في الخلفية والمخرجات الأخيرة.',
-  'browserUse.action.terminal_read.output': 'مخرجات الـ Terminal المشتركة الأخيرة.',
-  'chat.designToolbox.title': 'صندوق أدوات التصميم',
-  'chat.designToolbox.tooltip': 'صندوق أدوات التصميم',
-  'chat.designToolbox.aria': 'افتح صندوق أدوات التصميم',
-  'chat.designToolbox.searchPlaceholder': 'ابحث في المهارات / MCP / الإضافات / الموصّلات / ملفات التصميم...',
-  'chat.designToolbox.searchAria': 'ابحث في موارد صندوق أدوات التصميم',
-  'chat.designToolbox.followupSection': 'متابعة',
-  'chat.designToolbox.resourcesSection': 'الموارد العامة',
-  'chat.designToolbox.selected': 'المحدد',
-  'chat.designToolbox.noResources': 'لم يتم العثور على موارد لـ "{query}".',
-  'chat.designToolbox.badge.video': 'فيديو',
-  'chat.designToolbox.badge.image': 'صورة',
-  'chat.designToolbox.badge.motion': 'حركة',
-  'chat.designToolbox.badge.polish': 'صقل',
-  'chat.designToolbox.action.auto-match.title': 'طابق الخطوة التالية',
-  'chat.designToolbox.action.auto-match.badge': 'طابق',
-  'chat.designToolbox.action.auto-match.description': 'حدّد معيار الذوق أولاً، ثم طابق المهارات وMCP والإضافات والموصّلات والملفات.',
-  'chat.designToolbox.action.motion.title': 'أضف رسومًا متحركة / حركة',
-  'chat.designToolbox.action.motion.badge': 'حركة',
-  'chat.designToolbox.action.motion.description': 'أضف حركات الدخول والتمرير وانتقال الحالة والتفاعلات الدقيقة إلى HTML الحالي أو عنصر الصفحة.',
-  'chat.designToolbox.action.motion-polish.title': 'اصقل الحركة',
-  'chat.designToolbox.action.motion-polish.badge': 'التوقيت',
-  'chat.designToolbox.action.motion-polish.description': 'راجع التوقيت والتخفيف (easing) والأداء وبدائل تقليل الحركة للحركة الحالية.',
-  'chat.designToolbox.action.anti-ai-polish.title': 'أزل الطابع الاصطناعي للذكاء الاصطناعي',
-  'chat.designToolbox.action.anti-ai-polish.badge': 'الذوق',
-  'chat.designToolbox.action.anti-ai-polish.description': 'أزل الطابع القالبي وتدرّجات الذكاء الاصطناعي وأكوام البطاقات الرخيصة والنصوص المبهمة.',
-  'chat.designToolbox.action.visual-polish.title': 'صقل التصميم / جاهز للإطلاق',
-  'chat.designToolbox.action.visual-polish.badge': 'صقل',
-  'chat.designToolbox.action.visual-polish.description': 'دقّق التسلسل البصري والخط والتباعد والسلوك المتجاوب وإمكانية الوصول وجودة التسليم.',
-  'chat.designToolbox.action.image-gen.title': 'أنشئ صورًا / مراجع بصرية',
-  'chat.designToolbox.action.image-gen.badge': 'صورة',
-  'chat.designToolbox.action.image-gen.description': 'أنشئ مراجع أقسام أو أصولًا أو أيقونات أو صور تواصل اجتماعي أو لوحة إلهام للصفحة الحالية.',
-  'chat.designToolbox.action.video-gen.title': 'أنشئ فيديو / نص حركة',
-  'chat.designToolbox.action.video-gen.badge': 'فيديو',
-  'chat.designToolbox.action.video-gen.description': 'حوّل التصميم إلى فيديو قصير أو لوحة قصة Remotion / Hyperframes أو موجه جاهز للتوليد.',
-  'chat.designToolbox.kind.skill': 'مهارة',
-  'chat.designToolbox.kind.plugin': 'إضافة',
+  'browserUse.action.extract_logo.output': 'Ø£ÙØ¶Ù Ø§ÙÙØ±Ø´Ø­ÙÙ ÙÙØ´Ø¹Ø§Ø± ÙÙ Ø§ÙØªØ±ÙÙØ³Ø©Ø ÙØ§ÙØªÙÙÙÙÙØ ÙØ£Ø³ÙØ§Ø¡ Ø§ÙÙØ¦Ø§ØªØ ÙØ§ÙÙÙØ¶Ø¹Ø ÙØµÙØ±Ø© OGØ ÙØ¹ Ø§ÙØ±Ø¬ÙØ¹ Ø¥ÙÙ Ø£ÙÙÙÙØ© favicon.',
+  'browserUse.action.list_images.output': 'Ø¬ÙÙØ¹ ØµÙØ± img Ùsrcset Ùsource ÙØµÙØ± Ø§ÙØ®ÙÙÙØ© ÙÙ CSS ÙØ¹ Ø§ÙØ£Ø¨Ø¹Ø§Ø¯ ÙØ§ÙÙØµ Ø§ÙØ¨Ø¯ÙÙ.',
+  'browserUse.action.download_assets.output': 'ÙØ¬ÙØ¯ Ø§ÙØ£ØµÙÙ Ø§ÙÙÙØ²ÙÙØ© Ø¨Ø§ÙØ¥Ø¶Ø§ÙØ© Ø¥ÙÙ _manifest.json ÙØ¹ Ø¯Ø¹Ù referer ÙÙÙÙØ§Øª ØªØ¹Ø±ÙÙ Ø§ÙØ§Ø±ØªØ¨Ø§Ø·.',
+  'browserUse.action.extract_svgs.output': 'ÙÙÙØ§Øª SVG Ø§ÙÙØ¶ÙÙÙØ© ÙØ§ÙÙÙÙØ§Øª Ø§ÙÙØ±ØªØ¨Ø·Ø© â.svg ÙØ­ÙÙØ¸Ø© ÙÙÙÙØ§Øª SVG ÙÙÙØ±Ø¯Ø©.',
+  'browserUse.action.optimize_svgs.output': 'ÙÙÙØ§Øª SVG ÙÙØ­Ø³ÙÙÙØ© Ø¨Ø§ÙØ¥Ø¶Ø§ÙØ© Ø¥ÙÙ ÙØ³Ø¨Ø© Ø§ÙØ¶ØºØ·.',
+  'browserUse.action.extract_colors.output': 'ÙÙØ­Ø© Ø£ÙÙØ§Ù ÙÙØ±Ø¬ÙÙØ­Ø© Ø¨Ø§ÙØ¥Ø¶Ø§ÙØ© Ø¥ÙÙ ÙØªØºÙØ±Ø§Øª Ø£ÙÙØ§Ù CSS Ø¶ÙÙ â:root ÙÙ palette.json Ùpalette.html.',
+  'browserUse.action.extract_fonts.output': 'Ø£Ø¨Ø±Ø² Ø¹Ø§Ø¦ÙØ§Øª Ø§ÙØ®Ø·ÙØ· ÙØ§ÙØ£Ø­Ø¬Ø§Ù ÙØ§ÙØ£ÙØ²Ø§Ù ÙÙÙØ§Ø¹Ø¯ â@font-face ÙÙ typography.json.',
+  'browserUse.action.extract_design_tokens.output': 'ÙØµÙ Ø§ÙÙØ·Ø± ÙØ§ÙØ¸Ù ÙØ§ÙØªØ¨Ø§Ø¹Ø¯ ÙÙØªØºÙØ±Ø§Øª CSS ÙÙ tokens.json.',
+  'browserUse.action.extract_type_scale.output': 'Ø³ÙÙÙ Ø£Ø­Ø¬Ø§Ù Ø§ÙØ®Ø· ÙÙØ¹ÙØ§ÙÙÙ ÙØ§ÙÙØµ ÙØ§ÙØ£Ø²Ø±Ø§Ø± ÙØ¹ Ø§ÙØ­Ø¬Ù ÙØ§ÙÙØ²Ù ÙØ§Ø±ØªÙØ§Ø¹ Ø§ÙØ³Ø·Ø± ÙØ§ÙÙØ³Ø¨.',
+  'browserUse.action.extract_buttons.output': 'ÙÙØªØ¨Ø© Ø£ÙÙØ§Ø· Ø£Ø²Ø±Ø§Ø± Ø®Ø§ÙÙØ© ÙÙ Ø§ÙØªÙØ±Ø§Ø± ÙÙ buttons.html Ùbuttons.json.',
+  'browserUse.action.extract_grid_system.output': 'Ø­Ø§ÙÙØ§Øª Grid Ùflex ÙØ§ÙØ§ØªØ¬Ø§Ù ÙØ§ÙÙØ¬ÙØ§Øª ÙØ§ÙØ£Ø¹ÙØ¯Ø© ÙØ§ÙØ¹Ø±ÙØ¶ Ø§ÙÙØµÙÙ ÙÙ layout.json.',
+  'browserUse.action.extract_breakpoints.output': 'ÙÙØ§Ø· Ø§ÙØªÙÙÙ Ø§ÙÙØªØ¬Ø§ÙØ¨Ø© ÙØ§Ø³ØªØ¹ÙØ§ÙØ§Øª Ø§ÙÙØ³Ø§Ø¦Ø· ÙÙ breakpoints.json.',
+  'browserUse.action.extract_gradients.output': 'ØªØ¯Ø±ÙØ¬Ø§Øª CSS ÙÙ gradients.css Ùgradients.json ÙÙØ¹Ø§ÙÙØ© HTML.',
+  'browserUse.action.extract_shadows.output': 'Ø¸ÙØ§Ù Ø§ÙØµÙØ§Ø¯ÙÙ ÙØ¸ÙØ§Ù Ø§ÙÙØµÙØµ ÙØ§ÙØ¸ÙØ§Ù Ø§ÙÙÙØ³ÙÙØ·Ø© ÙÙ shadows.json Ø¨Ø§ÙØ¥Ø¶Ø§ÙØ© Ø¥ÙÙ ÙØ¹Ø§ÙÙØ©.',
+  'browserUse.action.extract_easings.output': 'Ø¯ÙØ§Ù ØªØ®ÙÙÙ Ø§ÙØ§ÙØªÙØ§ÙØ§Øª ÙØ§ÙØ­Ø±ÙØ§Øª ÙÙ easings.json.',
+  'browserUse.action.export_tokens.output': 'tokens.css Ùtokens.scss Ùtailwind.theme.js Ùstyle-dictionary.tokens.json.',
+  'browserUse.action.extract_animations.output': 'ÙÙØ§Ø¹Ø¯ â@keyframes ÙØ§ÙØ§ÙØªÙØ§Ù ÙØ§ÙØªØ­ÙÙÙØ ÙÙÙØªØ¨Ø§Øª Ø§ÙØ­Ø±ÙØ© Ø§ÙÙÙØªØ´ÙØ©Ø Ùmotion.cssØ Ùmotion.json.',
+  'browserUse.action.validate_view.output': 'ÙØ³Ø§Ø±Ø§Øª ÙÙØ·Ø§Øª Ø§ÙØ´Ø§Ø´Ø© Ø¨Ø§ÙØ¥Ø¶Ø§ÙØ© Ø¥ÙÙ ÙØ´ÙÙØ§Øª ÙØ±Ø¦ÙØ© ÙØªØ®Ø·ÙØ·ÙØ© ÙÙÙÙÙÙØ©.',
+  'browserUse.action.audit_layout.output': 'Ø¹ÙÙØ¨ Ø§ÙØªØ®Ø·ÙØ· Ø¨ÙØ§ ÙÙ Ø°ÙÙ Ø§ÙÙØ§Ø¦Ø¶Ø ÙØ§ÙØ­Ø¯ÙØ¯Ø ÙØ§ÙØªØ¯Ø§Ø®ÙØ ÙØ§ÙÙØµ Ø§ÙÙÙØµÙØµ ÙÙ audit.json.',
+  'browserUse.action.audit_accessibility.output': 'ÙØ´ÙÙØ§Øª Ø¥ÙÙØ§ÙÙØ© Ø§ÙÙØµÙÙ ÙØ¹ Ø§ÙÙØ­Ø¯ÙÙØ¯Ø§Øª ÙØ§ÙØªØ³ÙÙØ§Øª ÙØ§ÙØ£Ø¯ÙØ§Ø± ÙØ§ÙØªØ±ÙÙØ² ÙØ§ÙØªØ¨Ø§ÙÙ ÙÙÙØ·Ø§Øª Ø§ÙØ´Ø§Ø´Ø© Ø­ÙØ«ÙØ§ ÙØ§Ù ÙÙÙØ¯ÙØ§.',
+  'browserUse.action.responsive_screenshots.output': 'ÙÙØ·Ø§Øª Ø´Ø§Ø´Ø© ÙÙÙØ§ØªÙ 390Ø ÙØ§ÙØ¬ÙØ§Ø² Ø§ÙÙÙØ­Ù 834Ø ÙØ³Ø·Ø­ Ø§ÙÙÙØªØ¨ 1440.',
+  'browserUse.action.screenshot_full.output': 'ÙÙØ·Ø© Ø´Ø§Ø´Ø© ÙÙØµÙØ­Ø© ÙØ§ÙÙØ©Ù ØªØªØ¬Ø§ÙØ² ÙÙØ·ÙØ© Ø§ÙØ¹Ø±Ø¶.',
+  'browserUse.action.screenshot_element.output': 'ÙÙØ·Ø© Ø´Ø§Ø´Ø© ÙØ¹ÙØµØ± ÙØ§Ø­Ø¯ Ø¨Ø¯ÙØ© 2x Ø§ÙØªØ±Ø§Ø¶ÙÙØ§.',
+  'browserUse.action.screenshot_with_grid.output': 'ÙÙØ·Ø© Ø´Ø§Ø´Ø© ÙØ¹ ØªØ±Ø§ÙØ¨ Ø´Ø¨ÙØ© Ø§ÙØªØ®Ø·ÙØ·.',
+  'browserUse.action.screenshot_dark_mode.output': 'ÙÙØ·Ø© Ø´Ø§Ø´Ø© ÙØ¹ âprefers-color-scheme: dark.',
+  'browserUse.action.generate_styleguide.output': 'Ø¯ÙÙÙ Ø£ÙÙØ§Ø· ÙÙ ØµÙØ­Ø© ÙØ§Ø­Ø¯Ø© ÙØªØ¶ÙÙÙ Ø§ÙØ£ÙÙØ§Ù ÙØ³ÙÙÙ Ø£Ø­Ø¬Ø§Ù Ø§ÙØ®Ø· ÙÙØµÙ Ø§ÙÙØ·Ø± ÙØ§ÙØ¸ÙØ§Ù.',
+  'browserUse.action.extract_html.output': 'HTML ÙØ¸ÙÙ ÙÙÙØªÙÙ Ø°Ø§ØªÙÙØ§ Ø¯ÙÙ Ø³ÙØ§Øª script Ø£Ù noscript Ø£Ù Ø£Ø­Ø¯Ø§Ø« ÙØ¶ÙÙÙØ©.',
+  'browserUse.action.extract_component_inventory.output': 'Ø£ÙÙØ§Ø· Ø§ÙÙÙÙÙÙØ§Øª Ø§ÙÙØªÙØ±Ø±Ø© ÙØ§ÙÙØ­Ø¯ÙÙØ¯Ø§Øª ÙØ§ÙØ£Ø¹Ø¯Ø§Ø¯ ÙÙÙØ·Ø§Øª Ø§ÙØ´Ø§Ø´Ø©.',
+  'browserUse.action.extract_copy.output': 'Ø§ÙØ¹ÙØ§ÙÙÙØ ÙØ¯Ø¹ÙØ§Øª Ø§ØªØ®Ø§Ø° Ø§ÙØ¥Ø¬Ø±Ø§Ø¡Ø ÙØ§ÙÙØµ Ø§ÙØ£Ø³Ø§Ø³ÙØ ÙØ§ÙØ£ÙØµØ§Ù ÙÙ copy.md Ùcopy.json.',
+  'browserUse.action.extract_nav.output': 'Ø§ÙØªÙÙÙÙÙ Ø§ÙØ£Ø³Ø§Ø³Ù ÙØ±ÙØ§Ø¨Ø· Ø§ÙØªØ°ÙÙÙ ÙÙ sitemap.md Ùnav.json.',
+  'browserUse.action.extract_forms.output': 'Ø­ÙÙÙ Ø§ÙÙÙÙØ°Ø¬ ÙØ§ÙØªØ³ÙÙØ§Øª ÙØªÙÙÙØ­Ø§Øª Ø§ÙØªØ­ÙÙ ÙØ¥Ø¬Ø±Ø§Ø¡Ø§Øª Ø§ÙØ¥Ø±Ø³Ø§Ù ÙÙ forms.json.',
+  'browserUse.action.run_project.output': 'Ø¹ÙÙØ§Ù URL ÙØ®Ø§Ø¯Ù Ø§ÙØªØ·ÙÙØ± Ø§ÙÙÙØªØ´Ù ÙÙØªÙØ­ÙØ§ ÙÙ Ø¹ÙØ§ÙØ© ØªØ¨ÙÙØ¨ Browser.',
+  'browserUse.action.detect_project.output': 'Ø¥Ø·Ø§Ø± Ø§ÙØ¹ÙÙØ ÙÙØ¯ÙØ± Ø§ÙØ­Ø²ÙØ ÙØ£ÙØ± Ø§ÙØªØ«Ø¨ÙØªØ ÙØ£ÙØ± Ø§ÙØªØ·ÙÙØ±Ø ÙØ§ÙÙÙÙØ°.',
+  'browserUse.action.page_info.output': 'URLØ ÙØ§ÙØ¹ÙÙØ§ÙØ ÙØ§ÙÙØµÙØ ÙØµÙØ±Ø© OGØ ÙÙÙÙ Ø§ÙØ³ÙØ©Ø ÙØ£ÙÙÙÙØ© faviconØ ÙÙÙØ·ÙØ© Ø§ÙØ¹Ø±Ø¶.',
+  'browserUse.action.snapshot.output': 'ÙØ§ ÙØµÙ Ø¥ÙÙ 120 Ø¹ÙØµØ±ÙØ§ ÙØ±Ø¦ÙÙØ§ ØªÙØ§Ø¹ÙÙÙØ§ ÙÙØµÙÙØ§ ÙØ¹ Ø§ÙÙØ³Ù ÙØ§ÙØªØ³ÙÙØ© Ùhref ÙØ§ÙØ¥Ø­Ø¯Ø§Ø«ÙØ§Øª.',
+  'browserUse.action.navigate.output': 'Ø§ÙØªØ­ Ø§ÙØµÙØ­Ø© ÙØ£Ø¹Ø¯ page_info.',
+  'browserUse.action.click.output': 'Ø§ÙÙØ± Ø¹ÙÙ Ø£ÙÙ Ø¹ÙØµØ± ÙØ·Ø§Ø¨Ù Ø¨Ø¹Ø¯ ØªÙØ±ÙØ±Ù Ø¥ÙÙ ÙØ·Ø§Ù Ø§ÙØ¹Ø±Ø¶.',
+  'browserUse.action.type_text.output': 'Ø§ÙÙØ£ Ø­ÙÙ Ø¥Ø¯Ø®Ø§Ù ÙØ£Ø±Ø³Ù Ø­Ø¯Ø«Ù input Ùchange.',
+  'browserUse.action.scroll.output': 'ÙÙØ¶Ø¹ Ø§ÙØªÙØ±ÙØ± Ø§ÙØ­Ø§ÙÙ ÙØ§ÙØ£ÙØµÙ.',
+  'browserUse.action.extract_og_metadata.output': 'Ø¹ÙÙØ§Ù MetaØ Ø§ÙÙØµÙØ Ø§ÙÙ URL Ø§ÙØ£Ø³Ø§Ø³Ù (canonical)Ø Ø¨Ø·Ø§ÙØ§Øª OG/TwitterØ ØµÙØ±Ø© Ø§ÙØªÙØ§ØµÙ Ø§ÙØ§Ø¬ØªÙØ§Ø¹ÙØ ÙÙÙÙ Ø§ÙØ³ÙØ©.',
+  'browserUse.action.terminal_run.output': 'stdout Ùstderr ÙØ±ÙØ² Ø§ÙØ®Ø±ÙØ¬.',
+  'browserUse.action.terminal_run_background.output': 'ÙØ¹Ø±ÙÙ Ø§ÙÙÙÙØ© ÙÙ Ø§ÙØ®ÙÙÙØ© ÙØ§ÙÙØ®Ø±Ø¬Ø§Øª Ø§ÙØ£Ø®ÙØ±Ø©.',
+  'browserUse.action.terminal_read.output': 'ÙØ®Ø±Ø¬Ø§Øª Ø§ÙÙ Terminal Ø§ÙÙØ´ØªØ±ÙØ© Ø§ÙØ£Ø®ÙØ±Ø©.',
+  'chat.designToolbox.title': 'ØµÙØ¯ÙÙ Ø£Ø¯ÙØ§Øª Ø§ÙØªØµÙÙÙ',
+  'chat.designToolbox.tooltip': 'ØµÙØ¯ÙÙ Ø£Ø¯ÙØ§Øª Ø§ÙØªØµÙÙÙ',
+  'chat.designToolbox.aria': 'Ø§ÙØªØ­ ØµÙØ¯ÙÙ Ø£Ø¯ÙØ§Øª Ø§ÙØªØµÙÙÙ',
+  'chat.designToolbox.searchPlaceholder': 'Ø§Ø¨Ø­Ø« ÙÙ Ø§ÙÙÙØ§Ø±Ø§Øª / MCP / Ø§ÙØ¥Ø¶Ø§ÙØ§Øª / Ø§ÙÙÙØµÙÙØ§Øª / ÙÙÙØ§Øª Ø§ÙØªØµÙÙÙ...',
+  'chat.designToolbox.searchAria': 'Ø§Ø¨Ø­Ø« ÙÙ ÙÙØ§Ø±Ø¯ ØµÙØ¯ÙÙ Ø£Ø¯ÙØ§Øª Ø§ÙØªØµÙÙÙ',
+  'chat.designToolbox.followupSection': 'ÙØªØ§Ø¨Ø¹Ø©',
+  'chat.designToolbox.resourcesSection': 'Ø§ÙÙÙØ§Ø±Ø¯ Ø§ÙØ¹Ø§ÙØ©',
+  'chat.designToolbox.selected': 'Ø§ÙÙØ­Ø¯Ø¯',
+  'chat.designToolbox.noResources': 'ÙÙ ÙØªÙ Ø§ÙØ¹Ø«ÙØ± Ø¹ÙÙ ÙÙØ§Ø±Ø¯ ÙÙ "{query}".',
+  'chat.designToolbox.badge.video': 'ÙÙØ¯ÙÙ',
+  'chat.designToolbox.badge.image': 'ØµÙØ±Ø©',
+  'chat.designToolbox.badge.motion': 'Ø­Ø±ÙØ©',
+  'chat.designToolbox.badge.polish': 'ØµÙÙ',
+  'chat.designToolbox.action.auto-match.title': 'Ø·Ø§Ø¨Ù Ø§ÙØ®Ø·ÙØ© Ø§ÙØªØ§ÙÙØ©',
+  'chat.designToolbox.action.auto-match.badge': 'Ø·Ø§Ø¨Ù',
+  'chat.designToolbox.action.auto-match.description': 'Ø­Ø¯ÙØ¯ ÙØ¹ÙØ§Ø± Ø§ÙØ°ÙÙ Ø£ÙÙØ§ÙØ Ø«Ù Ø·Ø§Ø¨Ù Ø§ÙÙÙØ§Ø±Ø§Øª ÙMCP ÙØ§ÙØ¥Ø¶Ø§ÙØ§Øª ÙØ§ÙÙÙØµÙÙØ§Øª ÙØ§ÙÙÙÙØ§Øª.',
+  'chat.designToolbox.action.motion.title': 'Ø£Ø¶Ù Ø±Ø³ÙÙÙØ§ ÙØªØ­Ø±ÙØ© / Ø­Ø±ÙØ©',
+  'chat.designToolbox.action.motion.badge': 'Ø­Ø±ÙØ©',
+  'chat.designToolbox.action.motion.description': 'Ø£Ø¶Ù Ø­Ø±ÙØ§Øª Ø§ÙØ¯Ø®ÙÙ ÙØ§ÙØªÙØ±ÙØ± ÙØ§ÙØªÙØ§Ù Ø§ÙØ­Ø§ÙØ© ÙØ§ÙØªÙØ§Ø¹ÙØ§Øª Ø§ÙØ¯ÙÙÙØ© Ø¥ÙÙ HTML Ø§ÙØ­Ø§ÙÙ Ø£Ù Ø¹ÙØµØ± Ø§ÙØµÙØ­Ø©.',
+  'chat.designToolbox.action.motion-polish.title': 'Ø§ØµÙÙ Ø§ÙØ­Ø±ÙØ©',
+  'chat.designToolbox.action.motion-polish.badge': 'Ø§ÙØªÙÙÙØª',
+  'chat.designToolbox.action.motion-polish.description': 'Ø±Ø§Ø¬Ø¹ Ø§ÙØªÙÙÙØª ÙØ§ÙØªØ®ÙÙÙ (easing) ÙØ§ÙØ£Ø¯Ø§Ø¡ ÙØ¨Ø¯Ø§Ø¦Ù ØªÙÙÙÙ Ø§ÙØ­Ø±ÙØ© ÙÙØ­Ø±ÙØ© Ø§ÙØ­Ø§ÙÙØ©.',
+  'chat.designToolbox.action.anti-ai-polish.title': 'Ø£Ø²Ù Ø§ÙØ·Ø§Ø¨Ø¹ Ø§ÙØ§ØµØ·ÙØ§Ø¹Ù ÙÙØ°ÙØ§Ø¡ Ø§ÙØ§ØµØ·ÙØ§Ø¹Ù',
+  'chat.designToolbox.action.anti-ai-polish.badge': 'Ø§ÙØ°ÙÙ',
+  'chat.designToolbox.action.anti-ai-polish.description': 'Ø£Ø²Ù Ø§ÙØ·Ø§Ø¨Ø¹ Ø§ÙÙØ§ÙØ¨Ù ÙØªØ¯Ø±ÙØ¬Ø§Øª Ø§ÙØ°ÙØ§Ø¡ Ø§ÙØ§ØµØ·ÙØ§Ø¹Ù ÙØ£ÙÙØ§Ù Ø§ÙØ¨Ø·Ø§ÙØ§Øª Ø§ÙØ±Ø®ÙØµØ© ÙØ§ÙÙØµÙØµ Ø§ÙÙØ¨ÙÙØ©.',
+  'chat.designToolbox.action.visual-polish.title': 'ØµÙÙ Ø§ÙØªØµÙÙÙ / Ø¬Ø§ÙØ² ÙÙØ¥Ø·ÙØ§Ù',
+  'chat.designToolbox.action.visual-polish.badge': 'ØµÙÙ',
+  'chat.designToolbox.action.visual-polish.description': 'Ø¯ÙÙÙ Ø§ÙØªØ³ÙØ³Ù Ø§ÙØ¨ØµØ±Ù ÙØ§ÙØ®Ø· ÙØ§ÙØªØ¨Ø§Ø¹Ø¯ ÙØ§ÙØ³ÙÙÙ Ø§ÙÙØªØ¬Ø§ÙØ¨ ÙØ¥ÙÙØ§ÙÙØ© Ø§ÙÙØµÙÙ ÙØ¬ÙØ¯Ø© Ø§ÙØªØ³ÙÙÙ.',
+  'chat.designToolbox.action.image-gen.title': 'Ø£ÙØ´Ø¦ ØµÙØ±ÙØ§ / ÙØ±Ø§Ø¬Ø¹ Ø¨ØµØ±ÙØ©',
+  'chat.designToolbox.action.image-gen.badge': 'ØµÙØ±Ø©',
+  'chat.designToolbox.action.image-gen.description': 'Ø£ÙØ´Ø¦ ÙØ±Ø§Ø¬Ø¹ Ø£ÙØ³Ø§Ù Ø£Ù Ø£ØµÙÙÙØ§ Ø£Ù Ø£ÙÙÙÙØ§Øª Ø£Ù ØµÙØ± ØªÙØ§ØµÙ Ø§Ø¬ØªÙØ§Ø¹Ù Ø£Ù ÙÙØ­Ø© Ø¥ÙÙØ§Ù ÙÙØµÙØ­Ø© Ø§ÙØ­Ø§ÙÙØ©.',
+  'chat.designToolbox.action.video-gen.title': 'Ø£ÙØ´Ø¦ ÙÙØ¯ÙÙ / ÙØµ Ø­Ø±ÙØ©',
+  'chat.designToolbox.action.video-gen.badge': 'ÙÙØ¯ÙÙ',
+  'chat.designToolbox.action.video-gen.description': 'Ø­ÙÙÙ Ø§ÙØªØµÙÙÙ Ø¥ÙÙ ÙÙØ¯ÙÙ ÙØµÙØ± Ø£Ù ÙÙØ­Ø© ÙØµØ© Remotion / Hyperframes Ø£Ù ÙÙØ¬Ù Ø¬Ø§ÙØ² ÙÙØªÙÙÙØ¯.',
+  'chat.designToolbox.kind.skill': 'ÙÙØ§Ø±Ø©',
+  'chat.designToolbox.kind.plugin': 'Ø¥Ø¶Ø§ÙØ©',
   'chat.designToolbox.kind.mcp': 'MCP',
-  'chat.designToolbox.kind.mcpTemplate': 'قالب MCP',
-  'chat.designToolbox.kind.connector': 'موصّل',
-  'chat.designToolbox.kind.designFile': 'ملف تصميم',
-  'chat.designToolbox.context.browser': 'المتصفح',
-  'chat.designToolbox.context.designFiles': 'ملفات التصميم',
-  'chat.designToolbox.context.designSystem': 'نظام التصميم',
-  'chat.designToolbox.context.folder': 'مجلد',
-  'chat.designToolbox.context.terminal': 'الطرفية',
-  'chat.designToolbox.context.sideChat': 'محادثة جانبية',
-  'chat.designToolbox.context.liveArtifact': 'عنصر حي',
-  'chat.designToolbox.context.file': 'ملف',
-  'chat.designToolbox.prompt.contextGeneric': 'الهدف الحالي: ملف HTML / ملف التصميم / عنصر الويب المفتوح حاليًا.',
-  'chat.designToolbox.prompt.contextSpecific': 'الهدف الحالي: {kind} · {label}.',
-  'chat.designToolbox.prompt.preserveDraft': 'حافظ على القصد الموجود بالفعل في المُحرّر: {draft}',
-  'chat.designToolbox.prompt.selectedSkill': 'المهارة المحددة: {skill}. استخدمها كسير العمل الأساسي في هذه الجولة.',
-  'chat.designToolbox.prompt.noSkill': 'إذا لم تتطابق أي مهارة محددة، فاختر أولاً أفضل توليفة من المهارات وMCP والإضافات والموصِّلات وملفات التصميم المتاحة.',
-  'chat.designToolbox.prompt.autoMatchIntro': 'تصرّف بصفتك المنسِّق للمدير الإبداعي وأكمِل سير عمل تصميمي:',
-  'chat.designToolbox.prompt.autoMatchStep1': '1. حدّد أولًا معنى “التصميم الجميل”: الجمهور، والهدف التجاري، وإحساس العلامة التجارية، والمراجع الأسلوبية، وكثافة المعلومات، ومعايير الألوان/الخطوط/الحركة/الأصول، وأنماط الذكاء الاصطناعي/القوالب التي يجب تجنّبها.',
-  'chat.designToolbox.prompt.autoMatchStep2': '2. ابحث وطابِق فهرس الموارد الكامل أعلاه. لا تكتفِ بتوصيات صندوق أدوات التصميم؛ بل ادمج المهارات وMCP والإضافات والموصِّلات وملفات التصميم عند الحاجة.',
-  'chat.designToolbox.prompt.autoMatchStep3': '3. إذا كان الهدف أو معيار الجماليات لا يزال غير واضح، فأرشدني عبر خيارات محدودة أو واجهة على هيئة نموذج مع تضمين قيمة افتراضية مُوصى بها. وإذا كان واضحًا بما يكفي، فنفِّذ الخطوة التالية مباشرة.',
-  'chat.designToolbox.prompt.autoMatchStep4': '4. أكمِل التدفق بهذا الترتيب: التشخيص ← اتجاه النمط ← اختيار الموارد ← التحرير/التوليد الملموس ← التحقق. وفي كل خطوة، اشرح سبب اختيار هذه الموارد وما الذي يحتاج إلى تأكيد بعد ذلك.',
-  'chat.designToolbox.prompt.motion': 'أضِف حركة عالية الجودة إلى عنصر HTML / الصفحة الحالي: اختر أكثر لحظة أو لحظتين فائدة من بين الدخول أو التمرير أو انتقال الحالة أو التفاعل الدقيق. حافظ على التحفّظ، وفضِّل transform / opacity، وضمِّن بدائل احتياطية لـ prefers-reduced-motion.',
-  'chat.designToolbox.prompt.motionPolish': 'راجِع وحسِّن توقيت الحركة الحالي والتخفيف والأداء وإمكانية الوصول. أزِل الحركة المفاجئة أو الرخيصة أو الضارة بقابلية القراءة؛ واستخدم خطًا زمنيًا أكثر تنقيحًا عند الحاجة.',
-  'chat.designToolbox.prompt.antiAiPolish': 'نفِّذ تمريرة تنقيح واحدة لإزالة الطابع الاصطناعي للذكاء الاصطناعي: أزِل التخطيطات النمطية والتدرّجات/التوهّجات الرخيصة وأكوام البطاقات بلا معنى والنصوص المبهمة. احفظ المعلومات واجعلها تبدو وكأن مصمِّمًا حقيقيًا قد سلّمها.',
-  'chat.designToolbox.prompt.visualPolish': 'نقِّح هذا التصميم حتى يصبح جاهزًا للإطلاق: تحقّق من التسلسل الهرمي والطباعة والتباعد والسلوك المتجاوب وحالات الأزرار وحالات الفراغ/التحميل/الخطأ وإمكانية الوصول؛ وأصلِح أهم المشكلات مباشرة.',
-  'chat.designToolbox.prompt.imageGen': 'أنشئ خطة الأصول البصرية التالية لهذا التصميم: مراجع الأقسام أو أصول الواجهة الرئيسية أو الرسوم التوضيحية أو الأيقونات أو الصور الاجتماعية أو لوحة إلهام. حدِّد أولاً نوع الصورة المفقودة، ثم قدِّم موجِّهات توليد قابلة للتنفيذ / خطة ملفات.',
-  'chat.designToolbox.prompt.videoGen': 'حوِّل هذا التصميم نحو الفيديو: أنشئ لوحة قصة لفيديو قصير، أو بنية إطارات Hyperframes / Remotion، أو موجِّهًا جاهزًا لـ Sora/fal. فضِّل جعل محتوى HTML / الصفحة الحالي يتحوّل بشكل طبيعي إلى لقطات.',
-  'chat.designToolbox.prompt.useSkill': 'استخدم {skill} على التصميم الحالي.',
-  'chat.designToolbox.prompt.skillInstruction': 'حدِّد أولاً أفضل هدف للمتابعة، ثم أكمِل تمريرة ملموسة واحدة. وإذا كان يعتمد على أصول أو واجهات API خارجية، فقدِّم بديلاً احتياطيًا قابلاً للتشغيل أو بيِّن ما أحتاج إلى توفيره.',
-  'chat.designToolbox.prompt.selectedResource': 'المورد المحدد: {kind} · {title} ({id}).',
-  'chat.designToolbox.prompt.resourceDescription': 'وصف المورد: {description}',
-  'chat.designToolbox.prompt.pluginResource': 'استخدم هذه الإضافة كسياق رئيسي لتدفّق التصميم الحالي. إذا كانت تكشف مدخلات أو GenUI، فأرشدني إلى الاختيار عند الحاجة؛ وإذا لم تناسب الهدف، فاختر موردًا عامًا أفضل واشرح السبب.',
-  'chat.designToolbox.prompt.mcpResource': 'فضِّل إمكانية MCP هذه لخطوة التصميم التالية. عند الحاجة إلى أصول خارجية أو التقاط من الويب أو توليد صور/فيديو أو بيانات، حدِّد أولاً ما إذا كانت قادرة على إنجاز المهمة، ثم قدِّم خطة قابلة للتنفيذ.',
-  'chat.designToolbox.prompt.mcpTemplateResource': 'هذا الـ MCP قالب قابل للتهيئة. إذا كان الأداة الأكثر فائدة لخطوة التصميم هذه، فأرشِد إلى الإعداد أولاً؛ وإذا وُجد بديل مُهيّأ، فتابِع بذلك البديل.',
-  'chat.designToolbox.prompt.connectorResource': 'استخدم هذا الموصِّل عند الحاجة إلى بيانات حقيقية أو أصول أو محتوى حساب أو الوصول إلى سير عمل خارجي. قبل استخدامه، اشرح ما الذي ستتم قراءته أو كتابته واطلب التأكيد عند الاقتضاء.',
-  'chat.designToolbox.prompt.fileResource': 'استخدم ملف التصميم هذا كهدف تصميم حالي أو أصل مرجعي وأكمِل الخطوة التالية انطلاقًا منه. وإذا احتاجت ملفات أخرى إلى المقارنة، فتابِع البحث عبر جميع ملفات التصميم.',
-  'chat.designToolbox.prompt.resourceIndex': 'فهرس الموارد العام: المهارات({skills})، الإضافات({plugins})، MCP({mcpEnabled} مُفعَّل / {mcpTemplates} قالب)، الموصِّلات({connectors} متصل)، ملفات التصميم({files}).',
-  'chat.designToolbox.prompt.searchableSkills': 'المهارات القابلة للبحث',
-  'chat.designToolbox.prompt.searchablePlugins': 'الإضافات القابلة للبحث',
-  'chat.designToolbox.prompt.availableMcp': 'MCP المتاح',
-  'chat.designToolbox.prompt.connectedConnectors': 'الموصِّلات المتصلة',
-  'chat.designToolbox.prompt.referenceDesignFiles': 'ملفات التصميم المرجعية',
-  'chat.designToolbox.prompt.mcpTemplateName': 'قالب {name}',
-  'chat.designToolbox.prompt.processRule': 'قاعدة سير العمل: حدِّد الهدف الجمالي والقيود أولاً، ثم ابحث وطابِق الموارد؛ وعند الحاجة إلى اختيار المستخدم، أنشئ واجهة خيارات محدودة وتابِع بعد التأكيد.',
-  'chat.designToolbox.prompt.moreSuffix': '، +{count} أخرى',
+  'chat.designToolbox.kind.mcpTemplate': 'ÙØ§ÙØ¨ MCP',
+  'chat.designToolbox.kind.connector': 'ÙÙØµÙÙ',
+  'chat.designToolbox.kind.designFile': 'ÙÙÙ ØªØµÙÙÙ',
+  'chat.designToolbox.context.browser': 'Ø§ÙÙØªØµÙØ­',
+  'chat.designToolbox.context.designFiles': 'ÙÙÙØ§Øª Ø§ÙØªØµÙÙÙ',
+  'chat.designToolbox.context.designSystem': 'ÙØ¸Ø§Ù Ø§ÙØªØµÙÙÙ',
+  'chat.designToolbox.context.folder': 'ÙØ¬ÙØ¯',
+  'chat.designToolbox.context.terminal': 'Ø§ÙØ·Ø±ÙÙØ©',
+  'chat.designToolbox.context.sideChat': 'ÙØ­Ø§Ø¯Ø«Ø© Ø¬Ø§ÙØ¨ÙØ©',
+  'chat.designToolbox.context.liveArtifact': 'Ø¹ÙØµØ± Ø­Ù',
+  'chat.designToolbox.context.file': 'ÙÙÙ',
+  'chat.designToolbox.prompt.contextGeneric': 'Ø§ÙÙØ¯Ù Ø§ÙØ­Ø§ÙÙ: ÙÙÙ HTML / ÙÙÙ Ø§ÙØªØµÙÙÙ / Ø¹ÙØµØ± Ø§ÙÙÙØ¨ Ø§ÙÙÙØªÙØ­ Ø­Ø§ÙÙÙØ§.',
+  'chat.designToolbox.prompt.contextSpecific': 'Ø§ÙÙØ¯Ù Ø§ÙØ­Ø§ÙÙ: {kind} Â· {label}.',
+  'chat.designToolbox.prompt.preserveDraft': 'Ø­Ø§ÙØ¸ Ø¹ÙÙ Ø§ÙÙØµØ¯ Ø§ÙÙÙØ¬ÙØ¯ Ø¨Ø§ÙÙØ¹Ù ÙÙ Ø§ÙÙÙØ­Ø±ÙØ±: {draft}',
+  'chat.designToolbox.prompt.selectedSkill': 'Ø§ÙÙÙØ§Ø±Ø© Ø§ÙÙØ­Ø¯Ø¯Ø©: {skill}. Ø§Ø³ØªØ®Ø¯ÙÙØ§ ÙØ³ÙØ± Ø§ÙØ¹ÙÙ Ø§ÙØ£Ø³Ø§Ø³Ù ÙÙ ÙØ°Ù Ø§ÙØ¬ÙÙØ©.',
+  'chat.designToolbox.prompt.noSkill': 'Ø¥Ø°Ø§ ÙÙ ØªØªØ·Ø§Ø¨Ù Ø£Ù ÙÙØ§Ø±Ø© ÙØ­Ø¯Ø¯Ø©Ø ÙØ§Ø®ØªØ± Ø£ÙÙØ§Ù Ø£ÙØ¶Ù ØªÙÙÙÙØ© ÙÙ Ø§ÙÙÙØ§Ø±Ø§Øª ÙMCP ÙØ§ÙØ¥Ø¶Ø§ÙØ§Øª ÙØ§ÙÙÙØµÙÙÙØ§Øª ÙÙÙÙØ§Øª Ø§ÙØªØµÙÙÙ Ø§ÙÙØªØ§Ø­Ø©.',
+  'chat.designToolbox.prompt.autoMatchIntro': 'ØªØµØ±ÙÙ Ø¨ØµÙØªÙ Ø§ÙÙÙØ³ÙÙÙ ÙÙÙØ¯ÙØ± Ø§ÙØ¥Ø¨Ø¯Ø§Ø¹Ù ÙØ£ÙÙÙÙ Ø³ÙØ± Ø¹ÙÙ ØªØµÙÙÙÙ:',
+  'chat.designToolbox.prompt.autoMatchStep1': '1. Ø­Ø¯ÙØ¯ Ø£ÙÙÙØ§ ÙØ¹ÙÙ âØ§ÙØªØµÙÙÙ Ø§ÙØ¬ÙÙÙâ: Ø§ÙØ¬ÙÙÙØ±Ø ÙØ§ÙÙØ¯Ù Ø§ÙØªØ¬Ø§Ø±ÙØ ÙØ¥Ø­Ø³Ø§Ø³ Ø§ÙØ¹ÙØ§ÙØ© Ø§ÙØªØ¬Ø§Ø±ÙØ©Ø ÙØ§ÙÙØ±Ø§Ø¬Ø¹ Ø§ÙØ£Ø³ÙÙØ¨ÙØ©Ø ÙÙØ«Ø§ÙØ© Ø§ÙÙØ¹ÙÙÙØ§ØªØ ÙÙØ¹Ø§ÙÙØ± Ø§ÙØ£ÙÙØ§Ù/Ø§ÙØ®Ø·ÙØ·/Ø§ÙØ­Ø±ÙØ©/Ø§ÙØ£ØµÙÙØ ÙØ£ÙÙØ§Ø· Ø§ÙØ°ÙØ§Ø¡ Ø§ÙØ§ØµØ·ÙØ§Ø¹Ù/Ø§ÙÙÙØ§ÙØ¨ Ø§ÙØªÙ ÙØ¬Ø¨ ØªØ¬ÙÙØ¨ÙØ§.',
+  'chat.designToolbox.prompt.autoMatchStep2': '2. Ø§Ø¨Ø­Ø« ÙØ·Ø§Ø¨ÙÙ ÙÙØ±Ø³ Ø§ÙÙÙØ§Ø±Ø¯ Ø§ÙÙØ§ÙÙ Ø£Ø¹ÙØ§Ù. ÙØ§ ØªÙØªÙÙ Ø¨ØªÙØµÙØ§Øª ØµÙØ¯ÙÙ Ø£Ø¯ÙØ§Øª Ø§ÙØªØµÙÙÙØ Ø¨Ù Ø§Ø¯ÙØ¬ Ø§ÙÙÙØ§Ø±Ø§Øª ÙMCP ÙØ§ÙØ¥Ø¶Ø§ÙØ§Øª ÙØ§ÙÙÙØµÙÙÙØ§Øª ÙÙÙÙØ§Øª Ø§ÙØªØµÙÙÙ Ø¹ÙØ¯ Ø§ÙØ­Ø§Ø¬Ø©.',
+  'chat.designToolbox.prompt.autoMatchStep3': '3. Ø¥Ø°Ø§ ÙØ§Ù Ø§ÙÙØ¯Ù Ø£Ù ÙØ¹ÙØ§Ø± Ø§ÙØ¬ÙØ§ÙÙØ§Øª ÙØ§ ÙØ²Ø§Ù ØºÙØ± ÙØ§Ø¶Ø­Ø ÙØ£Ø±Ø´Ø¯ÙÙ Ø¹Ø¨Ø± Ø®ÙØ§Ø±Ø§Øª ÙØ­Ø¯ÙØ¯Ø© Ø£Ù ÙØ§Ø¬ÙØ© Ø¹ÙÙ ÙÙØ¦Ø© ÙÙÙØ°Ø¬ ÙØ¹ ØªØ¶ÙÙÙ ÙÙÙØ© Ø§ÙØªØ±Ø§Ø¶ÙØ© ÙÙÙØµÙ Ø¨ÙØ§. ÙØ¥Ø°Ø§ ÙØ§Ù ÙØ§Ø¶Ø­ÙØ§ Ø¨ÙØ§ ÙÙÙÙØ ÙÙÙÙÙØ° Ø§ÙØ®Ø·ÙØ© Ø§ÙØªØ§ÙÙØ© ÙØ¨Ø§Ø´Ø±Ø©.',
+  'chat.designToolbox.prompt.autoMatchStep4': '4. Ø£ÙÙÙÙ Ø§ÙØªØ¯ÙÙ Ø¨ÙØ°Ø§ Ø§ÙØªØ±ØªÙØ¨: Ø§ÙØªØ´Ø®ÙØµ â Ø§ØªØ¬Ø§Ù Ø§ÙÙÙØ· â Ø§Ø®ØªÙØ§Ø± Ø§ÙÙÙØ§Ø±Ø¯ â Ø§ÙØªØ­Ø±ÙØ±/Ø§ÙØªÙÙÙØ¯ Ø§ÙÙÙÙÙØ³ â Ø§ÙØªØ­ÙÙ. ÙÙÙ ÙÙ Ø®Ø·ÙØ©Ø Ø§Ø´Ø±Ø­ Ø³Ø¨Ø¨ Ø§Ø®ØªÙØ§Ø± ÙØ°Ù Ø§ÙÙÙØ§Ø±Ø¯ ÙÙØ§ Ø§ÙØ°Ù ÙØ­ØªØ§Ø¬ Ø¥ÙÙ ØªØ£ÙÙØ¯ Ø¨Ø¹Ø¯ Ø°ÙÙ.',
+  'chat.designToolbox.prompt.motion': 'Ø£Ø¶ÙÙ Ø­Ø±ÙØ© Ø¹Ø§ÙÙØ© Ø§ÙØ¬ÙØ¯Ø© Ø¥ÙÙ Ø¹ÙØµØ± HTML / Ø§ÙØµÙØ­Ø© Ø§ÙØ­Ø§ÙÙ: Ø§Ø®ØªØ± Ø£ÙØ«Ø± ÙØ­Ø¸Ø© Ø£Ù ÙØ­Ø¸ØªÙÙ ÙØ§Ø¦Ø¯Ø© ÙÙ Ø¨ÙÙ Ø§ÙØ¯Ø®ÙÙ Ø£Ù Ø§ÙØªÙØ±ÙØ± Ø£Ù Ø§ÙØªÙØ§Ù Ø§ÙØ­Ø§ÙØ© Ø£Ù Ø§ÙØªÙØ§Ø¹Ù Ø§ÙØ¯ÙÙÙ. Ø­Ø§ÙØ¸ Ø¹ÙÙ Ø§ÙØªØ­ÙÙØ¸Ø ÙÙØ¶ÙÙÙ transform / opacityØ ÙØ¶ÙÙÙÙ Ø¨Ø¯Ø§Ø¦Ù Ø§Ø­ØªÙØ§Ø·ÙØ© ÙÙ prefers-reduced-motion.',
+  'chat.designToolbox.prompt.motionPolish': 'Ø±Ø§Ø¬ÙØ¹ ÙØ­Ø³ÙÙÙ ØªÙÙÙØª Ø§ÙØ­Ø±ÙØ© Ø§ÙØ­Ø§ÙÙ ÙØ§ÙØªØ®ÙÙÙ ÙØ§ÙØ£Ø¯Ø§Ø¡ ÙØ¥ÙÙØ§ÙÙØ© Ø§ÙÙØµÙÙ. Ø£Ø²ÙÙ Ø§ÙØ­Ø±ÙØ© Ø§ÙÙÙØ§Ø¬Ø¦Ø© Ø£Ù Ø§ÙØ±Ø®ÙØµØ© Ø£Ù Ø§ÙØ¶Ø§Ø±Ø© Ø¨ÙØ§Ø¨ÙÙØ© Ø§ÙÙØ±Ø§Ø¡Ø©Ø ÙØ§Ø³ØªØ®Ø¯Ù Ø®Ø·ÙØ§ Ø²ÙÙÙÙØ§ Ø£ÙØ«Ø± ØªÙÙÙØ­ÙØ§ Ø¹ÙØ¯ Ø§ÙØ­Ø§Ø¬Ø©.',
+  'chat.designToolbox.prompt.antiAiPolish': 'ÙÙÙÙØ° ØªÙØ±ÙØ±Ø© ØªÙÙÙØ­ ÙØ§Ø­Ø¯Ø© ÙØ¥Ø²Ø§ÙØ© Ø§ÙØ·Ø§Ø¨Ø¹ Ø§ÙØ§ØµØ·ÙØ§Ø¹Ù ÙÙØ°ÙØ§Ø¡ Ø§ÙØ§ØµØ·ÙØ§Ø¹Ù: Ø£Ø²ÙÙ Ø§ÙØªØ®Ø·ÙØ·Ø§Øª Ø§ÙÙÙØ·ÙØ© ÙØ§ÙØªØ¯Ø±ÙØ¬Ø§Øª/Ø§ÙØªÙÙÙØ¬Ø§Øª Ø§ÙØ±Ø®ÙØµØ© ÙØ£ÙÙØ§Ù Ø§ÙØ¨Ø·Ø§ÙØ§Øª Ø¨ÙØ§ ÙØ¹ÙÙ ÙØ§ÙÙØµÙØµ Ø§ÙÙØ¨ÙÙØ©. Ø§Ø­ÙØ¸ Ø§ÙÙØ¹ÙÙÙØ§Øª ÙØ§Ø¬Ø¹ÙÙØ§ ØªØ¨Ø¯Ù ÙÙØ£Ù ÙØµÙÙÙÙÙØ§ Ø­ÙÙÙÙÙØ§ ÙØ¯ Ø³ÙÙÙÙØ§.',
+  'chat.designToolbox.prompt.visualPolish': 'ÙÙÙÙØ­ ÙØ°Ø§ Ø§ÙØªØµÙÙÙ Ø­ØªÙ ÙØµØ¨Ø­ Ø¬Ø§ÙØ²ÙØ§ ÙÙØ¥Ø·ÙØ§Ù: ØªØ­ÙÙÙ ÙÙ Ø§ÙØªØ³ÙØ³Ù Ø§ÙÙØ±ÙÙ ÙØ§ÙØ·Ø¨Ø§Ø¹Ø© ÙØ§ÙØªØ¨Ø§Ø¹Ø¯ ÙØ§ÙØ³ÙÙÙ Ø§ÙÙØªØ¬Ø§ÙØ¨ ÙØ­Ø§ÙØ§Øª Ø§ÙØ£Ø²Ø±Ø§Ø± ÙØ­Ø§ÙØ§Øª Ø§ÙÙØ±Ø§Øº/Ø§ÙØªØ­ÙÙÙ/Ø§ÙØ®Ø·Ø£ ÙØ¥ÙÙØ§ÙÙØ© Ø§ÙÙØµÙÙØ ÙØ£ØµÙÙØ­ Ø£ÙÙ Ø§ÙÙØ´ÙÙØ§Øª ÙØ¨Ø§Ø´Ø±Ø©.',
+  'chat.designToolbox.prompt.imageGen': 'Ø£ÙØ´Ø¦ Ø®Ø·Ø© Ø§ÙØ£ØµÙÙ Ø§ÙØ¨ØµØ±ÙØ© Ø§ÙØªØ§ÙÙØ© ÙÙØ°Ø§ Ø§ÙØªØµÙÙÙ: ÙØ±Ø§Ø¬Ø¹ Ø§ÙØ£ÙØ³Ø§Ù Ø£Ù Ø£ØµÙÙ Ø§ÙÙØ§Ø¬ÙØ© Ø§ÙØ±Ø¦ÙØ³ÙØ© Ø£Ù Ø§ÙØ±Ø³ÙÙ Ø§ÙØªÙØ¶ÙØ­ÙØ© Ø£Ù Ø§ÙØ£ÙÙÙÙØ§Øª Ø£Ù Ø§ÙØµÙØ± Ø§ÙØ§Ø¬ØªÙØ§Ø¹ÙØ© Ø£Ù ÙÙØ­Ø© Ø¥ÙÙØ§Ù. Ø­Ø¯ÙÙØ¯ Ø£ÙÙØ§Ù ÙÙØ¹ Ø§ÙØµÙØ±Ø© Ø§ÙÙÙÙÙØ¯Ø©Ø Ø«Ù ÙØ¯ÙÙÙ ÙÙØ¬ÙÙÙØ§Øª ØªÙÙÙØ¯ ÙØ§Ø¨ÙØ© ÙÙØªÙÙÙØ° / Ø®Ø·Ø© ÙÙÙØ§Øª.',
+  'chat.designToolbox.prompt.videoGen': 'Ø­ÙÙÙÙ ÙØ°Ø§ Ø§ÙØªØµÙÙÙ ÙØ­Ù Ø§ÙÙÙØ¯ÙÙ: Ø£ÙØ´Ø¦ ÙÙØ­Ø© ÙØµØ© ÙÙÙØ¯ÙÙ ÙØµÙØ±Ø Ø£Ù Ø¨ÙÙØ© Ø¥Ø·Ø§Ø±Ø§Øª Hyperframes / RemotionØ Ø£Ù ÙÙØ¬ÙÙÙÙØ§ Ø¬Ø§ÙØ²ÙØ§ ÙÙ Sora/fal. ÙØ¶ÙÙÙ Ø¬Ø¹Ù ÙØ­ØªÙÙ HTML / Ø§ÙØµÙØ­Ø© Ø§ÙØ­Ø§ÙÙ ÙØªØ­ÙÙÙ Ø¨Ø´ÙÙ Ø·Ø¨ÙØ¹Ù Ø¥ÙÙ ÙÙØ·Ø§Øª.',
+  'chat.designToolbox.prompt.useSkill': 'Ø§Ø³ØªØ®Ø¯Ù {skill} Ø¹ÙÙ Ø§ÙØªØµÙÙÙ Ø§ÙØ­Ø§ÙÙ.',
+  'chat.designToolbox.prompt.skillInstruction': 'Ø­Ø¯ÙÙØ¯ Ø£ÙÙØ§Ù Ø£ÙØ¶Ù ÙØ¯Ù ÙÙÙØªØ§Ø¨Ø¹Ø©Ø Ø«Ù Ø£ÙÙÙÙ ØªÙØ±ÙØ±Ø© ÙÙÙÙØ³Ø© ÙØ§Ø­Ø¯Ø©. ÙØ¥Ø°Ø§ ÙØ§Ù ÙØ¹ØªÙØ¯ Ø¹ÙÙ Ø£ØµÙÙ Ø£Ù ÙØ§Ø¬ÙØ§Øª API Ø®Ø§Ø±Ø¬ÙØ©Ø ÙÙØ¯ÙÙÙ Ø¨Ø¯ÙÙØ§Ù Ø§Ø­ØªÙØ§Ø·ÙÙØ§ ÙØ§Ø¨ÙØ§Ù ÙÙØªØ´ØºÙÙ Ø£Ù Ø¨ÙÙÙÙ ÙØ§ Ø£Ø­ØªØ§Ø¬ Ø¥ÙÙ ØªÙÙÙØ±Ù.',
+  'chat.designToolbox.prompt.selectedResource': 'Ø§ÙÙÙØ±Ø¯ Ø§ÙÙØ­Ø¯Ø¯: {kind} Â· {title} ({id}).',
+  'chat.designToolbox.prompt.resourceDescription': 'ÙØµÙ Ø§ÙÙÙØ±Ø¯: {description}',
+  'chat.designToolbox.prompt.pluginResource': 'Ø§Ø³ØªØ®Ø¯Ù ÙØ°Ù Ø§ÙØ¥Ø¶Ø§ÙØ© ÙØ³ÙØ§Ù Ø±Ø¦ÙØ³Ù ÙØªØ¯ÙÙÙ Ø§ÙØªØµÙÙÙ Ø§ÙØ­Ø§ÙÙ. Ø¥Ø°Ø§ ÙØ§ÙØª ØªÙØ´Ù ÙØ¯Ø®ÙØ§Øª Ø£Ù GenUIØ ÙØ£Ø±Ø´Ø¯ÙÙ Ø¥ÙÙ Ø§ÙØ§Ø®ØªÙØ§Ø± Ø¹ÙØ¯ Ø§ÙØ­Ø§Ø¬Ø©Ø ÙØ¥Ø°Ø§ ÙÙ ØªÙØ§Ø³Ø¨ Ø§ÙÙØ¯ÙØ ÙØ§Ø®ØªØ± ÙÙØ±Ø¯ÙØ§ Ø¹Ø§ÙÙØ§ Ø£ÙØ¶Ù ÙØ§Ø´Ø±Ø­ Ø§ÙØ³Ø¨Ø¨.',
+  'chat.designToolbox.prompt.mcpResource': 'ÙØ¶ÙÙÙ Ø¥ÙÙØ§ÙÙØ© MCP ÙØ°Ù ÙØ®Ø·ÙØ© Ø§ÙØªØµÙÙÙ Ø§ÙØªØ§ÙÙØ©. Ø¹ÙØ¯ Ø§ÙØ­Ø§Ø¬Ø© Ø¥ÙÙ Ø£ØµÙÙ Ø®Ø§Ø±Ø¬ÙØ© Ø£Ù Ø§ÙØªÙØ§Ø· ÙÙ Ø§ÙÙÙØ¨ Ø£Ù ØªÙÙÙØ¯ ØµÙØ±/ÙÙØ¯ÙÙ Ø£Ù Ø¨ÙØ§ÙØ§ØªØ Ø­Ø¯ÙÙØ¯ Ø£ÙÙØ§Ù ÙØ§ Ø¥Ø°Ø§ ÙØ§ÙØª ÙØ§Ø¯Ø±Ø© Ø¹ÙÙ Ø¥ÙØ¬Ø§Ø² Ø§ÙÙÙÙØ©Ø Ø«Ù ÙØ¯ÙÙÙ Ø®Ø·Ø© ÙØ§Ø¨ÙØ© ÙÙØªÙÙÙØ°.',
+  'chat.designToolbox.prompt.mcpTemplateResource': 'ÙØ°Ø§ Ø§ÙÙ MCP ÙØ§ÙØ¨ ÙØ§Ø¨Ù ÙÙØªÙÙØ¦Ø©. Ø¥Ø°Ø§ ÙØ§Ù Ø§ÙØ£Ø¯Ø§Ø© Ø§ÙØ£ÙØ«Ø± ÙØ§Ø¦Ø¯Ø© ÙØ®Ø·ÙØ© Ø§ÙØªØµÙÙÙ ÙØ°ÙØ ÙØ£Ø±Ø´ÙØ¯ Ø¥ÙÙ Ø§ÙØ¥Ø¹Ø¯Ø§Ø¯ Ø£ÙÙØ§ÙØ ÙØ¥Ø°Ø§ ÙÙØ¬Ø¯ Ø¨Ø¯ÙÙ ÙÙÙÙÙØ£Ø ÙØªØ§Ø¨ÙØ¹ Ø¨Ø°ÙÙ Ø§ÙØ¨Ø¯ÙÙ.',
+  'chat.designToolbox.prompt.connectorResource': 'Ø§Ø³ØªØ®Ø¯Ù ÙØ°Ø§ Ø§ÙÙÙØµÙÙÙ Ø¹ÙØ¯ Ø§ÙØ­Ø§Ø¬Ø© Ø¥ÙÙ Ø¨ÙØ§ÙØ§Øª Ø­ÙÙÙÙØ© Ø£Ù Ø£ØµÙÙ Ø£Ù ÙØ­ØªÙÙ Ø­Ø³Ø§Ø¨ Ø£Ù Ø§ÙÙØµÙÙ Ø¥ÙÙ Ø³ÙØ± Ø¹ÙÙ Ø®Ø§Ø±Ø¬Ù. ÙØ¨Ù Ø§Ø³ØªØ®Ø¯Ø§ÙÙØ Ø§Ø´Ø±Ø­ ÙØ§ Ø§ÙØ°Ù Ø³ØªØªÙ ÙØ±Ø§Ø¡ØªÙ Ø£Ù ÙØªØ§Ø¨ØªÙ ÙØ§Ø·ÙØ¨ Ø§ÙØªØ£ÙÙØ¯ Ø¹ÙØ¯ Ø§ÙØ§ÙØªØ¶Ø§Ø¡.',
+  'chat.designToolbox.prompt.fileResource': 'Ø§Ø³ØªØ®Ø¯Ù ÙÙÙ Ø§ÙØªØµÙÙÙ ÙØ°Ø§ ÙÙØ¯Ù ØªØµÙÙÙ Ø­Ø§ÙÙ Ø£Ù Ø£ØµÙ ÙØ±Ø¬Ø¹Ù ÙØ£ÙÙÙÙ Ø§ÙØ®Ø·ÙØ© Ø§ÙØªØ§ÙÙØ© Ø§ÙØ·ÙØ§ÙÙØ§ ÙÙÙ. ÙØ¥Ø°Ø§ Ø§Ø­ØªØ§Ø¬Øª ÙÙÙØ§Øª Ø£Ø®Ø±Ù Ø¥ÙÙ Ø§ÙÙÙØ§Ø±ÙØ©Ø ÙØªØ§Ø¨ÙØ¹ Ø§ÙØ¨Ø­Ø« Ø¹Ø¨Ø± Ø¬ÙÙØ¹ ÙÙÙØ§Øª Ø§ÙØªØµÙÙÙ.',
+  'chat.designToolbox.prompt.resourceIndex': 'ÙÙØ±Ø³ Ø§ÙÙÙØ§Ø±Ø¯ Ø§ÙØ¹Ø§Ù: Ø§ÙÙÙØ§Ø±Ø§Øª({skills})Ø Ø§ÙØ¥Ø¶Ø§ÙØ§Øª({plugins})Ø MCP({mcpEnabled} ÙÙÙØ¹ÙÙÙ / {mcpTemplates} ÙØ§ÙØ¨)Ø Ø§ÙÙÙØµÙÙÙØ§Øª({connectors} ÙØªØµÙ)Ø ÙÙÙØ§Øª Ø§ÙØªØµÙÙÙ({files}).',
+  'chat.designToolbox.prompt.searchableSkills': 'Ø§ÙÙÙØ§Ø±Ø§Øª Ø§ÙÙØ§Ø¨ÙØ© ÙÙØ¨Ø­Ø«',
+  'chat.designToolbox.prompt.searchablePlugins': 'Ø§ÙØ¥Ø¶Ø§ÙØ§Øª Ø§ÙÙØ§Ø¨ÙØ© ÙÙØ¨Ø­Ø«',
+  'chat.designToolbox.prompt.availableMcp': 'MCP Ø§ÙÙØªØ§Ø­',
+  'chat.designToolbox.prompt.connectedConnectors': 'Ø§ÙÙÙØµÙÙÙØ§Øª Ø§ÙÙØªØµÙØ©',
+  'chat.designToolbox.prompt.referenceDesignFiles': 'ÙÙÙØ§Øª Ø§ÙØªØµÙÙÙ Ø§ÙÙØ±Ø¬Ø¹ÙØ©',
+  'chat.designToolbox.prompt.mcpTemplateName': 'ÙØ§ÙØ¨ {name}',
+  'chat.designToolbox.prompt.processRule': 'ÙØ§Ø¹Ø¯Ø© Ø³ÙØ± Ø§ÙØ¹ÙÙ: Ø­Ø¯ÙÙØ¯ Ø§ÙÙØ¯Ù Ø§ÙØ¬ÙØ§ÙÙ ÙØ§ÙÙÙÙØ¯ Ø£ÙÙØ§ÙØ Ø«Ù Ø§Ø¨Ø­Ø« ÙØ·Ø§Ø¨ÙÙ Ø§ÙÙÙØ§Ø±Ø¯Ø ÙØ¹ÙØ¯ Ø§ÙØ­Ø§Ø¬Ø© Ø¥ÙÙ Ø§Ø®ØªÙØ§Ø± Ø§ÙÙØ³ØªØ®Ø¯ÙØ Ø£ÙØ´Ø¦ ÙØ§Ø¬ÙØ© Ø®ÙØ§Ø±Ø§Øª ÙØ­Ø¯ÙØ¯Ø© ÙØªØ§Ø¨ÙØ¹ Ø¨Ø¹Ø¯ Ø§ÙØªØ£ÙÙØ¯.',
+  'chat.designToolbox.prompt.moreSuffix': 'Ø +{count} Ø£Ø®Ø±Ù',
   'chat.designToolbox.prompt.compactLine': '{label}: {values}{suffix}.',
-  'chat.mentionTabsAria': 'أسطح الإشارة',
-  'chat.mentionTabAll': 'الكل',
-  'chat.mentionTabTabs': 'علامات التبويب',
-  'chat.mentionTabPlugins': 'الإضافات',
-  'chat.mentionTabSkills': 'المهارات',
+  'chat.mentionTabsAria': 'Ø£Ø³Ø·Ø­ Ø§ÙØ¥Ø´Ø§Ø±Ø©',
+  'chat.mentionTabAll': 'Ø§ÙÙÙ',
+  'chat.mentionTabTabs': 'Ø¹ÙØ§ÙØ§Øª Ø§ÙØªØ¨ÙÙØ¨',
+  'chat.mentionTabPlugins': 'Ø§ÙØ¥Ø¶Ø§ÙØ§Øª',
+  'chat.mentionTabSkills': 'Ø§ÙÙÙØ§Ø±Ø§Øª',
   'chat.mentionTabMcp': 'MCP',
-  'chat.mentionTabConnectors': 'الموصِّلات',
-  'chat.mentionTabFiles': 'ملفات التصميم',
-  'chat.mentionNoResults': 'لا نتائج لـ “{query}”.',
-  'chat.mentionSearchPrompt': 'ابحث في ملفات التصميم وعلامات التبويب والإضافات والمهارات وخوادم MCP والموصِّلات.',
-  'chat.mentionSectionTabs': 'علامات التبويب',
-  'chat.mentionSectionPlugins': 'الإضافات',
-  'chat.mentionSectionSkills': 'المهارات',
+  'chat.mentionTabConnectors': 'Ø§ÙÙÙØµÙÙÙØ§Øª',
+  'chat.mentionTabFiles': 'ÙÙÙØ§Øª Ø§ÙØªØµÙÙÙ',
+  'chat.mentionNoResults': 'ÙØ§ ÙØªØ§Ø¦Ø¬ ÙÙ â{query}â.',
+  'chat.mentionSearchPrompt': 'Ø§Ø¨Ø­Ø« ÙÙ ÙÙÙØ§Øª Ø§ÙØªØµÙÙÙ ÙØ¹ÙØ§ÙØ§Øª Ø§ÙØªØ¨ÙÙØ¨ ÙØ§ÙØ¥Ø¶Ø§ÙØ§Øª ÙØ§ÙÙÙØ§Ø±Ø§Øª ÙØ®ÙØ§Ø¯Ù MCP ÙØ§ÙÙÙØµÙÙÙØ§Øª.',
+  'chat.mentionSectionTabs': 'Ø¹ÙØ§ÙØ§Øª Ø§ÙØªØ¨ÙÙØ¨',
+  'chat.mentionSectionPlugins': 'Ø§ÙØ¥Ø¶Ø§ÙØ§Øª',
+  'chat.mentionSectionSkills': 'Ø§ÙÙÙØ§Ø±Ø§Øª',
   'chat.mentionSectionMcp': 'MCP',
-  'chat.mentionSectionConnectors': 'الموصِّلات',
-  'chat.mentionSectionFiles': 'ملفات التصميم',
-  'chat.mentionActiveSkill': 'نشط',
-  'chat.mentionUseMcpTitle': 'استخدم {name}',
-  'chat.mentionUseConnectorTitle': 'استخدم {name}',
-  'chat.mentionPluginOfficial': 'رسمي',
-  'chat.mentionPluginMine': 'إضافتي',
-  'chat.linkedFolderRemoveAria': 'إزالة المجلد المرتبط {path}',
-  'chat.linkedFolderNotFound': 'المجلد غير موجود',
-  'chat.linkedFolderAlready': 'هذا المجلد مرتبط بالفعل',
-  'chat.linkedFolderPickError': 'تعذر فتح منتقي المجلدات',
-  'chat.queuedHeader': 'في قائمة الانتظار',
-  'chat.queuedToSend': 'للإرسال',
-  'chat.queuedEditQueuedTaskAria': 'تحرير المهمة في قائمة الانتظار',
-  'chat.queuedSave': 'حفظ',
-  'chat.queuedCancel': 'إلغاء',
-  'chat.queuedReorder': 'اسحب لإعادة الترتيب',
-  'chat.queuedEdit': 'تحرير',
-  'chat.queuedMore': 'في قائمة الانتظار',
-  'chat.queuedFollowUpFallback': 'متابعة في قائمة الانتظار',
-  'chat.send': 'إرسال',
-  'chat.stop': 'إيقاف',
-  'chat.removeAria': 'إزالة {name}',
-  'chat.example1Title': 'عرض تقديمي تحريري',
-  'chat.example1Tag': 'مجلة',
-  'chat.example1Prompt': 'عرض تقديمي تحريري من 10 شرائح لاستوديو تصميم يجمع تمويلاً - تخطيط شبكة سويسرية، عناوين عريضة مع أحرف استهلالية بارزة، أرقام أقسام أحادية المسافة، مساحات سلبية سخية، وشرائح صور بملء الشاشة تتخللها شرائح نصية مكثفة. الغلاف، الرؤية، السوق، المنتج، الزخم، الفريق، الطلب، الاتصال.',
-  'chat.example2Title': 'لوحة تحكم تحليلات SaaS',
-  'chat.example2Tag': 'بيانات',
-  'chat.example2Prompt': 'لوحة تحكم تحليلات مكثفة لـ SaaS لأدوات المطورين - شريط KPI مع التغييرات الأسبوعية، مخططان خطيان متراكمان (MRR ومساحات العمل النشطة)، خريطة حرارية عالمية للاستخدام، شبكة احتفاظ بالمجموعات، لوحة صدارة لكبار العملاء، وخلاصة أحداث فورية. سمة داكنة، أرقام أحادية المسافة، تأثيرات sparkline.',
-  'chat.example3Title': 'تقرير سنوي بالتمرير الطويل',
-  'chat.example3Tag': 'تحريري',
-  'chat.example3Prompt': 'تقرير سنوي تفاعلي لمنظمة مناخية غير ربحية - تخطيط تحريري بالتمرير الطويل يمزج بين كتل الاقتباسات الكبيرة، تصورات البيانات (أعمدة متراكمة، عدادات متحركة، خريطة لمواقع المشاريع)، فواصل صور، جدار المتبرعين، ودعوة نهائية للعمل. خط متن حديث، تسميات مخططات sans-serif، لوحة ألوان ورقية ترابية.',
-  'preview.usePlugin': 'استخدام الإضافة',
-  'preview.usePluginOnly': 'استخدام الإضافة فقط',
-  'preview.usePluginOnlyDesc': 'استخدم بنية الإضافة واكتب المحتوى بنفسك',
-  'preview.replicateContent': 'استنساخ هذا المحتوى',
-  'preview.replicateContentDesc': 'استخدم المطالبة النموذجية لإعادة إنشاء المعاينة',
-  'preview.shareMenu': 'مشاركة',
-  'preview.exportMenu': 'تصدير',
-  'preview.shareTemplateBadge': 'قالب',
+  'chat.mentionSectionConnectors': 'Ø§ÙÙÙØµÙÙÙØ§Øª',
+  'chat.mentionSectionFiles': 'ÙÙÙØ§Øª Ø§ÙØªØµÙÙÙ',
+  'chat.mentionActiveSkill': 'ÙØ´Ø·',
+  'chat.mentionUseMcpTitle': 'Ø§Ø³ØªØ®Ø¯Ù {name}',
+  'chat.mentionUseConnectorTitle': 'Ø§Ø³ØªØ®Ø¯Ù {name}',
+  'chat.mentionPluginOfficial': 'Ø±Ø³ÙÙ',
+  'chat.mentionPluginMine': 'Ø¥Ø¶Ø§ÙØªÙ',
+  'chat.linkedFolderRemoveAria': 'Ø¥Ø²Ø§ÙØ© Ø§ÙÙØ¬ÙØ¯ Ø§ÙÙØ±ØªØ¨Ø· {path}',
+  'chat.linkedFolderNotFound': 'Ø§ÙÙØ¬ÙØ¯ ØºÙØ± ÙÙØ¬ÙØ¯',
+  'chat.linkedFolderAlready': 'ÙØ°Ø§ Ø§ÙÙØ¬ÙØ¯ ÙØ±ØªØ¨Ø· Ø¨Ø§ÙÙØ¹Ù',
+  'chat.linkedFolderPickError': 'ØªØ¹Ø°Ø± ÙØªØ­ ÙÙØªÙÙ Ø§ÙÙØ¬ÙØ¯Ø§Øª',
+  'chat.queuedHeader': 'ÙÙ ÙØ§Ø¦ÙØ© Ø§ÙØ§ÙØªØ¸Ø§Ø±',
+  'chat.queuedToSend': 'ÙÙØ¥Ø±Ø³Ø§Ù',
+  'chat.queuedEditQueuedTaskAria': 'ØªØ­Ø±ÙØ± Ø§ÙÙÙÙØ© ÙÙ ÙØ§Ø¦ÙØ© Ø§ÙØ§ÙØªØ¸Ø§Ø±',
+  'chat.queuedSave': 'Ø­ÙØ¸',
+  'chat.queuedCancel': 'Ø¥ÙØºØ§Ø¡',
+  'chat.queuedReorder': 'Ø§Ø³Ø­Ø¨ ÙØ¥Ø¹Ø§Ø¯Ø© Ø§ÙØªØ±ØªÙØ¨',
+  'chat.queuedEdit': 'ØªØ­Ø±ÙØ±',
+  'chat.queuedMore': 'ÙÙ ÙØ§Ø¦ÙØ© Ø§ÙØ§ÙØªØ¸Ø§Ø±',
+  'chat.queuedFollowUpFallback': 'ÙØªØ§Ø¨Ø¹Ø© ÙÙ ÙØ§Ø¦ÙØ© Ø§ÙØ§ÙØªØ¸Ø§Ø±',
+  'chat.send': 'Ø¥Ø±Ø³Ø§Ù',
+  'chat.stop': 'Ø¥ÙÙØ§Ù',
+  'chat.removeAria': 'Ø¥Ø²Ø§ÙØ© {name}',
+  'chat.example1Title': 'Ø¹Ø±Ø¶ ØªÙØ¯ÙÙÙ ØªØ­Ø±ÙØ±Ù',
+  'chat.example1Tag': 'ÙØ¬ÙØ©',
+  'chat.example1Prompt': 'Ø¹Ø±Ø¶ ØªÙØ¯ÙÙÙ ØªØ­Ø±ÙØ±Ù ÙÙ 10 Ø´Ø±Ø§Ø¦Ø­ ÙØ§Ø³ØªÙØ¯ÙÙ ØªØµÙÙÙ ÙØ¬ÙØ¹ ØªÙÙÙÙØ§Ù - ØªØ®Ø·ÙØ· Ø´Ø¨ÙØ© Ø³ÙÙØ³Ø±ÙØ©Ø Ø¹ÙØ§ÙÙÙ Ø¹Ø±ÙØ¶Ø© ÙØ¹ Ø£Ø­Ø±Ù Ø§Ø³ØªÙÙØ§ÙÙØ© Ø¨Ø§Ø±Ø²Ø©Ø Ø£Ø±ÙØ§Ù Ø£ÙØ³Ø§Ù Ø£Ø­Ø§Ø¯ÙØ© Ø§ÙÙØ³Ø§ÙØ©Ø ÙØ³Ø§Ø­Ø§Øª Ø³ÙØ¨ÙØ© Ø³Ø®ÙØ©Ø ÙØ´Ø±Ø§Ø¦Ø­ ØµÙØ± Ø¨ÙÙØ¡ Ø§ÙØ´Ø§Ø´Ø© ØªØªØ®ÙÙÙØ§ Ø´Ø±Ø§Ø¦Ø­ ÙØµÙØ© ÙÙØ«ÙØ©. Ø§ÙØºÙØ§ÙØ Ø§ÙØ±Ø¤ÙØ©Ø Ø§ÙØ³ÙÙØ Ø§ÙÙÙØªØ¬Ø Ø§ÙØ²Ø®ÙØ Ø§ÙÙØ±ÙÙØ Ø§ÙØ·ÙØ¨Ø Ø§ÙØ§ØªØµØ§Ù.',
+  'chat.example2Title': 'ÙÙØ­Ø© ØªØ­ÙÙ ØªØ­ÙÙÙØ§Øª SaaS',
+  'chat.example2Tag': 'Ø¨ÙØ§ÙØ§Øª',
+  'chat.example2Prompt': 'ÙÙØ­Ø© ØªØ­ÙÙ ØªØ­ÙÙÙØ§Øª ÙÙØ«ÙØ© ÙÙ SaaS ÙØ£Ø¯ÙØ§Øª Ø§ÙÙØ·ÙØ±ÙÙ - Ø´Ø±ÙØ· KPI ÙØ¹ Ø§ÙØªØºÙÙØ±Ø§Øª Ø§ÙØ£Ø³Ø¨ÙØ¹ÙØ©Ø ÙØ®Ø·Ø·Ø§Ù Ø®Ø·ÙØ§Ù ÙØªØ±Ø§ÙÙØ§Ù (MRR ÙÙØ³Ø§Ø­Ø§Øª Ø§ÙØ¹ÙÙ Ø§ÙÙØ´Ø·Ø©)Ø Ø®Ø±ÙØ·Ø© Ø­Ø±Ø§Ø±ÙØ© Ø¹Ø§ÙÙÙØ© ÙÙØ§Ø³ØªØ®Ø¯Ø§ÙØ Ø´Ø¨ÙØ© Ø§Ø­ØªÙØ§Ø¸ Ø¨Ø§ÙÙØ¬ÙÙØ¹Ø§ØªØ ÙÙØ­Ø© ØµØ¯Ø§Ø±Ø© ÙÙØ¨Ø§Ø± Ø§ÙØ¹ÙÙØ§Ø¡Ø ÙØ®ÙØ§ØµØ© Ø£Ø­Ø¯Ø§Ø« ÙÙØ±ÙØ©. Ø³ÙØ© Ø¯Ø§ÙÙØ©Ø Ø£Ø±ÙØ§Ù Ø£Ø­Ø§Ø¯ÙØ© Ø§ÙÙØ³Ø§ÙØ©Ø ØªØ£Ø«ÙØ±Ø§Øª sparkline.',
+  'chat.example3Title': 'ØªÙØ±ÙØ± Ø³ÙÙÙ Ø¨Ø§ÙØªÙØ±ÙØ± Ø§ÙØ·ÙÙÙ',
+  'chat.example3Tag': 'ØªØ­Ø±ÙØ±Ù',
+  'chat.example3Prompt': 'ØªÙØ±ÙØ± Ø³ÙÙÙ ØªÙØ§Ø¹ÙÙ ÙÙÙØ¸ÙØ© ÙÙØ§Ø®ÙØ© ØºÙØ± Ø±Ø¨Ø­ÙØ© - ØªØ®Ø·ÙØ· ØªØ­Ø±ÙØ±Ù Ø¨Ø§ÙØªÙØ±ÙØ± Ø§ÙØ·ÙÙÙ ÙÙØ²Ø¬ Ø¨ÙÙ ÙØªÙ Ø§ÙØ§ÙØªØ¨Ø§Ø³Ø§Øª Ø§ÙÙØ¨ÙØ±Ø©Ø ØªØµÙØ±Ø§Øª Ø§ÙØ¨ÙØ§ÙØ§Øª (Ø£Ø¹ÙØ¯Ø© ÙØªØ±Ø§ÙÙØ©Ø Ø¹Ø¯Ø§Ø¯Ø§Øª ÙØªØ­Ø±ÙØ©Ø Ø®Ø±ÙØ·Ø© ÙÙÙØ§ÙØ¹ Ø§ÙÙØ´Ø§Ø±ÙØ¹)Ø ÙÙØ§ØµÙ ØµÙØ±Ø Ø¬Ø¯Ø§Ø± Ø§ÙÙØªØ¨Ø±Ø¹ÙÙØ ÙØ¯Ø¹ÙØ© ÙÙØ§Ø¦ÙØ© ÙÙØ¹ÙÙ. Ø®Ø· ÙØªÙ Ø­Ø¯ÙØ«Ø ØªØ³ÙÙØ§Øª ÙØ®Ø·Ø·Ø§Øª sans-serifØ ÙÙØ­Ø© Ø£ÙÙØ§Ù ÙØ±ÙÙØ© ØªØ±Ø§Ø¨ÙØ©.',
+  'preview.usePlugin': 'Ø§Ø³ØªØ®Ø¯Ø§Ù Ø§ÙØ¥Ø¶Ø§ÙØ©',
+  'preview.usePluginOnly': 'Ø§Ø³ØªØ®Ø¯Ø§Ù Ø§ÙØ¥Ø¶Ø§ÙØ© ÙÙØ·',
+  'preview.usePluginOnlyDesc': 'Ø§Ø³ØªØ®Ø¯Ù Ø¨ÙÙØ© Ø§ÙØ¥Ø¶Ø§ÙØ© ÙØ§ÙØªØ¨ Ø§ÙÙØ­ØªÙÙ Ø¨ÙÙØ³Ù',
+  'preview.replicateContent': 'Ø§Ø³ØªÙØ³Ø§Ø® ÙØ°Ø§ Ø§ÙÙØ­ØªÙÙ',
+  'preview.replicateContentDesc': 'Ø§Ø³ØªØ®Ø¯Ù Ø§ÙÙØ·Ø§ÙØ¨Ø© Ø§ÙÙÙÙØ°Ø¬ÙØ© ÙØ¥Ø¹Ø§Ø¯Ø© Ø¥ÙØ´Ø§Ø¡ Ø§ÙÙØ¹Ø§ÙÙØ©',
+  'preview.shareMenu': 'ÙØ´Ø§Ø±ÙØ©',
+  'preview.exportMenu': 'ØªØµØ¯ÙØ±',
+  'preview.shareTemplateBadge': 'ÙØ§ÙØ¨',
   'preview.shareToX': 'X / Twitter',
   'preview.shareToReddit': 'Reddit',
   'preview.shareToFacebook': 'Facebook',
   'preview.shareToLinkedIn': 'LinkedIn',
   'preview.shareToInstagram': 'Instagram',
-  'preview.shareToXiaohongshu': '小红书',
-  'preview.copyTemplateLink': 'نسخ رابط القالب',
-  'preview.copyShareText': 'نسخ نص المشاركة',
-  'preview.shareSocialGroup': 'مشاركة على وسائل التواصل',
-  'preview.shareCopyGroup': 'نسخ',
-  'preview.shareExportGroup': 'تصدير الملفات',
-  'preview.shareCopied': 'تم النسخ',
-  'preview.shareCopyFailed': 'فشل النسخ',
-  'preview.shareTextDefault': 'قالب Open Design: {title}',
-  'preview.openInNewTab': 'فتح في علامة تبويب جديدة',
-  'preview.exit': '⤓ خروج',
-  'preview.fullscreen': '⤢ ملء الشاشة',
-  'preview.closeTitle': 'إغلاق (Esc)',
-  'preview.loading': 'جاري تحميل {label}...',
-  'preview.errorTitle': 'تعذّر تحميل هذا المثال.',
-  'preview.errorBody': 'فشل جلب HTML الخاص بالمثال. تأكد من تشغيل Open Design ثم أعد المحاولة.',
-  'preview.retry': 'إعادة المحاولة',
-  'preview.unavailableTitle': 'لا توجد معاينة مرفقة لـ{noun}.',
-  'preview.unavailableBody': 'شغّل الأمر في المحادثة لإنشاء مخرجات {kind}.',
-  'preview.nounSkill': 'هذه المهارة',
-  'preview.nounPlugin': 'هذه الإضافة',
-  'preview.nounTemplate': 'هذا القالب',
-  'preview.showSidebar': 'إظهار {label}',
-  'preview.hideSidebar': 'إخفاء {label}',
-  'misc.savedTemplate': 'قالب محفوظ',
-  'misc.primary': 'أساسي',
-  'misc.designSystem': 'نظام تصميم',
-  'workspace.designFiles': 'ملفات التصميم',
-  'workspace.focusMode': 'التركيز على مساحة العمل',
-  'workspace.showChat': 'إظهار المحادثة',
-  'workspace.closeTab': 'إغلاق علامة التبويب',
-  'workspace.deleteFileConfirm': 'حذف "{name}" من مجلد المشروع؟',
-  'workspace.deleteSelectedFilesConfirm': 'حذف {n} ملف(ات) محددة من مجلد المشروع؟',
-  'workspace.deleteSelectedFilesPartial': 'فشل حذف {n} ملف(ات).',
-  'workspace.openFromDesignFiles': 'فتح ملف من',
-  'workspace.designFilesLink': 'ملفات التصميم',
-  'workspace.loadingSketch': 'جاري تحميل الرسم...',
-  'workspace.newTab': 'علامة تبويب جديدة',
-  'workspace.searchFilesPlaceholder': 'Search files…',
-  'workspace.openTabs': 'علامات التبويب المفتوحة',
+  'preview.shareToXiaohongshu': 'å°çº¢ä¹¦',
+  'preview.copyTemplateLink': 'ÙØ³Ø® Ø±Ø§Ø¨Ø· Ø§ÙÙØ§ÙØ¨',
+  'preview.copyShareText': 'ÙØ³Ø® ÙØµ Ø§ÙÙØ´Ø§Ø±ÙØ©',
+  'preview.shareSocialGroup': 'ÙØ´Ø§Ø±ÙØ© Ø¹ÙÙ ÙØ³Ø§Ø¦Ù Ø§ÙØªÙØ§ØµÙ',
+  'preview.shareCopyGroup': 'ÙØ³Ø®',
+  'preview.shareExportGroup': 'ØªØµØ¯ÙØ± Ø§ÙÙÙÙØ§Øª',
+  'preview.shareCopied': 'ØªÙ Ø§ÙÙØ³Ø®',
+  'preview.shareCopyFailed': 'ÙØ´Ù Ø§ÙÙØ³Ø®',
+  'preview.shareTextDefault': 'ÙØ§ÙØ¨ Open Design: {title}',
+  'preview.openInNewTab': 'ÙØªØ­ ÙÙ Ø¹ÙØ§ÙØ© ØªØ¨ÙÙØ¨ Ø¬Ø¯ÙØ¯Ø©',
+  'preview.exit': 'â¤ Ø®Ø±ÙØ¬',
+  'preview.fullscreen': 'â¤¢ ÙÙØ¡ Ø§ÙØ´Ø§Ø´Ø©',
+  'preview.closeTitle': 'Ø¥ØºÙØ§Ù (Esc)',
+  'preview.loading': 'Ø¬Ø§Ø±Ù ØªØ­ÙÙÙ {label}...',
+  'preview.errorTitle': 'ØªØ¹Ø°ÙØ± ØªØ­ÙÙÙ ÙØ°Ø§ Ø§ÙÙØ«Ø§Ù.',
+  'preview.errorBody': 'ÙØ´Ù Ø¬ÙØ¨ HTML Ø§ÙØ®Ø§Øµ Ø¨Ø§ÙÙØ«Ø§Ù. ØªØ£ÙØ¯ ÙÙ ØªØ´ØºÙÙ Open Design Ø«Ù Ø£Ø¹Ø¯ Ø§ÙÙØ­Ø§ÙÙØ©.',
+  'preview.retry': 'Ø¥Ø¹Ø§Ø¯Ø© Ø§ÙÙØ­Ø§ÙÙØ©',
+  'preview.unavailableTitle': 'ÙØ§ ØªÙØ¬Ø¯ ÙØ¹Ø§ÙÙØ© ÙØ±ÙÙØ© ÙÙ{noun}.',
+  'preview.unavailableBody': 'Ø´ØºÙÙ Ø§ÙØ£ÙØ± ÙÙ Ø§ÙÙØ­Ø§Ø¯Ø«Ø© ÙØ¥ÙØ´Ø§Ø¡ ÙØ®Ø±Ø¬Ø§Øª {kind}.',
+  'preview.nounSkill': 'ÙØ°Ù Ø§ÙÙÙØ§Ø±Ø©',
+  'preview.nounPlugin': 'ÙØ°Ù Ø§ÙØ¥Ø¶Ø§ÙØ©',
+  'preview.nounTemplate': 'ÙØ°Ø§ Ø§ÙÙØ§ÙØ¨',
+  'preview.showSidebar': 'Ø¥Ø¸ÙØ§Ø± {label}',
+  'preview.hideSidebar': 'Ø¥Ø®ÙØ§Ø¡ {label}',
+  'misc.savedTemplate': 'ÙØ§ÙØ¨ ÙØ­ÙÙØ¸',
+  'misc.primary': 'Ø£Ø³Ø§Ø³Ù',
+  'misc.designSystem': 'ÙØ¸Ø§Ù ØªØµÙÙÙ',
+  'workspace.designFiles': 'ÙÙÙØ§Øª Ø§ÙØªØµÙÙÙ',
+  'workspace.focusMode': 'Ø§ÙØªØ±ÙÙØ² Ø¹ÙÙ ÙØ³Ø§Ø­Ø© Ø§ÙØ¹ÙÙ',
+  'workspace.showChat': 'Ø¥Ø¸ÙØ§Ø± Ø§ÙÙØ­Ø§Ø¯Ø«Ø©',
+  'workspace.closeTab': 'Ø¥ØºÙØ§Ù Ø¹ÙØ§ÙØ© Ø§ÙØªØ¨ÙÙØ¨',
+  'workspace.deleteFileConfirm': 'Ø­Ø°Ù "{name}" ÙÙ ÙØ¬ÙØ¯ Ø§ÙÙØ´Ø±ÙØ¹Ø',
+  'workspace.deleteSelectedFilesConfirm': 'Ø­Ø°Ù {n} ÙÙÙ(Ø§Øª) ÙØ­Ø¯Ø¯Ø© ÙÙ ÙØ¬ÙØ¯ Ø§ÙÙØ´Ø±ÙØ¹Ø',
+  'workspace.deleteSelectedFilesPartial': 'ÙØ´Ù Ø­Ø°Ù {n} ÙÙÙ(Ø§Øª).',
+  'workspace.openFromDesignFiles': 'ÙØªØ­ ÙÙÙ ÙÙ',
+  'workspace.designFilesLink': 'ÙÙÙØ§Øª Ø§ÙØªØµÙÙÙ',
+  'workspace.loadingSketch': 'Ø¬Ø§Ø±Ù ØªØ­ÙÙÙ Ø§ÙØ±Ø³Ù...',
+  'workspace.newTab': 'Ø¹ÙØ§ÙØ© ØªØ¨ÙÙØ¨ Ø¬Ø¯ÙØ¯Ø©',
+  'workspace.searchFilesPlaceholder': 'Search filesâ¦',
+  'workspace.openTabs': 'Ø¹ÙØ§ÙØ§Øª Ø§ÙØªØ¨ÙÙØ¨ Ø§ÙÙÙØªÙØ­Ø©',
   'workspace.openFile': 'Open a file',
   'workspace.noFilesMatch': 'No files match',
   'workspace.allFiles': 'All',
@@ -1969,241 +1969,244 @@ export const ar: Dict = {
   'workspace.newTerminalDescription': 'Open a shell in the project directory in a new tab',
   'workspace.newBrowser': 'New Browser',
   'workspace.newBrowserDescription': 'Open a built-in browser tab for reference sites and design research',
-  'workspace.terminalStarting': 'جارٍ بدء تشغيل الطرفية…',
-  'workspace.terminalStartingDescription': 'يتم تجهيز صدفة المشروع. يستغرق ذلك عادة بضع ثوانٍ.',
-  'workspace.terminalSessionEnded': 'انتهت الجلسة',
-  'workspace.terminalReconnecting': 'جارٍ إعادة الاتصال…',
-  'workspace.terminalStartFailed': 'تعذّر بدء جلسة الطرفية',
-  'workspace.terminalRestart': 'إعادة التشغيل',
-  'designFiles.title': 'ملفات التصميم',
-  'designFiles.upload': 'رفع ملفات',
-  'designFiles.pasteText': 'لصق كملف نصي',
-  'designFiles.newSketch': 'رسم جديد',
-  'designFiles.empty': 'ستظهر الإبداعات هنا',
-  'designFiles.refresh': 'تحديث',
-  'designFiles.delete': 'حذف',
-  'designFiles.searchPlaceholder': 'بحث في الملفات...',
-  'designFiles.up': 'للأعلى',
-  'designFiles.back': 'رجوع',
-  'designFiles.crumbs': 'مشروع',
-  'designFiles.rowMenu': 'قائمة الصف',
-  'designFiles.openInTab': 'فتح في علامة تبويب',
-  'designFiles.download': 'تحميل',
-  'designFiles.downloadSelected': 'تنزيل {n} كـ ZIP',
-  'designFiles.deleteSelected': 'حذف {n}',
-  'designFiles.clearSelection': 'مسح التحديد',
-  'designFiles.selectPage': 'تحديد الكل في الصفحة',
-  'designFiles.selectAll': 'تحديد الكل',
-  'designFiles.dropTitle': '⤓ أسقط الملفات هنا',
-  'designFiles.dropDesc': 'الصور، المستندات، المراجع، أو المجلدات - سيستخدمها الوكيل كسياق.',
-  'designFiles.dropLabel': 'أفلت الملفات هنا',
-  'designFiles.upload.title': 'رفع ملفات',
-  'designFiles.paste.title': 'لصق نص كملف',
-  'designFiles.upload.label': 'رفع',
-  'designFiles.paste.label': 'لصق',
-  'designFiles.previewOpen': 'فتح',
-  'designFiles.previewClose': 'إغلاق المعاينة',
-  'designFiles.modified': 'تم التعديل {time} · {size}',
-  'designFiles.weeksAgo': 'منذ {n} أسبوع',
-  'designFiles.groupBy': 'التجميع حسب',
-  'designFiles.groupByKind': 'النوع',
-  'designFiles.groupByModified': 'تاريخ التعديل',
-  'designFiles.filterBy': 'تصفية حسب النوع',
-  'designFiles.filterClear': 'مسح',
-  'designFiles.filterCount': '{n} أنواع',
-  'designFiles.expandGroup': 'توسيع',
-  'designFiles.collapseGroup': 'طي',
-  'designFiles.sectionPages': 'صفحات',
-  'designFiles.sectionScripts': 'سكربتات',
-  'designFiles.sectionImages': 'صور',
-  'designFiles.sectionSketches': 'رسومات',
-  'designFiles.sectionLiveArtifacts': 'عناصر حية',
-  'designFiles.sectionOther': 'أخرى',
-  'designFiles.modifiedToday': 'اليوم',
-  'designFiles.modifiedYesterday': 'أمس',
-  'designFiles.modifiedPrevious7Days': 'آخر 7 أيام',
-  'designFiles.modifiedPrevious30Days': 'آخر 30 يومًا',
-  'designFiles.modifiedOlder': 'أقدم',
-  'designFiles.showMore': 'عرض +{n} أخرى',
-  'designFiles.kindHtml': 'صفحة HTML',
-  'designFiles.kindImage': 'صورة',
-  'designFiles.kindSketch': 'رسم',
-  'designFiles.kindText': 'نص',
-  'designFiles.kindCode': 'سكربت',
+  'workspace.terminalStarting': 'Ø¬Ø§Ø±Ù Ø¨Ø¯Ø¡ ØªØ´ØºÙÙ Ø§ÙØ·Ø±ÙÙØ©â¦',
+  'workspace.terminalStartingDescription': 'ÙØªÙ ØªØ¬ÙÙØ² ØµØ¯ÙØ© Ø§ÙÙØ´Ø±ÙØ¹. ÙØ³ØªØºØ±Ù Ø°ÙÙ Ø¹Ø§Ø¯Ø© Ø¨Ø¶Ø¹ Ø«ÙØ§ÙÙ.',
+  'workspace.terminalSessionEnded': 'Ø§ÙØªÙØª Ø§ÙØ¬ÙØ³Ø©',
+  'workspace.terminalReconnecting': 'Ø¬Ø§Ø±Ù Ø¥Ø¹Ø§Ø¯Ø© Ø§ÙØ§ØªØµØ§Ùâ¦',
+  'workspace.terminalStartFailed': 'ØªØ¹Ø°ÙØ± Ø¨Ø¯Ø¡ Ø¬ÙØ³Ø© Ø§ÙØ·Ø±ÙÙØ©',
+  'workspace.terminalRestart': 'Ø¥Ø¹Ø§Ø¯Ø© Ø§ÙØªØ´ØºÙÙ',
+  'designFiles.title': 'ÙÙÙØ§Øª Ø§ÙØªØµÙÙÙ',
+  'designFiles.upload': 'Ø±ÙØ¹ ÙÙÙØ§Øª',
+  'designFiles.pasteText': 'ÙØµÙ ÙÙÙÙ ÙØµÙ',
+  'designFiles.newSketch': 'Ø±Ø³Ù Ø¬Ø¯ÙØ¯',
+  'designFiles.empty': 'Ø³ØªØ¸ÙØ± Ø§ÙØ¥Ø¨Ø¯Ø§Ø¹Ø§Øª ÙÙØ§',
+  'designFiles.refresh': 'ØªØ­Ø¯ÙØ«',
+  'designFiles.delete': 'Ø­Ø°Ù',
+  'designFiles.searchPlaceholder': 'Ø¨Ø­Ø« ÙÙ Ø§ÙÙÙÙØ§Øª...',
+  'designFiles.up': 'ÙÙØ£Ø¹ÙÙ',
+  'designFiles.back': 'Ø±Ø¬ÙØ¹',
+  'designFiles.crumbs': 'ÙØ´Ø±ÙØ¹',
+  'designFiles.rowMenu': 'ÙØ§Ø¦ÙØ© Ø§ÙØµÙ',
+  'designFiles.openInTab': 'ÙØªØ­ ÙÙ Ø¹ÙØ§ÙØ© ØªØ¨ÙÙØ¨',
+  'designFiles.download': 'ØªØ­ÙÙÙ',
+  'designFiles.downloadSelected': 'ØªÙØ²ÙÙ {n} ÙÙ ZIP',
+  'designFiles.deleteSelected': 'Ø­Ø°Ù {n}',
+  'designFiles.clearSelection': 'ÙØ³Ø­ Ø§ÙØªØ­Ø¯ÙØ¯',
+  'designFiles.selectPage': 'ØªØ­Ø¯ÙØ¯ Ø§ÙÙÙ ÙÙ Ø§ÙØµÙØ­Ø©',
+  'designFiles.selectAll': 'ØªØ­Ø¯ÙØ¯ Ø§ÙÙÙ',
+  'designFiles.dropTitle': 'â¤ Ø£Ø³ÙØ· Ø§ÙÙÙÙØ§Øª ÙÙØ§',
+  'designFiles.dropDesc': 'Ø§ÙØµÙØ±Ø Ø§ÙÙØ³ØªÙØ¯Ø§ØªØ Ø§ÙÙØ±Ø§Ø¬Ø¹Ø Ø£Ù Ø§ÙÙØ¬ÙØ¯Ø§Øª - Ø³ÙØ³ØªØ®Ø¯ÙÙØ§ Ø§ÙÙÙÙÙ ÙØ³ÙØ§Ù.',
+  'designFiles.dropLabel': 'Ø£ÙÙØª Ø§ÙÙÙÙØ§Øª ÙÙØ§',
+  'designFiles.upload.title': 'Ø±ÙØ¹ ÙÙÙØ§Øª',
+  'designFiles.paste.title': 'ÙØµÙ ÙØµ ÙÙÙÙ',
+  'designFiles.upload.label': 'Ø±ÙØ¹',
+  'designFiles.paste.label': 'ÙØµÙ',
+  'designFiles.previewOpen': 'ÙØªØ­',
+  'designFiles.previewClose': 'Ø¥ØºÙØ§Ù Ø§ÙÙØ¹Ø§ÙÙØ©',
+  'designFiles.modified': 'ØªÙ Ø§ÙØªØ¹Ø¯ÙÙ {time} Â· {size}',
+  'designFiles.weeksAgo': 'ÙÙØ° {n} Ø£Ø³Ø¨ÙØ¹',
+  'designFiles.groupBy': 'Ø§ÙØªØ¬ÙÙØ¹ Ø­Ø³Ø¨',
+  'designFiles.groupByKind': 'Ø§ÙÙÙØ¹',
+  'designFiles.groupByModified': 'ØªØ§Ø±ÙØ® Ø§ÙØªØ¹Ø¯ÙÙ',
+  'designFiles.filterBy': 'ØªØµÙÙØ© Ø­Ø³Ø¨ Ø§ÙÙÙØ¹',
+  'designFiles.filterClear': 'ÙØ³Ø­',
+  'designFiles.filterCount': '{n} Ø£ÙÙØ§Ø¹',
+  'designFiles.expandGroup': 'ØªÙØ³ÙØ¹',
+  'designFiles.collapseGroup': 'Ø·Ù',
+  'designFiles.sectionPages': 'ØµÙØ­Ø§Øª',
+  'designFiles.sectionScripts': 'Ø³ÙØ±Ø¨ØªØ§Øª',
+  'designFiles.sectionImages': 'ØµÙØ±',
+  'designFiles.sectionSketches': 'Ø±Ø³ÙÙØ§Øª',
+  'designFiles.sectionLiveArtifacts': 'Ø¹ÙØ§ØµØ± Ø­ÙØ©',
+  'designFiles.sectionOther': 'Ø£Ø®Ø±Ù',
+  'designFiles.modifiedToday': 'Ø§ÙÙÙÙ',
+  'designFiles.modifiedYesterday': 'Ø£ÙØ³',
+  'designFiles.modifiedPrevious7Days': 'Ø¢Ø®Ø± 7 Ø£ÙØ§Ù',
+  'designFiles.modifiedPrevious30Days': 'Ø¢Ø®Ø± 30 ÙÙÙÙØ§',
+  'designFiles.modifiedOlder': 'Ø£ÙØ¯Ù',
+  'designFiles.showMore': 'Ø¹Ø±Ø¶ +{n} Ø£Ø®Ø±Ù',
+  'designFiles.kindHtml': 'ØµÙØ­Ø© HTML',
+  'designFiles.kindImage': 'ØµÙØ±Ø©',
+  'designFiles.kindSketch': 'Ø±Ø³Ù',
+  'designFiles.kindText': 'ÙØµ',
+  'designFiles.kindCode': 'Ø³ÙØ±Ø¨Øª',
   'designFiles.kindPdf': 'PDF',
-  'designFiles.kindDocument': 'مستند',
-  'designFiles.kindPresentation': 'عرض تقديمي',
-  'designFiles.kindSpreadsheet': 'جدول بيانات',
-  'designFiles.kindLiveArtifact': 'عنصر حي',
-  'designFiles.kindBinary': 'ثنائي',
-  'designFiles.kindFolder': 'مجلد',
-  'designFiles.folderCount': '{n} ملفات',
-  'designFiles.newFolderTitle': 'مجلد جديد',
-  'designFiles.newFolderLabel': 'اسم المجلد',
-  'designFiles.moveTitle': 'نقل إلى مجلد',
-  'designFiles.moveLabel': 'المجلد الوجهة',
-  'designFiles.moveRoot': 'جذر المشروع',
-  'designFiles.moveNewFolder': 'مجلد جديد…',
-  'designFiles.move': 'نقل',
-  'designFiles.copyPath': 'نسخ المسار',
-  'designFiles.copiedPath': 'تم نسخ المسار',
-  'designFiles.deleteFolderConfirm': 'حذف المجلد "{name}" وكل محتوياته؟',
-  'designFiles.folderCreated': 'تم إنشاء المجلد "{name}"',
-  'designFiles.folderDeleted': 'تم حذف المجلد "{name}"',
-  'designFiles.filesMoved': 'تم نقل {n} إلى {dest}',
-  'designFiles.colName': 'الاسم',
-  'designFiles.colKind': 'النوع',
-  'designFiles.colModified': 'آخر تعديل',
-  'designFiles.perPage': 'عرض',
-  'designFiles.all': 'الكل',
-  'designFiles.prev': 'السابق',
-  'designFiles.next': 'التالي',
-  'designFiles.jumpToPage': 'انتقل إلى الصفحة',
-  'designFiles.pageInfo': '{start}–{end} من {total}',
-  'designFiles.sectionFolders': 'المجلدات',
-  'designFiles.sectionStylesheets': 'أوراق الأنماط',
-  'designFiles.sectionDocuments': 'المستندات',
-  'designFiles.kindStylesheet': 'ورقة أنماط',
-  'designFiles.modifiedExt': 'عُدّل {time} · {size} · {ext}',
-  'designFiles.usefulInfoLabel': 'معلومات مفيدة',
-  'designFiles.usefulInfoTip': 'انقر نقرًا مزدوجًا على أي ملف لفتحه في علامة تبويب كاملة.',
-  'designFiles.usefulInfoTip2': 'اكتب @ في المحادثة للإشارة إلى ملف كسياق.',
-  'designFiles.usefulInfoTip4': 'اختر نظام تصميم لتحصل على نتائج متوافقة مع هوية علامتك.',
-  'designFiles.usefulInfoTip5': 'لا توجد أفكار؟ جرّب قالب إضافة من قسم المجتمع في الصفحة الرئيسية.',
-  'designFiles.usefulInfoTip6': 'لديك سؤال أو اقتراح؟ انضم إلينا على Discord.',
-  'designFiles.usefulInfoTip7': 'أعجبك Open Design؟ امنحنا نجمة على GitHub.',
-  'designFiles.usefulInfoTip8': 'تابع @OpenDesignHQ على X لمعرفة آخر المستجدات.',
-  'designFiles.usefulInfoTip9': 'اسحب الصور أو المستندات أو مجلدات كاملة إلى هذه اللوحة — سيستخدمها الوكيل كسياق.',
-  'designFiles.usefulInfoTip10': 'انقر على «رسم جديد» وارسم تخطيطًا تقريبيًا ليولّد الوكيل التصميم منه.',
-  'designFiles.usefulInfoTip11': 'حدد أي عنصر في المعاينة للتعليق عليه — سيجري الوكيل تعديلات موجهة.',
-  'designFiles.usefulInfoTip12': 'لم تعجبك النتيجة؟ تحديد العنصر أسرع من إعادة الوصف.',
-  'designFiles.usefulInfoTip13': 'صدّر أي تصميم كملف PDF أو صورة أو HTML مستقل بنقرة واحدة.',
-  'designFiles.usefulInfoTip14': 'أعجبك مشروع؟ احفظه كقالب من قائمة المشاركة لإعادة استخدامه.',
-  'designFiles.usefulInfoTip15': 'بعد النشر، أنشئ بطاقات مشاركة اجتماعية مباشرة.',
-  'quickSwitcher.placeholder': 'فتح ملف…',
-  'quickSwitcher.empty': 'لا توجد ملفات في هذا المشروع',
-  'quickSwitcher.noMatches': 'لا توجد نتائج',
-  'quickSwitcher.navigate': 'تنقل',
-  'quickSwitcher.open': 'فتح',
-  'quickSwitcher.close': 'إغلاق',
-  'pasteDialog.title': 'لصق نص',
-  'pasteDialog.hint': 'يحفظ في مجلد المشروع. اختر أي اسم.',
-  'pasteDialog.fileNameLabel': 'اسم الملف',
+  'designFiles.kindDocument': 'ÙØ³ØªÙØ¯',
+  'designFiles.kindPresentation': 'Ø¹Ø±Ø¶ ØªÙØ¯ÙÙÙ',
+  'designFiles.kindSpreadsheet': 'Ø¬Ø¯ÙÙ Ø¨ÙØ§ÙØ§Øª',
+  'designFiles.kindLiveArtifact': 'Ø¹ÙØµØ± Ø­Ù',
+  'designFiles.kindBinary': 'Ø«ÙØ§Ø¦Ù',
+  'designFiles.kindFolder': 'ÙØ¬ÙØ¯',
+  'designFiles.folderCount': '{n} ÙÙÙØ§Øª',
+  'designFiles.newFolderTitle': 'ÙØ¬ÙØ¯ Ø¬Ø¯ÙØ¯',
+  'designFiles.newFolderLabel': 'Ø§Ø³Ù Ø§ÙÙØ¬ÙØ¯',
+  'designFiles.moveTitle': 'ÙÙÙ Ø¥ÙÙ ÙØ¬ÙØ¯',
+  'designFiles.moveLabel': 'Ø§ÙÙØ¬ÙØ¯ Ø§ÙÙØ¬ÙØ©',
+  'designFiles.moveRoot': 'Ø¬Ø°Ø± Ø§ÙÙØ´Ø±ÙØ¹',
+  'designFiles.moveNewFolder': 'ÙØ¬ÙØ¯ Ø¬Ø¯ÙØ¯â¦',
+  'designFiles.move': 'ÙÙÙ',
+  'designFiles.copyPath': 'ÙØ³Ø® Ø§ÙÙØ³Ø§Ø±',
+  'designFiles.copiedPath': 'ØªÙ ÙØ³Ø® Ø§ÙÙØ³Ø§Ø±',
+  'designFiles.deleteFolderConfirm': 'Ø­Ø°Ù Ø§ÙÙØ¬ÙØ¯ "{name}" ÙÙÙ ÙØ­ØªÙÙØ§ØªÙØ',
+  'designFiles.folderCreated': 'ØªÙ Ø¥ÙØ´Ø§Ø¡ Ø§ÙÙØ¬ÙØ¯ "{name}"',
+  'designFiles.folderDeleted': 'ØªÙ Ø­Ø°Ù Ø§ÙÙØ¬ÙØ¯ "{name}"',
+  'designFiles.filesMoved': 'ØªÙ ÙÙÙ {n} Ø¥ÙÙ {dest}',
+  'designFiles.colName': 'Ø§ÙØ§Ø³Ù',
+  'designFiles.colKind': 'Ø§ÙÙÙØ¹',
+  'designFiles.colModified': 'Ø¢Ø®Ø± ØªØ¹Ø¯ÙÙ',
+  'designFiles.perPage': 'Ø¹Ø±Ø¶',
+  'designFiles.all': 'Ø§ÙÙÙ',
+  'designFiles.prev': 'Ø§ÙØ³Ø§Ø¨Ù',
+  'designFiles.next': 'Ø§ÙØªØ§ÙÙ',
+  'designFiles.jumpToPage': 'Ø§ÙØªÙÙ Ø¥ÙÙ Ø§ÙØµÙØ­Ø©',
+  'designFiles.pageInfo': '{start}â{end} ÙÙ {total}',
+  'designFiles.sectionFolders': 'Ø§ÙÙØ¬ÙØ¯Ø§Øª',
+  'designFiles.sectionStylesheets': 'Ø£ÙØ±Ø§Ù Ø§ÙØ£ÙÙØ§Ø·',
+  'designFiles.sectionDocuments': 'Ø§ÙÙØ³ØªÙØ¯Ø§Øª',
+  'designFiles.kindStylesheet': 'ÙØ±ÙØ© Ø£ÙÙØ§Ø·',
+  'designFiles.modifiedExt': 'Ø¹ÙØ¯ÙÙ {time} Â· {size} Â· {ext}',
+  'designFiles.usefulInfoLabel': 'ÙØ¹ÙÙÙØ§Øª ÙÙÙØ¯Ø©',
+  'designFiles.usefulInfoTip': 'Ø§ÙÙØ± ÙÙØ±ÙØ§ ÙØ²Ø¯ÙØ¬ÙØ§ Ø¹ÙÙ Ø£Ù ÙÙÙ ÙÙØªØ­Ù ÙÙ Ø¹ÙØ§ÙØ© ØªØ¨ÙÙØ¨ ÙØ§ÙÙØ©.',
+  'designFiles.usefulInfoTip2': 'Ø§ÙØªØ¨ @ ÙÙ Ø§ÙÙØ­Ø§Ø¯Ø«Ø© ÙÙØ¥Ø´Ø§Ø±Ø© Ø¥ÙÙ ÙÙÙ ÙØ³ÙØ§Ù.',
+  'designFiles.usefulInfoTip4': 'Ø§Ø®ØªØ± ÙØ¸Ø§Ù ØªØµÙÙÙ ÙØªØ­ØµÙ Ø¹ÙÙ ÙØªØ§Ø¦Ø¬ ÙØªÙØ§ÙÙØ© ÙØ¹ ÙÙÙØ© Ø¹ÙØ§ÙØªÙ.',
+  'designFiles.usefulInfoTip5': 'ÙØ§ ØªÙØ¬Ø¯ Ø£ÙÙØ§Ø±Ø Ø¬Ø±ÙØ¨ ÙØ§ÙØ¨ Ø¥Ø¶Ø§ÙØ© ÙÙ ÙØ³Ù Ø§ÙÙØ¬ØªÙØ¹ ÙÙ Ø§ÙØµÙØ­Ø© Ø§ÙØ±Ø¦ÙØ³ÙØ©.',
+  'designFiles.usefulInfoTip6': 'ÙØ¯ÙÙ Ø³Ø¤Ø§Ù Ø£Ù Ø§ÙØªØ±Ø§Ø­Ø Ø§ÙØ¶Ù Ø¥ÙÙÙØ§ Ø¹ÙÙ Discord.',
+  'designFiles.usefulInfoTip7': 'Ø£Ø¹Ø¬Ø¨Ù Open DesignØ Ø§ÙÙØ­ÙØ§ ÙØ¬ÙØ© Ø¹ÙÙ GitHub.',
+  'designFiles.usefulInfoTip8': 'ØªØ§Ø¨Ø¹ @OpenDesignHQ Ø¹ÙÙ X ÙÙØ¹Ø±ÙØ© Ø¢Ø®Ø± Ø§ÙÙØ³ØªØ¬Ø¯Ø§Øª.',
+  'designFiles.usefulInfoTip9': 'Ø§Ø³Ø­Ø¨ Ø§ÙØµÙØ± Ø£Ù Ø§ÙÙØ³ØªÙØ¯Ø§Øª Ø£Ù ÙØ¬ÙØ¯Ø§Øª ÙØ§ÙÙØ© Ø¥ÙÙ ÙØ°Ù Ø§ÙÙÙØ­Ø© â Ø³ÙØ³ØªØ®Ø¯ÙÙØ§ Ø§ÙÙÙÙÙ ÙØ³ÙØ§Ù.',
+  'designFiles.usefulInfoTip10': 'Ø§ÙÙØ± Ø¹ÙÙ Â«Ø±Ø³Ù Ø¬Ø¯ÙØ¯Â» ÙØ§Ø±Ø³Ù ØªØ®Ø·ÙØ·ÙØ§ ØªÙØ±ÙØ¨ÙÙØ§ ÙÙÙÙÙØ¯ Ø§ÙÙÙÙÙ Ø§ÙØªØµÙÙÙ ÙÙÙ.',
+  'designFiles.usefulInfoTip11': 'Ø­Ø¯Ø¯ Ø£Ù Ø¹ÙØµØ± ÙÙ Ø§ÙÙØ¹Ø§ÙÙØ© ÙÙØªØ¹ÙÙÙ Ø¹ÙÙÙ â Ø³ÙØ¬Ø±Ù Ø§ÙÙÙÙÙ ØªØ¹Ø¯ÙÙØ§Øª ÙÙØ¬ÙØ©.',
+  'designFiles.usefulInfoTip12': 'ÙÙ ØªØ¹Ø¬Ø¨Ù Ø§ÙÙØªÙØ¬Ø©Ø ØªØ­Ø¯ÙØ¯ Ø§ÙØ¹ÙØµØ± Ø£Ø³Ø±Ø¹ ÙÙ Ø¥Ø¹Ø§Ø¯Ø© Ø§ÙÙØµÙ.',
+  'designFiles.usefulInfoTip13': 'ØµØ¯ÙØ± Ø£Ù ØªØµÙÙÙ ÙÙÙÙ PDF Ø£Ù ØµÙØ±Ø© Ø£Ù HTML ÙØ³ØªÙÙ Ø¨ÙÙØ±Ø© ÙØ§Ø­Ø¯Ø©.',
+  'designFiles.usefulInfoTip14': 'Ø£Ø¹Ø¬Ø¨Ù ÙØ´Ø±ÙØ¹Ø Ø§Ø­ÙØ¸Ù ÙÙØ§ÙØ¨ ÙÙ ÙØ§Ø¦ÙØ© Ø§ÙÙØ´Ø§Ø±ÙØ© ÙØ¥Ø¹Ø§Ø¯Ø© Ø§Ø³ØªØ®Ø¯Ø§ÙÙ.',
+  'designFiles.usefulInfoTip15': 'Ø¨Ø¹Ø¯ Ø§ÙÙØ´Ø±Ø Ø£ÙØ´Ø¦ Ø¨Ø·Ø§ÙØ§Øª ÙØ´Ø§Ø±ÙØ© Ø§Ø¬ØªÙØ§Ø¹ÙØ© ÙØ¨Ø§Ø´Ø±Ø©.',
+  'quickSwitcher.placeholder': 'ÙØªØ­ ÙÙÙâ¦',
+  'quickSwitcher.empty': 'ÙØ§ ØªÙØ¬Ø¯ ÙÙÙØ§Øª ÙÙ ÙØ°Ø§ Ø§ÙÙØ´Ø±ÙØ¹',
+  'quickSwitcher.noMatches': 'ÙØ§ ØªÙØ¬Ø¯ ÙØªØ§Ø¦Ø¬',
+  'quickSwitcher.navigate': 'ØªÙÙÙ',
+  'quickSwitcher.open': 'ÙØªØ­',
+  'quickSwitcher.close': 'Ø¥ØºÙØ§Ù',
+  'pasteDialog.title': 'ÙØµÙ ÙØµ',
+  'pasteDialog.hint': 'ÙØ­ÙØ¸ ÙÙ ÙØ¬ÙØ¯ Ø§ÙÙØ´Ø±ÙØ¹. Ø§Ø®ØªØ± Ø£Ù Ø§Ø³Ù.',
+  'pasteDialog.fileNameLabel': 'Ø§Ø³Ù Ø§ÙÙÙÙ',
   'pasteDialog.namePlaceholder': 'notes.txt',
-  'pasteDialog.contentLabel': 'المحتوى',
-  'pasteDialog.contentPlaceholder': 'الصق أي شيء...',
-  'pasteDialog.save': 'حفظ',
-  'pasteDialog.cancel': 'إلغاء',
-  'sketch.save': 'حفظ الرسم',
-  'sketch.cancel': 'إلغاء',
-  'sketch.saving': 'جاري الحفظ...',
-  'sketch.saved': 'تم الحفظ',
-  'sketch.tooltipDirty': 'تغييرات غير محفوظة',
-  'sketch.tooltipClean': 'تم الحفظ',
-  'fileViewer.empty': 'اختر ملفاً لعرضه.',
-  'fileViewer.loading': 'جاري التحميل...',
-  'fileViewer.exportPptx': 'تصدير كـ PPTX',
-  'fileViewer.openInNewTab': 'فتح في علامة تبويب جديدة',
-  'fileViewer.copyPath': 'نسخ المسار',
-  'fileViewer.copied': 'تم النسخ!',
-  'fileViewer.share': 'مشاركة',
-  'fileViewer.binaryMeta': 'ثنائي · {size}',
-  'fileViewer.binaryNote': 'ملف ثنائي ({size} بايت). حمله أو افتحه من القرص لفحصه.',
-  'fileViewer.pdfMeta': 'PDF · {size}',
-  'fileViewer.documentMeta': 'مستند',
-  'fileViewer.presentationMeta': 'عرض تقديمي',
-  'fileViewer.spreadsheetMeta': 'جدول بيانات',
-  'fileViewer.previewUnavailable': 'المعاينة غير متوفرة. حمل الملف أو افتحه لفحصه.',
-  'fileViewer.download': 'تحميل',
-  'fileViewer.open': 'فتح',
-  'fileViewer.imageMeta': 'صورة · {size}',
-  'fileViewer.reactMeta': 'مكون React · {size}',
-  'fileViewer.sketchMeta': 'رسم · {size}',
-  'fileViewer.markdownStreamingMeta': 'معاينة متدفقة...',
-  'fileViewer.markdownErrorMeta': 'قد تكون المعاينة غير مكتملة (خطأ في التوليد).',
-  'fileViewer.markdownStreamingStatus': 'تدفق... عرض ماركداون جزئي.',
-  'fileViewer.markdownErrorStatus': 'خطأ في التوليد. عرض آخر محتوى متوفر.',
-  'fileViewer.videoMeta': 'فيديو · {size}',
-  'fileViewer.audioMeta': 'صوت · {size}',
-  'fileViewer.reload': 'إعادة تحميل',
-  'fileViewer.reloadDisk': 'إعادة تحميل من القرص',
-  'fileViewer.copy': 'نسخ',
-  'fileViewer.copyTitle': 'نسخ محتويات الملف',
-  'fileViewer.saveDisabled': 'حفظ (عارض للقراءة فقط)',
-  'fileViewer.save': 'حفظ',
-  'fileViewer.preview': 'معاينة',
-  'fileViewer.source': 'المصدر',
-  'fileViewer.tweaks': 'تعديلات',
-  'fileViewer.tweaksUnavailable': 'لا توجد لوحة تعديلات في هذا العمل',
-  'fileViewer.jsxModuleTitle': 'لا توجد معاينة مستقلة',
-  'fileViewer.jsxModuleBody': 'هذا الملف وحدة مكوّن يتم تحميلها بواسطة صفحة أخرى.',
-  'fileViewer.jsxModuleCta': 'افتح الصفحة التي تعرضه:',
-  'fileViewer.comment': 'تعليق',
-  'fileViewer.edit': 'تعديل',
-  'fileViewer.draw': 'رسم',
-  'fileViewer.mark': 'تحديد',
-  'fileViewer.markTool': 'أداة التحديد',
-  'fileViewer.boxSelect': 'تحديد بمربع',
-  'fileViewer.screenshot': 'لقطة شاشة',
-  'fileViewer.editScreenshotToChat': 'إرسال لقطة الشاشة إلى المحادثة',
-  'manualEdit.layers': 'الطبقات',
-  'manualEdit.editableCount': '{count} قابلة للتحرير',
-  'manualEdit.hiddenBadge': 'مخفية',
-  'manualEdit.title': 'المحرر اليدوي',
-  'manualEdit.fallbackTitle': 'تحرير',
-  'manualEdit.movePanel': 'نقل لوحة التحرير',
-  'manualEdit.editParams': 'تعديل المعلمات',
-  'manualEdit.closePanel': 'إغلاق لوحة التحرير',
-  'manualEdit.selectLayer': 'اختر طبقة',
-  'manualEdit.empty': 'انقر على عنصر في المعاينة أو اختر طبقة.',
-  'manualEdit.noEditableLayers': 'لم يتم العثور على طبقات قابلة للتحرير.',
-  'manualEdit.noClass': 'بدون فئة',
-  'manualEdit.tabsAria': 'علامات تبويب التحرير اليدوي',
-  'manualEdit.tabContent': 'المحتوى',
-  'manualEdit.tabStyle': 'النمط',
-  'manualEdit.tabAttributes': 'السمات',
+  'pasteDialog.contentLabel': 'Ø§ÙÙØ­ØªÙÙ',
+  'pasteDialog.contentPlaceholder': 'Ø§ÙØµÙ Ø£Ù Ø´ÙØ¡...',
+  'pasteDialog.save': 'Ø­ÙØ¸',
+  'pasteDialog.cancel': 'Ø¥ÙØºØ§Ø¡',
+  'sketch.save': 'Ø­ÙØ¸ Ø§ÙØ±Ø³Ù',
+  'sketch.cancel': 'Ø¥ÙØºØ§Ø¡',
+  'sketch.saving': 'Ø¬Ø§Ø±Ù Ø§ÙØ­ÙØ¸...',
+  'sketch.saved': 'ØªÙ Ø§ÙØ­ÙØ¸',
+  'sketch.tooltipDirty': 'ØªØºÙÙØ±Ø§Øª ØºÙØ± ÙØ­ÙÙØ¸Ø©',
+  'sketch.tooltipClean': 'ØªÙ Ø§ÙØ­ÙØ¸',
+  'fileViewer.empty': 'Ø§Ø®ØªØ± ÙÙÙØ§Ù ÙØ¹Ø±Ø¶Ù.',
+  'fileViewer.loading': 'Ø¬Ø§Ø±Ù Ø§ÙØªØ­ÙÙÙ...',
+  'fileViewer.exportPptx': 'ØªØµØ¯ÙØ± ÙÙ PPTX',
+  'fileViewer.openInNewTab': 'ÙØªØ­ ÙÙ Ø¹ÙØ§ÙØ© ØªØ¨ÙÙØ¨ Ø¬Ø¯ÙØ¯Ø©',
+  'fileViewer.copyPath': 'ÙØ³Ø® Ø§ÙÙØ³Ø§Ø±',
+  'fileViewer.copied': 'ØªÙ Ø§ÙÙØ³Ø®!',
+  'fileViewer.share': 'ÙØ´Ø§Ø±ÙØ©',
+  'fileViewer.binaryMeta': 'Ø«ÙØ§Ø¦Ù Â· {size}',
+  'fileViewer.binaryNote': 'ÙÙÙ Ø«ÙØ§Ø¦Ù ({size} Ø¨Ø§ÙØª). Ø­ÙÙÙ Ø£Ù Ø§ÙØªØ­Ù ÙÙ Ø§ÙÙØ±Øµ ÙÙØ­ØµÙ.',
+  'fileViewer.pdfMeta': 'PDF Â· {size}',
+  'fileViewer.documentMeta': 'ÙØ³ØªÙØ¯',
+  'fileViewer.presentationMeta': 'Ø¹Ø±Ø¶ ØªÙØ¯ÙÙÙ',
+  'fileViewer.spreadsheetMeta': 'Ø¬Ø¯ÙÙ Ø¨ÙØ§ÙØ§Øª',
+  'fileViewer.previewUnavailable': 'Ø§ÙÙØ¹Ø§ÙÙØ© ØºÙØ± ÙØªÙÙØ±Ø©. Ø­ÙÙ Ø§ÙÙÙÙ Ø£Ù Ø§ÙØªØ­Ù ÙÙØ­ØµÙ.',
+  'fileViewer.download': 'ØªØ­ÙÙÙ',
+  'fileViewer.open': 'ÙØªØ­',
+  'fileViewer.imageMeta': 'ØµÙØ±Ø© Â· {size}',
+  'fileViewer.reactMeta': 'ÙÙÙÙ React Â· {size}',
+  'fileViewer.sketchMeta': 'Ø±Ø³Ù Â· {size}',
+  'fileViewer.markdownStreamingMeta': 'ÙØ¹Ø§ÙÙØ© ÙØªØ¯ÙÙØ©...',
+  'fileViewer.markdownErrorMeta': 'ÙØ¯ ØªÙÙÙ Ø§ÙÙØ¹Ø§ÙÙØ© ØºÙØ± ÙÙØªÙÙØ© (Ø®Ø·Ø£ ÙÙ Ø§ÙØªÙÙÙØ¯).',
+  'fileViewer.markdownStreamingStatus': 'ØªØ¯ÙÙ... Ø¹Ø±Ø¶ ÙØ§Ø±ÙØ¯Ø§ÙÙ Ø¬Ø²Ø¦Ù.',
+  'fileViewer.markdownErrorStatus': 'Ø®Ø·Ø£ ÙÙ Ø§ÙØªÙÙÙØ¯. Ø¹Ø±Ø¶ Ø¢Ø®Ø± ÙØ­ØªÙÙ ÙØªÙÙØ±.',
+  'fileViewer.videoMeta': 'ÙÙØ¯ÙÙ Â· {size}',
+  'fileViewer.audioMeta': 'ØµÙØª Â· {size}',
+  'fileViewer.reload': 'Ø¥Ø¹Ø§Ø¯Ø© ØªØ­ÙÙÙ',
+  'fileViewer.reloadDisk': 'Ø¥Ø¹Ø§Ø¯Ø© ØªØ­ÙÙÙ ÙÙ Ø§ÙÙØ±Øµ',
+  'fileViewer.copy': 'ÙØ³Ø®',
+  'fileViewer.copyTitle': 'ÙØ³Ø® ÙØ­ØªÙÙØ§Øª Ø§ÙÙÙÙ',
+  'fileViewer.saveDisabled': 'Ø­ÙØ¸ (Ø¹Ø§Ø±Ø¶ ÙÙÙØ±Ø§Ø¡Ø© ÙÙØ·)',
+  'fileViewer.save': 'Ø­ÙØ¸',
+  'fileViewer.preview': 'ÙØ¹Ø§ÙÙØ©',
+  'fileViewer.source': 'Ø§ÙÙØµØ¯Ø±',
+  'fileViewer.tweaks': 'ØªØ¹Ø¯ÙÙØ§Øª',
+  'fileViewer.tweaksUnavailable': 'ÙØ§ ØªÙØ¬Ø¯ ÙÙØ­Ø© ØªØ¹Ø¯ÙÙØ§Øª ÙÙ ÙØ°Ø§ Ø§ÙØ¹ÙÙ',
+  'fileViewer.jsxModuleTitle': 'ÙØ§ ØªÙØ¬Ø¯ ÙØ¹Ø§ÙÙØ© ÙØ³ØªÙÙØ©',
+  'fileViewer.jsxModuleBody': 'ÙØ°Ø§ Ø§ÙÙÙÙ ÙØ­Ø¯Ø© ÙÙÙÙÙ ÙØªÙ ØªØ­ÙÙÙÙØ§ Ø¨ÙØ§Ø³Ø·Ø© ØµÙØ­Ø© Ø£Ø®Ø±Ù.',
+  'fileViewer.jsxModuleCta': 'Ø§ÙØªØ­ Ø§ÙØµÙØ­Ø© Ø§ÙØªÙ ØªØ¹Ø±Ø¶Ù:',
+  'fileViewer.comment': 'ØªØ¹ÙÙÙ',
+  'fileViewer.edit': 'ØªØ¹Ø¯ÙÙ',
+  'fileViewer.draw': 'Ø±Ø³Ù',
+  'fileViewer.mark': 'ØªØ­Ø¯ÙØ¯',
+  'fileViewer.markTool': 'Ø£Ø¯Ø§Ø© Ø§ÙØªØ­Ø¯ÙØ¯',
+  'fileViewer.boxSelect': 'ØªØ­Ø¯ÙØ¯ Ø¨ÙØ±Ø¨Ø¹',
+  'fileViewer.screenshot': 'ÙÙØ·Ø© Ø´Ø§Ø´Ø©',
+  'fileViewer.editScreenshotToChat': 'Ø¥Ø±Ø³Ø§Ù ÙÙØ·Ø© Ø§ÙØ´Ø§Ø´Ø© Ø¥ÙÙ Ø§ÙÙØ­Ø§Ø¯Ø«Ø©',
+  'manualEdit.layers': 'Ø§ÙØ·Ø¨ÙØ§Øª',
+  'manualEdit.editableCount': '{count} ÙØ§Ø¨ÙØ© ÙÙØªØ­Ø±ÙØ±',
+  'manualEdit.hiddenBadge': 'ÙØ®ÙÙØ©',
+  'manualEdit.title': 'Ø§ÙÙØ­Ø±Ø± Ø§ÙÙØ¯ÙÙ',
+  'manualEdit.fallbackTitle': 'ØªØ­Ø±ÙØ±',
+  'manualEdit.movePanel': 'ÙÙÙ ÙÙØ­Ø© Ø§ÙØªØ­Ø±ÙØ±',
+  'manualEdit.editParams': 'ØªØ¹Ø¯ÙÙ Ø§ÙÙØ¹ÙÙØ§Øª',
+  'manualEdit.closePanel': 'Ø¥ØºÙØ§Ù ÙÙØ­Ø© Ø§ÙØªØ­Ø±ÙØ±',
+  'manualEdit.selectLayer': 'Ø§Ø®ØªØ± Ø·Ø¨ÙØ©',
+  'manualEdit.empty': 'Ø§ÙÙØ± Ø¹ÙÙ Ø¹ÙØµØ± ÙÙ Ø§ÙÙØ¹Ø§ÙÙØ© Ø£Ù Ø§Ø®ØªØ± Ø·Ø¨ÙØ©.',
+  'manualEdit.noEditableLayers': 'ÙÙ ÙØªÙ Ø§ÙØ¹Ø«ÙØ± Ø¹ÙÙ Ø·Ø¨ÙØ§Øª ÙØ§Ø¨ÙØ© ÙÙØªØ­Ø±ÙØ±.',
+  'manualEdit.noClass': 'Ø¨Ø¯ÙÙ ÙØ¦Ø©',
+  'manualEdit.tabsAria': 'Ø¹ÙØ§ÙØ§Øª ØªØ¨ÙÙØ¨ Ø§ÙØªØ­Ø±ÙØ± Ø§ÙÙØ¯ÙÙ',
+  'manualEdit.tabContent': 'Ø§ÙÙØ­ØªÙÙ',
+  'manualEdit.tabStyle': 'Ø§ÙÙÙØ·',
+  'manualEdit.tabAttributes': 'Ø§ÙØ³ÙØ§Øª',
   'manualEdit.tabHtml': 'Html',
-  'manualEdit.tabSource': 'المصدر',
-  'manualEdit.attributesJson': 'السمات بصيغة JSON',
-  'manualEdit.selectedHtml': 'HTML للعنصر المحدد',
-  'manualEdit.fullSource': 'المصدر الكامل للعنصر',
-  'manualEdit.applyContent': 'تطبيق المحتوى',
-  'manualEdit.applyStyle': 'تطبيق النمط',
-  'manualEdit.applyAttributes': 'تطبيق السمات',
-  'manualEdit.applyHtml': 'تطبيق HTML',
-  'manualEdit.applySource': 'تطبيق المصدر',
-  'manualEdit.invalidAttributes': 'السمات بصيغة JSON غير صالحة.',
-  'manualEdit.changes': 'التغييرات',
-  'manualEdit.undo': 'تراجع',
-  'manualEdit.redo': 'إعادة',
-  'manualEdit.noChanges': 'لا توجد تعديلات يدوية بعد.',
-  'manualEdit.imageUrl': 'عنوان URL للصورة',
-  'manualEdit.altText': 'النص البديل',
-  'manualEdit.label': 'التسمية',
-  'manualEdit.text': 'النص',
+  'manualEdit.tabSource': 'Ø§ÙÙØµØ¯Ø±',
+  'manualEdit.attributesJson': 'Ø§ÙØ³ÙØ§Øª Ø¨ØµÙØºØ© JSON',
+  'manualEdit.selectedHtml': 'HTML ÙÙØ¹ÙØµØ± Ø§ÙÙØ­Ø¯Ø¯',
+  'manualEdit.fullSource': 'Ø§ÙÙØµØ¯Ø± Ø§ÙÙØ§ÙÙ ÙÙØ¹ÙØµØ±',
+  'manualEdit.applyContent': 'ØªØ·Ø¨ÙÙ Ø§ÙÙØ­ØªÙÙ',
+  'manualEdit.applyStyle': 'ØªØ·Ø¨ÙÙ Ø§ÙÙÙØ·',
+  'manualEdit.applyAttributes': 'ØªØ·Ø¨ÙÙ Ø§ÙØ³ÙØ§Øª',
+  'manualEdit.applyHtml': 'ØªØ·Ø¨ÙÙ HTML',
+  'manualEdit.applySource': 'ØªØ·Ø¨ÙÙ Ø§ÙÙØµØ¯Ø±',
+  'manualEdit.invalidAttributes': 'Ø§ÙØ³ÙØ§Øª Ø¨ØµÙØºØ© JSON ØºÙØ± ØµØ§ÙØ­Ø©.',
+  'manualEdit.changes': 'Ø§ÙØªØºÙÙØ±Ø§Øª',
+  'manualEdit.undo': 'ØªØ±Ø§Ø¬Ø¹',
+  'manualEdit.redo': 'Ø¥Ø¹Ø§Ø¯Ø©',
+  'manualEdit.noChanges': 'ÙØ§ ØªÙØ¬Ø¯ ØªØ¹Ø¯ÙÙØ§Øª ÙØ¯ÙÙØ© Ø¨Ø¹Ø¯.',
+  'manualEdit.imageUrl': 'Ø¹ÙÙØ§Ù URL ÙÙØµÙØ±Ø©',
+  'manualEdit.altText': 'Ø§ÙÙØµ Ø§ÙØ¨Ø¯ÙÙ',
+  'manualEdit.label': 'Ø§ÙØªØ³ÙÙØ©',
+  'manualEdit.text': 'Ø§ÙÙØµ',
   'manualEdit.href': 'Href',
-  'manualEdit.textColor': 'لون النص',
-  'manualEdit.background': 'الخلفية',
-  'manualEdit.fontSize': 'حجم الخط',
-  'manualEdit.weight': 'السماكة',
-  'manualEdit.align': 'المحاذاة',
-  'manualEdit.textAlignLeft': 'محاذاة لليسار',
-  'manualEdit.textAlignCenter': 'توسيط',
-  'manualEdit.textAlignRight': 'محاذاة لليمين',
-  'manualEdit.padding': 'التباعد الداخلي',
-  'manualEdit.margin': 'الهامش',
-  'manualEdit.radius': 'نصف القطر',
-  'manualEdit.border': 'الحدود',
-  'manualEdit.width': 'العرض',
-  'manualEdit.minHeight': 'أدنى ارتفاع',
-  'manualEdit.deleteElement': 'حذف العنصر',
-  'manualEdit.deleteElementConfirm': 'حذف العنصر المحدد؟ يمكن التراجع عن ذلك باستخدام تراجع.',
-  'manualEdit.uploadImage': 'رفع صورة',
-  'manualEdit.uploadingImage': 'جارٍ رفع الصورة…',
-  'manualEdit.uploadImageFailed': 'تعذّر رفع الصورة.',
-  'manualEdit.focusSlides': 'التركيز على الشرائح',
-  'manualEdit.showPanels': 'إظهار اللوحات',
+  'manualEdit.textColor': 'ÙÙÙ Ø§ÙÙØµ',
+  'manualEdit.background': 'Ø§ÙØ®ÙÙÙØ©',
+  'manualEdit.fontSize': 'Ø­Ø¬Ù Ø§ÙØ®Ø·',
+  'manualEdit.weight': 'Ø§ÙØ³ÙØ§ÙØ©',
+  'manualEdit.align': 'Ø§ÙÙØ­Ø§Ø°Ø§Ø©',
+  'manualEdit.textAlignLeft': 'ÙØ­Ø§Ø°Ø§Ø© ÙÙÙØ³Ø§Ø±',
+  'manualEdit.textAlignCenter': 'ØªÙØ³ÙØ·',
+  'manualEdit.textAlignRight': 'ÙØ­Ø§Ø°Ø§Ø© ÙÙÙÙÙÙ',
+  'manualEdit.padding': 'Ø§ÙØªØ¨Ø§Ø¹Ø¯ Ø§ÙØ¯Ø§Ø®ÙÙ',
+  'manualEdit.margin': 'Ø§ÙÙØ§ÙØ´',
+  'manualEdit.radius': 'ÙØµÙ Ø§ÙÙØ·Ø±',
+  'manualEdit.border': 'Ø§ÙØ­Ø¯ÙØ¯',
+  'manualEdit.width': 'Ø§ÙØ¹Ø±Ø¶',
+  'manualEdit.minHeight': 'Ø£Ø¯ÙÙ Ø§Ø±ØªÙØ§Ø¹',
+  'manualEdit.deleteElement': 'Ø­Ø°Ù Ø§ÙØ¹ÙØµØ±',
+  'manualEdit.deleteElementConfirm': 'Ø­Ø°Ù Ø§ÙØ¹ÙØµØ± Ø§ÙÙØ­Ø¯Ø¯Ø ÙÙÙÙ Ø§ÙØªØ±Ø§Ø¬Ø¹ Ø¹Ù Ø°ÙÙ Ø¨Ø§Ø³ØªØ®Ø¯Ø§Ù ØªØ±Ø§Ø¬Ø¹.',
+  'manualEdit.uploadImage': 'Ø±ÙØ¹ ØµÙØ±Ø©',
+  'manualEdit.uploadingImage': 'Ø¬Ø§Ø±Ù Ø±ÙØ¹ Ø§ÙØµÙØ±Ø©â¦',
+  'manualEdit.uploadImageFailed': 'ØªØ¹Ø°ÙØ± Ø±ÙØ¹ Ø§ÙØµÙØ±Ø©.',
+  'manualEdit.focusSlides': 'Ø§ÙØªØ±ÙÙØ² Ø¹ÙÙ Ø§ÙØ´Ø±Ø§Ø¦Ø­',
+  'manualEdit.showPanels': 'Ø¥Ø¸ÙØ§Ø± Ø§ÙÙÙØ­Ø§Øª',
   'manualEdit.parameters': "Parameters",
+  'manualEdit.referenceValues': "Reference values",
+  'manualEdit.referenceValuesEmpty': "No matching reference values",
+  'manualEdit.referenceValuesLoading': "Loading…",
   'manualEdit.opacity': "Opacity",
   'manualEdit.fontFamily': "Font",
   'manualEdit.borderColor': "Border color",
@@ -2232,836 +2235,836 @@ export const ar: Dict = {
   'manualEdit.alignEnd': "End",
   'manualEdit.alignStretch': "Stretch",
   'manualEdit.alignBaseline': "Baseline",
-  'fileViewer.zoomOut': 'تصغير',
-  'fileViewer.zoomIn': 'تكبير',
-  'fileViewer.resetZoom': 'إعادة تعيين الزوم',
-  'fileViewer.viewportAria': 'منفذ عرض المعاينة',
-  'fileViewer.viewportDesktop': 'سطح المكتب',
-  'fileViewer.viewportDesktopTitle': 'معاينة سطح المكتب بعرض كامل',
-  'fileViewer.viewportTablet': 'الجهاز اللوحي',
-  'fileViewer.viewportTabletTitle': 'معاينة الجهاز اللوحي بأبعاد 820 × 1180 (الأساس العمودي الحديث)',
-  'fileViewer.viewportMobile': 'الجوال',
-  'fileViewer.viewportMobileTitle': 'معاينة الجوال بأبعاد 390 × 844',
-  'fileViewer.reloadAria': 'إعادة تحميل',
-  'fileViewer.previousSlide': 'الشريحة السابقة',
-  'fileViewer.nextSlide': 'الشريحة التالية',
-  'fileViewer.slideNavAria': 'التنقل بين الشرائح',
-  'fileViewer.present': 'تقديم',
-  'fileViewer.presentInTab': 'في علامة التبويب هذه',
-  'fileViewer.presentFullscreen': 'ملء الشاشة',
-  'fileViewer.presentNewTab': 'علامة تبويب جديدة',
-  'fileViewer.exitPresentation': 'الخروج من العرض',
-  'fileViewer.shareLabel': 'مشاركة',
-  'fileViewer.shareMenuShareLink': 'مشاركة',
-  'fileViewer.shareMenuPublishOnline': 'النشر على الإنترنت',
-  'fileViewer.shareMenuDownload': 'تنزيل',
-  'fileViewer.shareMenuPresentation': 'عرض تقديمي',
-  'fileViewer.shareMenuSourceFiles': 'ملفات المصدر',
-  'fileViewer.shareMenuSave': 'حفظ',
-  'fileViewer.copyShareLink': 'نسخ رابط المشاركة',
-  'fileViewer.openSharePage': 'فتح صفحة المشاركة',
-  'fileViewer.shareLinkRequiresDeploy': 'انشر على الإنترنت أولاً للحصول على رابط',
-  'fileViewer.shareLinkPublishGuide': 'انشر على الإنترنت أعلاه لتفعيل المشاركة ↑',
-  'fileViewer.shareAfterGenerationComplete': 'يمكن المشاركة بعد اكتمال الإنشاء',
-  'fileViewer.copyProviderLink': 'نسخ رابط {provider}',
-  'fileViewer.copyCloudflareLink': 'نسخ رابط Cloudflare',
-  'fileViewer.screenshotCopying': 'جارٍ نسخ لقطة الشاشة...',
-  'fileViewer.screenshotCopied': 'تم نسخ لقطة الشاشة إلى الحافظة',
-  'fileViewer.screenshotClipboardDenied': 'حظر المتصفح الوصول إلى الحافظة',
-  'fileViewer.screenshotPreviewLoading': 'لا تزال المعاينة قيد التحميل. حاول مجددًا بعد لحظة.',
-  'fileViewer.screenshotCaptureFailed': 'تعذّر التقاط المعاينة. يُرجى المحاولة مرة أخرى.',
-  'fileViewer.exportPdf': 'تصدير كـ PDF',
-  'fileViewer.exportPdfAllSlides': 'تصدير كـ PDF (كل الشرائح)',
-  'fileViewer.exportPptxBusy': 'انتظر انتهاء الدور الحالي.',
-  'fileViewer.exportPptxHint': 'أرسل طلباً للوكيل لتحويل هذا التصميم إلى PPTX.',
-  'fileViewer.exportPptxNa': 'تصدير PPTX غير متوفر هنا.',
-  'fileViewer.exportZip': 'تحميل كـ zip.',
-  'fileViewer.exportHtml': 'تصدير كـ HTML مستقل',
-  'fileViewer.exportMd': 'تصدير كـ Markdown',
-  'fileViewer.exportImage': 'تصدير كصورة',
-  'fileViewer.exportPptxImages': 'تصدير كـ PPTX (صور)',
-  'fileViewer.exportPptxEditable': 'تصدير كـ PPTX (قابل للتحرير)',
-  'fileViewer.exportingProgress': 'جارٍ التصدير…',
-  'fileViewer.exportSlideProgress': 'جارٍ تصدير الشريحة {current}/{total}…',
-  'fileViewer.exportingElapsed': 'جارٍ التصدير… {seconds}ث',
-  'fileViewer.exportSlideEta': 'الشريحة {current}/{total} · يتبقى ~{seconds}ث',
-  'fileViewer.exportFailed': 'فشل التصدير. يرجى المحاولة مرة أخرى.',
-  'fileViewer.exportDone': 'اكتمل التصدير',
-  'fileViewer.exportImageFailed': 'فشل التقاط الصورة. يرجى المحاولة مرة أخرى أو استخدام أداة لقطة الشاشة في المتصفح.',
-  'fileViewer.exportImageModalSubtitle': 'اختر تنسيقًا، ثم نزّل المعاينة الحالية كصورة.',
-  'fileViewer.exportImageFormatLabel': 'التنسيق',
-  'fileViewer.exportImageSaving': 'جارٍ حفظ الصورة…',
-  'fileViewer.exportImageSaved': 'تم حفظ الصورة',
-  'fileViewer.exportImageDownloadStarted': 'بدأ التنزيل',
-  'fileViewer.exportImageDownloadDetails': 'إذا لم تظهر نافذة حفظ باسم، فابحث عن {filename} في مجلد تنزيلات المتصفح.',
-  'fileViewer.exportJsx': 'تصدير كـ JSX',
-  'fileViewer.exportReactHtml': 'تصدير المعاينة كـ HTML',
-  'fileViewer.exportStarted': 'بدأ التصدير',
-  'fileViewer.saveAsTemplate': 'حفظ كقالب...',
-  'fileViewer.savingTemplate': 'جاري حفظ القالب...',
-  'fileViewer.savedTemplate': 'تم الحفظ باسم "{name}"',
-  'fileViewer.savedTemplateFail': 'تعذر حفظ القالب - حاول مرة أخرى.',
-  'fileViewer.templateNamePrompt': 'اسم القالب',
-  'fileViewer.templateNameDefault': 'قالب بدون عنوان',
-  'fileViewer.templateDescPrompt': 'وصف قصير (اختياري - ما الذي يجعل هذا القالب مفيداً؟)',
-  'liveArtifact.refresh.button': 'تحديث',
-  'liveArtifact.refresh.buttonTitle': 'تحديث هذا العنصر المباشر',
-  'liveArtifact.refresh.loadingTitle': 'جارٍ تحميل المُخرَج الحي…',
-  'liveArtifact.refresh.noSourceTitle': 'لا يتوفر مصدر تحديث بعد.',
-  'liveArtifact.refresh.running': 'جارٍ التحديث…',
-  'liveArtifact.refresh.runningMessage': 'جارٍ تحديث البيانات والمعاينة. قد يستغرق ذلك لحظة.',
-  'liveArtifact.refresh.runningAction': 'تبقى المعاينة السابقة ظاهرة حتى ينجح التحديث.',
-  'liveArtifact.refresh.successOne': 'اكتمل التحديث. تم تحديث البيانات.',
-  'liveArtifact.refresh.successMany': 'اكتمل التحديث. تم تحديث البيانات.',
-  'liveArtifact.refresh.successAction': 'تمت إعادة تحميل المعاينة بأحدث البيانات المُلتزَم بها.',
-  'liveArtifact.refresh.previousFailure': 'فشل التحديث السابق: {message}',
-  'liveArtifact.refresh.failureAction': 'راجع سجل التحديثات، وأصلح مشكلة المصدر أو الأذونات، ثم حاول مرة أخرى.',
-  'liveArtifact.refresh.networkFailure': 'فشل طلب التحديث. تحقق من اتصالك وحاول مرة أخرى.',
-  'liveArtifact.refresh.genericFailure': 'فشل التحديث.',
-  'liveArtifact.refresh.statusNever': 'غير قابل للتحديث',
-  'liveArtifact.refresh.statusReady': 'جاهز للتحديث',
-  'liveArtifact.refresh.statusSucceeded': 'محدَّث',
-  'liveArtifact.refresh.statusFailed': 'فشل التحديث',
-  'liveArtifact.refresh.statusRunning': 'جارٍ التحديث',
-  'liveArtifact.refresh.statusRunningDescription': 'تجري حاليًا عملية تحديث.',
-  'liveArtifact.refresh.statusSucceededDescription': 'اكتمل آخر تحديث بنجاح.',
-  'liveArtifact.refresh.statusFailedDescription': 'لم تكتمل محاولة التحديث الأخيرة بنجاح.',
-  'liveArtifact.refresh.statusReadyDescription': 'المصادر القابلة للتحديث مُهيّأة لكن لا توجد عملية قيد التشغيل.',
-  'liveArtifact.refresh.statusNeverDescription': 'لا يحتوي هذا العنصر المباشر على مصدر تحديث بعد.',
-  'liveArtifact.refresh.eventStarted': 'بدأ',
-  'liveArtifact.refresh.eventSucceeded': 'نجح',
-  'liveArtifact.refresh.eventFailed': 'فشل',
-  'liveArtifact.refresh.eventStartedDetail': 'بدأ التحديث…',
-  'liveArtifact.refresh.sourcesUpdatedOne': 'تم تحديث {n} مصدر',
-  'liveArtifact.refresh.sourcesUpdatedMany': 'تم تحديث {n} مصادر',
-  'liveArtifact.refresh.timelineEmpty': 'لا يوجد نشاط تحديث بعد في هذه الجلسة. شغّل التحديث لتسجيل مخطط زمني، أو انتظر عمليات التشغيل التلقائية.',
-  'liveArtifact.refresh.heroLastRefreshedLabel': 'آخر تحديث',
-  'liveArtifact.refresh.heroLastRefreshedNever': 'مطلقًا',
-  'liveArtifact.refresh.justNow': 'الآن',
-  'liveArtifact.refresh.factCreated': 'تم الإنشاء',
-  'liveArtifact.refresh.factLastUpdated': 'آخر تحديث',
-  'liveArtifact.refresh.factUnknown': 'غير معروف',
-  'liveArtifact.refresh.persistedTitle': 'سجل التحديثات المحفوظ',
-  'liveArtifact.refresh.persistedHint': 'الإدخالات المُحمَّلة من refreshes.jsonl',
-  'liveArtifact.refresh.persistedEmpty': 'لا يوجد سجل تحديثات محفوظ بعد.',
-  'liveArtifact.refresh.persistedStatusSucceeded': 'نجح',
-  'liveArtifact.refresh.persistedStatusRunning': 'قيد التشغيل',
-  'liveArtifact.refresh.persistedStatusFailed': 'فشل',
-  'liveArtifact.refresh.persistedStatusCancelled': 'أُلغي',
-  'liveArtifact.refresh.persistedStatusSkipped': 'تم التخطي',
-  'liveArtifact.refresh.sessionTitle': 'نشاط الجلسة',
-  'liveArtifact.refresh.sessionHint': 'الأحداث المُلاحَظة أثناء فتح هذا التبويب',
-  'liveArtifact.refresh.docSourceTitle': 'مصدر المستند',
-  'liveArtifact.refresh.docSourceHint': 'تم تهيئة المصدر',
-  'liveArtifact.refresh.docSourceType': 'النوع',
-  'liveArtifact.refresh.docSourceTool': 'الأداة',
-  'liveArtifact.refresh.docSourceConnector': 'موصِّل',
-  'liveArtifact.refresh.debugSummary': 'بيانات تصحيح متقدمة',
-  'liveArtifact.refresh.debugNote': 'قد تتضمن معرّفات الموصِّلات وأسماء الملفات وبيانات المصدر الوصفية ومسارات العناصر الداخلية.',
-  'liveArtifact.viewer.tabPreview': 'معاينة',
-  'liveArtifact.viewer.tabCode': 'الكود',
-  'liveArtifact.viewer.tabData': 'البيانات',
-  'liveArtifact.viewer.tabRefreshHistory': 'سجل التحديث',
-  'liveArtifact.viewer.dataEmpty': 'لا توجد ذاكرة data.json مؤقتة متاحة.',
-  'liveArtifact.viewer.code.templateHeading': 'HTML القالب',
-  'liveArtifact.viewer.code.renderedHeading': 'HTML المعروض',
-  'liveArtifact.viewer.code.templateHelp': 'القالب القابل للتحرير المستخدم مع data.json لإنشاء المعاينة.',
-  'liveArtifact.viewer.code.renderedHelp': 'ملف index.html المُنشأ الذي تحمّله المعاينة حاليًا.',
-  'liveArtifact.viewer.code.variantAria': 'متغير الكود',
-  'liveArtifact.viewer.code.variantTemplate': 'القالب',
-  'liveArtifact.viewer.code.variantRendered': 'معروض',
-  'liveArtifact.viewer.code.loading': 'جارٍ تحميل الكود…',
-  'liveArtifact.viewer.code.unavailable': 'الكود غير متاح بعد.',
-  'liveArtifact.viewer.code.empty': 'ملف الكود هذا فارغ.',
-  'fileViewer.deployToVercel': 'النشر إلى Vercel',
-  'fileViewer.redeployToVercel': 'إعادة النشر',
-  'fileViewer.deployingToVercel': 'جارٍ النشر إلى Vercel…',
-  'fileViewer.deployProviderLabel': 'منصة النشر',
+  'fileViewer.zoomOut': 'ØªØµØºÙØ±',
+  'fileViewer.zoomIn': 'ØªÙØ¨ÙØ±',
+  'fileViewer.resetZoom': 'Ø¥Ø¹Ø§Ø¯Ø© ØªØ¹ÙÙÙ Ø§ÙØ²ÙÙ',
+  'fileViewer.viewportAria': 'ÙÙÙØ° Ø¹Ø±Ø¶ Ø§ÙÙØ¹Ø§ÙÙØ©',
+  'fileViewer.viewportDesktop': 'Ø³Ø·Ø­ Ø§ÙÙÙØªØ¨',
+  'fileViewer.viewportDesktopTitle': 'ÙØ¹Ø§ÙÙØ© Ø³Ø·Ø­ Ø§ÙÙÙØªØ¨ Ø¨Ø¹Ø±Ø¶ ÙØ§ÙÙ',
+  'fileViewer.viewportTablet': 'Ø§ÙØ¬ÙØ§Ø² Ø§ÙÙÙØ­Ù',
+  'fileViewer.viewportTabletTitle': 'ÙØ¹Ø§ÙÙØ© Ø§ÙØ¬ÙØ§Ø² Ø§ÙÙÙØ­Ù Ø¨Ø£Ø¨Ø¹Ø§Ø¯ 820 Ã 1180 (Ø§ÙØ£Ø³Ø§Ø³ Ø§ÙØ¹ÙÙØ¯Ù Ø§ÙØ­Ø¯ÙØ«)',
+  'fileViewer.viewportMobile': 'Ø§ÙØ¬ÙØ§Ù',
+  'fileViewer.viewportMobileTitle': 'ÙØ¹Ø§ÙÙØ© Ø§ÙØ¬ÙØ§Ù Ø¨Ø£Ø¨Ø¹Ø§Ø¯ 390 Ã 844',
+  'fileViewer.reloadAria': 'Ø¥Ø¹Ø§Ø¯Ø© ØªØ­ÙÙÙ',
+  'fileViewer.previousSlide': 'Ø§ÙØ´Ø±ÙØ­Ø© Ø§ÙØ³Ø§Ø¨ÙØ©',
+  'fileViewer.nextSlide': 'Ø§ÙØ´Ø±ÙØ­Ø© Ø§ÙØªØ§ÙÙØ©',
+  'fileViewer.slideNavAria': 'Ø§ÙØªÙÙÙ Ø¨ÙÙ Ø§ÙØ´Ø±Ø§Ø¦Ø­',
+  'fileViewer.present': 'ØªÙØ¯ÙÙ',
+  'fileViewer.presentInTab': 'ÙÙ Ø¹ÙØ§ÙØ© Ø§ÙØªØ¨ÙÙØ¨ ÙØ°Ù',
+  'fileViewer.presentFullscreen': 'ÙÙØ¡ Ø§ÙØ´Ø§Ø´Ø©',
+  'fileViewer.presentNewTab': 'Ø¹ÙØ§ÙØ© ØªØ¨ÙÙØ¨ Ø¬Ø¯ÙØ¯Ø©',
+  'fileViewer.exitPresentation': 'Ø§ÙØ®Ø±ÙØ¬ ÙÙ Ø§ÙØ¹Ø±Ø¶',
+  'fileViewer.shareLabel': 'ÙØ´Ø§Ø±ÙØ©',
+  'fileViewer.shareMenuShareLink': 'ÙØ´Ø§Ø±ÙØ©',
+  'fileViewer.shareMenuPublishOnline': 'Ø§ÙÙØ´Ø± Ø¹ÙÙ Ø§ÙØ¥ÙØªØ±ÙØª',
+  'fileViewer.shareMenuDownload': 'ØªÙØ²ÙÙ',
+  'fileViewer.shareMenuPresentation': 'Ø¹Ø±Ø¶ ØªÙØ¯ÙÙÙ',
+  'fileViewer.shareMenuSourceFiles': 'ÙÙÙØ§Øª Ø§ÙÙØµØ¯Ø±',
+  'fileViewer.shareMenuSave': 'Ø­ÙØ¸',
+  'fileViewer.copyShareLink': 'ÙØ³Ø® Ø±Ø§Ø¨Ø· Ø§ÙÙØ´Ø§Ø±ÙØ©',
+  'fileViewer.openSharePage': 'ÙØªØ­ ØµÙØ­Ø© Ø§ÙÙØ´Ø§Ø±ÙØ©',
+  'fileViewer.shareLinkRequiresDeploy': 'Ø§ÙØ´Ø± Ø¹ÙÙ Ø§ÙØ¥ÙØªØ±ÙØª Ø£ÙÙØ§Ù ÙÙØ­ØµÙÙ Ø¹ÙÙ Ø±Ø§Ø¨Ø·',
+  'fileViewer.shareLinkPublishGuide': 'Ø§ÙØ´Ø± Ø¹ÙÙ Ø§ÙØ¥ÙØªØ±ÙØª Ø£Ø¹ÙØ§Ù ÙØªÙØ¹ÙÙ Ø§ÙÙØ´Ø§Ø±ÙØ© â',
+  'fileViewer.shareAfterGenerationComplete': 'ÙÙÙÙ Ø§ÙÙØ´Ø§Ø±ÙØ© Ø¨Ø¹Ø¯ Ø§ÙØªÙØ§Ù Ø§ÙØ¥ÙØ´Ø§Ø¡',
+  'fileViewer.copyProviderLink': 'ÙØ³Ø® Ø±Ø§Ø¨Ø· {provider}',
+  'fileViewer.copyCloudflareLink': 'ÙØ³Ø® Ø±Ø§Ø¨Ø· Cloudflare',
+  'fileViewer.screenshotCopying': 'Ø¬Ø§Ø±Ù ÙØ³Ø® ÙÙØ·Ø© Ø§ÙØ´Ø§Ø´Ø©...',
+  'fileViewer.screenshotCopied': 'ØªÙ ÙØ³Ø® ÙÙØ·Ø© Ø§ÙØ´Ø§Ø´Ø© Ø¥ÙÙ Ø§ÙØ­Ø§ÙØ¸Ø©',
+  'fileViewer.screenshotClipboardDenied': 'Ø­Ø¸Ø± Ø§ÙÙØªØµÙØ­ Ø§ÙÙØµÙÙ Ø¥ÙÙ Ø§ÙØ­Ø§ÙØ¸Ø©',
+  'fileViewer.screenshotPreviewLoading': 'ÙØ§ ØªØ²Ø§Ù Ø§ÙÙØ¹Ø§ÙÙØ© ÙÙØ¯ Ø§ÙØªØ­ÙÙÙ. Ø­Ø§ÙÙ ÙØ¬Ø¯Ø¯ÙØ§ Ø¨Ø¹Ø¯ ÙØ­Ø¸Ø©.',
+  'fileViewer.screenshotCaptureFailed': 'ØªØ¹Ø°ÙØ± Ø§ÙØªÙØ§Ø· Ø§ÙÙØ¹Ø§ÙÙØ©. ÙÙØ±Ø¬Ù Ø§ÙÙØ­Ø§ÙÙØ© ÙØ±Ø© Ø£Ø®Ø±Ù.',
+  'fileViewer.exportPdf': 'ØªØµØ¯ÙØ± ÙÙ PDF',
+  'fileViewer.exportPdfAllSlides': 'ØªØµØ¯ÙØ± ÙÙ PDF (ÙÙ Ø§ÙØ´Ø±Ø§Ø¦Ø­)',
+  'fileViewer.exportPptxBusy': 'Ø§ÙØªØ¸Ø± Ø§ÙØªÙØ§Ø¡ Ø§ÙØ¯ÙØ± Ø§ÙØ­Ø§ÙÙ.',
+  'fileViewer.exportPptxHint': 'Ø£Ø±Ø³Ù Ø·ÙØ¨Ø§Ù ÙÙÙÙÙÙ ÙØªØ­ÙÙÙ ÙØ°Ø§ Ø§ÙØªØµÙÙÙ Ø¥ÙÙ PPTX.',
+  'fileViewer.exportPptxNa': 'ØªØµØ¯ÙØ± PPTX ØºÙØ± ÙØªÙÙØ± ÙÙØ§.',
+  'fileViewer.exportZip': 'ØªØ­ÙÙÙ ÙÙ zip.',
+  'fileViewer.exportHtml': 'ØªØµØ¯ÙØ± ÙÙ HTML ÙØ³ØªÙÙ',
+  'fileViewer.exportMd': 'ØªØµØ¯ÙØ± ÙÙ Markdown',
+  'fileViewer.exportImage': 'ØªØµØ¯ÙØ± ÙØµÙØ±Ø©',
+  'fileViewer.exportPptxImages': 'ØªØµØ¯ÙØ± ÙÙ PPTX (ØµÙØ±)',
+  'fileViewer.exportPptxEditable': 'ØªØµØ¯ÙØ± ÙÙ PPTX (ÙØ§Ø¨Ù ÙÙØªØ­Ø±ÙØ±)',
+  'fileViewer.exportingProgress': 'Ø¬Ø§Ø±Ù Ø§ÙØªØµØ¯ÙØ±â¦',
+  'fileViewer.exportSlideProgress': 'Ø¬Ø§Ø±Ù ØªØµØ¯ÙØ± Ø§ÙØ´Ø±ÙØ­Ø© {current}/{total}â¦',
+  'fileViewer.exportingElapsed': 'Ø¬Ø§Ø±Ù Ø§ÙØªØµØ¯ÙØ±â¦ {seconds}Ø«',
+  'fileViewer.exportSlideEta': 'Ø§ÙØ´Ø±ÙØ­Ø© {current}/{total} Â· ÙØªØ¨ÙÙ ~{seconds}Ø«',
+  'fileViewer.exportFailed': 'ÙØ´Ù Ø§ÙØªØµØ¯ÙØ±. ÙØ±Ø¬Ù Ø§ÙÙØ­Ø§ÙÙØ© ÙØ±Ø© Ø£Ø®Ø±Ù.',
+  'fileViewer.exportDone': 'Ø§ÙØªÙÙ Ø§ÙØªØµØ¯ÙØ±',
+  'fileViewer.exportImageFailed': 'ÙØ´Ù Ø§ÙØªÙØ§Ø· Ø§ÙØµÙØ±Ø©. ÙØ±Ø¬Ù Ø§ÙÙØ­Ø§ÙÙØ© ÙØ±Ø© Ø£Ø®Ø±Ù Ø£Ù Ø§Ø³ØªØ®Ø¯Ø§Ù Ø£Ø¯Ø§Ø© ÙÙØ·Ø© Ø§ÙØ´Ø§Ø´Ø© ÙÙ Ø§ÙÙØªØµÙØ­.',
+  'fileViewer.exportImageModalSubtitle': 'Ø§Ø®ØªØ± ØªÙØ³ÙÙÙØ§Ø Ø«Ù ÙØ²ÙÙ Ø§ÙÙØ¹Ø§ÙÙØ© Ø§ÙØ­Ø§ÙÙØ© ÙØµÙØ±Ø©.',
+  'fileViewer.exportImageFormatLabel': 'Ø§ÙØªÙØ³ÙÙ',
+  'fileViewer.exportImageSaving': 'Ø¬Ø§Ø±Ù Ø­ÙØ¸ Ø§ÙØµÙØ±Ø©â¦',
+  'fileViewer.exportImageSaved': 'ØªÙ Ø­ÙØ¸ Ø§ÙØµÙØ±Ø©',
+  'fileViewer.exportImageDownloadStarted': 'Ø¨Ø¯Ø£ Ø§ÙØªÙØ²ÙÙ',
+  'fileViewer.exportImageDownloadDetails': 'Ø¥Ø°Ø§ ÙÙ ØªØ¸ÙØ± ÙØ§ÙØ°Ø© Ø­ÙØ¸ Ø¨Ø§Ø³ÙØ ÙØ§Ø¨Ø­Ø« Ø¹Ù {filename} ÙÙ ÙØ¬ÙØ¯ ØªÙØ²ÙÙØ§Øª Ø§ÙÙØªØµÙØ­.',
+  'fileViewer.exportJsx': 'ØªØµØ¯ÙØ± ÙÙ JSX',
+  'fileViewer.exportReactHtml': 'ØªØµØ¯ÙØ± Ø§ÙÙØ¹Ø§ÙÙØ© ÙÙ HTML',
+  'fileViewer.exportStarted': 'Ø¨Ø¯Ø£ Ø§ÙØªØµØ¯ÙØ±',
+  'fileViewer.saveAsTemplate': 'Ø­ÙØ¸ ÙÙØ§ÙØ¨...',
+  'fileViewer.savingTemplate': 'Ø¬Ø§Ø±Ù Ø­ÙØ¸ Ø§ÙÙØ§ÙØ¨...',
+  'fileViewer.savedTemplate': 'ØªÙ Ø§ÙØ­ÙØ¸ Ø¨Ø§Ø³Ù "{name}"',
+  'fileViewer.savedTemplateFail': 'ØªØ¹Ø°Ø± Ø­ÙØ¸ Ø§ÙÙØ§ÙØ¨ - Ø­Ø§ÙÙ ÙØ±Ø© Ø£Ø®Ø±Ù.',
+  'fileViewer.templateNamePrompt': 'Ø§Ø³Ù Ø§ÙÙØ§ÙØ¨',
+  'fileViewer.templateNameDefault': 'ÙØ§ÙØ¨ Ø¨Ø¯ÙÙ Ø¹ÙÙØ§Ù',
+  'fileViewer.templateDescPrompt': 'ÙØµÙ ÙØµÙØ± (Ø§Ø®ØªÙØ§Ø±Ù - ÙØ§ Ø§ÙØ°Ù ÙØ¬Ø¹Ù ÙØ°Ø§ Ø§ÙÙØ§ÙØ¨ ÙÙÙØ¯Ø§ÙØ)',
+  'liveArtifact.refresh.button': 'ØªØ­Ø¯ÙØ«',
+  'liveArtifact.refresh.buttonTitle': 'ØªØ­Ø¯ÙØ« ÙØ°Ø§ Ø§ÙØ¹ÙØµØ± Ø§ÙÙØ¨Ø§Ø´Ø±',
+  'liveArtifact.refresh.loadingTitle': 'Ø¬Ø§Ø±Ù ØªØ­ÙÙÙ Ø§ÙÙÙØ®Ø±ÙØ¬ Ø§ÙØ­Ùâ¦',
+  'liveArtifact.refresh.noSourceTitle': 'ÙØ§ ÙØªÙÙØ± ÙØµØ¯Ø± ØªØ­Ø¯ÙØ« Ø¨Ø¹Ø¯.',
+  'liveArtifact.refresh.running': 'Ø¬Ø§Ø±Ù Ø§ÙØªØ­Ø¯ÙØ«â¦',
+  'liveArtifact.refresh.runningMessage': 'Ø¬Ø§Ø±Ù ØªØ­Ø¯ÙØ« Ø§ÙØ¨ÙØ§ÙØ§Øª ÙØ§ÙÙØ¹Ø§ÙÙØ©. ÙØ¯ ÙØ³ØªØºØ±Ù Ø°ÙÙ ÙØ­Ø¸Ø©.',
+  'liveArtifact.refresh.runningAction': 'ØªØ¨ÙÙ Ø§ÙÙØ¹Ø§ÙÙØ© Ø§ÙØ³Ø§Ø¨ÙØ© Ø¸Ø§ÙØ±Ø© Ø­ØªÙ ÙÙØ¬Ø­ Ø§ÙØªØ­Ø¯ÙØ«.',
+  'liveArtifact.refresh.successOne': 'Ø§ÙØªÙÙ Ø§ÙØªØ­Ø¯ÙØ«. ØªÙ ØªØ­Ø¯ÙØ« Ø§ÙØ¨ÙØ§ÙØ§Øª.',
+  'liveArtifact.refresh.successMany': 'Ø§ÙØªÙÙ Ø§ÙØªØ­Ø¯ÙØ«. ØªÙ ØªØ­Ø¯ÙØ« Ø§ÙØ¨ÙØ§ÙØ§Øª.',
+  'liveArtifact.refresh.successAction': 'ØªÙØª Ø¥Ø¹Ø§Ø¯Ø© ØªØ­ÙÙÙ Ø§ÙÙØ¹Ø§ÙÙØ© Ø¨Ø£Ø­Ø¯Ø« Ø§ÙØ¨ÙØ§ÙØ§Øª Ø§ÙÙÙÙØªØ²ÙÙ Ø¨ÙØ§.',
+  'liveArtifact.refresh.previousFailure': 'ÙØ´Ù Ø§ÙØªØ­Ø¯ÙØ« Ø§ÙØ³Ø§Ø¨Ù: {message}',
+  'liveArtifact.refresh.failureAction': 'Ø±Ø§Ø¬Ø¹ Ø³Ø¬Ù Ø§ÙØªØ­Ø¯ÙØ«Ø§ØªØ ÙØ£ØµÙØ­ ÙØ´ÙÙØ© Ø§ÙÙØµØ¯Ø± Ø£Ù Ø§ÙØ£Ø°ÙÙØ§ØªØ Ø«Ù Ø­Ø§ÙÙ ÙØ±Ø© Ø£Ø®Ø±Ù.',
+  'liveArtifact.refresh.networkFailure': 'ÙØ´Ù Ø·ÙØ¨ Ø§ÙØªØ­Ø¯ÙØ«. ØªØ­ÙÙ ÙÙ Ø§ØªØµØ§ÙÙ ÙØ­Ø§ÙÙ ÙØ±Ø© Ø£Ø®Ø±Ù.',
+  'liveArtifact.refresh.genericFailure': 'ÙØ´Ù Ø§ÙØªØ­Ø¯ÙØ«.',
+  'liveArtifact.refresh.statusNever': 'ØºÙØ± ÙØ§Ø¨Ù ÙÙØªØ­Ø¯ÙØ«',
+  'liveArtifact.refresh.statusReady': 'Ø¬Ø§ÙØ² ÙÙØªØ­Ø¯ÙØ«',
+  'liveArtifact.refresh.statusSucceeded': 'ÙØ­Ø¯ÙÙØ«',
+  'liveArtifact.refresh.statusFailed': 'ÙØ´Ù Ø§ÙØªØ­Ø¯ÙØ«',
+  'liveArtifact.refresh.statusRunning': 'Ø¬Ø§Ø±Ù Ø§ÙØªØ­Ø¯ÙØ«',
+  'liveArtifact.refresh.statusRunningDescription': 'ØªØ¬Ø±Ù Ø­Ø§ÙÙÙØ§ Ø¹ÙÙÙØ© ØªØ­Ø¯ÙØ«.',
+  'liveArtifact.refresh.statusSucceededDescription': 'Ø§ÙØªÙÙ Ø¢Ø®Ø± ØªØ­Ø¯ÙØ« Ø¨ÙØ¬Ø§Ø­.',
+  'liveArtifact.refresh.statusFailedDescription': 'ÙÙ ØªÙØªÙÙ ÙØ­Ø§ÙÙØ© Ø§ÙØªØ­Ø¯ÙØ« Ø§ÙØ£Ø®ÙØ±Ø© Ø¨ÙØ¬Ø§Ø­.',
+  'liveArtifact.refresh.statusReadyDescription': 'Ø§ÙÙØµØ§Ø¯Ø± Ø§ÙÙØ§Ø¨ÙØ© ÙÙØªØ­Ø¯ÙØ« ÙÙÙÙÙØ£Ø© ÙÙÙ ÙØ§ ØªÙØ¬Ø¯ Ø¹ÙÙÙØ© ÙÙØ¯ Ø§ÙØªØ´ØºÙÙ.',
+  'liveArtifact.refresh.statusNeverDescription': 'ÙØ§ ÙØ­ØªÙÙ ÙØ°Ø§ Ø§ÙØ¹ÙØµØ± Ø§ÙÙØ¨Ø§Ø´Ø± Ø¹ÙÙ ÙØµØ¯Ø± ØªØ­Ø¯ÙØ« Ø¨Ø¹Ø¯.',
+  'liveArtifact.refresh.eventStarted': 'Ø¨Ø¯Ø£',
+  'liveArtifact.refresh.eventSucceeded': 'ÙØ¬Ø­',
+  'liveArtifact.refresh.eventFailed': 'ÙØ´Ù',
+  'liveArtifact.refresh.eventStartedDetail': 'Ø¨Ø¯Ø£ Ø§ÙØªØ­Ø¯ÙØ«â¦',
+  'liveArtifact.refresh.sourcesUpdatedOne': 'ØªÙ ØªØ­Ø¯ÙØ« {n} ÙØµØ¯Ø±',
+  'liveArtifact.refresh.sourcesUpdatedMany': 'ØªÙ ØªØ­Ø¯ÙØ« {n} ÙØµØ§Ø¯Ø±',
+  'liveArtifact.refresh.timelineEmpty': 'ÙØ§ ÙÙØ¬Ø¯ ÙØ´Ø§Ø· ØªØ­Ø¯ÙØ« Ø¨Ø¹Ø¯ ÙÙ ÙØ°Ù Ø§ÙØ¬ÙØ³Ø©. Ø´ØºÙÙ Ø§ÙØªØ­Ø¯ÙØ« ÙØªØ³Ø¬ÙÙ ÙØ®Ø·Ø· Ø²ÙÙÙØ Ø£Ù Ø§ÙØªØ¸Ø± Ø¹ÙÙÙØ§Øª Ø§ÙØªØ´ØºÙÙ Ø§ÙØªÙÙØ§Ø¦ÙØ©.',
+  'liveArtifact.refresh.heroLastRefreshedLabel': 'Ø¢Ø®Ø± ØªØ­Ø¯ÙØ«',
+  'liveArtifact.refresh.heroLastRefreshedNever': 'ÙØ·ÙÙÙØ§',
+  'liveArtifact.refresh.justNow': 'Ø§ÙØ¢Ù',
+  'liveArtifact.refresh.factCreated': 'ØªÙ Ø§ÙØ¥ÙØ´Ø§Ø¡',
+  'liveArtifact.refresh.factLastUpdated': 'Ø¢Ø®Ø± ØªØ­Ø¯ÙØ«',
+  'liveArtifact.refresh.factUnknown': 'ØºÙØ± ÙØ¹Ø±ÙÙ',
+  'liveArtifact.refresh.persistedTitle': 'Ø³Ø¬Ù Ø§ÙØªØ­Ø¯ÙØ«Ø§Øª Ø§ÙÙØ­ÙÙØ¸',
+  'liveArtifact.refresh.persistedHint': 'Ø§ÙØ¥Ø¯Ø®Ø§ÙØ§Øª Ø§ÙÙÙØ­ÙÙÙÙØ© ÙÙ refreshes.jsonl',
+  'liveArtifact.refresh.persistedEmpty': 'ÙØ§ ÙÙØ¬Ø¯ Ø³Ø¬Ù ØªØ­Ø¯ÙØ«Ø§Øª ÙØ­ÙÙØ¸ Ø¨Ø¹Ø¯.',
+  'liveArtifact.refresh.persistedStatusSucceeded': 'ÙØ¬Ø­',
+  'liveArtifact.refresh.persistedStatusRunning': 'ÙÙØ¯ Ø§ÙØªØ´ØºÙÙ',
+  'liveArtifact.refresh.persistedStatusFailed': 'ÙØ´Ù',
+  'liveArtifact.refresh.persistedStatusCancelled': 'Ø£ÙÙØºÙ',
+  'liveArtifact.refresh.persistedStatusSkipped': 'ØªÙ Ø§ÙØªØ®Ø·Ù',
+  'liveArtifact.refresh.sessionTitle': 'ÙØ´Ø§Ø· Ø§ÙØ¬ÙØ³Ø©',
+  'liveArtifact.refresh.sessionHint': 'Ø§ÙØ£Ø­Ø¯Ø§Ø« Ø§ÙÙÙÙØ§Ø­ÙØ¸Ø© Ø£Ø«ÙØ§Ø¡ ÙØªØ­ ÙØ°Ø§ Ø§ÙØªØ¨ÙÙØ¨',
+  'liveArtifact.refresh.docSourceTitle': 'ÙØµØ¯Ø± Ø§ÙÙØ³ØªÙØ¯',
+  'liveArtifact.refresh.docSourceHint': 'ØªÙ ØªÙÙØ¦Ø© Ø§ÙÙØµØ¯Ø±',
+  'liveArtifact.refresh.docSourceType': 'Ø§ÙÙÙØ¹',
+  'liveArtifact.refresh.docSourceTool': 'Ø§ÙØ£Ø¯Ø§Ø©',
+  'liveArtifact.refresh.docSourceConnector': 'ÙÙØµÙÙÙ',
+  'liveArtifact.refresh.debugSummary': 'Ø¨ÙØ§ÙØ§Øª ØªØµØ­ÙØ­ ÙØªÙØ¯ÙØ©',
+  'liveArtifact.refresh.debugNote': 'ÙØ¯ ØªØªØ¶ÙÙ ÙØ¹Ø±ÙÙØ§Øª Ø§ÙÙÙØµÙÙÙØ§Øª ÙØ£Ø³ÙØ§Ø¡ Ø§ÙÙÙÙØ§Øª ÙØ¨ÙØ§ÙØ§Øª Ø§ÙÙØµØ¯Ø± Ø§ÙÙØµÙÙØ© ÙÙØ³Ø§Ø±Ø§Øª Ø§ÙØ¹ÙØ§ØµØ± Ø§ÙØ¯Ø§Ø®ÙÙØ©.',
+  'liveArtifact.viewer.tabPreview': 'ÙØ¹Ø§ÙÙØ©',
+  'liveArtifact.viewer.tabCode': 'Ø§ÙÙÙØ¯',
+  'liveArtifact.viewer.tabData': 'Ø§ÙØ¨ÙØ§ÙØ§Øª',
+  'liveArtifact.viewer.tabRefreshHistory': 'Ø³Ø¬Ù Ø§ÙØªØ­Ø¯ÙØ«',
+  'liveArtifact.viewer.dataEmpty': 'ÙØ§ ØªÙØ¬Ø¯ Ø°Ø§ÙØ±Ø© data.json ÙØ¤ÙØªØ© ÙØªØ§Ø­Ø©.',
+  'liveArtifact.viewer.code.templateHeading': 'HTML Ø§ÙÙØ§ÙØ¨',
+  'liveArtifact.viewer.code.renderedHeading': 'HTML Ø§ÙÙØ¹Ø±ÙØ¶',
+  'liveArtifact.viewer.code.templateHelp': 'Ø§ÙÙØ§ÙØ¨ Ø§ÙÙØ§Ø¨Ù ÙÙØªØ­Ø±ÙØ± Ø§ÙÙØ³ØªØ®Ø¯Ù ÙØ¹ data.json ÙØ¥ÙØ´Ø§Ø¡ Ø§ÙÙØ¹Ø§ÙÙØ©.',
+  'liveArtifact.viewer.code.renderedHelp': 'ÙÙÙ index.html Ø§ÙÙÙÙØ´Ø£ Ø§ÙØ°Ù ØªØ­ÙÙÙÙ Ø§ÙÙØ¹Ø§ÙÙØ© Ø­Ø§ÙÙÙØ§.',
+  'liveArtifact.viewer.code.variantAria': 'ÙØªØºÙØ± Ø§ÙÙÙØ¯',
+  'liveArtifact.viewer.code.variantTemplate': 'Ø§ÙÙØ§ÙØ¨',
+  'liveArtifact.viewer.code.variantRendered': 'ÙØ¹Ø±ÙØ¶',
+  'liveArtifact.viewer.code.loading': 'Ø¬Ø§Ø±Ù ØªØ­ÙÙÙ Ø§ÙÙÙØ¯â¦',
+  'liveArtifact.viewer.code.unavailable': 'Ø§ÙÙÙØ¯ ØºÙØ± ÙØªØ§Ø­ Ø¨Ø¹Ø¯.',
+  'liveArtifact.viewer.code.empty': 'ÙÙÙ Ø§ÙÙÙØ¯ ÙØ°Ø§ ÙØ§Ø±Øº.',
+  'fileViewer.deployToVercel': 'Ø§ÙÙØ´Ø± Ø¥ÙÙ Vercel',
+  'fileViewer.redeployToVercel': 'Ø¥Ø¹Ø§Ø¯Ø© Ø§ÙÙØ´Ø±',
+  'fileViewer.deployingToVercel': 'Ø¬Ø§Ø±Ù Ø§ÙÙØ´Ø± Ø¥ÙÙ Vercelâ¦',
+  'fileViewer.deployProviderLabel': 'ÙÙØµØ© Ø§ÙÙØ´Ø±',
   'fileViewer.vercelProvider': 'Vercel',
   'fileViewer.cloudflarePagesProvider': 'Cloudflare Pages',
-  'fileViewer.deployToProvider': 'النشر إلى {provider}',
-  'fileViewer.redeployToProvider': 'إعادة النشر إلى {provider}',
-  'fileViewer.deployingToProvider': 'جارٍ النشر إلى {provider}…',
-  'fileViewer.preparingPublicLink': 'جاري تحضير الرابط العام...',
-  'fileViewer.copyDeployLink': 'نسخ الرابط',
-  'fileViewer.deployModalTitle': 'النشر',
-  'fileViewer.deployModalSubtitle': 'استخدم حساب منصة النشر المحددة لنشر معاينة HTML هذه.',
-  'fileViewer.vercelToken': 'رمز Vercel',
-  'fileViewer.vercelTokenGetLink': 'احصل على رمز Vercel',
-  'fileViewer.vercelTokenPlaceholder': 'الصق رمز Vercel الخاص بك',
-  'fileViewer.vercelTokenReuseHint': 'سيتم استخدام الرمز المحفوظ. أدخل رمزاً جديداً لاستبداله.',
-  'fileViewer.vercelTokenRequired': 'أدخل واحفظ رمز Vercel أولاً.',
-  'fileViewer.cloudflareApiToken': 'رمز Cloudflare API',
-  'fileViewer.cloudflareApiTokenGetLink': 'الحصول على رمز API',
-  'fileViewer.cloudflareApiTokenPlaceholder': 'الصق رمز Cloudflare API الخاص بك',
-  'fileViewer.cloudflareApiTokenReuseHint': 'سيتم استخدام رمز Cloudflare API المحفوظ. أدخل رمزاً جديداً لاستبداله.',
-  'fileViewer.cloudflareApiTokenRequired': 'أدخل واحفظ رمز Cloudflare API أولاً.',
-  'fileViewer.cloudflareApiTokenScopeHint': 'اختر Pages Edit عند إنشاء رمز API؛ تحتاج النطاقات المخصصة إلى Zone Read / DNS Edit.',
-  'fileViewer.vercelTeamId': 'معرف الفريق',
-  'fileViewer.vercelTeamSlug': 'اسم الفريق اللطيف',
-  'fileViewer.cloudflareAccountId': 'معرف الحساب',
-  'fileViewer.cloudflareAccountIdHint': 'اعثر على معرف الحساب في لوحة Cloudflare.',
-  'fileViewer.cloudflareAccountIdRequired': 'أدخل واحفظ Cloudflare Account ID أولاً.',
-  'fileViewer.cloudflareZoneLabel': 'النطاق',
-  'fileViewer.cloudflareZonePlaceholder': 'احفظ إعدادات Cloudflare لتحميل النطاقات',
-  'fileViewer.cloudflareZoneRequired': 'اختر نطاق Cloudflare أولًا.',
-  'fileViewer.cloudflareZonesLoading': 'جارٍ تحميل نطاقات Cloudflare…',
-  'fileViewer.cloudflareZonesRefresh': 'تحديث النطاقات',
-  'fileViewer.cloudflareZonesLoadFailed': 'تعذّر تحميل نطاقات Cloudflare.',
-  'fileViewer.cloudflareZonesEmpty': 'لم يتم العثور على نطاقات Cloudflare كاملة نشطة لهذا الحساب.',
-  'fileViewer.cloudflareDomainPrefixLabel': 'بادئة النطاق الفرعي',
+  'fileViewer.deployToProvider': 'Ø§ÙÙØ´Ø± Ø¥ÙÙ {provider}',
+  'fileViewer.redeployToProvider': 'Ø¥Ø¹Ø§Ø¯Ø© Ø§ÙÙØ´Ø± Ø¥ÙÙ {provider}',
+  'fileViewer.deployingToProvider': 'Ø¬Ø§Ø±Ù Ø§ÙÙØ´Ø± Ø¥ÙÙ {provider}â¦',
+  'fileViewer.preparingPublicLink': 'Ø¬Ø§Ø±Ù ØªØ­Ø¶ÙØ± Ø§ÙØ±Ø§Ø¨Ø· Ø§ÙØ¹Ø§Ù...',
+  'fileViewer.copyDeployLink': 'ÙØ³Ø® Ø§ÙØ±Ø§Ø¨Ø·',
+  'fileViewer.deployModalTitle': 'Ø§ÙÙØ´Ø±',
+  'fileViewer.deployModalSubtitle': 'Ø§Ø³ØªØ®Ø¯Ù Ø­Ø³Ø§Ø¨ ÙÙØµØ© Ø§ÙÙØ´Ø± Ø§ÙÙØ­Ø¯Ø¯Ø© ÙÙØ´Ø± ÙØ¹Ø§ÙÙØ© HTML ÙØ°Ù.',
+  'fileViewer.vercelToken': 'Ø±ÙØ² Vercel',
+  'fileViewer.vercelTokenGetLink': 'Ø§Ø­ØµÙ Ø¹ÙÙ Ø±ÙØ² Vercel',
+  'fileViewer.vercelTokenPlaceholder': 'Ø§ÙØµÙ Ø±ÙØ² Vercel Ø§ÙØ®Ø§Øµ Ø¨Ù',
+  'fileViewer.vercelTokenReuseHint': 'Ø³ÙØªÙ Ø§Ø³ØªØ®Ø¯Ø§Ù Ø§ÙØ±ÙØ² Ø§ÙÙØ­ÙÙØ¸. Ø£Ø¯Ø®Ù Ø±ÙØ²Ø§Ù Ø¬Ø¯ÙØ¯Ø§Ù ÙØ§Ø³ØªØ¨Ø¯Ø§ÙÙ.',
+  'fileViewer.vercelTokenRequired': 'Ø£Ø¯Ø®Ù ÙØ§Ø­ÙØ¸ Ø±ÙØ² Vercel Ø£ÙÙØ§Ù.',
+  'fileViewer.cloudflareApiToken': 'Ø±ÙØ² Cloudflare API',
+  'fileViewer.cloudflareApiTokenGetLink': 'Ø§ÙØ­ØµÙÙ Ø¹ÙÙ Ø±ÙØ² API',
+  'fileViewer.cloudflareApiTokenPlaceholder': 'Ø§ÙØµÙ Ø±ÙØ² Cloudflare API Ø§ÙØ®Ø§Øµ Ø¨Ù',
+  'fileViewer.cloudflareApiTokenReuseHint': 'Ø³ÙØªÙ Ø§Ø³ØªØ®Ø¯Ø§Ù Ø±ÙØ² Cloudflare API Ø§ÙÙØ­ÙÙØ¸. Ø£Ø¯Ø®Ù Ø±ÙØ²Ø§Ù Ø¬Ø¯ÙØ¯Ø§Ù ÙØ§Ø³ØªØ¨Ø¯Ø§ÙÙ.',
+  'fileViewer.cloudflareApiTokenRequired': 'Ø£Ø¯Ø®Ù ÙØ§Ø­ÙØ¸ Ø±ÙØ² Cloudflare API Ø£ÙÙØ§Ù.',
+  'fileViewer.cloudflareApiTokenScopeHint': 'Ø§Ø®ØªØ± Pages Edit Ø¹ÙØ¯ Ø¥ÙØ´Ø§Ø¡ Ø±ÙØ² APIØ ØªØ­ØªØ§Ø¬ Ø§ÙÙØ·Ø§ÙØ§Øª Ø§ÙÙØ®ØµØµØ© Ø¥ÙÙ Zone Read / DNS Edit.',
+  'fileViewer.vercelTeamId': 'ÙØ¹Ø±Ù Ø§ÙÙØ±ÙÙ',
+  'fileViewer.vercelTeamSlug': 'Ø§Ø³Ù Ø§ÙÙØ±ÙÙ Ø§ÙÙØ·ÙÙ',
+  'fileViewer.cloudflareAccountId': 'ÙØ¹Ø±Ù Ø§ÙØ­Ø³Ø§Ø¨',
+  'fileViewer.cloudflareAccountIdHint': 'Ø§Ø¹Ø«Ø± Ø¹ÙÙ ÙØ¹Ø±Ù Ø§ÙØ­Ø³Ø§Ø¨ ÙÙ ÙÙØ­Ø© Cloudflare.',
+  'fileViewer.cloudflareAccountIdRequired': 'Ø£Ø¯Ø®Ù ÙØ§Ø­ÙØ¸ Cloudflare Account ID Ø£ÙÙØ§Ù.',
+  'fileViewer.cloudflareZoneLabel': 'Ø§ÙÙØ·Ø§Ù',
+  'fileViewer.cloudflareZonePlaceholder': 'Ø§Ø­ÙØ¸ Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Cloudflare ÙØªØ­ÙÙÙ Ø§ÙÙØ·Ø§ÙØ§Øª',
+  'fileViewer.cloudflareZoneRequired': 'Ø§Ø®ØªØ± ÙØ·Ø§Ù Cloudflare Ø£ÙÙÙØ§.',
+  'fileViewer.cloudflareZonesLoading': 'Ø¬Ø§Ø±Ù ØªØ­ÙÙÙ ÙØ·Ø§ÙØ§Øª Cloudflareâ¦',
+  'fileViewer.cloudflareZonesRefresh': 'ØªØ­Ø¯ÙØ« Ø§ÙÙØ·Ø§ÙØ§Øª',
+  'fileViewer.cloudflareZonesLoadFailed': 'ØªØ¹Ø°ÙØ± ØªØ­ÙÙÙ ÙØ·Ø§ÙØ§Øª Cloudflare.',
+  'fileViewer.cloudflareZonesEmpty': 'ÙÙ ÙØªÙ Ø§ÙØ¹Ø«ÙØ± Ø¹ÙÙ ÙØ·Ø§ÙØ§Øª Cloudflare ÙØ§ÙÙØ© ÙØ´Ø·Ø© ÙÙØ°Ø§ Ø§ÙØ­Ø³Ø§Ø¨.',
+  'fileViewer.cloudflareDomainPrefixLabel': 'Ø¨Ø§Ø¯Ø¦Ø© Ø§ÙÙØ·Ø§Ù Ø§ÙÙØ±Ø¹Ù',
   'fileViewer.cloudflareDomainPrefixPlaceholder': 'demo',
-  'fileViewer.cloudflareDomainPrefixInvalid': 'استخدم تسمية DNS واحدة فقط: أحرف صغيرة وأرقام وشرطات.',
-  'fileViewer.cloudflareHostnamePreview': 'معاينة النطاق المخصص: {hostname}',
-  'fileViewer.cloudflareCustomDomainHint': 'اختياري: اربط نطاقاً مخصصاً. تركه فارغاً سيظل ينشئ رابط pages.dev.',
-  'fileViewer.cloudflarePagesDevLinkLabel': 'عنوان pages.dev URL',
-  'fileViewer.cloudflareCustomDomainLinkLabel': 'نطاق مخصص',
-  'fileViewer.optional': 'اختياري',
-  'fileViewer.vercelPreviewOnly': 'النشر للمعاينة فقط حالياً.',
-  'fileViewer.cloudflarePagesPreviewHint': 'تستخدم Cloudflare Pages أسلوب Direct Upload.',
-  'fileViewer.savingConfig': 'جاري الحفظ...',
-  'fileViewer.deployConfigSaveFailed': 'تعذر حفظ إعدادات Vercel.',
-  'fileViewer.deployFailed': 'فشل النشر. تحقق من إعدادات Vercel وحاول مرة أخرى.',
-  'fileViewer.deployProviderConfigSaveFailed': 'تعذر حفظ إعدادات {provider}.',
-  'fileViewer.deployProviderFailed': 'فشل النشر إلى {provider}. تحقق من الإعدادات وحاول مرة أخرى.',
-  'fileViewer.deployResultLabel': 'رابط النشر',
-  'fileViewer.deployLinkReady': 'جاهز',
-  'fileViewer.deploySuccessToast': 'تم رفع النشر بنجاح',
-  'fileViewer.deploySuccessToastDetails': '{provider} · {url}',
-  'fileViewer.deployLinkPreparingLabel': 'الرابط العام معلق',
-  'fileViewer.deployLinkDelayed': 'تم نشر الموقع، لكن الرابط العام ما زال قيد التحضير.',
-  'fileViewer.deployLinkFailed': 'فشل النطاق المخصص',
-  'fileViewer.deployLinkProtectedLabel': 'حماية النشر مفعلة',
-  'fileViewer.deployLinkProtected': 'تم نشر الموقع، لكن رابط المعاينة هذا يتطلب المصادقة. عطّل Deployment Protection أو استخدم نطاقاً مخصصاً.',
-  'fileViewer.retryLink': 'إعادة المحاولة الآن',
-  'questionForm.submit': 'إرسال',
-  'questionForm.skip': 'تخطي',
-  'questionForm.locked': 'تمت الإجابة',
-  'conv.switch': 'تبديل المحادثة',
-  'conv.label': 'المحادثة',
-  'conv.heading': 'المحادثات',
-  'conv.new': '+ جديد',
-  'conv.empty': 'لا توجد محادثات بعد.',
-  'conv.untitled': 'محادثة بدون عنوان',
-  'conv.renameTooltip': 'انقر مرتين لإعادة التسمية',
-  'conv.delete': 'حذف المحادثة',
-  'conv.deleteConfirm': 'هل تريد حذف "{title}"؟ سيؤدي هذا لإزالة رسائلها.',
-  'agentPicker.label': 'الوكيل',
-  'agentPicker.modeChoose': 'اختر وضع التنفيذ',
-  'agentPicker.localCli': 'CLI محلي',
-  'agentPicker.daemonOff': 'البرنامج الخفي متوقف',
-  'agentPicker.byok': 'API · BYOK',
-  'agentPicker.selectAgent': 'اختر وكيل كود مكتشف',
-  'agentPicker.noAgents': 'لا يوجد وكلاء في PATH',
-  'agentPicker.notInstalled': 'غير مثبت',
-  'agentPicker.rescan': 'إعادة مسح PATH المحلي للوكلاء',
-  'tool.openInTab': 'فتح {name} في علامة تبويب',
-  'tool.open': 'فتح',
-  'tool.todos': 'المهام',
-  'tool.todosExpand': 'عرض المهام',
-  'tool.todosCollapse': 'إخفاء المهام',
-  'tool.todosDone': 'تم',
-  'tool.todosDismiss': 'إغلاق قائمة المهام',
-  'tool.write': 'كتابة',
-  'tool.edit': 'تعديل',
-  'tool.read': 'قراءة',
+  'fileViewer.cloudflareDomainPrefixInvalid': 'Ø§Ø³ØªØ®Ø¯Ù ØªØ³ÙÙØ© DNS ÙØ§Ø­Ø¯Ø© ÙÙØ·: Ø£Ø­Ø±Ù ØµØºÙØ±Ø© ÙØ£Ø±ÙØ§Ù ÙØ´Ø±Ø·Ø§Øª.',
+  'fileViewer.cloudflareHostnamePreview': 'ÙØ¹Ø§ÙÙØ© Ø§ÙÙØ·Ø§Ù Ø§ÙÙØ®ØµØµ: {hostname}',
+  'fileViewer.cloudflareCustomDomainHint': 'Ø§Ø®ØªÙØ§Ø±Ù: Ø§Ø±Ø¨Ø· ÙØ·Ø§ÙØ§Ù ÙØ®ØµØµØ§Ù. ØªØ±ÙÙ ÙØ§Ø±ØºØ§Ù Ø³ÙØ¸Ù ÙÙØ´Ø¦ Ø±Ø§Ø¨Ø· pages.dev.',
+  'fileViewer.cloudflarePagesDevLinkLabel': 'Ø¹ÙÙØ§Ù pages.dev URL',
+  'fileViewer.cloudflareCustomDomainLinkLabel': 'ÙØ·Ø§Ù ÙØ®ØµØµ',
+  'fileViewer.optional': 'Ø§Ø®ØªÙØ§Ø±Ù',
+  'fileViewer.vercelPreviewOnly': 'Ø§ÙÙØ´Ø± ÙÙÙØ¹Ø§ÙÙØ© ÙÙØ· Ø­Ø§ÙÙØ§Ù.',
+  'fileViewer.cloudflarePagesPreviewHint': 'ØªØ³ØªØ®Ø¯Ù Cloudflare Pages Ø£Ø³ÙÙØ¨ Direct Upload.',
+  'fileViewer.savingConfig': 'Ø¬Ø§Ø±Ù Ø§ÙØ­ÙØ¸...',
+  'fileViewer.deployConfigSaveFailed': 'ØªØ¹Ø°Ø± Ø­ÙØ¸ Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Vercel.',
+  'fileViewer.deployFailed': 'ÙØ´Ù Ø§ÙÙØ´Ø±. ØªØ­ÙÙ ÙÙ Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Vercel ÙØ­Ø§ÙÙ ÙØ±Ø© Ø£Ø®Ø±Ù.',
+  'fileViewer.deployProviderConfigSaveFailed': 'ØªØ¹Ø°Ø± Ø­ÙØ¸ Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª {provider}.',
+  'fileViewer.deployProviderFailed': 'ÙØ´Ù Ø§ÙÙØ´Ø± Ø¥ÙÙ {provider}. ØªØ­ÙÙ ÙÙ Ø§ÙØ¥Ø¹Ø¯Ø§Ø¯Ø§Øª ÙØ­Ø§ÙÙ ÙØ±Ø© Ø£Ø®Ø±Ù.',
+  'fileViewer.deployResultLabel': 'Ø±Ø§Ø¨Ø· Ø§ÙÙØ´Ø±',
+  'fileViewer.deployLinkReady': 'Ø¬Ø§ÙØ²',
+  'fileViewer.deploySuccessToast': 'ØªÙ Ø±ÙØ¹ Ø§ÙÙØ´Ø± Ø¨ÙØ¬Ø§Ø­',
+  'fileViewer.deploySuccessToastDetails': '{provider} Â· {url}',
+  'fileViewer.deployLinkPreparingLabel': 'Ø§ÙØ±Ø§Ø¨Ø· Ø§ÙØ¹Ø§Ù ÙØ¹ÙÙ',
+  'fileViewer.deployLinkDelayed': 'ØªÙ ÙØ´Ø± Ø§ÙÙÙÙØ¹Ø ÙÙÙ Ø§ÙØ±Ø§Ø¨Ø· Ø§ÙØ¹Ø§Ù ÙØ§ Ø²Ø§Ù ÙÙØ¯ Ø§ÙØªØ­Ø¶ÙØ±.',
+  'fileViewer.deployLinkFailed': 'ÙØ´Ù Ø§ÙÙØ·Ø§Ù Ø§ÙÙØ®ØµØµ',
+  'fileViewer.deployLinkProtectedLabel': 'Ø­ÙØ§ÙØ© Ø§ÙÙØ´Ø± ÙÙØ¹ÙØ©',
+  'fileViewer.deployLinkProtected': 'ØªÙ ÙØ´Ø± Ø§ÙÙÙÙØ¹Ø ÙÙÙ Ø±Ø§Ø¨Ø· Ø§ÙÙØ¹Ø§ÙÙØ© ÙØ°Ø§ ÙØªØ·ÙØ¨ Ø§ÙÙØµØ§Ø¯ÙØ©. Ø¹Ø·ÙÙ Deployment Protection Ø£Ù Ø§Ø³ØªØ®Ø¯Ù ÙØ·Ø§ÙØ§Ù ÙØ®ØµØµØ§Ù.',
+  'fileViewer.retryLink': 'Ø¥Ø¹Ø§Ø¯Ø© Ø§ÙÙØ­Ø§ÙÙØ© Ø§ÙØ¢Ù',
+  'questionForm.submit': 'Ø¥Ø±Ø³Ø§Ù',
+  'questionForm.skip': 'ØªØ®Ø·Ù',
+  'questionForm.locked': 'ØªÙØª Ø§ÙØ¥Ø¬Ø§Ø¨Ø©',
+  'conv.switch': 'ØªØ¨Ø¯ÙÙ Ø§ÙÙØ­Ø§Ø¯Ø«Ø©',
+  'conv.label': 'Ø§ÙÙØ­Ø§Ø¯Ø«Ø©',
+  'conv.heading': 'Ø§ÙÙØ­Ø§Ø¯Ø«Ø§Øª',
+  'conv.new': '+ Ø¬Ø¯ÙØ¯',
+  'conv.empty': 'ÙØ§ ØªÙØ¬Ø¯ ÙØ­Ø§Ø¯Ø«Ø§Øª Ø¨Ø¹Ø¯.',
+  'conv.untitled': 'ÙØ­Ø§Ø¯Ø«Ø© Ø¨Ø¯ÙÙ Ø¹ÙÙØ§Ù',
+  'conv.renameTooltip': 'Ø§ÙÙØ± ÙØ±ØªÙÙ ÙØ¥Ø¹Ø§Ø¯Ø© Ø§ÙØªØ³ÙÙØ©',
+  'conv.delete': 'Ø­Ø°Ù Ø§ÙÙØ­Ø§Ø¯Ø«Ø©',
+  'conv.deleteConfirm': 'ÙÙ ØªØ±ÙØ¯ Ø­Ø°Ù "{title}"Ø Ø³ÙØ¤Ø¯Ù ÙØ°Ø§ ÙØ¥Ø²Ø§ÙØ© Ø±Ø³Ø§Ø¦ÙÙØ§.',
+  'agentPicker.label': 'Ø§ÙÙÙÙÙ',
+  'agentPicker.modeChoose': 'Ø§Ø®ØªØ± ÙØ¶Ø¹ Ø§ÙØªÙÙÙØ°',
+  'agentPicker.localCli': 'CLI ÙØ­ÙÙ',
+  'agentPicker.daemonOff': 'Ø§ÙØ¨Ø±ÙØ§ÙØ¬ Ø§ÙØ®ÙÙ ÙØªÙÙÙ',
+  'agentPicker.byok': 'API Â· BYOK',
+  'agentPicker.selectAgent': 'Ø§Ø®ØªØ± ÙÙÙÙ ÙÙØ¯ ÙÙØªØ´Ù',
+  'agentPicker.noAgents': 'ÙØ§ ÙÙØ¬Ø¯ ÙÙÙØ§Ø¡ ÙÙ PATH',
+  'agentPicker.notInstalled': 'ØºÙØ± ÙØ«Ø¨Øª',
+  'agentPicker.rescan': 'Ø¥Ø¹Ø§Ø¯Ø© ÙØ³Ø­ PATH Ø§ÙÙØ­ÙÙ ÙÙÙÙÙØ§Ø¡',
+  'tool.openInTab': 'ÙØªØ­ {name} ÙÙ Ø¹ÙØ§ÙØ© ØªØ¨ÙÙØ¨',
+  'tool.open': 'ÙØªØ­',
+  'tool.todos': 'Ø§ÙÙÙØ§Ù',
+  'tool.todosExpand': 'Ø¹Ø±Ø¶ Ø§ÙÙÙØ§Ù',
+  'tool.todosCollapse': 'Ø¥Ø®ÙØ§Ø¡ Ø§ÙÙÙØ§Ù',
+  'tool.todosDone': 'ØªÙ',
+  'tool.todosDismiss': 'Ø¥ØºÙØ§Ù ÙØ§Ø¦ÙØ© Ø§ÙÙÙØ§Ù',
+  'tool.write': 'ÙØªØ§Ø¨Ø©',
+  'tool.edit': 'ØªØ¹Ø¯ÙÙ',
+  'tool.read': 'ÙØ±Ø§Ø¡Ø©',
   'tool.bash': 'Bash',
   'tool.glob': 'Glob',
   'tool.grep': 'Grep',
-  'tool.fetch': 'جلب',
-  'tool.search': 'بحث',
-  'tool.lines': '{n} أسطر',
-  'tool.changeSingular': 'تغيير',
-  'tool.changePlural': 'تغييرات',
-  'tool.in': 'في {path}',
-  'tool.hide': 'إخفاء',
-  'tool.output': 'المخرجات',
-  'tool.running': 'جاري التشغيل...',
-  'tool.error': 'خطأ',
-  'tool.done': 'تم',
-  'assistant.role': 'المساعد',
-  'assistant.workingLabel': 'جاري العمل',
-  'assistant.doneLabel': 'تم',
-  'assistant.copyMarkdown': 'نسخ Markdown الرد',
-  'assistant.forkConversation': 'تفرع من هنا',
-  'assistant.forkingConversation': 'جارٍ التفرع…',
-  'assistant.shareToOpenDesign': 'المشاركة على Open Design',
-  'assistant.shareToOpenDesignBusy': 'جارٍ تجهيز الحزمة…',
-  'assistant.feedbackPrompt': 'ملاحظات',
-  'assistant.feedbackPositive': 'مفيد',
-  'assistant.feedbackNegative': 'غير مفيد',
-  'assistant.feedbackReasonTitle': 'أخبرنا بالسبب',
-  'assistant.feedbackReasonPositiveMatched': 'فهم طلبي',
-  'assistant.feedbackReasonPositiveVisual': 'يبدو جيدًا',
-  'assistant.feedbackReasonPositiveUseful': 'بنية مفيدة',
-  'assistant.feedbackReasonPositiveEasy': 'سهل المتابعة في التحرير',
-  'assistant.feedbackReasonPositiveDesignSystem': 'اتّبع نظام التصميم',
-  'assistant.feedbackReasonNegativeMissed': 'أغفل طلبي',
-  'assistant.feedbackReasonNegativeVisual': 'الجودة البصرية تحتاج إلى تحسين',
-  'assistant.feedbackReasonNegativeIncomplete': 'مخرجات غير مكتملة',
-  'assistant.feedbackReasonNegativeHard': 'صعب الاستخدام',
-  'assistant.feedbackReasonNegativeDesignSystem': 'لم يتّبع نظام التصميم',
-  'assistant.feedbackReasonOther': 'أخرى',
-  'assistant.feedbackReasonPlaceholder': 'أضف ملاحظة قصيرة...',
-  'assistant.feedbackReasonSubmit': 'إرسال',
-  'assistant.emptyResponseLabel': 'لا توجد مخرجات',
-  'assistant.emptyResponseMessage': 'أنهى المزوّد الطلب دون إرجاع نص أو عنصر. جرّب نموذجًا أو مزوّدًا آخر، أو تحقّق من الحصة، أو أعد المحاولة.',
-  'assistant.unfinishedLabel': 'توقف مع عمل غير مكتمل',
-  'assistant.unfinishedSummary': 'تبقى {n} مهمة/مهام',
-  'assistant.unfinishedMore': '+{n} أكثر',
-  'assistant.continueRemaining': 'متابعة المهام المتبقية',
-  'chat.resumeRunCta': 'متابعة التشغيل',
-  'assistant.outTokens': '{n} خرج',
-  'assistant.producedFiles': 'الملفات من هذا الدور',
-  'assistant.openFile': 'فتح',
-  'assistant.downloadFile': 'تحميل',
-  'nextStep.title': 'الخطوة التالية',
-  'nextStep.more': 'المزيد',
-  'nextStep.share': 'مشاركة',
-  'nextStep.download': 'تنزيل',
-  'nextStep.contribute': 'المساهمة',
+  'tool.fetch': 'Ø¬ÙØ¨',
+  'tool.search': 'Ø¨Ø­Ø«',
+  'tool.lines': '{n} Ø£Ø³Ø·Ø±',
+  'tool.changeSingular': 'ØªØºÙÙØ±',
+  'tool.changePlural': 'ØªØºÙÙØ±Ø§Øª',
+  'tool.in': 'ÙÙ {path}',
+  'tool.hide': 'Ø¥Ø®ÙØ§Ø¡',
+  'tool.output': 'Ø§ÙÙØ®Ø±Ø¬Ø§Øª',
+  'tool.running': 'Ø¬Ø§Ø±Ù Ø§ÙØªØ´ØºÙÙ...',
+  'tool.error': 'Ø®Ø·Ø£',
+  'tool.done': 'ØªÙ',
+  'assistant.role': 'Ø§ÙÙØ³Ø§Ø¹Ø¯',
+  'assistant.workingLabel': 'Ø¬Ø§Ø±Ù Ø§ÙØ¹ÙÙ',
+  'assistant.doneLabel': 'ØªÙ',
+  'assistant.copyMarkdown': 'ÙØ³Ø® Markdown Ø§ÙØ±Ø¯',
+  'assistant.forkConversation': 'ØªÙØ±Ø¹ ÙÙ ÙÙØ§',
+  'assistant.forkingConversation': 'Ø¬Ø§Ø±Ù Ø§ÙØªÙØ±Ø¹â¦',
+  'assistant.shareToOpenDesign': 'Ø§ÙÙØ´Ø§Ø±ÙØ© Ø¹ÙÙ Open Design',
+  'assistant.shareToOpenDesignBusy': 'Ø¬Ø§Ø±Ù ØªØ¬ÙÙØ² Ø§ÙØ­Ø²ÙØ©â¦',
+  'assistant.feedbackPrompt': 'ÙÙØ§Ø­Ø¸Ø§Øª',
+  'assistant.feedbackPositive': 'ÙÙÙØ¯',
+  'assistant.feedbackNegative': 'ØºÙØ± ÙÙÙØ¯',
+  'assistant.feedbackReasonTitle': 'Ø£Ø®Ø¨Ø±ÙØ§ Ø¨Ø§ÙØ³Ø¨Ø¨',
+  'assistant.feedbackReasonPositiveMatched': 'ÙÙÙ Ø·ÙØ¨Ù',
+  'assistant.feedbackReasonPositiveVisual': 'ÙØ¨Ø¯Ù Ø¬ÙØ¯ÙØ§',
+  'assistant.feedbackReasonPositiveUseful': 'Ø¨ÙÙØ© ÙÙÙØ¯Ø©',
+  'assistant.feedbackReasonPositiveEasy': 'Ø³ÙÙ Ø§ÙÙØªØ§Ø¨Ø¹Ø© ÙÙ Ø§ÙØªØ­Ø±ÙØ±',
+  'assistant.feedbackReasonPositiveDesignSystem': 'Ø§ØªÙØ¨Ø¹ ÙØ¸Ø§Ù Ø§ÙØªØµÙÙÙ',
+  'assistant.feedbackReasonNegativeMissed': 'Ø£ØºÙÙ Ø·ÙØ¨Ù',
+  'assistant.feedbackReasonNegativeVisual': 'Ø§ÙØ¬ÙØ¯Ø© Ø§ÙØ¨ØµØ±ÙØ© ØªØ­ØªØ§Ø¬ Ø¥ÙÙ ØªØ­Ø³ÙÙ',
+  'assistant.feedbackReasonNegativeIncomplete': 'ÙØ®Ø±Ø¬Ø§Øª ØºÙØ± ÙÙØªÙÙØ©',
+  'assistant.feedbackReasonNegativeHard': 'ØµØ¹Ø¨ Ø§ÙØ§Ø³ØªØ®Ø¯Ø§Ù',
+  'assistant.feedbackReasonNegativeDesignSystem': 'ÙÙ ÙØªÙØ¨Ø¹ ÙØ¸Ø§Ù Ø§ÙØªØµÙÙÙ',
+  'assistant.feedbackReasonOther': 'Ø£Ø®Ø±Ù',
+  'assistant.feedbackReasonPlaceholder': 'Ø£Ø¶Ù ÙÙØ§Ø­Ø¸Ø© ÙØµÙØ±Ø©...',
+  'assistant.feedbackReasonSubmit': 'Ø¥Ø±Ø³Ø§Ù',
+  'assistant.emptyResponseLabel': 'ÙØ§ ØªÙØ¬Ø¯ ÙØ®Ø±Ø¬Ø§Øª',
+  'assistant.emptyResponseMessage': 'Ø£ÙÙÙ Ø§ÙÙØ²ÙÙØ¯ Ø§ÙØ·ÙØ¨ Ø¯ÙÙ Ø¥Ø±Ø¬Ø§Ø¹ ÙØµ Ø£Ù Ø¹ÙØµØ±. Ø¬Ø±ÙØ¨ ÙÙÙØ°Ø¬ÙØ§ Ø£Ù ÙØ²ÙÙØ¯ÙØ§ Ø¢Ø®Ø±Ø Ø£Ù ØªØ­ÙÙÙ ÙÙ Ø§ÙØ­ØµØ©Ø Ø£Ù Ø£Ø¹Ø¯ Ø§ÙÙØ­Ø§ÙÙØ©.',
+  'assistant.unfinishedLabel': 'ØªÙÙÙ ÙØ¹ Ø¹ÙÙ ØºÙØ± ÙÙØªÙÙ',
+  'assistant.unfinishedSummary': 'ØªØ¨ÙÙ {n} ÙÙÙØ©/ÙÙØ§Ù',
+  'assistant.unfinishedMore': '+{n} Ø£ÙØ«Ø±',
+  'assistant.continueRemaining': 'ÙØªØ§Ø¨Ø¹Ø© Ø§ÙÙÙØ§Ù Ø§ÙÙØªØ¨ÙÙØ©',
+  'chat.resumeRunCta': 'ÙØªØ§Ø¨Ø¹Ø© Ø§ÙØªØ´ØºÙÙ',
+  'assistant.outTokens': '{n} Ø®Ø±Ø¬',
+  'assistant.producedFiles': 'Ø§ÙÙÙÙØ§Øª ÙÙ ÙØ°Ø§ Ø§ÙØ¯ÙØ±',
+  'assistant.openFile': 'ÙØªØ­',
+  'assistant.downloadFile': 'ØªØ­ÙÙÙ',
+  'nextStep.title': 'Ø§ÙØ®Ø·ÙØ© Ø§ÙØªØ§ÙÙØ©',
+  'nextStep.more': 'Ø§ÙÙØ²ÙØ¯',
+  'nextStep.share': 'ÙØ´Ø§Ø±ÙØ©',
+  'nextStep.download': 'ØªÙØ²ÙÙ',
+  'nextStep.contribute': 'Ø§ÙÙØ³Ø§ÙÙØ©',
   'nextStep.brandAiOptimizeTitle': 'Refine extracted design system',
   'nextStep.brandAiOptimizeBody': 'Starts an agent pass that consumes model tokens, re-extracts the source, and updates this design system in place.',
   'nextStep.brandCreateDesignTitle': 'Create with this design system',
   'nextStep.brandCreateDesignBody': 'Start a new design using the extracted colors, type, assets, and system guidance.',
-  'nextStep.createDesignBusy': 'جارٍ إنشاء التصميم...',
-  'assistant.thinking': 'تفكير',
-  'assistant.thought': 'فكّر',
-  'assistant.thoughtFor': 'فكّر لمدة {s} ث',
-  'assistant.systemReminder': 'تذكير النظام',
-  'assistant.possiblePromptInjection': 'احتمال حقن التوجيه',
-  'assistant.waitingFirstOutput': 'في انتظار أول مخرج',
-  'assistant.statusBootingAgent': 'تشغيل الوكيل',
-  'assistant.statusPreparing': 'جارٍ التحضير...',
-  'assistant.statusStarting': 'بدء',
-  'assistant.statusRequesting': 'إرسال الطلب',
-  'assistant.statusThinking': 'تفكير',
-  'assistant.statusStreaming': 'تدفق',
-  'assistant.slowHint': 'يستغرق وقتاً أطول من المعتاد. يظهر النموذج عادة في 5-10 ثوانٍ - يمكنك التوقف وإعادة الصياغة.',
-  'assistant.verbEditing': 'تعديل',
-  'assistant.verbWriting': 'كتابة',
-  'assistant.verbReading': 'قراءة',
-  'assistant.verbSearching': 'بحث',
-  'assistant.verbRunning': 'تشغيل',
-  'assistant.verbTodos': 'مهام',
-  'assistant.verbFetching': 'جلب',
-  'assistant.verbCalling': 'اتصال',
-  'qf.answered': 'تمت الإجابة',
-  'qf.choose': 'اختر...',
-  'qf.required': 'مطلوب',
-  'qf.lockedSubmitted': 'تم إرسال الإجابات - يستخدمها الوكيل لبقية الجلسة.',
-  'qf.lockedPrev': 'هذا النموذج من دور سابق.',
-  'qf.hint': 'اختر ما يناسبك. تخطى الحقول الاختيارية التي لا تهمك - سيستخدم الوكيل افتراضات معقولة.',
-  'qf.submitDefault': 'إرسال الإجابات',
-  'qf.submitDisabledTitle': 'املأ الحقول المطلوبة أولاً',
-  'qf.submitTitle': 'إرسال الإجابات',
-  'qf.cardSelected': 'محدد',
-  'qf.cardRefs': 'المراجع:',
-  'qf.cardSampleText': 'الثعلب البني السريع · 0123',
-  'questions.tabLabel': 'أسئلة',
-  'questions.banner': 'هل تمانع أن أطرح عليك بضعة أسئلة سريعة؟',
-  'questions.bannerAnswered': 'تمت الإجابة عن الأسئلة',
-  'questions.continue': 'متابعة',
-  'questions.generating': 'جارٍ إنشاء الأسئلة…',
-  'questions.skipAll': 'تخطّي الكل',
-  'questions.autoSkipHint': 'يتابع تلقائيًا عند انتهاء المؤقّت',
-  'sketch.toolSelect': 'تحديد (لا إجراء)',
-  'sketch.toolPen': 'قلم',
-  'sketch.toolText': 'نص',
-  'sketch.toolRect': 'مستطيل',
-  'sketch.toolArrow': 'سهم',
-  'sketch.toolEraser': 'ممحاة',
-  'sketch.color': 'اللون',
-  'sketch.strokeSize': 'حجم الخط',
-  'sketch.undo': 'تراجع',
-  'sketch.clear': 'مسح',
-  'sketch.close': 'إغلاق',
-  'sketch.closeConfirm': 'إغلاق الرسم وتجاهل التغييرات غير المحفوظة؟',
-  'sketch.textPrompt': 'النص:',
-  'sketch.textModalTitle': 'إضافة نص',
-  'critiqueTheater.userFacingName': 'لجنة تحكيم التصميم',
-  'critiqueTheater.roleDesigner': 'المصمّم',
-  'critiqueTheater.roleCritic': 'الناقد',
-  'critiqueTheater.roleBrand': 'العلامة التجارية',
-  'critiqueTheater.roleA11y': 'إمكانية الوصول',
-  'critiqueTheater.roleCopy': 'النص',
-  'critiqueTheater.roundLabel': 'الجولة {n} من {m}',
-  'critiqueTheater.mustFix': '{n} يجب إصلاحها',
-  'critiqueTheater.composite': 'مركّب',
-  'critiqueTheater.threshold': 'العتبة',
-  'critiqueTheater.consensus': 'الإجماع',
-  'critiqueTheater.interrupt': 'مقاطعة',
-  'critiqueTheater.interrupting': 'جارٍ المقاطعة…',
-  'critiqueTheater.interrupted': 'تمّت المقاطعة',
-  'critiqueTheater.degradedHeading': 'اللجنة غير متصلة في هذه الجلسة',
-  'critiqueTheater.degradedReasonMalformed': 'مخرجات اللجنة غير صحيحة (رفض المحلّل الكتلة).',
-  'critiqueTheater.degradedReasonOversize': 'تجاوزت مخرجات اللجنة الحدّ الآمن من البايتات.',
-  'critiqueTheater.degradedReasonAdapter': 'المحوّل {adapter} لا يدعم بروتوكول Critique.',
-  'critiqueTheater.degradedReasonProtocol': 'أرسل المحوّل {adapter} إصدار بروتوكول غير مدعوم.',
-  'critiqueTheater.degradedReasonMissingArtifact': 'انتهت الجلسة دون عنصر نهائي.',
-  'critiqueTheater.replay': 'إعادة التشغيل',
-  'critiqueTheater.replaySpeed': 'سرعة إعادة التشغيل',
-  'critiqueTheater.readOnly': 'للقراءة فقط',
-  'critiqueTheater.shippedSummary': 'تم الإطلاق في الجولة {round} · النتيجة المركبة {composite}',
-  'critiqueTheater.interruptedSummary': 'تمت المقاطعة في الجولة {round} · أفضل نتيجة مركبة {composite}',
-  'critiqueTheater.shippedBadge': 'تم الإطلاق',
-  'critiqueTheater.belowThresholdBadge': 'دون العتبة',
-  'critiqueTheater.timedOutBadge': 'انتهت المهلة',
-  'critiqueTheater.failedHeading': 'فشلت الجلسة',
-  'critiqueTheater.failedReasonCliExit': 'خرج Agent CLI برمز غير صفري قبل أن تتمكّن اللجنة من الإنهاء.',
-  'critiqueTheater.failedReasonPerRoundTimeout': 'تجاوزت إحدى الجولات حدّها الزمني.',
-  'critiqueTheater.failedReasonTotalTimeout': 'تجاوزت الجلسة الكاملة إجمالي حدّها الزمني.',
-  'critiqueTheater.failedReasonOrchestrator': 'خطأ داخلي في المنسّق.',
-  'critiqueTheater.transcriptEmpty': 'لا يوجد نص محادثة لإعادة تشغيله بعد. شغّل نقدًا لتسجيل واحد.',
-  'critiqueTheater.transcriptLoading': 'جارٍ تحميل النص…',
-  'critiqueTheater.transcriptError': 'تعذّر تحميل نص المحادثة: {error}',
-  'critiqueTheater.replaySpeedPaused': 'متوقّف مؤقتًا',
-  'critiqueTheater.replaySpeedInstant': 'فوري',
-  'critiqueTheater.replaySpeedLive': 'مباشر',
-  'critiqueTheater.replaySpeedFast': 'سريع',
-  'critiqueTheater.settingsNav': 'لجنة تحكيم التصميم',
-  'critiqueTheater.settingsNavHint': 'مراجعة تصميم بخمس لوحات لعمليات التشغيل الخاصة بك',
-  'critiqueTheater.settingsEnabledLabel': 'إظهار لجنة تحكيم التصميم أثناء تشغيل الـ Agent',
-  'critiqueTheater.settingsEnabledDescription': 'عند التفعيل، تظهر مراجعة بخمس لوحات بجانب مخرجات الـ Agent وتقيّم الناتج قبل التسليم. يمكنك المقاطعة في أي وقت.',
-  'critiqueTheater.settingsEnabledProjectHint': 'تم الحفظ لهذا المشروع. ستمر عمليات التشغيل الجديدة في هذا المشروع عبر لجنة تحكيم التصميم من جانب الخادم.',
-  'critiqueTheater.settingsEnabledNoProjectHint': 'افتح مشروعًا للحفظ من جانب الخادم. حتى ذلك الحين، يغيّر هذا فقط التفضيل داخل المتصفح.',
-  'pet.title': 'الحيوانات الأليفة',
-  'pet.subtitle': 'تبنَّ رفيقاً صغيراً يطفو فوق مساحة عملك.',
-  'pet.navTitle': 'الحيوانات الأليفة',
-  'pet.navHint': 'تبنَّ أو خصص',
-  'pet.tabBuiltIn': 'مدمج',
-  'pet.tabBuiltInHint': 'رفقاء منتقون مدمجون مع Open Design - اختر واحداً وتبنَّه.',
-  'pet.builtInEmpty': 'الحيوانات الأليفة المدمجة غير متوفرة حالياً. حاول تحديث تبويب المجتمع بمجرد اتصال البرنامج الخفي.',
-  'pet.tabCustom': 'مخصص',
-  'pet.tabCustomHint': 'اصنع خاصتك باسم، رمز، لون أو صورة.',
-  'pet.tabCommunity': 'المجتمع',
-  'pet.tabCommunityHint': 'حيوانات مفقوسة من Codex - تبنَّ واحداً أو ولد واحداً جديداً.',
-  'pet.tabsAria': 'مصدر الحيوان الأليف',
-  'pet.adopt': 'تبنَّ',
-  'pet.adoptedBadge': 'تم التبني',
-  'pet.adoptCallout': 'تبنَّ حيواناً أليفاً',
-  'pet.changePet': 'تغيير الحيوان الأليف',
-  'pet.wake': 'إيقاظ',
-  'pet.tuck': 'إخفاء',
-  'pet.wakeTitle': 'إيقاظ الحيوان الأليف - إظهار الطبقة العائمة.',
-  'pet.tuckTitle': 'إخفاء الحيوان الأليف - إخفاء الطبقة العائمة.',
-  'pet.settingsTitle': 'فتح إعدادات الحيوان الأليف',
-  'pet.useCustom': 'استخدم حيواني',
-  'pet.customTitle': 'اصنع خاصتك',
-  'pet.customHint': 'اختر اسماً، رمزاً ولوناً - الطبقة تتحدث مباشرة.',
-  'pet.customGreetingPlaceholder': 'قل مرحباً من حيوانك الأليف...',
-  'pet.fieldName': 'الاسم',
-  'pet.fieldGlyph': 'الرمز',
-  'pet.fieldGlyphHint': 'إيموجي واحد يعمل بشكل أفضل (مثلاً: 🐝, 🦄, 🐢).',
-  'pet.fieldGreeting': 'التحية',
-  'pet.fieldAccent': 'لون التمييز',
-  'pet.fieldAccentCustom': 'لون مخصص',
-  'pet.fieldAccentDefault': 'لون التمييز الافتراضي',
-  'pet.overlayAria': 'رفيق الحيوان الأليف',
-  'pet.spriteAria': '{name} - اسحب للتحريك، اضغط للدردشة',
-  'pet.spriteTitle': 'مرحباً من {name}! اضغط للدردشة.',
-  'pet.taskSummarySingle': 'تعمل {count} مهمة Agent.',
-  'pet.taskSummaryMultiple': 'تعمل {count} مهام Agent عبر {projects} مشاريع.',
-  'pet.taskSummaryRecentSingle': 'اكتملت مؤخرًا {count} مهمة Agent.',
-  'pet.taskSummaryRecentMultiple': 'اكتملت مؤخرًا {count} مهام Agent.',
-  'pet.taskListAria': 'مهام Agent النشطة',
-  'pet.taskOpenProject': 'فتح {project}',
-  'pet.taskGroup.running': 'قيد التشغيل',
-  'pet.taskGroup.queued': 'في الانتظار',
-  'pet.taskGroup.recent': 'اكتملت مؤخرًا',
-  'pet.idleQuote.leonardo.text': 'التعلّم لا يُنهك العقل أبدًا.',
-  'pet.idleQuote.leonardo.author': 'ليوناردو دافنشي',
-  'pet.idleQuote.michelangelo.text': 'رأيتُ الملاك في الرخام ونحتُّ حتى حررتُه.',
-  'pet.idleQuote.michelangelo.author': 'مايكل أنجلو',
-  'pet.idleQuote.bernini.text': 'هناك أداتان يمكن أن تساعدا النحّات: الضوء والظل.',
-  'pet.idleQuote.bernini.author': 'جان لورينزو برنيني',
-  'pet.idleQuote.raphael.text': 'حين يرسم المرء فإنه لا يفكّر.',
-  'pet.idleQuote.raphael.author': 'رفائيل',
-  'pet.idleQuote.caravaggio.text': 'كل الأعمال، أيًّا كانت أو مهما كان من رسمها، ليست سوى تفاهات وأمور صبيانية ما لم تُصنع وتُرسم من الواقع.',
-  'pet.idleQuote.caravaggio.author': 'كارافاجيو',
-  'pet.idleQuote.rodin.text': 'الأهم هو أن تتأثّر، أن تحبّ، أن تأمل، أن ترتجف، أن تحيا.',
-  'pet.idleQuote.rodin.author': 'أوغست رودان',
-  'pet.composerTitle': 'الحيوانات الأليفة - إيقاظ، إخفاء، أو اختيار واحد',
-  'pet.composerMenuTitle': 'الحيوانات الأليفة',
-  'pet.composerMenuHint': 'تلميح: اكتب /pet للتبديل',
-  'pet.composerOpenSettings': 'إدارة الحيوانات الأليفة',
-  'pet.welcomeTeaserTitle': 'تبنَّ حيواناً أليفاً',
-  'pet.welcomeTeaserBody': 'رفيق عائم صغير يقضي الوقت معك.',
-  'pet.welcomeTeaserCta': 'اختر واحداً',
-  'pet.imageUpload': 'رفع صورة',
-  'pet.imageReplace': 'استبدال الصورة',
-  'pet.imageRemove': 'استخدام إيموجي',
-  'pet.imageHintIdle': 'PNG, JPG, WebP, GIF أو SVG. رفع ورقة؟ أسقط شريطاً أفقياً وحدد عدد الإطارات.',
-  'pet.imageHintActive': 'عرض صورتك. حدد الإطارات > 1 للمشي في ورقة صور أفقية.',
-  'pet.fieldFrames': 'الإطارات',
-  'pet.fieldFramesHint': '1 = ثابت. > 1 = ورقة صور أفقية.',
-  'pet.fieldFps': 'السرعة (fps)',
-  'pet.fieldFpsHint': 'مدى سرعة تدوير الإطارات.',
-  'pet.atlasImport': 'استيراد صورة Codex',
-  'pet.atlasImportTitle': 'استيراد أطلس حيوان مفقوس 8x9 / 192x208 (PNG أو WebP).',
-  'pet.atlasPickerTitle': 'اختر صف رسوم متحركة',
-  'pet.atlasPickerHint': 'حيوانات Codex تأتي بـ 9 صفوف رسوم متحركة. افتراضياً نحتفظ بالأطلس الكامل ليغير الحيوان الصفوف عند التحويم، السحب، والسكون. يمكنك أيضاً تجميده في حلقة واحدة.',
-  'pet.atlasCancel': 'تجاهل الأطلس',
-  'pet.atlasAdopt': 'تجميد في هذا الصف',
-  'pet.atlasAdoptFull': 'استخدام الأطلس الكامل (متحرك)',
-  'pet.atlasAdoptFullTitle': 'الاحتفاظ بكل الصفوف ليتفاعل الحيوان مع التحويم، اتجاه السحب، والسكون الطويل.',
-  'pet.atlasAdoptRowTitle': 'قص الصف المظلل فقط في شريط متكرر واحد.',
-  'pet.atlasActiveHint': 'الأطلس المتحرك نشط - يختار الحيوان صفاً من تفاعلك (تحويم، سحب، سكون).',
-  'pet.atlasRow.idle': 'ساكن',
-  'pet.atlasRow.running-right': 'جري يميناً',
-  'pet.atlasRow.running-left': 'جري يساراً',
-  'pet.atlasRow.waving': 'تلويح',
-  'pet.atlasRow.jumping': 'قفز',
-  'pet.atlasRow.failed': 'فشل',
-  'pet.atlasRow.waiting': 'انتظار',
-  'pet.atlasRow.running': 'جري',
-  'pet.atlasRow.review': 'مراجعة',
-  'pet.hatchTitle': 'فقس حيوان جديد بالذكاء الاصطناعي',
-  'pet.hatchHint': 'استخدم مهارة hatch-pet في الدردشة لتوليد ورقة صور بأسلوب Codex، ثم استوردها هنا.',
-  'pet.hatchConcept': 'مفهوم الحيوان (اختياري)',
-  'pet.hatchConceptPlaceholder': 'مثلاً: شيبا بيكسل-آرت صغير في سترة مريحة',
-  'pet.hatchCopy': 'نسخ الأمر',
-  'pet.hatchCopied': 'تم النسخ!',
-  'pet.hatchFoot': 'بعد أن يحفظ المساعد حيوانك، عد إلى هنا واختر "استيراد صورة Codex".',
-  'pet.slashPopoverAria': 'أوامر Slash',
-  'pet.slashPopoverTitle': 'الأوامر',
-  'pet.slashPopoverHint': '↑↓ للتنقل · enter للاختيار · esc للتجاهل',
-  'pet.slashPet': 'تبديل، تبني، أو الانتقال لإعدادات الحيوانات الأليفة.',
-  'pet.slashPetWake': 'إيقاظ طبقة الحيوان الأليف العائمة.',
-  'pet.slashPetTuck': 'إخفاء الحيوان الأليف حالياً.',
-  'pet.slashHatch': 'توليد حيوان Codex عبر مهارة hatch-pet.',
-  'pet.slashHatchArg': '<مفهوم>',
-  'pet.slashSearch': 'ابحث في الويب عبر أمر OD research.',
-  'pet.slashSearchArg': '<استعلام>',
-  'pet.codexTitle': 'فقس مؤخراً',
-  'pet.codexSubtitle': 'الحيوانات التي تمت تعبئتها بواسطة مهارة hatch-pet تظهر هنا للتبني بنقرة واحدة.',
-  'pet.codexSubtitleWithDir': 'مسح {dir} للبحث عن حيوانات معبأة بواسطة مهارة hatch-pet.',
-  'pet.codexEmpty': 'لا توجد حيوانات مفقوسة بعد. اكتب /hatch في الدردشة لتوليد واحد.',
-  'pet.codexLoading': 'البحث عن حيوانات مفقوسة...',
-  'pet.codexRefresh': 'تحديث',
-  'pet.codexAdopt': 'تبنَّ',
-  'pet.codexAdopting': 'جاري التبني...',
-  'pet.communitySync': 'تحميل حيوانات المجتمع',
-  'pet.communitySyncing': 'جاري التحميل...',
-  'pet.communitySyncTitle': 'مزامنة أحدث الحيوانات من Codex Pet Share + j20 Hatchery إلى ~/.codex/pets/.',
-  'pet.communitySyncDone': 'تمت مزامنة {wrote} حيواناً جديداً ({total} إجمالي).',
-  'pet.communitySyncFailed': 'فشلت المزامنة: {error}',
-  'pet.codexBundled': 'مدمج',
-  'pet.codexBundledTitle': 'يأتي مع Open Design - لا حاجة للتحميل.',
-  'settings.notifications': 'الإشعارات',
-  'settings.notificationsHint': 'صوت وإشعار سطح المكتب عند اكتمال المهمة',
-  'settings.notifyCompletionSound': 'صوت الاكتمال',
-  'settings.notifyCompletionSoundHint': 'يُشغَّل عند انتهاء الجولة. متوقف افتراضيًا.',
-  'settings.notifySuccessSound': 'صوت النجاح',
-  'settings.notifyFailureSound': 'صوت الفشل',
-  'settings.notifyDesktop': 'إشعار سطح المكتب',
-  'settings.notifyDesktopHint': 'يُرسَل عندما لا تكون النافذة في المقدمة.',
-  'settings.notifyDesktopBlocked': 'تم حظر الإشعارات من المتصفح. اسمح بها من إعدادات الموقع.',
-  'settings.notifyDesktopUnsupported': 'إشعارات سطح المكتب غير متاحة في هذه البيئة.',
-  'settings.notifyTest': 'إرسال اختبار',
-  'settings.notifyTestSent': 'تم إرسال إشعار الاختبار. إذا لم تظهر نافذة، فتحقق من إعدادات إشعارات المتصفح والنظام.',
-  'settings.notifyTestFailed': 'فشل استدعاء الإشعار. تحقق من إعدادات إشعارات المتصفح والنظام.',
-  'settings.notifySoundDing': 'دينج',
-  'settings.notifySoundChime': 'جرس',
-  'settings.notifySoundTwoToneUp': 'نغمتان صاعدتان',
-  'settings.notifySoundPluck': 'نقرة وتر',
-  'settings.notifySoundBuzz': 'طنين',
-  'settings.notifySoundTwoToneDown': 'نغمتان هابطتان',
-  'settings.notifySoundThud': 'دمدمة',
-  'settings.skills': 'المهارات',
-  'settings.skillsHint': 'المهارات الوظيفية التي يمكن للوكيل استدعاؤها أثناء المهمة',
-  'settings.skillsNew': 'مهارة جديدة',
-  'settings.skillsEmpty': 'حدد مهارة من اليسار أو أنشئ مهارة جديدة.',
-  'settings.skillsEdit': 'تحرير',
-  'settings.skillsDelete': 'حذف',
-  'settings.skillsDeleteConfirm': 'تأكيد الحذف',
-  'settings.skillsName': 'الاسم',
-  'settings.skillsTriggers': 'محفزات (مفصولة بفواصل أو أسطر جديدة)',
-  'settings.skillsDescription': 'الوصف',
-  'settings.skillsBody': 'محتوى SKILL.md',
-  'settings.skillsCreate': 'إنشاء',
-  'settings.skillsSave': 'حفظ',
-  'settings.skillsSaving': 'جاري الحفظ…',
-  'settings.skillsFiles': 'الملفات',
-  'settings.skillsNoFiles': 'لا توجد ملفات في مجلد هذه المهارة.',
-  'settings.skillsNameRequired': 'اسم المهارة مطلوب.',
-  'settings.skillsBodyRequired': 'محتوى المهارة مطلوب.',
-  'settings.designSystems': 'أنظمة التصميم',
-  'settings.designSystemsHint': 'تصفح وتفعيل أنظمة التصميم المتاحة للوكيل',
-  'settings.designSystemsInstalled': 'مثبّتة',
-  'settings.designSystemsAdd': 'إضافة نظام تصميم',
-  'settings.designSystemsHiddenCount': '{count} مخفية من معرض الصفحة الرئيسية',
-  'settings.designSystemsShowAll': 'عرض الكل',
-  'settings.designSystemsShowHidden': 'عرض المخفية',
-  'settings.designSystemsSource': 'المصدر',
-  'settings.designSystemsSourceLocal': 'محلي',
+  'nextStep.createDesignBusy': 'Ø¬Ø§Ø±Ù Ø¥ÙØ´Ø§Ø¡ Ø§ÙØªØµÙÙÙ...',
+  'assistant.thinking': 'ØªÙÙÙØ±',
+  'assistant.thought': 'ÙÙÙØ±',
+  'assistant.thoughtFor': 'ÙÙÙØ± ÙÙØ¯Ø© {s} Ø«',
+  'assistant.systemReminder': 'ØªØ°ÙÙØ± Ø§ÙÙØ¸Ø§Ù',
+  'assistant.possiblePromptInjection': 'Ø§Ø­ØªÙØ§Ù Ø­ÙÙ Ø§ÙØªÙØ¬ÙÙ',
+  'assistant.waitingFirstOutput': 'ÙÙ Ø§ÙØªØ¸Ø§Ø± Ø£ÙÙ ÙØ®Ø±Ø¬',
+  'assistant.statusBootingAgent': 'ØªØ´ØºÙÙ Ø§ÙÙÙÙÙ',
+  'assistant.statusPreparing': 'Ø¬Ø§Ø±Ù Ø§ÙØªØ­Ø¶ÙØ±...',
+  'assistant.statusStarting': 'Ø¨Ø¯Ø¡',
+  'assistant.statusRequesting': 'Ø¥Ø±Ø³Ø§Ù Ø§ÙØ·ÙØ¨',
+  'assistant.statusThinking': 'ØªÙÙÙØ±',
+  'assistant.statusStreaming': 'ØªØ¯ÙÙ',
+  'assistant.slowHint': 'ÙØ³ØªØºØ±Ù ÙÙØªØ§Ù Ø£Ø·ÙÙ ÙÙ Ø§ÙÙØ¹ØªØ§Ø¯. ÙØ¸ÙØ± Ø§ÙÙÙÙØ°Ø¬ Ø¹Ø§Ø¯Ø© ÙÙ 5-10 Ø«ÙØ§ÙÙ - ÙÙÙÙÙ Ø§ÙØªÙÙÙ ÙØ¥Ø¹Ø§Ø¯Ø© Ø§ÙØµÙØ§ØºØ©.',
+  'assistant.verbEditing': 'ØªØ¹Ø¯ÙÙ',
+  'assistant.verbWriting': 'ÙØªØ§Ø¨Ø©',
+  'assistant.verbReading': 'ÙØ±Ø§Ø¡Ø©',
+  'assistant.verbSearching': 'Ø¨Ø­Ø«',
+  'assistant.verbRunning': 'ØªØ´ØºÙÙ',
+  'assistant.verbTodos': 'ÙÙØ§Ù',
+  'assistant.verbFetching': 'Ø¬ÙØ¨',
+  'assistant.verbCalling': 'Ø§ØªØµØ§Ù',
+  'qf.answered': 'ØªÙØª Ø§ÙØ¥Ø¬Ø§Ø¨Ø©',
+  'qf.choose': 'Ø§Ø®ØªØ±...',
+  'qf.required': 'ÙØ·ÙÙØ¨',
+  'qf.lockedSubmitted': 'ØªÙ Ø¥Ø±Ø³Ø§Ù Ø§ÙØ¥Ø¬Ø§Ø¨Ø§Øª - ÙØ³ØªØ®Ø¯ÙÙØ§ Ø§ÙÙÙÙÙ ÙØ¨ÙÙØ© Ø§ÙØ¬ÙØ³Ø©.',
+  'qf.lockedPrev': 'ÙØ°Ø§ Ø§ÙÙÙÙØ°Ø¬ ÙÙ Ø¯ÙØ± Ø³Ø§Ø¨Ù.',
+  'qf.hint': 'Ø§Ø®ØªØ± ÙØ§ ÙÙØ§Ø³Ø¨Ù. ØªØ®Ø·Ù Ø§ÙØ­ÙÙÙ Ø§ÙØ§Ø®ØªÙØ§Ø±ÙØ© Ø§ÙØªÙ ÙØ§ ØªÙÙÙ - Ø³ÙØ³ØªØ®Ø¯Ù Ø§ÙÙÙÙÙ Ø§ÙØªØ±Ø§Ø¶Ø§Øª ÙØ¹ÙÙÙØ©.',
+  'qf.submitDefault': 'Ø¥Ø±Ø³Ø§Ù Ø§ÙØ¥Ø¬Ø§Ø¨Ø§Øª',
+  'qf.submitDisabledTitle': 'Ø§ÙÙØ£ Ø§ÙØ­ÙÙÙ Ø§ÙÙØ·ÙÙØ¨Ø© Ø£ÙÙØ§Ù',
+  'qf.submitTitle': 'Ø¥Ø±Ø³Ø§Ù Ø§ÙØ¥Ø¬Ø§Ø¨Ø§Øª',
+  'qf.cardSelected': 'ÙØ­Ø¯Ø¯',
+  'qf.cardRefs': 'Ø§ÙÙØ±Ø§Ø¬Ø¹:',
+  'qf.cardSampleText': 'Ø§ÙØ«Ø¹ÙØ¨ Ø§ÙØ¨ÙÙ Ø§ÙØ³Ø±ÙØ¹ Â· 0123',
+  'questions.tabLabel': 'Ø£Ø³Ø¦ÙØ©',
+  'questions.banner': 'ÙÙ ØªÙØ§ÙØ¹ Ø£Ù Ø£Ø·Ø±Ø­ Ø¹ÙÙÙ Ø¨Ø¶Ø¹Ø© Ø£Ø³Ø¦ÙØ© Ø³Ø±ÙØ¹Ø©Ø',
+  'questions.bannerAnswered': 'ØªÙØª Ø§ÙØ¥Ø¬Ø§Ø¨Ø© Ø¹Ù Ø§ÙØ£Ø³Ø¦ÙØ©',
+  'questions.continue': 'ÙØªØ§Ø¨Ø¹Ø©',
+  'questions.generating': 'Ø¬Ø§Ø±Ù Ø¥ÙØ´Ø§Ø¡ Ø§ÙØ£Ø³Ø¦ÙØ©â¦',
+  'questions.skipAll': 'ØªØ®Ø·ÙÙ Ø§ÙÙÙ',
+  'questions.autoSkipHint': 'ÙØªØ§Ø¨Ø¹ ØªÙÙØ§Ø¦ÙÙØ§ Ø¹ÙØ¯ Ø§ÙØªÙØ§Ø¡ Ø§ÙÙØ¤ÙÙØª',
+  'sketch.toolSelect': 'ØªØ­Ø¯ÙØ¯ (ÙØ§ Ø¥Ø¬Ø±Ø§Ø¡)',
+  'sketch.toolPen': 'ÙÙÙ',
+  'sketch.toolText': 'ÙØµ',
+  'sketch.toolRect': 'ÙØ³ØªØ·ÙÙ',
+  'sketch.toolArrow': 'Ø³ÙÙ',
+  'sketch.toolEraser': 'ÙÙØ­Ø§Ø©',
+  'sketch.color': 'Ø§ÙÙÙÙ',
+  'sketch.strokeSize': 'Ø­Ø¬Ù Ø§ÙØ®Ø·',
+  'sketch.undo': 'ØªØ±Ø§Ø¬Ø¹',
+  'sketch.clear': 'ÙØ³Ø­',
+  'sketch.close': 'Ø¥ØºÙØ§Ù',
+  'sketch.closeConfirm': 'Ø¥ØºÙØ§Ù Ø§ÙØ±Ø³Ù ÙØªØ¬Ø§ÙÙ Ø§ÙØªØºÙÙØ±Ø§Øª ØºÙØ± Ø§ÙÙØ­ÙÙØ¸Ø©Ø',
+  'sketch.textPrompt': 'Ø§ÙÙØµ:',
+  'sketch.textModalTitle': 'Ø¥Ø¶Ø§ÙØ© ÙØµ',
+  'critiqueTheater.userFacingName': 'ÙØ¬ÙØ© ØªØ­ÙÙÙ Ø§ÙØªØµÙÙÙ',
+  'critiqueTheater.roleDesigner': 'Ø§ÙÙØµÙÙÙ',
+  'critiqueTheater.roleCritic': 'Ø§ÙÙØ§ÙØ¯',
+  'critiqueTheater.roleBrand': 'Ø§ÙØ¹ÙØ§ÙØ© Ø§ÙØªØ¬Ø§Ø±ÙØ©',
+  'critiqueTheater.roleA11y': 'Ø¥ÙÙØ§ÙÙØ© Ø§ÙÙØµÙÙ',
+  'critiqueTheater.roleCopy': 'Ø§ÙÙØµ',
+  'critiqueTheater.roundLabel': 'Ø§ÙØ¬ÙÙØ© {n} ÙÙ {m}',
+  'critiqueTheater.mustFix': '{n} ÙØ¬Ø¨ Ø¥ØµÙØ§Ø­ÙØ§',
+  'critiqueTheater.composite': 'ÙØ±ÙÙØ¨',
+  'critiqueTheater.threshold': 'Ø§ÙØ¹ØªØ¨Ø©',
+  'critiqueTheater.consensus': 'Ø§ÙØ¥Ø¬ÙØ§Ø¹',
+  'critiqueTheater.interrupt': 'ÙÙØ§Ø·Ø¹Ø©',
+  'critiqueTheater.interrupting': 'Ø¬Ø§Ø±Ù Ø§ÙÙÙØ§Ø·Ø¹Ø©â¦',
+  'critiqueTheater.interrupted': 'ØªÙÙØª Ø§ÙÙÙØ§Ø·Ø¹Ø©',
+  'critiqueTheater.degradedHeading': 'Ø§ÙÙØ¬ÙØ© ØºÙØ± ÙØªØµÙØ© ÙÙ ÙØ°Ù Ø§ÙØ¬ÙØ³Ø©',
+  'critiqueTheater.degradedReasonMalformed': 'ÙØ®Ø±Ø¬Ø§Øª Ø§ÙÙØ¬ÙØ© ØºÙØ± ØµØ­ÙØ­Ø© (Ø±ÙØ¶ Ø§ÙÙØ­ÙÙÙ Ø§ÙÙØªÙØ©).',
+  'critiqueTheater.degradedReasonOversize': 'ØªØ¬Ø§ÙØ²Øª ÙØ®Ø±Ø¬Ø§Øª Ø§ÙÙØ¬ÙØ© Ø§ÙØ­Ø¯Ù Ø§ÙØ¢ÙÙ ÙÙ Ø§ÙØ¨Ø§ÙØªØ§Øª.',
+  'critiqueTheater.degradedReasonAdapter': 'Ø§ÙÙØ­ÙÙÙ {adapter} ÙØ§ ÙØ¯Ø¹Ù Ø¨Ø±ÙØªÙÙÙÙ Critique.',
+  'critiqueTheater.degradedReasonProtocol': 'Ø£Ø±Ø³Ù Ø§ÙÙØ­ÙÙÙ {adapter} Ø¥ØµØ¯Ø§Ø± Ø¨Ø±ÙØªÙÙÙÙ ØºÙØ± ÙØ¯Ø¹ÙÙ.',
+  'critiqueTheater.degradedReasonMissingArtifact': 'Ø§ÙØªÙØª Ø§ÙØ¬ÙØ³Ø© Ø¯ÙÙ Ø¹ÙØµØ± ÙÙØ§Ø¦Ù.',
+  'critiqueTheater.replay': 'Ø¥Ø¹Ø§Ø¯Ø© Ø§ÙØªØ´ØºÙÙ',
+  'critiqueTheater.replaySpeed': 'Ø³Ø±Ø¹Ø© Ø¥Ø¹Ø§Ø¯Ø© Ø§ÙØªØ´ØºÙÙ',
+  'critiqueTheater.readOnly': 'ÙÙÙØ±Ø§Ø¡Ø© ÙÙØ·',
+  'critiqueTheater.shippedSummary': 'ØªÙ Ø§ÙØ¥Ø·ÙØ§Ù ÙÙ Ø§ÙØ¬ÙÙØ© {round} Â· Ø§ÙÙØªÙØ¬Ø© Ø§ÙÙØ±ÙØ¨Ø© {composite}',
+  'critiqueTheater.interruptedSummary': 'ØªÙØª Ø§ÙÙÙØ§Ø·Ø¹Ø© ÙÙ Ø§ÙØ¬ÙÙØ© {round} Â· Ø£ÙØ¶Ù ÙØªÙØ¬Ø© ÙØ±ÙØ¨Ø© {composite}',
+  'critiqueTheater.shippedBadge': 'ØªÙ Ø§ÙØ¥Ø·ÙØ§Ù',
+  'critiqueTheater.belowThresholdBadge': 'Ø¯ÙÙ Ø§ÙØ¹ØªØ¨Ø©',
+  'critiqueTheater.timedOutBadge': 'Ø§ÙØªÙØª Ø§ÙÙÙÙØ©',
+  'critiqueTheater.failedHeading': 'ÙØ´ÙØª Ø§ÙØ¬ÙØ³Ø©',
+  'critiqueTheater.failedReasonCliExit': 'Ø®Ø±Ø¬ Agent CLI Ø¨Ø±ÙØ² ØºÙØ± ØµÙØ±Ù ÙØ¨Ù Ø£Ù ØªØªÙÙÙÙ Ø§ÙÙØ¬ÙØ© ÙÙ Ø§ÙØ¥ÙÙØ§Ø¡.',
+  'critiqueTheater.failedReasonPerRoundTimeout': 'ØªØ¬Ø§ÙØ²Øª Ø¥Ø­Ø¯Ù Ø§ÙØ¬ÙÙØ§Øª Ø­Ø¯ÙÙØ§ Ø§ÙØ²ÙÙÙ.',
+  'critiqueTheater.failedReasonTotalTimeout': 'ØªØ¬Ø§ÙØ²Øª Ø§ÙØ¬ÙØ³Ø© Ø§ÙÙØ§ÙÙØ© Ø¥Ø¬ÙØ§ÙÙ Ø­Ø¯ÙÙØ§ Ø§ÙØ²ÙÙÙ.',
+  'critiqueTheater.failedReasonOrchestrator': 'Ø®Ø·Ø£ Ø¯Ø§Ø®ÙÙ ÙÙ Ø§ÙÙÙØ³ÙÙ.',
+  'critiqueTheater.transcriptEmpty': 'ÙØ§ ÙÙØ¬Ø¯ ÙØµ ÙØ­Ø§Ø¯Ø«Ø© ÙØ¥Ø¹Ø§Ø¯Ø© ØªØ´ØºÙÙÙ Ø¨Ø¹Ø¯. Ø´ØºÙÙ ÙÙØ¯ÙØ§ ÙØªØ³Ø¬ÙÙ ÙØ§Ø­Ø¯.',
+  'critiqueTheater.transcriptLoading': 'Ø¬Ø§Ø±Ù ØªØ­ÙÙÙ Ø§ÙÙØµâ¦',
+  'critiqueTheater.transcriptError': 'ØªØ¹Ø°ÙØ± ØªØ­ÙÙÙ ÙØµ Ø§ÙÙØ­Ø§Ø¯Ø«Ø©: {error}',
+  'critiqueTheater.replaySpeedPaused': 'ÙØªÙÙÙÙ ÙØ¤ÙØªÙØ§',
+  'critiqueTheater.replaySpeedInstant': 'ÙÙØ±Ù',
+  'critiqueTheater.replaySpeedLive': 'ÙØ¨Ø§Ø´Ø±',
+  'critiqueTheater.replaySpeedFast': 'Ø³Ø±ÙØ¹',
+  'critiqueTheater.settingsNav': 'ÙØ¬ÙØ© ØªØ­ÙÙÙ Ø§ÙØªØµÙÙÙ',
+  'critiqueTheater.settingsNavHint': 'ÙØ±Ø§Ø¬Ø¹Ø© ØªØµÙÙÙ Ø¨Ø®ÙØ³ ÙÙØ­Ø§Øª ÙØ¹ÙÙÙØ§Øª Ø§ÙØªØ´ØºÙÙ Ø§ÙØ®Ø§ØµØ© Ø¨Ù',
+  'critiqueTheater.settingsEnabledLabel': 'Ø¥Ø¸ÙØ§Ø± ÙØ¬ÙØ© ØªØ­ÙÙÙ Ø§ÙØªØµÙÙÙ Ø£Ø«ÙØ§Ø¡ ØªØ´ØºÙÙ Ø§ÙÙ Agent',
+  'critiqueTheater.settingsEnabledDescription': 'Ø¹ÙØ¯ Ø§ÙØªÙØ¹ÙÙØ ØªØ¸ÙØ± ÙØ±Ø§Ø¬Ø¹Ø© Ø¨Ø®ÙØ³ ÙÙØ­Ø§Øª Ø¨Ø¬Ø§ÙØ¨ ÙØ®Ø±Ø¬Ø§Øª Ø§ÙÙ Agent ÙØªÙÙÙÙ Ø§ÙÙØ§ØªØ¬ ÙØ¨Ù Ø§ÙØªØ³ÙÙÙ. ÙÙÙÙÙ Ø§ÙÙÙØ§Ø·Ø¹Ø© ÙÙ Ø£Ù ÙÙØª.',
+  'critiqueTheater.settingsEnabledProjectHint': 'ØªÙ Ø§ÙØ­ÙØ¸ ÙÙØ°Ø§ Ø§ÙÙØ´Ø±ÙØ¹. Ø³ØªÙØ± Ø¹ÙÙÙØ§Øª Ø§ÙØªØ´ØºÙÙ Ø§ÙØ¬Ø¯ÙØ¯Ø© ÙÙ ÙØ°Ø§ Ø§ÙÙØ´Ø±ÙØ¹ Ø¹Ø¨Ø± ÙØ¬ÙØ© ØªØ­ÙÙÙ Ø§ÙØªØµÙÙÙ ÙÙ Ø¬Ø§ÙØ¨ Ø§ÙØ®Ø§Ø¯Ù.',
+  'critiqueTheater.settingsEnabledNoProjectHint': 'Ø§ÙØªØ­ ÙØ´Ø±ÙØ¹ÙØ§ ÙÙØ­ÙØ¸ ÙÙ Ø¬Ø§ÙØ¨ Ø§ÙØ®Ø§Ø¯Ù. Ø­ØªÙ Ø°ÙÙ Ø§ÙØ­ÙÙØ ÙØºÙÙØ± ÙØ°Ø§ ÙÙØ· Ø§ÙØªÙØ¶ÙÙ Ø¯Ø§Ø®Ù Ø§ÙÙØªØµÙØ­.',
+  'pet.title': 'Ø§ÙØ­ÙÙØ§ÙØ§Øª Ø§ÙØ£ÙÙÙØ©',
+  'pet.subtitle': 'ØªØ¨ÙÙÙ Ø±ÙÙÙØ§Ù ØµØºÙØ±Ø§Ù ÙØ·ÙÙ ÙÙÙ ÙØ³Ø§Ø­Ø© Ø¹ÙÙÙ.',
+  'pet.navTitle': 'Ø§ÙØ­ÙÙØ§ÙØ§Øª Ø§ÙØ£ÙÙÙØ©',
+  'pet.navHint': 'ØªØ¨ÙÙÙ Ø£Ù Ø®ØµØµ',
+  'pet.tabBuiltIn': 'ÙØ¯ÙØ¬',
+  'pet.tabBuiltInHint': 'Ø±ÙÙØ§Ø¡ ÙÙØªÙÙÙ ÙØ¯ÙØ¬ÙÙ ÙØ¹ Open Design - Ø§Ø®ØªØ± ÙØ§Ø­Ø¯Ø§Ù ÙØªØ¨ÙÙÙÙ.',
+  'pet.builtInEmpty': 'Ø§ÙØ­ÙÙØ§ÙØ§Øª Ø§ÙØ£ÙÙÙØ© Ø§ÙÙØ¯ÙØ¬Ø© ØºÙØ± ÙØªÙÙØ±Ø© Ø­Ø§ÙÙØ§Ù. Ø­Ø§ÙÙ ØªØ­Ø¯ÙØ« ØªØ¨ÙÙØ¨ Ø§ÙÙØ¬ØªÙØ¹ Ø¨ÙØ¬Ø±Ø¯ Ø§ØªØµØ§Ù Ø§ÙØ¨Ø±ÙØ§ÙØ¬ Ø§ÙØ®ÙÙ.',
+  'pet.tabCustom': 'ÙØ®ØµØµ',
+  'pet.tabCustomHint': 'Ø§ØµÙØ¹ Ø®Ø§ØµØªÙ Ø¨Ø§Ø³ÙØ Ø±ÙØ²Ø ÙÙÙ Ø£Ù ØµÙØ±Ø©.',
+  'pet.tabCommunity': 'Ø§ÙÙØ¬ØªÙØ¹',
+  'pet.tabCommunityHint': 'Ø­ÙÙØ§ÙØ§Øª ÙÙÙÙØ³Ø© ÙÙ Codex - ØªØ¨ÙÙÙ ÙØ§Ø­Ø¯Ø§Ù Ø£Ù ÙÙØ¯ ÙØ§Ø­Ø¯Ø§Ù Ø¬Ø¯ÙØ¯Ø§Ù.',
+  'pet.tabsAria': 'ÙØµØ¯Ø± Ø§ÙØ­ÙÙØ§Ù Ø§ÙØ£ÙÙÙ',
+  'pet.adopt': 'ØªØ¨ÙÙÙ',
+  'pet.adoptedBadge': 'ØªÙ Ø§ÙØªØ¨ÙÙ',
+  'pet.adoptCallout': 'ØªØ¨ÙÙÙ Ø­ÙÙØ§ÙØ§Ù Ø£ÙÙÙØ§Ù',
+  'pet.changePet': 'ØªØºÙÙØ± Ø§ÙØ­ÙÙØ§Ù Ø§ÙØ£ÙÙÙ',
+  'pet.wake': 'Ø¥ÙÙØ§Ø¸',
+  'pet.tuck': 'Ø¥Ø®ÙØ§Ø¡',
+  'pet.wakeTitle': 'Ø¥ÙÙØ§Ø¸ Ø§ÙØ­ÙÙØ§Ù Ø§ÙØ£ÙÙÙ - Ø¥Ø¸ÙØ§Ø± Ø§ÙØ·Ø¨ÙØ© Ø§ÙØ¹Ø§Ø¦ÙØ©.',
+  'pet.tuckTitle': 'Ø¥Ø®ÙØ§Ø¡ Ø§ÙØ­ÙÙØ§Ù Ø§ÙØ£ÙÙÙ - Ø¥Ø®ÙØ§Ø¡ Ø§ÙØ·Ø¨ÙØ© Ø§ÙØ¹Ø§Ø¦ÙØ©.',
+  'pet.settingsTitle': 'ÙØªØ­ Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø§ÙØ­ÙÙØ§Ù Ø§ÙØ£ÙÙÙ',
+  'pet.useCustom': 'Ø§Ø³ØªØ®Ø¯Ù Ø­ÙÙØ§ÙÙ',
+  'pet.customTitle': 'Ø§ØµÙØ¹ Ø®Ø§ØµØªÙ',
+  'pet.customHint': 'Ø§Ø®ØªØ± Ø§Ø³ÙØ§ÙØ Ø±ÙØ²Ø§Ù ÙÙÙÙØ§Ù - Ø§ÙØ·Ø¨ÙØ© ØªØªØ­Ø¯Ø« ÙØ¨Ø§Ø´Ø±Ø©.',
+  'pet.customGreetingPlaceholder': 'ÙÙ ÙØ±Ø­Ø¨Ø§Ù ÙÙ Ø­ÙÙØ§ÙÙ Ø§ÙØ£ÙÙÙ...',
+  'pet.fieldName': 'Ø§ÙØ§Ø³Ù',
+  'pet.fieldGlyph': 'Ø§ÙØ±ÙØ²',
+  'pet.fieldGlyphHint': 'Ø¥ÙÙÙØ¬Ù ÙØ§Ø­Ø¯ ÙØ¹ÙÙ Ø¨Ø´ÙÙ Ø£ÙØ¶Ù (ÙØ«ÙØ§Ù: ð, ð¦, ð¢).',
+  'pet.fieldGreeting': 'Ø§ÙØªØ­ÙØ©',
+  'pet.fieldAccent': 'ÙÙÙ Ø§ÙØªÙÙÙØ²',
+  'pet.fieldAccentCustom': 'ÙÙÙ ÙØ®ØµØµ',
+  'pet.fieldAccentDefault': 'ÙÙÙ Ø§ÙØªÙÙÙØ² Ø§ÙØ§ÙØªØ±Ø§Ø¶Ù',
+  'pet.overlayAria': 'Ø±ÙÙÙ Ø§ÙØ­ÙÙØ§Ù Ø§ÙØ£ÙÙÙ',
+  'pet.spriteAria': '{name} - Ø§Ø³Ø­Ø¨ ÙÙØªØ­Ø±ÙÙØ Ø§Ø¶ØºØ· ÙÙØ¯Ø±Ø¯Ø´Ø©',
+  'pet.spriteTitle': 'ÙØ±Ø­Ø¨Ø§Ù ÙÙ {name}! Ø§Ø¶ØºØ· ÙÙØ¯Ø±Ø¯Ø´Ø©.',
+  'pet.taskSummarySingle': 'ØªØ¹ÙÙ {count} ÙÙÙØ© Agent.',
+  'pet.taskSummaryMultiple': 'ØªØ¹ÙÙ {count} ÙÙØ§Ù Agent Ø¹Ø¨Ø± {projects} ÙØ´Ø§Ø±ÙØ¹.',
+  'pet.taskSummaryRecentSingle': 'Ø§ÙØªÙÙØª ÙØ¤Ø®Ø±ÙØ§ {count} ÙÙÙØ© Agent.',
+  'pet.taskSummaryRecentMultiple': 'Ø§ÙØªÙÙØª ÙØ¤Ø®Ø±ÙØ§ {count} ÙÙØ§Ù Agent.',
+  'pet.taskListAria': 'ÙÙØ§Ù Agent Ø§ÙÙØ´Ø·Ø©',
+  'pet.taskOpenProject': 'ÙØªØ­ {project}',
+  'pet.taskGroup.running': 'ÙÙØ¯ Ø§ÙØªØ´ØºÙÙ',
+  'pet.taskGroup.queued': 'ÙÙ Ø§ÙØ§ÙØªØ¸Ø§Ø±',
+  'pet.taskGroup.recent': 'Ø§ÙØªÙÙØª ÙØ¤Ø®Ø±ÙØ§',
+  'pet.idleQuote.leonardo.text': 'Ø§ÙØªØ¹ÙÙÙ ÙØ§ ÙÙÙÙÙ Ø§ÙØ¹ÙÙ Ø£Ø¨Ø¯ÙØ§.',
+  'pet.idleQuote.leonardo.author': 'ÙÙÙÙØ§Ø±Ø¯Ù Ø¯Ø§ÙÙØ´Ù',
+  'pet.idleQuote.michelangelo.text': 'Ø±Ø£ÙØªÙ Ø§ÙÙÙØ§Ù ÙÙ Ø§ÙØ±Ø®Ø§Ù ÙÙØ­ØªÙÙ Ø­ØªÙ Ø­Ø±Ø±ØªÙÙ.',
+  'pet.idleQuote.michelangelo.author': 'ÙØ§ÙÙÙ Ø£ÙØ¬ÙÙ',
+  'pet.idleQuote.bernini.text': 'ÙÙØ§Ù Ø£Ø¯Ø§ØªØ§Ù ÙÙÙÙ Ø£Ù ØªØ³Ø§Ø¹Ø¯Ø§ Ø§ÙÙØ­ÙØ§Øª: Ø§ÙØ¶ÙØ¡ ÙØ§ÙØ¸Ù.',
+  'pet.idleQuote.bernini.author': 'Ø¬Ø§Ù ÙÙØ±ÙÙØ²Ù Ø¨Ø±ÙÙÙÙ',
+  'pet.idleQuote.raphael.text': 'Ø­ÙÙ ÙØ±Ø³Ù Ø§ÙÙØ±Ø¡ ÙØ¥ÙÙ ÙØ§ ÙÙÙÙØ±.',
+  'pet.idleQuote.raphael.author': 'Ø±ÙØ§Ø¦ÙÙ',
+  'pet.idleQuote.caravaggio.text': 'ÙÙ Ø§ÙØ£Ø¹ÙØ§ÙØ Ø£ÙÙÙØ§ ÙØ§ÙØª Ø£Ù ÙÙÙØ§ ÙØ§Ù ÙÙ Ø±Ø³ÙÙØ§Ø ÙÙØ³Øª Ø³ÙÙ ØªÙØ§ÙØ§Øª ÙØ£ÙÙØ± ØµØ¨ÙØ§ÙÙØ© ÙØ§ ÙÙ ØªÙØµÙØ¹ ÙØªÙØ±Ø³Ù ÙÙ Ø§ÙÙØ§ÙØ¹.',
+  'pet.idleQuote.caravaggio.author': 'ÙØ§Ø±Ø§ÙØ§Ø¬ÙÙ',
+  'pet.idleQuote.rodin.text': 'Ø§ÙØ£ÙÙ ÙÙ Ø£Ù ØªØªØ£Ø«ÙØ±Ø Ø£Ù ØªØ­Ø¨ÙØ Ø£Ù ØªØ£ÙÙØ Ø£Ù ØªØ±ØªØ¬ÙØ Ø£Ù ØªØ­ÙØ§.',
+  'pet.idleQuote.rodin.author': 'Ø£ÙØºØ³Øª Ø±ÙØ¯Ø§Ù',
+  'pet.composerTitle': 'Ø§ÙØ­ÙÙØ§ÙØ§Øª Ø§ÙØ£ÙÙÙØ© - Ø¥ÙÙØ§Ø¸Ø Ø¥Ø®ÙØ§Ø¡Ø Ø£Ù Ø§Ø®ØªÙØ§Ø± ÙØ§Ø­Ø¯',
+  'pet.composerMenuTitle': 'Ø§ÙØ­ÙÙØ§ÙØ§Øª Ø§ÙØ£ÙÙÙØ©',
+  'pet.composerMenuHint': 'ØªÙÙÙØ­: Ø§ÙØªØ¨ /pet ÙÙØªØ¨Ø¯ÙÙ',
+  'pet.composerOpenSettings': 'Ø¥Ø¯Ø§Ø±Ø© Ø§ÙØ­ÙÙØ§ÙØ§Øª Ø§ÙØ£ÙÙÙØ©',
+  'pet.welcomeTeaserTitle': 'ØªØ¨ÙÙÙ Ø­ÙÙØ§ÙØ§Ù Ø£ÙÙÙØ§Ù',
+  'pet.welcomeTeaserBody': 'Ø±ÙÙÙ Ø¹Ø§Ø¦Ù ØµØºÙØ± ÙÙØ¶Ù Ø§ÙÙÙØª ÙØ¹Ù.',
+  'pet.welcomeTeaserCta': 'Ø§Ø®ØªØ± ÙØ§Ø­Ø¯Ø§Ù',
+  'pet.imageUpload': 'Ø±ÙØ¹ ØµÙØ±Ø©',
+  'pet.imageReplace': 'Ø§Ø³ØªØ¨Ø¯Ø§Ù Ø§ÙØµÙØ±Ø©',
+  'pet.imageRemove': 'Ø§Ø³ØªØ®Ø¯Ø§Ù Ø¥ÙÙÙØ¬Ù',
+  'pet.imageHintIdle': 'PNG, JPG, WebP, GIF Ø£Ù SVG. Ø±ÙØ¹ ÙØ±ÙØ©Ø Ø£Ø³ÙØ· Ø´Ø±ÙØ·Ø§Ù Ø£ÙÙÙØ§Ù ÙØ­Ø¯Ø¯ Ø¹Ø¯Ø¯ Ø§ÙØ¥Ø·Ø§Ø±Ø§Øª.',
+  'pet.imageHintActive': 'Ø¹Ø±Ø¶ ØµÙØ±ØªÙ. Ø­Ø¯Ø¯ Ø§ÙØ¥Ø·Ø§Ø±Ø§Øª > 1 ÙÙÙØ´Ù ÙÙ ÙØ±ÙØ© ØµÙØ± Ø£ÙÙÙØ©.',
+  'pet.fieldFrames': 'Ø§ÙØ¥Ø·Ø§Ø±Ø§Øª',
+  'pet.fieldFramesHint': '1 = Ø«Ø§Ø¨Øª. > 1 = ÙØ±ÙØ© ØµÙØ± Ø£ÙÙÙØ©.',
+  'pet.fieldFps': 'Ø§ÙØ³Ø±Ø¹Ø© (fps)',
+  'pet.fieldFpsHint': 'ÙØ¯Ù Ø³Ø±Ø¹Ø© ØªØ¯ÙÙØ± Ø§ÙØ¥Ø·Ø§Ø±Ø§Øª.',
+  'pet.atlasImport': 'Ø§Ø³ØªÙØ±Ø§Ø¯ ØµÙØ±Ø© Codex',
+  'pet.atlasImportTitle': 'Ø§Ø³ØªÙØ±Ø§Ø¯ Ø£Ø·ÙØ³ Ø­ÙÙØ§Ù ÙÙÙÙØ³ 8x9 / 192x208 (PNG Ø£Ù WebP).',
+  'pet.atlasPickerTitle': 'Ø§Ø®ØªØ± ØµÙ Ø±Ø³ÙÙ ÙØªØ­Ø±ÙØ©',
+  'pet.atlasPickerHint': 'Ø­ÙÙØ§ÙØ§Øª Codex ØªØ£ØªÙ Ø¨Ù 9 ØµÙÙÙ Ø±Ø³ÙÙ ÙØªØ­Ø±ÙØ©. Ø§ÙØªØ±Ø§Ø¶ÙØ§Ù ÙØ­ØªÙØ¸ Ø¨Ø§ÙØ£Ø·ÙØ³ Ø§ÙÙØ§ÙÙ ÙÙØºÙØ± Ø§ÙØ­ÙÙØ§Ù Ø§ÙØµÙÙÙ Ø¹ÙØ¯ Ø§ÙØªØ­ÙÙÙØ Ø§ÙØ³Ø­Ø¨Ø ÙØ§ÙØ³ÙÙÙ. ÙÙÙÙÙ Ø£ÙØ¶Ø§Ù ØªØ¬ÙÙØ¯Ù ÙÙ Ø­ÙÙØ© ÙØ§Ø­Ø¯Ø©.',
+  'pet.atlasCancel': 'ØªØ¬Ø§ÙÙ Ø§ÙØ£Ø·ÙØ³',
+  'pet.atlasAdopt': 'ØªØ¬ÙÙØ¯ ÙÙ ÙØ°Ø§ Ø§ÙØµÙ',
+  'pet.atlasAdoptFull': 'Ø§Ø³ØªØ®Ø¯Ø§Ù Ø§ÙØ£Ø·ÙØ³ Ø§ÙÙØ§ÙÙ (ÙØªØ­Ø±Ù)',
+  'pet.atlasAdoptFullTitle': 'Ø§ÙØ§Ø­ØªÙØ§Ø¸ Ø¨ÙÙ Ø§ÙØµÙÙÙ ÙÙØªÙØ§Ø¹Ù Ø§ÙØ­ÙÙØ§Ù ÙØ¹ Ø§ÙØªØ­ÙÙÙØ Ø§ØªØ¬Ø§Ù Ø§ÙØ³Ø­Ø¨Ø ÙØ§ÙØ³ÙÙÙ Ø§ÙØ·ÙÙÙ.',
+  'pet.atlasAdoptRowTitle': 'ÙØµ Ø§ÙØµÙ Ø§ÙÙØ¸ÙÙ ÙÙØ· ÙÙ Ø´Ø±ÙØ· ÙØªÙØ±Ø± ÙØ§Ø­Ø¯.',
+  'pet.atlasActiveHint': 'Ø§ÙØ£Ø·ÙØ³ Ø§ÙÙØªØ­Ø±Ù ÙØ´Ø· - ÙØ®ØªØ§Ø± Ø§ÙØ­ÙÙØ§Ù ØµÙØ§Ù ÙÙ ØªÙØ§Ø¹ÙÙ (ØªØ­ÙÙÙØ Ø³Ø­Ø¨Ø Ø³ÙÙÙ).',
+  'pet.atlasRow.idle': 'Ø³Ø§ÙÙ',
+  'pet.atlasRow.running-right': 'Ø¬Ø±Ù ÙÙÙÙØ§Ù',
+  'pet.atlasRow.running-left': 'Ø¬Ø±Ù ÙØ³Ø§Ø±Ø§Ù',
+  'pet.atlasRow.waving': 'ØªÙÙÙØ­',
+  'pet.atlasRow.jumping': 'ÙÙØ²',
+  'pet.atlasRow.failed': 'ÙØ´Ù',
+  'pet.atlasRow.waiting': 'Ø§ÙØªØ¸Ø§Ø±',
+  'pet.atlasRow.running': 'Ø¬Ø±Ù',
+  'pet.atlasRow.review': 'ÙØ±Ø§Ø¬Ø¹Ø©',
+  'pet.hatchTitle': 'ÙÙØ³ Ø­ÙÙØ§Ù Ø¬Ø¯ÙØ¯ Ø¨Ø§ÙØ°ÙØ§Ø¡ Ø§ÙØ§ØµØ·ÙØ§Ø¹Ù',
+  'pet.hatchHint': 'Ø§Ø³ØªØ®Ø¯Ù ÙÙØ§Ø±Ø© hatch-pet ÙÙ Ø§ÙØ¯Ø±Ø¯Ø´Ø© ÙØªÙÙÙØ¯ ÙØ±ÙØ© ØµÙØ± Ø¨Ø£Ø³ÙÙØ¨ CodexØ Ø«Ù Ø§Ø³ØªÙØ±Ø¯ÙØ§ ÙÙØ§.',
+  'pet.hatchConcept': 'ÙÙÙÙÙ Ø§ÙØ­ÙÙØ§Ù (Ø§Ø®ØªÙØ§Ø±Ù)',
+  'pet.hatchConceptPlaceholder': 'ÙØ«ÙØ§Ù: Ø´ÙØ¨Ø§ Ø¨ÙÙØ³Ù-Ø¢Ø±Øª ØµØºÙØ± ÙÙ Ø³ØªØ±Ø© ÙØ±ÙØ­Ø©',
+  'pet.hatchCopy': 'ÙØ³Ø® Ø§ÙØ£ÙØ±',
+  'pet.hatchCopied': 'ØªÙ Ø§ÙÙØ³Ø®!',
+  'pet.hatchFoot': 'Ø¨Ø¹Ø¯ Ø£Ù ÙØ­ÙØ¸ Ø§ÙÙØ³Ø§Ø¹Ø¯ Ø­ÙÙØ§ÙÙØ Ø¹Ø¯ Ø¥ÙÙ ÙÙØ§ ÙØ§Ø®ØªØ± "Ø§Ø³ØªÙØ±Ø§Ø¯ ØµÙØ±Ø© Codex".',
+  'pet.slashPopoverAria': 'Ø£ÙØ§ÙØ± Slash',
+  'pet.slashPopoverTitle': 'Ø§ÙØ£ÙØ§ÙØ±',
+  'pet.slashPopoverHint': 'ââ ÙÙØªÙÙÙ Â· enter ÙÙØ§Ø®ØªÙØ§Ø± Â· esc ÙÙØªØ¬Ø§ÙÙ',
+  'pet.slashPet': 'ØªØ¨Ø¯ÙÙØ ØªØ¨ÙÙØ Ø£Ù Ø§ÙØ§ÙØªÙØ§Ù ÙØ¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø§ÙØ­ÙÙØ§ÙØ§Øª Ø§ÙØ£ÙÙÙØ©.',
+  'pet.slashPetWake': 'Ø¥ÙÙØ§Ø¸ Ø·Ø¨ÙØ© Ø§ÙØ­ÙÙØ§Ù Ø§ÙØ£ÙÙÙ Ø§ÙØ¹Ø§Ø¦ÙØ©.',
+  'pet.slashPetTuck': 'Ø¥Ø®ÙØ§Ø¡ Ø§ÙØ­ÙÙØ§Ù Ø§ÙØ£ÙÙÙ Ø­Ø§ÙÙØ§Ù.',
+  'pet.slashHatch': 'ØªÙÙÙØ¯ Ø­ÙÙØ§Ù Codex Ø¹Ø¨Ø± ÙÙØ§Ø±Ø© hatch-pet.',
+  'pet.slashHatchArg': '<ÙÙÙÙÙ>',
+  'pet.slashSearch': 'Ø§Ø¨Ø­Ø« ÙÙ Ø§ÙÙÙØ¨ Ø¹Ø¨Ø± Ø£ÙØ± OD research.',
+  'pet.slashSearchArg': '<Ø§Ø³ØªØ¹ÙØ§Ù>',
+  'pet.codexTitle': 'ÙÙØ³ ÙØ¤Ø®Ø±Ø§Ù',
+  'pet.codexSubtitle': 'Ø§ÙØ­ÙÙØ§ÙØ§Øª Ø§ÙØªÙ ØªÙØª ØªØ¹Ø¨Ø¦ØªÙØ§ Ø¨ÙØ§Ø³Ø·Ø© ÙÙØ§Ø±Ø© hatch-pet ØªØ¸ÙØ± ÙÙØ§ ÙÙØªØ¨ÙÙ Ø¨ÙÙØ±Ø© ÙØ§Ø­Ø¯Ø©.',
+  'pet.codexSubtitleWithDir': 'ÙØ³Ø­ {dir} ÙÙØ¨Ø­Ø« Ø¹Ù Ø­ÙÙØ§ÙØ§Øª ÙØ¹Ø¨Ø£Ø© Ø¨ÙØ§Ø³Ø·Ø© ÙÙØ§Ø±Ø© hatch-pet.',
+  'pet.codexEmpty': 'ÙØ§ ØªÙØ¬Ø¯ Ø­ÙÙØ§ÙØ§Øª ÙÙÙÙØ³Ø© Ø¨Ø¹Ø¯. Ø§ÙØªØ¨ /hatch ÙÙ Ø§ÙØ¯Ø±Ø¯Ø´Ø© ÙØªÙÙÙØ¯ ÙØ§Ø­Ø¯.',
+  'pet.codexLoading': 'Ø§ÙØ¨Ø­Ø« Ø¹Ù Ø­ÙÙØ§ÙØ§Øª ÙÙÙÙØ³Ø©...',
+  'pet.codexRefresh': 'ØªØ­Ø¯ÙØ«',
+  'pet.codexAdopt': 'ØªØ¨ÙÙÙ',
+  'pet.codexAdopting': 'Ø¬Ø§Ø±Ù Ø§ÙØªØ¨ÙÙ...',
+  'pet.communitySync': 'ØªØ­ÙÙÙ Ø­ÙÙØ§ÙØ§Øª Ø§ÙÙØ¬ØªÙØ¹',
+  'pet.communitySyncing': 'Ø¬Ø§Ø±Ù Ø§ÙØªØ­ÙÙÙ...',
+  'pet.communitySyncTitle': 'ÙØ²Ø§ÙÙØ© Ø£Ø­Ø¯Ø« Ø§ÙØ­ÙÙØ§ÙØ§Øª ÙÙ Codex Pet Share + j20 Hatchery Ø¥ÙÙ ~/.codex/pets/.',
+  'pet.communitySyncDone': 'ØªÙØª ÙØ²Ø§ÙÙØ© {wrote} Ø­ÙÙØ§ÙØ§Ù Ø¬Ø¯ÙØ¯Ø§Ù ({total} Ø¥Ø¬ÙØ§ÙÙ).',
+  'pet.communitySyncFailed': 'ÙØ´ÙØª Ø§ÙÙØ²Ø§ÙÙØ©: {error}',
+  'pet.codexBundled': 'ÙØ¯ÙØ¬',
+  'pet.codexBundledTitle': 'ÙØ£ØªÙ ÙØ¹ Open Design - ÙØ§ Ø­Ø§Ø¬Ø© ÙÙØªØ­ÙÙÙ.',
+  'settings.notifications': 'Ø§ÙØ¥Ø´Ø¹Ø§Ø±Ø§Øª',
+  'settings.notificationsHint': 'ØµÙØª ÙØ¥Ø´Ø¹Ø§Ø± Ø³Ø·Ø­ Ø§ÙÙÙØªØ¨ Ø¹ÙØ¯ Ø§ÙØªÙØ§Ù Ø§ÙÙÙÙØ©',
+  'settings.notifyCompletionSound': 'ØµÙØª Ø§ÙØ§ÙØªÙØ§Ù',
+  'settings.notifyCompletionSoundHint': 'ÙÙØ´ØºÙÙÙ Ø¹ÙØ¯ Ø§ÙØªÙØ§Ø¡ Ø§ÙØ¬ÙÙØ©. ÙØªÙÙÙ Ø§ÙØªØ±Ø§Ø¶ÙÙØ§.',
+  'settings.notifySuccessSound': 'ØµÙØª Ø§ÙÙØ¬Ø§Ø­',
+  'settings.notifyFailureSound': 'ØµÙØª Ø§ÙÙØ´Ù',
+  'settings.notifyDesktop': 'Ø¥Ø´Ø¹Ø§Ø± Ø³Ø·Ø­ Ø§ÙÙÙØªØ¨',
+  'settings.notifyDesktopHint': 'ÙÙØ±Ø³ÙÙ Ø¹ÙØ¯ÙØ§ ÙØ§ ØªÙÙÙ Ø§ÙÙØ§ÙØ°Ø© ÙÙ Ø§ÙÙÙØ¯ÙØ©.',
+  'settings.notifyDesktopBlocked': 'ØªÙ Ø­Ø¸Ø± Ø§ÙØ¥Ø´Ø¹Ø§Ø±Ø§Øª ÙÙ Ø§ÙÙØªØµÙØ­. Ø§Ø³ÙØ­ Ø¨ÙØ§ ÙÙ Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø§ÙÙÙÙØ¹.',
+  'settings.notifyDesktopUnsupported': 'Ø¥Ø´Ø¹Ø§Ø±Ø§Øª Ø³Ø·Ø­ Ø§ÙÙÙØªØ¨ ØºÙØ± ÙØªØ§Ø­Ø© ÙÙ ÙØ°Ù Ø§ÙØ¨ÙØ¦Ø©.',
+  'settings.notifyTest': 'Ø¥Ø±Ø³Ø§Ù Ø§Ø®ØªØ¨Ø§Ø±',
+  'settings.notifyTestSent': 'ØªÙ Ø¥Ø±Ø³Ø§Ù Ø¥Ø´Ø¹Ø§Ø± Ø§ÙØ§Ø®ØªØ¨Ø§Ø±. Ø¥Ø°Ø§ ÙÙ ØªØ¸ÙØ± ÙØ§ÙØ°Ø©Ø ÙØªØ­ÙÙ ÙÙ Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø¥Ø´Ø¹Ø§Ø±Ø§Øª Ø§ÙÙØªØµÙØ­ ÙØ§ÙÙØ¸Ø§Ù.',
+  'settings.notifyTestFailed': 'ÙØ´Ù Ø§Ø³ØªØ¯Ø¹Ø§Ø¡ Ø§ÙØ¥Ø´Ø¹Ø§Ø±. ØªØ­ÙÙ ÙÙ Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø¥Ø´Ø¹Ø§Ø±Ø§Øª Ø§ÙÙØªØµÙØ­ ÙØ§ÙÙØ¸Ø§Ù.',
+  'settings.notifySoundDing': 'Ø¯ÙÙØ¬',
+  'settings.notifySoundChime': 'Ø¬Ø±Ø³',
+  'settings.notifySoundTwoToneUp': 'ÙØºÙØªØ§Ù ØµØ§Ø¹Ø¯ØªØ§Ù',
+  'settings.notifySoundPluck': 'ÙÙØ±Ø© ÙØªØ±',
+  'settings.notifySoundBuzz': 'Ø·ÙÙÙ',
+  'settings.notifySoundTwoToneDown': 'ÙØºÙØªØ§Ù ÙØ§Ø¨Ø·ØªØ§Ù',
+  'settings.notifySoundThud': 'Ø¯ÙØ¯ÙØ©',
+  'settings.skills': 'Ø§ÙÙÙØ§Ø±Ø§Øª',
+  'settings.skillsHint': 'Ø§ÙÙÙØ§Ø±Ø§Øª Ø§ÙÙØ¸ÙÙÙØ© Ø§ÙØªÙ ÙÙÙÙ ÙÙÙÙÙÙ Ø§Ø³ØªØ¯Ø¹Ø§Ø¤ÙØ§ Ø£Ø«ÙØ§Ø¡ Ø§ÙÙÙÙØ©',
+  'settings.skillsNew': 'ÙÙØ§Ø±Ø© Ø¬Ø¯ÙØ¯Ø©',
+  'settings.skillsEmpty': 'Ø­Ø¯Ø¯ ÙÙØ§Ø±Ø© ÙÙ Ø§ÙÙØ³Ø§Ø± Ø£Ù Ø£ÙØ´Ø¦ ÙÙØ§Ø±Ø© Ø¬Ø¯ÙØ¯Ø©.',
+  'settings.skillsEdit': 'ØªØ­Ø±ÙØ±',
+  'settings.skillsDelete': 'Ø­Ø°Ù',
+  'settings.skillsDeleteConfirm': 'ØªØ£ÙÙØ¯ Ø§ÙØ­Ø°Ù',
+  'settings.skillsName': 'Ø§ÙØ§Ø³Ù',
+  'settings.skillsTriggers': 'ÙØ­ÙØ²Ø§Øª (ÙÙØµÙÙØ© Ø¨ÙÙØ§ØµÙ Ø£Ù Ø£Ø³Ø·Ø± Ø¬Ø¯ÙØ¯Ø©)',
+  'settings.skillsDescription': 'Ø§ÙÙØµÙ',
+  'settings.skillsBody': 'ÙØ­ØªÙÙ SKILL.md',
+  'settings.skillsCreate': 'Ø¥ÙØ´Ø§Ø¡',
+  'settings.skillsSave': 'Ø­ÙØ¸',
+  'settings.skillsSaving': 'Ø¬Ø§Ø±Ù Ø§ÙØ­ÙØ¸â¦',
+  'settings.skillsFiles': 'Ø§ÙÙÙÙØ§Øª',
+  'settings.skillsNoFiles': 'ÙØ§ ØªÙØ¬Ø¯ ÙÙÙØ§Øª ÙÙ ÙØ¬ÙØ¯ ÙØ°Ù Ø§ÙÙÙØ§Ø±Ø©.',
+  'settings.skillsNameRequired': 'Ø§Ø³Ù Ø§ÙÙÙØ§Ø±Ø© ÙØ·ÙÙØ¨.',
+  'settings.skillsBodyRequired': 'ÙØ­ØªÙÙ Ø§ÙÙÙØ§Ø±Ø© ÙØ·ÙÙØ¨.',
+  'settings.designSystems': 'Ø£ÙØ¸ÙØ© Ø§ÙØªØµÙÙÙ',
+  'settings.designSystemsHint': 'ØªØµÙØ­ ÙØªÙØ¹ÙÙ Ø£ÙØ¸ÙØ© Ø§ÙØªØµÙÙÙ Ø§ÙÙØªØ§Ø­Ø© ÙÙÙÙÙÙ',
+  'settings.designSystemsInstalled': 'ÙØ«Ø¨ÙØªØ©',
+  'settings.designSystemsAdd': 'Ø¥Ø¶Ø§ÙØ© ÙØ¸Ø§Ù ØªØµÙÙÙ',
+  'settings.designSystemsHiddenCount': '{count} ÙØ®ÙÙØ© ÙÙ ÙØ¹Ø±Ø¶ Ø§ÙØµÙØ­Ø© Ø§ÙØ±Ø¦ÙØ³ÙØ©',
+  'settings.designSystemsShowAll': 'Ø¹Ø±Ø¶ Ø§ÙÙÙ',
+  'settings.designSystemsShowHidden': 'Ø¹Ø±Ø¶ Ø§ÙÙØ®ÙÙØ©',
+  'settings.designSystemsSource': 'Ø§ÙÙØµØ¯Ø±',
+  'settings.designSystemsSourceLocal': 'ÙØ­ÙÙ',
   'settings.designSystemsSourceGithub': 'GitHub',
   'settings.designSystemsSourceShadcn': 'shadcn',
-  'settings.designSystemsShadcnReference': 'مرجع سجل shadcn',
-  'settings.designSystemsImportShadcn': 'استيراد من shadcn',
-  'settings.designSystemsStructure': 'البنية',
-  'settings.designSystemsModeHybrid': 'مختلط',
-  'settings.designSystemsModeNormalized': 'مطبّع',
-  'settings.designSystemsModeVerbatim': 'كما هو',
-  'settings.designSystemsCraft': 'الحِرفة',
-  'settings.designSystemsCraftColor': 'اللون',
-  'settings.designSystemsCraftAccessibility': 'إمكانية الوصول',
-  'settings.designSystemsGithubUrl': 'رابط GitHub',
-  'settings.designSystemsProjectPath': 'مسار المشروع',
-  'settings.designSystemsImportGithub': 'استيراد من GitHub',
-  'settings.designSystemsImportProject': 'استيراد من المشروع',
-  'settings.designSystemsImportedStatus': 'تم استيراد {title}',
-  'settings.designSystemsViewImported': 'عرض نظام التصميم المستورد',
-  'settings.designSystemsCategory': 'الفئة',
-  'settings.designSystemsAllCategories': 'كل الفئات',
-  'settings.designSystemsShowInHomeGallery': 'إظهار في معرض الصفحة الرئيسية',
-  'settings.projectLocations': 'مواقع المشاريع',
-  'settings.projectLocationsHint': 'جذور تخزين مساحات العمل',
-  'settings.projectLocationsDescription': 'أضف قواعد عمل يمكن أن تحتوي على عدة مجلدات مشاريع Open Design. تُحفظ المشاريع الجديدة كمجلد داخل القاعدة المحددة.',
-  'settings.projectLocationsSaveError': 'تعذّر حفظ مواقع المشاريع. تحقق من أن كل مسار مجلد يمكن الوصول إليه.',
-  'settings.projectLocationsSaved': 'تم حفظ مواقع المشاريع.',
-  'settings.projectLocationsScanError': 'تعذّر فحص مواقع المشاريع.',
-  'settings.projectLocationsScanComplete': 'اكتمل الفحص: تم استيراد {imported}، و{existing} مسجلة مسبقًا.',
-  'settings.projectLocationsNoFolderSelected': 'لم يتم اختيار مجلد.',
-  'settings.projectLocationsDuplicate': 'تمت إضافة قاعدة العمل هذه بالفعل.',
-  'settings.projectLocationsWorkBaseMeta': 'قاعدة عمل · يتم إنشاء المشاريع هنا كمجلدات فرعية',
-  'settings.projectLocationsAddFolder': 'إضافة مجلد…',
-  'settings.projectLocationsDefaultBadge': 'الموقع الافتراضي',
-  'settings.projectLocationsMakeDefault': 'تعيين كافتراضي',
-  'settings.projectLocationsDefaultSaved': 'تم تحديث موقع المشروع الافتراضي.',
-  'settings.librarySkills': 'المهارات',
-  'settings.libraryDesignSystems': 'أنظمة التصميم',
-  'settings.librarySearch': 'بحث...',
-  'settings.libraryAll': 'الكل',
-  'settings.libraryPreview': 'معاينة',
-  'settings.libraryPreviewClose': 'إغلاق',
-  'settings.libraryLoading': 'جارٍ التحميل...',
-  'settings.libraryNoResults': 'لا توجد عناصر تطابق بحثك.',
-  'settings.libraryEnabled': 'مفعّل',
-  'settings.libraryDisabled': 'معطّل',
-  'settings.connectorsNavHint': 'اتصالات الأنظمة الخارجية',
-  'settings.connectorsHint': 'إدارة إعدادات الموصّلات ومزوّدي الأدوات لهذا الجهاز.',
-  'settings.connectorsComposioApiKey': 'مفتاح API لـ Composio',
-  'settings.connectorsSavedTitle': 'محفوظ في daemon المحلي',
-  'settings.connectorsSavedWithTail': 'محفوظ · ••••{tail}',
-  'settings.connectorsSaved': 'محفوظ',
-  'settings.connectorsGetApiKey': 'الحصول على مفتاح API',
-  'settings.connectorsReplaceKeyPlaceholder': 'الصق مفتاحًا جديدًا لاستبدال المحفوظ',
-  'settings.connectorsApiKeyPlaceholder': 'الصق مفتاح API لـ Composio',
-  'settings.connectorsClear': 'مسح',
-  'settings.connectorsClearConfirmTitle': 'مسح مفتاح Composio API المحفوظ؟',
-  'settings.connectorsClearConfirmBody': 'إزالة المفتاح ستفصل جميع موصلات Composio المرتبطة بمساحة العمل هذه. سيُحذف كل من الحسابات المتصلة وأذونات OAuth والوصول إلى الأدوات.',
-  'settings.connectorsClearConfirmContinue': 'متابعة',
-  'settings.connectorsClearFinalTitle': 'سيؤدي هذا إلى فصل جميع الموصلات',
-  'settings.connectorsClearFinalBody': 'لا يمكن التراجع عن هذا الإجراء. ستحتاج إلى إعادة ربط كل تكامل من البداية بعد لصق مفتاح جديد.',
-  'settings.connectorsClearFinalConfirm': 'حذف المفتاح وفصل التكاملات',
-  'settings.connectorsClearArming': 'لحظة…',
-  'settings.connectorsClearCancel': 'إلغاء',
-  'settings.connectorsSaveKey': 'حفظ المفتاح',
-  'settings.connectorsSaveKeyTitle': 'إرسال هذا المفتاح إلى الـ daemon المحلي',
-  'settings.connectorsKeySaving': 'جارٍ الحفظ…',
-  'settings.connectorsKeySaved': 'تم الحفظ ✓',
-  'settings.connectorsKeyError': 'تعذّر حفظ المفتاح. تأكد أن الـ daemon المحلي يعمل ثم حاول مرة أخرى.',
-  'settings.connectorsHelpSaved': 'يفتح مفتاحك الكتالوج أدناه ويبقى في daemon المحلي. الصق مفتاحًا جديدًا لاستبداله أو امسحه لإزالته.',
-  'settings.connectorsHelpUnsaved': 'تغييرات غير محفوظة — اضغط على "حفظ المفتاح" لتخزين بيانات الاعتماد في الـ daemon المحلي وفتح الكتالوج أدناه.',
-  'settings.connectorsHelpEmpty': 'أضف مفتاحًا لفتح الكتالوج أدناه. تُخزّن المفاتيح محليًا في daemon ولا تُرسل أبدًا عبر متغيرات البيئة.',
-  'settings.connectorsLoadingSavedKey': 'جارٍ التحقق من مفتاح محفوظ في daemon المحلي…',
-  'settings.autosaveSaving': 'جارٍ الحفظ…',
-  'settings.autosaveSaved': 'تم حفظ جميع التغييرات',
-  'settings.autosaveError': 'تعذّر حفظ التغييرات. قد يكون الـ daemon المحلي غير متاح.',
-  'settings.libraryToggleLabel': 'تبديل',
-  'settings.memory': 'الذاكرة',
-  'settings.memoryHint': 'الحقائق والسياق المحفوظة للمحادثات المستقبلية',
-  'settings.customInstructionsTitle': 'القواعد العامة',
-  'settings.customInstructionsHint': 'تعليمات ثابتة يجب أن يتبعها OpenDesign في كل محادثة. احفظ الحقائق والتفضيلات وسياق المشروع كذكريات.',
-  'settings.customInstructionsPlaceholder': 'مثال: "استخدم TypeScript دائمًا. فضّل المكوّنات الوظيفية. اجعل الردود موجزة."',
-  'settings.memoryDescription': 'تحكّم في ما إذا كان سيُعاد استخدام الحقائق والتفضيلات وسياق المشروع المحفوظة في المحادثات المستقبلية.',
-  'settings.memoryEnabled': 'مُفعّل',
-  'settings.memoryDisabled': 'مُعطّل',
-  'settings.memoryEnableLabel': 'تفعيل إدراج الذاكرة',
-  'settings.memoryDisabledBanner': 'الذاكرة مُعطّلة حاليًا. تُحفظ الحقائق الموجودة على القرص لكنها لن تُدمج في المحادثات الجديدة، ولن تستخرج الأدوار الجديدة أي شيء جديد.',
-  'settings.memoryNew': 'ذاكرة جديدة',
-  'settings.memoryEdit': 'تعديل',
-  'settings.memoryDelete': 'حذف',
-  'settings.memoryPreview': 'معاينة',
-  'settings.memoryEmpty': 'لا توجد ذاكرة بعد.',
-  'settings.memoryEmptyHintZh': '记住: 用户偏好深色主题',
-  'settings.memoryEmptyHintEn': 'أفضّل الوضع الداكن',
-  'settings.memoryName': 'مثال: تفضيلات الواجهة',
-  'settings.memoryDesc': 'جملة واحدة — ما موضوع هذه الذاكرة؟',
-  'settings.memoryBody': '- القاعدة الأولى\n- القاعدة الثانية\n\nالسبب: سبب اختياري\nمتى تُطبَّق: نطاق اختياري',
-  'settings.memoryBodyHint': 'اكتب القواعد كنقاط أولًا، ثم أضِف سطري السبب ومتى تُطبَّق اختياريًا. يدعم Markdown. أو انقر على مثال بدء أعلاه لتحميل مثال عملي.',
-  'settings.memoryStartersLabel': 'تحتاج إلى نقطة بداية؟ انقر لملء النموذج:',
-  'settings.memoryStarterUserName': 'دوري',
-  'settings.memoryStarterUserDesc': 'أنا مهندس واجهات أمامية أعمل على أداة تصميم SaaS',
-  'settings.memoryStarterUserBody': '- الدور: مهندس واجهات أمامية أول\n- التقنيات: React، TypeScript، Vite\n- المجال: أدوات التصميم / التعاون\n- المنطقة الزمنية: GMT+8 (آسيا/شنغهاي)\n\nمتى يُطبَّق: في أي محادثة — اجعل الأمثلة متمحورة حول واجهات الويب الأمامية.',
-  'settings.memoryStarterFeedbackName': 'تفضيلات الواجهة',
-  'settings.memoryStarterFeedbackDesc': 'الوضع الداكن، نص أساسي كبير، كثافة معلومات منخفضة',
-  'settings.memoryStarterFeedbackBody': '- السمة: داكنة افتراضيًا\n- نص المحتوى: ≥ 18px\n- كثافة المعلومات: تفضيل المساحات البيضاء، عناصر أقل لكل شاشة\n\nالسبب: إجهاد أقل للعين أثناء الجلسات الطويلة.\nمتى يُطبَّق: كلما أنشأت واجهة مستخدم أو صفحات ويب أو شرائح عرض.',
-  'settings.memoryStarterProjectName': 'المشروع الحالي',
-  'settings.memoryStarterProjectDesc': 'Open Design v0.5 — محرر تصميم يعمل بالمحادثة',
-  'settings.memoryStarterProjectBody': '- الهدف: إطلاق المحرر القائم على المحادثة هذا الربع\n- الأولويات: التصيير المتدفق، الوسائط المتعددة المحلية، الأولوية لوضع عدم الاتصال\n- المنصة التقنية: Next.js 16، خادم Express، SQLite\n\nمتى يُطبّق: في أي محادثة حول هذا المشروع.',
-  'settings.memorySaveHint': 'لا يُحفَظ تلقائيًا — انقر إنشاء / حفظ للتطبيق.',
-  'settings.memoryIndexSaveHint': 'لا تُحفَظ التعديلات على الفهرس تلقائيًا — انقر حفظ الفهرس للتطبيق.',
-  'settings.memoryIndexUnsaved': 'تغييرات غير محفوظة',
-  'settings.memoryFlashCreated': '✓ تم إنشاء الذاكرة',
-  'settings.memoryFlashSaved': '✓ تم حفظ الذاكرة',
-  'settings.memoryFlashDeleted': '✓ تم حذف الذاكرة',
-  'settings.memoryFlashIndexSaved': '✓ تم حفظ الفهرس',
-  'settings.memoryFlashPathCopied': '✓ تم نسخ المسار',
-  'settings.memoryNameLabel': 'العنوان',
-  'settings.memoryTypeLabel': 'النوع',
-  'settings.memoryDescLabel': 'الوصف',
-  'settings.memoryBodyLabel': 'المحتوى',
-  'settings.memoryTypeUser': 'المستخدم',
-  'settings.memoryTypeFeedback': 'الملاحظات',
-  'settings.memoryTypeProject': 'المشروع',
-  'settings.memoryTypeReference': 'مرجع',
-  'artifact.odCardTaskBriefChip': 'تم تطبيق الذاكرة · عرض الموجز',
-  'artifact.odCardScorecardTitle': 'فحص ذاتي',
-  'artifact.odCardScorecardStatusPass': 'ناجح',
-  'artifact.odCardScorecardStatusPartial': 'جزئي',
-  'artifact.odCardScorecardStatusFail': 'يحتاج إلى تحسين',
-  'artifact.odCardRuleKicker': 'قاعدة مقترحة',
-  'artifact.odCardRuleNameLabel': 'الاسم',
-  'artifact.odCardRuleDescriptionLabel': 'الوصف',
-  'artifact.odCardRuleAssertionLabel': 'يجب أن يتحقق',
-  'artifact.odCardRuleCheckLabel': 'كيفية التحقق',
-  'artifact.odCardRuleRationaleLabel': 'السبب',
-  'artifact.odCardRuleKeep': 'احتفاظ',
-  'artifact.odCardRuleEdit': 'تعديل',
-  'artifact.odCardRuleDone': 'تم',
-  'artifact.odCardRuleDiscard': 'تجاهل',
-  'artifact.odCardRuleSaving': 'جارٍ الحفظ…',
-  'artifact.odCardRuleSaved': 'تم حفظ “{name}” كقاعدة',
-  'artifact.odCardRuleError': 'تعذّر حفظ القاعدة. حاول مرة أخرى.',
+  'settings.designSystemsShadcnReference': 'ÙØ±Ø¬Ø¹ Ø³Ø¬Ù shadcn',
+  'settings.designSystemsImportShadcn': 'Ø§Ø³ØªÙØ±Ø§Ø¯ ÙÙ shadcn',
+  'settings.designSystemsStructure': 'Ø§ÙØ¨ÙÙØ©',
+  'settings.designSystemsModeHybrid': 'ÙØ®ØªÙØ·',
+  'settings.designSystemsModeNormalized': 'ÙØ·Ø¨ÙØ¹',
+  'settings.designSystemsModeVerbatim': 'ÙÙØ§ ÙÙ',
+  'settings.designSystemsCraft': 'Ø§ÙØ­ÙØ±ÙØ©',
+  'settings.designSystemsCraftColor': 'Ø§ÙÙÙÙ',
+  'settings.designSystemsCraftAccessibility': 'Ø¥ÙÙØ§ÙÙØ© Ø§ÙÙØµÙÙ',
+  'settings.designSystemsGithubUrl': 'Ø±Ø§Ø¨Ø· GitHub',
+  'settings.designSystemsProjectPath': 'ÙØ³Ø§Ø± Ø§ÙÙØ´Ø±ÙØ¹',
+  'settings.designSystemsImportGithub': 'Ø§Ø³ØªÙØ±Ø§Ø¯ ÙÙ GitHub',
+  'settings.designSystemsImportProject': 'Ø§Ø³ØªÙØ±Ø§Ø¯ ÙÙ Ø§ÙÙØ´Ø±ÙØ¹',
+  'settings.designSystemsImportedStatus': 'ØªÙ Ø§Ø³ØªÙØ±Ø§Ø¯ {title}',
+  'settings.designSystemsViewImported': 'Ø¹Ø±Ø¶ ÙØ¸Ø§Ù Ø§ÙØªØµÙÙÙ Ø§ÙÙØ³ØªÙØ±Ø¯',
+  'settings.designSystemsCategory': 'Ø§ÙÙØ¦Ø©',
+  'settings.designSystemsAllCategories': 'ÙÙ Ø§ÙÙØ¦Ø§Øª',
+  'settings.designSystemsShowInHomeGallery': 'Ø¥Ø¸ÙØ§Ø± ÙÙ ÙØ¹Ø±Ø¶ Ø§ÙØµÙØ­Ø© Ø§ÙØ±Ø¦ÙØ³ÙØ©',
+  'settings.projectLocations': 'ÙÙØ§ÙØ¹ Ø§ÙÙØ´Ø§Ø±ÙØ¹',
+  'settings.projectLocationsHint': 'Ø¬Ø°ÙØ± ØªØ®Ø²ÙÙ ÙØ³Ø§Ø­Ø§Øª Ø§ÙØ¹ÙÙ',
+  'settings.projectLocationsDescription': 'Ø£Ø¶Ù ÙÙØ§Ø¹Ø¯ Ø¹ÙÙ ÙÙÙÙ Ø£Ù ØªØ­ØªÙÙ Ø¹ÙÙ Ø¹Ø¯Ø© ÙØ¬ÙØ¯Ø§Øª ÙØ´Ø§Ø±ÙØ¹ Open Design. ØªÙØ­ÙØ¸ Ø§ÙÙØ´Ø§Ø±ÙØ¹ Ø§ÙØ¬Ø¯ÙØ¯Ø© ÙÙØ¬ÙØ¯ Ø¯Ø§Ø®Ù Ø§ÙÙØ§Ø¹Ø¯Ø© Ø§ÙÙØ­Ø¯Ø¯Ø©.',
+  'settings.projectLocationsSaveError': 'ØªØ¹Ø°ÙØ± Ø­ÙØ¸ ÙÙØ§ÙØ¹ Ø§ÙÙØ´Ø§Ø±ÙØ¹. ØªØ­ÙÙ ÙÙ Ø£Ù ÙÙ ÙØ³Ø§Ø± ÙØ¬ÙØ¯ ÙÙÙÙ Ø§ÙÙØµÙÙ Ø¥ÙÙÙ.',
+  'settings.projectLocationsSaved': 'ØªÙ Ø­ÙØ¸ ÙÙØ§ÙØ¹ Ø§ÙÙØ´Ø§Ø±ÙØ¹.',
+  'settings.projectLocationsScanError': 'ØªØ¹Ø°ÙØ± ÙØ­Øµ ÙÙØ§ÙØ¹ Ø§ÙÙØ´Ø§Ø±ÙØ¹.',
+  'settings.projectLocationsScanComplete': 'Ø§ÙØªÙÙ Ø§ÙÙØ­Øµ: ØªÙ Ø§Ø³ØªÙØ±Ø§Ø¯ {imported}Ø Ù{existing} ÙØ³Ø¬ÙØ© ÙØ³Ø¨ÙÙØ§.',
+  'settings.projectLocationsNoFolderSelected': 'ÙÙ ÙØªÙ Ø§Ø®ØªÙØ§Ø± ÙØ¬ÙØ¯.',
+  'settings.projectLocationsDuplicate': 'ØªÙØª Ø¥Ø¶Ø§ÙØ© ÙØ§Ø¹Ø¯Ø© Ø§ÙØ¹ÙÙ ÙØ°Ù Ø¨Ø§ÙÙØ¹Ù.',
+  'settings.projectLocationsWorkBaseMeta': 'ÙØ§Ø¹Ø¯Ø© Ø¹ÙÙ Â· ÙØªÙ Ø¥ÙØ´Ø§Ø¡ Ø§ÙÙØ´Ø§Ø±ÙØ¹ ÙÙØ§ ÙÙØ¬ÙØ¯Ø§Øª ÙØ±Ø¹ÙØ©',
+  'settings.projectLocationsAddFolder': 'Ø¥Ø¶Ø§ÙØ© ÙØ¬ÙØ¯â¦',
+  'settings.projectLocationsDefaultBadge': 'Ø§ÙÙÙÙØ¹ Ø§ÙØ§ÙØªØ±Ø§Ø¶Ù',
+  'settings.projectLocationsMakeDefault': 'ØªØ¹ÙÙÙ ÙØ§ÙØªØ±Ø§Ø¶Ù',
+  'settings.projectLocationsDefaultSaved': 'ØªÙ ØªØ­Ø¯ÙØ« ÙÙÙØ¹ Ø§ÙÙØ´Ø±ÙØ¹ Ø§ÙØ§ÙØªØ±Ø§Ø¶Ù.',
+  'settings.librarySkills': 'Ø§ÙÙÙØ§Ø±Ø§Øª',
+  'settings.libraryDesignSystems': 'Ø£ÙØ¸ÙØ© Ø§ÙØªØµÙÙÙ',
+  'settings.librarySearch': 'Ø¨Ø­Ø«...',
+  'settings.libraryAll': 'Ø§ÙÙÙ',
+  'settings.libraryPreview': 'ÙØ¹Ø§ÙÙØ©',
+  'settings.libraryPreviewClose': 'Ø¥ØºÙØ§Ù',
+  'settings.libraryLoading': 'Ø¬Ø§Ø±Ù Ø§ÙØªØ­ÙÙÙ...',
+  'settings.libraryNoResults': 'ÙØ§ ØªÙØ¬Ø¯ Ø¹ÙØ§ØµØ± ØªØ·Ø§Ø¨Ù Ø¨Ø­Ø«Ù.',
+  'settings.libraryEnabled': 'ÙÙØ¹ÙÙ',
+  'settings.libraryDisabled': 'ÙØ¹Ø·ÙÙ',
+  'settings.connectorsNavHint': 'Ø§ØªØµØ§ÙØ§Øª Ø§ÙØ£ÙØ¸ÙØ© Ø§ÙØ®Ø§Ø±Ø¬ÙØ©',
+  'settings.connectorsHint': 'Ø¥Ø¯Ø§Ø±Ø© Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø§ÙÙÙØµÙÙØ§Øª ÙÙØ²ÙÙØ¯Ù Ø§ÙØ£Ø¯ÙØ§Øª ÙÙØ°Ø§ Ø§ÙØ¬ÙØ§Ø².',
+  'settings.connectorsComposioApiKey': 'ÙÙØªØ§Ø­ API ÙÙ Composio',
+  'settings.connectorsSavedTitle': 'ÙØ­ÙÙØ¸ ÙÙ daemon Ø§ÙÙØ­ÙÙ',
+  'settings.connectorsSavedWithTail': 'ÙØ­ÙÙØ¸ Â· â¢â¢â¢â¢{tail}',
+  'settings.connectorsSaved': 'ÙØ­ÙÙØ¸',
+  'settings.connectorsGetApiKey': 'Ø§ÙØ­ØµÙÙ Ø¹ÙÙ ÙÙØªØ§Ø­ API',
+  'settings.connectorsReplaceKeyPlaceholder': 'Ø§ÙØµÙ ÙÙØªØ§Ø­ÙØ§ Ø¬Ø¯ÙØ¯ÙØ§ ÙØ§Ø³ØªØ¨Ø¯Ø§Ù Ø§ÙÙØ­ÙÙØ¸',
+  'settings.connectorsApiKeyPlaceholder': 'Ø§ÙØµÙ ÙÙØªØ§Ø­ API ÙÙ Composio',
+  'settings.connectorsClear': 'ÙØ³Ø­',
+  'settings.connectorsClearConfirmTitle': 'ÙØ³Ø­ ÙÙØªØ§Ø­ Composio API Ø§ÙÙØ­ÙÙØ¸Ø',
+  'settings.connectorsClearConfirmBody': 'Ø¥Ø²Ø§ÙØ© Ø§ÙÙÙØªØ§Ø­ Ø³ØªÙØµÙ Ø¬ÙÙØ¹ ÙÙØµÙØ§Øª Composio Ø§ÙÙØ±ØªØ¨Ø·Ø© Ø¨ÙØ³Ø§Ø­Ø© Ø§ÙØ¹ÙÙ ÙØ°Ù. Ø³ÙÙØ­Ø°Ù ÙÙ ÙÙ Ø§ÙØ­Ø³Ø§Ø¨Ø§Øª Ø§ÙÙØªØµÙØ© ÙØ£Ø°ÙÙØ§Øª OAuth ÙØ§ÙÙØµÙÙ Ø¥ÙÙ Ø§ÙØ£Ø¯ÙØ§Øª.',
+  'settings.connectorsClearConfirmContinue': 'ÙØªØ§Ø¨Ø¹Ø©',
+  'settings.connectorsClearFinalTitle': 'Ø³ÙØ¤Ø¯Ù ÙØ°Ø§ Ø¥ÙÙ ÙØµÙ Ø¬ÙÙØ¹ Ø§ÙÙÙØµÙØ§Øª',
+  'settings.connectorsClearFinalBody': 'ÙØ§ ÙÙÙÙ Ø§ÙØªØ±Ø§Ø¬Ø¹ Ø¹Ù ÙØ°Ø§ Ø§ÙØ¥Ø¬Ø±Ø§Ø¡. Ø³ØªØ­ØªØ§Ø¬ Ø¥ÙÙ Ø¥Ø¹Ø§Ø¯Ø© Ø±Ø¨Ø· ÙÙ ØªÙØ§ÙÙ ÙÙ Ø§ÙØ¨Ø¯Ø§ÙØ© Ø¨Ø¹Ø¯ ÙØµÙ ÙÙØªØ§Ø­ Ø¬Ø¯ÙØ¯.',
+  'settings.connectorsClearFinalConfirm': 'Ø­Ø°Ù Ø§ÙÙÙØªØ§Ø­ ÙÙØµÙ Ø§ÙØªÙØ§ÙÙØ§Øª',
+  'settings.connectorsClearArming': 'ÙØ­Ø¸Ø©â¦',
+  'settings.connectorsClearCancel': 'Ø¥ÙØºØ§Ø¡',
+  'settings.connectorsSaveKey': 'Ø­ÙØ¸ Ø§ÙÙÙØªØ§Ø­',
+  'settings.connectorsSaveKeyTitle': 'Ø¥Ø±Ø³Ø§Ù ÙØ°Ø§ Ø§ÙÙÙØªØ§Ø­ Ø¥ÙÙ Ø§ÙÙ daemon Ø§ÙÙØ­ÙÙ',
+  'settings.connectorsKeySaving': 'Ø¬Ø§Ø±Ù Ø§ÙØ­ÙØ¸â¦',
+  'settings.connectorsKeySaved': 'ØªÙ Ø§ÙØ­ÙØ¸ â',
+  'settings.connectorsKeyError': 'ØªØ¹Ø°ÙØ± Ø­ÙØ¸ Ø§ÙÙÙØªØ§Ø­. ØªØ£ÙØ¯ Ø£Ù Ø§ÙÙ daemon Ø§ÙÙØ­ÙÙ ÙØ¹ÙÙ Ø«Ù Ø­Ø§ÙÙ ÙØ±Ø© Ø£Ø®Ø±Ù.',
+  'settings.connectorsHelpSaved': 'ÙÙØªØ­ ÙÙØªØ§Ø­Ù Ø§ÙÙØªØ§ÙÙØ¬ Ø£Ø¯ÙØ§Ù ÙÙØ¨ÙÙ ÙÙ daemon Ø§ÙÙØ­ÙÙ. Ø§ÙØµÙ ÙÙØªØ§Ø­ÙØ§ Ø¬Ø¯ÙØ¯ÙØ§ ÙØ§Ø³ØªØ¨Ø¯Ø§ÙÙ Ø£Ù Ø§ÙØ³Ø­Ù ÙØ¥Ø²Ø§ÙØªÙ.',
+  'settings.connectorsHelpUnsaved': 'ØªØºÙÙØ±Ø§Øª ØºÙØ± ÙØ­ÙÙØ¸Ø© â Ø§Ø¶ØºØ· Ø¹ÙÙ "Ø­ÙØ¸ Ø§ÙÙÙØªØ§Ø­" ÙØªØ®Ø²ÙÙ Ø¨ÙØ§ÙØ§Øª Ø§ÙØ§Ø¹ØªÙØ§Ø¯ ÙÙ Ø§ÙÙ daemon Ø§ÙÙØ­ÙÙ ÙÙØªØ­ Ø§ÙÙØªØ§ÙÙØ¬ Ø£Ø¯ÙØ§Ù.',
+  'settings.connectorsHelpEmpty': 'Ø£Ø¶Ù ÙÙØªØ§Ø­ÙØ§ ÙÙØªØ­ Ø§ÙÙØªØ§ÙÙØ¬ Ø£Ø¯ÙØ§Ù. ØªÙØ®Ø²ÙÙ Ø§ÙÙÙØ§ØªÙØ­ ÙØ­ÙÙÙØ§ ÙÙ daemon ÙÙØ§ ØªÙØ±Ø³Ù Ø£Ø¨Ø¯ÙØ§ Ø¹Ø¨Ø± ÙØªØºÙØ±Ø§Øª Ø§ÙØ¨ÙØ¦Ø©.',
+  'settings.connectorsLoadingSavedKey': 'Ø¬Ø§Ø±Ù Ø§ÙØªØ­ÙÙ ÙÙ ÙÙØªØ§Ø­ ÙØ­ÙÙØ¸ ÙÙ daemon Ø§ÙÙØ­ÙÙâ¦',
+  'settings.autosaveSaving': 'Ø¬Ø§Ø±Ù Ø§ÙØ­ÙØ¸â¦',
+  'settings.autosaveSaved': 'ØªÙ Ø­ÙØ¸ Ø¬ÙÙØ¹ Ø§ÙØªØºÙÙØ±Ø§Øª',
+  'settings.autosaveError': 'ØªØ¹Ø°ÙØ± Ø­ÙØ¸ Ø§ÙØªØºÙÙØ±Ø§Øª. ÙØ¯ ÙÙÙÙ Ø§ÙÙ daemon Ø§ÙÙØ­ÙÙ ØºÙØ± ÙØªØ§Ø­.',
+  'settings.libraryToggleLabel': 'ØªØ¨Ø¯ÙÙ',
+  'settings.memory': 'Ø§ÙØ°Ø§ÙØ±Ø©',
+  'settings.memoryHint': 'Ø§ÙØ­ÙØ§Ø¦Ù ÙØ§ÙØ³ÙØ§Ù Ø§ÙÙØ­ÙÙØ¸Ø© ÙÙÙØ­Ø§Ø¯Ø«Ø§Øª Ø§ÙÙØ³ØªÙØ¨ÙÙØ©',
+  'settings.customInstructionsTitle': 'Ø§ÙÙÙØ§Ø¹Ø¯ Ø§ÙØ¹Ø§ÙØ©',
+  'settings.customInstructionsHint': 'ØªØ¹ÙÙÙØ§Øª Ø«Ø§Ø¨ØªØ© ÙØ¬Ø¨ Ø£Ù ÙØªØ¨Ø¹ÙØ§ OpenDesign ÙÙ ÙÙ ÙØ­Ø§Ø¯Ø«Ø©. Ø§Ø­ÙØ¸ Ø§ÙØ­ÙØ§Ø¦Ù ÙØ§ÙØªÙØ¶ÙÙØ§Øª ÙØ³ÙØ§Ù Ø§ÙÙØ´Ø±ÙØ¹ ÙØ°ÙØ±ÙØ§Øª.',
+  'settings.customInstructionsPlaceholder': 'ÙØ«Ø§Ù: "Ø§Ø³ØªØ®Ø¯Ù TypeScript Ø¯Ø§Ø¦ÙÙØ§. ÙØ¶ÙÙ Ø§ÙÙÙÙÙÙØ§Øª Ø§ÙÙØ¸ÙÙÙØ©. Ø§Ø¬Ø¹Ù Ø§ÙØ±Ø¯ÙØ¯ ÙÙØ¬Ø²Ø©."',
+  'settings.memoryDescription': 'ØªØ­ÙÙÙ ÙÙ ÙØ§ Ø¥Ø°Ø§ ÙØ§Ù Ø³ÙÙØ¹Ø§Ø¯ Ø§Ø³ØªØ®Ø¯Ø§Ù Ø§ÙØ­ÙØ§Ø¦Ù ÙØ§ÙØªÙØ¶ÙÙØ§Øª ÙØ³ÙØ§Ù Ø§ÙÙØ´Ø±ÙØ¹ Ø§ÙÙØ­ÙÙØ¸Ø© ÙÙ Ø§ÙÙØ­Ø§Ø¯Ø«Ø§Øª Ø§ÙÙØ³ØªÙØ¨ÙÙØ©.',
+  'settings.memoryEnabled': 'ÙÙÙØ¹ÙÙ',
+  'settings.memoryDisabled': 'ÙÙØ¹Ø·ÙÙ',
+  'settings.memoryEnableLabel': 'ØªÙØ¹ÙÙ Ø¥Ø¯Ø±Ø§Ø¬ Ø§ÙØ°Ø§ÙØ±Ø©',
+  'settings.memoryDisabledBanner': 'Ø§ÙØ°Ø§ÙØ±Ø© ÙÙØ¹Ø·ÙÙØ© Ø­Ø§ÙÙÙØ§. ØªÙØ­ÙØ¸ Ø§ÙØ­ÙØ§Ø¦Ù Ø§ÙÙÙØ¬ÙØ¯Ø© Ø¹ÙÙ Ø§ÙÙØ±Øµ ÙÙÙÙØ§ ÙÙ ØªÙØ¯ÙØ¬ ÙÙ Ø§ÙÙØ­Ø§Ø¯Ø«Ø§Øª Ø§ÙØ¬Ø¯ÙØ¯Ø©Ø ÙÙÙ ØªØ³ØªØ®Ø±Ø¬ Ø§ÙØ£Ø¯ÙØ§Ø± Ø§ÙØ¬Ø¯ÙØ¯Ø© Ø£Ù Ø´ÙØ¡ Ø¬Ø¯ÙØ¯.',
+  'settings.memoryNew': 'Ø°Ø§ÙØ±Ø© Ø¬Ø¯ÙØ¯Ø©',
+  'settings.memoryEdit': 'ØªØ¹Ø¯ÙÙ',
+  'settings.memoryDelete': 'Ø­Ø°Ù',
+  'settings.memoryPreview': 'ÙØ¹Ø§ÙÙØ©',
+  'settings.memoryEmpty': 'ÙØ§ ØªÙØ¬Ø¯ Ø°Ø§ÙØ±Ø© Ø¨Ø¹Ø¯.',
+  'settings.memoryEmptyHintZh': 'è®°ä½: ç¨æ·åå¥½æ·±è²ä¸»é¢',
+  'settings.memoryEmptyHintEn': 'Ø£ÙØ¶ÙÙ Ø§ÙÙØ¶Ø¹ Ø§ÙØ¯Ø§ÙÙ',
+  'settings.memoryName': 'ÙØ«Ø§Ù: ØªÙØ¶ÙÙØ§Øª Ø§ÙÙØ§Ø¬ÙØ©',
+  'settings.memoryDesc': 'Ø¬ÙÙØ© ÙØ§Ø­Ø¯Ø© â ÙØ§ ÙÙØ¶ÙØ¹ ÙØ°Ù Ø§ÙØ°Ø§ÙØ±Ø©Ø',
+  'settings.memoryBody': '- Ø§ÙÙØ§Ø¹Ø¯Ø© Ø§ÙØ£ÙÙÙ\n- Ø§ÙÙØ§Ø¹Ø¯Ø© Ø§ÙØ«Ø§ÙÙØ©\n\nØ§ÙØ³Ø¨Ø¨: Ø³Ø¨Ø¨ Ø§Ø®ØªÙØ§Ø±Ù\nÙØªÙ ØªÙØ·Ø¨ÙÙÙ: ÙØ·Ø§Ù Ø§Ø®ØªÙØ§Ø±Ù',
+  'settings.memoryBodyHint': 'Ø§ÙØªØ¨ Ø§ÙÙÙØ§Ø¹Ø¯ ÙÙÙØ§Ø· Ø£ÙÙÙØ§Ø Ø«Ù Ø£Ø¶ÙÙ Ø³Ø·Ø±Ù Ø§ÙØ³Ø¨Ø¨ ÙÙØªÙ ØªÙØ·Ø¨ÙÙÙ Ø§Ø®ØªÙØ§Ø±ÙÙØ§. ÙØ¯Ø¹Ù Markdown. Ø£Ù Ø§ÙÙØ± Ø¹ÙÙ ÙØ«Ø§Ù Ø¨Ø¯Ø¡ Ø£Ø¹ÙØ§Ù ÙØªØ­ÙÙÙ ÙØ«Ø§Ù Ø¹ÙÙÙ.',
+  'settings.memoryStartersLabel': 'ØªØ­ØªØ§Ø¬ Ø¥ÙÙ ÙÙØ·Ø© Ø¨Ø¯Ø§ÙØ©Ø Ø§ÙÙØ± ÙÙÙØ¡ Ø§ÙÙÙÙØ°Ø¬:',
+  'settings.memoryStarterUserName': 'Ø¯ÙØ±Ù',
+  'settings.memoryStarterUserDesc': 'Ø£ÙØ§ ÙÙÙØ¯Ø³ ÙØ§Ø¬ÙØ§Øª Ø£ÙØ§ÙÙØ© Ø£Ø¹ÙÙ Ø¹ÙÙ Ø£Ø¯Ø§Ø© ØªØµÙÙÙ SaaS',
+  'settings.memoryStarterUserBody': '- Ø§ÙØ¯ÙØ±: ÙÙÙØ¯Ø³ ÙØ§Ø¬ÙØ§Øª Ø£ÙØ§ÙÙØ© Ø£ÙÙ\n- Ø§ÙØªÙÙÙØ§Øª: ReactØ TypeScriptØ Vite\n- Ø§ÙÙØ¬Ø§Ù: Ø£Ø¯ÙØ§Øª Ø§ÙØªØµÙÙÙ / Ø§ÙØªØ¹Ø§ÙÙ\n- Ø§ÙÙÙØ·ÙØ© Ø§ÙØ²ÙÙÙØ©: GMT+8 (Ø¢Ø³ÙØ§/Ø´ÙØºÙØ§Ù)\n\nÙØªÙ ÙÙØ·Ø¨ÙÙÙ: ÙÙ Ø£Ù ÙØ­Ø§Ø¯Ø«Ø© â Ø§Ø¬Ø¹Ù Ø§ÙØ£ÙØ«ÙØ© ÙØªÙØ­ÙØ±Ø© Ø­ÙÙ ÙØ§Ø¬ÙØ§Øª Ø§ÙÙÙØ¨ Ø§ÙØ£ÙØ§ÙÙØ©.',
+  'settings.memoryStarterFeedbackName': 'ØªÙØ¶ÙÙØ§Øª Ø§ÙÙØ§Ø¬ÙØ©',
+  'settings.memoryStarterFeedbackDesc': 'Ø§ÙÙØ¶Ø¹ Ø§ÙØ¯Ø§ÙÙØ ÙØµ Ø£Ø³Ø§Ø³Ù ÙØ¨ÙØ±Ø ÙØ«Ø§ÙØ© ÙØ¹ÙÙÙØ§Øª ÙÙØ®ÙØ¶Ø©',
+  'settings.memoryStarterFeedbackBody': '- Ø§ÙØ³ÙØ©: Ø¯Ø§ÙÙØ© Ø§ÙØªØ±Ø§Ø¶ÙÙØ§\n- ÙØµ Ø§ÙÙØ­ØªÙÙ: â¥ 18px\n- ÙØ«Ø§ÙØ© Ø§ÙÙØ¹ÙÙÙØ§Øª: ØªÙØ¶ÙÙ Ø§ÙÙØ³Ø§Ø­Ø§Øª Ø§ÙØ¨ÙØ¶Ø§Ø¡Ø Ø¹ÙØ§ØµØ± Ø£ÙÙ ÙÙÙ Ø´Ø§Ø´Ø©\n\nØ§ÙØ³Ø¨Ø¨: Ø¥Ø¬ÙØ§Ø¯ Ø£ÙÙ ÙÙØ¹ÙÙ Ø£Ø«ÙØ§Ø¡ Ø§ÙØ¬ÙØ³Ø§Øª Ø§ÙØ·ÙÙÙØ©.\nÙØªÙ ÙÙØ·Ø¨ÙÙÙ: ÙÙÙØ§ Ø£ÙØ´Ø£Øª ÙØ§Ø¬ÙØ© ÙØ³ØªØ®Ø¯Ù Ø£Ù ØµÙØ­Ø§Øª ÙÙØ¨ Ø£Ù Ø´Ø±Ø§Ø¦Ø­ Ø¹Ø±Ø¶.',
+  'settings.memoryStarterProjectName': 'Ø§ÙÙØ´Ø±ÙØ¹ Ø§ÙØ­Ø§ÙÙ',
+  'settings.memoryStarterProjectDesc': 'Open Design v0.5 â ÙØ­Ø±Ø± ØªØµÙÙÙ ÙØ¹ÙÙ Ø¨Ø§ÙÙØ­Ø§Ø¯Ø«Ø©',
+  'settings.memoryStarterProjectBody': '- Ø§ÙÙØ¯Ù: Ø¥Ø·ÙØ§Ù Ø§ÙÙØ­Ø±Ø± Ø§ÙÙØ§Ø¦Ù Ø¹ÙÙ Ø§ÙÙØ­Ø§Ø¯Ø«Ø© ÙØ°Ø§ Ø§ÙØ±Ø¨Ø¹\n- Ø§ÙØ£ÙÙÙÙØ§Øª: Ø§ÙØªØµÙÙØ± Ø§ÙÙØªØ¯ÙÙØ Ø§ÙÙØ³Ø§Ø¦Ø· Ø§ÙÙØªØ¹Ø¯Ø¯Ø© Ø§ÙÙØ­ÙÙØ©Ø Ø§ÙØ£ÙÙÙÙØ© ÙÙØ¶Ø¹ Ø¹Ø¯Ù Ø§ÙØ§ØªØµØ§Ù\n- Ø§ÙÙÙØµØ© Ø§ÙØªÙÙÙØ©: Next.js 16Ø Ø®Ø§Ø¯Ù ExpressØ SQLite\n\nÙØªÙ ÙÙØ·Ø¨ÙÙ: ÙÙ Ø£Ù ÙØ­Ø§Ø¯Ø«Ø© Ø­ÙÙ ÙØ°Ø§ Ø§ÙÙØ´Ø±ÙØ¹.',
+  'settings.memorySaveHint': 'ÙØ§ ÙÙØ­ÙÙØ¸ ØªÙÙØ§Ø¦ÙÙØ§ â Ø§ÙÙØ± Ø¥ÙØ´Ø§Ø¡ / Ø­ÙØ¸ ÙÙØªØ·Ø¨ÙÙ.',
+  'settings.memoryIndexSaveHint': 'ÙØ§ ØªÙØ­ÙÙØ¸ Ø§ÙØªØ¹Ø¯ÙÙØ§Øª Ø¹ÙÙ Ø§ÙÙÙØ±Ø³ ØªÙÙØ§Ø¦ÙÙØ§ â Ø§ÙÙØ± Ø­ÙØ¸ Ø§ÙÙÙØ±Ø³ ÙÙØªØ·Ø¨ÙÙ.',
+  'settings.memoryIndexUnsaved': 'ØªØºÙÙØ±Ø§Øª ØºÙØ± ÙØ­ÙÙØ¸Ø©',
+  'settings.memoryFlashCreated': 'â ØªÙ Ø¥ÙØ´Ø§Ø¡ Ø§ÙØ°Ø§ÙØ±Ø©',
+  'settings.memoryFlashSaved': 'â ØªÙ Ø­ÙØ¸ Ø§ÙØ°Ø§ÙØ±Ø©',
+  'settings.memoryFlashDeleted': 'â ØªÙ Ø­Ø°Ù Ø§ÙØ°Ø§ÙØ±Ø©',
+  'settings.memoryFlashIndexSaved': 'â ØªÙ Ø­ÙØ¸ Ø§ÙÙÙØ±Ø³',
+  'settings.memoryFlashPathCopied': 'â ØªÙ ÙØ³Ø® Ø§ÙÙØ³Ø§Ø±',
+  'settings.memoryNameLabel': 'Ø§ÙØ¹ÙÙØ§Ù',
+  'settings.memoryTypeLabel': 'Ø§ÙÙÙØ¹',
+  'settings.memoryDescLabel': 'Ø§ÙÙØµÙ',
+  'settings.memoryBodyLabel': 'Ø§ÙÙØ­ØªÙÙ',
+  'settings.memoryTypeUser': 'Ø§ÙÙØ³ØªØ®Ø¯Ù',
+  'settings.memoryTypeFeedback': 'Ø§ÙÙÙØ§Ø­Ø¸Ø§Øª',
+  'settings.memoryTypeProject': 'Ø§ÙÙØ´Ø±ÙØ¹',
+  'settings.memoryTypeReference': 'ÙØ±Ø¬Ø¹',
+  'artifact.odCardTaskBriefChip': 'ØªÙ ØªØ·Ø¨ÙÙ Ø§ÙØ°Ø§ÙØ±Ø© Â· Ø¹Ø±Ø¶ Ø§ÙÙÙØ¬Ø²',
+  'artifact.odCardScorecardTitle': 'ÙØ­Øµ Ø°Ø§ØªÙ',
+  'artifact.odCardScorecardStatusPass': 'ÙØ§Ø¬Ø­',
+  'artifact.odCardScorecardStatusPartial': 'Ø¬Ø²Ø¦Ù',
+  'artifact.odCardScorecardStatusFail': 'ÙØ­ØªØ§Ø¬ Ø¥ÙÙ ØªØ­Ø³ÙÙ',
+  'artifact.odCardRuleKicker': 'ÙØ§Ø¹Ø¯Ø© ÙÙØªØ±Ø­Ø©',
+  'artifact.odCardRuleNameLabel': 'Ø§ÙØ§Ø³Ù',
+  'artifact.odCardRuleDescriptionLabel': 'Ø§ÙÙØµÙ',
+  'artifact.odCardRuleAssertionLabel': 'ÙØ¬Ø¨ Ø£Ù ÙØªØ­ÙÙ',
+  'artifact.odCardRuleCheckLabel': 'ÙÙÙÙØ© Ø§ÙØªØ­ÙÙ',
+  'artifact.odCardRuleRationaleLabel': 'Ø§ÙØ³Ø¨Ø¨',
+  'artifact.odCardRuleKeep': 'Ø§Ø­ØªÙØ§Ø¸',
+  'artifact.odCardRuleEdit': 'ØªØ¹Ø¯ÙÙ',
+  'artifact.odCardRuleDone': 'ØªÙ',
+  'artifact.odCardRuleDiscard': 'ØªØ¬Ø§ÙÙ',
+  'artifact.odCardRuleSaving': 'Ø¬Ø§Ø±Ù Ø§ÙØ­ÙØ¸â¦',
+  'artifact.odCardRuleSaved': 'ØªÙ Ø­ÙØ¸ â{name}â ÙÙØ§Ø¹Ø¯Ø©',
+  'artifact.odCardRuleError': 'ØªØ¹Ø°ÙØ± Ø­ÙØ¸ Ø§ÙÙØ§Ø¹Ø¯Ø©. Ø­Ø§ÙÙ ÙØ±Ø© Ø£Ø®Ø±Ù.',
   'artifact.odCardBrandAssistDone': 'Browser assist confirmed',
   'artifact.odCardBrandAssistKicker': 'Browser assist needed: {reason}',
   'artifact.odCardBrandAssistBody': 'Open the brand site in the browser so Open Design can continue extracting this design system.',
   'artifact.odCardBrandAssistError': 'Could not start browser assist. Try again.',
   'artifact.odCardBrandAssistWorking': 'Starting...',
   'artifact.odCardBrandAssistConfirm': 'Open browser assist',
-  'settings.memoryTypeProfile': 'الملف الشخصي',
-  'settings.memoryTypeRule': 'قاعدة',
-  'settings.memoryTabMemories': 'الذكريات',
-  'settings.memoryTabMemoriesCaption': 'عرض الذاكرة المحفوظة وإدارتها',
-  'settings.memoryTabHow': 'كيف تعمل',
-  'settings.memoryTabHowCaption': 'الحلقتان وعناصر التحكم فيهما',
-  'settings.memoryAddDisclosure': 'إضافة ذكريات أو استيرادها',
-  'settings.memoryAddDisclosureHint': 'الملف الشخصي أو الإدخال اليدوي أو التطبيقات المتصلة',
-  'settings.memoryProfileTab': 'الملف الشخصي للعمل',
-  'settings.memoryProfileTabCaption': 'من أنت وإعداداتك الافتراضية',
-  'settings.memoryProfileTitle': 'ملفك الشخصي للعمل',
+  'settings.memoryTypeProfile': 'Ø§ÙÙÙÙ Ø§ÙØ´Ø®ØµÙ',
+  'settings.memoryTypeRule': 'ÙØ§Ø¹Ø¯Ø©',
+  'settings.memoryTabMemories': 'Ø§ÙØ°ÙØ±ÙØ§Øª',
+  'settings.memoryTabMemoriesCaption': 'Ø¹Ø±Ø¶ Ø§ÙØ°Ø§ÙØ±Ø© Ø§ÙÙØ­ÙÙØ¸Ø© ÙØ¥Ø¯Ø§Ø±ØªÙØ§',
+  'settings.memoryTabHow': 'ÙÙÙ ØªØ¹ÙÙ',
+  'settings.memoryTabHowCaption': 'Ø§ÙØ­ÙÙØªØ§Ù ÙØ¹ÙØ§ØµØ± Ø§ÙØªØ­ÙÙ ÙÙÙÙØ§',
+  'settings.memoryAddDisclosure': 'Ø¥Ø¶Ø§ÙØ© Ø°ÙØ±ÙØ§Øª Ø£Ù Ø§Ø³ØªÙØ±Ø§Ø¯ÙØ§',
+  'settings.memoryAddDisclosureHint': 'Ø§ÙÙÙÙ Ø§ÙØ´Ø®ØµÙ Ø£Ù Ø§ÙØ¥Ø¯Ø®Ø§Ù Ø§ÙÙØ¯ÙÙ Ø£Ù Ø§ÙØªØ·Ø¨ÙÙØ§Øª Ø§ÙÙØªØµÙØ©',
+  'settings.memoryProfileTab': 'Ø§ÙÙÙÙ Ø§ÙØ´Ø®ØµÙ ÙÙØ¹ÙÙ',
+  'settings.memoryProfileTabCaption': 'ÙÙ Ø£ÙØª ÙØ¥Ø¹Ø¯Ø§Ø¯Ø§ØªÙ Ø§ÙØ§ÙØªØ±Ø§Ø¶ÙØ©',
+  'settings.memoryProfileTitle': 'ÙÙÙÙ Ø§ÙØ´Ø®ØµÙ ÙÙØ¹ÙÙ',
   'settings.memoryProfileHint':
-    'بعض الحقائق عنك وعن إعداداتك الافتراضية. تُدرِج الذاكرة هذه قبل كل مهمة حتى يستنتج الوكيل ما تقصده من طلب قصير.',
-  'settings.memoryProfileName': 'الملف الشخصي للعمل',
+    'Ø¨Ø¹Ø¶ Ø§ÙØ­ÙØ§Ø¦Ù Ø¹ÙÙ ÙØ¹Ù Ø¥Ø¹Ø¯Ø§Ø¯Ø§ØªÙ Ø§ÙØ§ÙØªØ±Ø§Ø¶ÙØ©. ØªÙØ¯Ø±ÙØ¬ Ø§ÙØ°Ø§ÙØ±Ø© ÙØ°Ù ÙØ¨Ù ÙÙ ÙÙÙØ© Ø­ØªÙ ÙØ³ØªÙØªØ¬ Ø§ÙÙÙÙÙ ÙØ§ ØªÙØµØ¯Ù ÙÙ Ø·ÙØ¨ ÙØµÙØ±.',
+  'settings.memoryProfileName': 'Ø§ÙÙÙÙ Ø§ÙØ´Ø®ØµÙ ÙÙØ¹ÙÙ',
   'settings.memoryProfileDescription':
-    'الدور والشركة والمجال والجمهور والذوق والإعدادات الافتراضية التي ينبغي للمساعد إعادة استخدامها.',
-  'settings.memoryProfileSave': 'حفظ الملف الشخصي',
-  'settings.memoryProfileSaving': 'جارٍ الحفظ…',
-  'settings.memoryProfileSaved': 'تم حفظ الملف الشخصي',
-  'settings.memoryProfileRole': 'الدور',
-  'settings.memoryProfileRolePlaceholder': 'مثال: مؤسّس، مصمم، مدير منتج',
-  'settings.memoryProfileCompany': 'الشركة / الفريق',
-  'settings.memoryProfileCompanyPlaceholder': 'مثال: Acme، فريق النمو',
-  'settings.memoryProfileDomain': 'المجال',
-  'settings.memoryProfileDomainPlaceholder': 'مثال: B2B SaaS، fintech، devtools',
-  'settings.memoryProfileAudience': 'الجمهور الأساسي',
-  'settings.memoryProfileAudiencePlaceholder': 'مثال: المديرون التنفيذيون، المهندسون، المستخدمون النهائيون',
-  'settings.memoryProfileAesthetic': 'الجمالية / الذوق',
+    'Ø§ÙØ¯ÙØ± ÙØ§ÙØ´Ø±ÙØ© ÙØ§ÙÙØ¬Ø§Ù ÙØ§ÙØ¬ÙÙÙØ± ÙØ§ÙØ°ÙÙ ÙØ§ÙØ¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø§ÙØ§ÙØªØ±Ø§Ø¶ÙØ© Ø§ÙØªÙ ÙÙØ¨ØºÙ ÙÙÙØ³Ø§Ø¹Ø¯ Ø¥Ø¹Ø§Ø¯Ø© Ø§Ø³ØªØ®Ø¯Ø§ÙÙØ§.',
+  'settings.memoryProfileSave': 'Ø­ÙØ¸ Ø§ÙÙÙÙ Ø§ÙØ´Ø®ØµÙ',
+  'settings.memoryProfileSaving': 'Ø¬Ø§Ø±Ù Ø§ÙØ­ÙØ¸â¦',
+  'settings.memoryProfileSaved': 'ØªÙ Ø­ÙØ¸ Ø§ÙÙÙÙ Ø§ÙØ´Ø®ØµÙ',
+  'settings.memoryProfileRole': 'Ø§ÙØ¯ÙØ±',
+  'settings.memoryProfileRolePlaceholder': 'ÙØ«Ø§Ù: ÙØ¤Ø³ÙØ³Ø ÙØµÙÙØ ÙØ¯ÙØ± ÙÙØªØ¬',
+  'settings.memoryProfileCompany': 'Ø§ÙØ´Ø±ÙØ© / Ø§ÙÙØ±ÙÙ',
+  'settings.memoryProfileCompanyPlaceholder': 'ÙØ«Ø§Ù: AcmeØ ÙØ±ÙÙ Ø§ÙÙÙÙ',
+  'settings.memoryProfileDomain': 'Ø§ÙÙØ¬Ø§Ù',
+  'settings.memoryProfileDomainPlaceholder': 'ÙØ«Ø§Ù: B2B SaaSØ fintechØ devtools',
+  'settings.memoryProfileAudience': 'Ø§ÙØ¬ÙÙÙØ± Ø§ÙØ£Ø³Ø§Ø³Ù',
+  'settings.memoryProfileAudiencePlaceholder': 'ÙØ«Ø§Ù: Ø§ÙÙØ¯ÙØ±ÙÙ Ø§ÙØªÙÙÙØ°ÙÙÙØ Ø§ÙÙÙÙØ¯Ø³ÙÙØ Ø§ÙÙØ³ØªØ®Ø¯ÙÙÙ Ø§ÙÙÙØ§Ø¦ÙÙÙ',
+  'settings.memoryProfileAesthetic': 'Ø§ÙØ¬ÙØ§ÙÙØ© / Ø§ÙØ°ÙÙ',
   'settings.memoryProfileAestheticPlaceholder':
-    'مثال: نظيف وتحريري، خلفيات فاتحة، مساحات بيضاء وفيرة',
-  'settings.memoryProfileDeliverables': 'المخرجات الافتراضية',
-  'settings.memoryProfileDeliverablesPlaceholder': 'مثال: صفحات هبوط، عروض تقديمية، صفحات موجزة',
-  'settings.memoryProfileLocale': 'اللغة / المنطقة',
-  'settings.memoryProfileLocalePlaceholder': 'مثال: الإنجليزية (الولايات المتحدة)، الصينية المبسّطة',
-  'settings.memoryProfileGoals': 'الأهداف الحالية',
+    'ÙØ«Ø§Ù: ÙØ¸ÙÙ ÙØªØ­Ø±ÙØ±ÙØ Ø®ÙÙÙØ§Øª ÙØ§ØªØ­Ø©Ø ÙØ³Ø§Ø­Ø§Øª Ø¨ÙØ¶Ø§Ø¡ ÙÙÙØ±Ø©',
+  'settings.memoryProfileDeliverables': 'Ø§ÙÙØ®Ø±Ø¬Ø§Øª Ø§ÙØ§ÙØªØ±Ø§Ø¶ÙØ©',
+  'settings.memoryProfileDeliverablesPlaceholder': 'ÙØ«Ø§Ù: ØµÙØ­Ø§Øª ÙØ¨ÙØ·Ø Ø¹Ø±ÙØ¶ ØªÙØ¯ÙÙÙØ©Ø ØµÙØ­Ø§Øª ÙÙØ¬Ø²Ø©',
+  'settings.memoryProfileLocale': 'Ø§ÙÙØºØ© / Ø§ÙÙÙØ·ÙØ©',
+  'settings.memoryProfileLocalePlaceholder': 'ÙØ«Ø§Ù: Ø§ÙØ¥ÙØ¬ÙÙØ²ÙØ© (Ø§ÙÙÙØ§ÙØ§Øª Ø§ÙÙØªØ­Ø¯Ø©)Ø Ø§ÙØµÙÙÙØ© Ø§ÙÙØ¨Ø³ÙØ·Ø©',
+  'settings.memoryProfileGoals': 'Ø§ÙØ£ÙØ¯Ø§Ù Ø§ÙØ­Ø§ÙÙØ©',
   'settings.memoryProfileGoalsPlaceholder':
-    'مثال: إطلاق صفحة التسعير الجديدة، رفع معدّل التحويل في مسار التجربة',
-  'settings.memoryHooksTitle': 'خطّافات الذاكرة',
+    'ÙØ«Ø§Ù: Ø¥Ø·ÙØ§Ù ØµÙØ­Ø© Ø§ÙØªØ³Ø¹ÙØ± Ø§ÙØ¬Ø¯ÙØ¯Ø©Ø Ø±ÙØ¹ ÙØ¹Ø¯ÙÙ Ø§ÙØªØ­ÙÙÙ ÙÙ ÙØ³Ø§Ø± Ø§ÙØªØ¬Ø±Ø¨Ø©',
+  'settings.memoryHooksTitle': 'Ø®Ø·ÙØ§ÙØ§Øª Ø§ÙØ°Ø§ÙØ±Ø©',
   'settings.memoryHooksHint':
-    'اختر أجزاء الذاكرة التي تعمل تلقائيًا. يوقفها جميعًا المفتاح الرئيسي أعلاه.',
-  'settings.memoryHooksProfileLabel': 'استخدام ملفي الشخصي',
-  'settings.memoryHooksProfileDesc': 'إدراج ملفك الشخصي للعمل في كل مهمة.',
-  'settings.memoryHooksRewriteLabel': 'إعادة صياغة الطلبات القصيرة',
-  'settings.memoryHooksRewriteDesc': 'قبل: توسيع طلب قصير إلى موجز مهمة كامل.',
-  'settings.memoryHooksVerifyLabel': 'التحقق الذاتي من المخرجات',
-  'settings.memoryHooksVerifyDesc': 'بعد: فحص النتيجة وفق قواعدك، ثم عرض بطاقة تقييم.',
-  'settings.memoryHooksExtractionLabel': 'التعلّم من المحادثات',
-  'settings.memoryHooksExtractionDesc': 'التقاط الحقائق والتفضيلات المفيدة من أدوار المحادثة.',
-  'settings.memoryIndex': 'MEMORY.md (الفهرس)',
-  'settings.memoryIndexSave': 'حفظ الفهرس',
-  'settings.memoryIndexReset': 'إعادة تعيين',
-  'settings.memoryToastChanged': 'تم تحديث الذاكرة',
-  'settings.memoryToastClickHint': 'عرض',
-  'settings.memoryAll': 'الكل',
-  'settings.memoryExtractions': 'سجل الاستخراج',
-  'settings.memoryExtractionsHint': 'يعمل Regex أولًا، ويعمل LLM في الخلفية.',
-  'settings.memoryExtractionsEmpty': 'لا توجد عمليات استخراج بعد. ستملأ هذه القائمة في دور المحادثة التالي.',
-  'settings.memoryExtractionsRefresh': 'تحديث',
-  'settings.memoryExtractionsRefreshing': 'جارٍ التحديث…',
-  'settings.memoryExtractionPhaseRunning': 'جارٍ التشغيل…',
-  'settings.memoryExtractionPhaseSuccess': 'نجاح',
-  'settings.memoryExtractionPhaseSkipped': 'تم التخطي',
-  'settings.memoryExtractionPhaseFailed': 'فشل',
-  'settings.memoryExtractionSkipNoProvider': 'لم يتم تكوين API key لاستخراج الذاكرة عبر LLM.',
-  'settings.memoryExtractionSkipDisabled': 'الذاكرة معطّلة.',
-  'settings.memoryExtractionSkipEmpty': 'رسالة المستخدم فارغة — لا يوجد ما يُستخرَج.',
-  'settings.memoryExtractionSkipNoMatch': 'لم يتطابق أي نمط regex في هذا الدور.',
-  'settings.memoryExtractionKindHeuristic': 'تعبير نمطي',
+    'Ø§Ø®ØªØ± Ø£Ø¬Ø²Ø§Ø¡ Ø§ÙØ°Ø§ÙØ±Ø© Ø§ÙØªÙ ØªØ¹ÙÙ ØªÙÙØ§Ø¦ÙÙØ§. ÙÙÙÙÙØ§ Ø¬ÙÙØ¹ÙØ§ Ø§ÙÙÙØªØ§Ø­ Ø§ÙØ±Ø¦ÙØ³Ù Ø£Ø¹ÙØ§Ù.',
+  'settings.memoryHooksProfileLabel': 'Ø§Ø³ØªØ®Ø¯Ø§Ù ÙÙÙÙ Ø§ÙØ´Ø®ØµÙ',
+  'settings.memoryHooksProfileDesc': 'Ø¥Ø¯Ø±Ø§Ø¬ ÙÙÙÙ Ø§ÙØ´Ø®ØµÙ ÙÙØ¹ÙÙ ÙÙ ÙÙ ÙÙÙØ©.',
+  'settings.memoryHooksRewriteLabel': 'Ø¥Ø¹Ø§Ø¯Ø© ØµÙØ§ØºØ© Ø§ÙØ·ÙØ¨Ø§Øª Ø§ÙÙØµÙØ±Ø©',
+  'settings.memoryHooksRewriteDesc': 'ÙØ¨Ù: ØªÙØ³ÙØ¹ Ø·ÙØ¨ ÙØµÙØ± Ø¥ÙÙ ÙÙØ¬Ø² ÙÙÙØ© ÙØ§ÙÙ.',
+  'settings.memoryHooksVerifyLabel': 'Ø§ÙØªØ­ÙÙ Ø§ÙØ°Ø§ØªÙ ÙÙ Ø§ÙÙØ®Ø±Ø¬Ø§Øª',
+  'settings.memoryHooksVerifyDesc': 'Ø¨Ø¹Ø¯: ÙØ­Øµ Ø§ÙÙØªÙØ¬Ø© ÙÙÙ ÙÙØ§Ø¹Ø¯ÙØ Ø«Ù Ø¹Ø±Ø¶ Ø¨Ø·Ø§ÙØ© ØªÙÙÙÙ.',
+  'settings.memoryHooksExtractionLabel': 'Ø§ÙØªØ¹ÙÙÙ ÙÙ Ø§ÙÙØ­Ø§Ø¯Ø«Ø§Øª',
+  'settings.memoryHooksExtractionDesc': 'Ø§ÙØªÙØ§Ø· Ø§ÙØ­ÙØ§Ø¦Ù ÙØ§ÙØªÙØ¶ÙÙØ§Øª Ø§ÙÙÙÙØ¯Ø© ÙÙ Ø£Ø¯ÙØ§Ø± Ø§ÙÙØ­Ø§Ø¯Ø«Ø©.',
+  'settings.memoryIndex': 'MEMORY.md (Ø§ÙÙÙØ±Ø³)',
+  'settings.memoryIndexSave': 'Ø­ÙØ¸ Ø§ÙÙÙØ±Ø³',
+  'settings.memoryIndexReset': 'Ø¥Ø¹Ø§Ø¯Ø© ØªØ¹ÙÙÙ',
+  'settings.memoryToastChanged': 'ØªÙ ØªØ­Ø¯ÙØ« Ø§ÙØ°Ø§ÙØ±Ø©',
+  'settings.memoryToastClickHint': 'Ø¹Ø±Ø¶',
+  'settings.memoryAll': 'Ø§ÙÙÙ',
+  'settings.memoryExtractions': 'Ø³Ø¬Ù Ø§ÙØ§Ø³ØªØ®Ø±Ø§Ø¬',
+  'settings.memoryExtractionsHint': 'ÙØ¹ÙÙ Regex Ø£ÙÙÙØ§Ø ÙÙØ¹ÙÙ LLM ÙÙ Ø§ÙØ®ÙÙÙØ©.',
+  'settings.memoryExtractionsEmpty': 'ÙØ§ ØªÙØ¬Ø¯ Ø¹ÙÙÙØ§Øª Ø§Ø³ØªØ®Ø±Ø§Ø¬ Ø¨Ø¹Ø¯. Ø³ØªÙÙØ£ ÙØ°Ù Ø§ÙÙØ§Ø¦ÙØ© ÙÙ Ø¯ÙØ± Ø§ÙÙØ­Ø§Ø¯Ø«Ø© Ø§ÙØªØ§ÙÙ.',
+  'settings.memoryExtractionsRefresh': 'ØªØ­Ø¯ÙØ«',
+  'settings.memoryExtractionsRefreshing': 'Ø¬Ø§Ø±Ù Ø§ÙØªØ­Ø¯ÙØ«â¦',
+  'settings.memoryExtractionPhaseRunning': 'Ø¬Ø§Ø±Ù Ø§ÙØªØ´ØºÙÙâ¦',
+  'settings.memoryExtractionPhaseSuccess': 'ÙØ¬Ø§Ø­',
+  'settings.memoryExtractionPhaseSkipped': 'ØªÙ Ø§ÙØªØ®Ø·Ù',
+  'settings.memoryExtractionPhaseFailed': 'ÙØ´Ù',
+  'settings.memoryExtractionSkipNoProvider': 'ÙÙ ÙØªÙ ØªÙÙÙÙ API key ÙØ§Ø³ØªØ®Ø±Ø§Ø¬ Ø§ÙØ°Ø§ÙØ±Ø© Ø¹Ø¨Ø± LLM.',
+  'settings.memoryExtractionSkipDisabled': 'Ø§ÙØ°Ø§ÙØ±Ø© ÙØ¹Ø·ÙÙØ©.',
+  'settings.memoryExtractionSkipEmpty': 'Ø±Ø³Ø§ÙØ© Ø§ÙÙØ³ØªØ®Ø¯Ù ÙØ§Ø±ØºØ© â ÙØ§ ÙÙØ¬Ø¯ ÙØ§ ÙÙØ³ØªØ®Ø±ÙØ¬.',
+  'settings.memoryExtractionSkipNoMatch': 'ÙÙ ÙØªØ·Ø§Ø¨Ù Ø£Ù ÙÙØ· regex ÙÙ ÙØ°Ø§ Ø§ÙØ¯ÙØ±.',
+  'settings.memoryExtractionKindHeuristic': 'ØªØ¹Ø¨ÙØ± ÙÙØ·Ù',
   'settings.memoryExtractionKindLlm': 'LLM',
   'settings.memoryExtractionProviderEnv': 'env',
-  'settings.memoryExtractionProviderMediaConfig': 'إعدادات الوسائط',
-  'settings.memoryExtractionProviderOverride': 'إعدادات الذاكرة',
-  'settings.memoryExtractionProposed': 'مقترح',
-  'settings.memoryExtractionWritten': 'مكتوب',
+  'settings.memoryExtractionProviderMediaConfig': 'Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø§ÙÙØ³Ø§Ø¦Ø·',
+  'settings.memoryExtractionProviderOverride': 'Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø§ÙØ°Ø§ÙØ±Ø©',
+  'settings.memoryExtractionProposed': 'ÙÙØªØ±Ø­',
+  'settings.memoryExtractionWritten': 'ÙÙØªÙØ¨',
   'settings.memoryExtractionDuration': 'in',
-  'settings.memoryExtractionDelete': 'حذف',
-  'settings.memoryExtractionsClear': 'مسح',
-  'settings.memoryExtractionsClearTitle': 'مسح كل سجل الاستخراج',
-  'settings.memoryExtractionsClearConfirm': 'هل تريد مسح كل سجل الاستخراج؟ لا يمكن التراجع عن هذا الإجراء.',
-  'settings.memoryNoProviderBannerTitle': 'استخراج الذاكرة عبر LLM غير قيد التشغيل',
-  'settings.memoryNoProviderBannerBody': 'لم يُعثر على API key لمستخرج الذاكرة. أضف مفتاح OpenAI ضمن مزودي الوسائط، أو عيّن ANTHROPIC_API_KEY / OPENAI_API_KEY في البيئة لتفعيل الاستخراج المعتمد على LLM. لا يزال الاستخراج الاستدلالي عبر regex نشطًا.',
-  'settings.libraryInstall': 'تثبيت',
+  'settings.memoryExtractionDelete': 'Ø­Ø°Ù',
+  'settings.memoryExtractionsClear': 'ÙØ³Ø­',
+  'settings.memoryExtractionsClearTitle': 'ÙØ³Ø­ ÙÙ Ø³Ø¬Ù Ø§ÙØ§Ø³ØªØ®Ø±Ø§Ø¬',
+  'settings.memoryExtractionsClearConfirm': 'ÙÙ ØªØ±ÙØ¯ ÙØ³Ø­ ÙÙ Ø³Ø¬Ù Ø§ÙØ§Ø³ØªØ®Ø±Ø§Ø¬Ø ÙØ§ ÙÙÙÙ Ø§ÙØªØ±Ø§Ø¬Ø¹ Ø¹Ù ÙØ°Ø§ Ø§ÙØ¥Ø¬Ø±Ø§Ø¡.',
+  'settings.memoryNoProviderBannerTitle': 'Ø§Ø³ØªØ®Ø±Ø§Ø¬ Ø§ÙØ°Ø§ÙØ±Ø© Ø¹Ø¨Ø± LLM ØºÙØ± ÙÙØ¯ Ø§ÙØªØ´ØºÙÙ',
+  'settings.memoryNoProviderBannerBody': 'ÙÙ ÙÙØ¹Ø«Ø± Ø¹ÙÙ API key ÙÙØ³ØªØ®Ø±Ø¬ Ø§ÙØ°Ø§ÙØ±Ø©. Ø£Ø¶Ù ÙÙØªØ§Ø­ OpenAI Ø¶ÙÙ ÙØ²ÙØ¯Ù Ø§ÙÙØ³Ø§Ø¦Ø·Ø Ø£Ù Ø¹ÙÙÙ ANTHROPIC_API_KEY / OPENAI_API_KEY ÙÙ Ø§ÙØ¨ÙØ¦Ø© ÙØªÙØ¹ÙÙ Ø§ÙØ§Ø³ØªØ®Ø±Ø§Ø¬ Ø§ÙÙØ¹ØªÙØ¯ Ø¹ÙÙ LLM. ÙØ§ ÙØ²Ø§Ù Ø§ÙØ§Ø³ØªØ®Ø±Ø§Ø¬ Ø§ÙØ§Ø³ØªØ¯ÙØ§ÙÙ Ø¹Ø¨Ø± regex ÙØ´Ø·ÙØ§.',
+  'settings.libraryInstall': 'ØªØ«Ø¨ÙØª',
   'settings.libraryInstallGithub': 'GitHub',
-  'settings.libraryInstallLocal': 'مسار محلي',
+  'settings.libraryInstallLocal': 'ÙØ³Ø§Ø± ÙØ­ÙÙ',
   'settings.libraryInstallUrl': 'https://github.com/owner/repo',
   'settings.libraryInstallPath': '/path/to/skill-folder',
-  'settings.libraryInstallButton': 'تثبيت',
-  'settings.libraryUninstall': 'إلغاء التثبيت',
-  'settings.libraryBuiltIn': 'مدمج',
-  'settings.libraryInstalled': 'مثبّت',
-  'notify.successTitle': 'اكتملت المهمة',
-  'notify.failureTitle': 'فشلت المهمة',
-  'notify.successBody': 'انتهت جولة.',
-  'notify.failureBody': 'انتهت المهمة بخطأ.',
-  'updater.available': 'يتوفر تحديث',
-  'updater.availableBody': 'Open Design {version} متوفر. سيتم تنزيله قبل فتح المثبت.',
-  'updater.checking': 'جارٍ البحث عن تحديثات',
-  'updater.download': 'تنزيل التحديث',
-  'updater.downloading': 'جارٍ تنزيل التحديث',
-  'updater.downloadingPercent': 'جارٍ تنزيل التحديث {percent}%',
-  'updater.done': 'تم',
-  'updater.failed': 'فشل التحديث',
-  'updater.installerOpenBody': 'المثبت مفتوح. يتم الآن إنهاء Open Design لتتمكن من إكمال التحديث.',
-  'updater.installerOpened': 'تم فتح المثبت',
-  'updater.later': 'لاحقًا',
-  'updater.openFailedFallback': 'تعذر فتح المثبت.',
+  'settings.libraryInstallButton': 'ØªØ«Ø¨ÙØª',
+  'settings.libraryUninstall': 'Ø¥ÙØºØ§Ø¡ Ø§ÙØªØ«Ø¨ÙØª',
+  'settings.libraryBuiltIn': 'ÙØ¯ÙØ¬',
+  'settings.libraryInstalled': 'ÙØ«Ø¨ÙØª',
+  'notify.successTitle': 'Ø§ÙØªÙÙØª Ø§ÙÙÙÙØ©',
+  'notify.failureTitle': 'ÙØ´ÙØª Ø§ÙÙÙÙØ©',
+  'notify.successBody': 'Ø§ÙØªÙØª Ø¬ÙÙØ©.',
+  'notify.failureBody': 'Ø§ÙØªÙØª Ø§ÙÙÙÙØ© Ø¨Ø®Ø·Ø£.',
+  'updater.available': 'ÙØªÙÙØ± ØªØ­Ø¯ÙØ«',
+  'updater.availableBody': 'Open Design {version} ÙØªÙÙØ±. Ø³ÙØªÙ ØªÙØ²ÙÙÙ ÙØ¨Ù ÙØªØ­ Ø§ÙÙØ«Ø¨Øª.',
+  'updater.checking': 'Ø¬Ø§Ø±Ù Ø§ÙØ¨Ø­Ø« Ø¹Ù ØªØ­Ø¯ÙØ«Ø§Øª',
+  'updater.download': 'ØªÙØ²ÙÙ Ø§ÙØªØ­Ø¯ÙØ«',
+  'updater.downloading': 'Ø¬Ø§Ø±Ù ØªÙØ²ÙÙ Ø§ÙØªØ­Ø¯ÙØ«',
+  'updater.downloadingPercent': 'Ø¬Ø§Ø±Ù ØªÙØ²ÙÙ Ø§ÙØªØ­Ø¯ÙØ« {percent}%',
+  'updater.done': 'ØªÙ',
+  'updater.failed': 'ÙØ´Ù Ø§ÙØªØ­Ø¯ÙØ«',
+  'updater.installerOpenBody': 'Ø§ÙÙØ«Ø¨Øª ÙÙØªÙØ­. ÙØªÙ Ø§ÙØ¢Ù Ø¥ÙÙØ§Ø¡ Open Design ÙØªØªÙÙÙ ÙÙ Ø¥ÙÙØ§Ù Ø§ÙØªØ­Ø¯ÙØ«.',
+  'updater.installerOpened': 'ØªÙ ÙØªØ­ Ø§ÙÙØ«Ø¨Øª',
+  'updater.later': 'ÙØ§Ø­ÙÙØ§',
+  'updater.openFailedFallback': 'ØªØ¹Ø°Ø± ÙØªØ­ Ø§ÙÙØ«Ø¨Øª.',
   'updater.installRestart': 'Install and restart',
   'updater.installingRestart': 'Installing and restarting...',
-  'updater.openInstaller': 'تثبيت التحديث',
-  'updater.opening': 'جارٍ فتح المثبت...',
+  'updater.openInstaller': 'ØªØ«Ø¨ÙØª Ø§ÙØªØ­Ø¯ÙØ«',
+  'updater.opening': 'Ø¬Ø§Ø±Ù ÙØªØ­ Ø§ÙÙØ«Ø¨Øª...',
   'updater.payloadReadyGeneric': 'A new Open Design update is ready. Open Design will close and restart automatically.',
   'updater.payloadReadyVersion': 'Open Design {version} is ready. Open Design will close and restart automatically.',
-  'updater.quitButton': 'إنهاء Open Design',
-  'updater.quitFailedBody': 'المثبت مفتوح، لكن تعذر إنهاء Open Design. أغلق Open Design قبل استبدال التطبيق.',
-  'updater.quitFailedTitle': 'تعذر الإنهاء',
-  'updater.quitting': 'جارٍ الإنهاء...',
-  'updater.ready': 'التحديث جاهز',
-  'updater.readyGeneric': 'إصدار جديد جاهز. سيتم إغلاق Open Design وفتح المثبت.',
-  'updater.readyVersion': 'Open Design {version} جاهز. سيتم إغلاق Open Design وفتح المثبت.',
-  'updater.upToDate': 'أنت تستخدم أحدث إصدار بالفعل.',
-  'newsletter.label': 'النشرة (اختياري)',
+  'updater.quitButton': 'Ø¥ÙÙØ§Ø¡ Open Design',
+  'updater.quitFailedBody': 'Ø§ÙÙØ«Ø¨Øª ÙÙØªÙØ­Ø ÙÙÙ ØªØ¹Ø°Ø± Ø¥ÙÙØ§Ø¡ Open Design. Ø£ØºÙÙ Open Design ÙØ¨Ù Ø§Ø³ØªØ¨Ø¯Ø§Ù Ø§ÙØªØ·Ø¨ÙÙ.',
+  'updater.quitFailedTitle': 'ØªØ¹Ø°Ø± Ø§ÙØ¥ÙÙØ§Ø¡',
+  'updater.quitting': 'Ø¬Ø§Ø±Ù Ø§ÙØ¥ÙÙØ§Ø¡...',
+  'updater.ready': 'Ø§ÙØªØ­Ø¯ÙØ« Ø¬Ø§ÙØ²',
+  'updater.readyGeneric': 'Ø¥ØµØ¯Ø§Ø± Ø¬Ø¯ÙØ¯ Ø¬Ø§ÙØ². Ø³ÙØªÙ Ø¥ØºÙØ§Ù Open Design ÙÙØªØ­ Ø§ÙÙØ«Ø¨Øª.',
+  'updater.readyVersion': 'Open Design {version} Ø¬Ø§ÙØ². Ø³ÙØªÙ Ø¥ØºÙØ§Ù Open Design ÙÙØªØ­ Ø§ÙÙØ«Ø¨Øª.',
+  'updater.upToDate': 'Ø£ÙØª ØªØ³ØªØ®Ø¯Ù Ø£Ø­Ø¯Ø« Ø¥ØµØ¯Ø§Ø± Ø¨Ø§ÙÙØ¹Ù.',
+  'newsletter.label': 'Ø§ÙÙØ´Ø±Ø© (Ø§Ø®ØªÙØ§Ø±Ù)',
   'newsletter.placeholder': 'you@studio.com',
   'settings.memoryModelInlineLabel': 'Memory model',
   'settings.memoryModelInlineSameAsChat': 'Same as chat',
@@ -3069,250 +3072,250 @@ export const ar: Dict = {
   'settings.memoryModelInlineSameAsChatWithProvider': 'Same as chat ({provider})',
   'settings.memoryModelInlineHintCli': 'Optional. The memory extractor uses an env-var or media-providers API key on this provider; pinning a model here just overrides the auto-pick.',
   'settings.memoryModelInlineHintCliConstrained': 'Optional. Memory will call {provider}; needs an env-var or media-providers API key for that provider, or pick a model below to override.',
-  'settings.memoryModelInlineHintByok': 'Optional. Reuses your chat API key on the same provider — picking a different (usually cheaper) model only changes the request body.',
+  'settings.memoryModelInlineHintByok': 'Optional. Reuses your chat API key on the same provider â picking a different (usually cheaper) model only changes the request body.',
   'settings.memoryModelInlineFlashSaved': 'Saved',
   'settings.memoryModelInlineFlashCleared': 'Cleared',
-  'settings.orbit.eyebrow': 'الأتمتة',
+  'settings.orbit.eyebrow': 'Ø§ÙØ£ØªÙØªØ©',
   'settings.orbit.title': 'Orbit',
-  'settings.orbit.navHint': 'ملخص يومي للموصّلات',
-  'settings.orbit.lede': 'اجمع نشاط الموصّلات وفق جدول وانشر النتيجة كـ live artifact قابل للتحديث.',
-  'settings.orbit.statusOnTitle': 'التشغيلات اليومية المجدولة مفعّلة',
-  'settings.orbit.statusOffTitle': 'التشغيلات اليومية المجدولة متوقفة',
-  'settings.orbit.statusActive': 'نشط',
-  'settings.orbit.statusOff': 'متوقف',
-  'settings.orbit.runTitle': 'ابدأ تشغيل Orbit وافتح المحادثة الحية',
-  'settings.orbit.running': 'قيد التشغيل…',
-  'settings.orbit.runOpen': 'شغّله الآن',
-  'settings.orbit.dailySummaryTitle': 'ملخص يومي',
-  'settings.orbit.dailySummarySub': 'يعمل مرة يوميًا في الوقت المحلي المجدول.',
-  'settings.orbit.on': 'تشغيل',
-  'settings.orbit.off': 'متوقف',
-  'settings.orbit.runTimeTitle': 'وقت التشغيل',
-  'settings.orbit.runTimeSub': 'الافتراضي 08:00. احفظ لتطبيق جدول daemon.',
-  'settings.orbit.runTimeAria': 'وقت تشغيل Orbit اليومي',
-  'settings.orbit.nextRun': 'التشغيل التالي',
-  'settings.orbit.nextRunScheduledAfterSave': 'سيُجدول بعد الحفظ',
-  'settings.orbit.schedule': 'الجدول',
-  'settings.orbit.pausedManualOnly': 'متوقف مؤقتًا — تشغيل يدوي فقط',
-  'settings.orbit.templateTitle': 'قالب prompt',
-  'settings.orbit.templateMissing': 'القالب {id} غير مثبت.',
-  'settings.orbit.templateMissingOption': '{id} (مفقود)',
-  'settings.orbit.templateMissingInstall': 'ثبّت skill لـ Orbit لتوجيه prompt.',
-  'settings.orbit.templateMissingPickAnother': 'اختر قالبًا آخر من القائمة.',
-  'settings.orbit.templateResetTitle': 'إعادة إلى {id}',
-  'settings.orbit.templateReset': 'إعادة ضبط',
-  'settings.orbit.templateHelp': 'وجّه Orbit باستخدام skill — يُحقن prompt المثال للقالب المحدد في كل تشغيل Orbit كي تتبع الملخصات شكل ذلك القالب.',
-  'settings.orbit.templateAria': 'قالب prompt لـ Orbit',
-  'settings.orbit.templatesLoading': 'جارٍ تحميل القوالب…',
-  'settings.orbit.templatesOptgroup': 'قوالب skills لـ Orbit',
-  'settings.orbit.lastRun': 'آخر تشغيل',
-  'settings.orbit.triggerManual': 'يدوي',
-  'settings.orbit.triggerScheduled': 'مجدول',
-  'settings.orbit.meterAria': '{succeeded} نجح، {skipped} تم تخطيه، {failed} فشل من أصل {checked} تم فحصه',
-  'settings.orbit.countChecked': 'تم الفحص',
-  'settings.orbit.countSucceeded': 'نجح',
-  'settings.orbit.countSkipped': 'تم التخطي',
-  'settings.orbit.countFailed': 'فشل',
-  'settings.orbit.runError': 'تعذر تشغيل Orbit. تأكد من أن daemon المحلي يعمل وأن الموصّلات مهيأة.',
-  'settings.orbit.gateAriaLabel': 'يلزم وجود موصلات لاستخدام Orbit',
-  'settings.orbit.gateEyebrow': 'الإعداد مطلوب',
-  'settings.orbit.gateTitle': 'اربط أداة لتشغيل Orbit',
-  'settings.orbit.gateBody': 'يلخّص Orbit نشاط الموصلات الخاصة بك. لم تربط أيّ موصل بعد — أضف تكاملًا واحدًا على الأقل ليعمل Orbit.',
-  'settings.orbit.gateBodyNoKey': 'يلخّص Orbit نشاط موصلاتك، وتعمل الموصلات عبر Composio. أضِف مفتاح Composio API في «الموصلات» لفتح الكتالوج واختيار أوّل تكامل لك.',
-  'settings.orbit.gateAction': 'فتح الموصلات',
-  'settings.orbit.gateActionNoKey': 'تهيئة Composio',
-  'settings.orbit.gateLoading': 'جارٍ فحص الموصلات…',
-  'settings.orbit.controlsLockedBadge': 'مقفل',
-  'settings.orbit.controlsLockedHint': 'اربط أداة لإلغاء قفل جدولة Orbit وقالبه.',
-  'settings.orbit.artifactKickerLive': 'عنصر حي',
-  'settings.orbit.artifactKickerLegacy': 'ملخص قديم',
-  'settings.orbit.artifactTitle': 'ملخص نشاط Orbit اليومي',
-  'settings.orbit.artifactMetaLive': 'artifact HTML قابل للتحديث تم إنشاؤه من نشاط الموصّلات.',
-  'settings.orbit.artifactMetaLegacy': 'تم إنشاؤه قبل تفعيل دعم live artifact — شغّل Orbit مرة أخرى لنشر واحد.',
-  'settings.orbit.copyMarkdownTitle': 'نسخ ملخص Markdown إلى الحافظة',
-  'settings.orbit.copied': 'تم النسخ',
-  'settings.orbit.copy': 'نسخ',
-  'settings.orbit.openArtifact': 'فتح artifact',
-  'settings.orbit.sourceMarkdown': 'Markdown المصدر',
-  'settings.memoryModelInlineHintByokNeutral': 'تستخدم الذاكرة نموذجًا منفصلاً عن المحادثة. يكون الافتراضي هو نموذج المحادثة لديك.',
-  'diagnostics.exportTitle': 'تصدير التشخيص',
-  'diagnostics.exportButton': 'تصدير التشخيص',
-  'diagnostics.exportHint': 'يحزم سجلات التطبيق الأخيرة ومعلومات الجهاز في ملف zip لمشاركته مع الفريق.',
-  'diagnostics.exporting': 'جارٍ التصدير…',
-  'diagnostics.exportSuccess': 'تم حفظ التشخيص في {path}',
-  'diagnostics.exportFailed': 'تعذّر تصدير التشخيص: {message}',
-  'automations.eyebrow': 'جلسات الـ Agent المجدولة',
-  'automations.title': 'الأتمتة',
-  'automations.lede': 'خطّط لمحادثات متكررة لأعمال المشاريع، وملخّصات Orbit، والقطع الحيّة.',
-  'automations.summaryAria': 'ملخّص الأتمتة',
-  'automations.metricActive': 'نشطة',
-  'automations.metricPaused': 'متوقفة مؤقتًا',
-  'automations.metricTemplates': 'القوالب',
-  'automations.newAutomation': 'أتمتة جديدة',
-  'automations.yourAutomations': 'أتمتاتك',
-  'automations.loading': 'جارٍ التحميل',
-  'automations.emptyTitle': 'لا توجد أتمتة بعد',
-  'automations.emptyBody': 'أنشئ واحدة من قالب أو ابدأ بجدول فارغ.',
-  'automations.targetNewEachRun': 'مشروع جديد في كل تشغيل',
-  'automations.lastRun': 'آخر تشغيل {time}',
-  'automations.openResult': 'فتح النتيجة',
-  'automations.run': 'تشغيل',
-  'automations.runNowTitle': 'التشغيل الآن وفتح المحادثة',
-  'automations.history': 'السجل',
-  'automations.hideHistory': 'إخفاء السجل',
-  'automations.edit': 'تعديل',
-  'automations.pause': 'إيقاف مؤقت',
-  'automations.resume': 'استئناف',
-  'automations.deleteAria': 'حذف الأتمتة',
-  'automations.deleteTitle': 'حذف هذه الأتمتة',
-  'automations.deleteConfirm': 'حذف هذه الأتمتة؟ تُحفَظ عمليات التشغيل السابقة ومشاريعها.',
-  'automations.proposalsTitle': 'مقترحات التطوّر',
-  'automations.proposalsSub': 'راجِع مُخرجات الأتمتة قبل أن تُغيّر الذاكرة أو المهارات أو أنظمة التصميم.',
-  'automations.proposalsPending': '{n} قيد الانتظار',
-  'automations.apply': 'تطبيق',
-  'automations.reject': 'رفض',
-  'automations.proposalsDismissReason': 'تم تجاهله في الأتمتة',
-  'automations.templatesTitle': 'القوالب',
-  'automations.templatesSub': 'Orbit والقطع الحيّة قوالب ضمن تدفّق الأتمتة نفسه.',
-  'automations.templatesCount': '{filtered} من {total}',
-  'automations.templateFiltersAria': 'عوامل تصفية القوالب',
-  'automations.templatesEmptyTitle': 'لا توجد قوالب في هذه الفئة بعد.',
-  'automations.templatesEmptyBody': 'جرّب عامل تصفية مختلفًا، أو ابدأ من أتمتة فارغة.',
-  'automations.useTemplate': 'استخدام القالب',
-  'automations.runHistoryLoading': 'جارٍ تحميل سجل التشغيل...',
-  'automations.runHistoryEmpty': 'لا توجد عمليات تشغيل بعد.',
-  'automations.runHistoryTitle': 'سجل التشغيل',
-  'automations.runHistoryLatest': 'آخر 10',
-  'automations.crystallize': 'تبلوُر',
-  'automations.crystallizing': 'جارٍ التبلوُر',
-  'automations.crystallizeTitle': 'صياغة مقترحات مهارات وذاكرة من هذا التشغيل',
+  'settings.orbit.navHint': 'ÙÙØ®Øµ ÙÙÙÙ ÙÙÙÙØµÙÙØ§Øª',
+  'settings.orbit.lede': 'Ø§Ø¬ÙØ¹ ÙØ´Ø§Ø· Ø§ÙÙÙØµÙÙØ§Øª ÙÙÙ Ø¬Ø¯ÙÙ ÙØ§ÙØ´Ø± Ø§ÙÙØªÙØ¬Ø© ÙÙ live artifact ÙØ§Ø¨Ù ÙÙØªØ­Ø¯ÙØ«.',
+  'settings.orbit.statusOnTitle': 'Ø§ÙØªØ´ØºÙÙØ§Øª Ø§ÙÙÙÙÙØ© Ø§ÙÙØ¬Ø¯ÙÙØ© ÙÙØ¹ÙÙØ©',
+  'settings.orbit.statusOffTitle': 'Ø§ÙØªØ´ØºÙÙØ§Øª Ø§ÙÙÙÙÙØ© Ø§ÙÙØ¬Ø¯ÙÙØ© ÙØªÙÙÙØ©',
+  'settings.orbit.statusActive': 'ÙØ´Ø·',
+  'settings.orbit.statusOff': 'ÙØªÙÙÙ',
+  'settings.orbit.runTitle': 'Ø§Ø¨Ø¯Ø£ ØªØ´ØºÙÙ Orbit ÙØ§ÙØªØ­ Ø§ÙÙØ­Ø§Ø¯Ø«Ø© Ø§ÙØ­ÙØ©',
+  'settings.orbit.running': 'ÙÙØ¯ Ø§ÙØªØ´ØºÙÙâ¦',
+  'settings.orbit.runOpen': 'Ø´ØºÙÙÙ Ø§ÙØ¢Ù',
+  'settings.orbit.dailySummaryTitle': 'ÙÙØ®Øµ ÙÙÙÙ',
+  'settings.orbit.dailySummarySub': 'ÙØ¹ÙÙ ÙØ±Ø© ÙÙÙÙÙØ§ ÙÙ Ø§ÙÙÙØª Ø§ÙÙØ­ÙÙ Ø§ÙÙØ¬Ø¯ÙÙ.',
+  'settings.orbit.on': 'ØªØ´ØºÙÙ',
+  'settings.orbit.off': 'ÙØªÙÙÙ',
+  'settings.orbit.runTimeTitle': 'ÙÙØª Ø§ÙØªØ´ØºÙÙ',
+  'settings.orbit.runTimeSub': 'Ø§ÙØ§ÙØªØ±Ø§Ø¶Ù 08:00. Ø§Ø­ÙØ¸ ÙØªØ·Ø¨ÙÙ Ø¬Ø¯ÙÙ daemon.',
+  'settings.orbit.runTimeAria': 'ÙÙØª ØªØ´ØºÙÙ Orbit Ø§ÙÙÙÙÙ',
+  'settings.orbit.nextRun': 'Ø§ÙØªØ´ØºÙÙ Ø§ÙØªØ§ÙÙ',
+  'settings.orbit.nextRunScheduledAfterSave': 'Ø³ÙÙØ¬Ø¯ÙÙ Ø¨Ø¹Ø¯ Ø§ÙØ­ÙØ¸',
+  'settings.orbit.schedule': 'Ø§ÙØ¬Ø¯ÙÙ',
+  'settings.orbit.pausedManualOnly': 'ÙØªÙÙÙ ÙØ¤ÙØªÙØ§ â ØªØ´ØºÙÙ ÙØ¯ÙÙ ÙÙØ·',
+  'settings.orbit.templateTitle': 'ÙØ§ÙØ¨ prompt',
+  'settings.orbit.templateMissing': 'Ø§ÙÙØ§ÙØ¨ {id} ØºÙØ± ÙØ«Ø¨Øª.',
+  'settings.orbit.templateMissingOption': '{id} (ÙÙÙÙØ¯)',
+  'settings.orbit.templateMissingInstall': 'Ø«Ø¨ÙØª skill ÙÙ Orbit ÙØªÙØ¬ÙÙ prompt.',
+  'settings.orbit.templateMissingPickAnother': 'Ø§Ø®ØªØ± ÙØ§ÙØ¨ÙØ§ Ø¢Ø®Ø± ÙÙ Ø§ÙÙØ§Ø¦ÙØ©.',
+  'settings.orbit.templateResetTitle': 'Ø¥Ø¹Ø§Ø¯Ø© Ø¥ÙÙ {id}',
+  'settings.orbit.templateReset': 'Ø¥Ø¹Ø§Ø¯Ø© Ø¶Ø¨Ø·',
+  'settings.orbit.templateHelp': 'ÙØ¬ÙÙ Orbit Ø¨Ø§Ø³ØªØ®Ø¯Ø§Ù skill â ÙÙØ­ÙÙ prompt Ø§ÙÙØ«Ø§Ù ÙÙÙØ§ÙØ¨ Ø§ÙÙØ­Ø¯Ø¯ ÙÙ ÙÙ ØªØ´ØºÙÙ Orbit ÙÙ ØªØªØ¨Ø¹ Ø§ÙÙÙØ®ØµØ§Øª Ø´ÙÙ Ø°ÙÙ Ø§ÙÙØ§ÙØ¨.',
+  'settings.orbit.templateAria': 'ÙØ§ÙØ¨ prompt ÙÙ Orbit',
+  'settings.orbit.templatesLoading': 'Ø¬Ø§Ø±Ù ØªØ­ÙÙÙ Ø§ÙÙÙØ§ÙØ¨â¦',
+  'settings.orbit.templatesOptgroup': 'ÙÙØ§ÙØ¨ skills ÙÙ Orbit',
+  'settings.orbit.lastRun': 'Ø¢Ø®Ø± ØªØ´ØºÙÙ',
+  'settings.orbit.triggerManual': 'ÙØ¯ÙÙ',
+  'settings.orbit.triggerScheduled': 'ÙØ¬Ø¯ÙÙ',
+  'settings.orbit.meterAria': '{succeeded} ÙØ¬Ø­Ø {skipped} ØªÙ ØªØ®Ø·ÙÙØ {failed} ÙØ´Ù ÙÙ Ø£ØµÙ {checked} ØªÙ ÙØ­ØµÙ',
+  'settings.orbit.countChecked': 'ØªÙ Ø§ÙÙØ­Øµ',
+  'settings.orbit.countSucceeded': 'ÙØ¬Ø­',
+  'settings.orbit.countSkipped': 'ØªÙ Ø§ÙØªØ®Ø·Ù',
+  'settings.orbit.countFailed': 'ÙØ´Ù',
+  'settings.orbit.runError': 'ØªØ¹Ø°Ø± ØªØ´ØºÙÙ Orbit. ØªØ£ÙØ¯ ÙÙ Ø£Ù daemon Ø§ÙÙØ­ÙÙ ÙØ¹ÙÙ ÙØ£Ù Ø§ÙÙÙØµÙÙØ§Øª ÙÙÙØ£Ø©.',
+  'settings.orbit.gateAriaLabel': 'ÙÙØ²Ù ÙØ¬ÙØ¯ ÙÙØµÙØ§Øª ÙØ§Ø³ØªØ®Ø¯Ø§Ù Orbit',
+  'settings.orbit.gateEyebrow': 'Ø§ÙØ¥Ø¹Ø¯Ø§Ø¯ ÙØ·ÙÙØ¨',
+  'settings.orbit.gateTitle': 'Ø§Ø±Ø¨Ø· Ø£Ø¯Ø§Ø© ÙØªØ´ØºÙÙ Orbit',
+  'settings.orbit.gateBody': 'ÙÙØ®ÙØµ Orbit ÙØ´Ø§Ø· Ø§ÙÙÙØµÙØ§Øª Ø§ÙØ®Ø§ØµØ© Ø¨Ù. ÙÙ ØªØ±Ø¨Ø· Ø£ÙÙ ÙÙØµÙ Ø¨Ø¹Ø¯ â Ø£Ø¶Ù ØªÙØ§ÙÙÙØ§ ÙØ§Ø­Ø¯ÙØ§ Ø¹ÙÙ Ø§ÙØ£ÙÙ ÙÙØ¹ÙÙ Orbit.',
+  'settings.orbit.gateBodyNoKey': 'ÙÙØ®ÙØµ Orbit ÙØ´Ø§Ø· ÙÙØµÙØ§ØªÙØ ÙØªØ¹ÙÙ Ø§ÙÙÙØµÙØ§Øª Ø¹Ø¨Ø± Composio. Ø£Ø¶ÙÙ ÙÙØªØ§Ø­ Composio API ÙÙ Â«Ø§ÙÙÙØµÙØ§ØªÂ» ÙÙØªØ­ Ø§ÙÙØªØ§ÙÙØ¬ ÙØ§Ø®ØªÙØ§Ø± Ø£ÙÙÙ ØªÙØ§ÙÙ ÙÙ.',
+  'settings.orbit.gateAction': 'ÙØªØ­ Ø§ÙÙÙØµÙØ§Øª',
+  'settings.orbit.gateActionNoKey': 'ØªÙÙØ¦Ø© Composio',
+  'settings.orbit.gateLoading': 'Ø¬Ø§Ø±Ù ÙØ­Øµ Ø§ÙÙÙØµÙØ§Øªâ¦',
+  'settings.orbit.controlsLockedBadge': 'ÙÙÙÙ',
+  'settings.orbit.controlsLockedHint': 'Ø§Ø±Ø¨Ø· Ø£Ø¯Ø§Ø© ÙØ¥ÙØºØ§Ø¡ ÙÙÙ Ø¬Ø¯ÙÙØ© Orbit ÙÙØ§ÙØ¨Ù.',
+  'settings.orbit.artifactKickerLive': 'Ø¹ÙØµØ± Ø­Ù',
+  'settings.orbit.artifactKickerLegacy': 'ÙÙØ®Øµ ÙØ¯ÙÙ',
+  'settings.orbit.artifactTitle': 'ÙÙØ®Øµ ÙØ´Ø§Ø· Orbit Ø§ÙÙÙÙÙ',
+  'settings.orbit.artifactMetaLive': 'artifact HTML ÙØ§Ø¨Ù ÙÙØªØ­Ø¯ÙØ« ØªÙ Ø¥ÙØ´Ø§Ø¤Ù ÙÙ ÙØ´Ø§Ø· Ø§ÙÙÙØµÙÙØ§Øª.',
+  'settings.orbit.artifactMetaLegacy': 'ØªÙ Ø¥ÙØ´Ø§Ø¤Ù ÙØ¨Ù ØªÙØ¹ÙÙ Ø¯Ø¹Ù live artifact â Ø´ØºÙÙ Orbit ÙØ±Ø© Ø£Ø®Ø±Ù ÙÙØ´Ø± ÙØ§Ø­Ø¯.',
+  'settings.orbit.copyMarkdownTitle': 'ÙØ³Ø® ÙÙØ®Øµ Markdown Ø¥ÙÙ Ø§ÙØ­Ø§ÙØ¸Ø©',
+  'settings.orbit.copied': 'ØªÙ Ø§ÙÙØ³Ø®',
+  'settings.orbit.copy': 'ÙØ³Ø®',
+  'settings.orbit.openArtifact': 'ÙØªØ­ artifact',
+  'settings.orbit.sourceMarkdown': 'Markdown Ø§ÙÙØµØ¯Ø±',
+  'settings.memoryModelInlineHintByokNeutral': 'ØªØ³ØªØ®Ø¯Ù Ø§ÙØ°Ø§ÙØ±Ø© ÙÙÙØ°Ø¬ÙØ§ ÙÙÙØµÙØ§Ù Ø¹Ù Ø§ÙÙØ­Ø§Ø¯Ø«Ø©. ÙÙÙÙ Ø§ÙØ§ÙØªØ±Ø§Ø¶Ù ÙÙ ÙÙÙØ°Ø¬ Ø§ÙÙØ­Ø§Ø¯Ø«Ø© ÙØ¯ÙÙ.',
+  'diagnostics.exportTitle': 'ØªØµØ¯ÙØ± Ø§ÙØªØ´Ø®ÙØµ',
+  'diagnostics.exportButton': 'ØªØµØ¯ÙØ± Ø§ÙØªØ´Ø®ÙØµ',
+  'diagnostics.exportHint': 'ÙØ­Ø²Ù Ø³Ø¬ÙØ§Øª Ø§ÙØªØ·Ø¨ÙÙ Ø§ÙØ£Ø®ÙØ±Ø© ÙÙØ¹ÙÙÙØ§Øª Ø§ÙØ¬ÙØ§Ø² ÙÙ ÙÙÙ zip ÙÙØ´Ø§Ø±ÙØªÙ ÙØ¹ Ø§ÙÙØ±ÙÙ.',
+  'diagnostics.exporting': 'Ø¬Ø§Ø±Ù Ø§ÙØªØµØ¯ÙØ±â¦',
+  'diagnostics.exportSuccess': 'ØªÙ Ø­ÙØ¸ Ø§ÙØªØ´Ø®ÙØµ ÙÙ {path}',
+  'diagnostics.exportFailed': 'ØªØ¹Ø°ÙØ± ØªØµØ¯ÙØ± Ø§ÙØªØ´Ø®ÙØµ: {message}',
+  'automations.eyebrow': 'Ø¬ÙØ³Ø§Øª Ø§ÙÙ Agent Ø§ÙÙØ¬Ø¯ÙÙØ©',
+  'automations.title': 'Ø§ÙØ£ØªÙØªØ©',
+  'automations.lede': 'Ø®Ø·ÙØ· ÙÙØ­Ø§Ø¯Ø«Ø§Øª ÙØªÙØ±Ø±Ø© ÙØ£Ø¹ÙØ§Ù Ø§ÙÙØ´Ø§Ø±ÙØ¹Ø ÙÙÙØ®ÙØµØ§Øª OrbitØ ÙØ§ÙÙØ·Ø¹ Ø§ÙØ­ÙÙØ©.',
+  'automations.summaryAria': 'ÙÙØ®ÙØµ Ø§ÙØ£ØªÙØªØ©',
+  'automations.metricActive': 'ÙØ´Ø·Ø©',
+  'automations.metricPaused': 'ÙØªÙÙÙØ© ÙØ¤ÙØªÙØ§',
+  'automations.metricTemplates': 'Ø§ÙÙÙØ§ÙØ¨',
+  'automations.newAutomation': 'Ø£ØªÙØªØ© Ø¬Ø¯ÙØ¯Ø©',
+  'automations.yourAutomations': 'Ø£ØªÙØªØ§ØªÙ',
+  'automations.loading': 'Ø¬Ø§Ø±Ù Ø§ÙØªØ­ÙÙÙ',
+  'automations.emptyTitle': 'ÙØ§ ØªÙØ¬Ø¯ Ø£ØªÙØªØ© Ø¨Ø¹Ø¯',
+  'automations.emptyBody': 'Ø£ÙØ´Ø¦ ÙØ§Ø­Ø¯Ø© ÙÙ ÙØ§ÙØ¨ Ø£Ù Ø§Ø¨Ø¯Ø£ Ø¨Ø¬Ø¯ÙÙ ÙØ§Ø±Øº.',
+  'automations.targetNewEachRun': 'ÙØ´Ø±ÙØ¹ Ø¬Ø¯ÙØ¯ ÙÙ ÙÙ ØªØ´ØºÙÙ',
+  'automations.lastRun': 'Ø¢Ø®Ø± ØªØ´ØºÙÙ {time}',
+  'automations.openResult': 'ÙØªØ­ Ø§ÙÙØªÙØ¬Ø©',
+  'automations.run': 'ØªØ´ØºÙÙ',
+  'automations.runNowTitle': 'Ø§ÙØªØ´ØºÙÙ Ø§ÙØ¢Ù ÙÙØªØ­ Ø§ÙÙØ­Ø§Ø¯Ø«Ø©',
+  'automations.history': 'Ø§ÙØ³Ø¬Ù',
+  'automations.hideHistory': 'Ø¥Ø®ÙØ§Ø¡ Ø§ÙØ³Ø¬Ù',
+  'automations.edit': 'ØªØ¹Ø¯ÙÙ',
+  'automations.pause': 'Ø¥ÙÙØ§Ù ÙØ¤ÙØª',
+  'automations.resume': 'Ø§Ø³ØªØ¦ÙØ§Ù',
+  'automations.deleteAria': 'Ø­Ø°Ù Ø§ÙØ£ØªÙØªØ©',
+  'automations.deleteTitle': 'Ø­Ø°Ù ÙØ°Ù Ø§ÙØ£ØªÙØªØ©',
+  'automations.deleteConfirm': 'Ø­Ø°Ù ÙØ°Ù Ø§ÙØ£ØªÙØªØ©Ø ØªÙØ­ÙÙØ¸ Ø¹ÙÙÙØ§Øª Ø§ÙØªØ´ØºÙÙ Ø§ÙØ³Ø§Ø¨ÙØ© ÙÙØ´Ø§Ø±ÙØ¹ÙØ§.',
+  'automations.proposalsTitle': 'ÙÙØªØ±Ø­Ø§Øª Ø§ÙØªØ·ÙÙØ±',
+  'automations.proposalsSub': 'Ø±Ø§Ø¬ÙØ¹ ÙÙØ®Ø±Ø¬Ø§Øª Ø§ÙØ£ØªÙØªØ© ÙØ¨Ù Ø£Ù ØªÙØºÙÙØ± Ø§ÙØ°Ø§ÙØ±Ø© Ø£Ù Ø§ÙÙÙØ§Ø±Ø§Øª Ø£Ù Ø£ÙØ¸ÙØ© Ø§ÙØªØµÙÙÙ.',
+  'automations.proposalsPending': '{n} ÙÙØ¯ Ø§ÙØ§ÙØªØ¸Ø§Ø±',
+  'automations.apply': 'ØªØ·Ø¨ÙÙ',
+  'automations.reject': 'Ø±ÙØ¶',
+  'automations.proposalsDismissReason': 'ØªÙ ØªØ¬Ø§ÙÙÙ ÙÙ Ø§ÙØ£ØªÙØªØ©',
+  'automations.templatesTitle': 'Ø§ÙÙÙØ§ÙØ¨',
+  'automations.templatesSub': 'Orbit ÙØ§ÙÙØ·Ø¹ Ø§ÙØ­ÙÙØ© ÙÙØ§ÙØ¨ Ø¶ÙÙ ØªØ¯ÙÙÙ Ø§ÙØ£ØªÙØªØ© ÙÙØ³Ù.',
+  'automations.templatesCount': '{filtered} ÙÙ {total}',
+  'automations.templateFiltersAria': 'Ø¹ÙØ§ÙÙ ØªØµÙÙØ© Ø§ÙÙÙØ§ÙØ¨',
+  'automations.templatesEmptyTitle': 'ÙØ§ ØªÙØ¬Ø¯ ÙÙØ§ÙØ¨ ÙÙ ÙØ°Ù Ø§ÙÙØ¦Ø© Ø¨Ø¹Ø¯.',
+  'automations.templatesEmptyBody': 'Ø¬Ø±ÙØ¨ Ø¹Ø§ÙÙ ØªØµÙÙØ© ÙØ®ØªÙÙÙØ§Ø Ø£Ù Ø§Ø¨Ø¯Ø£ ÙÙ Ø£ØªÙØªØ© ÙØ§Ø±ØºØ©.',
+  'automations.useTemplate': 'Ø§Ø³ØªØ®Ø¯Ø§Ù Ø§ÙÙØ§ÙØ¨',
+  'automations.runHistoryLoading': 'Ø¬Ø§Ø±Ù ØªØ­ÙÙÙ Ø³Ø¬Ù Ø§ÙØªØ´ØºÙÙ...',
+  'automations.runHistoryEmpty': 'ÙØ§ ØªÙØ¬Ø¯ Ø¹ÙÙÙØ§Øª ØªØ´ØºÙÙ Ø¨Ø¹Ø¯.',
+  'automations.runHistoryTitle': 'Ø³Ø¬Ù Ø§ÙØªØ´ØºÙÙ',
+  'automations.runHistoryLatest': 'Ø¢Ø®Ø± 10',
+  'automations.crystallize': 'ØªØ¨ÙÙÙØ±',
+  'automations.crystallizing': 'Ø¬Ø§Ø±Ù Ø§ÙØªØ¨ÙÙÙØ±',
+  'automations.crystallizeTitle': 'ØµÙØ§ØºØ© ÙÙØªØ±Ø­Ø§Øª ÙÙØ§Ø±Ø§Øª ÙØ°Ø§ÙØ±Ø© ÙÙ ÙØ°Ø§ Ø§ÙØªØ´ØºÙÙ',
   'automations.crystallizeFailed': 'Crystallize failed: {error}',
   'automations.crystallizePartialSuccess': 'Crystallize created proposals, but Automations could not refresh the proposal list. Review the visible proposals or try refreshing.',
   'automations.crystallizeRefreshFailed': 'Crystallize finished, but Automations could not refresh proposals. Try refreshing before running it again.',
   'automations.crystallizeNoProposals': 'Crystallize finished, but no proposals were returned. Try refreshing or check the run details.',
-  'automations.openConversation': 'فتح المحادثة',
-  'automations.runHistoryAria': 'سجل تشغيل الأتمتة',
-  'automations.proposalsAria': 'مقترحات تطوّر الأتمتة',
-  'automations.templatesAria': 'قوالب الأتمتة',
-  'automations.runInProgress': 'قيد التنفيذ',
-  'automations.scheduleStatusPaused': 'متوقفة مؤقتًا',
-  'automations.nextRunManualOnly': 'يدوي فقط',
-  'automations.nextRunScheduled': 'مجدول',
-  'automations.nextRunAt': 'التالي {time}',
-  'automations.statusSucceeded': 'نجح',
-  'automations.statusFailed': 'فشل',
-  'automations.statusRunning': 'قيد التشغيل',
-  'automations.statusQueued': 'في قائمة الانتظار',
-  'automations.statusCanceled': 'أُلغي',
+  'automations.openConversation': 'ÙØªØ­ Ø§ÙÙØ­Ø§Ø¯Ø«Ø©',
+  'automations.runHistoryAria': 'Ø³Ø¬Ù ØªØ´ØºÙÙ Ø§ÙØ£ØªÙØªØ©',
+  'automations.proposalsAria': 'ÙÙØªØ±Ø­Ø§Øª ØªØ·ÙÙØ± Ø§ÙØ£ØªÙØªØ©',
+  'automations.templatesAria': 'ÙÙØ§ÙØ¨ Ø§ÙØ£ØªÙØªØ©',
+  'automations.runInProgress': 'ÙÙØ¯ Ø§ÙØªÙÙÙØ°',
+  'automations.scheduleStatusPaused': 'ÙØªÙÙÙØ© ÙØ¤ÙØªÙØ§',
+  'automations.nextRunManualOnly': 'ÙØ¯ÙÙ ÙÙØ·',
+  'automations.nextRunScheduled': 'ÙØ¬Ø¯ÙÙ',
+  'automations.nextRunAt': 'Ø§ÙØªØ§ÙÙ {time}',
+  'automations.statusSucceeded': 'ÙØ¬Ø­',
+  'automations.statusFailed': 'ÙØ´Ù',
+  'automations.statusRunning': 'ÙÙØ¯ Ø§ÙØªØ´ØºÙÙ',
+  'automations.statusQueued': 'ÙÙ ÙØ§Ø¦ÙØ© Ø§ÙØ§ÙØªØ¸Ø§Ø±',
+  'automations.statusCanceled': 'Ø£ÙÙØºÙ',
   'automations.kindOrbit': 'Orbit',
-  'automations.kindLiveArtifact': 'قطعة حيّة',
-  'automations.kindAutomation': 'أتمتة',
-  'automations.proposalTargetMemory': 'الذاكرة',
-  'automations.proposalTargetDesignSystem': 'نظام التصميم',
-  'automations.proposalTargetSkill': 'مهارة',
-  'automations.proposalTargetTemplate': 'قالب أتمتة',
-  'automations.proposalActionCreate': 'إنشاء',
-  'automations.proposalActionUpdate': 'تحديث',
-  'automations.proposalActionMerge': 'دمج',
-  'automations.proposalActionMove': 'نقل',
-  'automations.proposalActionDelete': 'حذف',
-  'automations.proposalActionPromote': 'ترقية',
-  'automations.filterAll': 'الكل',
+  'automations.kindLiveArtifact': 'ÙØ·Ø¹Ø© Ø­ÙÙØ©',
+  'automations.kindAutomation': 'Ø£ØªÙØªØ©',
+  'automations.proposalTargetMemory': 'Ø§ÙØ°Ø§ÙØ±Ø©',
+  'automations.proposalTargetDesignSystem': 'ÙØ¸Ø§Ù Ø§ÙØªØµÙÙÙ',
+  'automations.proposalTargetSkill': 'ÙÙØ§Ø±Ø©',
+  'automations.proposalTargetTemplate': 'ÙØ§ÙØ¨ Ø£ØªÙØªØ©',
+  'automations.proposalActionCreate': 'Ø¥ÙØ´Ø§Ø¡',
+  'automations.proposalActionUpdate': 'ØªØ­Ø¯ÙØ«',
+  'automations.proposalActionMerge': 'Ø¯ÙØ¬',
+  'automations.proposalActionMove': 'ÙÙÙ',
+  'automations.proposalActionDelete': 'Ø­Ø°Ù',
+  'automations.proposalActionPromote': 'ØªØ±ÙÙØ©',
+  'automations.filterAll': 'Ø§ÙÙÙ',
   'automations.filterOrbit': 'Orbit',
-  'automations.filterLiveArtifacts': 'القطع الحيّة',
-  'automations.filterMemory': 'الذاكرة',
-  'automations.filterDesignSystems': 'أنظمة التصميم',
-  'automations.filterSkills': 'المهارات',
-  'automations.filterConnectors': 'الموصِّلات',
-  'automations.filterCompression': 'الضغط',
-  'automations.filterRelease': 'الإصدار',
-  'automations.filterQuality': 'الجودة',
-  'automations.tpl.memoryRefresh.title': 'تحديث ذاكرة المشروع من الأعمال الأخيرة.',
-  'automations.tpl.memoryRefresh.desc': 'يحوّل القرارات والتفضيلات والملاحظات المتكررة إلى تحديثات ذاكرة قابلة لإعادة الاستخدام.',
-  'automations.tpl.designSystemRefresh.title': 'تحديث أنظمة التصميم من القطع المُسلَّمة.',
-  'automations.tpl.designSystemRefresh.desc': 'يكتشف الرموز والمكوّنات والقواعد القابلة لإعادة الاستخدام عبر أعمال التصميم الأخيرة.',
-  'automations.tpl.liveArtifactRegistry.title': 'تدقيق القطع الحيّة وتحديث الإصدارات القديمة.',
-  'automations.tpl.liveArtifactRegistry.desc': 'يُبقي لوحات المعلومات والتقارير والمعاينات الدائمة محدّثة بدلًا من تكرارها.',
-  'automations.tpl.orbitDashboard.title': 'بناء لوحة معلومات لنشاط الموصِّلات.',
-  'automations.tpl.orbitDashboard.desc': 'يجمّع الموصِّلات المحدّدة في لوحة معلومات حيّة بأسلوب Orbit.',
-  'automations.tpl.releaseNotes.title': 'صياغة ملاحظات الإصدار من أعمال التصميم المُسلَّمة.',
-  'automations.tpl.releaseNotes.desc': 'يربط طلبات الدمج PR والقطع والتغييرات الموجَّهة للمنتج في ملاحظات الإصدار.',
-  'automations.tpl.qualityRegressionWatch.title': 'مراقبة تراجعات التصميم والتنفيذ.',
-  'automations.tpl.qualityRegressionWatch.desc': 'يقارن التغييرات الأخيرة بالمعايير والتتبّعات والمراجع المعتمدة.',
-  'automations.tpl.orbitDaily.title': 'ملخّص يومي للموصِّلات.',
-  'automations.tpl.orbitDaily.desc': 'يحدّث ملخّص نشاط الموصِّلات وفق جدول زمني.',
-  'automations.tpl.liveStatusBoard.title': 'إبقاء قطعة الحالة الحيّة محدّثة.',
-  'automations.tpl.liveStatusBoard.desc': 'يحدّث قطعة دائمة واحدة بدلًا من إنشاء تقرير جديد في كل تشغيل.',
-  'dsManager.areaAria': 'منطقة أنظمة التصميم',
-  'dsManager.tabDesignSystem': 'نظام التصميم',
-  'dsManager.tabTemplate': 'قالب',
-  'dsManager.sourceAria': 'مصدر نظام التصميم',
-  'dsManager.templateSourceAria': 'مصدر القالب',
-  'dsManager.yourSystems': 'أنظمتك',
-  'dsManager.officialPresets': 'الإعدادات المسبقة الرسمية',
-  'dsManager.enterprise': 'المؤسسات',
-  'dsManager.yourTemplates': 'قوالبك',
-  'dsManager.yourSystemsAria': 'أنظمة التصميم الخاصة بك',
-  'dsManager.eyebrowDesignSystems': 'أنظمة التصميم',
-  'dsManager.yourSystemsHeading': 'أنظمتك',
-  'dsManager.filterAria': 'تصفية أنظمة التصميم',
-  'dsManager.filterAll': 'الكل',
-  'dsManager.filterPublished': 'منشورة',
-  'dsManager.filterDraft': 'مسودة',
-  'dsManager.createTitle': 'إنشاء نظام تصميم جديد',
-  'dsManager.createBody': 'علّم Open Design علامتك التجارية ومنتجك وكودك وأصولك ومراجع التصميم الخاصة بك.',
-  'dsManager.createAction': 'إنشاء',
-  'dsManager.emptyMine': 'لا توجد أنظمة تصميم بعد. أنشئ واحدًا من سياق منتج حقيقي، وراجِع المسودة، ثم انشره للمشاريع المستقبلية.',
-  'dsManager.badgeDefault': 'افتراضي',
-  'dsManager.rowMetaUpdated': 'أنت · تم التحديث {date}',
-  'dsManager.edit': 'تعديل',
-  'dsManager.openSystem': 'فتح',
-  'dsManager.editWithAgent': 'تحرير باستخدام Agent',
-  'dsManager.downloadTitle': 'تنزيل نظام التصميم (.zip + SKILLS.md)',
-  'dsManager.downloadAria': 'تنزيل {title} كملف .zip',
-  'dsManager.downloadFailed': 'تعذر تنزيل نظام التصميم. حاول مرة أخرى.',
-  'dsManager.deleteConfirm': 'حذف "{title}"؟ سيؤدي ذلك إلى إزالة مسودة نظام التصميم من هذا الجهاز.',
-  'dsManager.makeDefault': 'تعيين كافتراضي',
-  'dsManager.statusPublished': 'منشور',
-  'dsManager.statusDraft': 'مسودة',
-  'dsManager.openSystemAria': 'فتح {title}',
-  'dsManager.deleteSystemAria': 'حذف {title}',
-  'dsManager.presetsAria': 'الإعدادات المسبقة الرسمية لأنظمة التصميم',
-  'dsManager.eyebrowLibrary': 'المكتبة',
-  'dsManager.eyebrowTemplates': 'القوالب',
-  'dsManager.yourTemplatesAria': 'قوالبك',
-  'dsManager.emptyTemplates': 'لا توجد قوالب بعد. أنشئ واحدًا من أي مشروع مُنشأ عبر المشاركة بمجرد تفعيل نشر القوالب.',
-  'dsManager.templateDescFallback': 'تم الإنشاء من مشروع',
-  'dsManager.comingSoonBadge': 'قريبًا',
-  'dsManager.enterpriseDsTitle': 'أنظمة تصميم المؤسسات',
-  'dsManager.enterpriseDsBody': 'أنظمة التصميم المشتركة للفِرق ومكتبات العلامات التجارية المُدارة قريبًا.',
-  'dsManager.enterpriseTplTitle': 'قوالب المؤسسات',
-  'dsManager.enterpriseTplBody': 'القوالب المعتمدة من الفريق والنشر على مستوى المؤسسة قريبًا.',
-  'settings.instructionsTitle': 'التعليمات / القواعد',
-  'settings.instructionsSubtitle': 'سلوك ثابت ينبغي للمساعد اتباعه',
-  'settings.instructionsNavSub': 'سلوك ثابت للمساعد',
-  'settings.customInstructionsDesc': 'تعليمات ثابتة يتبعها Open Design في كل محادثة. هذه ليست ذكريات محفوظة؛ استخدم الذاكرة للحقائق والتفضيلات وسياق المشروع.',
-  'mcpClient.forwardedToLabel': 'مُمرَّر إلى:',
-  'mcpClient.notForwardedToLabel': 'غير مُمرَّر إلى:',
-  'mcpClient.forwardedAcpNote': 'محوِّلات ACP المُعلَّمة بـ stdio تتلقى فقط خوادم MCP من نوع stdio من هذه القائمة؛ تُسقَط إدخالات HTTP وSSE عند بدء التشغيل.',
-  'mcpClient.notForwardedNote': 'بالنسبة إلى تلك الـ Agents، اضبط خوادم MCP في ملف إعدادات الـ Agent الخاص به (مثل ~/.codex/config.toml و~/.gemini/settings.json)؛ الخوادم أدناه غير مستخدمة هناك دون إشعار.',
+  'automations.filterLiveArtifacts': 'Ø§ÙÙØ·Ø¹ Ø§ÙØ­ÙÙØ©',
+  'automations.filterMemory': 'Ø§ÙØ°Ø§ÙØ±Ø©',
+  'automations.filterDesignSystems': 'Ø£ÙØ¸ÙØ© Ø§ÙØªØµÙÙÙ',
+  'automations.filterSkills': 'Ø§ÙÙÙØ§Ø±Ø§Øª',
+  'automations.filterConnectors': 'Ø§ÙÙÙØµÙÙÙØ§Øª',
+  'automations.filterCompression': 'Ø§ÙØ¶ØºØ·',
+  'automations.filterRelease': 'Ø§ÙØ¥ØµØ¯Ø§Ø±',
+  'automations.filterQuality': 'Ø§ÙØ¬ÙØ¯Ø©',
+  'automations.tpl.memoryRefresh.title': 'ØªØ­Ø¯ÙØ« Ø°Ø§ÙØ±Ø© Ø§ÙÙØ´Ø±ÙØ¹ ÙÙ Ø§ÙØ£Ø¹ÙØ§Ù Ø§ÙØ£Ø®ÙØ±Ø©.',
+  'automations.tpl.memoryRefresh.desc': 'ÙØ­ÙÙÙ Ø§ÙÙØ±Ø§Ø±Ø§Øª ÙØ§ÙØªÙØ¶ÙÙØ§Øª ÙØ§ÙÙÙØ§Ø­Ø¸Ø§Øª Ø§ÙÙØªÙØ±Ø±Ø© Ø¥ÙÙ ØªØ­Ø¯ÙØ«Ø§Øª Ø°Ø§ÙØ±Ø© ÙØ§Ø¨ÙØ© ÙØ¥Ø¹Ø§Ø¯Ø© Ø§ÙØ§Ø³ØªØ®Ø¯Ø§Ù.',
+  'automations.tpl.designSystemRefresh.title': 'ØªØ­Ø¯ÙØ« Ø£ÙØ¸ÙØ© Ø§ÙØªØµÙÙÙ ÙÙ Ø§ÙÙØ·Ø¹ Ø§ÙÙÙØ³ÙÙÙÙØ©.',
+  'automations.tpl.designSystemRefresh.desc': 'ÙÙØªØ´Ù Ø§ÙØ±ÙÙØ² ÙØ§ÙÙÙÙÙÙØ§Øª ÙØ§ÙÙÙØ§Ø¹Ø¯ Ø§ÙÙØ§Ø¨ÙØ© ÙØ¥Ø¹Ø§Ø¯Ø© Ø§ÙØ§Ø³ØªØ®Ø¯Ø§Ù Ø¹Ø¨Ø± Ø£Ø¹ÙØ§Ù Ø§ÙØªØµÙÙÙ Ø§ÙØ£Ø®ÙØ±Ø©.',
+  'automations.tpl.liveArtifactRegistry.title': 'ØªØ¯ÙÙÙ Ø§ÙÙØ·Ø¹ Ø§ÙØ­ÙÙØ© ÙØªØ­Ø¯ÙØ« Ø§ÙØ¥ØµØ¯Ø§Ø±Ø§Øª Ø§ÙÙØ¯ÙÙØ©.',
+  'automations.tpl.liveArtifactRegistry.desc': 'ÙÙØ¨ÙÙ ÙÙØ­Ø§Øª Ø§ÙÙØ¹ÙÙÙØ§Øª ÙØ§ÙØªÙØ§Ø±ÙØ± ÙØ§ÙÙØ¹Ø§ÙÙØ§Øª Ø§ÙØ¯Ø§Ø¦ÙØ© ÙØ­Ø¯ÙØ«Ø© Ø¨Ø¯ÙÙØ§ ÙÙ ØªÙØ±Ø§Ø±ÙØ§.',
+  'automations.tpl.orbitDashboard.title': 'Ø¨ÙØ§Ø¡ ÙÙØ­Ø© ÙØ¹ÙÙÙØ§Øª ÙÙØ´Ø§Ø· Ø§ÙÙÙØµÙÙÙØ§Øª.',
+  'automations.tpl.orbitDashboard.desc': 'ÙØ¬ÙÙØ¹ Ø§ÙÙÙØµÙÙÙØ§Øª Ø§ÙÙØ­Ø¯ÙØ¯Ø© ÙÙ ÙÙØ­Ø© ÙØ¹ÙÙÙØ§Øª Ø­ÙÙØ© Ø¨Ø£Ø³ÙÙØ¨ Orbit.',
+  'automations.tpl.releaseNotes.title': 'ØµÙØ§ØºØ© ÙÙØ§Ø­Ø¸Ø§Øª Ø§ÙØ¥ØµØ¯Ø§Ø± ÙÙ Ø£Ø¹ÙØ§Ù Ø§ÙØªØµÙÙÙ Ø§ÙÙÙØ³ÙÙÙÙØ©.',
+  'automations.tpl.releaseNotes.desc': 'ÙØ±Ø¨Ø· Ø·ÙØ¨Ø§Øª Ø§ÙØ¯ÙØ¬ PR ÙØ§ÙÙØ·Ø¹ ÙØ§ÙØªØºÙÙØ±Ø§Øª Ø§ÙÙÙØ¬ÙÙÙØ© ÙÙÙÙØªØ¬ ÙÙ ÙÙØ§Ø­Ø¸Ø§Øª Ø§ÙØ¥ØµØ¯Ø§Ø±.',
+  'automations.tpl.qualityRegressionWatch.title': 'ÙØ±Ø§ÙØ¨Ø© ØªØ±Ø§Ø¬Ø¹Ø§Øª Ø§ÙØªØµÙÙÙ ÙØ§ÙØªÙÙÙØ°.',
+  'automations.tpl.qualityRegressionWatch.desc': 'ÙÙØ§Ø±Ù Ø§ÙØªØºÙÙØ±Ø§Øª Ø§ÙØ£Ø®ÙØ±Ø© Ø¨Ø§ÙÙØ¹Ø§ÙÙØ± ÙØ§ÙØªØªØ¨ÙØ¹Ø§Øª ÙØ§ÙÙØ±Ø§Ø¬Ø¹ Ø§ÙÙØ¹ØªÙØ¯Ø©.',
+  'automations.tpl.orbitDaily.title': 'ÙÙØ®ÙØµ ÙÙÙÙ ÙÙÙÙØµÙÙÙØ§Øª.',
+  'automations.tpl.orbitDaily.desc': 'ÙØ­Ø¯ÙØ« ÙÙØ®ÙØµ ÙØ´Ø§Ø· Ø§ÙÙÙØµÙÙÙØ§Øª ÙÙÙ Ø¬Ø¯ÙÙ Ø²ÙÙÙ.',
+  'automations.tpl.liveStatusBoard.title': 'Ø¥Ø¨ÙØ§Ø¡ ÙØ·Ø¹Ø© Ø§ÙØ­Ø§ÙØ© Ø§ÙØ­ÙÙØ© ÙØ­Ø¯ÙØ«Ø©.',
+  'automations.tpl.liveStatusBoard.desc': 'ÙØ­Ø¯ÙØ« ÙØ·Ø¹Ø© Ø¯Ø§Ø¦ÙØ© ÙØ§Ø­Ø¯Ø© Ø¨Ø¯ÙÙØ§ ÙÙ Ø¥ÙØ´Ø§Ø¡ ØªÙØ±ÙØ± Ø¬Ø¯ÙØ¯ ÙÙ ÙÙ ØªØ´ØºÙÙ.',
+  'dsManager.areaAria': 'ÙÙØ·ÙØ© Ø£ÙØ¸ÙØ© Ø§ÙØªØµÙÙÙ',
+  'dsManager.tabDesignSystem': 'ÙØ¸Ø§Ù Ø§ÙØªØµÙÙÙ',
+  'dsManager.tabTemplate': 'ÙØ§ÙØ¨',
+  'dsManager.sourceAria': 'ÙØµØ¯Ø± ÙØ¸Ø§Ù Ø§ÙØªØµÙÙÙ',
+  'dsManager.templateSourceAria': 'ÙØµØ¯Ø± Ø§ÙÙØ§ÙØ¨',
+  'dsManager.yourSystems': 'Ø£ÙØ¸ÙØªÙ',
+  'dsManager.officialPresets': 'Ø§ÙØ¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø§ÙÙØ³Ø¨ÙØ© Ø§ÙØ±Ø³ÙÙØ©',
+  'dsManager.enterprise': 'Ø§ÙÙØ¤Ø³Ø³Ø§Øª',
+  'dsManager.yourTemplates': 'ÙÙØ§ÙØ¨Ù',
+  'dsManager.yourSystemsAria': 'Ø£ÙØ¸ÙØ© Ø§ÙØªØµÙÙÙ Ø§ÙØ®Ø§ØµØ© Ø¨Ù',
+  'dsManager.eyebrowDesignSystems': 'Ø£ÙØ¸ÙØ© Ø§ÙØªØµÙÙÙ',
+  'dsManager.yourSystemsHeading': 'Ø£ÙØ¸ÙØªÙ',
+  'dsManager.filterAria': 'ØªØµÙÙØ© Ø£ÙØ¸ÙØ© Ø§ÙØªØµÙÙÙ',
+  'dsManager.filterAll': 'Ø§ÙÙÙ',
+  'dsManager.filterPublished': 'ÙÙØ´ÙØ±Ø©',
+  'dsManager.filterDraft': 'ÙØ³ÙØ¯Ø©',
+  'dsManager.createTitle': 'Ø¥ÙØ´Ø§Ø¡ ÙØ¸Ø§Ù ØªØµÙÙÙ Ø¬Ø¯ÙØ¯',
+  'dsManager.createBody': 'Ø¹ÙÙÙ Open Design Ø¹ÙØ§ÙØªÙ Ø§ÙØªØ¬Ø§Ø±ÙØ© ÙÙÙØªØ¬Ù ÙÙÙØ¯Ù ÙØ£ØµÙÙÙ ÙÙØ±Ø§Ø¬Ø¹ Ø§ÙØªØµÙÙÙ Ø§ÙØ®Ø§ØµØ© Ø¨Ù.',
+  'dsManager.createAction': 'Ø¥ÙØ´Ø§Ø¡',
+  'dsManager.emptyMine': 'ÙØ§ ØªÙØ¬Ø¯ Ø£ÙØ¸ÙØ© ØªØµÙÙÙ Ø¨Ø¹Ø¯. Ø£ÙØ´Ø¦ ÙØ§Ø­Ø¯ÙØ§ ÙÙ Ø³ÙØ§Ù ÙÙØªØ¬ Ø­ÙÙÙÙØ ÙØ±Ø§Ø¬ÙØ¹ Ø§ÙÙØ³ÙØ¯Ø©Ø Ø«Ù Ø§ÙØ´Ø±Ù ÙÙÙØ´Ø§Ø±ÙØ¹ Ø§ÙÙØ³ØªÙØ¨ÙÙØ©.',
+  'dsManager.badgeDefault': 'Ø§ÙØªØ±Ø§Ø¶Ù',
+  'dsManager.rowMetaUpdated': 'Ø£ÙØª Â· ØªÙ Ø§ÙØªØ­Ø¯ÙØ« {date}',
+  'dsManager.edit': 'ØªØ¹Ø¯ÙÙ',
+  'dsManager.openSystem': 'ÙØªØ­',
+  'dsManager.editWithAgent': 'ØªØ­Ø±ÙØ± Ø¨Ø§Ø³ØªØ®Ø¯Ø§Ù Agent',
+  'dsManager.downloadTitle': 'ØªÙØ²ÙÙ ÙØ¸Ø§Ù Ø§ÙØªØµÙÙÙ (.zip + SKILLS.md)',
+  'dsManager.downloadAria': 'ØªÙØ²ÙÙ {title} ÙÙÙÙ .zip',
+  'dsManager.downloadFailed': 'ØªØ¹Ø°Ø± ØªÙØ²ÙÙ ÙØ¸Ø§Ù Ø§ÙØªØµÙÙÙ. Ø­Ø§ÙÙ ÙØ±Ø© Ø£Ø®Ø±Ù.',
+  'dsManager.deleteConfirm': 'Ø­Ø°Ù "{title}"Ø Ø³ÙØ¤Ø¯Ù Ø°ÙÙ Ø¥ÙÙ Ø¥Ø²Ø§ÙØ© ÙØ³ÙØ¯Ø© ÙØ¸Ø§Ù Ø§ÙØªØµÙÙÙ ÙÙ ÙØ°Ø§ Ø§ÙØ¬ÙØ§Ø².',
+  'dsManager.makeDefault': 'ØªØ¹ÙÙÙ ÙØ§ÙØªØ±Ø§Ø¶Ù',
+  'dsManager.statusPublished': 'ÙÙØ´ÙØ±',
+  'dsManager.statusDraft': 'ÙØ³ÙØ¯Ø©',
+  'dsManager.openSystemAria': 'ÙØªØ­ {title}',
+  'dsManager.deleteSystemAria': 'Ø­Ø°Ù {title}',
+  'dsManager.presetsAria': 'Ø§ÙØ¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø§ÙÙØ³Ø¨ÙØ© Ø§ÙØ±Ø³ÙÙØ© ÙØ£ÙØ¸ÙØ© Ø§ÙØªØµÙÙÙ',
+  'dsManager.eyebrowLibrary': 'Ø§ÙÙÙØªØ¨Ø©',
+  'dsManager.eyebrowTemplates': 'Ø§ÙÙÙØ§ÙØ¨',
+  'dsManager.yourTemplatesAria': 'ÙÙØ§ÙØ¨Ù',
+  'dsManager.emptyTemplates': 'ÙØ§ ØªÙØ¬Ø¯ ÙÙØ§ÙØ¨ Ø¨Ø¹Ø¯. Ø£ÙØ´Ø¦ ÙØ§Ø­Ø¯ÙØ§ ÙÙ Ø£Ù ÙØ´Ø±ÙØ¹ ÙÙÙØ´Ø£ Ø¹Ø¨Ø± Ø§ÙÙØ´Ø§Ø±ÙØ© Ø¨ÙØ¬Ø±Ø¯ ØªÙØ¹ÙÙ ÙØ´Ø± Ø§ÙÙÙØ§ÙØ¨.',
+  'dsManager.templateDescFallback': 'ØªÙ Ø§ÙØ¥ÙØ´Ø§Ø¡ ÙÙ ÙØ´Ø±ÙØ¹',
+  'dsManager.comingSoonBadge': 'ÙØ±ÙØ¨ÙØ§',
+  'dsManager.enterpriseDsTitle': 'Ø£ÙØ¸ÙØ© ØªØµÙÙÙ Ø§ÙÙØ¤Ø³Ø³Ø§Øª',
+  'dsManager.enterpriseDsBody': 'Ø£ÙØ¸ÙØ© Ø§ÙØªØµÙÙÙ Ø§ÙÙØ´ØªØ±ÙØ© ÙÙÙÙØ±Ù ÙÙÙØªØ¨Ø§Øª Ø§ÙØ¹ÙØ§ÙØ§Øª Ø§ÙØªØ¬Ø§Ø±ÙØ© Ø§ÙÙÙØ¯Ø§Ø±Ø© ÙØ±ÙØ¨ÙØ§.',
+  'dsManager.enterpriseTplTitle': 'ÙÙØ§ÙØ¨ Ø§ÙÙØ¤Ø³Ø³Ø§Øª',
+  'dsManager.enterpriseTplBody': 'Ø§ÙÙÙØ§ÙØ¨ Ø§ÙÙØ¹ØªÙØ¯Ø© ÙÙ Ø§ÙÙØ±ÙÙ ÙØ§ÙÙØ´Ø± Ø¹ÙÙ ÙØ³ØªÙÙ Ø§ÙÙØ¤Ø³Ø³Ø© ÙØ±ÙØ¨ÙØ§.',
+  'settings.instructionsTitle': 'Ø§ÙØªØ¹ÙÙÙØ§Øª / Ø§ÙÙÙØ§Ø¹Ø¯',
+  'settings.instructionsSubtitle': 'Ø³ÙÙÙ Ø«Ø§Ø¨Øª ÙÙØ¨ØºÙ ÙÙÙØ³Ø§Ø¹Ø¯ Ø§ØªØ¨Ø§Ø¹Ù',
+  'settings.instructionsNavSub': 'Ø³ÙÙÙ Ø«Ø§Ø¨Øª ÙÙÙØ³Ø§Ø¹Ø¯',
+  'settings.customInstructionsDesc': 'ØªØ¹ÙÙÙØ§Øª Ø«Ø§Ø¨ØªØ© ÙØªØ¨Ø¹ÙØ§ Open Design ÙÙ ÙÙ ÙØ­Ø§Ø¯Ø«Ø©. ÙØ°Ù ÙÙØ³Øª Ø°ÙØ±ÙØ§Øª ÙØ­ÙÙØ¸Ø©Ø Ø§Ø³ØªØ®Ø¯Ù Ø§ÙØ°Ø§ÙØ±Ø© ÙÙØ­ÙØ§Ø¦Ù ÙØ§ÙØªÙØ¶ÙÙØ§Øª ÙØ³ÙØ§Ù Ø§ÙÙØ´Ø±ÙØ¹.',
+  'mcpClient.forwardedToLabel': 'ÙÙÙØ±ÙÙØ± Ø¥ÙÙ:',
+  'mcpClient.notForwardedToLabel': 'ØºÙØ± ÙÙÙØ±ÙÙØ± Ø¥ÙÙ:',
+  'mcpClient.forwardedAcpNote': 'ÙØ­ÙÙÙÙØ§Øª ACP Ø§ÙÙÙØ¹ÙÙÙÙØ© Ø¨Ù stdio ØªØªÙÙÙ ÙÙØ· Ø®ÙØ§Ø¯Ù MCP ÙÙ ÙÙØ¹ stdio ÙÙ ÙØ°Ù Ø§ÙÙØ§Ø¦ÙØ©Ø ØªÙØ³ÙÙØ· Ø¥Ø¯Ø®Ø§ÙØ§Øª HTTP ÙSSE Ø¹ÙØ¯ Ø¨Ø¯Ø¡ Ø§ÙØªØ´ØºÙÙ.',
+  'mcpClient.notForwardedNote': 'Ø¨Ø§ÙÙØ³Ø¨Ø© Ø¥ÙÙ ØªÙÙ Ø§ÙÙ AgentsØ Ø§Ø¶Ø¨Ø· Ø®ÙØ§Ø¯Ù MCP ÙÙ ÙÙÙ Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø§ÙÙ Agent Ø§ÙØ®Ø§Øµ Ø¨Ù (ÙØ«Ù ~/.codex/config.toml Ù~/.gemini/settings.json)Ø Ø§ÙØ®ÙØ§Ø¯Ù Ø£Ø¯ÙØ§Ù ØºÙØ± ÙØ³ØªØ®Ø¯ÙØ© ÙÙØ§Ù Ø¯ÙÙ Ø¥Ø´Ø¹Ø§Ø±.',
 
   // Brands library + extraction
-  'brand.libraryTitle': 'حزمة العلامة التجارية',
-  'brand.librarySubtitle': 'Teach Open Design your brand kits — extract one from a website, then apply it in any chat.',
+  'brand.libraryTitle': 'Ø­Ø²ÙØ© Ø§ÙØ¹ÙØ§ÙØ© Ø§ÙØªØ¬Ø§Ø±ÙØ©',
+  'brand.librarySubtitle': 'Teach Open Design your brand kits â extract one from a website, then apply it in any chat.',
   'brand.newBrand': 'New Brand Kit',
-  'brand.searchPlaceholder': 'Search your brand kits…',
+  'brand.searchPlaceholder': 'Search your brand kitsâ¦',
   'brand.empty': 'No brand kits yet. Extract one from a website to get started.',
   'brand.colorsCount': '{count} colors',
-  'brand.extracting': 'Extracting…',
+  'brand.extracting': 'Extractingâ¦',
   'brand.failed': 'Extraction failed',
   'brand.needsInput': 'Needs input',
-  'brand.needsInputHint': 'Extraction paused — open the project to finish verification or answer the question.',
+  'brand.needsInputHint': 'Extraction paused â open the project to finish verification or answer the question.',
   'brand.appliedToChat': 'Using {name}',
   'brand.previewEmpty': 'Select a brand to preview',
   'brand.viewDetails': 'View details',
   'newBrand.title': 'New Brand',
-  'newBrand.subtitle': 'الصق موقعًا إلكترونيًا، أو اختر علامة تجارية أدناه، وسنستخرج ألوانها وخطوطها وشعارها.',
+  'newBrand.subtitle': 'Ø§ÙØµÙ ÙÙÙØ¹ÙØ§ Ø¥ÙÙØªØ±ÙÙÙÙØ§Ø Ø£Ù Ø§Ø®ØªØ± Ø¹ÙØ§ÙØ© ØªØ¬Ø§Ø±ÙØ© Ø£Ø¯ÙØ§ÙØ ÙØ³ÙØ³ØªØ®Ø±Ø¬ Ø£ÙÙØ§ÙÙØ§ ÙØ®Ø·ÙØ·ÙØ§ ÙØ´Ø¹Ø§Ø±ÙØ§.',
   'newBrand.urlLabel': 'Brand website',
   'newBrand.urlPlaceholder': 'yourcompany.com',
   'newBrand.extract': 'Extract brand',
@@ -3321,7 +3324,7 @@ export const ar: Dict = {
   'newBrand.stage1': 'Fetching the site & measuring its design',
   'newBrand.stage2': 'Building a brand preview',
   'newBrand.stage3': 'Deriving & registering the design system',
-  'newBrand.measured': '{colors} colors · {fonts} fonts · {logos} logos',
+  'newBrand.measured': '{colors} colors Â· {fonts} fonts Â· {logos} logos',
   'newBrand.done': 'Brand ready',
   'brandDetail.identity': 'Identity',
   'brandDetail.designLanguage': 'Design Language',
@@ -3333,8 +3336,8 @@ export const ar: Dict = {
   'brandDetail.voice': 'Voice',
   'brandDetail.useInChat': 'Use in new chat',
   'brandDetail.delete': 'Delete brand',
-  'brandDetail.back': 'حزمة العلامة التجارية',
-  'brandDetail.refining': 'Refining this brand…',
+  'brandDetail.back': 'Ø­Ø²ÙØ© Ø§ÙØ¹ÙØ§ÙØ© Ø§ÙØªØ¬Ø§Ø±ÙØ©',
+  'brandDetail.refining': 'Refining this brandâ¦',
   'brandDetail.notFound': 'Brand not found.',
   'brandDetail.logo': 'Logo',
   'brandDetail.typography': 'Typography',
@@ -3362,8 +3365,8 @@ export const ar: Dict = {
   'onboarding.brandSubtitle': 'Paste a website and we\'ll turn its brand signals into a reusable brand kit for future work.',
   'onboarding.brandSkip': 'Skip for now',
   'onboarding.brandDone': 'Brand kit extracted',
-  'onboarding.buildTitle': 'أنشئ مرة واحدة، وابنِ في كل مكان',
-  'onboarding.buildBody': 'يحوّل Open Design علامتك التجارية إلى نظام تصميم قابل لإعادة الاستخدام، ويبقي كل ما تنشئه متّسقًا ومطابقًا للعلامة.',
+  'onboarding.buildTitle': 'Ø£ÙØ´Ø¦ ÙØ±Ø© ÙØ§Ø­Ø¯Ø©Ø ÙØ§Ø¨ÙÙ ÙÙ ÙÙ ÙÙØ§Ù',
+  'onboarding.buildBody': 'ÙØ­ÙÙÙ Open Design Ø¹ÙØ§ÙØªÙ Ø§ÙØªØ¬Ø§Ø±ÙØ© Ø¥ÙÙ ÙØ¸Ø§Ù ØªØµÙÙÙ ÙØ§Ø¨Ù ÙØ¥Ø¹Ø§Ø¯Ø© Ø§ÙØ§Ø³ØªØ®Ø¯Ø§ÙØ ÙÙØ¨ÙÙ ÙÙ ÙØ§ ØªÙØ´Ø¦Ù ÙØªÙØ³ÙÙØ§ ÙÙØ·Ø§Ø¨ÙÙØ§ ÙÙØ¹ÙØ§ÙØ©.',
   'onboarding.buildBenefitMemoryTitle': 'One brand memory',
   'onboarding.buildBenefitMemoryBody': 'Colors, type, spacing, components, and voice become a DESIGN.md your agents can reuse.',
   'onboarding.buildBenefitAlignedTitle': 'Every output stays aligned',
@@ -3371,8 +3374,8 @@ export const ar: Dict = {
   'onboarding.buildBenefitSourcesTitle': 'Start from what you have',
   'onboarding.buildBenefitSourcesBody': 'Use a GitHub repo, website, existing DESIGN.md, screenshots, fonts, or Figma files.',
   'onboarding.buildPreviewLabel': 'Brand system',
-  'onboarding.buildStart': 'إنشاء نظام تصميم',
-  'onboarding.buildHome': 'الذهاب إلى الرئيسية',
+  'onboarding.buildStart': 'Ø¥ÙØ´Ø§Ø¡ ÙØ¸Ø§Ù ØªØµÙÙÙ',
+  'onboarding.buildHome': 'Ø§ÙØ°ÙØ§Ø¨ Ø¥ÙÙ Ø§ÙØ±Ø¦ÙØ³ÙØ©',
   'dsCreate.referenceLabel': 'Copy from existing design system',
   'dsCreate.referenceLoading': 'Loading DESIGN.md...',
   'dsCreate.referenceLoadFailed': 'Could not load that design system.',
@@ -3390,8 +3393,8 @@ export const ar: Dict = {
   'dsCreate.githubWebsiteLabel': 'GitHub or website',
   'dsCreate.add': 'Add',
   'dsCreate.startFromBrand': 'Start from a brand',
-  'dsCreate.brandPickerSubtitle': 'Search hundreds of brands — pick one and we\'ll add its site as a style reference.',
-  'dsCreate.brandPickerQuickPicks': 'Popular brands — click to add',
+  'dsCreate.brandPickerSubtitle': 'Search hundreds of brands â pick one and we\'ll add its site as a style reference.',
+  'dsCreate.brandPickerQuickPicks': 'Popular brands â click to add',
   'dsCreate.addedSourceLinks': 'Added source links',
   'dsCreate.openSourceLabel': 'Open {label}',
   'dsCreate.removeSourceLabel': 'Remove {label}',
@@ -3404,16 +3407,16 @@ export const ar: Dict = {
   'dsCreate.pasteDesignMdHelp': 'Paste a DESIGN.md to create directly from tokens, rationale and component guidance.',
   'dsCreate.reference': 'Reference',
   'dsCreate.designMdViewMode': 'DESIGN.md view mode',
-  'dsCreate.advancedToggle': 'Advanced — repo, local code, Figma',
+  'dsCreate.advancedToggle': 'Advanced â repo, local code, Figma',
   'dsCreate.githubRepo': 'GitHub repo',
   'dsCreate.localCodeLabel': 'Link local code',
   'dsCreate.localCodeHelper': 'Use a folder or selected files from this computer.',
   'dsCreate.localCodePrompt': 'Drag a folder here or browse',
   'dsCreate.uploadFigLabel': 'Upload .fig',
-  'dsCreate.uploadFigHelper': 'Decoded on your machine into real tokens, components & assets — no Figma account.',
+  'dsCreate.uploadFigHelper': 'Decoded on your machine into real tokens, components & assets â no Figma account.',
   'dsCreate.uploadFigPrompt': 'Drop .fig here or browse',
   'dsCreate.figmaUrl': 'Figma URL',
-  'dsCreate.figmaPlaceholder': 'https://figma.com/design/… or /file/…',
+  'dsCreate.figmaPlaceholder': 'https://figma.com/design/â¦ or /file/â¦',
   'dsCreate.addedFigmaUrls': 'Added Figma URLs',
   'dsCreate.savedFigmaHelp': 'Saved as a Figma design source. The agent uses it as the canonical reference; export a .fig above for a full offline decode.',
   'dsCreate.notes': 'Notes',
@@ -3426,7 +3429,7 @@ export const ar: Dict = {
   'dsCreate.designMdPreviewTitle': 'DESIGN.md preview',
   'dsCreate.componentKit': 'component kit',
   'dsCreate.defaultTheme': 'default theme',
-  'dsCreate.componentKitTitle': '{name} — component kit',
+  'dsCreate.componentKitTitle': '{name} â component kit',
   'dsCreate.designMdGeneratedDescription': 'Generated from pasted DESIGN.md tokens, rationale and component guidance.',
   'dsCreate.previewButtons': 'Buttons',
   'dsCreate.previewButtonsHelp': 'Five types across three sizes.',
@@ -3439,63 +3442,63 @@ export const ar: Dict = {
   'dsCreate.sizeLarge': 'Large',
   'dsCreate.previewTypeScale': 'Type scale',
   'dsCreate.extractedTokens': 'Extracted DESIGN.md tokens',
-  'brandPicker.heading': 'ابدأ من علامة تجارية تحبها',
-  'brandPicker.subtext': 'انقر على أي علامة تجارية لاستخراج حزمتها مباشرة من موقعها الإلكتروني.',
-  'brandPicker.quickPicksLabel': 'علامات تجارية شائعة — انقر للاستخراج',
-  'brandPicker.searchPlaceholder': 'ابحث عن العلامات التجارية…',
-  'brandPicker.allCategories': 'الكل',
-  'brandPicker.extractAction': 'استخراج',
-  'brandPicker.showMore': 'عرض المزيد',
-  'brandPicker.opening': 'جارٍ بدء الاستخراج — جارٍ فتح {brand}…',
-  'ds.kitVisualize': 'عرض',
-  'ds.kitEdit': 'تحرير',
-  'ds.kitSource': 'المصدر',
-  'ds.saveDesignMd': 'حفظ DESIGN.md',
-  'ds.saving': 'جارٍ الحفظ…',
-  'ds.copyDesignMd': 'نسخ DESIGN.md',
-  'ds.editDesignMd': 'تحرير DESIGN.md',
-  'ds.openDesignMd': 'فتح DESIGN.md',
-  'ds.copyDesignMdModule': 'نسخ قسم {module}',
-  'ds.editDesignMdModule': 'تحرير قسم {module}',
-  'ds.openDesignMdModule': 'فتح قسم {module}',
-  'ds.uploadMd': 'رفع MD',
-  'ds.uploadFont': 'إضافة ملف خط',
-  'ds.pasteImage': 'لصق صورة',
-  'ds.refresh': 'تحديث',
-  'ds.download': 'تنزيل',
-  'ds.importFolder': 'استيراد مجلد',
-  'ds.reset': 'إعادة تعيين',
-  'ds.editingDesignMdHint': 'سيؤدي تحرير Markdown هذا إلى تحديث وحدات الحزمة المعروضة.',
-  'ds.editingModuleHint': 'يتم تحرير وحدة {module} فقط.',
+  'brandPicker.heading': 'Ø§Ø¨Ø¯Ø£ ÙÙ Ø¹ÙØ§ÙØ© ØªØ¬Ø§Ø±ÙØ© ØªØ­Ø¨ÙØ§',
+  'brandPicker.subtext': 'Ø§ÙÙØ± Ø¹ÙÙ Ø£Ù Ø¹ÙØ§ÙØ© ØªØ¬Ø§Ø±ÙØ© ÙØ§Ø³ØªØ®Ø±Ø§Ø¬ Ø­Ø²ÙØªÙØ§ ÙØ¨Ø§Ø´Ø±Ø© ÙÙ ÙÙÙØ¹ÙØ§ Ø§ÙØ¥ÙÙØªØ±ÙÙÙ.',
+  'brandPicker.quickPicksLabel': 'Ø¹ÙØ§ÙØ§Øª ØªØ¬Ø§Ø±ÙØ© Ø´Ø§Ø¦Ø¹Ø© â Ø§ÙÙØ± ÙÙØ§Ø³ØªØ®Ø±Ø§Ø¬',
+  'brandPicker.searchPlaceholder': 'Ø§Ø¨Ø­Ø« Ø¹Ù Ø§ÙØ¹ÙØ§ÙØ§Øª Ø§ÙØªØ¬Ø§Ø±ÙØ©â¦',
+  'brandPicker.allCategories': 'Ø§ÙÙÙ',
+  'brandPicker.extractAction': 'Ø§Ø³ØªØ®Ø±Ø§Ø¬',
+  'brandPicker.showMore': 'Ø¹Ø±Ø¶ Ø§ÙÙØ²ÙØ¯',
+  'brandPicker.opening': 'Ø¬Ø§Ø±Ù Ø¨Ø¯Ø¡ Ø§ÙØ§Ø³ØªØ®Ø±Ø§Ø¬ â Ø¬Ø§Ø±Ù ÙØªØ­ {brand}â¦',
+  'ds.kitVisualize': 'Ø¹Ø±Ø¶',
+  'ds.kitEdit': 'ØªØ­Ø±ÙØ±',
+  'ds.kitSource': 'Ø§ÙÙØµØ¯Ø±',
+  'ds.saveDesignMd': 'Ø­ÙØ¸ DESIGN.md',
+  'ds.saving': 'Ø¬Ø§Ø±Ù Ø§ÙØ­ÙØ¸â¦',
+  'ds.copyDesignMd': 'ÙØ³Ø® DESIGN.md',
+  'ds.editDesignMd': 'ØªØ­Ø±ÙØ± DESIGN.md',
+  'ds.openDesignMd': 'ÙØªØ­ DESIGN.md',
+  'ds.copyDesignMdModule': 'ÙØ³Ø® ÙØ³Ù {module}',
+  'ds.editDesignMdModule': 'ØªØ­Ø±ÙØ± ÙØ³Ù {module}',
+  'ds.openDesignMdModule': 'ÙØªØ­ ÙØ³Ù {module}',
+  'ds.uploadMd': 'Ø±ÙØ¹ MD',
+  'ds.uploadFont': 'Ø¥Ø¶Ø§ÙØ© ÙÙÙ Ø®Ø·',
+  'ds.pasteImage': 'ÙØµÙ ØµÙØ±Ø©',
+  'ds.refresh': 'ØªØ­Ø¯ÙØ«',
+  'ds.download': 'ØªÙØ²ÙÙ',
+  'ds.importFolder': 'Ø§Ø³ØªÙØ±Ø§Ø¯ ÙØ¬ÙØ¯',
+  'ds.reset': 'Ø¥Ø¹Ø§Ø¯Ø© ØªØ¹ÙÙÙ',
+  'ds.editingDesignMdHint': 'Ø³ÙØ¤Ø¯Ù ØªØ­Ø±ÙØ± Markdown ÙØ°Ø§ Ø¥ÙÙ ØªØ­Ø¯ÙØ« ÙØ­Ø¯Ø§Øª Ø§ÙØ­Ø²ÙØ© Ø§ÙÙØ¹Ø±ÙØ¶Ø©.',
+  'ds.editingModuleHint': 'ÙØªÙ ØªØ­Ø±ÙØ± ÙØ­Ø¯Ø© {module} ÙÙØ·.',
   'ds.manualEditModuleHint': 'Edit {module} here. Hover this section to reveal controls.',
-  'ds.saveModule': 'حفظ الوحدة',
-  'ds.uploadLogo': 'رفع الشعار',
-  'ds.uploadImage': 'رفع صورة',
-  'ds.uploading': 'جارٍ الرفع…',
-  'ds.moduleEmptyLogo': 'لا يوجد شعار بعد',
-  'ds.moduleEmptyFonts': 'لم يتم التقاط أي خطوط.',
-  'ds.actionDone': 'تم',
-  'ds.actionFailed': 'حدث خطأ. حاول مرة أخرى.',
-  'ds.uploadDone': 'تم الرفع',
-  'ds.uploadFailed': 'فشل الرفع. حاول مرة أخرى.',
-  'ds.deleteLogo': 'حذف الشعار',
-  'ds.deleteImage': 'حذف {caption}',
-  'ds.deleteProjectConfirm': 'حذف "{title}"؟ سيؤدي ذلك إلى إزالة نظام التصميم ومشروعه نهائيًا من هذا الجهاز.',
-  'ds.deleteProjectAction': 'حذف {title}',
-  'ds.editColor': 'تحرير {name}',
-  'ds.colorLabel': 'اللون',
+  'ds.saveModule': 'Ø­ÙØ¸ Ø§ÙÙØ­Ø¯Ø©',
+  'ds.uploadLogo': 'Ø±ÙØ¹ Ø§ÙØ´Ø¹Ø§Ø±',
+  'ds.uploadImage': 'Ø±ÙØ¹ ØµÙØ±Ø©',
+  'ds.uploading': 'Ø¬Ø§Ø±Ù Ø§ÙØ±ÙØ¹â¦',
+  'ds.moduleEmptyLogo': 'ÙØ§ ÙÙØ¬Ø¯ Ø´Ø¹Ø§Ø± Ø¨Ø¹Ø¯',
+  'ds.moduleEmptyFonts': 'ÙÙ ÙØªÙ Ø§ÙØªÙØ§Ø· Ø£Ù Ø®Ø·ÙØ·.',
+  'ds.actionDone': 'ØªÙ',
+  'ds.actionFailed': 'Ø­Ø¯Ø« Ø®Ø·Ø£. Ø­Ø§ÙÙ ÙØ±Ø© Ø£Ø®Ø±Ù.',
+  'ds.uploadDone': 'ØªÙ Ø§ÙØ±ÙØ¹',
+  'ds.uploadFailed': 'ÙØ´Ù Ø§ÙØ±ÙØ¹. Ø­Ø§ÙÙ ÙØ±Ø© Ø£Ø®Ø±Ù.',
+  'ds.deleteLogo': 'Ø­Ø°Ù Ø§ÙØ´Ø¹Ø§Ø±',
+  'ds.deleteImage': 'Ø­Ø°Ù {caption}',
+  'ds.deleteProjectConfirm': 'Ø­Ø°Ù "{title}"Ø Ø³ÙØ¤Ø¯Ù Ø°ÙÙ Ø¥ÙÙ Ø¥Ø²Ø§ÙØ© ÙØ¸Ø§Ù Ø§ÙØªØµÙÙÙ ÙÙØ´Ø±ÙØ¹Ù ÙÙØ§Ø¦ÙÙØ§ ÙÙ ÙØ°Ø§ Ø§ÙØ¬ÙØ§Ø².',
+  'ds.deleteProjectAction': 'Ø­Ø°Ù {title}',
+  'ds.editColor': 'ØªØ­Ø±ÙØ± {name}',
+  'ds.colorLabel': 'Ø§ÙÙÙÙ',
   'ds.hexLabel': 'Hex',
-  'ds.hexValueLabel': 'قيمة Hex',
-  'ds.saveColor': 'حفظ اللون',
-  'ds.invalidHexColor': 'أدخل لون Hex صالحًا، مثل #FF6A3D.',
-  'ds.colorSaveFailed': 'تعذر حفظ هذا اللون.',
-  'ds.colorResetFailed': 'تعذر إعادة تعيين هذا اللون.',
-  'ds.designMdSectionLabel': 'قسم {module} في DESIGN.md',
-  'ds.kitErrorTitle': 'واجه هذا العرض مشكلة.',
-  'ds.kitErrorRetry': 'إعادة التحميل',
-  'ds.shortcutsLabel': 'اختصارات لوحة المفاتيح',
-  'ds.shortcutsHint': 'الاختصارات: E تحرير · C نسخ · U رفع · R تحديث · ⌫ حذف الشعار',
-  'ds.moduleEmptyImages': 'لا توجد صور بعد',
+  'ds.hexValueLabel': 'ÙÙÙØ© Hex',
+  'ds.saveColor': 'Ø­ÙØ¸ Ø§ÙÙÙÙ',
+  'ds.invalidHexColor': 'Ø£Ø¯Ø®Ù ÙÙÙ Hex ØµØ§ÙØ­ÙØ§Ø ÙØ«Ù #FF6A3D.',
+  'ds.colorSaveFailed': 'ØªØ¹Ø°Ø± Ø­ÙØ¸ ÙØ°Ø§ Ø§ÙÙÙÙ.',
+  'ds.colorResetFailed': 'ØªØ¹Ø°Ø± Ø¥Ø¹Ø§Ø¯Ø© ØªØ¹ÙÙÙ ÙØ°Ø§ Ø§ÙÙÙÙ.',
+  'ds.designMdSectionLabel': 'ÙØ³Ù {module} ÙÙ DESIGN.md',
+  'ds.kitErrorTitle': 'ÙØ§Ø¬Ù ÙØ°Ø§ Ø§ÙØ¹Ø±Ø¶ ÙØ´ÙÙØ©.',
+  'ds.kitErrorRetry': 'Ø¥Ø¹Ø§Ø¯Ø© Ø§ÙØªØ­ÙÙÙ',
+  'ds.shortcutsLabel': 'Ø§Ø®ØªØµØ§Ø±Ø§Øª ÙÙØ­Ø© Ø§ÙÙÙØ§ØªÙØ­',
+  'ds.shortcutsHint': 'Ø§ÙØ§Ø®ØªØµØ§Ø±Ø§Øª: E ØªØ­Ø±ÙØ± Â· C ÙØ³Ø® Â· U Ø±ÙØ¹ Â· R ØªØ­Ø¯ÙØ« Â· â« Ø­Ø°Ù Ø§ÙØ´Ø¹Ø§Ø±',
+  'ds.moduleEmptyImages': 'ÙØ§ ØªÙØ¬Ø¯ ØµÙØ± Ø¨Ø¹Ø¯',
   'ds.noOriginalColor': 'No original color is available for this swatch.',
   'ds.manifestReadFailed': 'Unable to read _ds_manifest.json.',
   'ds.reviewCollapseSection': 'Collapse {title}',

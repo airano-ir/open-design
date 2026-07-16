@@ -1791,7 +1791,6 @@ export function MemorySection({
               <h3 id="memory-add-modal-title">
                 {t('settings.memoryAddDisclosure')}
               </h3>
-              <p>{t('settings.memoryAddDisclosureHint')}</p>
             </div>
             <button
               type="button"
@@ -1803,7 +1802,7 @@ export function MemorySection({
               <Icon name="close" size={16} />
             </button>
           </div>
-          <div className="memory-action-modal-body">
+          <div className="memory-action-modal-body memory-source-layout">
 
       <div
         className="memory-source-tabs"
@@ -1831,6 +1830,7 @@ export function MemorySection({
         ))}
       </div>
 
+      <div className="memory-source-content">
       {activeTab === 'profile' ? (
         <div className="memory-tab-panel memory-profile-tab-panel">
           <MemoryProfilePanel enabled={enabled} />
@@ -2322,6 +2322,7 @@ export function MemorySection({
           ) : null}
         </div>
       ) : null}
+          </div>
 
           </div>
         </div>

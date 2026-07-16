@@ -1096,19 +1096,6 @@ export function DesignFilesPanel({
           {files.length === 0 && liveArtifacts.length === 0 && (folders?.length ?? 0) === 0 ? (
             <div className="df-empty" data-testid="design-files-empty">
               <div className="df-empty-pill">
-                <div className="df-empty-stack" aria-hidden="true">
-                  {/* Each fan card carries its CTA's icon — left/front/right ↔
-                      New sketch / New Browser / Create design system. */}
-                  <span className="df-empty-stack-card df-empty-stack-card--left">
-                    <Icon name="pencil" size={22} />
-                  </span>
-                  <span className="df-empty-stack-card df-empty-stack-card--right">
-                    <Icon name="blocks" size={22} />
-                  </span>
-                  <span className="df-empty-stack-card df-empty-stack-card--front">
-                    <Icon name="globe" size={22} />
-                  </span>
-                </div>
                 <span className="df-empty-title">
                   {t('designFiles.empty')}
                 </span>

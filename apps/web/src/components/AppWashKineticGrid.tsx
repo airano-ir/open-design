@@ -8,7 +8,7 @@
 
 import { useEffect, useRef } from 'react';
 
-const DOT_COLOR = '#87ea5c';
+const DOT_COLOR = '#9a9a9a';
 const SPACING = 25;
 const RADIUS = 203;
 const STRENGTH = 2;
@@ -172,7 +172,7 @@ export function AppWashKineticGrid({ clipBottomTo }: AppWashKineticGridProps) {
         ctx.globalAlpha = (0.22 + prox * 0.78) * edgeFade;
         ctx.fillStyle = DOT_COLOR;
         ctx.beginPath();
-        ctx.arc(d.x, d.y, 0.55 + prox * 1.35, 0, 2 * Math.PI);
+        ctx.arc(d.x, d.y, 0.55 + prox * 0.8, 0, 2 * Math.PI);
         ctx.fill();
       }
       ctx.globalAlpha = 1;

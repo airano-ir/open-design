@@ -3028,17 +3028,9 @@ function workspaceContextIcon(item: WorkspaceContextItem): IconName {
    base grid stays static. Dots use currentColor so the glyph adapts to the
    button's light-on-dark (and dark-mode inverted) fill. */
 function ComposerRunIcon({ className }: { className?: string }) {
-  return (
-    <video
-      className={className}
-      src="/composer-send.mp4"
-      autoPlay
-      loop
-      muted
-      playsInline
-      aria-hidden
-    />
-  );
+  // Self-animating matrix loader (SMIL inside the SVG); runs on its own as an
+  // <img>, so it needs none of the <video> autoplay/loop plumbing.
+  return <img className={className} src="/composer-matrix-loader.svg" alt="" aria-hidden />;
 }
 
 function workspaceContextTitle(item: WorkspaceContextItem): string {

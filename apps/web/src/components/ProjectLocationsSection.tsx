@@ -181,15 +181,15 @@ export function ProjectLocationsSection({ cfg, setCfg, onProjectsRefresh }: Prop
             <strong>{t('newproj.locationDefault')}</strong>
             <code>{builtIn.path}</code>
           </div>
-          <label className="project-location-default-control">
-            <input
-              type="radio"
-              name="project-location-default"
-              checked={effectiveDefaultLocationId === builtIn.id}
-              onChange={() => handleDefaultLocationChange(builtIn.id)}
-            />
-            <span>{defaultControlLabel(builtIn.id)}</span>
-          </label>
+          <button
+            type="button"
+            className="icon-btn project-location-add"
+            onClick={handleAddFolder}
+            disabled={loading || saving}
+          >
+            <Icon name="plus" size={14} />
+            {t('settings.projectLocationsAddFolder')}
+          </button>
         </div>
       ) : null}
 
@@ -221,16 +221,6 @@ export function ProjectLocationsSection({ cfg, setCfg, onProjectsRefresh }: Prop
           </div>
         ))}
       </div>
-
-      <button
-        type="button"
-        className="icon-btn project-location-add"
-        onClick={handleAddFolder}
-        disabled={loading || saving}
-      >
-        <Icon name="plus" size={14} />
-        {t('settings.projectLocationsAddFolder')}
-      </button>
 
       {status ? <p className="settings-rescan-status">{status}</p> : null}
       {error ? <p className="settings-rescan-status error">{error}</p> : null}

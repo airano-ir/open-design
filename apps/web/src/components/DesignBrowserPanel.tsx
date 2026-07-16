@@ -1523,12 +1523,32 @@ export function DesignBrowserPanel({
       await new Promise<void>((resolve) =>
         requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
       );
-      const snapshot = await captureHostRegionSnapshot({
+      let snapshot = await captureHostRegionSnapshot({
         left,
         top,
         width: right - left,
         height: bottom - top,
       });
+      if (!snapshot) {
+        // Host compositor region grab unavailable (returns null on some
+        // setups even when the full-frame grab works). Fall back to the
+        // guest's own capturePage() and crop to the image's rect — the same
+        // guest fallback captureBrowserSnapshot() uses, so the "添加到 Chat"
+        // path is as robust as the full-frame capture.
+        try {
+          const guestUrl = (await node.capturePage()).toDataURL();
+          const dpr = window.devicePixelRatio || 1;
+          snapshot = await cropDataUrl(
+            guestUrl,
+            (left - frame.left) * dpr,
+            (top - frame.top) * dpr,
+            (right - left) * dpr,
+            (bottom - top) * dpr,
+          );
+        } catch {
+          snapshot = null;
+        }
+      }
       if (!snapshot) throw new Error('Could not capture this image');
 
       animateImageIntoChat(snapshot.dataUrl, { left, top, width: right - left, height: bottom - top });
@@ -3305,6 +3325,46 @@ function imageSizeFromDataUrl(dataUrl: string): Promise<{ w: number; h: number }
       w: Math.max(1, img.naturalWidth || img.width),
       h: Math.max(1, img.naturalHeight || img.height),
     });
+    img.onerror = () => resolve(null);
+    img.src = dataUrl;
+  });
+}
+
+// Crop a source data URL to a sub-rect (in bitmap pixels), clamped to the
+// image's natural bounds. Used to carve the hovered image's region out of a
+// full-frame guest capturePage() when the host-region compositor grab isn't
+// available. Returns null if the source can't load or the rect is empty.
+function cropDataUrl(
+  dataUrl: string,
+  sx: number,
+  sy: number,
+  sw: number,
+  sh: number,
+): Promise<{ dataUrl: string; w: number; h: number } | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const naturalW = Math.max(1, img.naturalWidth || img.width);
+        const naturalH = Math.max(1, img.naturalHeight || img.height);
+        const cx = Math.max(0, Math.min(Math.round(sx), naturalW - 1));
+        const cy = Math.max(0, Math.min(Math.round(sy), naturalH - 1));
+        const cw = Math.max(1, Math.min(Math.round(sw), naturalW - cx));
+        const ch = Math.max(1, Math.min(Math.round(sh), naturalH - cy));
+        const canvas = document.createElement('canvas');
+        canvas.width = cw;
+        canvas.height = ch;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(null);
+          return;
+        }
+        ctx.drawImage(img, cx, cy, cw, ch, 0, 0, cw, ch);
+        resolve({ dataUrl: canvas.toDataURL('image/png'), w: cw, h: ch });
+      } catch {
+        resolve(null);
+      }
+    };
     img.onerror = () => resolve(null);
     img.src = dataUrl;
   });

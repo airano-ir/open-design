@@ -177,18 +177,25 @@ export function TemplatePicker({
           className="home-hero__footer-option-icon home-hero__footer-option-icon--compact"
           aria-hidden
         >
-          <Icon name={shown ? shown.icon : 'grid'} size={14} />
+          <Icon name={shown ? shown.icon : 'grid'} size={16} />
         </span>
         {shown ? null : (
           <span className="home-hero__template-kicker">{t('homeHero.templatePicker.label')}</span>
         )}
-        <span
-          className={`home-hero__footer-select-label${isPreviewing ? ' is-preview' : ''}`}
-        >
-          {valueLabel}
-        </span>
-        <Icon name="chevron-down" size={14} aria-hidden />
+        {/* No "None" placeholder at rest — the gray kicker alone reads as the
+            empty state; the label slot only appears once a template is set. */}
+        {shown ? (
+          <span
+            className={`home-hero__footer-select-label${isPreviewing ? ' is-preview' : ''}`}
+          >
+            {valueLabel}
+          </span>
+        ) : null}
+        {/* Once a template is chosen the dropdown chevron gives way to a
+            hairline divider before the clear (×) control. */}
+        {hasSelection ? null : <Icon name="chevron-down" size={16} aria-hidden />}
       </button>
+      {hasSelection ? <span className="home-hero__template-divider" aria-hidden /> : null}
       {hasSelection ? (
         <button
           type="button"
@@ -203,7 +210,7 @@ export function TemplatePicker({
             onClear();
           }}
         >
-          <Icon name="close" size={14} strokeWidth={2.2} />
+          <Icon name="close" size={16} strokeWidth={2.2} />
         </button>
       ) : null}
       {open ? createPortal(
@@ -220,6 +227,16 @@ export function TemplatePicker({
             viewBox={`0 0 ${RING} ${RING}`}
             aria-hidden={templates.length === 0}
           >
+            {/* Left→right brand wash for the selected wedge; referenced from
+                CSS via fill: url(#od-template-wedge-grad). Default
+                objectBoundingBox units, so the fade runs across each wedge's
+                own width. */}
+            <defs>
+              <linearGradient id="od-template-wedge-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#87ea5c" stopOpacity="0.45" />
+                <stop offset="100%" stopColor="#87ea5c" stopOpacity="0.1" />
+              </linearGradient>
+            </defs>
             {templates.map((chip, index) => {
               const isActive = chip.id === activeChipId;
               const isHover = chip.id === hoverId;
@@ -244,6 +261,26 @@ export function TemplatePicker({
                 />
               );
             })}
+            {/* Angular indicator hugging the center disc: an arc spanning the
+                hovered wedge's angle range, so the disc points back at the
+                wedge being previewed. */}
+            {hovered ? (() => {
+              const index = templates.findIndex((chip) => chip.id === hovered.id);
+              if (index < 0) return null;
+              const a0 = index * wedgeStep;
+              const a1 = a0 + wedgeStep;
+              const arcRadius = 78;
+              const [sx, sy] = polar(arcRadius, a0);
+              const [ex, ey] = polar(arcRadius, a1);
+              const large = wedgeStep > 180 ? 1 : 0;
+              return (
+                <path
+                  className="home-hero__template-radial-center-arc"
+                  d={`M ${sx.toFixed(2)} ${sy.toFixed(2)} A ${arcRadius} ${arcRadius} 0 ${large} 1 ${ex.toFixed(2)} ${ey.toFixed(2)}`}
+                  aria-hidden
+                />
+              );
+            })() : null}
           </svg>
           {templates.map((chip, index) => {
             const [x, y] = polar(R_ICON, (index + 0.5) * wedgeStep);
@@ -256,13 +293,13 @@ export function TemplatePicker({
                 style={{ left: `${(x / RING) * 100}%`, top: `${(y / RING) * 100}%` }}
                 aria-hidden
               >
-                <Icon name={chip.icon} size={15} />
+                <Icon name={chip.icon} size={20} />
               </span>
             );
           })}
           <button
             type="button"
-            className="home-hero__template-radial-center"
+            className={`home-hero__template-radial-center${hovered ? ' is-previewing' : ''}`}
             data-testid="home-hero-template-radial-clear"
             aria-label={t('common.clear')}
             onClick={() => {

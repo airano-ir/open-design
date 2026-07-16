@@ -77,7 +77,6 @@ import type {
 } from '@open-design/contracts/analytics';
 import { useAnalytics } from '../analytics/provider';
 import {
-  trackArtifactHeaderClick,
   trackComposerBarClick,
   trackDesignSystemApplyResult,
   trackDesignSystemEnrichClick,
@@ -187,7 +186,6 @@ import {
 } from '../comments';
 import { filterImplicitProducedFiles } from '../produced-files';
 import { AvatarMenu } from './AvatarMenu';
-import { EntrySettingsMenu } from './EntrySettingsMenu';
 import { Icon } from './Icon';
 import { DesignSystemPicker } from './DesignSystemPicker';
 import { PluginDetailsModal } from './PluginDetailsModal';
@@ -1008,7 +1006,6 @@ export function ProjectView({
   const { locale, t } = useI18n();
   const analytics = useAnalytics();
   const iframeKeepAlivePool = useIframeKeepAlivePool();
-  const handleThemeChange = onThemeChange ?? (() => {});
   const projectDetail = useProjectDetail(project.id);
   const detailedProject = projectDetail.project?.id === project.id ? projectDetail.project : null;
   const currentProject =
@@ -6948,27 +6945,6 @@ export function ProjectView({
           agents={agents}
           metricsConsent={config.telemetry?.metrics === true}
           installationId={config.installationId}
-          headerActions={(
-            <>
-              <EntrySettingsMenu
-                config={config}
-                onThemeChange={handleThemeChange}
-                onOpenSettings={onOpenSettings}
-                trackingPageName="artifact"
-                onTrackTriggerClick={() => {
-                  // Spec row 52: the settings gear in the artifact header.
-                  // Carry the active artifact so settings slices line up with
-                  // the rest of the artifact_header funnel.
-                  trackArtifactHeaderClick(analytics.track, {
-                    page_name: 'artifact',
-                    area: 'artifact_header',
-                    element: 'settings',
-                    ...headerArtifact,
-                  });
-                }}
-              />
-            </>
-          )}
           questionForm={displayedQuestionForm}
           questionFormPreview={displayedQuestionFormPreview}
           questionFormKey={displayedQuestionFormKey}

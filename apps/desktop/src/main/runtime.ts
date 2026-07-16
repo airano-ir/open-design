@@ -685,7 +685,10 @@ const MAC_WINDOW_CHROME =
   process.platform === "darwin"
     ? ({
         titleBarStyle: "hiddenInset" as const,
-        trafficLightPosition: { x: 12, y: 10 },
+        // y centers the 12px traffic-light circles on the tab strip's midline
+        // (52px header, tabs span 10–42 → center 26 → top 20), so they line up
+        // horizontally with the home pill / tab strip to their right.
+        trafficLightPosition: { x: 12, y: 20 },
         // Frosted-glass window: the desktop wallpaper blurs through the whole
         // window (NSVisualEffectView). The web shell keeps html/body
         // transparent in desktop mode (see apps/web app-wash.css) so the
@@ -701,14 +704,15 @@ const MAC_WINDOW_CHROME_CSS = `
   .app-chrome-header {
     /* Windowed: the home pill sits 4px after the traffic lights (lights span
        x:12 + 52px = 64px). Fullscreen (class synced from main below): the
-       lights are hidden, so the pill left-aligns with the nav-rail card's
-       10px inset instead. */
+       lights are hidden, so zero the traffic reserve — the tab strip's own
+       10px edge-inset then lines the home pill's left edge up exactly with the
+       nav-rail card's 10px inset below it. */
     --app-chrome-traffic-space: 64px !important;
     --app-chrome-traffic-margin: 4px !important;
     -webkit-app-region: drag;
   }
   html.is-window-fullscreen .app-chrome-header {
-    --app-chrome-traffic-space: 10px !important;
+    --app-chrome-traffic-space: 0px !important;
     --app-chrome-traffic-margin: 0px !important;
   }
   .app-chrome-traffic-space {

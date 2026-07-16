@@ -82,8 +82,14 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin: 10px;
-  padding: 10px 0 12px;
+  /* Top margin 0: the tab bar already contributes a 10px gap below the tabs
+     (its bottom padding), so the single visible gap between the tabs and this
+     rail card stays 10px instead of doubling to 20 (tab 10 + rail 10). */
+  margin: 0 10px 10px;
+  /* Bottom padding trimmed 12 → 5 so the account row's gap to the panel's
+     bottom edge (trigger padding 4 + footer padding 6 + 5 + 1px stroke = 16px)
+     matches its 16px left/right inset. */
+  padding: 10px 0 5px;
   position: relative;
   /* Craft-style milky frost (material.css thin tier): soft white surface over
      the wash/wallpaper with a saturated blur, instead of fully clear glass. */
@@ -902,8 +908,9 @@
   border: 1px solid transparent;
   border-radius: 8px;
   background: transparent;
-  /* Unselected items read at the first text tier (颜色规范 标题、最强文字). */
-  color: var(--text-strong);
+  /* Unselected: label matches the icon's muted tone (one uniform color); hover
+     steps up to --text-strong, selection goes near-black on light gray. */
+  color: color-mix(in srgb, var(--text) 52%, transparent);
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -918,7 +925,8 @@
   align-items: center;
   justify-content: center;
   flex: 0 0 18px;
-  color: color-mix(in srgb, var(--text) 62%, transparent);
+  /* One step lighter than before, tracking the lighter unselected label. */
+  color: color-mix(in srgb, var(--text) 52%, transparent);
 }
 .entry-nav-rail__btn-icon > svg {
   width: 18px;
@@ -938,13 +946,10 @@
   text-overflow: ellipsis;
 }
 .entry-nav-rail__btn.is-active .entry-nav-rail__btn-icon {
-  color: #2f781d;
-  /* Remix glyphs are font outlines — a whisper of text-stroke nudges the
-     icon's weight up to sit with the medium label without going chunky. */
-  -webkit-text-stroke: 0.2px currentColor;
+  color: var(--selected);
 }
 .entry-nav-rail__btn.is-active .entry-nav-rail__btn-label {
-  font-weight: 500;
+  font-weight: 400;
 }
 
 /* Search box */
@@ -952,7 +957,10 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  margin: 4px 0 10px;
+  /* No top margin: the search box's gap to the rail's top edge (panel
+     padding-top 10px + 1px stroke = 11px) then matches its 11px left/right
+     inset, instead of the extra 4px pushing it to 15px. */
+  margin: 0 0 10px;
 }
 .entry-nav-rail__search-row .entry-nav-rail__search {
   flex: 1;
@@ -978,7 +986,9 @@
 }
 .entry-nav-rail__search:focus-within {
   flex-direction: row-reverse;
-  border-color: var(--text-strong, #353535);
+  /* Lighter focus ring — a step up from the resting border, not the near-black
+     --text-strong which read as a heavy outline the moment you typed. */
+  border-color: var(--border-strong);
   background: var(--rail-surface, #fff);
   color: var(--text-muted);
   box-shadow: none;
@@ -1053,7 +1063,7 @@
 }
 .entry-nav-rail__team-name {
   font-size: 13px;
-  font-weight: 400;
+  font-weight: 500;
   flex: 1;
   white-space: nowrap;
   overflow: hidden;
@@ -1078,19 +1088,20 @@
   background: var(--border-soft, rgba(0, 0, 0, 0.08));
 }
 .entry-nav-rail__btn:not(.is-active):hover {
+  /* Only the fill changes on hover — the label keeps its resting color so
+     text doesn't shift tone under the pointer. */
   background: color-mix(in srgb, var(--text) 5%, transparent);
-  color: var(--text-strong);
   border-color: transparent;
 }
 .entry-nav-rail__btn.is-active {
-  /* Selected = 极浅品牌背景 (#F5FFEE) under the deep brand green label/icon
-     (颜色规范 品牌色对). */
-  background: #f9fff4;
-  color: #2f781d;
+  /* Selected = one step above the lightest surface gray (--bg-subtle #ededed)
+     under the spec's selection color (--selected #353535) for label + icon. */
+  background: var(--bg-subtle);
+  color: var(--selected);
   border-color: transparent;
 }
 .entry-nav-rail__btn.is-active:hover {
-  background: #f9fff4;
+  background: var(--bg-subtle);
   border-color: transparent;
 }
 .entry-nav-rail__btn:focus-visible {
@@ -1187,6 +1198,20 @@
    while the hero card self-constrains to a readable column. */
 .entry-main__inner--wide {
   max-width: 1600px;
+}
+/* Uniform left/right gutters across the home view AND the wide sub-views
+   (全部项目 / 草稿 / design-systems / …): the recent-projects grid and the
+   project lists all breathe away from the window edges by the same 48px, so
+   switching between 最近 and 全部项目 keeps the same side inset. */
+.entry-main__inner {
+  padding-left: 48px;
+  padding-right: 48px;
+}
+@media (max-width: 900px) {
+  .entry-main__inner {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
 }
 
 /* Sticky top-right control strip inside the main scroll area.
@@ -1706,6 +1731,17 @@
 .inline-switcher__chip-sep {
   color: var(--text-faint);
 }
+/* Hairline splitting the agent (logo + status dot) from the model name, so the
+   compact chip reads as two groups rather than one run. Same treatment as
+   `.home-hero__workdir-divider` in the composer row beside it; the chip's own
+   gap does the spacing. */
+.inline-switcher__chip-divider {
+  flex: 0 0 auto;
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+  opacity: 0.7;
+}
 .inline-switcher__chip-primary {
   min-width: 0;
   overflow: hidden;
@@ -1776,6 +1812,13 @@
   letter-spacing: 0.04em;
   color: var(--text-muted);
 }
+/* Left-align the label with the option text beneath it. Each
+   `.inline-switcher__agent` insets its name by 1px border + 8px padding, so a
+   flush label hangs 9px to the left of the list. Scoped to rows that actually
+   hold a list — a label above the model-select trigger has a different inset. */
+.inline-switcher__row:has(.inline-switcher__agent-grid) .inline-switcher__label {
+  padding-left: 9px;
+}
 .inline-switcher__hint {
   font-size: 12px;
   color: var(--text-muted);
@@ -1843,8 +1886,13 @@
   width: 100%;
   min-width: 0;
 }
-.inline-switcher__agent:hover {
+/* Hover reads from the background alone — same reasoning as `.is-active`
+   below. Without the `:not(:disabled)` here, the global `button:hover` repaint
+   in primitives.css (specificity 0,2,1) out-specifies this rule and darkens
+   the border to --border-strong, popping a visible outline on hover. */
+.inline-switcher__agent:hover:not(:disabled) {
   background: var(--bg-subtle);
+  border-color: transparent;
 }
 .inline-switcher__agent.is-active {
   /* Selected state reads from the tinted background alone — no dark accent
@@ -5095,7 +5143,7 @@
 }
 .entry-nav-rail__account-name {
   font-size: 13px;
-  font-weight: 400;
+  font-weight: 500;
   flex: 0 1 auto;
   margin-right: auto;
   white-space: nowrap;
@@ -5499,6 +5547,19 @@
 }
 .entry-nav-rail__menu-social-btn svg,
 .entry-nav-rail__menu-social-btn .od-icon { color: inherit; }
+/* GitHub 按钮附带实时 star 数时放开固定宽度，图标 + 数字并排 */
+.entry-nav-rail__menu-social-btn:has(.entry-nav-rail__menu-social-count) {
+  width: auto;
+  padding: 0 9px;
+  gap: 5px;
+}
+.entry-nav-rail__menu-social-count {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  color: inherit;
+  font-variant-numeric: tabular-nums;
+}
 .entry-nav-rail__menu-social-btn .entry-nav-rail__menu-x {
   flex: 0 0 auto;
   color: inherit;

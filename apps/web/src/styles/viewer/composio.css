@@ -871,7 +871,7 @@
 .qf-chip-desc {
   color: var(--text-muted);
   font-size: 12px;
-  font-weight: 400;
+  font-weight: 500;
 }
 .qf-chip-on .qf-chip-desc {
   color: inherit;
@@ -1408,6 +1408,10 @@
 .ds-modal-actions .share-menu > button {
   white-space: nowrap;
   flex-shrink: 0;
+  /* Every header action reads as a capsule. The split primary action keeps its
+     inner corners square (see --split / -caret below) so its two halves join
+     into one pill. */
+  border-radius: var(--radius-pill);
 }
 .ds-modal-stage {
   flex: 1;
@@ -1767,7 +1771,7 @@
   align-items: center;
   gap: 6px;
   padding: 7px 16px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   border: 1px solid var(--accent);
   background: var(--accent);
   color: white;
@@ -2304,9 +2308,14 @@ body.entry-resizing { cursor: col-resize; user-select: none; }
 .chat-history-menu {
   position: absolute;
   top: calc(100% + 6px);
-  left: 12px;
+  /* Right-anchored to the conversations icon: the sticky .chat-project-header
+     is the containing block and pads 12px, and the icon is its last (and
+     right-most) child — so right:12px lands the menu's right edge exactly on
+     the icon's. This is also what `transform-origin: top right` below already
+     assumed. Width stays 80% of the header's inner span, growing leftward. */
+  left: auto;
   right: 12px;
-  width: auto;
+  width: calc((100% - 24px) * 0.8);
   max-height: min(360px, calc(100vh - 160px));
   display: flex;
   flex-direction: column;
@@ -2316,11 +2325,11 @@ body.entry-resizing { cursor: col-resize; user-select: none; }
      translucent fill just lets un-blurred text bleed through. Solid matches
      the app's other anchored menus (working-dir picker, plus menu). */
   background: var(--bg-panel);
-  border: 1px solid var(--material-separator);
-  border-radius: var(--radius);
+  border: 1px solid var(--border-soft, var(--border));
+  border-radius: var(--radius-lg);
   box-shadow:
-    0 18px 48px color-mix(in srgb, #000 12%, transparent),
-    0 1px 0 color-mix(in srgb, #fff 42%, transparent) inset;
+    0 1px 2px color-mix(in srgb, #000 4%, transparent),
+    0 12px 32px -12px color-mix(in srgb, #000 22%, transparent);
   z-index: 30;
   overflow: hidden;
   transform-origin: top right;
@@ -2330,9 +2339,10 @@ body.entry-resizing { cursor: col-resize; user-select: none; }
   display: flex;
   align-items: center;
   gap: 7px;
-  padding: 6px 8px 5px;
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
-  background: color-mix(in srgb, var(--bg-panel) 92%, var(--bg));
+  /* No divider, no tinted band — the header shares one continuous surface
+     with the search field and list so the popover reads as a single clean
+     sheet, matching the app's other anchored menus. */
+  padding: 8px 8px 4px;
 }
 .chat-history-menu-title {
   font-size: 12px;
@@ -2351,9 +2361,12 @@ body.entry-resizing { cursor: col-resize; user-select: none; }
   display: flex;
   align-items: center;
   gap: 5px;
-  height: 28px;
+  /* Matches the app's standard control height (primitives.css `button`); at
+     28px this field read as a cramped slot against the list rows below it.
+     The inner input stays 20px and is centered by `align-items`. */
+  height: 36px;
   margin: 6px 8px 3px;
-  padding: 0 7px;
+  padding: 0 9px;
   border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
   border-radius: var(--radius);
   background: color-mix(in srgb, var(--bg) 88%, var(--bg-panel));
@@ -2468,9 +2481,9 @@ body.entry-resizing { cursor: col-resize; user-select: none; }
   align-items: center;
   gap: 6px;
   min-height: 32px;
-  /* Tighter left inset so the title sits closer to the card edge (aligns with
-     the menu header); right keeps room for the meta + hover delete button. */
-  padding: 4px 6px 4px 4px;
+  /* Roomier left inset so the title has breathing room from the card edge;
+     right keeps room for the hover delete button. */
+  padding: 4px 6px 4px 12px;
   border-radius: var(--radius);
   background: transparent;
   border: 1px solid transparent;
@@ -2573,7 +2586,8 @@ body.entry-resizing { cursor: col-resize; user-select: none; }
   padding: 6px 12px;
   border-radius: var(--radius-pill);
   /* Surface comes from .od-glass-refract (frosted base, SDF refraction on
-     Chromium via useLiquidGlass in ChatPane). */
+     Chromium via useLiquidGlass in ChatPane); the white→transparent wash is
+     layered on top via the higher-specificity rule below. */
   border: 1px solid var(--material-separator);
   color: var(--text);
   font-size: 12px;
@@ -2596,6 +2610,13 @@ body.entry-resizing { cursor: col-resize; user-select: none; }
     opacity 140ms cubic-bezier(0.23, 1, 0.32, 1),
     transform 140ms cubic-bezier(0.23, 1, 0.32, 1),
     visibility 0s linear 140ms;
+}
+/* Top-to-bottom white wash fading to fully transparent — beats the SDF
+   surface's `background: transparent` (which is 0,2,0) so the pill reads
+   solid white up top and dissolves into the frosted glass at the bottom. */
+.chat-jump-btn.od-glass-refract,
+.chat-jump-btn.od-glass-refract[data-od-glass-sdf] {
+  background: linear-gradient(180deg, #fff 0%, rgba(255, 255, 255, 0) 100%);
 }
 .chat-jump-btn-active {
   opacity: 1;
@@ -2646,7 +2667,7 @@ body.entry-resizing { cursor: col-resize; user-select: none; }
   animation: pulse 1.2s ease-in-out infinite;
 }
 .assistant-footer .assistant-label {
-  font-weight: 400;
+  font-weight: 500;
   color: var(--text-faint);
   font-size: 12px;
 }

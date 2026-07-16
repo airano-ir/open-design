@@ -19,16 +19,26 @@
   justify-content: space-between;
   align-items: center;
   padding: 8px 14px;
-  border-bottom: 1px solid var(--border);
-  /* Functional toolbar → Liquid Glass regular (材质规范). */
-  background: var(--glass-regular);
-  -webkit-backdrop-filter: var(--glass-backdrop);
-  backdrop-filter: var(--glass-backdrop);
+  border-bottom: 0;
+  /* Solid white bar, no hairline: nothing scrolls under this bar (the body
+     scrolls inside itself), so a glass film served no function. Dark theme
+     swaps to the panel surface below. */
+  background: #ffffff;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
   font-size: 13px;
   color: var(--text-muted);
   gap: 8px;
   min-height: 44px;
   flex-shrink: 0;
+}
+[data-theme='dark'] .viewer-toolbar {
+  background: var(--bg-panel);
+}
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme]) .viewer-toolbar {
+    background: var(--bg-panel);
+  }
 }
 .viewer-toolbar-left { display: inline-flex; align-items: center; gap: 8px; }
 .viewer-toolbar-actions { display: inline-flex; gap: 2px; align-items: center; }
@@ -135,12 +145,21 @@
   opacity: 0.42;
 }
 .viewer-action.active {
+  /* Selected reads from the tinted fill alone — no ring. The active tool
+     button carries a transparent 1px border by default; the global
+     button:hover rule (primitives.css) would otherwise flip that border to
+     --border-strong while the button is hovered, drawing a gray ring on the
+     selected tool. Pin it transparent (and kill any shadow) across states. */
   background: var(--accent-tint);
   color: var(--accent-strong);
+  border-color: transparent;
+  box-shadow: none;
 }
 .viewer-action.active:hover:not(:disabled) {
   background: var(--accent-tint);
   color: var(--accent-strong);
+  border-color: transparent;
+  box-shadow: none;
 }
 .viewer-action.primary {
   background: var(--accent);
@@ -427,6 +446,18 @@
   gap: 4px;
 }
 .ghost-link:hover { background: var(--bg-subtle); color: var(--text); }
+/* Viewer toolbar actions: pure outlined pills — stroke only, no fill. */
+.viewer-toolbar-actions .ghost-link {
+  padding: 5px 14px;
+  border-color: var(--border);
+  border-radius: var(--radius-pill, 999px);
+  background: transparent;
+}
+.viewer-toolbar-actions .ghost-link:hover {
+  background: var(--bg-subtle);
+  border-color: var(--border-strong, var(--border));
+  color: var(--text);
+}
 .viewer-body {
   flex: 1;
   min-height: 0;
@@ -966,7 +997,7 @@
   background-color: transparent;
   color: var(--text);
   font-size: 13px;
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.2;
   box-shadow: none;
 }
@@ -1016,7 +1047,7 @@
   background: transparent;
   color: var(--text-muted);
   font-size: 13px;
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1;
   text-align: left;
 }

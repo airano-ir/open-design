@@ -202,7 +202,7 @@
   margin-top: 4px;
   font-size: 12px;
   opacity: 0.85;
-  font-weight: 400;
+  font-weight: 500;
 }
 .od-toast-code {
   margin: 8px 0 0;
@@ -749,15 +749,18 @@
 /* Project page audit pass: one final rule set for the active project shell.
    Keep the outer panes flat; only controls and repeated items get radius. */
 .workspace-shell {
-  grid-template-rows: 40px minmax(0, 1fr);
+  /* 52px tab-bar row: 10px above + 32px tab + 10px below, so the tabs get 10px
+     top/bottom breathing room and the row below (sidebar) keeps its own 10px
+     top margin — one consistent 10px rhythm around the strip. */
+  grid-template-rows: 52px minmax(0, 1fr);
 }
 .workspace-shell .workspace-tabs-chrome.app-chrome-header {
-  --workspace-tabs-chrome-height: 40px;
+  --workspace-tabs-chrome-height: 52px;
   /* Flush with the page below it — the bar shares the app surface. */
   --workspace-tab-bar-bg: var(--bg);
   --workspace-active-tab-border: color-mix(in srgb, var(--border-strong) 38%, transparent);
-  height: 40px;
-  min-height: 40px;
+  height: 52px;
+  min-height: 52px;
   padding: 0 8px 0 0;
   background: var(--workspace-tab-bar-bg);
   border-bottom: 0;
@@ -785,7 +788,7 @@
   flex: 0 1 156px;
   grid-template-columns: minmax(0, 1fr) 22px;
   align-self: center;
-  border-radius: var(--radius-large, 8px);
+  border-radius: 12px;
   border: 1px solid transparent;
   background: transparent;
   box-shadow: none;
@@ -799,32 +802,32 @@
    tabs from showing through it. Declared before .is-active so an active Home
    tab still picks up the active highlight. */
 .workspace-shell .workspace-tab.is-pinned {
-  flex: 0 0 104px;
-  width: 104px;
-  min-width: 104px;
-  max-width: 104px;
+  /* Single-icon pill (~half a project tab): the Home button on a project page,
+     or the sidebar toggle on the Home page. */
+  flex: 0 0 78px;
+  width: 78px;
+  min-width: 78px;
+  max-width: 78px;
   grid-template-columns: minmax(0, 1fr);
   position: sticky;
   left: 0;
   z-index: 3;
   background: var(--workspace-tab-bar-bg);
 }
-/* With the sidebar toggle present (active Home tab): 8px group padding on
-   both sides; symmetric halves (1fr | divider | 1fr) so each icon centers
-   in its half and the hairline sits exactly mid-pill. */
+/* Active Home tab now shows only the sidebar toggle (no icon + divider), so it
+   is a single centered column. */
 .workspace-shell .workspace-tab.is-pinned:has(.workspace-tab__rail-toggle) {
-  /* The base tab is a flex row; symmetric halves need a real grid. */
   display: grid;
   align-items: center;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  column-gap: 0;
-  padding: 0 8px;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  padding: 0;
 }
 .workspace-shell .workspace-tab.is-pinned .workspace-tab__rail-toggle {
   justify-self: center;
 }
 .workspace-shell .workspace-tab.is-active {
-  border-radius: var(--radius-pill, 999px);
+  border-radius: 12px;
   background: #ffffff;
   border-color: var(--workspace-active-tab-border);
   box-shadow:
@@ -832,14 +835,23 @@
     0 0 0 0.5px color-mix(in srgb, var(--bg-panel) 82%, transparent) inset;
   z-index: 2;
 }
+/* Home view: the pinned tab is just the sidebar toggle — keep it flat (no
+   white "active pill" fill / border / shadow) so it sits like the other tabs
+   on the bar rather than a filled button. Uses the opaque bar fill so scrolled
+   tabs can't bleed through; the toggle's own ghost hover is the affordance. */
+.workspace-shell .workspace-tab.is-pinned.is-active:has(.workspace-tab__rail-toggle) {
+  background: var(--workspace-tab-bar-bg);
+  border-color: transparent;
+  box-shadow: none;
+}
 .workspace-shell .workspace-tab:not(.is-active):hover,
 .workspace-shell .workspace-tab:not(.is-active):focus-within {
-  border-radius: var(--radius-pill, 999px);
+  border-radius: 12px;
   background: color-mix(in srgb, var(--bg-panel) 78%, transparent);
   border-color: transparent;
-  box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--border) 58%, transparent),
-    0 1px 2px color-mix(in srgb, var(--text) 5%, transparent);
+  /* No inset stroke ring on hover — the soft fill alone is the affordance;
+     a whisper of drop shadow keeps the slight lift. */
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--text) 5%, transparent);
 }
 /* The sticky Home tab must stay opaque on hover/focus: the translucent panel
    wash above (color-mix(… 78%, transparent)) would otherwise let horizontally
@@ -883,7 +895,8 @@
 .workspace-shell .workspace-tabs-glide {
   top: calc(50% - 16px);
   height: 32px; /* matches .workspace-shell .workspace-tab */
-  border-radius: var(--radius-pill, 999px);
+  /* 12px (not a full pill) so the active tab reads as a rounded rect. */
+  border-radius: 12px;
 }
 .workspace-shell .workspace-tabs-glide__pill {
   border: 1px solid var(--workspace-active-tab-border);
@@ -1041,32 +1054,48 @@
 }
 .app .split-chat-slot {
   /* Inset the pane so it reads as a floating card (same treatment as the home
-     sidebar's .entry-nav-rail__panel). 8px gap on every side — the top gap to
-     the tabs chrome and the bottom gap both read as 8px. The slot's
-     overflow:hidden (shell.css) clips the card's shadow cleanly at the slot
-     edge so it never bleeds onto the file-viewer panel to the right.
-     Right side is 0 so the gap to the workspace card is just the 8px
-     resize-handle column (not 8+8+8=24px). */
-  padding: 8px 0 8px 8px;
+     sidebar's .entry-nav-rail__panel). Top inset is 0 so the card sits 8px
+     higher — the tab strip's own 10px bottom breathing is the only gap to it,
+     giving a 10px tab-to-content spacing (was 18px). Bottom/left stay 8px; the
+     slot's overflow:hidden (shell.css) clips the card's shadow cleanly at the
+     slot edge. Right side is 0 so the gap to the workspace card is just the
+     8px resize-handle column (not 8+8+8=24px). */
+  padding: 0 0 8px 8px;
   background: var(--veil-page, transparent);
 }
 .app .split-chat-slot > .pane {
-  /* Matches the top tab strip's effect exactly — see the material note in
-     the shared body below. overflow:hidden still rounds the content (the
-     composer is a separate fixed/portaled layer, so it isn't clipped and
-     auto-follows the inset via composerPortalRect). */
+  /* overflow:hidden still rounds the content (the composer is a separate
+     fixed/portaled layer, so it isn't clipped and auto-follows the inset via
+     composerPortalRect). */
   border: none;
   border-radius: var(--radius-lg);
   box-shadow: none;
-  /* Same effect as the top tab strip: no fill, no frost of its own — the
-     ground (app wash in the browser, wallpaper vibrancy on desktop) shows
-     through identically in the strip, the gutter, and these cards, so the
-     whole shell reads as one continuous material. Veil tokens return to
-     solid surfaces under reduced transparency (app-wash.css). */
-  background: transparent;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
+  /* Pure-white frosted glass: a white tint over the regular blur so the chat
+     panel reads paper-white instead of showing the raw ground. Dark theme
+     falls back to the standard Regular material, and the degraded blocks
+     below flatten it to a solid surface. */
+  background: color-mix(in srgb, #fff 85%, transparent);
+  -webkit-backdrop-filter: var(--material-regular-backdrop);
+  backdrop-filter: var(--material-regular-backdrop);
   overflow: hidden;
+}
+[data-theme='dark'] .app .split-chat-slot > .pane {
+  background: var(--material-regular);
+}
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme]) .app .split-chat-slot > .pane {
+    background: var(--material-regular);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .app .split-chat-slot > .pane {
+    background: var(--bg-elevated);
+  }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .app .split-chat-slot > .pane {
+    background: var(--bg-elevated);
+  }
 }
 .app .split-resize-handle {
   --split-resize-gradient-surface: #fff;
@@ -1258,7 +1287,7 @@
   box-shadow: none;
 }
 .app .assistant-footer .assistant-label {
-  font-weight: 400;
+  font-weight: 500;
   font-size: 12px;
   color: var(--text-faint);
 }
@@ -2152,8 +2181,10 @@
      the cards; overflow:hidden rounds the content and the toolbar dropdowns
      open downward into the preview so they aren't clipped. Left side is 0 so
      the gap to the chat card is just the 8px resize-handle column (focus
-     mode restores it below). */
-  margin: 8px 8px 8px 0;
+     mode restores it below). Top margin is 0 so the card sits 8px higher,
+     matching the chat card; the tab strip's own 10px bottom breathing is the
+     only tab-to-content gap (10px, was 18px). */
+  margin: 0 8px 8px 0;
   padding: 0;
   border: none;
   border-radius: var(--radius-lg);
@@ -2962,9 +2993,12 @@
 .project-ds-picker-search {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 0 10px;
-  height: 34px;
+  gap: 8px;
+  padding: 0 14px;
+  /* Taller, roomier header row: the search field reads as a proper input
+     instead of a cramped strip, and align-items:center places the icon and
+     the pill actions on the true vertical midline. */
+  height: 52px;
   color: var(--text-muted);
   flex: 0 0 auto;
 }
@@ -2975,7 +3009,7 @@
   outline: none;
   background: transparent;
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.2;
   color: var(--text);
 }
@@ -2996,10 +3030,11 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  height: 24px;
-  padding: 0 8px;
+  height: 30px;
+  padding: 0 13px;
   border: 0;
-  border-radius: var(--radius-sm, 6px);
+  /* Capsule actions — full pill radius to match the taller header row. */
+  border-radius: 999px;
   background: var(--bg-panel);
   color: var(--text-muted);
   font: inherit;
@@ -3087,7 +3122,7 @@
 }
 .project-ds-picker-option-title {
   font-size: 13px;
-  font-weight: 400;
+  font-weight: 500;
   color: var(--text-strong, var(--text));
   min-width: 0;
   overflow: hidden;

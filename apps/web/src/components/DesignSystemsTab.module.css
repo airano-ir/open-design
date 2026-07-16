@@ -681,7 +681,7 @@
 .itemRowActive,
 .itemRowActive:hover {
   border-color: #dbdbdb;
-  background: color-mix(in srgb, #ededed 32%, transparent);
+  background: #ffffff;
 }
 
 .itemRow:hover > .item,

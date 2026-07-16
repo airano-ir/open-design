@@ -33,9 +33,10 @@ describe("desktop BrowserWindow chrome options", () => {
     // Windowed: home pill 4px after the lights (12px inset + 52px span).
     expect(runtimeSource).toContain("--app-chrome-traffic-space: 64px !important;");
     expect(runtimeSource).toContain("--app-chrome-traffic-margin: 4px !important;");
-    // Fullscreen: lights hidden; the pill left-aligns with the nav-rail card.
+    // Fullscreen: lights hidden; traffic reserve zeroed so the tab strip's own
+    // 10px edge-inset left-aligns the home pill with the nav-rail card.
     expect(runtimeSource).toContain("html.is-window-fullscreen .app-chrome-header");
-    expect(runtimeSource).toContain("--app-chrome-traffic-space: 10px !important;");
+    expect(runtimeSource).toContain("--app-chrome-traffic-space: 0px !important;");
     expect(runtimeSource).toContain("flex: 0 0 var(--app-chrome-traffic-space) !important;");
     expect(runtimeSource).toContain("width: var(--app-chrome-traffic-space) !important;");
   });

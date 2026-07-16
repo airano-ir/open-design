@@ -385,7 +385,7 @@
 }
 .slash-popover-hint {
   font-size: 12px;
-  font-weight: 400;
+  font-weight: 500;
   text-transform: none;
   letter-spacing: 0;
   color: var(--text-muted);
@@ -770,7 +770,7 @@
 }
 
 .library-group-count {
-  font-weight: 400;
+  font-weight: 500;
   font-size: 12px;
   opacity: 0.6;
 }
@@ -1431,6 +1431,24 @@
   padding: 14px 18px 18px;
 }
 
+/* Add/import memory modal: left rail (the source tabs) + right content pane.
+   Overrides the column stack above and moves scrolling into the content pane
+   so the tab rail stays pinned. */
+.memory-action-modal-body.memory-source-layout {
+  flex-direction: row;
+  align-items: stretch;
+  gap: 18px;
+  overflow: hidden;
+}
+.memory-source-layout .memory-source-content {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  /* Keep field focus rings and the last row off the scroll edge. */
+  padding-right: 2px;
+}
+
 .memory-action-modal button.primary,
 .memory-action-modal button.ghost {
   align-items: center;
@@ -1702,6 +1720,43 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin-top: 4px;
+}
+
+/* Left-rail layout: the source tabs stack vertically in a fixed-width column
+   beside the content pane. */
+.memory-source-layout .memory-source-tabs {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 236px;
+  width: 236px;
+  gap: 4px;
+  margin-top: 0;
+  overflow-y: auto;
+}
+/* Rail buttons: no chrome until selected. Content hugs the left edge (icon
+   flush left), selected = a plain gray wash, unselected = transparent. */
+.memory-source-layout .memory-source-tabs button {
+  justify-content: flex-start;
+  min-height: 52px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.memory-source-layout .memory-source-tabs button:hover {
+  border: 0;
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+}
+.memory-source-layout .memory-source-tabs button.active,
+.memory-source-layout .memory-source-tabs button.active:hover {
+  border: 0;
+  background: var(--bg-subtle);
+  box-shadow: none;
+}
+/* Keep the icon neutral (no accent tint) so selection is carried only by the
+   gray button wash. */
+.memory-source-layout .memory-source-tabs button.active .memory-source-tab-icon {
+  color: var(--text-muted);
+  background: var(--bg-panel);
 }
 
 .memory-source-tabs button {
@@ -2783,6 +2838,20 @@
   .memory-gateway-example,
   .memory-scenario-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* Narrow: collapse the left-rail layout back to a stacked column so the
+     tabs and content don't fight over the shrunken width. */
+  .memory-action-modal-body.memory-source-layout {
+    flex-direction: column;
+    overflow: auto;
+  }
+  .memory-source-layout .memory-source-tabs {
+    flex: 0 0 auto;
+    width: auto;
+  }
+  .memory-source-layout .memory-source-content {
+    overflow: visible;
   }
 
   .memory-work-profile {

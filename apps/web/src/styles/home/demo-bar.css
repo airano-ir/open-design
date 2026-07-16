@@ -1,6 +1,7 @@
 .demo-bar {
   position: fixed;
-  bottom: 18px;
+  /* Raised 8px (18 → 26) so the control cluster sits higher off the bottom. */
+  bottom: 26px;
   right: 22px;
   z-index: 99999;
   display: flex;
@@ -206,7 +207,8 @@
 @media (max-width: 560px) {
   .demo-bar {
     right: 12px;
-    bottom: 14px;
+    /* Raised 8px (14 → 22) to keep the same lift on narrow viewports. */
+    bottom: 22px;
     width: calc(100vw - 24px);
   }
 
