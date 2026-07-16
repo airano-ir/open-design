@@ -1,9 +1,9 @@
 {
   "name": "open-design",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Create websites, product prototypes, presentations, and reusable design systems with Open Design from ChatGPT.",
   "author": {
-    "name": "Nexu",
+    "name": "OpenDesign",
     "email": "support@open-design.ai",
     "url": "https://open-design.ai"
   },
@@ -17,8 +17,8 @@
     "displayName": "Open Design",
     "shortDescription": "Turn a brief into a real design artifact.",
     "longDescription": "Create and refine websites, product prototypes, presentations, and reusable design systems through Open Design. Review progress and results in ChatGPT, then open the full Open Design studio for detailed editing, versions, and export.",
-    "developerName": "Nexu",
-    "category": "Design",
+    "developerName": "OpenDesign",
+    "category": "Creativity",
     "capabilities": ["Interactive", "Write"],
     "websiteURL": "https://open-design.ai",
     "privacyPolicyURL": "https://github.com/nexu-io/open-design/blob/main/PRIVACY.md",
