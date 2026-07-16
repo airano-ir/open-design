@@ -60,6 +60,7 @@ import {
   applyInspectOverridesToSource,
   commentPreviewCanvasSize,
   desktopPreviewAutoFitZoomPercent,
+  desktopPreviewDocumentContentWidth,
   deckKeyboardShortcutForEvent,
   effectivePreviewScale,
   fileVersionPreviewOptions,
@@ -162,6 +163,28 @@ function testRect(left: number, top: number, width: number, height: number): DOM
     bottom: top + height,
     toJSON: () => ({}),
   } as DOMRect;
+}
+
+function setIframeDocumentContentWidth(frame: HTMLIFrameElement, width: number) {
+  let doc = frame.contentWindow?.document ?? frame.contentDocument;
+  if (!doc?.documentElement) {
+    doc = document.implementation.createHTMLDocument('preview');
+    Object.defineProperty(frame, 'contentWindow', {
+      configurable: true,
+      value: {
+        document: doc,
+        postMessage: vi.fn(),
+      },
+    });
+  }
+  if (!doc.body) {
+    doc.documentElement.appendChild(doc.createElement('body'));
+  }
+  for (const target of [doc.documentElement, doc.body]) {
+    Object.defineProperty(target, 'scrollWidth', { configurable: true, value: width });
+    Object.defineProperty(target, 'offsetWidth', { configurable: true, value: width });
+    Object.defineProperty(target, 'clientWidth', { configurable: true, value: width });
+  }
 }
 
 function clickAgentTool(testId: string) {
@@ -350,8 +373,18 @@ describe('FileViewer preview scale', () => {
   });
 
   it('calculates a desktop auto-fit zoom for wide landing pages', () => {
-    expect(desktopPreviewAutoFitZoomPercent({ width: 900, height: 700 })).toBeCloseTo(62.5);
-    expect(desktopPreviewAutoFitZoomPercent({ width: 1600, height: 900 })).toBe(100);
+    expect(desktopPreviewAutoFitZoomPercent({ width: 900, height: 700 })).toBe(100);
+    expect(desktopPreviewAutoFitZoomPercent({ width: 900, height: 700 }, 1440)).toBeCloseTo(62.5);
+    expect(desktopPreviewAutoFitZoomPercent({ width: 900, height: 700 }, 900)).toBe(100);
+    expect(desktopPreviewAutoFitZoomPercent({ width: 1600, height: 900 }, 1440)).toBe(100);
+  });
+
+  it('measures desktop preview document content width from real iframe layout', () => {
+    const doc = document.implementation.createHTMLDocument('preview');
+    Object.defineProperty(doc.documentElement, 'scrollWidth', { configurable: true, value: 960 });
+    Object.defineProperty(doc.body, 'scrollWidth', { configurable: true, value: 1440 });
+
+    expect(desktopPreviewDocumentContentWidth(doc)).toBe(1440);
   });
 
   it('only treats unmodified deck keyboard presses as deck shortcuts', () => {
@@ -5173,6 +5206,10 @@ describe('FileViewer tweaks toolbar', () => {
       />,
     );
 
+    const frame = screen.getByTestId('artifact-preview-frame') as HTMLIFrameElement;
+    setIframeDocumentContentWidth(frame, 1440);
+    fireEvent.load(frame);
+
     await waitFor(() => {
       expect(screen.getByRole('button', { name: '63%' })).toBeTruthy();
     });
@@ -5196,6 +5233,46 @@ describe('FileViewer tweaks toolbar', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', { name: '75%' })).toBeTruthy();
     });
+  });
+
+  it('keeps desktop HTML previews at 100% when measured content already fits', async () => {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockImplementation(function getBoundingClientRectMock(this: HTMLElement) {
+        if (this.classList.contains('viewer-body')) return testRect(0, 0, 900, 700);
+        return testRect(0, 0, 0, 0);
+      });
+
+    const { container } = render(
+      <FileViewer
+        projectId="project-1"
+        projectKind="prototype"
+        file={htmlPreviewFile({
+          name: 'responsive-preview.html',
+          path: 'responsive-preview.html',
+          artifactManifest: {
+            version: 1,
+            kind: 'html',
+            title: 'Responsive preview',
+            entry: 'responsive-preview.html',
+            renderer: 'html',
+            exports: ['html'],
+          },
+        })}
+        liveHtml='<html><body><main style="width:100%">Responsive landing page</main></body></html>'
+      />,
+    );
+
+    const responsiveFrame = screen.getByTestId('artifact-preview-frame') as HTMLIFrameElement;
+    setIframeDocumentContentWidth(responsiveFrame, 900);
+    fireEvent.load(responsiveFrame);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: '100%' })).toBeTruthy();
+    });
+    const scaledShell = Array.from(container.querySelectorAll('div')).find(
+      (node) => node.style.transform === 'scale(1)',
+    );
+    expect(scaledShell).toBeTruthy();
   });
 
   it('portals the comment composer to the preview viewport instead of the clipped canvas', async () => {

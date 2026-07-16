@@ -329,8 +329,6 @@ const PREVIEW_VIEWPORT_PRESETS: PreviewViewportPreset[] = [
   },
 ];
 
-const DESKTOP_PREVIEW_AUTO_FIT_WIDTH = 1440;
-
 function previewViewportIcon(viewport: PreviewViewportId): string {
   if (viewport === 'tablet') return 'tablet-line';
   if (viewport === 'mobile') return 'smartphone-line';
@@ -928,10 +926,26 @@ export function effectivePreviewScale(
 
 export function desktopPreviewAutoFitZoomPercent(
   canvasSize: PreviewCanvasSize | undefined,
-  designWidth = DESKTOP_PREVIEW_AUTO_FIT_WIDTH,
+  contentWidth?: number | null,
 ): number {
-  if (!canvasSize?.width || !Number.isFinite(canvasSize.width) || designWidth <= 0) return 100;
-  return Math.max(1, Math.min(100, (canvasSize.width / designWidth) * 100));
+  if (!canvasSize?.width || !Number.isFinite(canvasSize.width)) return 100;
+  if (!contentWidth || !Number.isFinite(contentWidth) || contentWidth <= canvasSize.width) return 100;
+  return Math.max(1, Math.min(100, (canvasSize.width / contentWidth) * 100));
+}
+
+export function desktopPreviewDocumentContentWidth(doc: Document | null | undefined): number | null {
+  if (!doc) return null;
+  const root = doc.documentElement;
+  const body = doc.body;
+  const widths = [
+    root?.scrollWidth,
+    body?.scrollWidth,
+    root?.offsetWidth,
+    body?.offsetWidth,
+    root?.clientWidth,
+    body?.clientWidth,
+  ].filter((value): value is number => typeof value === 'number' && Number.isFinite(value) && value > 0);
+  return widths.length ? Math.max(...widths) : null;
 }
 
 function zoomPercentLabel(zoomPercent: number): string {
@@ -6273,6 +6287,7 @@ function HtmlViewer({
   const [previewBodyRef, previewBodySize] = usePreviewCanvasSize<HTMLDivElement>();
   const [commentComposerHost, setCommentComposerHost] = useState<HTMLDivElement | null>(null);
   const [commentPreviewCanvasNode, setCommentPreviewCanvasNode] = useState<HTMLDivElement | null>(null);
+  const [desktopPreviewContentWidth, setDesktopPreviewContentWidth] = useState<number | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const urlPreviewIframeRef = useRef<HTMLIFrameElement | null>(null);
   const srcDocPreviewIframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -6301,6 +6316,23 @@ function HtmlViewer({
   const setCommentPreviewCanvasRef = useCallback((node: HTMLDivElement | null) => {
     setCommentPreviewCanvasNode((current) => (current === node ? current : node));
   }, []);
+  const measureDesktopPreviewContentWidth = useCallback((target: HTMLIFrameElement | null = iframeRef.current) => {
+    let measuredWidth: number | null = null;
+    try {
+      measuredWidth = desktopPreviewDocumentContentWidth(target?.contentWindow?.document);
+    } catch {
+      measuredWidth = null;
+    }
+    setDesktopPreviewContentWidth((current) => (current === measuredWidth ? current : measuredWidth));
+  }, []);
+  const scheduleDesktopPreviewContentMeasure = useCallback((target: HTMLIFrameElement | null = iframeRef.current) => {
+    measureDesktopPreviewContentWidth(target);
+    window.requestAnimationFrame(() => {
+      measureDesktopPreviewContentWidth(target);
+      window.setTimeout(() => measureDesktopPreviewContentWidth(target), 80);
+      window.setTimeout(() => measureDesktopPreviewContentWidth(target), 260);
+    });
+  }, [measureDesktopPreviewContentWidth]);
   useEffect(() => {
     if (!onBrandExtractionStopRequest) return;
     const requestStop = onBrandExtractionStopRequest;
@@ -6349,6 +6381,7 @@ function HtmlViewer({
   useEffect(() => {
     setManualEditSrcDocActive(false);
     setManualEditFrozenSource(null);
+    setDesktopPreviewContentWidth(null);
   }, [projectId, file.name]);
   useEffect(() => {
     onCommentModeChange?.(commentPanelOpen);
@@ -6640,6 +6673,16 @@ function HtmlViewer({
     sidePanelCollapsed: commentSidePanelCollapsed,
     viewport: previewViewport,
   });
+  useEffect(() => {
+    if (previewViewport !== 'desktop' || zoomMode !== 'auto') return;
+    scheduleDesktopPreviewContentMeasure();
+  }, [
+    boardPreviewCanvasSize?.width,
+    boardPreviewCanvasSize?.height,
+    previewViewport,
+    scheduleDesktopPreviewContentMeasure,
+    zoomMode,
+  ]);
 
   function deploymentMapForCurrentFile(items: WebDeploymentInfo[]) {
     const next: Partial<Record<WebDeployProviderId, WebDeploymentInfo>> = {};
@@ -6778,7 +6821,7 @@ function HtmlViewer({
   const speakerNotesTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const boardPreviewScaleOptions = localCommentSideDockActive ? { canvasPadding: 0 } : undefined;
   const previewZoomPercent = zoomMode === 'auto' && previewViewport === 'desktop'
-    ? desktopPreviewAutoFitZoomPercent(boardPreviewCanvasSize)
+    ? desktopPreviewAutoFitZoomPercent(boardPreviewCanvasSize, desktopPreviewContentWidth)
     : zoom;
   const previewScale = previewZoomPercent / 100;
   const previewZoomText = zoomPercentLabel(previewZoomPercent);
@@ -12067,6 +12110,7 @@ function HtmlViewer({
                             frame?.contentWindow?.postMessage({ type: 'od:url-selection-bridge-probe' }, '*');
                             syncBridgeModes(frame);
                             if (useUrlLoadPreview) restorePreviewScrollPosition();
+                            if (useUrlLoadPreview) scheduleDesktopPreviewContentMeasure(frame);
                           }}
                         />
                       ) : (
@@ -12094,6 +12138,7 @@ function HtmlViewer({
                             frame?.contentWindow?.postMessage({ type: 'od:url-selection-bridge-probe' }, '*');
                             syncBridgeModes(frame);
                             if (useUrlLoadPreview) restorePreviewScrollPosition();
+                            if (useUrlLoadPreview) scheduleDesktopPreviewContentMeasure(frame);
                           }}
                         />
                       )}
@@ -12156,6 +12201,7 @@ function HtmlViewer({
                           syncBridgeModes(frame);
                           syncCachedSlideStateToIframe(frame);
                           if (!useUrlLoadPreview) restorePreviewScrollPosition();
+                          if (!useUrlLoadPreview) scheduleDesktopPreviewContentMeasure(frame);
                         }}
                       />
                     </div>
