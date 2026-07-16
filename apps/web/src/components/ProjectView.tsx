@@ -1447,6 +1447,12 @@ export function ProjectView({
   const projectCollab = useProjectCollab(project?.id ?? null, {
     presenceFilePath: project?.metadata?.entryFile ?? null,
   });
+  // Stable references (useCallback with empty deps inside useCollab) — safe
+  // for the project-events handler's dependency array without re-subscribing.
+  const {
+    refreshPresence: collabRefreshPresence,
+    checkStatusNow: collabCheckStatusNow,
+  } = projectCollab;
   // Read-only banner copy: when the collab cloud resolved who shared this project,
   // name them ("这是 麻薯 创建的共享项目…"); otherwise fall back to the name-less
   // notice. Only computed when the viewer is actually read-only.
@@ -2856,10 +2862,17 @@ export function ProjectView({
       if (evt.projectId === project.id) void refreshPreviewCommentsRef.current?.();
       return;
     }
-    if (evt.type === 'presence-changed' || evt.type === 'project-metadata-changed') {
-      // Presence + project metadata refresh through their own poll loops
-      // (CollabClient status/heartbeat); nothing extra to do here yet, but we
-      // stop these from falling through to the live-artifact path.
+    if (evt.type === 'presence-changed') {
+      // Hub push channel: a teammate joined/left. Refresh the roster now
+      // instead of waiting for the next 10s heartbeat tick.
+      if (evt.projectId === project.id) collabRefreshPresence();
+      return;
+    }
+    if (evt.type === 'project-metadata-changed') {
+      // Hub push channel: rename or a fresh content publish landed. Run one
+      // status check now (drives the member auto-pull) instead of waiting for
+      // the next 5s status tick.
+      if (evt.projectId === project.id) collabCheckStatusNow();
       return;
     }
     if (evt.type === 'conversation-created') {
@@ -2907,7 +2920,7 @@ export function ProjectView({
     // Live artifact events come from chat-turn-emitted artifacts; they
     // also imply the conversation transcript changed.
     setDesignMdRefreshKey((n) => n + 1);
-  }, [coalescedFileChangedRefresh, iframeKeepAlivePool, onProjectsRefresh, refreshLiveArtifacts, project.id]);
+  }, [coalescedFileChangedRefresh, collabCheckStatusNow, collabRefreshPresence, iframeKeepAlivePool, onProjectsRefresh, refreshLiveArtifacts, project.id]);
   useProjectFileEvents(project.id, daemonLive, handleProjectEvent, {
     onConnectedChange: setProjectEventsSseConnected,
   });

@@ -24,6 +24,8 @@ const DISABLED: CollabContextValue = {
   ownerRole: null,
   reportChange: () => {},
   requestPublish: () => {},
+  refreshPresence: () => {},
+  checkStatusNow: () => {},
 };
 
 const CollabContext = createContext<CollabContextValue>(DISABLED);

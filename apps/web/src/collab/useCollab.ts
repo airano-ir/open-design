@@ -29,6 +29,10 @@ export interface UseCollabResult {
   requestPublish: () => void;
   /** Member side — pull the published head into the local project directory. */
   pull: () => Promise<void>;
+  /** Refresh the presence roster now (hub push-channel consumer). */
+  refreshPresence: () => void;
+  /** Run one status check now (hub push-channel consumer). */
+  checkStatusNow: () => void;
 }
 
 const EMPTY: CollabSnapshot = {
@@ -103,6 +107,16 @@ export function useCollab(options: UseCollabOptions): UseCollabResult {
   const pull = useCallback(async () => {
     await clientRef.current?.pull();
   }, []);
+  // Hub push-channel consumers: `presence-changed` / `project-metadata-changed`
+  // thin events trigger these instead of waiting for the next 10s heartbeat /
+  // 5s status tick, so joins, leaves, renames, and fresh publishes surface
+  // near-instantly while the poll loops stay as the fallback cadence.
+  const refreshPresence = useCallback(() => {
+    void clientRef.current?.heartbeat();
+  }, []);
+  const checkStatusNow = useCallback(() => {
+    void clientRef.current?.pollStatus();
+  }, []);
 
   return {
     present: snapshot.present,
@@ -114,5 +128,7 @@ export function useCollab(options: UseCollabOptions): UseCollabResult {
     reportChange,
     requestPublish,
     pull,
+    refreshPresence,
+    checkStatusNow,
   };
 }

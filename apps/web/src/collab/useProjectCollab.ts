@@ -99,6 +99,10 @@ export interface ProjectCollab {
   ownerRole: CollabMemberRole | null;
   reportChange: () => void;
   requestPublish: () => void;
+  /** Refresh the presence roster now (hub push-channel consumer). */
+  refreshPresence: () => void;
+  /** Run one status check now (hub push-channel consumer). */
+  checkStatusNow: () => void;
 }
 
 /**
@@ -222,5 +226,7 @@ export function useProjectCollab(
     ownerRole: collab.ownerRole,
     reportChange: collab.reportChange,
     requestPublish: collab.requestPublish,
+    refreshPresence: collab.refreshPresence,
+    checkStatusNow: collab.checkStatusNow,
   };
 }

@@ -63,6 +63,7 @@ export class CollabClient {
     ownerRole: null,
   };
   private running = false;
+  private onVisibilityChange: (() => void) | null = null;
 
   constructor(options: CollabClientOptions) {
     this.projectId = options.projectId;
@@ -83,8 +84,27 @@ export class CollabClient {
     if (this.running) return;
     this.running = true;
     void this.pollStatus();
-    this.timers.push(setInterval(() => void this.pollStatus(), this.statusPollMs));
-    this.timers.push(setInterval(() => void this.heartbeat(), this.heartbeatMs));
+    // Hidden-tab gating: a backgrounded tab keeps its timers but skips the
+    // network ticks (status head + presence heartbeat both fan out to the
+    // hub), and one immediate catch-up pair fires on return to visible.
+    // Presence naturally expires on the hub's TTL while hidden, which is the
+    // honest signal — a tab nobody is looking at is not "viewing".
+    const visible = () =>
+      typeof document === 'undefined' || document.visibilityState !== 'hidden';
+    this.timers.push(setInterval(() => {
+      if (visible()) void this.pollStatus();
+    }, this.statusPollMs));
+    this.timers.push(setInterval(() => {
+      if (visible()) void this.heartbeat();
+    }, this.heartbeatMs));
+    if (typeof document !== 'undefined') {
+      this.onVisibilityChange = () => {
+        if (!visible()) return;
+        void this.pollStatus();
+        void this.heartbeat();
+      };
+      document.addEventListener('visibilitychange', this.onVisibilityChange);
+    }
   }
 
   stop(): void {
@@ -92,6 +112,10 @@ export class CollabClient {
     this.running = false;
     for (const timer of this.timers) clearInterval(timer);
     this.timers.length = 0;
+    if (this.onVisibilityChange && typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', this.onVisibilityChange);
+      this.onVisibilityChange = null;
+    }
     void this.leave();
   }
 
