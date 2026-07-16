@@ -241,6 +241,7 @@ export type TrackingRunFailureDetail =
   | 'qoder_stop_sequence'
   | 'signal_killed'
   | 'process_crashed'
+  | 'cpu_unsupported'
   | 'interrupted'
   | 'exit_code'
   | 'terminated_unknown'

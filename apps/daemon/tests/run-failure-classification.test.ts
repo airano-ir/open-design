@@ -1129,7 +1129,10 @@ describe('classifyRunFailure — signal and interrupt attribution', () => {
       ),
     ).toMatchObject({
       failure_category: 'process_exit',
-      failure_detail: 'process_crashed',
+      // An illegal-instruction crash resolves to the more specific
+      // cpu_unsupported detail; other Bun crash shapes (segfault, 0xc0000409)
+      // keep process_crashed.
+      failure_detail: 'cpu_unsupported',
       retryable: false,
       user_action: 'none',
     });
@@ -1139,6 +1142,80 @@ describe('classifyRunFailure — signal and interrupt attribution', () => {
 function runtimeCloseEvent(reason: string): RunEventForFailureClassification {
   return { event: 'diagnostic', data: { type: 'runtime_close', rpc_close_reason: reason } };
 }
+
+describe('cpu_unsupported (AVX2) crash classification', () => {
+  // Windows AMR failure shape from Langfuse: the bundled opencode.exe is a Bun
+  // build requiring AVX2; on CPUs without it the child dies with an illegal
+  // instruction BEFORE readiness, vela surfaces an ACP fatal, and the daemon
+  // stamps runtime_close: fatal_rpc_error. The crash text must win over the
+  // fatal_rpc_error close-reason promotion — retrying the same binary on the
+  // same CPU deterministically fails again.
+  it('classifies a Bun illegal-instruction crash under an ACP fatal close as cpu_unsupported', () => {
+    const stderr = [
+      '============================================================',
+      'Bun v1.3.10 (30e609e0) Windows x64',
+      'CPU: sse42 popcnt no_avx no_avx2',
+      'panic(main thread): Illegal instruction',
+      'oh no: Bun has crashed. This indicates a bug in Bun, not your code.',
+    ].join('\n');
+    expect(
+      classify('AGENT_EXECUTION_FAILED', '', [
+        { event: 'stderr', data: { chunk: stderr } },
+        errorEvent('AGENT_EXECUTION_FAILED', ''),
+        runtimeCloseEvent('fatal_rpc_error'),
+      ]),
+    ).toMatchObject({
+      failure_category: 'process_exit',
+      failure_detail: 'cpu_unsupported',
+      retryable: false,
+      user_action: 'none',
+    });
+  });
+
+  it('classifies a bare STATUS_ILLEGAL_INSTRUCTION exit under an ACP fatal close as cpu_unsupported', () => {
+    // No Bun crash banner — vela only reports the raw Windows exit status
+    // (0xC000001D, decimal 3221225501 in Go/Node exit-status text).
+    expect(
+      classify(
+        'AGENT_EXECUTION_FAILED',
+        'start opencode server: exit status 3221225501',
+        [
+          errorEvent('AGENT_EXECUTION_FAILED', 'start opencode server: exit status 3221225501'),
+          runtimeCloseEvent('fatal_rpc_error'),
+        ],
+      ),
+    ).toMatchObject({
+      failure_category: 'process_exit',
+      failure_detail: 'cpu_unsupported',
+      retryable: false,
+      user_action: 'none',
+    });
+  });
+
+  it('classifies the hex STATUS_ILLEGAL_INSTRUCTION form as cpu_unsupported', () => {
+    expect(
+      classify('AGENT_EXECUTION_FAILED', 'opencode exited with 0xC000001D', [
+        errorEvent('AGENT_EXECUTION_FAILED', 'opencode exited with 0xC000001D'),
+        runtimeCloseEvent('fatal_rpc_error'),
+      ]),
+    ).toMatchObject({
+      failure_detail: 'cpu_unsupported',
+      retryable: false,
+    });
+  });
+
+  it('keeps plain ACP fatal closes without crash text on fatal_rpc_error', () => {
+    expect(
+      classify('AGENT_EXECUTION_FAILED', '', [
+        errorEvent('AGENT_EXECUTION_FAILED', ''),
+        runtimeCloseEvent('fatal_rpc_error'),
+      ]),
+    ).toMatchObject({
+      failure_detail: 'fatal_rpc_error',
+      retryable: true,
+    });
+  });
+})
 
 describe('execution_failed close-reason refinement', () => {
   // A generic AGENT_EXECUTION_FAILED whose text matched no pattern, plus the

@@ -440,6 +440,18 @@ function isProcessCrashText(text: string): boolean {
     .test(text);
 }
 
+// The child binary executed an instruction this CPU does not implement — in
+// practice a Bun-compiled agent (bundled opencode) built for AVX2 running on a
+// CPU without it (Intel Atom/Celeron/Pentium N-series through 2021). Seen as
+// the Bun crash banner with a `no_avx2` CPU feature line, the POSIX "Illegal
+// instruction" message, or Windows STATUS_ILLEGAL_INSTRUCTION as either the
+// hex 0xC000001D or Go/Node's decimal exit-status rendering 3221225501. The
+// same binary on the same CPU fails deterministically, so this must never be
+// auto-retried.
+function isCpuUnsupportedCrashText(text: string): boolean {
+  return /\billegal instruction\b|\bno_avx2\b|0xc000001d|\b3221225501\b/i.test(text);
+}
+
 // The daemon emits a `runtime_close` diagnostic into the run's event stream at
 // finalize time (see `deriveRpcCloseReason` in server.ts) carrying the mechanism
 // that ended the child as `rpc_close_reason`. When the agent-level error code is
@@ -778,6 +790,21 @@ export function classifyRunFailure(
       'child_close',
       retryable,
       retryable ? 'retry' : 'none',
+    );
+  }
+
+  // Must be checked BEFORE the fatal_rpc_error close-reason promotion below:
+  // when the bundled agent binary dies of an illegal instruction before
+  // readiness, vela surfaces an ACP fatal and the close reason alone would
+  // classify this as a retryable fatal_rpc_error — but the retry re-runs the
+  // same binary on the same CPU and deterministically fails again.
+  if (isCpuUnsupportedCrashText(text)) {
+    return classification(
+      'process_exit',
+      'cpu_unsupported',
+      inferFailureStageFromEvents(input.events, 'session_init'),
+      false,
+      'none',
     );
   }
 
