@@ -1845,9 +1845,55 @@ body.sub-page {
 .plugins-sec-more:hover {
   color: var(--coral);
 }
-.plugins-filter {
+.explore-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin: 0 0 22px;
   padding: 0;
+}
+.explore-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 550;
+  line-height: 1;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink-mute);
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.explore-tag:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+.explore-tag.is-active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+.explore-tag .chip-num {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.55;
+}
+.explore-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+@media (max-width: 900px) {
+  .explore-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  .explore-grid { grid-template-columns: 1fr; }
+}
+.explore-cell[hidden] {
+  display: none;
 }
 
 /* Category tiles lead with an on-brand cover illustration. The cover

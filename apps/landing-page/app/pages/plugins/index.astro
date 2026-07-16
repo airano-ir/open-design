@@ -14,7 +14,7 @@ import TemplateCard from '../../_components/template-card.astro';
 import TemplateCardAutoplay from '../../_components/template-card-autoplay.astro';
 import { getCraftRecords, getSystemRecords } from '../../_lib/catalog';
 import { getBundledPlugins, type BundledPluginRecord } from '../../_lib/bundled-plugins';
-import { categorizePlugin, bundledRecordOf } from '../../_lib/plugin-facets';
+import { categorizePlugin, bundledRecordOf, PLUGIN_CATEGORIES, type PluginCategorySlug } from '../../_lib/plugin-facets';
 import { getPluginsCopy } from '../../_lib/plugins-i18n';
 import { localeFromPath, localizedHref } from '../../i18n';
 
@@ -41,9 +41,21 @@ const totalCount = templatesCount + skillsCount + systemsCount + craftCount;
 
 // Explore grid — real template cards (rich preview posters), featured first.
 const isFeatured = (p: BundledPluginRecord) => (p.tags ?? []).includes('featured');
-const exploreCards = [...templatesSet]
+const exploreItems = [...templatesSet]
   .sort((a, b) => Number(isFeatured(b)) - Number(isFeatured(a)))
-  .slice(0, 12);
+  .slice(0, 24)
+  .map((rec, idx) => ({ rec, idx, category: categorizePlugin(bundledRecordOf(rec)) }));
+
+// Filter chips are the real template categories (slides / image / video …)
+// with clean i18n labels, so a click filters this grid in place.
+const catCounts = new Map<PluginCategorySlug, number>();
+for (const it of exploreItems) {
+  if (it.category) catCounts.set(it.category, (catCounts.get(it.category) ?? 0) + 1);
+}
+const chipCats = PLUGIN_CATEGORIES
+  .map((c) => c.slug as PluginCategorySlug)
+  .filter((slug) => (catCounts.get(slug) ?? 0) > 0)
+  .map((slug) => ({ slug, label: pcopy.category[slug]?.label ?? slug, count: catCounts.get(slug) ?? 0 }));
 
 const title = pcopy.hubMetaTitle(totalCount);
 const description = pcopy.hubMetaDescription;
@@ -68,12 +80,6 @@ const tiles = [
   { href: href('/plugins/systems/'),   title: pcopy.tileSystems,   count: systemsCount,   blurb: pcopy.tileSystemsBlurb,   cta: pcopy.browseSystems,   cover: '/plugins/covers/systems.webp' },
 ];
 
-const filters = [
-  { label: pcopy.hubFilterAll, count: totalCount,     href: href('/plugins/templates/'), active: true },
-  { label: pcopy.tileTemplates, count: templatesCount, href: href('/plugins/templates/'), active: false },
-  { label: pcopy.tileSkills,    count: skillsCount,    href: href('/plugins/skills/'),    active: false },
-  { label: pcopy.tileSystems,   count: systemsCount,   href: href('/plugins/systems/'),   active: false },
-];
 ---
 
 <Layout title={title} description={description} active="plugins" jsonLd={jsonLd}>
@@ -85,12 +91,11 @@ const filters = [
     <p class="lead">{pcopy.hubLead}</p>
     <ul class="plugins-stats">
       <li><strong>{totalCount}+</strong> {pcopy.hubUnitPlugins}</li>
-      <li>{pcopy.hubStatOpen}</li>
       <li>{pcopy.hubStatAgents}</li>
     </ul>
     <div class="plugins-hero-cta">
       <a class="btn btn-primary" href={href('/download/')}>{pcopy.hubCtaDownload}</a>
-      <a class="btn plugins-star-btn" href={REPO_URL} target="_blank" rel="noopener">
+      <a class="btn btn-ghost plugins-star-btn" href={REPO_URL} target="_blank" rel="noopener">
         <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 .6l2.02 4.28 4.6.6-3.37 3.18.88 4.68L8 11.5 3.87 13.7l.88-4.68L1.38 5.85l4.6-.6z"/></svg>
         GitHub<span class="plugins-star-count" data-github-stars>76K</span>
       </a>
@@ -120,21 +125,43 @@ const filters = [
       <h2 class="plugins-sec-title">{pcopy.hubExploreTitle}</h2>
       <a class="plugins-sec-more" href={href('/plugins/templates/')}>{pcopy.hubViewAll} →</a>
     </div>
-    <ul class="tpl-chip-list plugins-filter">
-      {filters.map((f) => (
-        <li>
-          <a class={`chip chip-link${f.active ? ' is-active' : ''}`} href={f.href} aria-current={f.active ? 'page' : undefined}>
-            {f.label}<span class="chip-num">{f.count}</span>
-          </a>
-        </li>
+    <div class="explore-tags" data-explore-tags>
+      <button class="explore-tag is-active" data-cat-chip="" type="button">
+        {pcopy.hubFilterAll}<span class="chip-num">{exploreItems.length}</span>
+      </button>
+      {chipCats.map((c) => (
+        <button class="explore-tag" data-cat-chip={c.slug} type="button">
+          {c.label}<span class="chip-num">{c.count}</span>
+        </button>
       ))}
-    </ul>
-    <div class="tpl-grid plugins-explore-grid">
-      {exploreCards.map((rec, idx) => (
-        <TemplateCard record={rec} index={idx} featured={isFeatured(rec)} />
+    </div>
+    <div class="explore-grid" data-explore-grid>
+      {exploreItems.map(({ rec, idx, category }) => (
+        <div class="explore-cell" data-category={category ?? ''}>
+          <TemplateCard record={rec} index={idx} featured={isFeatured(rec)} />
+        </div>
       ))}
     </div>
   </section>
+
+  <script is:inline>
+    (function () {
+      var bar = document.querySelector('[data-explore-tags]');
+      var grid = document.querySelector('[data-explore-grid]');
+      if (!bar || !grid) return;
+      var chips = bar.querySelectorAll('.explore-tag');
+      var cells = grid.querySelectorAll('.explore-cell');
+      bar.addEventListener('click', function (e) {
+        var chip = e.target.closest('.explore-tag');
+        if (!chip) return;
+        var cat = chip.getAttribute('data-cat-chip') || '';
+        chips.forEach(function (c) { c.classList.toggle('is-active', c === chip); });
+        cells.forEach(function (cell) {
+          cell.hidden = cat !== '' && cell.getAttribute('data-category') !== cat;
+        });
+      });
+    })();
+  </script>
 
   <TemplateCardAutoplay />
 
