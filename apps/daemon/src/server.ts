@@ -2973,6 +2973,20 @@ export async function startServer({
   // mechanism while this channel is down); on every reconnect we run one
   // poller catch-up cycle to close the disconnect gap.
   const dirtyCommentProjects = new Set<string>();
+  // One hub write can legitimately fan out as two thin events (a display-name
+  // carrying catalog upsert emits team-projects-changed AND
+  // project-metadata-changed, ~1ms apart). Both map to the same workspace
+  // "list changed" signal here, so collapse repeats inside a short window —
+  // the signal is idempotent, but no reason to make every web client refetch
+  // twice for one write.
+  let lastTeamProjectsSignalAt = 0;
+  const emitTeamProjectsChangedDeduped = () => {
+    const now = Date.now();
+    if (now - lastTeamProjectsSignalAt < 250) return;
+    lastTeamProjectsSignalAt = now;
+    void teamProjectsDisplayCache?.().catch(() => undefined);
+    emitWorkspaceEvent({ type: 'team-projects-changed', at: now });
+  };
   const hubEventsSubscriber = startHubEventsSubscriber({
     resolveEndpoint: async () => {
       // Same gating as the workspace-context provider: only the vela source
@@ -2996,8 +3010,7 @@ export async function startServer({
           // Catalog changed (share/unshare/rename). Refresh the display cache
           // then signal the web; the metadata variant additionally pings the
           // open project view so its title can follow a rename.
-          void teamProjectsDisplayCache?.().catch(() => undefined);
-          emitWorkspaceEvent({ type: 'team-projects-changed', at: Date.now() });
+          emitTeamProjectsChangedDeduped();
           if (event.type === 'project-metadata-changed' && event.projectId) {
             emitProjectEvent(event.projectId, {
               type: 'project-metadata-changed',
