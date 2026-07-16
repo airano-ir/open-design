@@ -456,6 +456,8 @@ import {
   PendingAuthCache,
   refreshAccessToken,
 } from './mcp-oauth.js';
+import { registerChatGptMcpRoutes } from './routes/chatgpt-mcp.js';
+import { createManagedChatGptTenantManager } from './services/chatgpt-tenant-daemons.js';
 import {
   clearToken,
   getToken,
@@ -2657,6 +2659,34 @@ export async function startServer({
       pathPrefix: 'powered',
     };
     res.json(body);
+  });
+
+  // ChatGPT Apps use MCP Streamable HTTP. This endpoint reuses the exact
+  // tools/resources exposed by `od mcp`; loopback is available for local
+  // plugin validation while remote deployments must explicitly configure an
+  // auth boundary. The endpoint intentionally lives at the conventional
+  // top-level `/mcp` URL rather than under the daemon's REST `/api` namespace.
+  const chatGptTenantManager = createManagedChatGptTenantManager({
+    dataRoot: RUNTIME_DATA_DIR,
+    env: process.env,
+  });
+  const chatGptTenantReaper = chatGptTenantManager
+    ? setInterval(() => {
+        void chatGptTenantManager.reapIdle().catch((error) => {
+          console.warn('[chatgpt-mcp] tenant idle reaper failed', error);
+        });
+      }, 5 * 60_000)
+    : null;
+  chatGptTenantReaper?.unref?.();
+  registerChatGptMcpRoutes(app, {
+    getDaemonUrl: () => `http://127.0.0.1:${resolvedPort}`,
+    ...(chatGptTenantManager
+      ? {
+          resolveTenantDaemonUrl: (principal, accessToken) =>
+            chatGptTenantManager.resolve(principal.subject, accessToken),
+        }
+      : {}),
+    env: process.env,
   });
 
   registerDaemonRoutes(app, {
@@ -8607,6 +8637,7 @@ export async function startServer({
   return await new Promise((resolve, reject) => {
     let daemonShutdownStarted = false;
     const cleanupDaemonBackgroundWork = () => {
+      if (chatGptTenantReaper) clearInterval(chatGptTenantReaper);
       composioConnectorProvider.stopCatalogRefreshLoop();
       orbitService.stop();
       routineService?.stop();
@@ -8618,6 +8649,7 @@ export async function startServer({
       await design.runs.shutdownActive({ graceMs: resolveChatRunShutdownGraceMs() });
       await terminalService.shutdownActive();
       await design.analytics.shutdown();
+      await chatGptTenantManager?.stopAll();
     };
     let server;
     try {
