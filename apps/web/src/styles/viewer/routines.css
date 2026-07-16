@@ -1344,31 +1344,18 @@
 .app .task-activity .action-card-toggle {
   width: fit-content;
   min-height: 32px;
-  padding: 4px 8px 4px 5px;
+  padding: 4px 0;
   gap: 6px;
-  border: 1px solid transparent;
-  border-radius: var(--radius-lg);
-  transition:
-    background 200ms var(--ease-out),
-    border-color 200ms var(--ease-out);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  transition: color 200ms var(--ease-out);
 }
 .app .task-activity .action-card-toggle:hover {
-  filter: brightness(0.98);
-}
-.app .task-activity .action-card-toggle.task-state-running {
-  color: var(--purple);
-  border-color: var(--purple-border);
-  background: var(--purple-bg);
+  background: transparent;
 }
 .app .task-activity .action-card-toggle.task-state-completed {
   color: var(--green);
-  border-color: var(--green-border);
-  background: var(--green-bg);
-}
-.app .task-activity .action-card-toggle.task-state-error {
-  color: var(--red);
-  border-color: var(--red-border);
-  background: var(--red-bg);
 }
 .app .task-activity .action-card-toggle .summary {
   color: currentColor;
@@ -1383,8 +1370,9 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
+  color: inherit;
   border-color: currentColor;
-  background: var(--bg-panel);
+  background: transparent;
 }
 .app .task-activity .action-card-body {
   padding: 8px 0;
