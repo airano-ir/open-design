@@ -41,7 +41,7 @@ describe('AssistantMessage tool status', () => {
     const activity = screen.getByTestId('task-activity-toggle');
     expect(activity.textContent).toContain('Done');
     expect(activity.getAttribute('data-run-state')).toBe('completed');
-    expect(activity.querySelector('.task-activity-status')).toBeNull();
+    expect(activity.querySelector('.task-activity-complete-icon')).not.toBeNull();
     expect(container.querySelector('[data-tool-category="terminal"]')).not.toBeNull();
     expect(container.querySelector('.op-status-error')).toBeNull();
   });
@@ -265,12 +265,79 @@ describe('AssistantMessage tool status', () => {
       />,
     );
 
-    const activity = screen.getByTestId('task-activity-toggle');
-    expect(activity.textContent).toContain('Working');
+    const activity = screen.getByTestId('task-activity-current');
+    expect(activity.textContent).toContain('Bash');
+    expect(activity.textContent).toContain('Run guard');
     expect(activity.getAttribute('data-run-state')).toBe('running');
-    expect(activity.querySelector('.task-activity-status')).toBeNull();
+    expect(screen.queryByTestId('task-activity-toggle')).toBeNull();
+    expect(activity.querySelector('.task-activity-complete-icon')).toBeNull();
     expect(container.querySelector('[data-tool-category="terminal"].op-status-running')).not.toBeNull();
     expect(container.querySelector('.op-status-ok')).toBeNull();
+  });
+
+  it('replaces the single live progress row and collapses the history when prose starts', () => {
+    const renderMessage = (
+      events: AgentEvent[],
+      options: { streaming: boolean; runStatus: ChatMessage['runStatus']; endedAt?: number },
+    ) => (
+      <AssistantMessage
+        projectKind="prototype"
+        conversationId="conv-1"
+        message={{
+          ...messageWithEvents(events),
+          endedAt: options.endedAt,
+          runStatus: options.runStatus,
+        }}
+        streaming={options.streaming}
+        projectId="project-1"
+      />
+    );
+    const thinking = { kind: 'thinking', text: 'Reviewing the request.' } satisfies AgentEvent;
+    const read = {
+      kind: 'tool_use',
+      id: 'tool-1',
+      name: 'Read',
+      input: { file_path: '/repo/source.ts' },
+    } satisfies AgentEvent;
+
+    const { rerender } = render(renderMessage(
+      [thinking],
+      { streaming: true, runStatus: 'running' },
+    ));
+    expect(screen.getByTestId('task-activity-current').textContent).toContain('Thinking');
+    expect(screen.queryByTestId('task-activity-toggle')).toBeNull();
+
+    rerender(renderMessage(
+      [thinking, read],
+      { streaming: true, runStatus: 'running' },
+    ));
+    const currentRead = screen.getByTestId('task-activity-current');
+    expect(currentRead.textContent).toContain('Read');
+    expect(currentRead.textContent).toContain('source.ts');
+    expect(currentRead.textContent).not.toContain('Thinking');
+
+    rerender(renderMessage(
+      [thinking, read, { kind: 'text', text: 'Here is the conclusion.' }],
+      { streaming: true, runStatus: 'running' },
+    ));
+    expect(screen.queryByTestId('task-activity-current')).toBeNull();
+    const concludingActivity = screen.getByTestId('task-activity-toggle');
+    expect(concludingActivity.getAttribute('aria-expanded')).toBe('false');
+    expect(concludingActivity.textContent).toContain('Working');
+
+    rerender(renderMessage(
+      [
+        thinking,
+        read,
+        { kind: 'tool_result', toolUseId: 'tool-1', content: 'source', isError: false },
+        { kind: 'text', text: 'Here is the conclusion.' },
+      ],
+      { streaming: false, runStatus: 'succeeded', endedAt: 3_000 },
+    ));
+    const completedActivity = screen.getByTestId('task-activity-toggle');
+    expect(completedActivity.getAttribute('aria-expanded')).toBe('false');
+    expect(completedActivity.textContent).toContain('Done');
+    expect(completedActivity.querySelector('.task-activity-complete-icon')).not.toBeNull();
   });
 
   it('keeps the run state above the answer and groups thinking into the timeline', () => {
@@ -299,6 +366,7 @@ describe('AssistantMessage tool status', () => {
     const activityCard = activity.closest('.task-activity');
     expect(activityCard?.querySelector('.thinking-block')).not.toBeNull();
     expect(activityCard?.querySelector('[data-tool-category="eye"]')).not.toBeNull();
+    expect(screen.getByTestId('task-activity-terminal').textContent).toContain('done');
   });
 
   it('renders URLs in JSON-like status details without trailing structural characters', () => {

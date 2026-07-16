@@ -1414,6 +1414,85 @@
   border-color: transparent;
   background: var(--bg-panel);
 }
+@keyframes task-activity-current-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.app .task-activity-current {
+  min-height: 36px;
+  overflow: hidden;
+}
+.app .task-activity-current-row {
+  width: fit-content;
+  max-width: 100%;
+  animation: task-activity-current-enter 200ms var(--ease-out);
+}
+.app .task-activity-current-row .op-card,
+.app .task-activity-current-row .live-code-box {
+  width: fit-content;
+  max-width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  pointer-events: none;
+}
+.app .task-activity-current-row .op-card-head,
+.app .task-activity-current-thinking {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  gap: 6px;
+  padding: 4px 0;
+  background: transparent;
+}
+.app .task-activity-current-row .op-card-head:hover {
+  background: transparent;
+}
+.app .task-activity-current-row .op-status-running,
+.app .task-activity-current-row .op-status-category,
+.app .task-activity-current-row .op-title,
+.app .task-activity-current-row .op-meta {
+  color: var(--text-muted);
+}
+.app .task-activity-current-row .op-expand-chev,
+.app .task-activity-current-row .accordion-collapsible,
+.app .task-activity-current-row .live-code-pre,
+.app .task-activity-current-row .op-output {
+  display: none;
+}
+.app .task-activity-complete-icon,
+.app .task-activity-terminal-icon {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: var(--bg-panel);
+}
+.app .task-activity-terminal {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  color: var(--green);
+  font-size: 13px;
+  font-weight: 600;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app .task-activity-current-row {
+    animation: none;
+  }
+}
 .app .thinking-block {
   background: none;
   border: none;
