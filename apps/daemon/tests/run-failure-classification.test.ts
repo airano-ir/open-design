@@ -1184,6 +1184,44 @@ describe('cpu_unsupported (AVX2) crash classification', () => {
     });
   });
 
+  it('classifies the abort-after-panic shape (exit status 3) via its stderr banner', () => {
+    // Production shape (Langfuse trace 266a5706, 0.15.0 stable): on a CPU with
+    // AVX but not AVX2 (Sandy/Ivy Bridge era), Bun panics on an illegal
+    // instruction, panics again during the panic, and abort()s — so the exit
+    // status vela reports is 3, not STATUS_ILLEGAL_INSTRUCTION. Only the
+    // stderr banner carries the truth.
+    const stderr = [
+      '============================================================',
+      'Bun v1.3.14 (0d9b296a) Windows x64',
+      'Windows v.win10_cu',
+      'CPU: sse42 avx',
+      'Args: ',
+      'Features: no_avx2 ',
+      '',
+      'panic: Illegal instruction at address 0x7FF6C08DF82C',
+      'panicked during a panic. Aborting.',
+    ].join('\n');
+    expect(
+      classify(
+        'AGENT_EXECUTION_FAILED',
+        'json-rpc id 2: start opencode server: opencode exited before readiness: exit status 3',
+        [
+          { event: 'stderr', data: { chunk: stderr } },
+          errorEvent(
+            'AGENT_EXECUTION_FAILED',
+            'json-rpc id 2: start opencode server: opencode exited before readiness: exit status 3',
+          ),
+          runtimeCloseEvent('fatal_rpc_error'),
+        ],
+      ),
+    ).toMatchObject({
+      failure_category: 'process_exit',
+      failure_detail: 'cpu_unsupported',
+      retryable: false,
+      user_action: 'none',
+    });
+  });
+
   it('classifies a bare STATUS_ILLEGAL_INSTRUCTION exit under an ACP fatal close as cpu_unsupported', () => {
     // No Bun crash banner — vela only reports the raw Windows exit status
     // (0xC000001D, decimal 3221225501 in Go/Node exit-status text).
