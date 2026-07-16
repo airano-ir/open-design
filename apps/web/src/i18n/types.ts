@@ -842,6 +842,7 @@ export interface Dict {
   'settings.memoryExtractionPhaseSkipped': string;
   'settings.memoryExtractionPhaseFailed': string;
   'settings.memoryExtractionSkipNoProvider': string;
+  'settings.memoryExtractionSkipUnsupportedProvider': string;
   'settings.memoryExtractionSkipDisabled': string;
   'settings.memoryExtractionSkipEmpty': string;
   'settings.memoryExtractionSkipNoMatch': string;
@@ -859,6 +860,7 @@ export interface Dict {
   'settings.memoryExtractionsClearConfirm': string;
   'settings.memoryNoProviderBannerTitle': string;
   'settings.memoryNoProviderBannerBody': string;
+  'settings.memoryUnsupportedProviderBannerBody': string;
   // Memory model picker — rendered inline next to the chat model picker
   // so picking "the fast model that mines facts each turn" lives in the
   // same row as the chat agent + model. Reuses the surrounding chat
