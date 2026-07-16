@@ -714,6 +714,7 @@ export const id: Dict = {
   'entry.discordOnlineLabel': '{count} online',
   'entry.mailAria': 'Kirim email ke Open Design',
   'entry.accountSettings': 'Pengaturan',
+  'chat.collapsePane': 'Ciutkan panel percakapan',
   'collabPresence.ariaOne': '1 collaborator online',
   'collabPresence.aria': '{count} collaborators online',
   'collabPresence.ariaWithSelfOne': '1 collaborator online, including you',

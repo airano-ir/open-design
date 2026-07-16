@@ -714,6 +714,7 @@ export const tr: Dict = {
   'entry.discordOnlineLabel': '{count} çevrimiçi',
   'entry.mailAria': 'Open Design\'a e-posta gönder',
   'entry.accountSettings': 'Ayarlar',
+  'chat.collapsePane': 'Konuşma panelini daralt',
   'collabPresence.ariaOne': '1 collaborator online',
   'collabPresence.aria': '{count} collaborators online',
   'collabPresence.ariaWithSelfOne': '1 collaborator online, including you',

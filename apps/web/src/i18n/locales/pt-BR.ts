@@ -714,6 +714,7 @@ export const ptBR: Dict = {
   'entry.discordOnlineLabel': '{count} online',
   'entry.mailAria': 'Enviar e-mail para o Open Design',
   'entry.accountSettings': 'Configurações',
+  'chat.collapsePane': 'Recolher o painel de conversa',
   'collabPresence.ariaOne': '1 collaborator online',
   'collabPresence.aria': '{count} collaborators online',
   'collabPresence.ariaWithSelfOne': '1 collaborator online, including you',

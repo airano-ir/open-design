@@ -8810,7 +8810,13 @@ export function ProjectView({
               // changes through chat (comments go through the separate overlay).
               sendDisabled={currentConversationSendDisabled || projectCollab.viewerOnly}
               viewerOnly={projectCollab.viewerOnly}
-              composerPlaceholder={projectCollab.viewerOnly ? t('workspace.readonlyNotice') : undefined}
+              composerPlaceholder={
+                projectCollab.viewerOnly
+                  ? (projectCollab.ownerDisplayName
+                      ? t('workspace.readonlyNoticeBy', { owner: projectCollab.ownerDisplayName })
+                      : t('workspace.readonlyNotice'))
+                  : undefined
+              }
               queuedItems={currentConversationQueuedItems}
               error={conversationLoadError ?? error}
               projectId={project.id}
@@ -8944,6 +8950,7 @@ export function ProjectView({
                 setProjectActionsToast({ message, details: null });
               }}
               onBack={onBack}
+              onCollapse={() => setWorkspaceFocused(true)}
               backLabel={t('project.backToProjects')}
               composerFooterAccessory={executionControls}
               projectHeader={(

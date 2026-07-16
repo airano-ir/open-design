@@ -1073,6 +1073,7 @@ export interface Dict {
   'entry.discordOnlineLabel': string;
   'entry.mailAria': string;
   'entry.accountSettings': string;
+  'chat.collapsePane': string;
   'collabPresence.ariaOne': string;
   'collabPresence.aria': string;
   'collabPresence.ariaWithSelfOne': string;

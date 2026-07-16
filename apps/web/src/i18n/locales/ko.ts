@@ -714,6 +714,7 @@ export const ko: Dict = {
   'entry.discordOnlineLabel': '{count}명 온라인',
   'entry.mailAria': 'Open Design에 이메일 보내기',
   'entry.accountSettings': '설정',
+  'chat.collapsePane': '대화 패널 접기',
   'collabPresence.ariaOne': '1 collaborator online',
   'collabPresence.aria': '{count} collaborators online',
   'collabPresence.ariaWithSelfOne': '1 collaborator online, including you',

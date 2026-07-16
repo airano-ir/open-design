@@ -675,6 +675,9 @@ interface Props {
   // into the top of the chat pane. ProjectView owns the project record so it
   // renders these as slots rather than ChatPane re-deriving the data.
   onBack?: () => void;
+  /** Collapse the conversation pane into workspace-focused mode (#5517's
+   *  panel-left control). Takes precedence over onBack in the header. */
+  onCollapse?: () => void;
   backLabel?: string;
   projectHeader?: ReactNode;
   designSystemPicker?: ReactNode;
@@ -895,6 +898,7 @@ export function ChatPane({
   onShowToast,
   chatLogTray,
   onBack,
+  onCollapse,
   backLabel,
   projectHeader,
   designSystemPicker,
@@ -2099,7 +2103,20 @@ export function ChatPane({
   return (
     <div className="pane">
       <div className="chat-project-header">
-        {onBack ? (
+        {onCollapse ? (
+          <button
+            type="button"
+            className="chat-project-back od-tooltip"
+            onClick={onCollapse}
+            title={t('chat.collapsePane')}
+            aria-label={t('chat.collapsePane')}
+            data-tooltip={t('chat.collapsePane')}
+            data-tooltip-placement="bottom"
+            data-testid="chat-collapse-toggle"
+          >
+            <Icon name="panel-left" size={16} />
+          </button>
+        ) : onBack ? (
           <button
             type="button"
             className="chat-project-back"

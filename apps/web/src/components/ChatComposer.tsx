@@ -2609,15 +2609,17 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
           'composer',
           dragActive ? 'drag-active' : '',
           activeFileContext ? 'composer-active-file-mode' : '',
+          inputDisabled ? 'composer-readonly' : '',
         ].filter(Boolean).join(' ')}
         data-testid="chat-composer"
         ref={composerRootRef}
         onDragOver={(e) => {
+          if (inputDisabled) return;
           e.preventDefault();
           setDragActive(true);
         }}
         onDragLeave={() => setDragActive(false)}
-        onDrop={handleDrop}
+        onDrop={inputDisabled ? undefined : handleDrop}
       >
         <div className="composer-shell">
           {/*
@@ -3105,7 +3107,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
             concept): the workdir row is the ONLY entry for re-binding a
             project's working directory / managing linked dirs mid-project,
             so it stays. */}
-        {projectId ? (
+        {projectId && !inputDisabled ? (
           <div className="composer-workdir-row">
             <WorkingDirPicker
               placement="up"

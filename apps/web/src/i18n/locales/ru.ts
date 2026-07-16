@@ -714,6 +714,7 @@ export const ru: Dict = {
   'entry.discordOnlineLabel': '{count} онлайн',
   'entry.mailAria': 'Написать Open Design по электронной почте',
   'entry.accountSettings': 'Настройки',
+  'chat.collapsePane': 'Свернуть панель беседы',
   'collabPresence.ariaOne': '1 collaborator online',
   'collabPresence.aria': '{count} collaborators online',
   'collabPresence.ariaWithSelfOne': '1 collaborator online, including you',
