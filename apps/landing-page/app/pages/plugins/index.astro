@@ -68,7 +68,7 @@ for (const it of exploreItems) for (const t of it.tags) tagCounts.set(t, (tagCou
 const titleize = (t: string) => t.charAt(0).toUpperCase() + t.slice(1).replace(/-/g, ' ');
 const topTags = TAG_ALLOWLIST
   .filter((tag) => (tagCounts.get(tag) ?? 0) > 0)
-  .map((tag) => ({ tag, label: titleize(tag), count: tagCounts.get(tag) ?? 0 }));
+  .map((tag) => ({ tag, label: pcopy.tagLabels[tag] ?? titleize(tag), count: tagCounts.get(tag) ?? 0 }));
 
 const title = pcopy.hubMetaTitle(totalCount);
 const description = pcopy.hubMetaDescription;

@@ -53,6 +53,8 @@ export interface PluginsCopy {
   hubExploreTitle: string;
   hubFilterAll: string;
   hubViewAll: string;
+  /** Localized labels for the curated explore filter tags. */
+  tagLabels: Readonly<Record<string, string>>;
 
   tileTemplates: string;
   tileSkills: string;
@@ -250,6 +252,7 @@ const en: PluginsCopy = {
   hubExploreTitle: 'Explore all resources',
   hubFilterAll: 'All',
   hubViewAll: 'See all',
+  tagLabels: { web: 'Web', deck: 'Deck', marketing: 'Marketing', prototype: 'Prototype', desktop: 'Desktop', brand: 'Brand', editorial: 'Editorial', motion: 'Motion' },
 
   tileTemplates: 'Templates',
   tileSkills: 'Skills',
@@ -584,6 +587,7 @@ const overrides: Partial<Record<LandingLocaleCode, Partial<PluginsCopy>>> = {
     hubExploreTitle: '探索全部资源',
     hubFilterAll: '全部',
     hubViewAll: '查看全部',
+    tagLabels: { web: '网页', deck: '幻灯片', marketing: '营销', prototype: '原型', desktop: '桌面端', brand: '品牌', editorial: '版式', motion: '动效' },
     tileTemplates: '模板',
     tileSkills: '技能',
     tileSystems: '设计系统',
@@ -725,6 +729,7 @@ const overrides: Partial<Record<LandingLocaleCode, Partial<PluginsCopy>>> = {
   'zh-tw': {
     hubLabel: 'Agent 設計外掛庫', hubHeading: () => `Agent 設計外掛庫`,
     hubLead: '別人做好的設計系統、技能和範本，裝上就能用——讓你的 AI 設計助手少從零開始，直接把想法變成介面。可以按 agent、品牌或類型來找，也能直接跳到你已經知道的那一項。',
+    tagLabels: { web: '網頁', deck: '簡報', marketing: '行銷', prototype: '原型', desktop: '桌面端', brand: '品牌', editorial: '版式', motion: '動效' },
     hubMetaTitle: (n) => `Claude Skills 市集 — ${n}+ 外掛 | Open Design`,
     hubMetaDescription:
       '瀏覽開源的 Claude skills 市集——設計 skills、設計系統、範本與 craft，你的 coding agent 可直接執行。支援 Claude、Codex、Cursor。',
@@ -3240,5 +3245,6 @@ export function getPluginsCopy(locale: LandingLocaleCode): PluginsCopy {
     detailBucketLabel: { ...en.detailBucketLabel, ...(partial.detailBucketLabel ?? {}) },
     tokenGroupLabels: { ...en.tokenGroupLabels, ...(partial.tokenGroupLabels ?? {}) },
     scenarioLabels: { ...en.scenarioLabels, ...(partial.scenarioLabels ?? {}) },
+    tagLabels: { ...en.tagLabels, ...(partial.tagLabels ?? {}) },
   };
 }
