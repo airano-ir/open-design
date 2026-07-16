@@ -840,7 +840,7 @@ export const fa: Dict = {
   'workspaceTabs.marketplace': 'بازارچه',
   'homeHero.title': 'امروز چه چیزی طراحی می‌کنید؟',
   'homeHero.startWithTemplate': 'با یک قالب شروع کنید…',
-  'homeHero.startBlankProject': '…یا یک پروژه خالی شروع کنید',
+  'homeHero.startBlankProject': 'یک پروژه خالی شروع کنید',
   'homeHero.templatePicker.label': 'قالب',
   'homeHero.templatePicker.searchPlaceholder': 'جستجوی قالب‌ها',
   'homeHero.templatePicker.projectTypes': 'انواع پروژه',

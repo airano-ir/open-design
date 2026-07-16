@@ -840,7 +840,7 @@ export const pl: Dict = {
   'workspaceTabs.marketplace': 'Marketplace',
   'homeHero.title': 'Co dziś zaprojektujesz?',
   'homeHero.startWithTemplate': 'Zacznij od szablonu…',
-  'homeHero.startBlankProject': '…lub zacznij pusty projekt',
+  'homeHero.startBlankProject': 'zacznij pusty projekt',
   'homeHero.templatePicker.label': 'Szablon',
   'homeHero.templatePicker.searchPlaceholder': 'Szukaj szablonów',
   'homeHero.templatePicker.projectTypes': 'Typy projektów',

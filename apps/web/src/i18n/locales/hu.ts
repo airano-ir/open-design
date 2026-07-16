@@ -840,7 +840,7 @@ export const hu: Dict = {
   'workspaceTabs.marketplace': 'Marketplace',
   'homeHero.title': 'Mit tervezel ma?',
   'homeHero.startWithTemplate': 'Kezdés sablonnal…',
-  'homeHero.startBlankProject': '…vagy kezdj egy üres projektet',
+  'homeHero.startBlankProject': 'kezdj egy üres projektet',
   'homeHero.templatePicker.label': 'Sablon',
   'homeHero.templatePicker.searchPlaceholder': 'Sablonok keresése',
   'homeHero.templatePicker.projectTypes': 'Projekttípusok',

@@ -840,7 +840,7 @@ export const th: Dict = {
   'workspaceTabs.marketplace': 'Marketplace',
   'homeHero.title': 'วันนี้คุณจะออกแบบอะไร?',
   'homeHero.startWithTemplate': 'เริ่มต้นด้วยเทมเพลต…',
-  'homeHero.startBlankProject': '…หรือเริ่มโปรเจกต์เปล่า',
+  'homeHero.startBlankProject': 'เริ่มโปรเจกต์เปล่า',
   'homeHero.templatePicker.label': 'เทมเพลต',
   'homeHero.templatePicker.searchPlaceholder': 'ค้นหาเทมเพลต',
   'homeHero.templatePicker.projectTypes': 'ประเภทโปรเจกต์',

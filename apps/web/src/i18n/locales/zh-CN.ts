@@ -859,7 +859,7 @@ export const zhCN: Dict = {
   "workspaceTabs.marketplace": "插件市场",
   "homeHero.title": "你今天要设计什么？",
   "homeHero.startWithTemplate": "从模板开始…",
-  "homeHero.startBlankProject": "…或创建一个空白项目",
+  "homeHero.startBlankProject": "创建一个空白项目",
   "homeHero.templatePicker.label": "模板",
   "homeHero.templatePicker.searchPlaceholder": "搜索模板",
   "homeHero.templatePicker.projectTypes": "项目类型",

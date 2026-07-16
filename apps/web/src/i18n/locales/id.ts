@@ -840,7 +840,7 @@ export const id: Dict = {
   'workspaceTabs.marketplace': 'Marketplace',
   'homeHero.title': 'Apa yang akan Anda desain hari ini?',
   'homeHero.startWithTemplate': 'Mulai dengan templat…',
-  'homeHero.startBlankProject': '…atau mulai proyek kosong',
+  'homeHero.startBlankProject': 'mulai proyek kosong',
   'homeHero.templatePicker.label': 'Templat',
   'homeHero.templatePicker.searchPlaceholder': 'Cari templat',
   'homeHero.templatePicker.projectTypes': 'Tipe proyek',

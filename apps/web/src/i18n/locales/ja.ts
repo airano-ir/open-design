@@ -840,7 +840,7 @@ export const ja: Dict = {
   'workspaceTabs.marketplace': 'マーケットプレイス',
   'homeHero.title': '今日は何をデザインしますか？',
   'homeHero.startWithTemplate': 'テンプレートから始める…',
-  'homeHero.startBlankProject': '…または空のプロジェクトを作成',
+  'homeHero.startBlankProject': '空のプロジェクトを作成',
   'homeHero.templatePicker.label': 'テンプレート',
   'homeHero.templatePicker.searchPlaceholder': 'テンプレートを検索',
   'homeHero.templatePicker.projectTypes': 'プロジェクトタイプ',

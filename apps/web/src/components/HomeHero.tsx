@@ -1228,15 +1228,16 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
 
   return (
     <section ref={homeHeroRef} className="home-hero" data-testid="home-hero">
-      <div className="home-hero__brand" aria-hidden>
-        <span className="home-hero__brand-mark od-brand-glyph" />
-        <span className="home-hero__brand-name">Open Design</span>
-      </div>
+      {/* #5517 hero header: the OpenDesign logotype replaces the small
+          brand-mark + name pair, and the tagline subtitle is dropped. */}
+      <span className="home-hero__logo-wrap">
+        <img className="home-hero__logo" src="/logo-03.svg" alt="Open Design" />
+      </span>
       <h1 className="home-hero__title">{t('homeHero.title')}</h1>
-      <p className="home-hero__subtitle">
-        {t('homeHero.subtitlePrefix')}
-      </p>
 
+      {/* #5517 wraps the input card + workdir row into one visible composer
+          card so they read as a single surface. */}
+      <div className="home-hero__composer-card">
       <div
         className={`home-hero__input-card${
           authoringLayoutActive ? ' home-hero__input-card--compact-authoring' : ''
@@ -1991,8 +1992,7 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
               aria-label={submitting ? t('chat.comments.sending') : t('homeHero.run')}
               aria-busy={submitting}
             >
-              <Icon name="send" size={16} />
-              <span>{submitting ? t('chat.comments.sending') : t('chat.send')}</span>
+              <Icon name={submitting ? 'spinner' : 'arrow-up'} size={17} />
             </button>
           </div>
         </div>
@@ -2043,24 +2043,30 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
           ) : null}
         </div>
       ) : null}
+      </div>
 
       {recommendationSlot}
 
       {activeCreateChip ? null : (
         <div
-          className={`home-hero__template-section${templateSectionOpen ? ' is-open' : ''}`}
+          className={`home-hero__template-section${templateSectionOpen ? ' is-expanded is-open' : ''}`}
           data-testid="home-hero-template-section"
         >
-          <button
-            type="button"
-            className="home-hero__template-heading"
-            aria-expanded={templateSectionOpen}
-            data-testid="home-hero-template-toggle"
-            onClick={() => setTemplateSectionOpen((open) => !open)}
-          >
-            <span>{t('homeHero.startWithTemplate')}</span>
-            <Icon name="chevron-down" size={13} aria-hidden />
-          </button>
+          {/* #5517 renders one inline bar: 从模板开始… ⌄ or 创建一个空白项目 › */}
+          <div className="home-hero__template-bar">
+            <button
+              type="button"
+              className={`home-hero__template-toggle${templateSectionOpen ? ' is-open' : ''}`}
+              aria-expanded={templateSectionOpen}
+              data-testid="home-hero-template-toggle"
+              onClick={() => setTemplateSectionOpen((open) => !open)}
+            >
+              {t('homeHero.startWithTemplate')}
+              <Icon name="chevron-down" size={14} aria-hidden />
+            </button>
+            <span className="home-hero__template-or">or</span>
+            {blankProjectEntry}
+          </div>
           {templateSectionOpen ? (
             <div className="home-hero__template-body">
               <div className="home-hero__template-body-inner">
@@ -2181,8 +2187,6 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
           </div>
         </div>
       ) : null}
-
-      {blankProjectEntry}
 
       {error ? (
         <div role="alert" className="home-hero__error">

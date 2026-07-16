@@ -840,7 +840,7 @@ export const ru: Dict = {
   'workspaceTabs.marketplace': 'Маркетплейс',
   'homeHero.title': 'Что вы спроектируете сегодня?',
   'homeHero.startWithTemplate': 'Начать с шаблона…',
-  'homeHero.startBlankProject': '…или создать пустой проект',
+  'homeHero.startBlankProject': 'создать пустой проект',
   'homeHero.templatePicker.label': 'Шаблон',
   'homeHero.templatePicker.searchPlaceholder': 'Поиск шаблонов',
   'homeHero.templatePicker.projectTypes': 'Типы проектов',

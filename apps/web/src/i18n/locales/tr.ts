@@ -840,7 +840,7 @@ export const tr: Dict = {
   'workspaceTabs.marketplace': 'Pazar Yeri',
   'homeHero.title': 'Bugün ne tasarlayacaksın?',
   'homeHero.startWithTemplate': 'Bir şablonla başla…',
-  'homeHero.startBlankProject': '…ya da boş bir proje başlat',
+  'homeHero.startBlankProject': 'boş bir proje başlat',
   'homeHero.templatePicker.label': 'Şablon',
   'homeHero.templatePicker.searchPlaceholder': 'Şablon ara',
   'homeHero.templatePicker.projectTypes': 'Proje türleri',

@@ -840,7 +840,7 @@ export const ar: Dict = {
   'workspaceTabs.marketplace': 'المتجر',
   'homeHero.title': 'ماذا ستصمّم اليوم؟',
   'homeHero.startWithTemplate': 'ابدأ بقالب…',
-  'homeHero.startBlankProject': '…أو ابدأ مشروعًا فارغًا',
+  'homeHero.startBlankProject': 'ابدأ مشروعًا فارغًا',
   'homeHero.templatePicker.label': 'قالب',
   'homeHero.templatePicker.searchPlaceholder': 'البحث في القوالب',
   'homeHero.templatePicker.projectTypes': 'أنواع المشاريع',

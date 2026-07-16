@@ -840,7 +840,7 @@ export const uk: Dict = {
   'workspaceTabs.marketplace': 'Маркетплейс',
   'homeHero.title': 'Що ви спроєктуєте сьогодні?',
   'homeHero.startWithTemplate': 'Почати з шаблону…',
-  'homeHero.startBlankProject': '…або створити порожній проєкт',
+  'homeHero.startBlankProject': 'створити порожній проєкт',
   'homeHero.templatePicker.label': 'Шаблон',
   'homeHero.templatePicker.searchPlaceholder': 'Пошук шаблонів',
   'homeHero.templatePicker.projectTypes': 'Типи проєктів',

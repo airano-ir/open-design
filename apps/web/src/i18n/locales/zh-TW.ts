@@ -862,7 +862,7 @@ export const zhTW: Dict = {
   "workspaceTabs.marketplace": "市集",
   "homeHero.title": "你今天要設計什麼？",
   "homeHero.startWithTemplate": "從範本開始…",
-  "homeHero.startBlankProject": "…或建立一個空白專案",
+  "homeHero.startBlankProject": "建立一個空白專案",
   "homeHero.templatePicker.label": "範本",
   "homeHero.templatePicker.searchPlaceholder": "搜尋範本",
   "homeHero.templatePicker.projectTypes": "專案類型",

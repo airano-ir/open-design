@@ -840,7 +840,7 @@ export const ptBR: Dict = {
   'workspaceTabs.marketplace': 'Marketplace',
   'homeHero.title': 'O que você vai projetar hoje?',
   'homeHero.startWithTemplate': 'Começar com um modelo…',
-  'homeHero.startBlankProject': '…ou começar um projeto em branco',
+  'homeHero.startBlankProject': 'começar um projeto em branco',
   'homeHero.templatePicker.label': 'Modelo',
   'homeHero.templatePicker.searchPlaceholder': 'Buscar modelos',
   'homeHero.templatePicker.projectTypes': 'Tipos de projeto',
