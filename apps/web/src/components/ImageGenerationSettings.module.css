@@ -54,6 +54,14 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   text-align: left;
+  transition:
+    border-color var(--dur-quick) var(--ease-out),
+    background-color var(--dur-quick) var(--ease-out);
+}
+
+.source:not([aria-checked='true']):hover {
+  border-color: var(--border-strong);
+  background: var(--bg-subtle);
 }
 
 .source[aria-checked='true'] {

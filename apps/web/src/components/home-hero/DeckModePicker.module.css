@@ -36,6 +36,11 @@
   padding: 8px;
   border-radius: var(--radius);
   text-align: left;
+  transition: background var(--dur-quick) var(--ease-out);
+}
+
+.option:not([aria-selected='true']):hover {
+  background: var(--bg-subtle);
 }
 
 .option[aria-selected='true'] {

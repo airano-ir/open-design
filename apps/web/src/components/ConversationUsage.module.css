@@ -17,13 +17,11 @@
   width: min(340px, calc(100vw - 24px));
   padding: 18px;
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   background: var(--bg-panel);
-  box-shadow:
-    0 2px 8px rgb(0 0 0 / 8%),
-    0 20px 48px rgb(0 0 0 / 14%);
+  box-shadow: var(--shadow-lg);
   color: var(--text);
-  animation: usage-popover-enter 200ms cubic-bezier(0.23, 1, 0.32, 1);
+  animation: usage-popover-enter var(--dur-enter) var(--ease-out);
 }
 
 .title {
@@ -94,7 +92,7 @@
   gap: 10px;
   padding: 11px 12px;
   border: 1px solid color-mix(in srgb, var(--border-soft) 72%, transparent);
-  border-radius: 11px;
+  border-radius: var(--radius-md);
   background: var(--bg-subtle);
 }
 

@@ -37,12 +37,13 @@
   min-width: 0;
   padding: 12px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--bg-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-xs);
   transition:
-    border-color 200ms cubic-bezier(0.23, 1, 0.32, 1),
-    background-color 200ms cubic-bezier(0.23, 1, 0.32, 1);
-  animation: research-round-in 200ms cubic-bezier(0.23, 1, 0.32, 1) both;
+    border-color var(--dur-enter) var(--ease-out),
+    background-color var(--dur-enter) var(--ease-out);
+  animation: research-round-in var(--dur-enter) var(--ease-out) both;
 }
 
 .round:nth-child(2) {
@@ -68,11 +69,11 @@
 }
 
 .complete .glyph {
-  color: var(--success, #2e9e5b);
+  color: var(--green);
 }
 
 .error .glyph {
-  color: var(--danger, #d9534f);
+  color: var(--red);
 }
 
 .roundCopy {
@@ -104,7 +105,7 @@
   color: var(--text-muted);
   font-size: 12px;
   line-height: 1.5;
-  animation: research-detail-in 200ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  animation: research-detail-in var(--dur-enter) var(--ease-out) both;
 }
 
 .reportPreview {
@@ -112,8 +113,9 @@
   max-height: min(44vh, 460px);
   padding: 14px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--bg-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-xs);
   font-size: 12px;
   line-height: 1.6;
 }
@@ -135,8 +137,9 @@
   gap: 14px;
   padding: 18px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--bg-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-xs);
   color: var(--text-muted);
   font-size: 12px;
   text-align: center;
@@ -205,7 +208,7 @@
 .reportPending {
   overflow: hidden;
   color: var(--text-muted);
-  font-family: var(--font-mono);
+  font-family: var(--mono);
   font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;

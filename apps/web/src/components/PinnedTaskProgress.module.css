@@ -24,21 +24,19 @@
   min-height: 48px;
   padding: 7px 9px;
   border: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
-  border-radius: 17px;
+  border-radius: var(--radius-lg);
   background: var(--bg-panel);
-  box-shadow:
-    0 1px 2px rgb(0 0 0 / 4%),
-    0 10px 30px -22px rgb(0 0 0 / 32%);
+  box-shadow: var(--shadow-md);
   transition:
-    border-color 140ms cubic-bezier(0.23, 1, 0.32, 1),
-    border-radius 200ms cubic-bezier(0.23, 1, 0.32, 1),
-    box-shadow 200ms cubic-bezier(0.23, 1, 0.32, 1);
+    border-color var(--dur-exit) var(--ease-out),
+    border-radius var(--dur-enter) var(--ease-out),
+    box-shadow var(--dur-enter) var(--ease-out);
 }
 
 .root[data-collapsed='false'] .head {
   border-top-color: transparent;
-  border-radius: 0 0 17px 17px;
-  box-shadow: 0 12px 30px -24px rgb(0 0 0 / 34%);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .computer {
@@ -50,7 +48,7 @@
   height: 32px;
   padding: 0;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: var(--bg-subtle);
   color: var(--text-muted, var(--text));
   cursor: default;
@@ -59,10 +57,10 @@
 button.computer {
   cursor: pointer;
   transition:
-    color 140ms cubic-bezier(0.23, 1, 0.32, 1),
-    border-color 140ms cubic-bezier(0.23, 1, 0.32, 1),
-    box-shadow 140ms cubic-bezier(0.23, 1, 0.32, 1),
-    transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
+    color var(--dur-exit) var(--ease-out),
+    border-color var(--dur-exit) var(--ease-out),
+    box-shadow var(--dur-exit) var(--ease-out),
+    transform var(--dur-exit) var(--ease-out);
 }
 
 button.computer:hover {
@@ -74,7 +72,7 @@ button.computer:hover {
 
 button.computer:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
 .toggle {
@@ -97,7 +95,7 @@ button.computer:focus-visible {
 .toggle:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
 }
 
 .toggle:hover .title,
@@ -128,12 +126,15 @@ button.computer:focus-visible {
 
 .progressStatusIcon[data-status='done'],
 .progressStatusIcon[data-status='completed'] {
-  color: var(--success, #2e9e5b);
+  color: var(--green);
 }
 
-.progressStatusIcon[data-status='error'],
+.progressStatusIcon[data-status='error'] {
+  color: var(--red);
+}
+
 .progressStatusIcon[data-status='stopped'] {
-  color: var(--danger, #d9534f);
+  color: var(--text-faint);
 }
 
 .progressStatusIcon[data-status='pending'] {
@@ -162,7 +163,7 @@ button.computer:focus-visible {
   flex: 0 0 auto;
   align-items: center;
   gap: 5px;
-  color: var(--success, #2e9e5b);
+  color: var(--green);
   font-weight: 600;
   font-size: 11px;
 }
@@ -171,7 +172,7 @@ button.computer:focus-visible {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--success, #2e9e5b);
+  background: var(--green);
   animation: pinned-live-pulse 1.6s ease-in-out infinite;
 }
 
@@ -185,7 +186,7 @@ button.computer:focus-visible {
 }
 
 .terminal.done {
-  color: var(--success, #2e9e5b);
+  color: var(--green);
 }
 
 .terminal.waiting {
@@ -193,11 +194,11 @@ button.computer:focus-visible {
 }
 
 .terminal.failed {
-  color: var(--danger, #d9534f);
+  color: var(--red);
 }
 
 .terminal.stopped {
-  color: var(--text-muted, var(--text));
+  color: var(--text-faint);
 }
 
 .stepOf {
@@ -215,9 +216,9 @@ button.computer:focus-visible {
   height: 22px;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   color: var(--text-muted, var(--text));
-  transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1);
+  transition: transform var(--dur-enter) var(--ease-out);
 }
 
 .chevron[data-collapsed='true'] {
@@ -233,7 +234,7 @@ button.computer:focus-visible {
   padding: 0 12px;
   border: 1px solid transparent;
   border-bottom: 0;
-  border-radius: 17px 17px 0 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   background: transparent;
   box-shadow: none;
   pointer-events: none;
@@ -243,20 +244,20 @@ button.computer:focus-visible {
   border-color: color-mix(in srgb, var(--border) 88%, transparent);
   border-bottom-color: transparent;
   background: var(--bg-panel);
-  box-shadow: 0 -16px 34px -28px rgb(0 0 0 / 38%);
+  box-shadow: var(--shadow-md);
   pointer-events: auto;
 }
 
 .root[data-collapsed='false'] .body {
   transition:
-    grid-template-rows 200ms cubic-bezier(0.23, 1, 0.32, 1),
-    opacity 200ms cubic-bezier(0.23, 1, 0.32, 1);
+    grid-template-rows var(--dur-enter) var(--ease-out),
+    opacity var(--dur-enter) var(--ease-out);
 }
 
 .root[data-collapsed='true'] .body {
   transition:
-    grid-template-rows 140ms cubic-bezier(0.23, 1, 0.32, 1),
-    opacity 140ms cubic-bezier(0.23, 1, 0.32, 1);
+    grid-template-rows var(--dur-exit) var(--ease-out),
+    opacity var(--dur-exit) var(--ease-out);
 }
 
 .bodyInner {
@@ -271,7 +272,7 @@ button.computer:focus-visible {
   height: 100%;
   grid-template-rows: 11px minmax(0, 1fr);
   overflow: hidden;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--bg-panel);
   color: var(--text-muted);
   text-align: left;
@@ -296,17 +297,24 @@ button.computer:focus-visible {
 }
 
 .previewDot[data-live='true'] {
-  background: var(--success, #2e9e5b);
+  background: var(--green);
 }
 
+/* Mini-preview text is far below a legible size, so it renders as a skeleton
+   bar (pure-CSS: transparent glyphs over a filled rounded rect) rather than
+   unreadable characters. Text stays in the DOM for a11y/tests. */
 .previewStatus {
+  flex: 0 0 auto;
+  width: 62%;
+  height: 4px;
   overflow: hidden;
-  color: var(--text-muted);
-  font-size: 6.5px;
-  font-weight: 650;
-  line-height: 1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  color: transparent;
+  background: var(--bg-fill-secondary);
+  border-radius: var(--radius-pill);
+}
+
+.previewStatus:empty {
+  background: none;
 }
 
 .previewContent {
@@ -326,13 +334,12 @@ button.computer:focus-visible {
 }
 
 .previewLabel {
+  width: 82%;
+  height: 5px;
   overflow: hidden;
-  color: var(--text);
-  font-size: 7px;
-  font-weight: 580;
-  line-height: 1.15;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  color: transparent;
+  background: var(--bg-fill-secondary);
+  border-radius: var(--radius-pill);
 }
 
 .compactList {
@@ -359,12 +366,15 @@ button.computer:focus-visible {
 
 .compactList li[data-status='done'],
 .compactList li[data-status='completed'] {
-  color: var(--success, #2e9e5b);
+  color: var(--green);
 }
 
-.compactList li[data-status='error'],
+.compactList li[data-status='error'] {
+  color: var(--red);
+}
+
 .compactList li[data-status='stopped'] {
-  color: var(--danger, #d9534f);
+  color: var(--text-faint);
 }
 
 .compactList button {

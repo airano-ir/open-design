@@ -87,8 +87,9 @@
   flex-direction: column;
   gap: 12px;
   padding: 20px;
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-sm);
+  border: none;
+  border-radius: var(--radius);
+  background: var(--bg-subtle);
   color: var(--text-muted);
   font-size: 12px;
   text-align: center;
@@ -129,12 +130,14 @@
   min-width: 0;
   flex-direction: column;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--bg-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-xs);
   transition:
-    border-color 140ms cubic-bezier(0.23, 1, 0.32, 1),
-    box-shadow 140ms cubic-bezier(0.23, 1, 0.32, 1);
-  animation: inspire-card-in 200ms cubic-bezier(0.23, 1, 0.32, 1) both;
+    border-color var(--dur-quick) var(--ease-out),
+    box-shadow var(--dur-quick) var(--ease-out),
+    transform var(--dur-quick) var(--ease-out);
+  animation: inspire-card-in var(--dur-enter) var(--ease-out) both;
 }
 
 .grid > li:nth-child(2) .card {
@@ -159,6 +162,8 @@
 
 .card:hover {
   border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
 }
 
 .selected {
@@ -227,9 +232,10 @@
 .category {
   align-self: flex-start;
   padding: 2px 6px;
-  border-radius: 999px;
-  background: var(--bg-muted);
-  color: var(--text-muted);
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
+  border-radius: var(--radius-pill);
+  background: var(--accent-tint);
+  color: var(--accent);
   font-size: 10px;
 }
 
@@ -259,16 +265,19 @@
   gap: 9px 12px;
   padding: 10px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--bg-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-xs);
   transition:
-    border-color 140ms cubic-bezier(0.23, 1, 0.32, 1),
-    box-shadow 140ms cubic-bezier(0.23, 1, 0.32, 1),
-    background-color 140ms cubic-bezier(0.23, 1, 0.32, 1);
+    border-color var(--dur-quick) var(--ease-out),
+    box-shadow var(--dur-quick) var(--ease-out),
+    transform var(--dur-quick) var(--ease-out);
 }
 
 .designSystemCard:hover {
   border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
 }
 
 .swatches {
@@ -278,7 +287,7 @@
   height: 24px;
   grid-column: 1 / -1;
   border: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--bg);
 }
 

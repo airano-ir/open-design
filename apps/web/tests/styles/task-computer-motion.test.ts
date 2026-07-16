@@ -10,10 +10,12 @@ describe('Task Progress and Computer motion', () => {
     const pinned = read('src/components/PinnedTaskProgress.module.css');
     const computer = read('src/components/OdComputerPanel.module.css');
 
-    expect(pinned).toMatch(/\.root\[data-collapsed='false'\] \.body[\s\S]*200ms cubic-bezier\(0\.23, 1, 0\.32, 1\)/);
-    expect(pinned).toMatch(/\.root\[data-collapsed='true'\] \.body[\s\S]*140ms cubic-bezier\(0\.23, 1, 0\.32, 1\)/);
-    expect(computer).toMatch(/\.taskProgress\[data-collapsed='false'\] \.taskProgressBody[\s\S]*200ms cubic-bezier\(0\.23, 1, 0\.32, 1\)/);
-    expect(computer).toMatch(/\.taskProgress\[data-collapsed='true'\] \.taskProgressBody[\s\S]*140ms cubic-bezier\(0\.23, 1, 0\.32, 1\)/);
+    // Asymmetric disclosure: enter uses --dur-enter (200ms), exit uses
+    // --dur-exit (140ms), both on the canonical --ease-out curve (tokens.css).
+    expect(pinned).toMatch(/\.root\[data-collapsed='false'\] \.body \{[^}]*var\(--dur-enter\) var\(--ease-out\)/);
+    expect(pinned).toMatch(/\.root\[data-collapsed='true'\] \.body \{[^}]*var\(--dur-exit\) var\(--ease-out\)/);
+    expect(computer).toMatch(/\.taskProgress\[data-collapsed='false'\] \.taskProgressBody \{[^}]*var\(--dur-enter\) var\(--ease-out\)/);
+    expect(computer).toMatch(/\.taskProgress\[data-collapsed='true'\] \.taskProgressBody \{[^}]*var\(--dur-exit\) var\(--ease-out\)/);
   });
 
   it('animates Computer steps directionally and disables spatial motion when requested', () => {
@@ -32,13 +34,13 @@ describe('Task Progress and Computer motion', () => {
     const computer = read('src/components/OdComputerPanel.module.css');
 
     expect(computer).toMatch(/\.root \{[\s\S]*isolation: isolate;[\s\S]*contain: paint;/);
-    expect(computer).toMatch(/\.body \{[\s\S]*background: var\(--bg-panel, #fff\);/);
+    expect(computer).toMatch(/\.body \{[\s\S]*background: var\(--bg-panel\);/);
   });
 
   it('keeps a stable three-track grid and disables easing during direct resize', () => {
     const shell = read('src/styles/shell.css');
 
-    expect(shell).toMatch(/\.split \{[\s\S]*transition:\s*grid-template-columns 200ms cubic-bezier\(0\.23, 1, 0\.32, 1\)/);
+    expect(shell).toMatch(/\.split \{[\s\S]*transition:\s*grid-template-columns (?:200ms|var\(--dur-enter\)) var\(--ease-out\)/);
     expect(shell).toMatch(/\.split\.is-resizing-chat \{[\s\S]*transition: none/);
   });
 });
