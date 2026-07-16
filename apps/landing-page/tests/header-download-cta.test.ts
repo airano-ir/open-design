@@ -8,6 +8,45 @@ const homePagePath = new URL('../app/pages/index.astro', import.meta.url);
 const downloadPagePath = new URL('../app/pages/download/index.astro', import.meta.url);
 const infoCopyPath = new URL('../app/info-page-i18n.ts', import.meta.url);
 
+function runMobileNoticeGate(
+  page: string,
+  options: { userAgent: string; platform: string; maxTouchPoints: number; narrow: boolean },
+) {
+  const start = page.indexOf("      const ua = (navigator.userAgent || '').toLowerCase();");
+  const endMarker = "      narrowViewport.addEventListener('change', syncMobileNotice);";
+  const end = page.indexOf(endMarker, start);
+  assert.ok(start >= 0 && end > start, 'mobile notice gate not found');
+  const script = page.slice(start, end + endMarker.length);
+
+  const notice = { hidden: true };
+  let matches = options.narrow;
+  const listeners: Array<() => void> = [];
+  const mediaQuery = {
+    get matches() { return matches; },
+    addEventListener: (type: string, listener: () => void) => {
+      if (type === 'change') listeners.push(listener);
+    },
+  };
+  const window = { matchMedia: () => mediaQuery };
+  const navigator = {
+    userAgent: options.userAgent,
+    platform: options.platform,
+    maxTouchPoints: options.maxTouchPoints,
+  };
+  const document = { querySelector: () => notice };
+
+  // eslint-disable-next-line no-new-func
+  new Function('window', 'navigator', 'document', script)(window, navigator, document);
+
+  return {
+    notice,
+    setNarrow(value: boolean) {
+      matches = value;
+      for (const listener of listeners) listener();
+    },
+  };
+}
+
 describe('landing header account and download entry', () => {
   it('keeps the nav download-page CTA and removes the signed-out login entry', async () => {
     const header = await readFile(headerPath, 'utf8');
@@ -43,5 +82,33 @@ describe('mobile download-page guidance', () => {
     assert.match(page, /mobileNotice\.hidden = !\(isMobileDevice \|\| narrowViewport\.matches\)/);
     assert.match(page, /narrowViewport\.addEventListener\('change', syncMobileNotice\)/);
     assert.match(copy, /Open Design 是桌面客户端，请在电脑上下载。/);
+  });
+
+  it('treats iPadOS desktop-mode Safari as a mobile device', async () => {
+    const page = await readFile(downloadPagePath, 'utf8');
+    const gate = runMobileNoticeGate(page, {
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15)',
+      platform: 'MacIntel',
+      maxTouchPoints: 5,
+      narrow: false,
+    });
+
+    assert.equal(gate.notice.hidden, false);
+  });
+
+  it('keeps the notice synchronized when the viewport crosses the mobile breakpoint', async () => {
+    const page = await readFile(downloadPagePath, 'utf8');
+    const gate = runMobileNoticeGate(page, {
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15)',
+      platform: 'MacIntel',
+      maxTouchPoints: 0,
+      narrow: false,
+    });
+
+    assert.equal(gate.notice.hidden, true);
+    gate.setNarrow(true);
+    assert.equal(gate.notice.hidden, false);
+    gate.setNarrow(false);
+    assert.equal(gate.notice.hidden, true);
   });
 });
