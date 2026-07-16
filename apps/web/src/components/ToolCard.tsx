@@ -216,9 +216,9 @@ export function TodoCard({ input, runStreaming, runSucceeded, onDismiss }: { inp
   const todos = parseTodoWriteInput(input);
   // Mirror the pattern other agent UIs (Cursor, Codex) use: default the
   // todo list to expanded while there is in-progress work or anything
-  // pending, collapse it to a one-line summary when everything is done.
-  // The user can flip it manually via the header button — that local
-  // override sticks for the lifetime of this card.
+  // pending, replace it with a one-line summary when everything is done.
+  // While work remains, the user can flip the detail list manually; that
+  // local override sticks for the lifetime of this card.
   const hasInProgress = todos.some((todo) => todo.status === 'in_progress');
   const hasPending = todos.some((todo) => todo.status === 'pending' || todo.status === 'in_progress');
   // The counter reads as "active progress / total" — a task that is
@@ -245,27 +245,37 @@ export function TodoCard({ input, runStreaming, runSucceeded, onDismiss }: { inp
   return (
     <div className={`op-card op-todo${expanded ? '' : ' op-todo-collapsed'}`}>
       <div className="op-card-head op-todo-head">
-        <button
-          type="button"
-          className="op-todo-toggle"
-          aria-expanded={expanded}
-          onClick={() => setOverrideExpanded(!expanded)}
-          title={expanded ? t('tool.todosCollapse') : t('tool.todosExpand')}
-        >
-          <span className="op-icon" aria-hidden>☐</span>
-          <span className="op-title">{t('tool.todos')}</span>
-          <span className="op-meta">
-            {done}/{todos.length}
-          </span>
-          {!expanded && inProgressTodo ? (
-            <span className="op-todo-current">
-              {inProgressTodo.activeForm || inProgressTodo.content}
+        {allComplete ? (
+          <div className="op-todo-toggle op-todo-summary">
+            <span className="op-icon" aria-hidden>☐</span>
+            <span className="op-title">{t('tool.todos')}</span>
+            <span className="op-meta">
+              {done}/{todos.length}
             </span>
-          ) : null}
-          <span className="op-todo-chev" aria-hidden>
-            {expanded ? '▾' : '▸'}
-          </span>
-        </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="op-todo-toggle"
+            aria-expanded={expanded}
+            onClick={() => setOverrideExpanded(!expanded)}
+            title={expanded ? t('tool.todosCollapse') : t('tool.todosExpand')}
+          >
+            <span className="op-icon" aria-hidden>☐</span>
+            <span className="op-title">{t('tool.todos')}</span>
+            <span className="op-meta">
+              {done}/{todos.length}
+            </span>
+            {!expanded && inProgressTodo ? (
+              <span className="op-todo-current">
+                {inProgressTodo.activeForm || inProgressTodo.content}
+              </span>
+            ) : null}
+            <span className="op-todo-chev" aria-hidden>
+              {expanded ? '▾' : '▸'}
+            </span>
+          </button>
+        )}
         {showDismiss ? (
           <button
             type="button"
@@ -277,28 +287,30 @@ export function TodoCard({ input, runStreaming, runSucceeded, onDismiss }: { inp
           </button>
         ) : null}
       </div>
-      <div className={`accordion-collapsible${expanded ? ' open' : ''}`}>
-        <div className="accordion-collapsible-inner">
-          <ul className="todo-list">
-            {todos.map((todo, i) => (
-              <li key={i} className={`todo-item todo-${todo.status}`}>
-                <span className="todo-check" aria-hidden>
-                  {todo.status === 'completed'
-                    ? '✓'
-                    : todo.status === 'in_progress'
-                      ? '◐'
-                      : todo.status === 'stopped'
-                        ? '!'
-                        : '○'}
-                </span>
-                <span className="todo-text">
-                  {todo.status === 'in_progress' && todo.activeForm ? todo.activeForm : todo.content}
-                </span>
-              </li>
-            ))}
-          </ul>
+      {!allComplete ? (
+        <div className={`accordion-collapsible${expanded ? ' open' : ''}`}>
+          <div className="accordion-collapsible-inner">
+            <ul className="todo-list">
+              {todos.map((todo, i) => (
+                <li key={i} className={`todo-item todo-${todo.status}`}>
+                  <span className="todo-check" aria-hidden>
+                    {todo.status === 'completed'
+                      ? '✓'
+                      : todo.status === 'in_progress'
+                        ? '◐'
+                        : todo.status === 'stopped'
+                          ? '!'
+                          : '○'}
+                  </span>
+                  <span className="todo-text">
+                    {todo.status === 'in_progress' && todo.activeForm ? todo.activeForm : todo.content}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }

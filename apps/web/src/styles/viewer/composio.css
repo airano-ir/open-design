@@ -738,11 +738,10 @@
 }
 
 /*
- * Make the todo card header a clickable expand/collapse affordance.
- * Default is expanded while work is in flight; the user can flip it via
- * the chevron at the right. Removing the bottom border in the collapsed
- * state keeps the card looking like a single pill rather than an empty
- * disclosure with a hanging line.
+ * Active todo cards expose a clickable expand/collapse affordance. Once every
+ * task is complete, the card becomes a single non-interactive progress row.
+ * Removing the bottom border in the collapsed state keeps it from looking
+ * like an empty disclosure with a hanging line.
  */
 .op-todo .op-todo-head {
   display: flex;
@@ -763,6 +762,7 @@
   font: inherit;
   color: inherit;
 }
+.op-todo .op-todo-summary { cursor: default; }
 .op-todo .op-todo-done {
   display: inline-flex;
   align-items: center;
