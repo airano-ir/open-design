@@ -634,6 +634,8 @@ import { registerTeamResourceShareRoutes } from './routes/team-resource-share.js
 import { createCollabRuntime } from './collab/runtime.js';
 import { createActiveWorkspaceSelectionStore } from './collab/active-workspace-selection.js';
 import { createWorkspaceContextProviderFromEnv } from './collab/vela-workspace-context.js';
+import { startHubEventsSubscriber } from './collab/hub-events-subscriber.js';
+import { readVelaControlApiContext } from './integrations/vela.js';
 import { createCollabPublishWatcher } from './collab/collab-publish-watcher.js';
 import { resolveProjectShareDir } from './collab/project-share-dir.js';
 import { createTeamProjectsLister } from './collab/team-projects.js';
@@ -2963,6 +2965,104 @@ export async function startServer({
     onError: (error) => console.warn('[od] workspace invalidation poll error:', error),
   });
   workspaceInvalidationPoller.start();
+
+  // Collab realtime hop-1: cloud hub → daemon push channel. The hub emits the
+  // same thin invalidation signals this daemon's pollers would eventually
+  // derive by diffing, so freshness stops being bounded by the 5-15s poll
+  // cadences. The pollers stay running as the safety net (and as the ONLY
+  // mechanism while this channel is down); on every reconnect we run one
+  // poller catch-up cycle to close the disconnect gap.
+  const dirtyCommentProjects = new Set<string>();
+  const hubEventsSubscriber = startHubEventsSubscriber({
+    resolveEndpoint: async () => {
+      // Same gating as the workspace-context provider: only the vela source
+      // has a hub to subscribe to (dev daemons must not dial production).
+      if (process.env.OD_WORKSPACE_CONTEXT_SOURCE?.trim() !== 'vela') return null;
+      const session = readVelaControlApiContext(process.env);
+      if (!session?.controlKey || !session.apiUrl) return null;
+      const workspaceId = activeWorkspace.get()?.trim();
+      return {
+        url: new URL('/api/v1/collab/events', session.apiUrl).toString(),
+        headers: {
+          authorization: `Bearer ${session.controlKey}`,
+          ...(workspaceId ? { 'x-vela-workspace-id': workspaceId } : {}),
+        },
+      };
+    },
+    onEvent: (event) => {
+      switch (event.type) {
+        case 'team-projects-changed':
+        case 'project-metadata-changed': {
+          // Catalog changed (share/unshare/rename). Refresh the display cache
+          // then signal the web; the metadata variant additionally pings the
+          // open project view so its title can follow a rename.
+          void teamProjectsDisplayCache?.().catch(() => undefined);
+          emitWorkspaceEvent({ type: 'team-projects-changed', at: Date.now() });
+          if (event.type === 'project-metadata-changed' && event.projectId) {
+            emitProjectEvent(event.projectId, {
+              type: 'project-metadata-changed',
+              projectId: event.projectId,
+              at: Date.now(),
+            });
+          }
+          break;
+        }
+        case 'comment-changed': {
+          const projectId = event.projectId;
+          if (!projectId) break;
+          if (activeProjectEventSinks.has(projectId)) {
+            // Project is open here — pull now instead of waiting for the next
+            // poll tick; the merge emits `comment-changed` to the web itself.
+            dirtyCommentProjects.delete(projectId);
+            void collabCloud?.pollOnce().catch(() => undefined);
+          } else {
+            // Closed project: just mark dirty. The open-project path pulls
+            // immediately, and an unopened project costs zero requests.
+            dirtyCommentProjects.add(projectId);
+          }
+          break;
+        }
+        case 'presence-changed': {
+          if (event.projectId) {
+            emitProjectEvent(event.projectId, {
+              type: 'presence-changed',
+              projectId: event.projectId,
+              at: Date.now(),
+            });
+          }
+          break;
+        }
+        case 'project-content-changed': {
+          // A teammate published a new version. The member web's status loop
+          // picks it up; forward a thin nudge so an open project checks NOW.
+          if (event.projectId && activeProjectEventSinks.has(event.projectId)) {
+            emitProjectEvent(event.projectId, {
+              type: 'project-metadata-changed',
+              projectId: event.projectId,
+              at: Date.now(),
+            });
+          }
+          break;
+        }
+        case 'workspace-context-changed':
+          emitWorkspaceEvent({ type: 'workspace-context-changed', at: Date.now() });
+          break;
+        case 'billing-changed':
+          emitWorkspaceEvent({ type: 'billing-changed', at: Date.now() });
+          break;
+      }
+    },
+    onReconnect: () => {
+      // Close the disconnect gap: one catch-up cycle over the same reads the
+      // pollers watch, plus a comment pull for open projects.
+      void workspaceInvalidationPoller.pollOnce().catch(() => undefined);
+      void collabCloud?.pollOnce().catch(() => undefined);
+    },
+    onError: (error) => {
+      console.warn('[od] hub events channel error (will reconnect):', String(error));
+    },
+  });
+
   registerTeamResourceRoutes(app, { teamResources: collab.teamResources });
 
   // Team resource sharing: promote a personal design system, plugin, or skill
@@ -3846,6 +3946,13 @@ export async function startServer({
     shouldSyncProjectComments: async (_authorization, projectId) => isSharedTeamProject(projectId),
     ...(collabCloud
       ? {
+          onCommentsRead: (projectId) => {
+            // Consume the hub push channel's dirty mark: first read after
+            // opening a project pulls the missed comments immediately.
+            if (dirtyCommentProjects.delete(projectId)) {
+              void collabCloud.pollOnce().catch(() => {});
+            }
+          },
           onCommentCreated: (comment) => {
             void collabCloud.pushComment(comment).catch(() => {});
           },
@@ -9446,6 +9553,7 @@ export async function startServer({
       orbitService.stop();
       routineService?.stop();
       workspaceInvalidationPoller.stop();
+      hubEventsSubscriber.stop();
     };
     const shutdownDaemonRuns = async () => {
       if (daemonShutdownStarted) return;

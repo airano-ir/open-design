@@ -44,6 +44,13 @@ export interface RegisterProjectCommentRoutesDeps extends RouteDeps<'db' | 'proj
    * tombstone can be pushed to the relay. Best-effort.
    */
   onCommentDeleted?: (comment: PreviewComment) => void;
+  /**
+   * Fired when the comment list is read. The hub push channel marks closed
+   * projects comment-dirty instead of pulling eagerly; the first read after
+   * opening consumes that mark and triggers an immediate cloud pull, so an
+   * opened project catches up NOW instead of on the next poll tick.
+   */
+  onCommentsRead?: (projectId: string) => void;
 }
 
 export function registerProjectCommentRoutes(app: Express, ctx: RegisterProjectCommentRoutesDeps): void {
@@ -105,6 +112,7 @@ export function registerProjectCommentRoutes(app: Express, ctx: RegisterProjectC
     if (!conv || conv.projectId !== req.params.id) {
       return res.status(404).json({ error: 'conversation not found' });
     }
+    ctx.onCommentsRead?.(req.params.id);
     res.json({
       comments: listPreviewComments(db, req.params.id, req.params.cid),
     });
