@@ -3636,3 +3636,72 @@ dialog.tpl-share-popover .detail-share-dialog-text {
   .info-page.solution-page .info-section + .info-section,
   .info-page.solution-index-page .info-section + .info-section { margin-top: 0; }
 }
+
+/* ---------------------------------------------------------------------------
+ * codex-design page (.agent-rich-hub): sticky sidebar TOC + consistent image
+ * sizing. Scoped to .agent-rich-hub so no other agent/solution page is
+ * touched — promote to the shared agent-rich layout later if it lands well.
+ * ------------------------------------------------------------------------- */
+.agent-rich-hub .agent-rich-body {
+  display: grid;
+  grid-template-columns: 212px minmax(0, 1fr);
+  gap: 56px;
+  align-items: start;
+}
+.agent-rich-hub .agent-toc-rail {
+  position: sticky;
+  top: 84px;
+  align-self: start;
+}
+.agent-rich-hub .agent-toc-rail .info-toc {
+  display: block;
+  border: 0;
+  border-left: 1px solid var(--line);
+  padding: 0 0 0 16px;
+  margin: 0;
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: var(--sans);
+  font-size: 12.5px;
+}
+.agent-rich-hub .agent-toc-rail .info-toc span {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 12px;
+}
+.agent-rich-hub .agent-toc-rail .info-toc a {
+  display: block;
+  padding: 5px 0;
+  color: var(--ink-soft);
+  border-bottom: 0;
+  line-height: 1.35;
+  transition: color 0.14s ease;
+}
+.agent-rich-hub .agent-toc-rail .info-toc a:hover { color: var(--ink); border-bottom: 0; }
+.agent-rich-hub .agent-toc-rail .info-toc a.is-active { color: var(--coral); font-weight: 600; }
+
+/* One consistent measure for every figure: hero + section illustrations +
+ * product screenshots all cap to the same width and center, so the article's
+ * imagery reads as one set instead of jumping between full-bleed and small. */
+.agent-rich-hub .agent-hero-banner { max-width: 720px; }
+.agent-rich-hub .agent-rich-main .agent-section-img {
+  max-width: 720px;
+  margin: 30px auto 12px;
+}
+.agent-rich-hub .agent-rich-main .agent-section-img figcaption { text-align: center; }
+
+@media (max-width: 900px) {
+  .agent-rich-hub .agent-rich-body { display: block; }
+  .agent-rich-hub .agent-toc-rail { position: static; margin-bottom: 30px; }
+  .agent-rich-hub .agent-toc-rail .info-toc {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    padding: 14px 0;
+  }
+  .agent-rich-hub .agent-toc-rail .info-toc a { padding: 3px 0; }
+}

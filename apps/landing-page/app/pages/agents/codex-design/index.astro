@@ -84,7 +84,7 @@ const jsonLd = [
     <span aria-current="page">{page.breadcrumb}</span>
   </nav>
 
-  <article class={`info-page${rich ? ' solution-page agent-rich' : ''}`}>
+  <article class={`info-page${rich ? ' solution-page agent-rich agent-rich-hub' : ''}`}>
     {rich ? (
       <>
         {/* Single-column article header: full-measure heading + lead + CTA,
@@ -115,10 +115,14 @@ const jsonLd = [
           {rich.intro.map((p) => (<p>{p}</p>))}
         </div>
 
+        <div class="agent-rich-body">
+        <aside class="agent-toc-rail">
         <nav class="info-toc" aria-label={rich.tocLabel}>
           <span>{rich.tocLabel}</span>
-          {rich.toc.map((t) => (<a href={`#${t.id}`}>{t.label}</a>))}
+          {rich.toc.map((t) => (<a href={`#${t.id}`} data-toc-link>{t.label}</a>))}
         </nav>
+        </aside>
+        <div class="agent-rich-main">
 
         {rich.sections.map((section) => (
           <section class="info-section" id={section.id}>
@@ -206,6 +210,27 @@ const jsonLd = [
             <span><a class="inline-link" href={href('/agents/')}>{rich.hubLinkLabel}</a></span>
           </div>
         </section>
+        </div>{/* .agent-rich-main */}
+        </div>{/* .agent-rich-body */}
+
+        <script is:inline>
+          {`(() => {
+            const links = Array.from(document.querySelectorAll('.agent-rich-hub [data-toc-link]'));
+            if (!links.length || !('IntersectionObserver' in window)) return;
+            const byId = new Map(links.map((a) => [a.getAttribute('href').slice(1), a]));
+            const seen = new Set();
+            const spy = new IntersectionObserver((entries) => {
+              for (const e of entries) {
+                if (e.isIntersecting) seen.add(e.target.id); else seen.delete(e.target.id);
+              }
+              let active = null;
+              for (const id of byId.keys()) if (seen.has(id)) { active = id; break; }
+              links.forEach((a) => a.classList.remove('is-active'));
+              if (active && byId.get(active)) byId.get(active).classList.add('is-active');
+            }, { rootMargin: '-80px 0px -70% 0px', threshold: 0 });
+            document.querySelectorAll('.agent-rich-hub .info-section[id]').forEach((s) => spy.observe(s));
+          })();`}
+        </script>
       </>
     ) : (
       <>
