@@ -463,14 +463,17 @@ function isProcessCrashText(text: string): boolean {
 
 // The child binary executed an instruction this CPU does not implement — in
 // practice a Bun-compiled agent (bundled opencode) built for AVX2 running on a
-// CPU without it (Intel Atom/Celeron/Pentium N-series through 2021). Seen as
-// the Bun crash banner with a `no_avx2` CPU feature line, the POSIX "Illegal
-// instruction" message, or Windows STATUS_ILLEGAL_INSTRUCTION as either the
-// hex 0xC000001D or Go/Node's decimal exit-status rendering 3221225501. The
-// same binary on the same CPU fails deterministically, so this must never be
-// auto-retried.
+// CPU without it (Intel Atom/Celeron/Pentium N-series through 2021, and
+// AVX-but-not-AVX2 Sandy/Ivy Bridge cores). Matched only on precise signals:
+// the `no_avx2` CPU-feature line Bun's crash banner always prints on such
+// machines, or Windows STATUS_ILLEGAL_INSTRUCTION as either the hex
+// 0xC000001D or Go/Node's decimal exit-status rendering 3221225501. A bare
+// "Illegal instruction" line is deliberately NOT matched: any unrelated
+// SIGILL (a runtime bug on an AVX2-capable machine) would then be mislabeled
+// as a processor limitation and lose its retry. The same binary on the same
+// CPU fails deterministically, so cpu_unsupported must never be auto-retried.
 function isCpuUnsupportedCrashText(text: string): boolean {
-  return /\billegal instruction\b|\bno_avx2\b|0xc000001d|\b3221225501\b/i.test(text);
+  return /\bno_avx2\b|0xc000001d|\b3221225501\b/i.test(text);
 }
 
 // The daemon emits a `runtime_close` diagnostic into the run's event stream at

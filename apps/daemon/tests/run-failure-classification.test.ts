@@ -1141,10 +1141,11 @@ describe('classifyRunFailure — signal and interrupt attribution', () => {
       ),
     ).toMatchObject({
       failure_category: 'process_exit',
-      // An illegal-instruction crash resolves to the more specific
-      // cpu_unsupported detail; other Bun crash shapes (segfault, 0xc0000409)
-      // keep process_crashed.
-      failure_detail: 'cpu_unsupported',
+      // A bare Bun illegal-instruction banner WITHOUT the no_avx2 CPU-feature
+      // line stays process_crashed: it may be an unrelated SIGILL on an
+      // AVX2-capable machine, so it must not claim the cpu_unsupported detail
+      // (which shows "Processor not supported" guidance).
+      failure_detail: 'process_crashed',
       retryable: false,
       user_action: 'none',
     });
@@ -1251,6 +1252,28 @@ describe('cpu_unsupported (AVX2) crash classification', () => {
     ).toMatchObject({
       failure_detail: 'cpu_unsupported',
       retryable: false,
+    });
+  });
+
+  it('does not claim an illegal-instruction crash without the no_avx2 feature line', () => {
+    // A SIGILL on an AVX2-capable machine (runtime bug, corrupted jump) prints
+    // the same "Illegal instruction" panic but a CPU-feature line WITHOUT
+    // no_avx2. That must keep the retryable fatal_rpc_error path — labeling it
+    // "Processor not supported" would mislead the user and drop the retry.
+    const stderr = [
+      'Bun v1.3.14 (0d9b296a) Windows x64',
+      'CPU: sse42 avx avx2',
+      'panic(main thread): Illegal instruction at address 0x7FF6C08DF82C',
+    ].join('\n');
+    expect(
+      classify('AGENT_EXECUTION_FAILED', '', [
+        { event: 'stderr', data: { chunk: stderr } },
+        errorEvent('AGENT_EXECUTION_FAILED', ''),
+        runtimeCloseEvent('fatal_rpc_error'),
+      ]),
+    ).toMatchObject({
+      failure_detail: 'fatal_rpc_error',
+      retryable: true,
     });
   });
 
