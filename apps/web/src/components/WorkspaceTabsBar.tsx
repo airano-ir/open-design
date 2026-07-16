@@ -410,6 +410,17 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
   const t = useT();
   const [state, setState] = useState<WorkspaceTabsState>(() => initialTabsState(route));
   const [tabsMenuOpen, setTabsMenuOpen] = useState(false);
+  // #5517 corner fan: the "+" button opens a quarter-pie radial menu of
+  // entry-view shortcuts instead of immediately spawning a home tab.
+  const [radialMenu, setRadialMenu] = useState<{ x: number; y: number } | null>(null);
+  useEffect(() => {
+    if (!radialMenu) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setRadialMenu(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [radialMenu]);
   const [query, setQuery] = useState('');
   const [hoverPreview, setHoverPreview] = useState<HoverPreviewState | null>(null);
   const [tabsOverflowing, setTabsOverflowing] = useState(false);
@@ -759,6 +770,43 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
     activateTab(tab);
   }
 
+  // Corner-anchored radial fan menu on the "+" button (structure borrowed
+  // from a quarter-pie corner menu): sectors sweep down-left from the
+  // button, each one an entry-view shortcut. (#5517)
+  const RADIAL_SIZE = 264;
+  const RADIAL_PAD = 24;
+  const RADIAL_ACTIONS: Array<{ label: string; view: EntryHomeView }> = [
+    { label: t('entry.navRecents'), view: 'home' },
+    { label: t('entry.navAllProjects'), view: 'all-projects' },
+    { label: t('entry.navDesignSystems'), view: 'design-systems' },
+    { label: t('pluginsHome.title'), view: 'community' },
+  ];
+
+  function radialSectorPath(cx: number, cy: number, a1: number, a2: number, r0: number, r1: number): string {
+    const rad = (a: number) => (a * Math.PI) / 180;
+    const px = (r: number, a: number) => `${(cx + r * Math.cos(rad(a))).toFixed(2)} ${(cy + r * Math.sin(rad(a))).toFixed(2)}`;
+    return `M ${px(r1, a1)} A ${r1} ${r1} 0 0 1 ${px(r1, a2)} L ${px(r0, a2)} A ${r0} ${r0} 0 0 0 ${px(r0, a1)} Z`;
+  }
+
+  function openEntryView(view: EntryHomeView) {
+    const normalized = normalizeTabsState(state);
+    const existingEntryTab = normalized.tabs.find((tab) => tab.kind === 'entry');
+    if (existingEntryTab) {
+      setState({ ...normalized, activeTabId: existingEntryTab.id });
+    } else {
+      const tab = createEntryTab(view);
+      setState({ tabs: [...normalized.tabs, tab], activeTabId: tab.id });
+    }
+    navigate({ kind: 'home', view });
+    setRadialMenu(null);
+  }
+
+  function openRadialMenu(event: React.MouseEvent<HTMLButtonElement>) {
+    if (onboardingActive) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    setRadialMenu((cur) => (cur ? null : { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }));
+  }
+
   function createNewTab() {
     // Onboarding gate — see `onboardingActive`. Covers the "+" button and the
     // Cmd/Ctrl+T keyboard shortcut, since both funnel through here.
@@ -1003,7 +1051,7 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
         <button
           type="button"
           className="workspace-tabs-new-btn od-tooltip"
-          onClick={createNewTab}
+          onClick={openRadialMenu}
           title="New tab"
           data-tooltip="New tab"
           data-tooltip-placement="bottom"
@@ -1104,6 +1152,46 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
             )
           : null}
       </div>
+      {radialMenu ? createPortal(
+        <div className="workspace-radial-layer" onMouseDown={() => setRadialMenu(null)}>
+          <svg
+            className="workspace-radial-menu"
+            style={{ left: radialMenu.x - (RADIAL_SIZE - RADIAL_PAD), top: radialMenu.y - RADIAL_PAD }}
+            width={RADIAL_SIZE}
+            height={RADIAL_SIZE}
+            viewBox={`0 0 ${RADIAL_SIZE} ${RADIAL_SIZE}`}
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            {RADIAL_ACTIONS.map((action, index) => {
+              const cx = RADIAL_SIZE - RADIAL_PAD;
+              const cy = RADIAL_PAD;
+              const start = 98;
+              const span = 68 / RADIAL_ACTIONS.length;
+              const gap = 2.4;
+              const a1 = start + index * span + gap / 2;
+              const a2 = start + (index + 1) * span - gap / 2;
+              const mid = (a1 + a2) / 2;
+              const labelR = 158;
+              const lx = cx + labelR * Math.cos((mid * Math.PI) / 180);
+              const ly = cy + labelR * Math.sin((mid * Math.PI) / 180);
+              return (
+                <g
+                  key={action.view}
+                  className="workspace-radial-sector"
+                  role="menuitem"
+                  onClick={() => openEntryView(action.view)}
+                >
+                  <path d={radialSectorPath(cx, cy, a1, a2, 52, 224)} />
+                  <text x={lx} y={ly} textAnchor="middle" dominantBaseline="middle">
+                    {action.label}
+                  </text>
+                </g>
+              );
+            })}
+          </svg>
+        </div>,
+        document.body,
+      ) : null}
       {hoverPreview && typeof document !== 'undefined' && !tabsMenuOpen
         ? createPortal(
             (() => {
