@@ -60,6 +60,14 @@ export type IconName =
   | 'panel-left'
   | 'palette'
   | 'palette-filled'
+  | 'file-filled'
+  | 'file-history-filled'
+  | 'globe-filled'
+  | 'grid-filled'
+  | 'puzzle-filled'
+  | 'users-filled'
+  | 'dashboard-filled'
+  | 'settings-filled'
   | 'pencil'
   | 'plus'
   | 'plus-filled'
@@ -557,6 +565,59 @@ export function Icon({ name, size = 14, strokeWidth = 1.6, ...rest }: Props) {
       return (
         <svg {...common} fill="currentColor" stroke="none">
           <path d="M12 2C17.5222 2 22 5.97778 22 10.8889C22 13.9556 19.5111 16.4444 16.4444 16.4444H14.4778C13.5556 16.4444 12.8111 17.1889 12.8111 18.1111C12.8111 18.5333 12.9778 18.9222 13.2333 19.2111C13.5 19.5111 13.6667 19.9 13.6667 20.3333C13.6667 21.2556 12.9 22 12 22C6.47778 22 2 17.5222 2 12C2 6.47778 6.47778 2 12 2ZM10.8111 18.1111C10.8111 16.0843 12.451 14.4444 14.4778 14.4444H16.4444C18.4065 14.4444 20 12.851 20 10.8889C20 7.1392 16.4677 4 12 4C7.58235 4 4 7.58235 4 12C4 16.19 7.2226 19.6285 11.324 19.9718C10.9948 19.4168 10.8111 18.7761 10.8111 18.1111ZM7.5 12C6.67157 12 6 11.3284 6 10.5C6 9.67157 6.67157 9 7.5 9C8.32843 9 9 9.67157 9 10.5C9 11.3284 8.32843 12 7.5 12ZM16.5 12C15.6716 12 15 11.3284 15 10.5C15 9.67157 15.6716 9 16.5 9C17.3284 9 18 9.67157 18 10.5C18 11.3284 17.3284 12 16.5 12ZM12 9C11.1716 9 10.5 8.32843 10.5 7.5C10.5 6.67157 11.1716 6 12 6C12.8284 6 13.5 6.67157 13.5 7.5C13.5 8.32843 12.8284 9 12 9Z" />
+        </svg>
+      );
+    case 'file-filled':
+      return (
+        <svg {...common} fill="currentColor" stroke="none">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z" />
+        </svg>
+      );
+    case 'file-history-filled':
+      return (
+        <svg {...common} fill="currentColor" stroke="none">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zm-1 3a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9zm-.5 2v3l2.4 1.44.72-1.2-1.62-.97V14h-1.5z" />
+        </svg>
+      );
+    case 'globe-filled':
+      return (
+        <svg {...common} fill="currentColor" stroke="none">
+          <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm6.93 9h-3.02a15.7 15.7 0 0 0-1.27-5.44A8.02 8.02 0 0 1 18.93 11zM12 4.06c.9 1.32 1.66 3.7 1.9 6.94h-3.8c.24-3.24 1-5.62 1.9-6.94zM5.07 13h3.02c.16 2.03.6 3.9 1.27 5.44A8.02 8.02 0 0 1 5.07 13zm3.02-2H5.07a8.02 8.02 0 0 1 4.29-5.44A15.7 15.7 0 0 0 8.09 11zM12 19.94c-.9-1.32-1.66-3.7-1.9-6.94h3.8c-.24 3.24-1 5.62-1.9 6.94zm2.64-1.5A15.7 15.7 0 0 0 15.91 13h3.02a8.02 8.02 0 0 1-4.29 5.44z" />
+        </svg>
+      );
+    case 'grid-filled':
+      return (
+        <svg {...common} fill="currentColor" stroke="none">
+          <circle cx="5" cy="5" r="2" /><circle cx="12" cy="5" r="2" /><circle cx="19" cy="5" r="2" />
+          <circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" />
+          <circle cx="5" cy="19" r="2" /><circle cx="12" cy="19" r="2" /><circle cx="19" cy="19" r="2" />
+        </svg>
+      );
+    case 'puzzle-filled':
+      return (
+        <svg {...common} fill="currentColor" stroke="none">
+          <path d="M10 3a2.5 2.5 0 0 1 2.5 2.5V6H16a2 2 0 0 1 2 2v3.5h.5a2.5 2.5 0 0 1 0 5H18V20a2 2 0 0 1-2 2h-3.5v-.5a2.5 2.5 0 0 0-5 0v.5H4a2 2 0 0 1-2-2v-3.5h.5a2.5 2.5 0 0 0 0-5H2V8a2 2 0 0 1 2-2h3.5v-.5A2.5 2.5 0 0 1 10 3z" />
+        </svg>
+      );
+    case 'users-filled':
+      return (
+        <svg {...common} fill="currentColor" stroke="none">
+          <path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-3.31 0-8 1.66-8 4.95V21h16v-3.05C17 14.66 12.31 13 9 13zm8.5-2.5a3.5 3.5 0 1 0-2.14-6.27 6 6 0 0 1 .11 5.6c.6.43 1.3.67 2.03.67zM19 13.3c1.86.77 4 2.09 4 4.65V21h-4v-3.05c0-1.83-.79-3.29-2-4.4.72-.17 1.4-.25 2-.25z" />
+        </svg>
+      );
+    case 'dashboard-filled':
+      return (
+        <svg {...common} fill="currentColor" stroke="none">
+          <rect x="3" y="3" width="8" height="11" rx="1.5" />
+          <rect x="13" y="3" width="8" height="6" rx="1.5" />
+          <rect x="13" y="11" width="8" height="10" rx="1.5" />
+          <rect x="3" y="16" width="8" height="5" rx="1.5" />
+        </svg>
+      );
+    case 'settings-filled':
+      return (
+        <svg {...common} fill="currentColor" stroke="none">
+          <path d="M12 1l2.09 3.62 4.16.6-.34 4.19L21 12l-3.09 2.59.34 4.19-4.16.6L12 23l-2.09-3.62-4.16-.6.34-4.19L3 12l3.09-2.59-.34-4.19 4.16-.6L12 1zm0 7.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z" />
         </svg>
       );
     case 'pencil':

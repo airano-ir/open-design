@@ -202,7 +202,7 @@ describe('HomeHero intent rail', () => {
   it('lets the active creation chip be removed from the composer', () => {
     const { onClearActiveChip } = renderHero({ activeChipId: 'prototype' });
     fireEvent.click(screen.getByTestId('home-hero-template-trigger'));
-    fireEvent.click(screen.getByTestId('home-hero-template-clear'));
+    fireEvent.click(screen.getByTestId('home-hero-template-radial-clear'));
     expect(onClearActiveChip).toHaveBeenCalledTimes(1);
   });
 
@@ -263,7 +263,7 @@ describe('HomeHero intent rail', () => {
     expect(screen.getByTestId('home-hero-template-trigger').textContent).toContain('Slide deck');
 
     fireEvent.click(screen.getByTestId('home-hero-template-trigger'));
-    fireEvent.click(screen.getByTestId('home-hero-template-clear'));
+    fireEvent.click(screen.getByTestId('home-hero-template-radial-clear'));
 
     expect(onClearActiveChip).toHaveBeenCalledTimes(1);
     const trigger = screen.getByTestId('home-hero-template-trigger');

@@ -365,6 +365,44 @@ export function EntryNavRail({
                     <span className="entry-nav-rail__account-head-avatar" aria-hidden>{accountInitial}</span>
                     <span className="entry-nav-rail__account-head-name">{accountName}</span>
                   </div>
+                  {/* #5517 billing card: plan + 升级 CTA + credits row. Real
+                      billing data (no 附加积分 row — vela reports one combined
+                      total); the credits row opens the full CreditsPanel. */}
+                  {billing ? (
+                    <div className="entry-nav-rail__menu-credits">
+                      <div className="entry-nav-rail__menu-credits-head">
+                        <span className="entry-nav-rail__menu-credits-plan">{tierLabel}</span>
+                        {canUpgrade ? (
+                          <button
+                            type="button"
+                            className="entry-nav-rail__menu-credits-upgrade"
+                            onClick={() => {
+                              setAccountOpen(false);
+                              openBillingUpgrade();
+                            }}
+                          >
+                            {t('entry.creditsUpgrade')}
+                          </button>
+                        ) : null}
+                      </div>
+                      <button
+                        type="button"
+                        className="entry-nav-rail__menu-credits-row"
+                        onClick={() => {
+                          setAccountOpen(false);
+                          setCreditsOpen(true);
+                        }}
+                      >
+                        <span className="entry-nav-rail__menu-credits-label">
+                          <Icon name="sparkles" size={14} /> {t('entry.creditsRemaining')}
+                        </span>
+                        <span className="entry-nav-rail__menu-credits-value">
+                          {creditsBalance != null ? creditsBalance.toLocaleString('en-US') : '—'}
+                          <Icon name="chevron-right" size={14} />
+                        </span>
+                      </button>
+                    </div>
+                  ) : null}
                   {onToggleTheme ? (
                     <button
                       type="button"
@@ -562,7 +600,7 @@ export function EntryNavRail({
           onClick={() => selectView('home')}
           testId="entry-nav-home"
         >
-          <Icon name="history" size={18} />
+          <Icon name="file-history-filled" size={18} />
         </NavButton>
         <NavButton
           active={view === 'community'}
@@ -571,7 +609,7 @@ export function EntryNavRail({
           onClick={() => selectView('community')}
           testId="entry-nav-community"
         >
-          <Icon name="globe" size={18} />
+          <Icon name="globe-filled" size={18} />
         </NavButton>
 
         {context ? (
@@ -657,7 +695,7 @@ export function EntryNavRail({
               onClick={() => selectView('drafts')}
               testId="entry-nav-drafts"
             >
-              <Icon name="file" size={18} />
+              <Icon name="file-filled" size={18} />
             </NavButton>
             <NavButton
               active={view === 'all-projects'}
@@ -666,7 +704,7 @@ export function EntryNavRail({
               onClick={() => selectView('all-projects')}
               testId="entry-nav-all-projects"
             >
-              <Icon name="grid" size={18} />
+              <Icon name="grid-filled" size={18} />
             </NavButton>
             <NavButton
               active={view === 'design-systems'}
@@ -675,7 +713,7 @@ export function EntryNavRail({
               onClick={() => selectView('design-systems')}
               testId="entry-nav-design-systems"
             >
-              <Icon name="palette" size={18} />
+              <Icon name="palette-filled" size={18} />
             </NavButton>
             <NavButton
               active={view === 'plugins'}
@@ -684,7 +722,7 @@ export function EntryNavRail({
               onClick={() => selectView('plugins')}
               testId="entry-nav-plugins"
             >
-              <Icon name="grid" size={18} />
+              <Icon name="puzzle-filled" size={18} />
             </NavButton>
             {/* Workspace management (成员 / 数据大盘 / Workspace 设置) lives in
                 B's vela/web console — link OUT, don't route to in-client views.
@@ -700,7 +738,7 @@ export function EntryNavRail({
                 data-testid="entry-nav-members"
               >
                 <span className="entry-nav-rail__btn-icon" aria-hidden>
-                  <Icon name="users" size={18} />
+                  <Icon name="users-filled" size={18} />
                 </span>
                 <span className="entry-nav-rail__btn-label">{t('entry.navMembers')}</span>
               </a>
@@ -715,7 +753,7 @@ export function EntryNavRail({
                 data-testid="entry-nav-dashboard"
               >
                 <span className="entry-nav-rail__btn-icon" aria-hidden>
-                  <Icon name="kanban" size={18} />
+                  <Icon name="dashboard-filled" size={18} />
                 </span>
                 <span className="entry-nav-rail__btn-label">{t('entry.navDashboard')}</span>
               </a>
@@ -730,7 +768,7 @@ export function EntryNavRail({
                 data-testid="entry-nav-workspace-settings"
               >
                 <span className="entry-nav-rail__btn-icon" aria-hidden>
-                  <Icon name="settings" size={18} />
+                  <Icon name="settings-filled" size={18} />
                 </span>
                 <span className="entry-nav-rail__btn-label">{t('entry.navWorkspaceSettings')}</span>
               </a>
@@ -746,7 +784,7 @@ export function EntryNavRail({
               onClick={() => selectView('design-systems')}
               testId="entry-nav-design-systems"
             >
-              <Icon name="palette" size={18} />
+              <Icon name="palette-filled" size={18} />
             </NavButton>
             <NavButton
               active={view === 'plugins'}
@@ -755,7 +793,7 @@ export function EntryNavRail({
               onClick={() => selectView('plugins')}
               testId="entry-nav-plugins"
             >
-              <Icon name="grid" size={18} />
+              <Icon name="puzzle-filled" size={18} />
             </NavButton>
           </>
         )}

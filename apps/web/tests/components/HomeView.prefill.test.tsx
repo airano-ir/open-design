@@ -2036,11 +2036,12 @@ async function setPromptAndSettle(value: string): Promise<void> {
 }
 
 async function clearActiveTypeChip() {
-  // Reset the Template selection back to "None" via the dropdown's Clear.
+  // Reset the Template selection back to "None" via the radial's center Clear
+  // (#5517 replaced the dropdown Clear with the radial menu's center button).
   const trigger = screen.queryByTestId('home-hero-template-trigger');
   if (!trigger) return;
   fireEvent.click(trigger);
-  const clear = screen.queryByTestId('home-hero-template-clear');
+  const clear = screen.queryByTestId('home-hero-template-radial-clear');
   if (clear) fireEvent.click(clear);
   fireEvent.keyDown(document, { key: 'Escape' });
 }
