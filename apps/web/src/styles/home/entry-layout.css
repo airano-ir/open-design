@@ -38,12 +38,17 @@
    to the right (it stays docked until the user collapses it again). */
 .entry-shell--no-header .entry {
   grid-template-columns: 0 minmax(0, 1fr);
-  transition: grid-template-columns 200ms cubic-bezier(0.23, 1, 0.32, 1);
+  /* Collapse: hold the horizontal squeeze until the rows have cascaded out
+     top-to-bottom (see the staggered rail-row fade below), otherwise the
+     0-width clip would swallow the lower rows before their turn. */
+  transition: grid-template-columns 200ms cubic-bezier(0.23, 1, 0.32, 1) 170ms;
   /* Translucent over the app-wash pastel ground (app-wash.css): the frosted
      rail and content cards float on the wash instead of a flat tone. */
   background: var(--veil-page);
 }
 .entry-shell--no-header .entry.entry--rail-open {
+  /* Expand is immediate — no hold — so opening stays snappy. */
+  transition: grid-template-columns 200ms cubic-bezier(0.23, 1, 0.32, 1) 0ms;
   grid-template-columns: var(--entry-rail-width, 56px) minmax(0, 1fr);
 }
 
@@ -82,8 +87,14 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin: 10px;
-  padding: 10px 0 12px;
+  /* Top margin 0: the tab bar already contributes a 10px gap below the tabs
+     (its bottom padding), so the single visible gap between the tabs and this
+     rail card stays 10px instead of doubling to 20 (tab 10 + rail 10). */
+  margin: 0 10px 10px;
+  /* Bottom padding trimmed 12 → 5 so the account row's gap to the panel's
+     bottom edge (trigger padding 4 + footer padding 6 + 5 + 1px stroke = 16px)
+     matches its 16px left/right inset. */
+  padding: 10px 0 5px;
   position: relative;
   /* Craft-style milky frost (material.css thin tier): soft white surface over
      the wash/wallpaper with a saturated blur, instead of fully clear glass. */
@@ -167,6 +178,68 @@
 }
 .entry--rail-open .entry-nav-rail {
   overflow: visible;
+}
+
+/* ── Collapse cascade ──────────────────────────────────────────────────────
+   Clicking collapse plays a top-to-bottom sequence: each rail row fades and
+   lifts a few px, staggered by its document order (search → nav items → team
+   items → footer), so the sidebar empties from the top down before the track
+   squeezes shut. Expanding is instant (no per-row delay) to stay snappy. */
+.entry-nav-rail__group > .entry-nav-rail__search,
+.entry-nav-rail__group > .entry-nav-rail__btn,
+.entry-nav-rail__group > .entry-nav-rail__team-wrap,
+.entry-nav-rail__section-divider,
+.entry-nav-rail__footer {
+  transition:
+    opacity 150ms cubic-bezier(0.23, 1, 0.32, 1),
+    transform 150ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.entry:not(.entry--rail-open) .entry-nav-rail__group > .entry-nav-rail__search,
+.entry:not(.entry--rail-open) .entry-nav-rail__group > .entry-nav-rail__btn,
+.entry:not(.entry--rail-open) .entry-nav-rail__group > .entry-nav-rail__team-wrap,
+.entry:not(.entry--rail-open) .entry-nav-rail__section-divider,
+.entry:not(.entry--rail-open) .entry-nav-rail__footer {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+/* Per-row stagger — applied only while collapsing so the cascade runs
+   top→bottom. Our rail keeps every row (search → nav items → team switcher →
+   team items → divider …) as direct children of one __group, so a single
+   nth-child run covers the whole sequence (the designer branch split this
+   across a group + team-section pair). Child 1 is the brand slot, which does
+   not fade, so the sequence starts at child 2. */
+.entry:not(.entry--rail-open) .entry-nav-rail__group > *:nth-child(2) { transition-delay: 0ms; }
+.entry:not(.entry--rail-open) .entry-nav-rail__group > *:nth-child(3) { transition-delay: 15ms; }
+.entry:not(.entry--rail-open) .entry-nav-rail__group > *:nth-child(4) { transition-delay: 30ms; }
+.entry:not(.entry--rail-open) .entry-nav-rail__group > *:nth-child(5) { transition-delay: 45ms; }
+.entry:not(.entry--rail-open) .entry-nav-rail__group > *:nth-child(6) { transition-delay: 60ms; }
+.entry:not(.entry--rail-open) .entry-nav-rail__group > *:nth-child(7) { transition-delay: 75ms; }
+.entry:not(.entry--rail-open) .entry-nav-rail__group > *:nth-child(8) { transition-delay: 90ms; }
+.entry:not(.entry--rail-open) .entry-nav-rail__group > *:nth-child(9) { transition-delay: 105ms; }
+.entry:not(.entry--rail-open) .entry-nav-rail__group > *:nth-child(10) { transition-delay: 120ms; }
+.entry:not(.entry--rail-open) .entry-nav-rail__group > *:nth-child(11) { transition-delay: 135ms; }
+.entry:not(.entry--rail-open) .entry-nav-rail__group > *:nth-child(n + 12) { transition-delay: 150ms; }
+.entry:not(.entry--rail-open) .entry-nav-rail__footer { transition-delay: 165ms; }
+/* Footer finale: after the rows have cascaded out top-to-bottom, the account
+   底卡 does NOT fade up with them — it stays fully opaque and slides left as
+   the track squeezes shut, reading as the card retracting to the left. Same
+   selector as the shared collapse rule above, placed after it so it wins. */
+.entry:not(.entry--rail-open) .entry-nav-rail__footer {
+  opacity: 1;
+  transform: translateX(-36px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .entry-nav-rail__group > .entry-nav-rail__search,
+  .entry-nav-rail__group > .entry-nav-rail__btn,
+  .entry-nav-rail__group > .entry-nav-rail__team-wrap,
+  .entry-nav-rail__section-divider,
+  .entry-nav-rail__footer {
+    transition: none;
+    transform: none;
+  }
+  .entry:not(.entry--rail-open) .entry-nav-rail__group > * { transition-delay: 0ms; }
+  .entry:not(.entry--rail-open) .entry-nav-rail__footer { transition-delay: 0ms; }
+  .entry-shell--no-header .entry { transition-delay: 0ms; }
 }
 
 /* Brand slot — the logo, with a collapse button that fades in on hover so the
@@ -898,8 +971,9 @@
   border: 1px solid transparent;
   border-radius: 8px;
   background: transparent;
-  /* Unselected items read at the first text tier (颜色规范 标题、最强文字). */
-  color: var(--text-strong);
+  /* Unselected: label matches the icon's muted tone (one uniform color); hover
+     steps up to --text-strong, selection goes near-black on light gray. */
+  color: color-mix(in srgb, var(--text) 52%, transparent);
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -914,7 +988,8 @@
   align-items: center;
   justify-content: center;
   flex: 0 0 18px;
-  color: color-mix(in srgb, var(--text) 62%, transparent);
+  /* One step lighter than before, tracking the lighter unselected label. */
+  color: color-mix(in srgb, var(--text) 52%, transparent);
 }
 .entry-nav-rail__btn-icon > svg {
   width: 18px;
@@ -934,13 +1009,10 @@
   text-overflow: ellipsis;
 }
 .entry-nav-rail__btn.is-active .entry-nav-rail__btn-icon {
-  color: #2f781d;
-  /* Remix glyphs are font outlines — a whisper of text-stroke nudges the
-     icon's weight up to sit with the medium label without going chunky. */
-  -webkit-text-stroke: 0.2px currentColor;
+  color: var(--selected);
 }
 .entry-nav-rail__btn.is-active .entry-nav-rail__btn-label {
-  font-weight: 500;
+  font-weight: 400;
 }
 
 /* Search box */
@@ -948,7 +1020,10 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  margin: 4px 0 10px;
+  /* No top margin: the search box's gap to the rail's top edge (panel
+     padding-top 10px + 1px stroke = 11px) then matches its 11px left/right
+     inset, instead of the extra 4px pushing it to 15px. */
+  margin: 0 0 10px;
 }
 .entry-nav-rail__search-row .entry-nav-rail__search {
   flex: 1;
@@ -974,7 +1049,9 @@
 }
 .entry-nav-rail__search:focus-within {
   flex-direction: row-reverse;
-  border-color: var(--text-strong, #353535);
+  /* Lighter focus ring — a step up from the resting border, not the near-black
+     --text-strong which read as a heavy outline the moment you typed. */
+  border-color: var(--border-strong);
   background: var(--rail-surface, #fff);
   color: var(--text-muted);
   box-shadow: none;
@@ -1049,7 +1126,7 @@
 }
 .entry-nav-rail__team-name {
   font-size: 13px;
-  font-weight: 400;
+  font-weight: 500;
   flex: 1;
   white-space: nowrap;
   overflow: hidden;
@@ -1074,19 +1151,20 @@
   background: var(--border-soft, rgba(0, 0, 0, 0.08));
 }
 .entry-nav-rail__btn:not(.is-active):hover {
+  /* Only the fill changes on hover — the label keeps its resting color so
+     text doesn't shift tone under the pointer. */
   background: color-mix(in srgb, var(--text) 5%, transparent);
-  color: var(--text-strong);
   border-color: transparent;
 }
 .entry-nav-rail__btn.is-active {
-  /* Selected = 极浅品牌背景 (#F5FFEE) under the deep brand green label/icon
-     (颜色规范 品牌色对). */
-  background: #f9fff4;
-  color: #2f781d;
+  /* Selected = one step above the lightest surface gray (--bg-subtle #ededed)
+     under the spec's selection color (--selected #353535) for label + icon. */
+  background: var(--bg-subtle);
+  color: var(--selected);
   border-color: transparent;
 }
 .entry-nav-rail__btn.is-active:hover {
-  background: #f9fff4;
+  background: var(--bg-subtle);
   border-color: transparent;
 }
 .entry-nav-rail__btn:focus-visible {
@@ -1183,6 +1261,20 @@
    while the hero card self-constrains to a readable column. */
 .entry-main__inner--wide {
   max-width: 1600px;
+}
+/* Uniform left/right gutters across the home view AND the wide sub-views
+   (全部项目 / 草稿 / design-systems / …): the recent-projects grid and the
+   project lists all breathe away from the window edges by the same 48px, so
+   switching between 最近 and 全部项目 keeps the same side inset. */
+.entry-main__inner {
+  padding-left: 48px;
+  padding-right: 48px;
+}
+@media (max-width: 900px) {
+  .entry-main__inner {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
 }
 
 /* Sticky top-right control strip inside the main scroll area.
@@ -1711,6 +1803,17 @@
 .inline-switcher__chip-sep {
   color: var(--text-faint);
 }
+/* Hairline splitting the agent (logo + status dot) from the model name, so the
+   compact chip reads as two groups rather than one run. Same treatment as
+   `.home-hero__workdir-divider` in the composer row beside it; the chip's own
+   gap does the spacing. */
+.inline-switcher__chip-divider {
+  flex: 0 0 auto;
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+  opacity: 0.7;
+}
 .inline-switcher__chip-primary {
   min-width: 0;
   overflow: hidden;
@@ -1781,6 +1884,13 @@
   letter-spacing: 0.04em;
   color: var(--text-muted);
 }
+/* Left-align the label with the option text beneath it. Each
+   `.inline-switcher__agent` insets its name by 1px border + 8px padding, so a
+   flush label hangs 9px to the left of the list. Scoped to rows that actually
+   hold a list — a label above the model-select trigger has a different inset. */
+.inline-switcher__row:has(.inline-switcher__agent-grid) .inline-switcher__label {
+  padding-left: 9px;
+}
 .inline-switcher__hint {
   font-size: 12px;
   color: var(--text-muted);
@@ -1848,13 +1958,38 @@
   width: 100%;
   min-width: 0;
 }
-.inline-switcher__agent:hover {
+/* Hover reads from the background alone — same reasoning as `.is-active`
+   below. Without the `:not(:disabled)` here, the global `button:hover` repaint
+   in primitives.css (specificity 0,2,1) out-specifies this rule and darkens
+   the border to --border-strong, popping a visible outline on hover. */
+.inline-switcher__agent:hover:not(:disabled) {
   background: var(--bg-subtle);
+  border-color: transparent;
 }
 .inline-switcher__agent.is-active {
   /* Selected state reads from the tinted background alone — no dark accent
      border, which showed as a heavy near-black outline on the active row. */
   background: var(--accent-tint);
+  color: var(--text-strong);
+}
+/* Compact model list (home composer popover): a plain borderless list —
+   no card outlines around each row, tighter single-column rows, and a neutral
+   gray selection instead of the accent tint. */
+.inline-switcher--compact .inline-switcher__agent-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1px;
+}
+.inline-switcher--compact .inline-switcher__agent {
+  border: none;
+  background: transparent;
+  padding: 6px 10px;
+}
+.inline-switcher--compact .inline-switcher__agent:hover:not(:disabled) {
+  border: none;
+  background: var(--bg-subtle);
+}
+.inline-switcher--compact .inline-switcher__agent.is-active {
+  background: var(--bg-subtle);
   color: var(--text-strong);
 }
 .inline-switcher__amr-reminder-dot--agent {
@@ -5323,7 +5458,7 @@
 }
 .entry-nav-rail__account-name {
   font-size: 13px;
-  font-weight: 400;
+  font-weight: 500;
   flex: 0 1 auto;
   margin-right: auto;
   white-space: nowrap;
@@ -5727,6 +5862,19 @@
 }
 .entry-nav-rail__menu-social-btn svg,
 .entry-nav-rail__menu-social-btn .od-icon { color: inherit; }
+/* GitHub 按钮附带实时 star 数时放开固定宽度，图标 + 数字并排 */
+.entry-nav-rail__menu-social-btn:has(.entry-nav-rail__menu-social-count) {
+  width: auto;
+  padding: 0 9px;
+  gap: 5px;
+}
+.entry-nav-rail__menu-social-count {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  color: inherit;
+  font-variant-numeric: tabular-nums;
+}
 .entry-nav-rail__menu-social-btn .entry-nav-rail__menu-x {
   flex: 0 0 auto;
   color: inherit;
@@ -6088,7 +6236,7 @@
 
 [data-testid="design-systems-tab"] > aside div:has(> [data-testid^="design-system-card-"][aria-pressed="true"]) {
   border-color: #dbdbdb;
-  background: color-mix(in srgb, #ededed 32%, transparent);
+  background: #ffffff;
 }
 
 [data-testid="design-systems-tab"] > aside div:has(> [data-testid^="design-system-card-"]):hover > [data-testid^="design-system-card-"],

@@ -82,12 +82,18 @@ pre,
   font-variant-numeric: tabular-nums;
 }
 
+/* Centered row: the dot-matrix loader leads, the label follows. Was a grid
+   with `place-items: center`, which would stack the two children instead. */
 .od-loading-shell {
   min-height: 100vh;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   color: var(--text-muted);
-  background: var(--veil-shell);
+  /* Opaque base (not the see-through veil) so the pastel app-wash corner
+     blobs don't bleed through the loading screen. */
+  background: var(--bg-app);
   font: 500 var(--font-size-13)/125% var(--sans);
 }
 

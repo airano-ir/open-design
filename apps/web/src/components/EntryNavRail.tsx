@@ -33,6 +33,7 @@ import type {
 } from '@open-design/contracts';
 import { fetchVelaLoginStatus } from '../providers/daemon';
 import { Icon } from './Icon';
+import { GITHUB_STARS_FALLBACK_LABEL, formatStars, useGithubStars } from './useGithubStars';
 import { PlanWordmark, planBadgeTierForLabel } from './PlanWordmark';
 import { RemixIcon } from './RemixIcon';
 import { InviteDialog } from './InviteDialog';
@@ -164,6 +165,7 @@ export function EntryNavRail({
   const { t, locale, setLocale } = useI18n();
   const brandLabel = t('app.brand');
   const communityLabel = t('pluginsHome.title');
+  const homeLabel = t('entry.navHome');
   const isHome = view === 'home';
 
   const isTeam = Boolean(context) && context!.workspaceType === 'team';
@@ -198,6 +200,7 @@ export function EntryNavRail({
   const planTier = planBadgeTierForLabel(billing?.membershipTier || tierLabel);
 
   const [accountOpen, setAccountOpen] = useState(false);
+  const githubStars = useGithubStars();
   // Signed-in account email for the menu head (#5517 shows it under the
   // display name). The workspace context carries no email, so lazily read the
   // vela login-status projection the first time the menu opens — never on
@@ -465,12 +468,6 @@ export function EntryNavRail({
                           <Icon name="chevron-right" size={14} />
                         </span>
                       </button>
-                      <div className="entry-nav-rail__menu-credits-row">
-                        <span className="entry-nav-rail__menu-credits-label">
-                          <RemixIcon name="battery-charge-line" size={14} /> {t('entry.creditsBonus')}
-                        </span>
-                        <span className="entry-nav-rail__menu-credits-value">0</span>
-                      </div>
                     </div>
                   ) : null}
                   {onToggleTheme ? (
@@ -576,11 +573,14 @@ export function EntryNavRail({
                       role="menuitem"
                       href={REPO_URL}
                       {...externalLinkProps}
-                      aria-label="GitHub"
-                      title="GitHub"
+                      aria-label={`GitHub · ${githubStars == null ? GITHUB_STARS_FALLBACK_LABEL : formatStars(githubStars)} stars`}
+                      title={`GitHub · ${githubStars == null ? GITHUB_STARS_FALLBACK_LABEL : formatStars(githubStars)} stars`}
                       onClick={() => setAccountOpen(false)}
                     >
                       <Icon name="github-filled" size={15} />
+                      <span className="entry-nav-rail__menu-social-count">
+                        {githubStars == null ? GITHUB_STARS_FALLBACK_LABEL : formatStars(githubStars)}
+                      </span>
                     </a>
                     <a
                       className="entry-nav-rail__menu-social-btn"
@@ -665,12 +665,12 @@ export function EntryNavRail({
 
         <NavButton
           active={isHome}
-          ariaLabel={t('entry.navRecents')}
-          tooltip={t('entry.navRecents')}
+          ariaLabel={homeLabel}
+          tooltip={homeLabel}
           onClick={() => selectView('home')}
           testId="entry-nav-home"
         >
-          <RemixIcon name="file-history-fill" size={18} />
+          <Icon name="home" size={16} />
         </NavButton>
         <NavButton
           active={view === 'community'}
@@ -679,7 +679,7 @@ export function EntryNavRail({
           onClick={() => selectView('community')}
           testId="entry-nav-community"
         >
-          <RemixIcon name="global-fill" size={18} />
+          <Icon name="globe" size={16} />
         </NavButton>
 
         {context ? (
@@ -765,7 +765,7 @@ export function EntryNavRail({
               onClick={() => selectView('drafts')}
               testId="entry-nav-drafts"
             >
-              <RemixIcon name="file-fill" size={18} />
+              <Icon name="file" size={16} />
             </NavButton>
             <NavButton
               active={view === 'all-projects'}
@@ -774,7 +774,7 @@ export function EntryNavRail({
               onClick={() => selectView('all-projects')}
               testId="entry-nav-all-projects"
             >
-              <RemixIcon name="grid-fill" size={18} />
+              <Icon name="grid" size={16} />
             </NavButton>
             <NavButton
               active={view === 'design-systems'}
@@ -783,7 +783,7 @@ export function EntryNavRail({
               onClick={() => selectView('design-systems')}
               testId="entry-nav-design-systems"
             >
-              <RemixIcon name="palette-fill" size={18} />
+              <Icon name="palette" size={16} />
             </NavButton>
             <NavButton
               active={view === 'plugins'}
@@ -792,7 +792,7 @@ export function EntryNavRail({
               onClick={() => selectView('plugins')}
               testId="entry-nav-plugins"
             >
-              <RemixIcon name="puzzle-fill" size={18} />
+              <Icon name="puzzle" size={16} />
             </NavButton>
             {/* Workspace management (成员 / 数据大盘 / Workspace 设置) lives in
                 B's vela/web console — link OUT, don't route to in-client views.
@@ -808,7 +808,7 @@ export function EntryNavRail({
                 data-testid="entry-nav-members"
               >
                 <span className="entry-nav-rail__btn-icon" aria-hidden>
-                  <RemixIcon name="group-fill" size={18} />
+                  <Icon name="users" size={16} />
                 </span>
                 <span className="entry-nav-rail__btn-label">{t('entry.navMembers')}</span>
               </a>
@@ -823,7 +823,7 @@ export function EntryNavRail({
                 data-testid="entry-nav-dashboard"
               >
                 <span className="entry-nav-rail__btn-icon" aria-hidden>
-                  <RemixIcon name="dashboard-fill" size={18} />
+                  <Icon name="dashboard" size={16} />
                 </span>
                 <span className="entry-nav-rail__btn-label">{t('entry.navDashboard')}</span>
               </a>
@@ -838,7 +838,7 @@ export function EntryNavRail({
                 data-testid="entry-nav-workspace-settings"
               >
                 <span className="entry-nav-rail__btn-icon" aria-hidden>
-                  <RemixIcon name="settings-3-fill" size={18} />
+                  <Icon name="settings" size={16} />
                 </span>
                 <span className="entry-nav-rail__btn-label">{t('entry.navWorkspaceSettings')}</span>
               </a>
@@ -854,7 +854,7 @@ export function EntryNavRail({
               onClick={() => selectView('design-systems')}
               testId="entry-nav-design-systems"
             >
-              <RemixIcon name="palette-fill" size={18} />
+              <Icon name="palette" size={16} />
             </NavButton>
             <NavButton
               active={view === 'plugins'}
@@ -863,7 +863,7 @@ export function EntryNavRail({
               onClick={() => selectView('plugins')}
               testId="entry-nav-plugins"
             >
-              <RemixIcon name="puzzle-fill" size={18} />
+              <Icon name="puzzle" size={16} />
             </NavButton>
           </>
         )}

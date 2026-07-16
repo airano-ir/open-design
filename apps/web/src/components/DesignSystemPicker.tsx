@@ -485,14 +485,14 @@ export function DesignSystemPicker({
           aria-haspopup="listbox"
           aria-expanded={open}
           disabled={triggerDisabled}
-          title={selected?.title ?? t('designSystemPicker.noneTitle')}
+          title={selected?.title ?? t('newproj.designSystem')}
           onClick={() => setOpen((v) => !v)}
         >
           <Icon name="palette" size={13} className="home-hero__ds-row-trigger-icon" />
           <span className="home-hero__ds-row-trigger-label">
             {loading
               ? t('designSystemPicker.loading')
-              : selected?.title ?? t('designSystemPicker.noneTitle')}
+              : selected?.title ?? t('newproj.designSystem')}
           </span>
           <Icon name="chevron-down" size={11} className="home-hero__ds-row-trigger-chevron" />
         </button>

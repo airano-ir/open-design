@@ -1000,9 +1000,11 @@ describe('HomeView prompt handoff', () => {
     await waitFor(() => {
       expect(screen.getByTestId('home-hero-template-trigger').textContent).toContain('Prototype');
     });
+    // Round-4 skin: the unset trigger reads "Design system" (the field name)
+    // instead of the "No design system" placeholder.
     expect(
       screen.getByTestId('home-hero-design-system-trigger').textContent,
-    ).toContain('No design system');
+    ).toContain('Design system');
 
     await setPromptAndSettle('Build a pricing-page prototype.');
     fireEvent.click(screen.getByTestId('home-hero-submit'));
@@ -1073,9 +1075,10 @@ describe('HomeView prompt handoff', () => {
     const noneOption = await within(popover).findByText('No design system');
     fireEvent.mouseDown(noneOption);
     await waitFor(() => {
+      // Round-4 skin: with nothing selected the trigger reads "Design system".
       expect(
         screen.getByTestId('home-hero-design-system-trigger').textContent,
-      ).toContain('No design system');
+      ).toContain('Design system');
     });
 
     await setPromptAndSettle('Build a pricing-page prototype.');

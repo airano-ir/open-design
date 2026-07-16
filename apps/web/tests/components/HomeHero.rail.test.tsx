@@ -241,10 +241,12 @@ describe('HomeHero intent rail', () => {
     rerender(<HomeHero {...baseProps} activeChipId="deck" />);
     expect(screen.getByTestId('home-hero-template-trigger').textContent).toContain('Slide deck');
 
-    // Clear nulls the active chip — the pill must fall back to None.
+    // Clear nulls the active chip — the pill must fall back to the empty
+    // state. Round-4 skin: no "None" placeholder text at rest; the gray
+    // "Template" kicker alone reads as empty.
     rerender(<HomeHero {...baseProps} activeChipId={null} />);
     const trigger = screen.getByTestId('home-hero-template-trigger');
-    expect(trigger.textContent).toContain('None');
+    expect(trigger.textContent).toContain('Template');
     expect(trigger.textContent).not.toContain('Slide deck');
   });
 
@@ -266,8 +268,10 @@ describe('HomeHero intent rail', () => {
     fireEvent.click(screen.getByTestId('home-hero-template-radial-clear'));
 
     expect(onClearActiveChip).toHaveBeenCalledTimes(1);
+    // Round-4 skin: the empty pill shows the gray "Template" kicker, not a
+    // "None" placeholder label.
     const trigger = screen.getByTestId('home-hero-template-trigger');
-    expect(trigger.textContent).toContain('None');
+    expect(trigger.textContent).toContain('Template');
     expect(trigger.textContent).not.toContain('Slide deck');
   });
 

@@ -47,6 +47,7 @@ import {
 import { sessionModeToTracking } from '@open-design/contracts/analytics';
 import {
   chipsForGroup,
+  HOME_APPLY_TEMPLATE_EVENT,
   orderedCreateChips,
   type ChipGroup,
   type HomeHeroChip,
@@ -674,6 +675,21 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
     () => orderedCreateChips().filter((chip) => chip.action.kind === 'apply-scenario'),
     [],
   );
+  // A surface outside the hero (e.g. the workspace tabs-bar) can hand off a
+  // template pick through this window event; apply the chip exactly as if it
+  // was clicked here. Deliberately depless (re-subscribes each render) so the
+  // listener always sees the current handlers without threading them through
+  // refs.
+  useEffect(() => {
+    function onApplyTemplate(event: Event) {
+      const chipId = (event as CustomEvent<{ chipId?: string }>).detail?.chipId;
+      if (!chipId) return;
+      const chip = templateChips.find((item) => item.id === chipId);
+      if (chip) handlePickTaskChip(chip);
+    }
+    window.addEventListener(HOME_APPLY_TEMPLATE_EVENT, onApplyTemplate);
+    return () => window.removeEventListener(HOME_APPLY_TEMPLATE_EVENT, onApplyTemplate);
+  });
   const activeExamplePlugins = useMemo(
     () =>
       activeChipId

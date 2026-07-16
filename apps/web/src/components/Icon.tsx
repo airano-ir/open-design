@@ -4,7 +4,9 @@ export type IconName =
   | 'alert-triangle'
   | 'arrow-left'
   | 'arrow-up'
+  | 'artboard'
   | 'attach'
+  | 'bar-chart-box'
   | 'bell'
   | 'blocks'
   | 'check'
@@ -14,6 +16,7 @@ export type IconName =
   | 'close'
   | 'copy'
   | 'comment'
+  | 'dashboard'
   | 'discord'
   | 'download'
   | 'draw'
@@ -90,6 +93,7 @@ export type IconName =
   | 'upload'
   | 'users'
   | 'trash'
+  | 'video-ai'
   | 'volume'
   | 'zoom-in'
   | 'zoom-out';
@@ -146,6 +150,34 @@ export function Icon({ name, size = 14, strokeWidth = 1.6, ...rest }: Props) {
       return (
         <svg {...common}>
           <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+        </svg>
+      );
+    // Remix `artboard-2-line` (4.9.1), filled-path style like the *-filled set.
+    case 'artboard':
+      return (
+        <svg {...common} fill="currentColor" stroke="none">
+          <path d="M8 8V16H16V8H8ZM6 6H18V18H6V6ZM6 2H8V5H6V2ZM6 19H8V22H6V19ZM2 6H5V8H2V6ZM2 16H5V18H2V16ZM19 6H22V8H19V6ZM19 16H22V18H19V16ZM16 2H18V5H16V2ZM16 19H18V22H16V19Z" />
+        </svg>
+      );
+    // Remix `dashboard-line` (4.9.1).
+    case 'dashboard':
+      return (
+        <svg {...common} fill="currentColor" stroke="none">
+          <path d="M14 21C13.4477 21 13 20.5523 13 20V12C13 11.4477 13.4477 11 14 11H20C20.5523 11 21 11.4477 21 12V20C21 20.5523 20.5523 21 20 21H14ZM4 13C3.44772 13 3 12.5523 3 12V4C3 3.44772 3.44772 3 4 3H10C10.5523 3 11 3.44772 11 4V12C11 12.5523 10.5523 13 10 13H4ZM9 11V5H5V11H9ZM4 21C3.44772 21 3 20.5523 3 20V16C3 15.4477 3.44772 15 4 15H10C10.5523 15 11 15.4477 11 16V20C11 20.5523 10.5523 21 10 21H4ZM5 19H9V17H5V19ZM15 19H19V13H15V19ZM13 4C13 3.44772 13.4477 3 14 3H20C20.5523 3 21 3.44772 21 4V8C21 8.55228 20.5523 9 20 9H14C13.4477 9 13 8.55228 13 8V4ZM15 5V7H19V5H15Z" />
+        </svg>
+      );
+    // Remix `bar-chart-box-line` (4.9.1).
+    case 'bar-chart-box':
+      return (
+        <svg {...common} fill="currentColor" stroke="none">
+          <path d="M3 3H21C21.5523 3 22 3.44772 22 4V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V4C2 3.44772 2.44772 3 3 3ZM4 5V19H20V5H4ZM7 13H9V17H7V13ZM11 7H13V17H11V7ZM15 10H17V17H15V10Z" />
+        </svg>
+      );
+    // Remix `video-ai-line` (4.9.1).
+    case 'video-ai':
+      return (
+        <svg {...common} fill="currentColor" stroke="none">
+          <path d="M19.7134 8.12811L19.4668 8.69379C19.2864 9.10792 18.7136 9.10792 18.5331 8.69379L18.2866 8.12811C17.8471 7.11947 17.0555 6.31641 16.0677 5.87708L15.308 5.53922C14.8973 5.35653 14.8973 4.75881 15.308 4.57612L16.0252 4.25714C17.0384 3.80651 17.8442 2.97373 18.2761 1.93083L18.5293 1.31953C18.7058 0.893489 19.2942 0.893489 19.4706 1.31953L19.7238 1.93083C20.1558 2.97373 20.9616 3.80651 21.9748 4.25714L22.6919 4.57612C23.1027 4.75881 23.1027 5.35653 22.6919 5.53922L21.9323 5.87708C20.9445 6.31641 20.1529 7.11947 19.7134 8.12811ZM3.9934 3H13V5H5V19H19V11H21V20.0066C21 20.5552 20.5551 21 20.0066 21H3.9934C3.44476 21 3 20.5551 3 20.0066V3.9934C3 3.44476 3.44495 3 3.9934 3ZM10.6219 8.41459L15.5008 11.6672C15.6846 11.7897 15.7343 12.0381 15.6117 12.2219C15.5824 12.2658 15.5447 12.3035 15.5008 12.3328L10.6219 15.5854C10.4381 15.708 10.1897 15.6583 10.0672 15.4745C10.0234 15.4088 10 15.3316 10 15.2526V8.74741C10 8.52649 10.1791 8.34741 10.4 8.34741C10.479 8.34741 10.5562 8.37078 10.6219 8.41459Z" />
         </svg>
       );
     case 'bell':

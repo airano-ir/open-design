@@ -24,6 +24,11 @@
   width: 100%;
   max-width: 960px;
 }
+/* Give "最近项目" a clearer break from the composer above — the 12px flex
+   gap alone read as too tight against the hero. */
+.home-view > .recent-projects {
+  margin-top: var(--spacing-52);
+}
 
 /* Hero — large centered prompt input */
 .home-hero {
@@ -65,7 +70,8 @@
 .home-hero__logo-wrap {
   position: relative;
   display: block;
-  width: min(168px, 42vw);
+  /* Brand block scaled up 20% (logo + title together). */
+  width: min(201.6px, 50.4vw);
   margin-bottom: var(--spacing-4);
   overflow: hidden;
 }
@@ -114,7 +120,7 @@
   margin: 0 0 var(--spacing-20);
   font-family: var(--serif);
   font-weight: 600;
-  font-size: 24px;
+  font-size: 28.8px;
   line-height: 1.24;
   letter-spacing: -0.02em;
   color: var(--text-strong);
@@ -537,6 +543,17 @@
 .home-hero__input-card:has(.home-hero__template-menu) {
   z-index: 9;
   overflow: visible;
+}
+/* The input-card's z:1700 only wins INSIDE the composer-card's stacking
+   context (composer-card is z:2). The example-prompts rail is a later sibling
+   whose scroll-edge fades are also z:2, so by DOM order they paint over the
+   whole composer-card subtree — including an open popover. Lift the
+   composer-card itself while a composer popover is open so its trapped popover
+   clears the rail fades instead of the white gradient floating over it. */
+.home-hero__composer-card:has(.inline-switcher__popover),
+.home-hero__composer-card:has(.home-hero__plugin-picker),
+.home-hero__composer-card:has(.home-hero__template-menu) {
+  z-index: 40;
 }
 .home-hero__input-card--compact-authoring {
   max-width: 640px;
@@ -1147,16 +1164,22 @@
 }
 .home-hero__execution-switcher .inline-switcher {
   min-width: 0;
-  width: 36px;
-  max-width: 36px;
+  /* Sizes to the chip below, which now carries a status dot + the model name.
+     Left at the old 36px icon square, this wrapper capped the chip before its
+     own max-width applied and squeezed the model name to zero width. The
+     ≤900px block collapses both back to an icon. */
+  width: auto;
+  max-width: 220px;
 }
 .home-hero__execution-switcher .inline-switcher__chip {
-  width: 36px;
+  /* Now shows a connection-status dot + the selected model name, so it sizes
+     to its content instead of a fixed icon square. */
+  width: auto;
+  max-width: 220px;
   height: 36px;
-  max-width: 36px;
   justify-content: center;
-  padding: 0;
-  gap: 0;
+  padding: 0 14px;
+  gap: 7px;
   border-color: transparent;
   border-radius: var(--radius-pill);
   box-shadow: none;
@@ -1165,10 +1188,59 @@
 .home-hero__execution-switcher .inline-switcher__chip[aria-expanded='true'] {
   border-color: transparent;
   box-shadow: none;
+  background: var(--bg-subtle);
 }
 .home-hero__execution-switcher .inline-switcher__chip-icon {
   width: 20px;
   height: 20px;
+}
+/* Connection-status dot: green = agent reachable, gray = unreachable/failed.
+   A same-color halo pulses outward for the "breathing" live indicator. */
+.inline-switcher__chip-conn {
+  position: relative;
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--text-soft);
+}
+.inline-switcher__chip-conn[data-connected='true'] {
+  background: var(--green, #00aa54);
+}
+.inline-switcher__chip-conn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: inherit;
+  animation: inline-switcher-chip-breathe 2s var(--ease-out, ease-out) infinite;
+}
+@keyframes inline-switcher-chip-breathe {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  70%,
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .inline-switcher__chip-conn::after {
+    animation: none;
+  }
+}
+.inline-switcher__chip-model-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-size-12, 12px);
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--text);
 }
 .home-hero__execution-switcher .inline-switcher__chip-chevron {
   flex: 0 0 auto;
@@ -1186,7 +1258,8 @@
 }
 .home-hero__execution-switcher .inline-switcher__agent-grid {
   grid-template-columns: 1fr;
-  gap: var(--spacing-6);
+  /* Tight rows for the borderless compact model list (no card gaps). */
+  gap: 2px;
 }
 .home-hero__tool {
   appearance: none;
@@ -1483,7 +1556,7 @@
   color: var(--text-muted);
   cursor: pointer;
   font-size: 12px;
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.2;
   box-shadow: var(--shadow-xs);
   transition:
@@ -1560,7 +1633,7 @@
   background: var(--bg-panel);
   color: var(--text-muted);
   font-size: 12px;
-  font-weight: 400;
+  font-weight: 500;
   box-shadow: var(--shadow-xs);
   transition:
     background-color 120ms var(--ease-out),
@@ -1618,7 +1691,7 @@
   color: currentColor;
   font: inherit;
   font-size: 12px;
-  font-weight: 400;
+  font-weight: 500;
   letter-spacing: 0;
   outline: none;
   cursor: pointer;
@@ -1666,7 +1739,7 @@
   cursor: pointer;
   font: inherit;
   font-size: 12px;
-  font-weight: 400;
+  font-weight: 500;
   letter-spacing: 0;
   box-shadow: var(--shadow-xs);
   transition:
@@ -2293,12 +2366,13 @@
 }
 
 .home-hero__submit:disabled {
-  /* Idle (nothing typed): gray ground + deep-green arrow, mirroring the
-     chat composer's idle send button. */
+  /* Idle (nothing typed) reads identical to the active state — always the
+     black ground + brand-green arrow, so the button never shifts color when
+     the user starts typing. */
   opacity: 1;
   cursor: default;
-  background: var(--bg-muted);
-  color: #2f781d;
+  background: var(--home-hero-submit-bg);
+  color: var(--home-hero-submit-fg);
   box-shadow: none;
 }
 .home-hero__error {
@@ -2569,7 +2643,12 @@
 .home-hero__plugin-preset-preview {
   position: relative;
   min-width: 0;
+  /* Pinned to the tile's 150px preview row: whatever the inner surface
+     renders (oversized media, iframes) clips here instead of spilling over
+     the title below. */
+  height: 150px;
   min-height: 150px;
+  max-height: 150px;
   overflow: hidden;
   background: var(--bg-subtle);
   border-bottom: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
@@ -2647,6 +2726,31 @@
   width: 1280px;
   height: 720px;
   transform: translate(-50%, -50%) scale(var(--deck-preview-scale));
+}
+
+/* Cover zoom on hover — same as the home recent-projects cards. The preview
+   box clips (overflow: hidden), so each surface scales in place; the zoom
+   composes with whatever fit transform the surface already carries:
+   image/video have none (→ 1.04), the html preview iframe is fit-scaled to
+   0.172 (→ 0.172 × 1.04 = 0.17888), and the deck stage keeps its measured
+   --deck-preview-scale fit (→ × 1.04). */
+.home-hero__plugin-preset-preview .plugins-home__media-img,
+.home-hero__plugin-preset-preview .plugins-home__media-video,
+.home-hero__plugin-preset-preview .plugins-home__html-iframe {
+  transition: transform 320ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.home-hero__plugin-preset:not(:disabled):hover .plugins-home__media-img,
+.home-hero__plugin-preset:not(:disabled):hover .plugins-home__media-video {
+  transform: scale(1.04);
+}
+.home-hero__plugin-preset:not(:disabled):hover .plugins-home__html-iframe {
+  transform: scale(0.17888);
+}
+.home-hero__plugin-preset[data-od-mode="deck"]:not(:disabled):hover
+  .plugins-home__html-iframe {
+  /* Compose with the deck's centered fit transform — a bare scale(1.04) would
+     drop the translate/fit and blow the stage out of the cell. */
+  transform: translate(-50%, -50%) scale(calc(var(--deck-preview-scale) * 1.04));
 }
 
 /* Baked clips are framed 1.31:1 for the Community grid; the wider preset tiles
@@ -2804,7 +2908,7 @@
 
 @media (max-width: 900px) {
   .home-hero__title {
-    font-size: 32px;
+    font-size: 38.4px;
   }
   .home-hero__prompt-examples-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3101,12 +3205,14 @@
   background-color: transparent;
   background-image: none;
 }
+/* Selected template: same selected pair as the nav rail's active item
+   (极浅品牌背景 #f9fff4 under deep brand green #2f781d). */
 .home-hero__footer-option--select[data-field-name='template'].has-selection {
   max-width: 250px;
-  border-color: var(--border);
-  background-color: transparent;
+  border-color: transparent;
+  background-color: #f9fff4;
   background-image: none;
-  color: var(--text-muted);
+  color: #2f781d;
   box-shadow: var(--shadow-xs);
 }
 .home-hero__footer-option--select[data-field-name='template']:hover,
@@ -3118,11 +3224,24 @@
   color: var(--text-muted);
   box-shadow: var(--shadow-xs);
 }
+.home-hero__footer-option--select[data-field-name='template'].has-selection:hover,
+.home-hero__footer-option--select[data-field-name='template'].has-selection.is-open,
+.home-hero__footer-option--select[data-field-name='template'].has-selection:focus-within {
+  border-color: transparent;
+  background-color: #f9fff4;
+  color: #2f781d;
+}
 .home-hero__footer-option.home-hero__template-option:hover,
 .home-hero__footer-option.home-hero__template-option.is-open,
 .home-hero__footer-option.home-hero__template-option:focus-within {
   background-color: transparent;
   background-image: none;
+}
+.home-hero__template-option {
+  /* Same overall height as the neighboring composer "+" trigger (36px, see
+     .home-hero__input-card .plus-menu__trigger) so the foot row reads as one
+     line of equal-height controls. */
+  height: 36px;
 }
 .home-hero__template-trigger {
   flex: 1 1 auto;
@@ -3169,14 +3288,32 @@
 .home-hero__template-option.has-selection .home-hero__template-kicker {
   color: var(--text-faint);
 }
+/* Icon + label in the nav rail's deep brand green on the pale wash. */
+.home-hero__template-option.has-selection .home-hero__footer-option-icon {
+  color: #2f781d;
+}
 .home-hero__template-option.has-selection .home-hero__footer-select-label {
-  color: var(--brand-text);
+  color: #2f781d;
   font-weight: 600;
 }
-/* With the reset × showing, the pill's right padding tightens so the icon
-   hugs the border instead of floating. */
-.home-hero__template-option.has-selection {
-  padding-right: 6px;
+/* The template pill breathes wider than its 8px siblings: 16px on both
+   edges, in rest and selected states alike. */
+.home-hero__template-option {
+  padding: 0 16px;
+}
+/* Hairline between the selected label and the clear × (replaces the
+   dropdown chevron once a template is chosen). The `> span` qualifier +
+   explicit position/clip resets out-specify the footer option's
+   visually-hidden `> span` rule above. */
+.home-hero__footer-option > span.home-hero__template-divider {
+  position: static;
+  flex: 0 0 auto;
+  width: 1px;
+  height: 14px;
+  margin: 0 4px;
+  overflow: visible;
+  clip: auto;
+  background: var(--material-separator, var(--border));
 }
 .home-hero__template-reset {
   appearance: none;
@@ -3213,6 +3350,15 @@
   outline: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
   outline-offset: 2px;
 }
+/* Reset × on the green wash: brand green with a deeper green hover. */
+.home-hero__template-option.has-selection .home-hero__template-reset {
+  color: #2f781d;
+}
+.home-hero__template-option.has-selection .home-hero__template-reset:hover,
+.home-hero__template-option.has-selection .home-hero__template-reset:focus-visible {
+  background: color-mix(in srgb, #2f781d 12%, transparent);
+  color: #1f5711;
+}
 /* Radial template picker — a donut menu centered on the trigger. Wedges are
    SVG paths (the only way to get true pie-slice hit areas); icons ride on the
    wedge mid-angles as HTML spans; the hole is the close button. The ring
@@ -3228,9 +3374,9 @@
   height: 240px;
   border-radius: 50%;
   transform: translate(-50%, -50%);
-  box-shadow:
-    0 0 0 1px var(--material-separator),
-    0 18px 48px rgba(0, 0, 0, 0.16);
+  /* No hairline ring: the disc edge is feathered (see the ::before mask), so
+     a crisp 1px circle would reintroduce the hard rim. Elevation only. */
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.16);
   /* Fade-only entrance: a scale transform here makes Chromium stretch the
      frost layer's stale backdrop snapshot past the rounded clip, hazing the
      page around the disc. */
@@ -3249,23 +3395,33 @@
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  /* Real glass (66% frost + blur + saturate): portaled to <body> the
+     backdrop sampler works, so the near-opaque 90% tint the old in-hero menu
+     needed reads as a solid disc instead of 磨砂玻璃. */
+  background: var(--glass-regular);
   -webkit-backdrop-filter: var(--glass-backdrop);
   backdrop-filter: var(--glass-backdrop);
+  /* Feathered rim: white tint + frost dissolve to transparent over the outer
+     band, so the disc has no hard circular cut — it melts into the page.
+     Solid through 82% keeps the wedge icons on fully frosted ground. */
+  -webkit-mask-image: radial-gradient(circle closest-side, #000 72%, transparent 100%);
+  mask-image: radial-gradient(circle closest-side, #000 72%, transparent 100%);
 }
-/* Frosted halo: the page just around the disc blurs too, extending 12%
-   beyond the module and fading out (scrim blur tier, degradation-safe). */
+/* Frosted halo: the page around the disc blurs too, extending 24% beyond the
+   module and fading out (scrim blur tier, degradation-safe). The solid stop
+   sits at the disc edge (~68% of the halo radius) so the blur is continuous
+   under the feathered rim and rolls off well outside it. */
 .home-hero__template-radial::after {
   content: '';
   position: absolute;
-  inset: -12%;
+  inset: -24%;
   z-index: -1;
   border-radius: 50%;
   pointer-events: none;
   -webkit-backdrop-filter: var(--scrim-backdrop);
   backdrop-filter: var(--scrim-backdrop);
-  -webkit-mask-image: radial-gradient(circle closest-side, #000 78%, transparent 100%);
-  mask-image: radial-gradient(circle closest-side, #000 78%, transparent 100%);
+  -webkit-mask-image: radial-gradient(circle closest-side, #000 66%, transparent 100%);
+  mask-image: radial-gradient(circle closest-side, #000 66%, transparent 100%);
 }
 .home-hero__template-radial-ring {
   position: absolute;
@@ -3285,13 +3441,31 @@
   transition: fill 0.14s cubic-bezier(0.23, 1, 0.32, 1);
 }
 .home-hero__template-radial-wedge.is-active {
-  fill: color-mix(in srgb, #87ea5c 28%, transparent);
+  /* Left→right brand gradient — SVG defs live in TemplatePicker.tsx (path
+     fills can't take CSS gradients). */
+  fill: url(#od-template-wedge-grad);
 }
 .home-hero__template-radial-wedge.is-hover {
-  fill: #87ea5c;
+  /* Whisper brand tint — the same fill as the nav rail's active (最近)
+     button, so hover here and selection there read as one family. */
+  fill: #f9fff4;
+}
+/* Hovering the already-selected wedge keeps the gradient (two classes
+   outrank the single-class hover rule above). */
+.home-hero__template-radial-wedge.is-active.is-hover {
+  fill: url(#od-template-wedge-grad);
 }
 .home-hero__template-radial-wedge[aria-disabled='true'] {
   cursor: default;
+}
+/* Arc hugging the center disc over the hovered wedge's angular range — the
+   disc "points" back at the previewed template. Round caps per 形状 spec. */
+.home-hero__template-radial-center-arc {
+  fill: none;
+  stroke: #87ea5c;
+  stroke-width: 5;
+  stroke-linecap: round;
+  pointer-events: none;
 }
 .home-hero__template-radial-icon {
   position: absolute;
@@ -3305,7 +3479,8 @@
   color: var(--text);
 }
 .home-hero__template-radial-icon.is-hover {
-  color: #202020;
+  /* Deep brand green — mirrors the nav rail's active icon color. */
+  color: #2f781d;
 }
 .home-hero__template-radial-center {
   outline: none;
@@ -3343,6 +3518,20 @@
 .home-hero__template-radial-center:focus-visible {
   background: color-mix(in srgb, var(--text) 7%, var(--bg));
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 14%, transparent);
+}
+/* Previewing a wedge (pointer on a template): the center disc flips to the
+   darkest neutral with the brand green carrying the icon + label, echoing
+   the green gradient on the hovered wedge. Hover/focus keep the dark fill so
+   the disc doesn't flash back to white while a preview is showing. */
+.home-hero__template-radial-center.is-previewing,
+.home-hero__template-radial-center.is-previewing:hover,
+.home-hero__template-radial-center.is-previewing:focus-visible {
+  background: #202020;
+  box-shadow: 0 0 0 1px color-mix(in srgb, #202020 32%, transparent);
+  color: #87ea5c;
+}
+.home-hero__template-radial-center.is-previewing .home-hero__template-radial-center-icon {
+  color: #87ea5c;
 }
 .home-hero__template-radial-center-icon {
   display: flex;
@@ -3558,6 +3747,10 @@
 .home-hero__template-option .home-hero__footer-select-label.is-preview {
   color: var(--text-muted);
   font-style: italic;
+}
+/* Preview text needs the light ramp (not grey) when it sits on the ink fill. */
+.home-hero__template-option.has-selection .home-hero__footer-select-label.is-preview {
+  color: color-mix(in srgb, #fafafa 72%, transparent);
 }
 @media (prefers-reduced-motion: reduce) {
   .home-hero__template-card .home-hero__scenario-art-svg {
