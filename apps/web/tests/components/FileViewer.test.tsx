@@ -165,26 +165,28 @@ function testRect(left: number, top: number, width: number, height: number): DOM
   } as DOMRect;
 }
 
-function setIframeDocumentContentWidth(frame: HTMLIFrameElement, width: number) {
-  let doc = frame.contentWindow?.document ?? frame.contentDocument;
-  if (!doc?.documentElement) {
-    doc = document.implementation.createHTMLDocument('preview');
-    Object.defineProperty(frame, 'contentWindow', {
-      configurable: true,
-      value: {
-        document: doc,
-        postMessage: vi.fn(),
-      },
-    });
-  }
-  if (!doc.body) {
-    doc.documentElement.appendChild(doc.createElement('body'));
-  }
-  for (const target of [doc.documentElement, doc.body]) {
-    Object.defineProperty(target, 'scrollWidth', { configurable: true, value: width });
-    Object.defineProperty(target, 'offsetWidth', { configurable: true, value: width });
-    Object.defineProperty(target, 'clientWidth', { configurable: true, value: width });
-  }
+function installSandboxedPreviewWindow(frame: HTMLIFrameElement): Window {
+  const previewWindow = {
+    postMessage: vi.fn(),
+  } as unknown as Window;
+  Object.defineProperty(previewWindow, 'document', {
+    configurable: true,
+    get() {
+      throw new DOMException('Blocked by iframe sandbox', 'SecurityError');
+    },
+  });
+  Object.defineProperty(frame, 'contentWindow', {
+    configurable: true,
+    value: previewWindow,
+  });
+  return previewWindow;
+}
+
+function postPreviewContentWidth(source: Window, width: number) {
+  window.dispatchEvent(new MessageEvent('message', {
+    source,
+    data: { type: 'od:preview-content-size', width },
+  }));
 }
 
 function clickAgentTool(testId: string) {
@@ -5207,8 +5209,9 @@ describe('FileViewer tweaks toolbar', () => {
     );
 
     const frame = screen.getByTestId('artifact-preview-frame') as HTMLIFrameElement;
-    setIframeDocumentContentWidth(frame, 1440);
+    const previewWindow = installSandboxedPreviewWindow(frame);
     fireEvent.load(frame);
+    act(() => postPreviewContentWidth(previewWindow, 1440));
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: '63%' })).toBeTruthy();
@@ -5263,8 +5266,9 @@ describe('FileViewer tweaks toolbar', () => {
     );
 
     const responsiveFrame = screen.getByTestId('artifact-preview-frame') as HTMLIFrameElement;
-    setIframeDocumentContentWidth(responsiveFrame, 900);
+    const previewWindow = installSandboxedPreviewWindow(responsiveFrame);
     fireEvent.load(responsiveFrame);
+    act(() => postPreviewContentWidth(previewWindow, 900));
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: '100%' })).toBeTruthy();

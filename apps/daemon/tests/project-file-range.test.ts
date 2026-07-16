@@ -349,6 +349,8 @@ describe('GET /api/projects/:id/raw/* range request route', () => {
     const html = await bridged.text();
     expect(html).toContain('data-od-url-scroll-bridge');
     expect(html).toContain("type: 'od:preview-scroll'");
+    expect(html).toContain("type: 'od:preview-content-size'");
+    expect(html).toContain('od:preview-content-size-request');
   });
 
   it('injects the URL preview scroll bridge before the closing body tag', async () => {

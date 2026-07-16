@@ -6316,23 +6316,17 @@ function HtmlViewer({
   const setCommentPreviewCanvasRef = useCallback((node: HTMLDivElement | null) => {
     setCommentPreviewCanvasNode((current) => (current === node ? current : node));
   }, []);
-  const measureDesktopPreviewContentWidth = useCallback((target: HTMLIFrameElement | null = iframeRef.current) => {
-    let measuredWidth: number | null = null;
-    try {
-      measuredWidth = desktopPreviewDocumentContentWidth(target?.contentWindow?.document);
-    } catch {
-      measuredWidth = null;
-    }
-    setDesktopPreviewContentWidth((current) => (current === measuredWidth ? current : measuredWidth));
+  const requestDesktopPreviewContentMeasure = useCallback((target: HTMLIFrameElement | null = iframeRef.current) => {
+    target?.contentWindow?.postMessage({ type: 'od:preview-content-size-request' }, '*');
   }, []);
   const scheduleDesktopPreviewContentMeasure = useCallback((target: HTMLIFrameElement | null = iframeRef.current) => {
-    measureDesktopPreviewContentWidth(target);
+    requestDesktopPreviewContentMeasure(target);
     window.requestAnimationFrame(() => {
-      measureDesktopPreviewContentWidth(target);
-      window.setTimeout(() => measureDesktopPreviewContentWidth(target), 80);
-      window.setTimeout(() => measureDesktopPreviewContentWidth(target), 260);
+      requestDesktopPreviewContentMeasure(target);
+      window.setTimeout(() => requestDesktopPreviewContentMeasure(target), 80);
+      window.setTimeout(() => requestDesktopPreviewContentMeasure(target), 260);
     });
-  }, [measureDesktopPreviewContentWidth]);
+  }, [requestDesktopPreviewContentMeasure]);
   useEffect(() => {
     if (!onBrandExtractionStopRequest) return;
     const requestStop = onBrandExtractionStopRequest;
@@ -7764,13 +7758,25 @@ function HtmlViewer({
         }, '*');
       }
     }
+    function onContentSizeMessage(ev: MessageEvent) {
+      if (!isOurPreviewIframeSource(ev.source)) return;
+      if (!isActivePreviewIframeSource(ev.source)) return;
+      const data = ev.data as { type?: string; width?: number | null } | null;
+      if (!data || data.type !== 'od:preview-content-size') return;
+      const measuredWidth = typeof data.width === 'number' && Number.isFinite(data.width) && data.width > 0
+        ? Math.ceil(data.width)
+        : null;
+      setDesktopPreviewContentWidth((current) => (current === measuredWidth ? current : measuredWidth));
+    }
     window.addEventListener('message', onMessage);
     window.addEventListener('message', onRestoreRequest);
     window.addEventListener('message', onDcViewportMessage);
+    window.addEventListener('message', onContentSizeMessage);
     return () => {
       window.removeEventListener('message', onMessage);
       window.removeEventListener('message', onRestoreRequest);
       window.removeEventListener('message', onDcViewportMessage);
+      window.removeEventListener('message', onContentSizeMessage);
     };
   }, [isActivePreviewIframeSource, isOurPreviewIframeSource]);
 

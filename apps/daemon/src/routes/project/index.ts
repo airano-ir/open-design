@@ -111,12 +111,43 @@ const URL_PREVIEW_SCROLL_BRIDGE = `<script data-od-url-scroll-bridge>
   if (window.__odUrlScrollBridge) return;
   window.__odUrlScrollBridge = true;
   var pending = false;
+  var contentSizePending = false;
   function scrollElement(){
     return document.querySelector('.design-canvas') || document.scrollingElement || document.documentElement;
   }
   function num(value){
     var next = Number(value || 0);
     return Number.isFinite(next) ? next : 0;
+  }
+  function measureContentWidth(){
+    var root = document.documentElement;
+    var body = document.body || root;
+    if (!root) return null;
+    var values = [
+      root.scrollWidth,
+      body && body.scrollWidth,
+      root.offsetWidth,
+      body && body.offsetWidth,
+      root.clientWidth,
+      body && body.clientWidth
+    ];
+    var width = 0;
+    for (var i = 0; i < values.length; i += 1) {
+      var next = num(values[i]);
+      if (next > width) width = next;
+    }
+    return width > 0 ? Math.ceil(width) : null;
+  }
+  function postContentSize(){
+    window.parent.postMessage({ type: 'od:preview-content-size', width: measureContentWidth() }, '*');
+  }
+  function scheduleContentSize(){
+    if (contentSizePending) return;
+    contentSizePending = true;
+    window.requestAnimationFrame(function(){
+      contentSizePending = false;
+      postContentSize();
+    });
   }
   function post(){
     var el = scrollElement();
@@ -172,21 +203,43 @@ const URL_PREVIEW_SCROLL_BRIDGE = `<script data-od-url-scroll-bridge>
     if (data.type === 'od:preview-scroll-by') {
       scrollBy(scrollElement(), data.left, data.top);
       schedule();
+      scheduleContentSize();
+      return;
+    }
+    if (data.type === 'od:preview-content-size-request') {
+      scheduleContentSize();
     }
   });
   window.addEventListener('scroll', schedule, true);
   document.addEventListener('scroll', schedule, true);
-  window.addEventListener('resize', schedule);
+  window.addEventListener('resize', function(){
+    schedule();
+    scheduleContentSize();
+  });
+  if (typeof ResizeObserver !== 'undefined') {
+    try {
+      var observer = new ResizeObserver(scheduleContentSize);
+      observer.observe(document.documentElement);
+      if (document.body) observer.observe(document.body);
+    } catch (_) {}
+  }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function(){
       requestRestore();
       schedule();
+      scheduleContentSize();
     });
   } else {
     setTimeout(function(){
       requestRestore();
       schedule();
+      scheduleContentSize();
     }, 0);
+  }
+  setTimeout(scheduleContentSize, 80);
+  setTimeout(scheduleContentSize, 260);
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(scheduleContentSize).catch(function(){});
   }
 })();
 </script>`;
