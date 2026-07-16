@@ -21,7 +21,7 @@ import { tForLanguageTag, useT } from '../i18n';
 import type { DirectionCard, FormOption, QuestionForm } from '../artifacts/question-form';
 import { formatFormAnswers, formOptionValueForLabel } from '../artifacts/question-form';
 import {
-  visualStyleCardsForOptions,
+  visualStyleCardsForContext,
   type VisualStyleCard,
   type VisualStyleCategory,
   type VisualStyleContext,
@@ -323,11 +323,12 @@ export const QuestionFormView = forwardRef<QuestionFormHandle, Props>(function Q
   ) {
     if (!onSubmit) return;
     const submittedAnswers = answersWithSkippedQuestions(form, answers, skippedIds);
+    const submissionForm = formWithVisualStyleOptions(form, visualStyleContext);
     const files = collectFileSubmissions(form, fileAnswers, skippedIds);
     if (files.length > 0) {
-      onSubmit(formatFormAnswers(form, submittedAnswers), submittedAnswers, source, files);
+      onSubmit(formatFormAnswers(submissionForm, submittedAnswers), submittedAnswers, source, files);
     } else {
-      onSubmit(formatFormAnswers(form, submittedAnswers), submittedAnswers, source);
+      onSubmit(formatFormAnswers(submissionForm, submittedAnswers), submittedAnswers, source);
     }
   }
 
@@ -341,7 +342,7 @@ export const QuestionFormView = forwardRef<QuestionFormHandle, Props>(function Q
   function handleSkipAll() {
     if (locked || !onSubmit || !canSkipAll) return;
     const empty: Record<string, string | string[]> = {};
-    onSubmit(formatFormAnswers(form, empty), empty, 'skip');
+    onSubmit(formatFormAnswers(formWithVisualStyleOptions(form, visualStyleContext), empty), empty, 'skip');
   }
 
   function handleSkipCurrent() {
@@ -468,7 +469,7 @@ export const QuestionFormView = forwardRef<QuestionFormHandle, Props>(function Q
             q.id === 'tone' &&
             (q.type === 'checkbox' || q.type === 'radio') &&
             q.options
-              ? visualStyleCardsForOptions(visualStyleContext, q.options)
+              ? visualStyleCardsForContext(visualStyleContext)
               : null;
           return (
             <div
@@ -1512,6 +1513,33 @@ function emptyQuestionValue(q: QuestionForm['questions'][number]): string | stri
   if (q.type === 'range') return String(q.min ?? 0);
   if (q.type === 'color') return normalizeColorInputValue('');
   return '';
+}
+
+function formWithVisualStyleOptions(
+  form: QuestionForm,
+  visualStyleContext: VisualStyleContext | undefined,
+): QuestionForm {
+  if (!visualStyleContext) return form;
+  let expanded = false;
+  const questions = form.questions.map((question) => {
+    if (
+      question.id !== 'tone' ||
+      (question.type !== 'checkbox' && question.type !== 'radio') ||
+      !question.options
+    ) {
+      return question;
+    }
+    expanded = true;
+    return {
+      ...question,
+      options: visualStyleCardsForContext(visualStyleContext).map((card) => ({
+        label: card.title,
+        value: card.value,
+        description: card.description,
+      })),
+    };
+  });
+  return expanded ? { ...form, questions } : form;
 }
 
 function questionAnswerIsPresent(value: string | string[] | undefined): boolean {

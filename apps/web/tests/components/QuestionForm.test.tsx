@@ -4,6 +4,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QuestionFormView, parseSubmittedAnswers } from '../../src/components/QuestionForm';
 import type { QuestionForm } from '../../src/artifacts/question-form';
+import { visualStyleCardsForContext } from '../../src/runtime/visual-style-catalog';
 
 const form: QuestionForm = {
   id: 'discovery',
@@ -914,29 +915,29 @@ describe('QuestionFormView', () => {
 
     expect(screen.getByText('Editorial narrative')).toBeTruthy();
     expect(screen.getByText('Product keynote')).toBeTruthy();
-    expect(screen.getByText('Soft gradients')).toBeTruthy();
+    expect(screen.getByText('Bold storytelling')).toBeTruthy();
     expect(
       (screen.getByAltText(
-        'Three editorial narrative deck slides with warm paper and burnt orange accents.',
+        'Editorial narrative deck style preview.',
       ) as HTMLImageElement).getAttribute('src'),
     ).toBe('https://repo-assets.open-design.ai/style-catalog/v1/deck-editorial-narrative-v1.webp');
     expect(
       (screen.getByAltText(
-        'Three minimal product keynote slides with white surfaces and cobalt accents.',
+        'Product keynote deck style preview.',
       ) as HTMLImageElement).getAttribute('src'),
     ).toBe('https://repo-assets.open-design.ai/style-catalog/v1/deck-product-keynote-v1.webp');
     expect(document.querySelector('[data-artifact-type="deck"]')).toBeTruthy();
 
     fireEvent.click(screen.getByLabelText('Editorial narrative'));
-    fireEvent.click(screen.getByLabelText('Soft gradients'));
+    fireEvent.click(screen.getByLabelText('Bold storytelling'));
     expect((screen.getByLabelText('Product keynote') as HTMLInputElement).disabled).toBe(true);
     fireEvent.click(screen.getByRole('button', { name: 'Send answers' }));
 
     expect(onSubmit.mock.calls[0]?.[1]).toEqual({
-      tone: ['editorial', 'soft-gradients'],
+      tone: ['deck-editorial-narrative', 'deck-bold-storytelling'],
     });
     expect(onSubmit.mock.calls[0]?.[0]).toContain(
-      'Editorial / magazine [value: editorial]',
+      'Editorial narrative [value: deck-editorial-narrative]',
     );
   });
 
@@ -982,7 +983,7 @@ describe('QuestionFormView', () => {
     expect(firstPage).toHaveLength(4);
     expect(screen.queryByLabelText('Custom answer')).toBeNull();
     expect(screen.queryByText('Refresh')).toBeNull();
-    expect(screen.getByText('+2')).toBeTruthy();
+    expect(screen.getByText('+18')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
     expect(onInteraction).toHaveBeenCalledWith({
@@ -1000,12 +1001,13 @@ describe('QuestionFormView', () => {
       styleContext: 'deck',
     });
     const dialog = screen.getByRole('dialog', { name: 'Visual direction' });
-    expect(dialog.querySelectorAll('.qf-visual-card input')).toHaveLength(6);
+    expect(dialog.querySelectorAll('.qf-visual-card input')).toHaveLength(22);
     expect(
       dialog.querySelector(
         'img[src="https://repo-assets.open-design.ai/style-catalog/v1/deck-editorial-narrative-v1.webp"]',
       ),
     ).toBeTruthy();
+    expect(dialog.querySelector('[aria-label="Bento modular"]')).toBeTruthy();
     expect(visibleLabels()).toHaveLength(4);
     const customInput = screen.getByLabelText('Custom answer') as HTMLInputElement;
     fireEvent.change(customInput, { target: { value: 'Warm Japanese editorial' } });
@@ -1021,14 +1023,14 @@ describe('QuestionFormView', () => {
       styleContext: 'deck',
       categoryId: 'business',
     });
-    expect(dialog.querySelectorAll('.qf-visual-card input')).toHaveLength(2);
+    expect(dialog.querySelectorAll('.qf-visual-card input')).toHaveLength(5);
     expect(dialog.querySelector('[aria-label="Data briefing"]')).toBeTruthy();
     expect(dialog.querySelector('[aria-label="Premium pitch"]')).toBeTruthy();
     fireEvent.click(dialog.querySelector('[aria-label="Premium pitch"]')!);
     expect(onInteraction).toHaveBeenCalledWith({
       element: 'visual_style_card',
       questionId: 'tone',
-      styleId: 'luxury',
+      styleId: 'deck-premium-pitch',
       styleContext: 'deck',
       source: 'gallery',
     });
@@ -1036,11 +1038,28 @@ describe('QuestionFormView', () => {
     expect(container.querySelector('.qf-visual-custom-summary')).toBeNull();
 
     fireEvent.click(screen.getByRole('tab', { name: 'All' }));
-    expect(dialog.querySelectorAll('.qf-visual-card input')).toHaveLength(6);
+    expect(dialog.querySelectorAll('.qf-visual-card input')).toHaveLength(22);
 
     fireEvent.click(screen.getByRole('button', { name: /done/i }));
     expect(screen.queryByRole('dialog', { name: 'Visual direction' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Send answers' }));
-    expect(onSubmit.mock.calls[0]?.[1]).toEqual({ tone: 'luxury' });
+    expect(onSubmit.mock.calls[0]?.[1]).toEqual({ tone: 'deck-premium-pitch' });
+    expect(onSubmit.mock.calls[0]?.[0]).toContain(
+      'Premium pitch [value: deck-premium-pitch]',
+    );
+  });
+
+  it('exposes all uploaded style previews for both artifact types', () => {
+    const deckCards = visualStyleCardsForContext('deck');
+    const prototypeCards = visualStyleCardsForContext('prototype');
+
+    expect(deckCards).toHaveLength(22);
+    expect(prototypeCards).toHaveLength(22);
+    expect(deckCards.find((card) => card.value === 'deck-bento')?.preview.src).toBe(
+      'https://repo-assets.open-design.ai/style-catalog/v1/deck-bento-v1.webp',
+    );
+    expect(
+      prototypeCards.find((card) => card.value === 'prototype-photojournal')?.preview.src,
+    ).toBe('https://repo-assets.open-design.ai/style-catalog/v1/prototype-photojournal-v1.webp');
   });
 });

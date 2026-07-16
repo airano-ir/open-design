@@ -60,7 +60,7 @@ import {
   type QuestionFormInteraction,
 } from "./QuestionForm";
 import {
-  visualStyleCardsForOptions,
+  visualStyleCardsForContext,
   type VisualStyleContext,
 } from "../runtime/visual-style-catalog";
 import { splitStreamingArtifact, stripArtifact, stripRecoveredHtmlFallbackForDisplay } from "../artifacts/strip";
@@ -2666,7 +2666,7 @@ function FormBlock({
         question.id === "tone" &&
         (question.type === "checkbox" || question.type === "radio") &&
         question.options
-          ? visualStyleCardsForOptions(visualStyleContext, question.options)
+          ? visualStyleCardsForContext(visualStyleContext)
           : [];
       const visualCards = visualStyleCards.flatMap((card) =>
         values.includes(card.value) && card.preview
