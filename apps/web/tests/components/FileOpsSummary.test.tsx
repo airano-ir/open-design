@@ -50,7 +50,7 @@ describe('FileOpsSummary', () => {
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
   });
 
-  it('keeps file-level detail collapsed after completion until the user asks for it', () => {
+  it('opens by default once the run is no longer streaming and lists every touched file', () => {
     render(
       <FileOpsSummary
         entries={[
@@ -61,17 +61,12 @@ describe('FileOpsSummary', () => {
       />,
     );
 
-    expect(screen.queryByTestId('file-ops-row-a.ts')).toBeNull();
-    expect(screen.queryByTestId('file-ops-row-b.ts')).toBeNull();
-    const toggle = screen.getByTestId('file-ops-toggle');
-    expect(toggle.getAttribute('aria-expanded')).toBe('false');
-
-    fireEvent.click(toggle);
     expect(screen.getByTestId('file-ops-row-a.ts')).toBeTruthy();
     expect(screen.getByTestId('file-ops-row-b.ts')).toBeTruthy();
+    expect(screen.getByTestId('file-ops-toggle').getAttribute('aria-expanded')).toBe('true');
   });
 
-  it('stays collapsed when streaming flips to false', () => {
+  it('reopens once streaming flips to false unless the user collapsed it manually', () => {
     const { rerender } = render(
       <FileOpsSummary
         entries={[entry({ path: 'a.ts' })]}
@@ -86,7 +81,7 @@ describe('FileOpsSummary', () => {
         streaming={false}
       />,
     );
-    expect(screen.getByTestId('file-ops-toggle').getAttribute('aria-expanded')).toBe('false');
+    expect(screen.getByTestId('file-ops-toggle').getAttribute('aria-expanded')).toBe('true');
   });
 
   it('shows the open button only for files that are present in the project file set', () => {
@@ -103,7 +98,6 @@ describe('FileOpsSummary', () => {
       />,
     );
 
-    fireEvent.click(screen.getByTestId('file-ops-toggle'));
     expect(screen.getByTestId('file-ops-row-open-a.ts')).toBeTruthy();
     expect(screen.queryByTestId('file-ops-row-open-missing.ts')).toBeNull();
 
@@ -124,7 +118,6 @@ describe('FileOpsSummary', () => {
       />,
     );
 
-    fireEvent.click(screen.getByTestId('file-ops-toggle'));
     expect(screen.getByTestId('file-ops-row-gone.ts')).toBeTruthy();
     expect(screen.queryByTestId('file-ops-row-open-gone.ts')).toBeNull();
   });

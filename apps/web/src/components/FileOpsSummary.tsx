@@ -12,7 +12,7 @@
  * future surfaces (sidebar, log export, etc.) without coupling to
  * AssistantMessage's render shape.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useT } from '../i18n';
 import type { Dict } from '../i18n/types';
 import {
@@ -24,8 +24,9 @@ import { Icon } from './Icon';
 
 interface Props {
   entries: FileOpEntry[];
-  /** True while the parent run is still streaming. Drives the live-pulse
-   *  styling; file-level detail stays behind the disclosure in both states. */
+  /** True while the parent run is still streaming. Drives default-open
+   *  state (collapsed when active, expanded once done) and the live-pulse
+   *  styling. */
   streaming: boolean;
   /** Names that exist in the project folder. When set, the open button
    *  only shows for entries whose basename is in the set. Pass undefined
@@ -55,11 +56,14 @@ export function FileOpsSummary({
   onRequestOpenFile,
 }: Props) {
   const t = useT();
-  // The header is the durable result summary. Keep the per-file operation
-  // list collapsed by default both while running and after completion, so a
-  // long task does not leave a second, competing result card in the chat.
-  // It remains one click away for review and manual toggles always win.
-  const [open, setOpen] = useState(false);
+  // Collapsed while streaming so the running pill stays compact; once
+  // the run finishes we open it so the user lands on the full file list
+  // without an extra click. Manual toggles win after that.
+  const [open, setOpen] = useState<boolean>(!streaming);
+  const [userToggled, setUserToggled] = useState(false);
+  useEffect(() => {
+    if (!userToggled && !streaming) setOpen(true);
+  }, [streaming, userToggled]);
 
   if (entries.length === 0) return null;
 
@@ -79,6 +83,7 @@ export function FileOpsSummary({
         type="button"
         className="file-ops-toggle"
         onClick={() => {
+          setUserToggled(true);
           setOpen((value) => !value);
         }}
         aria-expanded={open}
