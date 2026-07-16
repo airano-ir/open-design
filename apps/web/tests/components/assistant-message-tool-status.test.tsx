@@ -38,8 +38,9 @@ describe('AssistantMessage tool status', () => {
       />,
     );
 
-    expect(container.querySelector('.action-card-status.op-status-ok')).not.toBeNull();
-    expect(container.querySelector('.action-card-status.op-status-running')).toBeNull();
+    expect(screen.getByTestId('task-activity-toggle').textContent).toContain('Done');
+    expect(container.querySelector('[data-tool-category="terminal"]')).not.toBeNull();
+    expect(container.querySelector('.op-status-error')).toBeNull();
   });
 
   it('keeps legacy completed messages without runStatus as Done', () => {
@@ -63,8 +64,9 @@ describe('AssistantMessage tool status', () => {
       />,
     );
 
-    expect(container.querySelector('.action-card-status.op-status-ok')).not.toBeNull();
-    expect(container.querySelector('.action-card-status.op-status-running')).toBeNull();
+    expect(screen.getByTestId('task-activity-toggle').textContent).toContain('Done');
+    expect(container.querySelector('[data-tool-category="terminal"]')).not.toBeNull();
+    expect(container.querySelector('.op-status-error')).toBeNull();
   });
 
   it('shows Done in a grouped completed run when tool results are missing', () => {
@@ -92,7 +94,8 @@ describe('AssistantMessage tool status', () => {
     );
 
     expect(container.querySelector('.action-card-toggle.running')).toBeNull();
-    expect(container.querySelector('.op-status-ok, .action-card-status.op-status-ok')).not.toBeNull();
+    expect(screen.getByTestId('task-activity-toggle').textContent).toContain('Done');
+    expect(container.querySelectorAll('[data-tool-category="terminal"]')).toHaveLength(2);
   });
 
   it('does not group duplicate tool_use records with the same id', () => {
@@ -177,6 +180,9 @@ describe('AssistantMessage tool status', () => {
     fireEvent.click(activity);
     expect(activity.getAttribute('aria-expanded')).toBe('true');
     expect(container.querySelectorAll('.op-card')).toHaveLength(3);
+    expect(container.querySelector('[data-tool-category="eye"]')).not.toBeNull();
+    expect(container.querySelector('[data-tool-category="file-code"]')).not.toBeNull();
+    expect(container.querySelector('[data-tool-category="terminal"]')).not.toBeNull();
   });
 
   it('does not show Done when a failed run is missing a tool result', () => {
@@ -200,8 +206,9 @@ describe('AssistantMessage tool status', () => {
       />,
     );
 
-    expect(container.querySelector('.action-card-status.op-status-error')).not.toBeNull();
-    expect(container.querySelector('.action-card-status.op-status-ok')).toBeNull();
+    expect(screen.getByTestId('task-activity-toggle').textContent).toContain('error');
+    expect(container.querySelector('.op-status-error')).not.toBeNull();
+    expect(container.querySelector('.op-status-ok')).toBeNull();
   });
 
   it('does not show Done when a canceled run is missing a tool result', () => {
@@ -225,8 +232,9 @@ describe('AssistantMessage tool status', () => {
       />,
     );
 
-    expect(container.querySelector('.action-card-status.op-status-error')).not.toBeNull();
-    expect(container.querySelector('.action-card-status.op-status-ok')).toBeNull();
+    expect(screen.getByTestId('task-activity-toggle').textContent).toContain('error');
+    expect(container.querySelector('.op-status-error')).not.toBeNull();
+    expect(container.querySelector('.op-status-ok')).toBeNull();
   });
 
   it('keeps Running for a streaming tool use that has no tool result', () => {
@@ -251,8 +259,37 @@ describe('AssistantMessage tool status', () => {
       />,
     );
 
-    expect(container.querySelector('.action-card-status.op-status-running')).not.toBeNull();
-    expect(container.querySelector('.action-card-status.op-status-ok')).toBeNull();
+    expect(screen.getByTestId('task-activity-toggle').textContent).toContain('Working');
+    expect(container.querySelector('[data-tool-category="terminal"].op-status-running')).not.toBeNull();
+    expect(container.querySelector('.op-status-ok')).toBeNull();
+  });
+
+  it('keeps the run state above the answer and groups thinking into the timeline', () => {
+    const { container } = render(
+      <AssistantMessage
+        projectKind="prototype"
+        conversationId="conv-1"
+        message={messageWithEvents([
+          { kind: 'thinking', text: 'Reviewing the request.' },
+          { kind: 'tool_use', id: 'tool-1', name: 'Read', input: { file_path: '/repo/source.ts' } },
+          { kind: 'tool_result', toolUseId: 'tool-1', content: 'source', isError: false },
+          { kind: 'text', text: 'Here is the finished answer.' },
+        ])}
+        streaming={false}
+        projectId="project-1"
+      />,
+    );
+
+    const flow = container.querySelector('.assistant-flow');
+    const activity = screen.getByTestId('task-activity-toggle');
+    expect(flow?.firstElementChild?.classList.contains('task-activity')).toBe(true);
+    expect(activity.textContent).toContain('Done');
+    expect(flow?.textContent).toContain('Here is the finished answer.');
+
+    fireEvent.click(activity);
+    const activityCard = activity.closest('.task-activity');
+    expect(activityCard?.querySelector('.thinking-block')).not.toBeNull();
+    expect(activityCard?.querySelector('[data-tool-category="eye"]')).not.toBeNull();
   });
 
   it('renders URLs in JSON-like status details without trailing structural characters', () => {

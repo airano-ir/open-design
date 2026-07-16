@@ -13,7 +13,7 @@ import { useT } from '../i18n';
 import { isTodoWriteToolName, parseTodoWriteInput } from '../runtime/todos';
 import { getToolRenderer, toRenderProps } from '../runtime/tool-renderers';
 import type { AgentEvent } from '../types';
-import { Icon } from './Icon';
+import { Icon, type IconName } from './Icon';
 
 interface Props {
   use: Extract<AgentEvent, { kind: 'tool_use' }>;
@@ -177,7 +177,7 @@ function LegacyAskUserQuestionCard({
   return (
     <div className="op-card op-generic">
       <div className="op-card-head">
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
+        <ResultBadge icon="help-circle" result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
         <span className="op-title">{title}</span>
         {summary ? <span className="op-meta">{truncate(summary, 240)}</span> : null}
       </div>
@@ -328,7 +328,7 @@ function FileWriteCard({
   return (
     <div className="op-card op-file">
       <button type="button" className="op-card-head" onClick={() => setOpen((o) => !o)}>
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
+        <ResultBadge icon="file-code" result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
         <span className={`op-title${isRunning ? ' shimmer-text' : ''}`}>{t('tool.write')}</span>
         <span className="op-meta">{baseName}{lines !== null ? ` · ${t('tool.lines', { n: lines })}` : ''}</span>
         <span className="op-expand-chev" aria-hidden>
@@ -378,7 +378,7 @@ function FileEditCard({
   return (
     <div className="op-card op-file">
       <button type="button" className="op-card-head" onClick={() => setOpen((o) => !o)}>
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
+        <ResultBadge icon="pencil" result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
         <span className={`op-title${isRunning ? ' shimmer-text' : ''}`}>{t('tool.edit')}</span>
         <span className="op-meta">{baseName} · {editCount} {editCount === 1 ? t('tool.changeSingular') : t('tool.changePlural')}</span>
         <span className="op-expand-chev" aria-hidden>
@@ -420,7 +420,7 @@ function FileReadCard({
   return (
     <div className="op-card op-file">
       <button type="button" className="op-card-head" onClick={() => setOpen((o) => !o)}>
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
+        <ResultBadge icon="eye" result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
         <span className={`op-title${isRunning ? ' shimmer-text' : ''}`}>{t('tool.read')}</span>
         <span className="op-meta">{baseName}</span>
         <span className="op-expand-chev" aria-hidden>
@@ -450,7 +450,7 @@ function BashCard({ input, result, runStreaming, runSucceeded }: { input: unknow
   return (
     <div className="op-card op-bash">
       <button type="button" className="op-card-head" onClick={() => setOpen((o) => !o)}>
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
+        <ResultBadge icon="terminal" result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
         <span className={`op-title${isRunning ? ' shimmer-text' : ''}`}>{t('tool.bash')}</span>
         {desc ? <span className="op-meta op-desc">{desc}</span> : null}
         <span className="op-expand-chev" aria-hidden>
@@ -477,7 +477,7 @@ function GlobCard({ input, result, runStreaming, runSucceeded }: { input: unknow
   return (
     <div className="op-card op-search">
       <div className="op-card-head">
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
+        <ResultBadge icon="folder" result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
         <span className="op-title">{t('tool.glob')}</span>
         <span className="op-meta">{obj.pattern ?? '*'}{obj.path ? ` in ${obj.path}` : ''}</span>
       </div>
@@ -491,7 +491,7 @@ function GrepCard({ input, result, runStreaming, runSucceeded }: { input: unknow
   return (
     <div className="op-card op-search">
       <div className="op-card-head">
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
+        <ResultBadge icon="search" result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
         <span className="op-title">{t('tool.grep')}</span>
         <span className="op-meta">{obj.pattern ?? ''}{obj.path ? ` in ${obj.path}` : ''}</span>
       </div>
@@ -505,7 +505,7 @@ function WebFetchCard({ input, result, runStreaming, runSucceeded }: { input: un
   return (
     <div className="op-card op-web">
       <div className="op-card-head">
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
+        <ResultBadge icon="globe" result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
         <span className="op-title">{t('tool.fetch')}</span>
         <span className="op-meta">{obj.url ?? ''}</span>
       </div>
@@ -519,7 +519,7 @@ function WebSearchCard({ input, result, runStreaming, runSucceeded }: { input: u
   return (
     <div className="op-card op-web">
       <div className="op-card-head">
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
+        <ResultBadge icon="search" result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
         <span className="op-title">{t('tool.search')}</span>
         <span className="op-meta">{obj.query ?? ''}</span>
       </div>
@@ -544,7 +544,7 @@ function GenericCard({
   return (
     <div className="op-card op-generic">
       <div className="op-card-head">
-        <ResultBadge result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
+        <ResultBadge icon="blocks" result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
         <span className="op-title">{name}</span>
         {summary ? <span className="op-meta">{truncate(summary, 200)}</span> : null}
       </div>
@@ -552,12 +552,29 @@ function GenericCard({
   );
 }
 
-function ResultBadge({ result, runStreaming, runSucceeded }: { result?: Props['result']; runStreaming: boolean; runSucceeded: boolean }) {
+function ResultBadge({
+  icon,
+  result,
+  runStreaming,
+  runSucceeded,
+}: {
+  icon: IconName;
+  result?: Props['result'];
+  runStreaming: boolean;
+  runSucceeded: boolean;
+}) {
   const t = useT();
-  if (!result && runStreaming) return <span className="op-status op-status-running" title={t('tool.running')}><Icon name="spinner" size={14} /></span>;
-  if (!result && !runSucceeded) return <span className="op-status op-status-error" title={t('tool.error')}><Icon name="close" size={14} /></span>;
+  if (!result && !runStreaming && !runSucceeded) return <span className="op-status op-status-error" title={t('tool.error')}><Icon name="close" size={14} /></span>;
   if (result?.isError) return <span className="op-status op-status-error" title={result.content || t('tool.error')}><Icon name="close" size={14} /></span>;
-  return <span className="op-status op-status-ok" title={t('tool.done')}><Icon name="check" size={14} /></span>;
+  return (
+    <span
+      className={`op-status op-status-category${runStreaming && !result ? ' op-status-running' : ''}`}
+      data-tool-category={icon}
+      title={runStreaming && !result ? t('tool.running') : t('tool.done')}
+    >
+      <Icon name={icon} size={14} />
+    </span>
+  );
 }
 
 function FileErrorDetail({ result }: { result?: Props['result'] }) {

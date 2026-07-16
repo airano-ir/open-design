@@ -1583,19 +1583,48 @@
   flex: 1; min-width: 0;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.task-activity-count {
-  flex: 0 0 auto;
-  min-width: 18px;
-  padding: 1px 5px;
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-pill);
-  color: var(--text-faint);
-  font-size: 10px;
+.task-activity .action-card-toggle {
+  width: fit-content;
+  padding: 4px 0;
+  gap: 5px;
+}
+.task-activity .action-card-toggle:hover {
+  background: transparent;
+}
+.task-activity .action-card-toggle .summary {
+  flex: 0 1 auto;
+  font-weight: 400;
+}
+.task-activity-elapsed {
+  color: var(--text-muted);
+  font-size: 13px;
   font-variant-numeric: tabular-nums;
-  text-align: center;
 }
 .task-activity .action-card-body {
-  padding-top: 4px;
+  position: relative;
+  padding: 8px 0;
+  gap: 6px;
+}
+.task-activity .action-card-body::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  top: 20px;
+  bottom: 20px;
+  left: 15.5px;
+  width: 1px;
+  background: var(--border-soft);
+}
+.task-activity .action-card-body > * {
+  position: relative;
+  z-index: 1;
+}
+.task-activity .action-card-toggle .chev {
+  transform: rotate(0deg);
+  transition: transform 200ms var(--ease-out);
+}
+.task-activity.is-open .action-card-toggle .chev {
+  transform: rotate(180deg);
 }
 .action-card-toggle .chev { color: var(--text-faint); font-size: 10px; flex-shrink: 0; transition: transform 120ms var(--ease-out); }
 .action-card-body {
