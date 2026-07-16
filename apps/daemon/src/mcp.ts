@@ -25,7 +25,7 @@ import { postCreateArtifactRequest } from './artifacts/create.js';
 import { classifyAmrAccountFailure } from './integrations/vela-errors.js';
 
 const SERVER_NAME = 'open-design';
-const SERVER_VERSION = '0.2.5';
+const SERVER_VERSION = '0.2.6';
 const MCP_STDIO_IDLE_EXIT_MS = 30 * 60 * 1000;
 const CHATGPT_WIDGET_URI = 'ui://open-design/artifact-card-v2.html';
 const CHATGPT_SIGN_IN_URL = 'https://open-design.ai/amr';
@@ -96,10 +96,15 @@ function chatGptV1OutputSchema(toolName: string): JsonObject {
       projectId: stringValue,
       status: { type: 'string', enum: ['queued', 'running', 'succeeded', 'failed', 'canceled'] },
       stage: { type: 'string', enum: ['queued', 'generating', 'ready', 'failed', 'canceled'] },
+      skillId: { type: ['string', 'null'] },
+      artifactCount: { type: 'number', minimum: 0 },
       previewUrl: stringValue,
       studioUrl: stringValue,
       entryFile: stringValue,
       agentMessage: stringValue,
+      error: { type: ['string', 'null'] },
+      errorCode: { type: ['string', 'null'] },
+      retryable: { type: 'boolean' },
     },
     cancel_run: {
       id: stringValue,
@@ -1235,7 +1240,9 @@ export function createOpenDesignMcpServer({
         'Confirm audience, outcome, content/flows, visual direction, and output format before calling start_run with confirmed:true.',
         'Before Cloud generation call get_cloud_account. Use create_project, then start_run; its card polls get_run and updates in place.',
         'Open Design runs can take 5–30 minutes. Do not cancel unless the user asks.',
-        'On success, surface studioUrl and previewUrl. Complex editing stays in Open Design.',
+        'A browser-artifact run is delivered only when get_run returns status:succeeded plus artifactCount greater than zero and a real previewUrl. A Design System run instead requires status:succeeded plus artifactCount greater than zero.',
+        'For a delivered website, prototype, or presentation, use the host in-app browser to open studioUrl and previewUrl in two separate tabs before replying. Never replace either with the Open Design root or /onboarding. If no in-app browser capability exists, show both as clickable links.',
+        'Complex editing stays in Open Design.',
       ].join('\n'),
     },
   );
@@ -1420,8 +1427,49 @@ function publicChatGptResult(name: string, result: any): any {
     structuredContent.stage = structuredContent.status === 'queued' ? 'queued' : 'generating';
     structuredContent.hint = 'Open Design Cloud is still working. Keep the progress card visible and poll again in 30–60 seconds.';
   } else if (name === 'get_run') {
-    const terminalStage: Record<string, string> = { succeeded: 'ready', failed: 'failed', canceled: 'canceled' };
-    if (terminalStage[String(structuredContent.status)]) structuredContent.stage = terminalStage[String(structuredContent.status)];
+    // A V1 start_run always represents a confirmed artifact commission. The
+    // daemon's `succeeded` status means the agent process completed cleanly;
+    // it does not prove that a deliverable reached the project filesystem.
+    // Never turn a clean process exit with zero touched artifacts into a
+    // misleading Ready card.
+    const isSucceeded = structuredContent.status === 'succeeded';
+    const artifactCount = typeof structuredContent.artifactCount === 'number'
+      ? structuredContent.artifactCount
+      : 0;
+    const isDesignSystemRun = structuredContent.skillId === 'design-md';
+    const missingDeliverable = isSucceeded && artifactCount <= 0;
+    const missingBrowserPreview = isSucceeded && !isDesignSystemRun && !structuredContent.previewUrl;
+    const missingStudioUrl = isSucceeded && !structuredContent.studioUrl;
+    if (missingDeliverable || missingBrowserPreview || missingStudioUrl) {
+      structuredContent.status = 'failed';
+      structuredContent.stage = 'failed';
+      structuredContent.errorCode = missingDeliverable
+        ? 'RUN_NO_DELIVERABLE'
+        : missingBrowserPreview
+          ? 'RUN_NO_PREVIEW'
+          : 'RUN_NO_STUDIO_URL';
+      structuredContent.error = missingDeliverable
+        ? 'Open Design Cloud finished without creating or updating any project files.'
+        : missingBrowserPreview
+          ? 'Open Design Cloud wrote files but did not produce a reachable browser preview.'
+          : 'Open Design Cloud produced files but could not resolve the exact Studio project URL.';
+      structuredContent.retryable = true;
+      structuredContent.hint = missingDeliverable
+        ? 'Generation failed because no deliverable was written. Do not claim that an artifact is ready or offer a preview. Retry the run; if it repeats, report the Cloud tool failure.'
+        : missingBrowserPreview
+          ? 'Generation is incomplete because no reachable preview entry was produced. Do not claim that the Artifact is ready. Retry with an explicit HTML entry-file requirement.'
+          : 'Generation is incomplete because the exact Open Design project URL is unavailable. Do not open the Open Design root or /onboarding as a substitute.';
+      delete structuredContent.previewUrl;
+      delete structuredContent.entryFile;
+    } else {
+      const terminalStage: Record<string, string> = { succeeded: 'ready', failed: 'failed', canceled: 'canceled' };
+      if (terminalStage[String(structuredContent.status)]) structuredContent.stage = terminalStage[String(structuredContent.status)];
+      if (isSucceeded && structuredContent.previewUrl) {
+        structuredContent.hint = 'Delivery complete. Before replying, use the host in-app browser to open studioUrl and previewUrl in two separate tabs. Open these exact returned URLs; do not substitute the Open Design root or /onboarding.';
+      } else if (isSucceeded && isDesignSystemRun) {
+        structuredContent.hint = 'Delivery complete. Before replying, open the exact studioUrl in the host in-app browser; do not substitute the Open Design root or /onboarding.';
+      }
+    }
     const accountFailure = classifyAmrAccountFailure(JSON.stringify(structuredContent));
     if (accountFailure?.action === 'recharge') {
       structuredContent.accountAction = 'recharge';
@@ -1506,6 +1554,7 @@ function prepareChatGptV1Run(args: McpArgs): { skill: string; prompt: string } |
     `Content and flows: ${brief.contentAndFlows}`,
     `Visual direction: ${brief.visualDirection}`,
     `Output format: ${brief.outputFormat}`,
+    'Delivery contract: write the actual deliverable files inside the current project working directory. Project files are discovered automatically; there is no separate artifact registration command to run. For a browser artifact, create a real HTML entry file and verify it can be read back before finishing. If any write or verification tool reports an error, report that error and do not claim the file exists.',
   ];
   if (typeof brief.constraints === 'string' && brief.constraints.trim()) {
     lines.push(`Constraints: ${brief.constraints}`);
@@ -1557,7 +1606,7 @@ async function handleMcpToolCall(baseUrl: string, name: unknown, args: McpArgs):
         const resolvedDir = typeof data?.resolvedDir === 'string' ? data.resolvedDir : null;
         const declaredEntry = project?.metadata?.entryFile ?? null;
         const entryFile = await resolveProjectEntry(baseUrl, id, declaredEntry);
-        const previewUrl = rawPreviewUrl(baseUrl, id, entryFile);
+        const previewUrl = await validatePreviewUrl(rawPreviewUrl(baseUrl, id, entryFile));
         // Build the studio deep link too — needs the project's
         // default conversation, which we look up once. Cheap to skip
         // when the daemon has no webBaseUrl configured.
@@ -2232,6 +2281,31 @@ function rawPreviewUrl(baseUrl: string, projectId: string, entry: unknown): stri
   return buildProjectRawFileUrl(baseUrl, projectId, entry);
 }
 
+async function validatePreviewUrl(url: string | null): Promise<string | null> {
+  if (!url) return null;
+  try {
+    const response = await fetch(url, { method: 'GET' });
+    if (!response.ok) return null;
+    const contentType = response.headers.get('content-type')?.toLowerCase() ?? '';
+    if (!contentType.startsWith('text/html')) {
+      try {
+        await response.body?.cancel();
+      } catch {
+        // The response is already rejected as a browser preview.
+      }
+      return null;
+    }
+    try {
+      await response.body?.cancel();
+    } catch {
+      // The successful HTML response already proved that the entry is reachable.
+    }
+    return url;
+  } catch {
+    return null;
+  }
+}
+
 // Best-effort variant for get_run, which only has a projectId: fetch the
 // project, then build the URL. Returns null on any lookup failure — the
 // run result is still reachable via get_artifact, so this is a
@@ -2244,7 +2318,7 @@ async function buildRunPreviewUrl(baseUrl: string, projectId: string): Promise<s
     const project = data?.project ?? data;
     const declared = (project as { metadata?: JsonObject } | undefined)?.metadata?.entryFile;
     const entry = await resolveProjectEntry(baseUrl, projectId, declared);
-    return rawPreviewUrl(baseUrl, projectId, entry);
+    return await validatePreviewUrl(rawPreviewUrl(baseUrl, projectId, entry));
   } catch {
     return null;
   }

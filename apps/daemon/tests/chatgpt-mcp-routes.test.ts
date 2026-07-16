@@ -68,8 +68,10 @@ describe('ChatGPT Streamable HTTP MCP', () => {
       ))).toBe(true);
       expect((tools.tools.find((tool) => tool.name === 'get_run')?.outputSchema as any)?.properties).toMatchObject({
         status: { enum: ['queued', 'running', 'succeeded', 'failed', 'canceled'] },
+        artifactCount: { type: 'number', minimum: 0 },
         previewUrl: { type: 'string' },
         studioUrl: { type: 'string' },
+        errorCode: { type: ['string', 'null'] },
       });
       expect(tools.tools.map((tool) => tool.name)).not.toEqual(expect.arrayContaining([
         'write_file',
@@ -107,7 +109,7 @@ describe('ChatGPT Streamable HTTP MCP', () => {
       expect(widgetHtml).toContain('window.openai');
       expect(widgetHtml).toContain("rpcRequest('ui/initialize'");
       expect(widgetHtml).toContain("rpcRequest('tools/call'");
-      expect(widgetHtml).toContain("version: '0.2.5'");
+      expect(widgetHtml).toContain("version: '0.2.6'");
       expect(widgetHtml).toContain('data-view="compact"');
       expect(widgetHtml).toContain('Authorization complete');
       expect(widgetHtml).toContain('Sign in / Register');
@@ -444,6 +446,7 @@ describe('ChatGPT Streamable HTTP MCP', () => {
           'Content and flows: Hero, proof, feature sections, pricing CTA',
           'Visual direction: Use the attached Acme Design System',
           'Output format: Responsive website',
+          'Delivery contract: write the actual deliverable files inside the current project working directory. Project files are discovered automatically; there is no separate artifact registration command to run. For a browser artifact, create a real HTML entry file and verify it can be read back before finishing. If any write or verification tool reports an error, report that error and do not claim the file exists.',
         ].join('\n'),
         skillId: 'frontend-design',
         agentId: 'amr',
@@ -516,6 +519,196 @@ describe('ChatGPT Streamable HTTP MCP', () => {
         },
       });
       expect(runBodies).toHaveLength(4);
+    } finally {
+      await client.close();
+    }
+  });
+
+  it('reports a clean Cloud exit with zero artifacts as a failed V1 commission', async () => {
+    const daemon = express();
+    daemon.use(express.json());
+    daemon.get('/api/runs/r-empty', (_request, response) => response.json({
+      id: 'r-empty',
+      projectId: 'p-empty',
+      conversationId: 'c-empty',
+      skillId: 'frontend-design',
+      status: 'succeeded',
+      artifactCount: 0,
+      exitCode: 0,
+    }));
+    daemon.get('/api/runs/r-no-preview', (_request, response) => response.json({
+      id: 'r-no-preview',
+      projectId: 'p-no-preview',
+      conversationId: 'c-no-preview',
+      skillId: 'frontend-design',
+      status: 'succeeded',
+      artifactCount: 1,
+      exitCode: 0,
+    }));
+    daemon.get('/api/runs/r-design', (_request, response) => response.json({
+      id: 'r-design',
+      projectId: 'p-design',
+      conversationId: 'c-design',
+      skillId: 'design-md',
+      status: 'succeeded',
+      artifactCount: 1,
+      exitCode: 0,
+    }));
+    daemon.get('/api/runs/r-success', (_request, response) => response.json({
+      id: 'r-success',
+      projectId: 'p-success',
+      conversationId: 'c-success',
+      skillId: 'frontend-design',
+      status: 'succeeded',
+      artifactCount: 1,
+      exitCode: 0,
+    }));
+    daemon.get('/api/runs/r-no-studio', (_request, response) => response.json({
+      id: 'r-no-studio',
+      projectId: 'p-no-studio',
+      skillId: 'frontend-design',
+      status: 'succeeded',
+      artifactCount: 1,
+      exitCode: 0,
+    }));
+    daemon.get('/api/runs/r-missing-count', (_request, response) => response.json({
+      id: 'r-missing-count',
+      projectId: 'p-missing-count',
+      conversationId: 'c-missing-count',
+      skillId: 'frontend-design',
+      status: 'succeeded',
+      exitCode: 0,
+    }));
+    daemon.get('/api/projects/p-empty', (_request, response) => response.json({
+      project: { id: 'p-empty', metadata: {} },
+    }));
+    daemon.get('/api/projects/p-empty/files', (_request, response) => response.json({ files: [] }));
+    daemon.get('/api/projects/p-no-preview', (_request, response) => response.json({
+      project: { id: 'p-no-preview', metadata: {} },
+    }));
+    daemon.get('/api/projects/p-no-preview/files', (_request, response) => response.json({
+      files: [{ name: 'README.md' }],
+    }));
+    daemon.get('/api/projects/p-design', (_request, response) => response.json({
+      project: { id: 'p-design', metadata: {} },
+    }));
+    daemon.get('/api/projects/p-design/files', (_request, response) => response.json({
+      files: [{ name: 'DESIGN.md' }],
+    }));
+    daemon.get('/api/projects/p-success', (_request, response) => response.json({
+      project: { id: 'p-success', metadata: { entryFile: 'index.html' } },
+    }));
+    daemon.get('/api/projects/p-success/files', (_request, response) => response.json({
+      files: [{ name: 'index.html' }],
+    }));
+    daemon.get('/api/projects/p-success/raw/index.html', (_request, response) => response.type('html').send('<!doctype html><title>Success</title>'));
+    daemon.get('/api/projects/p-no-studio', (_request, response) => response.json({
+      project: { id: 'p-no-studio', metadata: { entryFile: 'index.html' } },
+    }));
+    daemon.get('/api/projects/p-no-studio/raw/index.html', (_request, response) => response.type('html').send('<!doctype html><title>No Studio</title>'));
+    daemon.get('/api/projects/p-missing-count', (_request, response) => response.json({
+      project: { id: 'p-missing-count', metadata: { entryFile: 'index.html' } },
+    }));
+    daemon.get('/api/projects/p-missing-count/files', (_request, response) => response.json({
+      files: [{ name: 'index.html' }],
+    }));
+    daemon.get('/api/runs/r-empty/events', (_request, response) => response.status(404).send('not found'));
+    daemon.get('/api/mcp/install-info', (_request, response) => response.json({
+      webBaseUrl: 'https://studio.open-design.ai',
+    }));
+    const daemonServer = daemon.listen(0, '127.0.0.1');
+    servers.push(daemonServer);
+    await new Promise<void>((resolve) => daemonServer.once('listening', resolve));
+    const daemonPort = (daemonServer.address() as AddressInfo).port;
+
+    const app = express();
+    app.use(express.json());
+    registerChatGptMcpRoutes(app, {
+      getDaemonUrl: () => `http://127.0.0.1:${daemonPort}`,
+      env: {},
+    });
+    const httpServer = app.listen(0, '127.0.0.1');
+    servers.push(httpServer);
+    await new Promise<void>((resolve) => httpServer.once('listening', resolve));
+    const { port } = httpServer.address() as AddressInfo;
+
+    const client = new Client({ name: 'chatgpt-empty-artifact-test', version: '1.0.0' });
+    await client.connect(new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${port}/mcp`)) as any);
+    try {
+      const result = await client.callTool({
+        name: 'get_run',
+        arguments: { runId: 'r-empty' },
+      }) as any;
+      expect(result.structuredContent).toMatchObject({
+        status: 'failed',
+        stage: 'failed',
+        artifactCount: 0,
+        errorCode: 'RUN_NO_DELIVERABLE',
+        retryable: true,
+      });
+      expect(result.structuredContent.error).toContain('without creating or updating any project files');
+      expect(result.structuredContent.previewUrl).toBeUndefined();
+      expect(JSON.parse(result.content[0].text)).toMatchObject({
+        status: 'failed',
+        stage: 'failed',
+        errorCode: 'RUN_NO_DELIVERABLE',
+      });
+
+      const noPreview = await client.callTool({
+        name: 'get_run',
+        arguments: { runId: 'r-no-preview' },
+      }) as any;
+      expect(noPreview.structuredContent).toMatchObject({
+        status: 'failed',
+        stage: 'failed',
+        artifactCount: 1,
+        errorCode: 'RUN_NO_PREVIEW',
+      });
+
+      const designSystem = await client.callTool({
+        name: 'get_run',
+        arguments: { runId: 'r-design' },
+      }) as any;
+      expect(designSystem.structuredContent).toMatchObject({
+        status: 'succeeded',
+        stage: 'ready',
+        artifactCount: 1,
+        skillId: 'design-md',
+      });
+      expect(designSystem.structuredContent.hint).toContain('exact studioUrl');
+
+      const success = await client.callTool({
+        name: 'get_run',
+        arguments: { runId: 'r-success' },
+      }) as any;
+      expect(success.structuredContent).toMatchObject({
+        status: 'succeeded',
+        stage: 'ready',
+        artifactCount: 1,
+      });
+      expect(success.structuredContent.previewUrl).toContain('/api/projects/p-success/raw/index.html');
+      expect(success.structuredContent.hint).toContain('studioUrl and previewUrl in two separate tabs');
+
+      const noStudio = await client.callTool({
+        name: 'get_run',
+        arguments: { runId: 'r-no-studio' },
+      }) as any;
+      expect(noStudio.structuredContent).toMatchObject({
+        status: 'failed',
+        stage: 'failed',
+        artifactCount: 1,
+        errorCode: 'RUN_NO_STUDIO_URL',
+      });
+
+      const missingCount = await client.callTool({
+        name: 'get_run',
+        arguments: { runId: 'r-missing-count' },
+      }) as any;
+      expect(missingCount.structuredContent).toMatchObject({
+        status: 'failed',
+        stage: 'failed',
+        errorCode: 'RUN_NO_DELIVERABLE',
+      });
     } finally {
       await client.close();
     }

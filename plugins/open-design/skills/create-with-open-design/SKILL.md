@@ -29,8 +29,10 @@ For other artifact types, explain that the first plugin version focuses on these
 3. Call `create_project` with a clear human-readable name. Pass `designSystem` when applying a known system.
 4. Call `start_run` with the supported `artifactType`, the five-field structured `brief`, and `confirmed: true`. The server maps the artifact type to the approved skill and pins the run to Cloud. Return the progress card; do not wait silently.
 5. Poll `get_run` every 30–60 seconds until the run is terminal. Long periods with no file changes are normal agent thinking time; do not cancel unless the user asks.
-6. On success, show the Artifact preview and the Open Design studio action. Keep complex editing, version management, and advanced export in Open Design.
-7. For a refinement, reuse the same project and call `start_run` with the requested delta. Do not create a duplicate project unless the user asks.
+6. For a website, product prototype, or presentation, treat the run as delivered only when `get_run` returns `status: succeeded`, `artifactCount` greater than zero, and a real `previewUrl`. A Design System delivery instead requires `status: succeeded` and `artifactCount` greater than zero. A process-level success without the required output is incomplete; report the returned error and do not claim the Artifact exists.
+7. For a delivered website, prototype, or presentation, use the host's **in-app browser** capability to open two separate tabs before replying: one for `studioUrl` (the exact Open Design project/conversation) and one for `previewUrl` (the rendered Artifact). Do not substitute the system/external browser. If the host has no in-app browser capability, fall back to two clickable links and say that the tabs could not be opened automatically. For a Design System, open the exact `studioUrl`.
+8. Keep complex editing, version management, and advanced export in Open Design.
+9. For a refinement, reuse the same project and call `start_run` with the requested delta. Do not create a duplicate project unless the user asks.
 
 ## Requirement confirmation
 
@@ -52,3 +54,4 @@ If the user already supplied all five, proceed without an extra confirmation tur
 - Use explicit project ids after project creation so active-context drift cannot target the wrong project.
 - Never delete a project or file as part of cleanup unless the user explicitly requests it.
 - Surface the real Open Design result and URLs. Do not imply a design exists until `get_run` reports success.
+- Never open the Open Design origin, `/`, or `/onboarding` as a substitute for a returned URL. For browser artifacts, open the exact `studioUrl` and `previewUrl`; for Design Systems, open the exact `studioUrl`.
