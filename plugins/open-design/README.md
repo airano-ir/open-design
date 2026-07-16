@@ -19,6 +19,9 @@ This is the first-party ChatGPT plugin package for Open Design. It uses the offi
 4. Add this repository marketplace in Codex developer settings to validate the official plugin package shape and skill discovery.
 5. Restart the desktop app after changing plugin manifests.
 
+For the one-command package and MCP contract verifier, Codex install path, and
+optional ChatGPT HTTPS-tunnel flow, see [LOCAL_TEST.md](./LOCAL_TEST.md).
+
 The ChatGPT Apps path uses Streamable HTTP at `POST /mcp`; remote access is denied by default unless a trusted deployment configures its OAuth boundary. Loopback acceptance exists only to inspect the same hosted V1 contract locally—it does not register a local MCP capability in the published plugin.
 
 The hosted `POST /mcp` surface is intentionally narrower than the engineering MCP surface: it exposes only the Cloud V1 website/prototype/presentation/Design System workflow plus account status, progress, versions, and export. It does not expose arbitrary file writes, project deletion, local active context, local-agent execution, or generic plugin execution.

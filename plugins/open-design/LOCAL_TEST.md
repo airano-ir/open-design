@@ -1,0 +1,52 @@
+# Local test build
+
+This is a local test path for the same Cloud-only package that will be submitted to the official marketplace. It does not add a local stdio MCP server, change the plugin manifest shape, or create a separate development-only product contract.
+
+## 1. Validate the package
+
+From the repository root:
+
+```bash
+pnpm exec tsx plugins/open-design/scripts/verify-local.ts --package-only
+```
+
+This checks the repo marketplace entry, plugin and app manifests, skill path, Cloud sign-in policy, and absence of the retired Claude/local MCP package files.
+
+## 2. Start the local gateway
+
+Use the repository lifecycle entry point:
+
+```bash
+pnpm tools-dev run web --daemon-port 17456 --web-port 17574
+```
+
+The daemon accepts MCP inspection from a direct loopback client without disabling the production authentication boundary. Sign in to Open Design Cloud in the local Open Design UI when you want to exercise account balance and a real generation run.
+
+## 3. Verify the MCP Apps contract
+
+In another terminal:
+
+```bash
+pnpm exec tsx plugins/open-design/scripts/verify-local.ts
+```
+
+The verifier connects to `http://127.0.0.1:17456/mcp` and proves that:
+
+- the server identifies as Open Design;
+- only the eight Cloud V1 tools are published;
+- `start_run` accepts website, product prototype, presentation, and Design System;
+- the MCP Apps Artifact card resource is registered.
+
+You can also connect MCP Inspector to `http://127.0.0.1:17456/mcp` to call tools and render the card interactively.
+
+## 4. Install the repository plugin in Codex
+
+Open the repository marketplace from the Codex deep link in the project handoff, install **Open Design**, and restart Codex after changing a manifest. This validates the same `.codex-plugin/plugin.json`, `.app.json`, skill, assets, and marketplace metadata intended for distribution.
+
+The checked-in `.app.json` remains empty until ChatGPT Developer Mode assigns the real `asdk_app_...` identifier. That identifier belongs to the hosted app registration and must not be replaced with a fake local id.
+
+## 5. Optional ChatGPT Developer Mode test
+
+ChatGPT cannot connect directly to a loopback URL. To test inside ChatGPT before production deployment, expose the local daemon through an access-controlled HTTPS tunnel and set the public MCP resource URL to the tunnel's exact `/mcp` URL. For that short-lived test only, set `OD_CHATGPT_MCP_ALLOW_UNAUTHENTICATED=1`, then remove it immediately after the session.
+
+Do not use this tunnel mode for a shared or production deployment. The release build must use Open Design OAuth and managed tenant routing described in [PRODUCTION.md](./PRODUCTION.md).
