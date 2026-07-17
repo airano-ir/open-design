@@ -104,6 +104,15 @@ const jsonLd = [
           </div>
         </header>
 
+        <div class="agent-rich-body">
+        <aside class="agent-toc-rail">
+        <nav class="info-toc" aria-label={rich.tocLabel}>
+          <span>{rich.tocLabel}</span>
+          {rich.toc.map((t) => (<a href={`#${t.id}`} data-toc-link>{t.label}</a>))}
+        </nav>
+        </aside>
+        <div class="agent-rich-main">
+
         {rich.heroImage ? (
           <figure class="agent-hero-banner">
             <img src={rich.heroImage.src} alt={rich.heroImage.alt} loading="eager" decoding="async" width={1280} height={720} />
@@ -114,15 +123,6 @@ const jsonLd = [
           <p class="agent-hero-lead">{rich.heroCtaLead}</p>
           {rich.intro.map((p) => (<p>{p}</p>))}
         </div>
-
-        <div class="agent-rich-body">
-        <aside class="agent-toc-rail">
-        <nav class="info-toc" aria-label={rich.tocLabel}>
-          <span>{rich.tocLabel}</span>
-          {rich.toc.map((t) => (<a href={`#${t.id}`} data-toc-link>{t.label}</a>))}
-        </nav>
-        </aside>
-        <div class="agent-rich-main">
 
         {rich.sections.map((section) => (
           <section class="info-section" id={section.id}>
