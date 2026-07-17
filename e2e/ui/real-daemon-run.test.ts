@@ -597,7 +597,23 @@ test('[P1] BYOK OpenCode run fails clearly before spawn when provider config is 
   await createByokOpenCodeProject(page, 'BYOK OpenCode missing provider smoke');
   await expectWorkspaceReady(page);
 
-  const runResponse = await sendPrompt(page, 'Create a BYOK OpenCode missing provider smoke artifact');
+  // The composer's BYOK gate silently swallows submits until the incremental
+  // /api/agents stream has delivered byok-opencode's availability, so a fast
+  // submit races the stream (sendPrompt then reports the POST "was never
+  // issued"). Retry through that window; runErrorCard() reads the last card,
+  // so the swallowed attempts' unavailable-message cards cannot shadow the
+  // provider-validation oracle below.
+  let runResponse: Response | null = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      runResponse = await sendPrompt(page, 'Create a BYOK OpenCode missing provider smoke artifact');
+      break;
+    } catch (error) {
+      if (attempt === 2 || !String(error).includes('was never issued')) throw error;
+      await page.waitForTimeout(2_000);
+    }
+  }
+  if (!runResponse) throw new Error('create-run response missing after retries');
   expectCreateRunAgentId(runResponse, 'byok-opencode');
   const { runId } = (await runResponse.json()) as { runId: string };
 

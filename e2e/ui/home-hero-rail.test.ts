@@ -1328,7 +1328,7 @@ test('[P2] zh-CN home smoke exposes the localized template, design system, worki
   await routeHomeDesignSystems(page);
   await gotoEntryHome(page);
 
-  await expect(page.getByRole('heading', { name: '你今天要设计什么？' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '今天想和你的 Agent 一起设计什么？' })).toBeVisible();
   await expect(page.getByText('从模板开始…')).toBeVisible();
   await expect(page.getByText('…或创建一个空白项目')).toBeVisible();
   await expect(page.getByText('不指定设计系统')).toBeVisible();
