@@ -584,6 +584,16 @@ export interface Dict {
   'settings.mediaProviderReloadSuccess': string;
   'settings.mediaProviderLoadError': string;
   'settings.mediaProviderComingSoonHint': string;
+  // #5517 media-providers redesign: provider pill selector + single detail
+  // card (labeled Model field, docs callout, save-bar note, no-key panel).
+  'settings.mediaProviderModelProviders': string;
+  'settings.mediaProviderModel': string;
+  'settings.mediaProviderModelPlaceholder': string;
+  'settings.mediaProviderDocsTitle': string;
+  'settings.mediaProviderDocsHint': string;
+  'settings.mediaProviderSaveHint': string;
+  'settings.mediaProviderNoKeyRequired': string;
+  'settings.mediaProviderNoKeyHint': string;
   'settings.privacy': string;
   'settings.privacyHint': string;
   'settings.privacyConsentKicker': string;
@@ -1156,6 +1166,7 @@ export interface Dict {
   'entry.creditsUpgrade': string;
   'entry.creditsOpening': string;
   'entry.creditsRemaining': string;
+  'entry.credits': string;
   'entry.creditsBonus': string;
   'entry.creditsUsage': string;
   'entry.creditsMemberNoticeTitle': string;
@@ -1201,6 +1212,7 @@ export interface Dict {
   'entry.teamSlotNote': string;
   'entry.cloudCalloutTitle': string;
   'entry.cloudCalloutBody': string;
+  'entry.cloudCalloutDismissAria': string;
   'entry.workspaceLockedNote': string;
   'entry.workspaceLockedRecover': string;
   'workspaceTabs.project': string;
@@ -1438,6 +1450,15 @@ export interface Dict {
   'recentProjects.shareInProgress': string;
   'recentProjects.sharedInTeam': string;
   'recentProjects.moveToTeam': string;
+  'recentProjects.moveToTeamDescPre': string;
+  'recentProjects.moveToTeamDescStrong': string;
+  'recentProjects.moveToTeamDescPost': string;
+  'recentProjects.moveToPersonalDescPre': string;
+  'recentProjects.moveToPersonalDescStrong': string;
+  'recentProjects.moveToPersonalDescPost': string;
+  'recentProjects.moveDontRemind': string;
+  'recentProjects.confirmMoveToTeam': string;
+  'recentProjects.confirmMoveToPersonal': string;
   'recentProjects.unshareInProgress': string;
   'recentProjects.moveOutOfTeam': string;
   'recentProjects.unshareFailed': string;
