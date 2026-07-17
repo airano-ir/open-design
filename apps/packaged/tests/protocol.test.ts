@@ -184,6 +184,33 @@ describe('od:// protocol transient retry', () => {
     expect(calls).toBe(2);
   });
 
+  it('retries login with its attribution body intact when the first attempt throws', async () => {
+    const receivedBodies: string[] = [];
+    const fetchImpl: typeof fetch = async (input) => {
+      const request = input as Request;
+      receivedBodies.push(await request.text());
+      if (receivedBodies.length === 1) throw transientSocketError();
+      return new Response(JSON.stringify({ pid: 42 }), { status: 202 });
+    };
+
+    const response = await handleOdRequest(
+      new Request('od://app/api/integrations/vela/login', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ attribution: { source: 'settings_amr_authorize' } }),
+      }),
+      'http://127.0.0.1:17579/',
+      fetchImpl,
+      noDelay,
+    );
+
+    expect(response.status).toBe(202);
+    expect(receivedBodies).toEqual([
+      JSON.stringify({ attribution: { source: 'settings_amr_authorize' } }),
+      JSON.stringify({ attribution: { source: 'settings_amr_authorize' } }),
+    ]);
+  });
+
   it('gives up after the bounded attempt budget and returns the 502 proxy-failure document', async () => {
     let calls = 0;
     const fetchImpl: typeof fetch = async () => {

@@ -28,12 +28,14 @@ function toWebRuntimeUrl(webRuntimeUrl: string, requestUrl: string): string {
 
 const OD_PROXY_RETRYABLE_METHODS = new Set(["GET", "HEAD"]);
 // Most POST requests change state and must never be replayed after an
-// indeterminate socket failure. Logout is deliberately idempotent, though:
-// either attempt leaves the local credential store signed out. Retrying this
-// bodyless request keeps the Settings action usable when Electron's local
-// `net.fetch` hits the same transient socket failures we already absorb for
-// document and asset requests.
+// indeterminate socket failure. These two routes are deliberate exceptions:
+// logout is idempotent, while login deduplicates a second request as
+// "already running" (which the renderer treats as a successful start).
+// Retrying keeps Settings usable when Electron's local `net.fetch` hits the
+// same transient socket failures we already absorb for document and asset
+// requests.
 const OD_PROXY_RETRYABLE_POST_PATHS = new Set([
+  "/api/integrations/vela/login",
   "/api/integrations/vela/logout",
 ]);
 const OD_PROXY_RETRY_ATTEMPTS = 3;
@@ -50,7 +52,7 @@ const defaultRetryDelay = (ms: number): Promise<void> =>
 
 function isRetryableOdProxyRequest(request: Request): boolean {
   if (OD_PROXY_RETRYABLE_METHODS.has(request.method)) return true;
-  if (request.method !== "POST" || request.body !== null) return false;
+  if (request.method !== "POST") return false;
   return OD_PROXY_RETRYABLE_POST_PATHS.has(new URL(request.url).pathname);
 }
 
@@ -85,9 +87,13 @@ async function fetchOdTargetWithTransientRetry(
   const backoffMs = options.backoffMs ?? OD_PROXY_RETRY_BACKOFF_MS;
   const delay = options.delay ?? defaultRetryDelay;
   let lastError: unknown;
+  // Each proxy attempt consumes its Request body. Keep an untouched clone as
+  // the source so the login attribution JSON remains available to a retry.
+  const retrySource = attempts > 1 ? request.clone() : request;
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
-      return await fetchImpl(new Request(target, request));
+      const attemptRequest = attempts > 1 ? retrySource.clone() : request;
+      return await fetchImpl(new Request(target, attemptRequest));
     } catch (error) {
       lastError = error;
       if (attempt === attempts) break;
