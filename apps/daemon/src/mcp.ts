@@ -25,7 +25,7 @@ import { postCreateArtifactRequest } from './artifacts/create.js';
 import { classifyAmrAccountFailure } from './integrations/vela-errors.js';
 
 const SERVER_NAME = 'open-design';
-const SERVER_VERSION = '0.2.10';
+const SERVER_VERSION = '0.2.11';
 const MCP_STDIO_IDLE_EXIT_MS = 30 * 60 * 1000;
 // MCP Apps hosts cache widget resources by URI. Bump this whenever the
 // embedded HTML/CSS/JS changes so a failed or stale sandbox is not reused.
@@ -1456,6 +1456,36 @@ export async function runMcpStdio({ daemonUrl }: RunMcpOptions): Promise<void> {
     idleExit.dispose();
     closeTransportForIdle = null;
   }
+}
+
+export async function runChatGptMcpStdio({ daemonUrl }: RunMcpOptions): Promise<void> {
+  const baseUrl = String(daemonUrl).replace(/\/$/, '');
+  const server = createOpenDesignMcpServer({
+    daemonUrl: baseUrl,
+    widgetFrameDomains: [new URL(baseUrl).origin],
+    widgetRedirectDomains: ['https://open-design.ai'],
+  });
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+
+  await new Promise<void>((resolve) => {
+    const sdkOnClose = transport.onclose;
+    let finished = false;
+    const done = () => {
+      if (finished) return;
+      finished = true;
+      resolve();
+    };
+    transport.onclose = () => {
+      sdkOnClose?.();
+      done();
+    };
+    const closeTransportForStdin = () => {
+      void transport.close().catch(() => done());
+    };
+    process.stdin.once('end', closeTransportForStdin);
+    process.stdin.once('close', closeTransportForStdin);
+  });
 }
 
 // Stateless transports (notably ChatGPT's Streamable HTTP client) need a

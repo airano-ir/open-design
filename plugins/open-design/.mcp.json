@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "open-design": {
+      "title": "Open Design Custom UI MCP",
+      "description": "Expose the Open Design Cloud V1 tools and Custom UI in Codex.",
+      "command": "node",
+      "args": ["./mcp/server.bundle.mjs"],
+      "cwd": "."
+    }
+  }
+}

@@ -141,7 +141,7 @@ describe('ChatGPT Streamable HTTP MCP', () => {
       expect(widgetHtml).toContain("rpcRequest('ui/update-model-context'");
       expect(widgetHtml).toContain(String.raw`const text = lines.join('\n')`);
       expect(widgetHtml).toContain('id="brief-form"');
-      expect(widgetHtml).toContain("version: '0.2.10'");
+      expect(widgetHtml).toContain("version: '0.2.11'");
       expect(widgetHtml).toContain('data-view="compact"');
       expect(widgetHtml).toContain('Authorization complete');
       expect(widgetHtml).toContain('Sign in / Register');

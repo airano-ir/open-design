@@ -1,6 +1,6 @@
 # Local test build
 
-This is a local test path for the same Cloud-only package that will be submitted to the official marketplace. It does not add a local stdio MCP server, change the plugin manifest shape, or create a separate development-only product contract.
+This is the local validation path for the same V1 workflow used by the hosted ChatGPT app. The package includes a self-contained stdio MCP for Codex so `collect_brief` and its Custom UI do not disappear when a manually started HTTP dev server stops.
 
 ## 1. Validate the package
 
@@ -10,7 +10,7 @@ From the repository root:
 pnpm exec tsx plugins/open-design/scripts/verify-local.ts --package-only
 ```
 
-This checks the repo marketplace entry, plugin and app manifests, skill path, Cloud sign-in policy, and absence of the retired Claude/local MCP package files.
+This checks the repo marketplace entry, plugin and app manifests, skill path, Cloud sign-in policy, and bundled Codex MCP entry.
 
 ## 2. Start the local gateway
 
@@ -33,7 +33,7 @@ pnpm exec tsx plugins/open-design/scripts/verify-local.ts
 The verifier connects to `http://127.0.0.1:17456/mcp` and proves that:
 
 - the server identifies as Open Design;
-- only the eight Cloud V1 tools are published;
+- only the nine Cloud V1 tools are published;
 - `start_run` accepts website, product prototype, presentation, and Design System;
 - the MCP Apps Artifact card resource is registered.
 
@@ -52,7 +52,7 @@ external-link actions; it does not maintain a separate copy of the card.
 
 ## 4. Install the repository plugin in Codex
 
-Open the repository marketplace from the Codex deep link in the project handoff, install **Open Design**, and restart Codex after changing a manifest. This validates the same `.codex-plugin/plugin.json`, `.app.json`, skill, assets, and marketplace metadata intended for distribution.
+Open the repository marketplace from the Codex deep link in the project handoff, install **Open Design**, and restart Codex after changing a manifest. The installed plugin must contribute both the workflow skill and an `open-design` stdio MCP. A fresh task can call `collect_brief` while the daemon is offline; account and generation calls additionally require Open Design to be running.
 
 The checked-in `.app.json` remains empty until ChatGPT Developer Mode assigns the real `asdk_app_...` identifier. That identifier belongs to the hosted app registration and must not be replaced with a fake local id.
 

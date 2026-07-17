@@ -1,6 +1,6 @@
 {
   "name": "open-design",
-  "version": "0.2.10",
+  "version": "0.2.11",
   "description": "Create websites, product prototypes, presentations, and reusable design systems with Open Design from ChatGPT.",
   "author": {
     "name": "OpenDesign",
@@ -12,6 +12,7 @@
   "license": "Apache-2.0",
   "keywords": ["design", "website", "prototype", "presentation", "design-system"],
   "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
   "apps": "./.app.json",
   "interface": {
     "displayName": "Open Design",

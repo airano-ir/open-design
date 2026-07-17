@@ -99,6 +99,7 @@ async function validatePackage(pluginRoot: string): Promise<void> {
   assert(typeof manifest.version === 'string', 'plugin version is required');
   assert(manifest.apps === './.app.json', 'plugin must use the official app manifest path');
   assert(manifest.skills === './skills/', 'plugin must publish its skill directory');
+  assert(manifest.mcpServers === './.mcp.json', 'plugin must publish its local Codex MCP config');
   assert(appManifest.apps && typeof appManifest.apps === 'object', '.app.json must contain an apps object');
   assert(entry, 'repo marketplace must contain the open-design plugin');
   assert((entry.source as Record<string, unknown>)?.path === './plugins/open-design', 'marketplace source path is invalid');
@@ -110,16 +111,23 @@ async function validatePackage(pluginRoot: string): Promise<void> {
   assert(/viewBox="0 0 64 64"/u.test(logoSvg), 'plugin list logo must keep a square viewBox');
   assert(!/<text\b/u.test(logoSvg), 'plugin list logo must not use the horizontal wordmark');
 
-  for (const forbidden of ['.mcp.json', '.claude-plugin']) {
+  const mcpManifest = await json(resolve(pluginRoot, '.mcp.json'));
+  const mcpServer = (mcpManifest.mcpServers as Record<string, Record<string, unknown>> | undefined)?.['open-design'];
+  assert(mcpServer?.command === 'node', 'local Codex MCP must use the bundled Node entry');
+  assert(JSON.stringify(mcpServer?.args) === JSON.stringify(['./mcp/server.bundle.mjs']), 'local Codex MCP bundle path is invalid');
+  assert(mcpServer?.cwd === '.', 'local Codex MCP cwd must resolve from the installed plugin root');
+  await access(resolve(pluginRoot, 'mcp/server.bundle.mjs'));
+
+  for (const forbidden of ['.claude-plugin']) {
     try {
       await access(resolve(pluginRoot, forbidden));
-      throw new Error(`${forbidden} must not be present in the Cloud-only V1 package`);
+      throw new Error(`${forbidden} must not be present in the V1 package`);
     } catch (error) {
       if (error instanceof Error && error.message.includes('must not be present')) throw error;
     }
   }
 
-  process.stdout.write(`package ok: open-design@${String(manifest.version)} (official marketplace layout, Cloud-only)\n`);
+  process.stdout.write(`package ok: open-design@${String(manifest.version)} (hosted ChatGPT app + bundled Codex MCP)\n`);
 }
 
 async function validateEndpoint(endpoint: string): Promise<void> {
