@@ -4028,17 +4028,6 @@ export function SettingsDialog({
             ) : null}
             <button
               type="button"
-              className={`settings-nav-item${activeSection === 'general' ? ' active' : ''}`}
-              onClick={() => setActiveSection('general')}
-            >
-              <Icon name="settings" size={18} />
-              <span>
-                <strong>{t('settings.general')}</strong>
-                <small>{t('settings.generalHint')}</small>
-              </span>
-            </button>
-            <button
-              type="button"
               className={`settings-nav-item${activeSection === 'execution' ? ' active' : ''}`}
               onClick={() => setActiveSection('execution')}
               data-testid="settings-nav-execution"
@@ -4047,6 +4036,17 @@ export function SettingsDialog({
               <span>
                 <strong>{t('settings.envConfigure')}</strong>
                 <small>{`${t('settings.localCli')} / ${t('settings.modeApiMeta')}`}</small>
+              </span>
+            </button>
+            <button
+              type="button"
+              className={`settings-nav-item${activeSection === 'general' ? ' active' : ''}`}
+              onClick={() => setActiveSection('general')}
+            >
+              <Icon name="settings" size={18} />
+              <span>
+                <strong>{t('settings.general')}</strong>
+                <small>{t('settings.generalHint')}</small>
               </span>
             </button>
             {showWorkspaceSettings ? (
@@ -4161,6 +4161,28 @@ export function SettingsDialog({
               <span>
                 <strong>{t('settings.designSystems')}</strong>
                 <small>{t('settings.designSystemsHint')}</small>
+              </span>
+            </button>
+            <button
+              type="button"
+              className={`settings-nav-item${activeSection === 'privacy' ? ' active' : ''}`}
+              onClick={() => setActiveSection('privacy')}
+            >
+              <Icon name="eye" size={18} />
+              <span>
+                <strong>{t('settings.privacy')}</strong>
+                <small>{t('settings.privacyHint')}</small>
+              </span>
+            </button>
+            <button
+              type="button"
+              className={`settings-nav-item${activeSection === 'about' ? ' active' : ''}`}
+              onClick={() => setActiveSection('about')}
+            >
+              <Icon name="settings" size={18} />
+              <span>
+                <strong>{t('settings.about')}</strong>
+                <small>{t('settings.aboutHint')}</small>
               </span>
             </button>
           </aside>
@@ -5627,11 +5649,11 @@ export function SettingsDialog({
             />
           ) : null}
 
-          {activeSection === 'general' || activeSection === 'privacy' ? (
+          {activeSection === 'privacy' ? (
             <PrivacySection cfg={cfg} setCfg={setCfg} />
           ) : null}
 
-          {activeSection === 'general' || activeSection === 'about' ? (
+          {activeSection === 'about' ? (
             <section className="settings-section">
               {appVersionInfo ? (
                 <dl className="settings-about-list">
