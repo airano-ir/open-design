@@ -592,9 +592,18 @@ export async function confirmPackagedLauncherRuntime(runtime: PackagedLauncherRu
     handoff.target.version === runtime.selection.pointer.version;
   const canRefreshConfirmedBinding = handoff?.state === "confirmed";
   if (handoff != null && (canConfirmResumeBinding || canRefreshConfirmedBinding)) {
+    const advancesConfirmedBinding =
+      canRefreshConfirmedBinding &&
+      (
+        handoff.source.generation !== runtime.selection.pointer.generation ||
+        handoff.source.version !== runtime.selection.pointer.version
+      );
     await writeJsonFile(runtime.launcherPaths.handoffPath, {
       ...handoff,
       payloadExecutablePath: runtime.desktopExecutablePath,
+      previous: advancesConfirmedBinding && runtime.descriptor.lastSuccessful != null
+        ? runtime.descriptor.lastSuccessful
+        : handoff.previous,
       source: runtime.selection.pointer,
       state: "confirmed",
       target: runtime.selection.pointer,
