@@ -3429,6 +3429,12 @@ describe('FileViewer SVG artifacts', () => {
 
     expect(options.deck).toBe(true);
     expect(options.baseHref).toBe('/api/projects/project-1/raw/');
+
+    expect(fileVersionPreviewOptions(
+      'project-1',
+      'slides.html',
+      '<section class="slide">A</section><section class="slide">B</section>',
+    ).deck).toBe(true);
   });
 
   it('routes history deck arrow keys to the preview unless a text input is focused', async () => {

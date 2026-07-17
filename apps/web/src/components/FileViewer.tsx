@@ -2618,13 +2618,21 @@ function fileVersionSourceToTracking(version: ProjectFileVersion): TrackingFileV
   return 'ai';
 }
 
+function sourceLooksLikeDeckPreview(source: string | null | undefined): boolean {
+  if (!source) return false;
+  return (
+    /class\s*=\s*['"](?:[^'"]*\s)?slide(?:\s|['"])/i.test(source) ||
+    sourceLooksLikeExportableDeck(source)
+  );
+}
+
 export function fileVersionPreviewOptions(
   projectId: string,
   fileName: string,
   source: string | null | undefined,
 ) {
   return {
-    deck: sourceLooksLikeExportableDeck(source),
+    deck: sourceLooksLikeDeckPreview(source),
     baseHref: projectRawUrl(projectId, baseDirFor(fileName)),
   };
 }
@@ -6984,11 +6992,7 @@ function HtmlViewer({
   // never surface and the deck becomes a static, unnavigable preview.
   const looksLikeDeck = useMemo(() => {
     const s = routingHtmlSource;
-    if (!s) return false;
-    return (
-      /class\s*=\s*['"](?:[^'"]*\s)?slide(?:\s|['"])/i.test(s) ||
-      sourceLooksLikeExportableDeck(s)
-    );
+    return sourceLooksLikeDeckPreview(s);
   }, [routingHtmlSource]);
   const effectiveDeck = isDeck || (!passiveLargeHtmlPreview && looksLikeDeck);
   const showDeckNavigation = effectiveDeck && (slideState === null || slideState.count > 0);
