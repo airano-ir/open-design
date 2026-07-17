@@ -1042,9 +1042,9 @@ async function runQuestionFormSubmitPersistenceFlow(
   const firstRunBody = (await firstRunRequestPromise).postDataJSON() as Record<string, unknown>;
   expectScenarioRunRequest(firstRunBody, entry);
 
-  const panel = page.getByTestId('questions-panel');
-  await expect(panel).toBeVisible();
-  const form = panel.locator('.question-form');
+  // Studio discovery renders the clarification form inline in the chat flow
+  // (the legacy Questions workspace tab is gone), so locate the form directly.
+  const form = page.locator('.question-form').first();
   await expect(form).toBeVisible();
 
   const toneQuestion = form.locator('.qf-field', { has: page.getByText('Visual tone') });
@@ -1052,15 +1052,15 @@ async function runQuestionFormSubmitPersistenceFlow(
   await toneQuestion.locator('label.qf-visual-card[title="Quiet SaaS"]').click();
   await expect(modern).toBeChecked();
 
-  const continueButton = panel.getByRole('button', { name: /^Continue$/i });
-  await expect(continueButton).toBeEnabled();
-  await continueButton.click();
+  await form.getByRole('button', { name: 'Send answers' }).click();
 
   const summary = page.getByTestId('question-form-summary');
   await expect(summary).toBeVisible();
   await expect(summary.getByText('Questions answered')).toBeVisible();
   await expect(summary.getByText('Visual tone')).toBeVisible();
-  await expect(summary.getByText('Modern minimal')).toBeVisible();
+  // The summary echoes the picked visual-style card (its title), not the
+  // underlying option label.
+  await expect(summary.getByText('Quiet SaaS')).toBeVisible();
 
   const { projectId, conversationId } = await getCurrentProjectContext(page);
   const messagesResponse = await page.request.get(
@@ -1070,15 +1070,17 @@ async function runQuestionFormSubmitPersistenceFlow(
   const { messages } = (await messagesResponse.json()) as { messages: Array<{ role: string; content: string }> };
   const formAnswerMessage = messages.find((message) => message.role === 'user' && message.content.includes('[form answers — discovery]'));
   expect(formAnswerMessage).toBeTruthy();
-  expect(formAnswerMessage?.content).toContain('Editorial / magazine');
-  expect(formAnswerMessage?.content).toContain('Modern minimal');
+  // Inline discovery submits the picked visual-style card and its value id,
+  // not the raw option labels.
+  expect(formAnswerMessage?.content).toContain('Visual tone: Quiet SaaS');
+  expect(formAnswerMessage?.content).toContain('[value: prototype-quiet-saas]');
 
   await page.reload();
   await expectWorkspaceReady(page);
   const restoredSummary = page.getByTestId('question-form-summary');
   await expect(restoredSummary).toBeVisible();
   await expect(restoredSummary.getByText('Visual tone')).toBeVisible();
-  await expect(restoredSummary.getByText('Modern minimal')).toBeVisible();
+  await expect(restoredSummary.getByText('Quiet SaaS')).toBeVisible();
   await expect(page.locator('.question-form')).toHaveCount(0);
 }
 
