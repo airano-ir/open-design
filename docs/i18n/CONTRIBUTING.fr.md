@@ -107,10 +107,10 @@ od:
   featured: 1               # any positive integer surfaces it under "Showcase examples"
   preview:
     type: html              # html | jsx | pptx | markdown
-    entry: index.html
   design_system:
     requires: true          # does the template read the active DESIGN.md?
-    sections: [color, typography, layout, components]
+  craft:
+    requires: [typography, color, anti-ai-slop]
   example_prompt: "A copy-pastable prompt that nicely shows what this template does."
 ---
 
@@ -119,8 +119,12 @@ od:
 Body is free-form Markdown describing the workflow the agent should follow…
 ```
 
-La grammaire complète — typed inputs, paramètres de sliders, capability gating
-— se trouve dans [`docs/skills-protocol.md`](../../docs/skills-protocol.md).
+La grammaire active complète (`od.mode`, `od.surface`, `od.craft.requires`,
+`od.critique.policy`, les indices de galerie, etc.) se trouve dans
+[`docs/skills-protocol.md`](../../docs/skills-protocol.md). D'anciens champs
+portables comme `od.inputs`, `od.parameters` et `od.capabilities_required`
+peuvent encore apparaître dans des bundles externes, mais le registre des
+skills/templates ne les consomme pas.
 
 ### Critères de merge pour un nouveau template
 

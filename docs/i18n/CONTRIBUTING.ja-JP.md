@@ -84,10 +84,10 @@ od:
   featured: 1               # 正の整数を設定すると「ショーケース」セクションに表示
   preview:
     type: html              # html | jsx | pptx | markdown
-    entry: index.html
   design_system:
     requires: true          # template がアクティブな DESIGN.md を読むか？
-    sections: [color, typography, layout, components]
+  craft:
+    requires: [typography, color, anti-ai-slop]
   example_prompt: "この template の機能をわかりやすく示すコピペ可能なプロンプト。"
 ---
 
@@ -96,7 +96,7 @@ od:
 本文はエージェントが従うべきワークフローを記述する自由形式の Markdown…
 ```
 
-型付き入力、スライダーパラメータ、ケイパビリティゲーティングの完全な文法は [`docs/skills-protocol.md`](../../docs/skills-protocol.md) にあります。
+アクティブな完全文法（`od.mode`、`od.surface`、`od.craft.requires`、`od.critique.policy`、gallery hints など）は [`docs/skills-protocol.md`](../../docs/skills-protocol.md) にあります。`od.inputs`、`od.parameters`、`od.capabilities_required` のような古いポータブルフィールドは外部バンドルに残ることがありますが、skill/template registry では消費されません。
 
 ### 新しい Design template のマージ基準
 

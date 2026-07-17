@@ -116,7 +116,7 @@ Design template คือ folder ใต้ [`design-templates/`](../../design-te
 - **PR description template** — วางลง PR body แล้วกรอก.
 - **Common rejection patterns** — เหตุผลที่เคยใช้ close พร้อมตัวอย่างจริง.
 
-Protocol spec (frontmatter grammar แบบเต็ม — typed inputs, slider parameters, craft references, testing primitives) อยู่แยกใน [`docs/skills-protocol.md`](../../docs/skills-protocol.md).
+Protocol spec (frontmatter grammar แบบ active เต็ม และ field ที่ registry ใช้งานจริง) อยู่แยกใน [`docs/skills-protocol.md`](../../docs/skills-protocol.md). Field แบบพกพารุ่นเก่าอย่าง `od.inputs`, `od.parameters`, และ `od.capabilities_required` อาจยังโผล่ใน external bundles ได้ แต่ skill/template registry ไม่ได้ consume มันแล้ว.
 
 ---
 

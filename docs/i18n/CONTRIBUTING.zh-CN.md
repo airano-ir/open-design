@@ -83,10 +83,10 @@ od:
   featured: 1               # 任何正整数都会让它出现在「Showcase examples」
   preview:
     type: html              # html | jsx | pptx | markdown
-    entry: index.html
   design_system:
     requires: true          # 这个模板是否会读激活的 DESIGN.md
-    sections: [color, typography, layout, components]
+  craft:
+    requires: [typography, color, anti-ai-slop]
   example_prompt: "一段可复制粘贴的提示词，最能体现这个模板的能力。"
 ---
 
@@ -95,7 +95,7 @@ od:
 正文是自由 Markdown，描述 agent 应该走的工作流……
 ```
 
-完整 grammar —— 类型化输入、滑块参数、能力 gating —— 在 [`docs/skills-protocol.md`](../../docs/skills-protocol.md)。
+完整的活跃 grammar（`od.mode`、`od.surface`、`od.craft.requires`、`od.critique.policy`、gallery hints 等）在 [`docs/skills-protocol.md`](../../docs/skills-protocol.md)。旧的便携字段如 `od.inputs`、`od.parameters` 和 `od.capabilities_required` 可能仍会出现在外部 bundle 里，但 skill/template registry 不会消费它们。
 
 ### 合并新设计模板的硬线
 

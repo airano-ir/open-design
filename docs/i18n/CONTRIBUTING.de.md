@@ -84,10 +84,10 @@ od:
   featured: 1               # any positive integer surfaces it under "Showcase examples"
   preview:
     type: html              # html | jsx | pptx | markdown
-    entry: index.html
   design_system:
     requires: true
-    sections: [color, typography, layout, components]
+  craft:
+    requires: [typography, color, anti-ai-slop]
   example_prompt: "A copy-pastable prompt that nicely shows what this template does."
 ---
 
@@ -96,7 +96,7 @@ od:
 Body is free-form Markdown describing the workflow the agent should follow…
 ```
 
-Die vollständige Grammatik — typed inputs, Slider-Parameter, capability gating — steht in [`docs/skills-protocol.md`](../../docs/skills-protocol.md).
+Die vollständige aktive Grammatik (`od.mode`, `od.surface`, `od.craft.requires`, `od.critique.policy`, Gallery-Hinweise und mehr) steht in [`docs/skills-protocol.md`](../../docs/skills-protocol.md). Ältere portable Felder wie `od.inputs`, `od.parameters` und `od.capabilities_required` können in externen Bundles noch auftauchen, werden aber vom Skill-/Template-Registry nicht ausgewertet.
 
 ### Merge-Messlatte für ein neues Design-Template
 
