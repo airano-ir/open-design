@@ -210,6 +210,39 @@ describe('byok-opencode runtime config', () => {
     });
   });
 
+  it.each([
+    {
+      name: 'query parameters',
+      baseUrl: 'https://gateway.example.com/anthropic?tenant=x',
+      expectedBaseUrl: 'https://gateway.example.com/anthropic/v1?tenant=x',
+    },
+    {
+      name: 'a fragment',
+      baseUrl: 'https://gateway.example.com/anthropic#route',
+      expectedBaseUrl: 'https://gateway.example.com/anthropic/v1#route',
+    },
+  ])(
+    'preserves $name when versioning an Anthropic compatibility base URL',
+    ({ baseUrl, expectedBaseUrl }) => {
+      expect(buildOpenCodeByokProviderConfig(
+        {
+          protocol: 'anthropic',
+          apiKey: 'anthropic-compatible-key',
+          baseUrl,
+        },
+        'anthropic-compatible-model',
+      )?.config).toMatchObject({
+        provider: {
+          [BYOK_OPENCODE_PROVIDER_ID]: {
+            options: {
+              baseURL: expectedBaseUrl,
+            },
+          },
+        },
+      });
+    },
+  );
+
   it('maps other native BYOK protocols to provider packages', () => {
     expect(buildOpenCodeByokProviderConfig(
       { protocol: 'anthropic', apiKey: 'sk-ant', baseUrl: 'https://api.anthropic.com' },
