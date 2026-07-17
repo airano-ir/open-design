@@ -831,11 +831,11 @@
   margin-top: 12px;
   max-width: 760px;
   padding: 10px 12px;
-  /* Lighter panel fill to match the provider cards above (was the darker
-     --bg-subtle). */
+  /* Lighter panel fill + matching 16px radius so it reads as the same card
+     family as the provider card above (.media-provider-detail). */
   background: var(--bg-panel);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: 16px;
 }
 .media-provider-coming-soon--nav {
   margin-top: 0;

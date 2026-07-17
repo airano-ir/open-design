@@ -50,6 +50,8 @@ interface Props {
   view: EntryView;
   onViewChange: (view: EntryView) => void;
   onNewProject: () => void;
+  /** Opens the project search palette (blurred modal over all projects). */
+  onOpenSearch?: () => void;
   /** When false the rail is collapsed (hidden off-canvas) on the entry view. */
   open: boolean;
   /** Collapse the rail — called after a destination is chosen or the user dismisses it. */
@@ -95,7 +97,7 @@ function NavButton({ active, ariaLabel, tooltip, onClick, testId, children }: Na
   );
 }
 
-export function EntryNavRail({ view, onViewChange, onNewProject, open, onClose, footerExtra, footerNotice, solo = false, credits, onUpgrade, onOpenSettings, canManageWorkspace = true, canOwnWorkspace = true, cloudWorkspace = true }: Props) {
+export function EntryNavRail({ view, onViewChange, onNewProject, onOpenSearch, open, onClose, footerExtra, footerNotice, solo = false, credits, onUpgrade, onOpenSettings, canManageWorkspace = true, canOwnWorkspace = true, cloudWorkspace = true }: Props) {
   const t = useT();
   const contactEmailUrl = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(t('demo.EntryNavRail.tsx.contactEmailSubject'))}&body=${encodeURIComponent(t('demo.EntryNavRail.tsx.contactEmailBody'))}`;
   const brandLabel = t('app.brand');
@@ -347,10 +349,17 @@ export function EntryNavRail({ view, onViewChange, onNewProject, open, onClose, 
       <div className="entry-nav-rail__panel">
       <div className="entry-nav-rail__group">
         <div className="entry-nav-rail__search-row">
-          <div className="entry-nav-rail__search" aria-hidden>
+          <button
+            type="button"
+            className="entry-nav-rail__search"
+            onClick={() => onOpenSearch?.()}
+            aria-label={t('common.search')}
+            data-testid="entry-nav-search"
+          >
             <Icon name="search" size={14} />
-            <input type="text" placeholder={t('common.search')} readOnly tabIndex={-1} />
-          </div>
+            <span className="entry-nav-rail__search-placeholder">{t('common.search')}</span>
+            <span className="entry-nav-rail__search-kbd" aria-hidden>⌘K</span>
+          </button>
         </div>
         <NavButton
           active={isHome}
@@ -526,7 +535,6 @@ export function EntryNavRail({ view, onViewChange, onNewProject, open, onClose, 
 
         {!cloudWorkspace ? (
           <>
-            <div className="entry-nav-rail__section-divider" aria-hidden />
             <NavButton
               active={view === 'design-systems'}
               ariaLabel={t('entry.navDesignSystems')}
@@ -544,6 +552,18 @@ export function EntryNavRail({ view, onViewChange, onNewProject, open, onClose, 
               testId="entry-nav-plugins"
             >
               <Icon name="puzzle" size={16} />
+            </NavButton>
+            {/* Signed-out rail has no account menu, so surface user settings
+                here. Opens the settings module (modal) rather than a view, so
+                it carries no active state — same action as the account menu's
+                Settings item. */}
+            <NavButton
+              ariaLabel={t('demo.EntryNavRail.tsx.settings')}
+              tooltip={t('demo.EntryNavRail.tsx.settings')}
+              onClick={() => onOpenSettings?.()}
+              testId="entry-nav-settings"
+            >
+              <Icon name="settings" size={16} />
             </NavButton>
           </>
         ) : null}

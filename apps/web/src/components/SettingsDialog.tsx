@@ -3494,10 +3494,13 @@ export function SettingsDialog({
                     <Icon name="chevron-down" size={14} />
                   </label>
                 </div>
+                {/* Theme (主题: 系统/浅色/深色) temporarily hidden per request.
+                    Restore this block to bring the theme switcher back.
                 <div className="settings-general-field">
                   <span className="settings-general-label">{t('demo.SettingsDialog.tsx.themeLabel')}</span>
                   <AppearanceSection cfg={cfg} setCfg={setCfg} />
                 </div>
+                */}
               </div>
 
               <div className="settings-general-block">

@@ -91,6 +91,7 @@ import { DesignsTab } from './DesignsTab';
 import { DesignSystemsTab } from './DesignSystemsTab';
 import { BrandsTab } from './BrandsTab';
 import { EntryNavRail, type EntryView as EntryViewKind } from './EntryNavRail';
+import { ProjectSearchModal } from './ProjectSearchModal';
 import { LibrarySection } from './LibrarySection';
 import { UpdaterPopup } from './UpdaterPopup';
 import { HomeView } from './HomeView';
@@ -509,6 +510,20 @@ export function EntryShell({
   const view: EntryViewKind = route.kind === 'home' ? route.view : 'home';
   const [newProjectOpen, setNewProjectOpen] = useState(false);
   const [railOpen, setRailOpen] = useState<boolean>(readStoredRailOpen);
+  const [projectSearchOpen, setProjectSearchOpen] = useState(false);
+
+  // ⌘K / Ctrl+K opens the project search palette — same as clicking the rail
+  // search box.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && (event.key === 'k' || event.key === 'K')) {
+        event.preventDefault();
+        setProjectSearchOpen(true);
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
   const [demoScenario, setDemoScenario] = useState<DemoScenario>('home');
   const [demoPlan, setDemoPlan] = useState<DemoPlan>('free');
   const [demoUseMode, setDemoUseMode] = useState<DemoUseMode>('cloud');
@@ -1084,6 +1099,7 @@ export function EntryShell({
           view={view}
           onViewChange={changeView}
           onNewProject={() => openNewProject()}
+          onOpenSearch={() => setProjectSearchOpen(true)}
           open={railOpen}
           onClose={() => setRailOpen(false)}
           footerExtra={railFooterActions}
@@ -1096,6 +1112,13 @@ export function EntryShell({
           canOwnWorkspace={canOwnWorkspace}
           cloudWorkspace={cloudWorkspace}
         />
+        {projectSearchOpen ? (
+          <ProjectSearchModal
+            projects={projects}
+            onOpenProject={onOpenProject}
+            onClose={() => setProjectSearchOpen(false)}
+          />
+        ) : null}
         <main className="entry-main entry-main--scroll" ref={entryMainScrollRef}>
           <div
             className={`entry-main__inner${

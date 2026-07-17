@@ -1206,7 +1206,7 @@ function mockCoverUrl(cardIndex: number): string {
   return `/mock-covers/cover-${cardIndex % MOCK_COVER_COUNT}.jpg`;
 }
 
-function projectCover(
+export function projectCover(
   project: Project,
   override: { kind: 'html' | 'image' | 'video' | 'logo'; name: string } | null,
   cardIndex: number,
@@ -1240,9 +1240,9 @@ function projectCover(
   return { kind: 'image', src: mockCoverUrl(cardIndex), style, initial };
 }
 
-type ProjectCategory = 'prototype' | 'live-artifact' | 'slide' | 'media' | 'brand';
+export type ProjectCategory = 'prototype' | 'live-artifact' | 'slide' | 'media' | 'brand';
 
-function projectCategory(project: Project): ProjectCategory {
+export function projectCategory(project: Project): ProjectCategory {
   const meta = project.metadata;
   if (meta?.intent === 'live-artifact' || project.skillId === 'live-artifact') {
     return 'live-artifact';
@@ -1255,7 +1255,7 @@ function projectCategory(project: Project): ProjectCategory {
   return 'prototype';
 }
 
-function ProjectTag({ category }: { category: ProjectCategory }) {
+export function ProjectTag({ category }: { category: ProjectCategory }) {
   const t = useT();
   const label =
     category === 'live-artifact'

@@ -53,6 +53,7 @@ import type {
 import { buildVisualAnnotationAttachment, commentTargetDisplayName } from '../comments';
 import { Icon, type IconName } from "./Icon";
 import { ComposerPlusMenu } from './ComposerPlusMenu';
+import { ComposerModePicker } from './ComposerModePicker';
 import { LibraryPicker } from './LibraryPicker';
 import { FigmaImportModal } from './FigmaImportModal';
 import { assetTitle, elementMetaOf } from './LibraryAssetMeta';
@@ -2724,6 +2725,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
             ) : null}
             {leadingAccessory}
             <span className="composer-spacer" />
+            <ComposerModePicker />
             {footerAccessory}
             {showStopButton ? (
               <button

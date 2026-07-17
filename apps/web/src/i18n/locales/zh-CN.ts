@@ -3640,7 +3640,7 @@ export const zhCN: Dict = {
   'demo.EntryNavRail.tsx.emailOpenDesign': '给 Open Design 发邮件',
   'demo.EntryNavRail.tsx.addAccount': '添加账号',
   'demo.EntryNavRail.tsx.logOut': '退出登录',
-  'demo.EntryNavRail.tsx.tooltipRecents': '最近',
+  'demo.EntryNavRail.tsx.tooltipRecents': '首页',
   'demo.EntryNavRail.tsx.teamName': 'Nexu 团队',
   'demo.EntryNavRail.tsx.inviteColleagues': '邀请同事',
   'demo.EntryNavRail.tsx.createTeam': '新建团队',

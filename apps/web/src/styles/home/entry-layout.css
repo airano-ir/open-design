@@ -1054,14 +1054,48 @@
     border-color var(--duration-ultra-fast) var(--curve-easy-ease),
     color var(--duration-ultra-fast) var(--curve-easy-ease);
 }
-.entry-nav-rail__search:focus-within {
-  flex-direction: row-reverse;
-  /* Lighter focus ring — a step up from the resting border, not the near-black
-     --text-strong which read as a heavy outline the moment you typed. */
+/* The search box is now a <button> that opens the search palette. Keep the
+   input-box look, left-align its content, and give it a plain hover. */
+.entry-nav-rail__search {
+  justify-content: flex-start;
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+}
+.entry-nav-rail__search:hover {
   border-color: var(--border-strong);
-  background: var(--rail-surface, #fff);
+}
+.entry-nav-rail__search:focus-visible {
+  outline: none;
+  border-color: var(--border-strong);
+}
+.entry-nav-rail__search-placeholder {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-faint);
+  font-size: 13px;
+}
+/* ⌘K shortcut hint pinned to the right of the search box. Taller (24px in the
+   34px box) so it hugs closer to the top/bottom edges instead of floating. */
+.entry-nav-rail__search-kbd {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 24px;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-subtle);
   color: var(--text-muted);
-  box-shadow: none;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.02em;
 }
 .entry-nav-rail__search input {
   appearance: none;
@@ -7494,4 +7528,144 @@
   .upgrade-team__benefits {
     grid-template-columns: 1fr;
   }
+}
+
+/* ── Project search palette ─────────────────────────────────────────────────
+   Opened from the rail's search box (ProjectSearchModal). A gaussian-blurred
+   full-screen scrim over a centered card with a live-filtered project list. */
+.project-search-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: flex;
+  /* Centered card (no blur) — a light dim keeps the palette legible over the
+     page without hazing it. */
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: color-mix(in srgb, #000 12%, transparent);
+  animation: project-search-fade 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+@keyframes project-search-fade {
+  from { opacity: 0; }
+}
+.project-search-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(520px, 100%);
+  max-height: 52vh;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--bg-panel);
+  box-shadow:
+    0 1px 2px color-mix(in srgb, #000 6%, transparent),
+    0 24px 60px -20px color-mix(in srgb, #000 34%, transparent);
+  animation: project-search-pop 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+@keyframes project-search-pop {
+  from { opacity: 0; transform: translateY(-6px) scale(0.985); }
+}
+.project-search-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-soft, var(--border));
+  color: var(--text-muted);
+}
+.project-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.3;
+}
+.project-search-input::placeholder { color: var(--text-faint); }
+.project-search-results {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 6px;
+  scrollbar-width: none;
+}
+.project-search-results::-webkit-scrollbar { display: none; }
+.project-search-empty {
+  padding: 28px 12px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.project-search-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  /* height:auto overrides the global button height:36px so the padding below
+     actually sets the row height. */
+  height: auto;
+  min-height: 0;
+  padding: 11px 10px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 120ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.project-search-item:hover,
+.project-search-item:focus-visible {
+  outline: none;
+  background: var(--bg-subtle);
+}
+/* Cover thumbnail — same list-row structure as the All Projects list view. */
+.project-search-item-thumb {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 36px;
+  overflow: hidden;
+  border-radius: 7px;
+  background: var(--bg-subtle);
+}
+.project-search-item-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.project-search-item-glyph {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+.project-search-item-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+}
+.project-search-item-tag {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+}
+.project-search-item-meta {
+  flex: 0 0 auto;
+  min-width: 52px;
+  text-align: right;
+  color: var(--text-faint);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
 }

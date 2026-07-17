@@ -3639,7 +3639,7 @@ export const en: Dict = {
   'demo.EntryNavRail.tsx.emailOpenDesign': 'Email Open Design',
   'demo.EntryNavRail.tsx.addAccount': 'Add account',
   'demo.EntryNavRail.tsx.logOut': 'Log out',
-  'demo.EntryNavRail.tsx.tooltipRecents': 'Recents',
+  'demo.EntryNavRail.tsx.tooltipRecents': 'Home',
   'demo.EntryNavRail.tsx.teamName': 'Nexu Team',
   'demo.EntryNavRail.tsx.inviteColleagues': 'Invite colleagues',
   'demo.EntryNavRail.tsx.createTeam': 'Create team',

@@ -1355,7 +1355,15 @@
 }
 .settings-page-shell .settings-nav-item {
   border-radius: var(--radius-large, 8px);
-  padding: 8px 10px;
+  /* Selected board breathes a uniform 10px on all four sides. */
+  padding: 10px;
+}
+/* Selected item on the settings page reads as a solid white base card (the
+   transparent sidebar behind it makes a faint tint invisible), not the modal's
+   subtle wash. */
+.settings-page-shell .settings-nav-item.active,
+.settings-page-shell .settings-nav-item.active:hover {
+  background: var(--bg-panel);
 }
 .settings-nav-item.active,
 .settings-nav-item.active:hover {

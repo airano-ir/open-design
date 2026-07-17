@@ -1,0 +1,123 @@
+// Project search palette — opened from the nav rail's search box. A blurred
+// full-screen backdrop over a centered card: type to filter every project by
+// name in real time, click a result to open it. Portaled to <body> so the
+// blur covers the whole app and the card isn't clipped by the rail.
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import type { Project } from '../types';
+import { Icon } from './Icon';
+import { useT } from '../i18n';
+import { relativeTimeLong } from '../utils/chatTime';
+import { projectCover, projectCategory, ProjectTag } from './RecentProjectsStrip';
+
+interface Props {
+  projects: Project[];
+  onOpenProject: (id: string) => Promise<boolean> | boolean | void;
+  onClose: () => void;
+}
+
+export function ProjectSearchModal({ projects, onOpenProject, onClose }: Props) {
+  const t = useT();
+  const [query, setQuery] = useState('');
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    const id = window.setTimeout(() => inputRef.current?.focus(), 0);
+    return () => window.clearTimeout(id);
+  }, []);
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const filtered = useMemo(() => {
+    const sorted = [...projects].sort((a, b) => b.updatedAt - a.updatedAt);
+    const q = query.trim().toLowerCase();
+    if (q.length === 0) return sorted;
+    return sorted.filter((p) => (p.name || '').toLowerCase().includes(q));
+  }, [projects, query]);
+
+  const openProject = (id: string) => {
+    void onOpenProject(id);
+    onClose();
+  };
+
+  return createPortal(
+    <div
+      className="project-search-backdrop"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="project-search-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('common.search')}
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <div className="project-search-input-row">
+          <Icon name="search" size={16} />
+          <input
+            ref={inputRef}
+            type="text"
+            className="project-search-input"
+            value={query}
+            placeholder={t('common.search')}
+            onChange={(event) => setQuery(event.target.value)}
+            data-testid="project-search-input"
+          />
+        </div>
+        <div className="project-search-results" role="listbox">
+          {filtered.length === 0 ? (
+            <div className="project-search-empty">{t('quickSwitcher.noMatches')}</div>
+          ) : (
+            filtered.map((project, index) => {
+              const cover = projectCover(project, null, index);
+              const showImage =
+                (cover.kind === 'image' || cover.kind === 'logo') && Boolean(cover.src);
+              return (
+                <button
+                  key={project.id}
+                  type="button"
+                  className="project-search-item"
+                  role="option"
+                  aria-selected={false}
+                  onClick={() => openProject(project.id)}
+                  data-testid={`project-search-item-${project.id}`}
+                >
+                  <span
+                    className="project-search-item-thumb"
+                    style={cover.style}
+                    aria-hidden
+                  >
+                    {showImage ? (
+                      <img src={cover.src} alt="" loading="lazy" />
+                    ) : (
+                      <span className="project-search-item-glyph">{cover.initial}</span>
+                    )}
+                  </span>
+                  <span className="project-search-item-name">
+                    {project.name || t('chat.untitledConversation')}
+                  </span>
+                  <span className="project-search-item-tag">
+                    <ProjectTag category={projectCategory(project)} />
+                  </span>
+                  <span className="project-search-item-meta">
+                    {relativeTimeLong(project.updatedAt, t)}
+                  </span>
+                </button>
+              );
+            })
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
