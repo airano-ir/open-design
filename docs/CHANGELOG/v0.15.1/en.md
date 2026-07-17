@@ -5,13 +5,13 @@ description: Sharper multimodal understanding and more coherent long-running ses
 
 # Open Design 0.15.1 — Sharper Vision, Longer Flow
 
-Open Design 0.15.1 upgrades the built-in Vela runtime from **0.0.21 to 0.0.26**, bringing its underlying OpenCode engine from **1.15.10 to 1.18.1**. Multimodal models can read finer image details, while leaner context handling helps responses stay faster and more focused on the work that matters.
+Open Design 0.15.1 brings a comprehensive upgrade to the built-in **OpenDesign Agent**. Multimodal models can read finer image details, while leaner context handling helps responses stay faster and more focused on the work that matters.
 
 ## ⚡ Core runtime upgrade
 
-- **Images arrive with more of their detail intact.** The newer OpenCode runtime improves how multimodal models receive and understand image content, making screenshot analysis, visual critique, and image-led design tasks more dependable.
+- **Images arrive with more of their detail intact.** The newer OpenDesign Agent improves how multimodal models receive and understand image content, making screenshot analysis, visual critique, and image-led design tasks more dependable.
 
-- **Longer agent sessions stay coherent and recover more gracefully.** The Vela and OpenCode upgrades improve session replay, stream and context-overflow recovery, and preservation of useful context through compaction—so extended work is less likely to lose its place or end prematurely.
+- **Longer agent sessions stay coherent and recover more gracefully.** The OpenDesign Agent upgrade improves session replay, stream and context-overflow recovery, and preservation of useful context through compaction—so extended work is less likely to lose its place or end prematurely.
 
 ## ✨ Added
 
@@ -61,9 +61,9 @@ Open Design 0.15.1 upgrades the built-in Vela runtime from **0.0.21 to 0.0.26**,
 
 ### 🤖 Agents and BYOK
 
-- **Agent interruptions recover instead of ending the job.** AMR retries transient runtime closures, and OpenCode resume EOF failures clear stale sessions and continue through the existing recovery path. (#5564, #5744)
+- **Agent interruptions recover instead of ending the job.** AMR retries transient runtime closures, and OpenDesign Agent resume EOF failures clear stale sessions and continue through the existing recovery path. (#5564, #5744)
 
-- **BYOK OpenCode failures are more accurate and less disruptive.** Permission prompts no longer block supported BYOK runs, while provider “Not Found” responses stop cleanly instead of retrying as a transient stream failure. (#5701, #5726)
+- **BYOK Agent failures are more accurate and less disruptive.** Permission prompts no longer block supported BYOK runs, while provider “Not Found” responses stop cleanly instead of retrying as a transient stream failure. (#5701, #5726)
 
 - **Model and media integrations return the expected result.** Pi model discovery reads the correct output, long model names keep their lock affordances visible, call-prefixed Codex images are accepted, and `od media generate` accepts prompt files as documented. (#5637, #5533, #5582, #5534)
 
