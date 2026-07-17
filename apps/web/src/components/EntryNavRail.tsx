@@ -119,14 +119,20 @@ function NavButton({ active, ariaLabel, tooltip, onClick, disabled, testId, chil
 // not the local client. We link out to it, deriving the section path from the one
 // workspace-settings URL the context carries. Best-effort: swap/append the section
 // segment, falling back to the raw settings URL when the path can't be rewritten.
-function teamConsoleUrl(base: string, section: 'members' | 'dashboard' | 'settings' | 'billing'): string {
+export function teamConsoleUrl(base: string, section: 'members' | 'dashboard' | 'settings' | 'billing'): string {
+  // B's console routes: members live at /team, the (global) wallet backs the
+  // billing entry. The settings URL the context carries includes the
+  // ?workspaceId deep-link param; URL parsing preserves it, so the target page
+  // opens on the SAME workspace this client is pinned to (B asks the user to
+  // confirm if their account-level selection differs).
+  const path = section === 'members' ? 'team' : section === 'billing' ? 'wallet' : section;
   try {
     const url = new URL(base);
     const segments = url.pathname.split('/').filter(Boolean);
     if (segments.length > 0 && segments[segments.length - 1] === 'settings') {
-      segments[segments.length - 1] = section;
+      segments[segments.length - 1] = path;
     } else {
-      segments.push(section);
+      segments.push(path);
     }
     url.pathname = `/${segments.join('/')}`;
     return url.toString();

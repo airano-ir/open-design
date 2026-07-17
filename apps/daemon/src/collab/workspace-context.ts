@@ -98,15 +98,30 @@ export function resolveWorkspaceSettingsUrl(
   explicit: unknown,
   env: NodeJS.ProcessEnv = process.env,
 ): string | undefined {
-  if (typeof explicit === 'string' && explicit.trim()) return explicit.trim();
+  // B's web console supports workspace deep links (?workspaceId=…): the target
+  // page opens directly when it matches the account's Active Workspace, and
+  // otherwise asks the user to confirm the switch — the confirmation IS the
+  // explicit user action that may change B's Active Workspace (the client
+  // itself never PUTs it). A bare /settings link would depend on whatever
+  // workspace another device left active, so every console link pins the id.
+  if (typeof explicit === 'string' && explicit.trim()) {
+    return withWorkspaceDeepLink(explicit.trim(), workspaceId);
+  }
   const base = env.OD_VELA_WEB_URL?.trim();
   if (!base) return undefined;
-  // The cloud web app serves the current workspace's settings at /settings (the
-  // workspace is implicit from the signed-in session — no id in the path). We
-  // still take an explicit URL first, so if the upstream context ever carries one
-  // it wins over this construction.
-  void workspaceId;
-  return `${base.replace(/\/$/, '')}/settings`;
+  return withWorkspaceDeepLink(`${base.replace(/\/$/, '')}/settings`, workspaceId);
+}
+
+function withWorkspaceDeepLink(url: string, workspaceId: string): string {
+  try {
+    const parsed = new URL(url);
+    if (!parsed.searchParams.get('workspaceId') && workspaceId.trim()) {
+      parsed.searchParams.set('workspaceId', workspaceId.trim());
+    }
+    return parsed.toString();
+  } catch {
+    return url;
+  }
 }
 
 /**
