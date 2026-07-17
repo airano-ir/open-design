@@ -19,6 +19,8 @@ export type AnalyticsEventName =
   | 'langfuse_report_result'
   | 'run_retry_attempted'
   | 'run_retry_finished'
+  // Paid media provider request outcome and bounded response retry.
+  | 'media_generation_result'
   // Packaged updater lifecycle
   | 'update_install_result'
   | 'update_apply_observed'

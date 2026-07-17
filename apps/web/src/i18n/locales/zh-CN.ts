@@ -3161,6 +3161,9 @@ export const zhCN: Dict = {
   "fileViewer.deployProviderLabel": "部署平台",
   "fileViewer.vercelProvider": "Vercel",
   "fileViewer.cloudflarePagesProvider": "Cloudflare Pages",
+  "fileViewer.deployTargetLabel": "目标",
+  "fileViewer.deployTargetPreview": "预览",
+  "fileViewer.deployTargetProduction": "生产环境",
   "fileViewer.deployToProvider": "部署到 {provider}",
   "fileViewer.redeployToProvider": "重新部署到 {provider}",
   "fileViewer.deployingToProvider": "正在部署到 {provider}…",
@@ -3875,6 +3878,8 @@ export const zhCN: Dict = {
   "settings.memoryExtractionPhaseSkipped": "已跳过",
   "settings.memoryExtractionPhaseFailed": "失败",
   "settings.memoryExtractionSkipNoProvider": "未配置 API key，LLM 抽取未运行。",
+  "settings.memoryExtractionSkipUnsupportedProvider":
+    "已保存的媒体 Provider 不能用于 LLM 记忆抽取。",
   "settings.memoryExtractionSkipDisabled": "记忆功能已关闭。",
   "settings.memoryExtractionSkipEmpty": "用户消息为空，没有可抽取的内容。",
   "settings.memoryExtractionSkipNoMatch": "本轮没有命中任何正则规则。",
@@ -3894,6 +3899,8 @@ export const zhCN: Dict = {
   "settings.memoryNoProviderBannerTitle": "LLM 抽取未启用",
   "settings.memoryNoProviderBannerBody":
     "未找到可用的 API key，LLM 抽取已跳过。可以在媒体提供商里填入 OpenAI key，或设置环境变量 ANTHROPIC_API_KEY / OPENAI_API_KEY 来启用。启发式抽取仍在运行。",
+  "settings.memoryUnsupportedProviderBannerBody":
+    "已保存媒体 Provider key，但 Memory 只能复用支持文本抽取的 Provider：OpenAI、MiniMax、AIHubMix 和 SenseAudio。请在媒体提供商中配置其中一个，设置 ANTHROPIC_API_KEY / OPENAI_API_KEY，或在高级设置中选择 Memory model。",
   "settings.libraryInstall": "安装",
   "settings.libraryInstallGithub": "GitHub",
   "settings.libraryInstallLocal": "本地路径",
