@@ -6230,6 +6230,7 @@ function HtmlViewer({
   const [deployResult, setDeployResult] = useState<WebDeployProjectFileResponse | null>(null);
   const [copiedDeployLink, setCopiedDeployLink] = useState<string | null>(null);
   const [deployProviderId, setDeployProviderId] = useState<WebDeployProviderId>(DEFAULT_DEPLOY_PROVIDER_ID);
+  const [deployTarget, setDeployTarget] = useState<'preview' | 'production'>('production');
   const [projectSocialShare, setProjectSocialShare] = useState<SocialShareResponse | null>(null);
   const [deployToken, setDeployToken] = useState('');
   const [teamId, setTeamId] = useState('');
@@ -6703,6 +6704,13 @@ function HtmlViewer({
     setCloudflareAccountId(matchingConfig?.accountId || '');
     setCloudflareZoneId(matchingConfig?.cloudflarePages?.lastZoneId || '');
     setCloudflareDomainPrefix(matchingConfig?.cloudflarePages?.lastDomainPrefix || '');
+    // The daemon's GET /api/deploy/config response currently hardcodes `target: 'preview'`
+    // as a placeholder (apps/daemon/src/deploy.ts publicDeployConfig /
+    // publicCloudflarePagesConfig) rather than persisting a real user preference, so it must
+    // not be used to seed the deploy-target selector's default. Default to 'production' to
+    // match the daemon's documented default for an omitted target on POST deploy, and to match
+    // pre-regression behavior.
+    setDeployTarget('production');
   }
 
   function cloudflareConfigHintsFromForm() {
@@ -9688,7 +9696,13 @@ function HtmlViewer({
         }
       }
       setDeployPhase('preparing-link');
-      const next = await deployProjectFile(projectId, file.name, deployProviderId, cloudflarePagesSelection);
+      const next = await deployProjectFile(
+        projectId,
+        file.name,
+        deployProviderId,
+        cloudflarePagesSelection,
+        deployProviderId === CLOUDFLARE_PAGES_PROVIDER_ID ? deployTarget : undefined,
+      );
       setDeploymentsByProvider((current) => ({
         ...current,
         [next.providerId]: next,
@@ -12807,6 +12821,20 @@ function HtmlViewer({
                   ))}
                 </select>
               </label>
+              {deployProviderId === CLOUDFLARE_PAGES_PROVIDER_ID ? (
+                <label className="deploy-target-field">
+                  <span className="deploy-field-title">{t('fileViewer.deployTargetLabel')}</span>
+                  <select
+                    value={deployTarget}
+                    onChange={(e) => {
+                      setDeployTarget(e.target.value as 'preview' | 'production');
+                    }}
+                  >
+                    <option value="preview">{t('fileViewer.deployTargetPreview')}</option>
+                    <option value="production">{t('fileViewer.deployTargetProduction')}</option>
+                  </select>
+                </label>
+              ) : null}
               <div className="field-label-row deploy-token-label-row">
                 <label htmlFor="deploy-token" className="deploy-field-title required">{t(deployProvider.tokenLabelKey)}</label>
                 <a
