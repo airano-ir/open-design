@@ -1998,7 +1998,13 @@ async function postVelaBatch(
   batch: unknown[],
   installationId: string,
   fetchImpl: typeof fetch,
+  opts: { allowAnonymousAuthFallback?: boolean } = {},
 ): Promise<LangfuseDeliveryState> {
+  // Completed-run batches may fall back to the anonymous relay when Vela
+  // rejects auth (expired Control Key, etc.). Score-only feedback must not:
+  // the matching trace is account-scoped on Vela, so anonymous delivery would
+  // orphan the scores while the feedback route has already reported accepted.
+  const allowAnonymousAuthFallback = opts.allowAnonymousAuthFallback !== false;
   const envelope = buildVelaEnvelope(batch, installationId);
   const body = JSON.stringify(envelope);
   const idempotencyKey = velaIdempotencyKey(envelope);
@@ -2027,7 +2033,10 @@ async function postVelaBatch(
       }
 
       await response.text().catch(() => '');
-      if (response.status === 401 || response.status === 403) {
+      if (
+        allowAnonymousAuthFallback &&
+        (response.status === 401 || response.status === 403)
+      ) {
         const fallback = readTelemetrySinkConfig();
         if (fallback) {
           const serialized = JSON.stringify({ batch });
@@ -2408,7 +2417,11 @@ export async function reportRunFeedback(
       await postLangfuseBatch(fallback, batch, fetchImpl);
       return;
     }
-    await postVelaBatch(config, batch, installationId, fetchImpl);
+    // Never fall back to anonymous sinks for feedback: scores need the
+    // account-scoped Vela trace from the completed run.
+    await postVelaBatch(config, batch, installationId, fetchImpl, {
+      allowAnonymousAuthFallback: false,
+    });
     return;
   }
   if (config.kind === 'relay') {

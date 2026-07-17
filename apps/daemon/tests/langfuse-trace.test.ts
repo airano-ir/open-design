@@ -2417,6 +2417,26 @@ describe('reportRunFeedback', () => {
     });
   });
 
+  it('does not fall back anonymously when Vela rejects feedback auth', async () => {
+    vi.stubEnv('VELA_CONTROL_KEY', 'ck_expired');
+    vi.stubEnv('VELA_API_URL', 'https://vela.example.test');
+    vi.stubEnv(
+      'OPEN_DESIGN_TELEMETRY_RELAY_URL',
+      'https://telemetry.open-design.ai/api/langfuse',
+    );
+    const fetchSpy = vi.fn().mockResolvedValue(new Response('', { status: 401 }));
+
+    await reportRunFeedback(
+      makeFeedbackCtx({ reasonCodes: ['matched_request'] }),
+      { fetchImpl: fetchSpy as any },
+    );
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy.mock.calls[0]![0]).toBe(
+      'https://vela.example.test/api/v1/open-design/telemetry',
+    );
+  });
+
   it('skips when metrics consent is off', async () => {
     const fetchSpy = vi.fn();
     await reportRunFeedback(makeFeedbackCtx({ prefs: { metrics: false, content: true } }), {
