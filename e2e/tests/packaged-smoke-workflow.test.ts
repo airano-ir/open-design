@@ -913,7 +913,7 @@ process.stdin.on("end", () => {
       run_ui_p0: true,
       run_playwright_critical: false,
     });
-    await expect(runScopesPrint("workflow_dispatch", { inputs: { ci_mode: "hot" } }, ["tools/pack/src/index.ts"])).resolves.toMatchObject({
+    await expect(runScopesPrint("workflow_dispatch", { inputs: { ci_mode: "hot" } }, ["tools/dev/src/index.ts"])).resolves.toMatchObject({
       ci_mode: "hot",
       run_ui_p0: false,
       run_playwright_critical: true,
@@ -943,6 +943,79 @@ process.stdin.on("end", () => {
       expect(plan).not.toHaveProperty("nix_validation_required");
       expect(plan).not.toHaveProperty("docker_validation_required");
     }
+  });
+
+  it("[P2] skips the critical fallback for pure packaged-leaf changes and stays fail-closed elsewhere", async () => {
+    const hot = { inputs: { ci_mode: "hot" } };
+
+    // Playwright never starts the desktop, packaged, or tools-pack
+    // entrypoints, so a change confined to those leaf roots keeps its
+    // package tests but must not pay the two-job critical fallback.
+    for (const file of [
+      "apps/desktop/src/main.ts",
+      "apps/packaged/src/index.ts",
+      "tools/pack/src/win/installer.ts",
+    ]) {
+      await expect(runScopesPrint("workflow_dispatch", hot, [file])).resolves.toMatchObject({
+        run_playwright_critical: false,
+        run_ui_p0: false,
+        ui_critical_validation_required: false,
+        workspace_validation_required: true,
+      });
+    }
+
+    // Fail-closed: anything that can reach the Playwright runtime — tools-dev,
+    // transitive packages (including the undeclared metatool edge), scripts,
+    // runtime resources, or unknown roots — retains the fallback.
+    for (const file of [
+      "tools/dev/src/index.ts",
+      "packages/metatool/src/index.ts",
+      "packages/agui-adapter/src/adapter.ts",
+      "packages/diagnostics/src/index.ts",
+      "packages/plugin-runtime/src/index.ts",
+      "packages/registry-protocol/src/index.ts",
+      "scripts/guard.ts",
+      "mocks/bin/opencode",
+      "some-new-root/file.ts",
+    ]) {
+      await expect(runScopesPrint("workflow_dispatch", hot, [file])).resolves.toMatchObject({
+        run_playwright_critical: true,
+        ui_critical_validation_required: true,
+      });
+    }
+
+    // A mixed leaf + runtime change retains the fallback.
+    await expect(
+      runScopesPrint("workflow_dispatch", hot, ["apps/desktop/src/main.ts", "tools/dev/src/index.ts"]),
+    ).resolves.toMatchObject({
+      run_playwright_critical: true,
+      ui_critical_validation_required: true,
+    });
+
+    // Root manifest/lock/workspace files keep enabling P0, which retains the
+    // existing critical/P0 mutual exclusion.
+    for (const file of ["package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml"]) {
+      await expect(runScopesPrint("workflow_dispatch", hot, [file])).resolves.toMatchObject({
+        run_ui_p0: true,
+        run_playwright_critical: false,
+      });
+    }
+
+    // Documentation-only changes stay exempt from both.
+    await expect(runScopesPrint("workflow_dispatch", hot, ["docs/spec.md"])).resolves.toMatchObject({
+      run_playwright_critical: false,
+      ui_critical_validation_required: false,
+      workspace_validation_required: false,
+    });
+
+    // merge_group/full behavior is unchanged: everything is required and the
+    // matrix covers critical, so the fallback stays off.
+    await expect(runScopesPrint("merge_group", {})).resolves.toMatchObject({
+      ci_mode: "full",
+      ui_critical_validation_required: true,
+      run_playwright_critical: false,
+      run_ui_p0: true,
+    });
   });
 
   it("[P2] keeps packaging (nix/docker) off the core Validate workspace gate", async () => {
