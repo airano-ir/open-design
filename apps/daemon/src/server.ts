@@ -28,6 +28,11 @@ import {
   renderConnectedExternalMcpDirective,
   resolveExclusiveSurface,
 } from './prompts/system.js';
+import {
+  computeStableSectionHashes,
+  serializeStableSections,
+  type StableSectionHashes,
+} from './prompts/stable-sections.js';
 import { emittedRenderableQuestionForm } from './question-form-detect.js';
 import { resolveProjectRoot } from './project-root.js';
 import {
@@ -4025,7 +4030,11 @@ export async function startServer({
       }
     }
 
-    const prompt = composeSystemPrompt({
+    // Hoisted verbatim out of the composeSystemPrompt() call so the exact same
+    // object both composes the prompt and feeds section-level drift
+    // attribution — a second, hand-maintained copy of these inputs would drift
+    // from the real ones and mislabel the telemetry it exists to explain.
+    const systemPromptInputs = {
       agentId,
       includeCodexImagegenOverride: false,
       skillBody,
@@ -4079,7 +4088,8 @@ export async function startServer({
       // restores the classic stack. main keeps classic as the default —
       // do NOT carry this flip into a PR against main.
       promptCoreVariant: process.env.OD_PROMPT_CORE === 'classic' ? undefined : 'slim',
-    });
+    };
+    const prompt = composeSystemPrompt(systemPromptInputs);
     // The chat handler also needs to know where the active skill lives
     // on disk so it can stage a per-project copy of its side files
     // before spawning the agent. Returning that here avoids a second
@@ -4104,6 +4114,10 @@ export async function startServer({
           .filter((part) => typeof part === 'string' && part.trim().length > 0)
           .join('\n\n---\n\n'),
       },
+      // Diagnostic only. The caller merges its own stable inputs
+      // (runtimeToolPrompt, the client system prompt) in before hashing, so the
+      // section map covers the whole fingerprint rather than just this half.
+      stableSectionInputs: systemPromptInputs,
     };
   };
 
@@ -4588,6 +4602,7 @@ export async function startServer({
       critiqueShouldRun,
       designSystemSelection,
       promptTelemetryParts,
+      stableSectionInputs,
     } =
       await composeDaemonSystemPrompt({
         agentId,
@@ -4904,7 +4919,7 @@ export async function startServer({
             currentCwd: effectiveCwd,
             currentAssistantMessageId: run.assistantMessageId ?? null,
           })
-        : { storedSessionId: null as string | null, resumeSessionId: null as string | null, newSessionId: undefined as string | undefined, isResuming: false, storedStablePromptHash: null as string | null, invalidationReason: null };
+        : { storedSessionId: null as string | null, resumeSessionId: null as string | null, newSessionId: undefined as string | undefined, isResuming: false, storedStablePromptHash: null as string | null, storedStableSections: null as StableSectionHashes | null, invalidationReason: null };
     const publishNativeSessionRecoveryMetadata = () => {
       if (!run.nativeSessionRecovery) return;
       design.runs.emit(run, 'diagnostic', {
@@ -4942,6 +4957,14 @@ export async function startServer({
       .map((part) => (typeof part === 'string' ? part.trim() : ''))
       .join('\n\n---\n\n');
     const currentStableHash = hashStableInstructions(stableInstructionFingerprint);
+    // Per-section digests of the SAME inputs the fingerprint is built from, so a
+    // drift event can name which one moved. `currentStableHash` above stays the
+    // sole re-send decider — these only label a decision already made.
+    const currentStableSections = computeStableSectionHashes({
+      ...(stableSectionInputs ?? {}),
+      runtimeToolPrompt,
+      clientSystemPrompt: systemPrompt,
+    });
     // `runtimeToolPrompt` is part of the fingerprint and varies only when the
     // tool-token grant's presence flips between turns (rare cwd/projectId edge
     // cases); any such change correctly forces a full re-send that turn.
@@ -4954,7 +4977,10 @@ export async function startServer({
       isResuming: agentResumeCtx.isResuming,
       storedStablePromptHash: agentResumeCtx.storedStablePromptHash,
       currentStableHash,
+      storedStableSections: agentResumeCtx.storedStableSections,
+      currentStableSections,
     });
+    const currentStableSectionsJson = serializeStableSections(currentStableSections);
     const browserUsePromptGuard = renderBrowserUseUnavailablePrompt(run.browserUse ?? null);
     const titleGenerationRequested =
       titleGeneration &&
@@ -5462,6 +5488,7 @@ export async function startServer({
           agentId: def.id,
           sessionId: liveSessionId,
           stablePromptHash: currentStableHash,
+          stablePromptSections: currentStableSectionsJson,
           model: safeModel ?? null,
           cwd: effectiveCwd,
           lastMessageId: run.assistantMessageId ?? null,
@@ -5973,6 +6000,7 @@ export async function startServer({
             agentId: def.id,
             sessionId: createTurnSessionId,
             stablePromptHash: currentStableHash,
+            stablePromptSections: currentStableSectionsJson,
             model: safeModel ?? null,
             cwd: effectiveCwd,
             lastMessageId: run.assistantMessageId ?? null,
@@ -5999,6 +6027,7 @@ export async function startServer({
             agentId: def.id,
             sessionId: agentResumeCtx.resumeSessionId,
             stablePromptHash: currentStableHash,
+            stablePromptSections: currentStableSectionsJson,
             model: safeModel ?? null,
             cwd: effectiveCwd,
             lastMessageId: run.assistantMessageId ?? null,
@@ -7866,6 +7895,7 @@ export async function startServer({
             agentId: def.id,
             sessionId: sessionPath,
             stablePromptHash: currentStableHash,
+            stablePromptSections: currentStableSectionsJson,
             model: safeModel ?? null,
             cwd: effectiveCwd,
             lastMessageId: run.assistantMessageId ?? null,
@@ -7895,6 +7925,7 @@ export async function startServer({
           agentId: def.id,
           sessionId: acpSession.getDurableSessionId(),
           stablePromptHash: currentStableHash,
+          stablePromptSections: currentStableSectionsJson,
           model: safeModel ?? null,
           cwd: effectiveCwd,
           lastMessageId: run.assistantMessageId ?? null,

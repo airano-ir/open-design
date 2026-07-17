@@ -92,6 +92,7 @@ interface DaemonRunRecord {
     stablePromptHash: string;
     hit: boolean;
     missReason: string | null;
+    changedSections?: string[] | null;
   };
   clientType?: 'desktop' | 'web' | 'unknown';
   promptTelemetry?: PromptStackTelemetry;
