@@ -53,7 +53,9 @@ external-link actions; it does not maintain a separate copy of the card.
 
 ## 4. Install the repository plugin in Codex
 
-Open the repository marketplace from the Codex deep link in the project handoff, install **Open Design**, and restart Codex after changing a manifest. The installed plugin must contribute both the workflow skill and an `open-design` stdio MCP. A fresh task can call `collect_brief` while the daemon is offline; account and generation calls additionally require Open Design to be running.
+Open the repository marketplace from the Codex deep link in the project handoff and install **Open Design**. After every install or update—including a manifest, skill, bundle, or cachebuster change—fully quit and relaunch Codex, then create a fresh task and select Open Design again. The plugin-page Refresh control and a fresh task by themselves do not reload an already-running MCP process.
+
+The installed plugin must contribute both the workflow skill and an `open-design` stdio MCP. The acceptance signal is a real `collect_brief` tool call whose Custom UI card appears in the fresh task; prose questions or literal `<question-form>` markup mean the tool snapshot is still stale. `collect_brief` works while the Open Design daemon is offline; account and generation calls additionally require Open Design to be running.
 
 The checked-in `.app.json` remains empty until ChatGPT Developer Mode assigns the real `asdk_app_...` identifier. That identifier belongs to the hosted app registration and must not be replaced with a fake local id.
 

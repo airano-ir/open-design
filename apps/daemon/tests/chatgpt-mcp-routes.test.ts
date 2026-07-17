@@ -212,9 +212,18 @@ describe('ChatGPT Streamable HTTP MCP', () => {
       new URL('../../../plugins/open-design/skills/create-with-open-design/SKILL.md', import.meta.url),
       'utf8',
     );
+    const repositoryInstructions = await readFile(
+      new URL('../../../AGENTS.md', import.meta.url),
+      'utf8',
+    );
     expect(skill).toContain('Call `collect_brief`');
     expect(skill).toContain('Do not emit `<question-form>`');
     expect(skill).toContain('Custom UI');
+    expect(skill).toContain('If the Open Design MCP tools are unavailable');
+    expect(skill).toContain('fully quit and relaunch Codex');
+    expect(skill).toContain('Do not synthesize a substitute form');
+    expect(repositoryInstructions).toContain('only apply inside the Open Design daemon and `apps/web` chat host');
+    expect(repositoryInstructions).toContain('must fail closed instead of synthesizing a form');
   });
 
   it('requires explicit remote auth and accepts the configured development bearer', async () => {

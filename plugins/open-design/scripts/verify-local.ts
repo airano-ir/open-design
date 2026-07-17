@@ -105,7 +105,10 @@ async function validatePackage(pluginRoot: string): Promise<void> {
   assert((entry.source as Record<string, unknown>)?.path === './plugins/open-design', 'marketplace source path is invalid');
   assert((entry.policy as Record<string, unknown>)?.installation === 'AVAILABLE', 'plugin must be available');
   assert((entry.policy as Record<string, unknown>)?.authentication === 'ON_USE', 'Cloud sign-in must happen on use');
-  await access(resolve(pluginRoot, 'skills/create-with-open-design/SKILL.md'));
+  const skill = await readFile(resolve(pluginRoot, 'skills/create-with-open-design/SKILL.md'), 'utf8');
+  assert(skill.includes('If the Open Design MCP tools are unavailable'), 'plugin skill must fail closed when its MCP is unavailable');
+  assert(skill.includes('fully quit and relaunch Codex'), 'plugin skill must require a full Codex relaunch after a stale install');
+  assert(skill.includes('Do not synthesize a substitute form'), 'plugin skill must forbid fallback text forms');
   assert(pluginInterface?.logo === './assets/logo.svg', 'plugin list logo must use the square logo asset');
   const logoSvg = await readFile(resolve(pluginRoot, 'assets/logo.svg'), 'utf8');
   assert(/viewBox="0 0 64 64"/u.test(logoSvg), 'plugin list logo must keep a square viewBox');

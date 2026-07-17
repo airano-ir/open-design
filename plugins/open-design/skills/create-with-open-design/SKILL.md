@@ -20,6 +20,12 @@ For other artifact types, explain that the first plugin version focuses on these
 
 ## Workflow
 
+### Tool availability gate
+
+If the Open Design MCP tools are unavailable in the current task, stop and tell the user to fully quit and relaunch Codex, create a fresh task, and select Open Design again. Do not synthesize a substitute form, ask for the brief as prose, or emit `<question-form>`, `<ask-question>`, JSON, or Markdown form markup. Do not search for or reuse this repository's internal question-form protocol as a fallback.
+
+After installing or updating the plugin, merely refreshing the plugin page or opening a fresh task does not prove that the desktop process reloaded its MCP tool snapshot. The acceptance signal is a real `collect_brief` tool call and Custom UI card after the full relaunch.
+
 1. Confirm the deliverable, audience, goal, required content, visual references, and must-have constraints.
    - Call `collect_brief` whenever any of the five required brief fields is missing. Pass the known values so the OpenDesign Custom UI preserves them as preselected choices, then offers simple goal, audience, content, and visual-style options for anything missing. Do not ask those questions as prose. Do not emit `<question-form>` or JSON form markup; ChatGPT/Codex displays that markup as plain text.
    - The form submits a user message beginning `[OpenDesign brief confirmed]`. Treat its values as the approved brief and continue without asking for the same information again.

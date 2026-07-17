@@ -18,7 +18,7 @@ This is the first-party ChatGPT plugin package for Open Design. The hosted ChatG
 2. Point MCP Inspector or ChatGPT Developer Mode directly at that deployment's `POST /mcp` endpoint.
 3. Validate the hosted V1 tools and Artifact card through Streamable HTTP.
 4. Add this repository marketplace in Codex developer settings to validate the skill and bundled Custom UI MCP together.
-5. Restart the desktop app after changing plugin manifests.
+5. After installing or updating the plugin, including a manifest, skill, bundle, or cachebuster change, fully quit and relaunch the desktop app. Merely pressing Refresh on the plugin page or opening a fresh task does not reload an already-running MCP process. Validate the relaunch in a new task by confirming that the first brief interaction is a real `collect_brief` Custom UI card rather than prose or literal form markup.
 
 For the one-command package and MCP contract verifier, Codex install path, and
 optional ChatGPT HTTPS-tunnel flow, see [LOCAL_TEST.md](./LOCAL_TEST.md).
