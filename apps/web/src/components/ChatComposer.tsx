@@ -3070,14 +3070,15 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
             {showStopButton ? (
               <button
                 type="button"
-                className="composer-send stop od-tooltip"
+                className="composer-send stop"
                 onClick={onStop}
-                title={t('chat.stop')}
-                data-tooltip={t('chat.stop')}
                 aria-label={t('chat.stop')}
               >
-                <Icon name="stop" size={16} />
-                <span>{t('chat.stop')}</span>
+                <ComposerRunIcon className="composer-run-glyph" />
+                <span className="composer-run-labels">
+                  <span className="composer-run-label">{t('assistant.thinking')}</span>
+                  <span className="composer-stop-label">{t('chat.stop')}</span>
+                </span>
               </button>
             ) : null}
             {showSendButton ? (
@@ -3412,6 +3413,17 @@ function sortChatCommentAttachmentsByOrder(attachments: ChatCommentAttachment[])
       return a.index - b.index;
     })
     .map((entry) => entry.attachment);
+}
+
+/* 5×5 dot-matrix "cross expand" glyph shown inside the black send button while
+   a run is executing: a plus shape blooms outward from the center in Manhattan
+   steps (delay = 220ms × Manhattan distance from the middle dot); the faint
+   base grid stays static. Dots use currentColor so the glyph adapts to the
+   button's light-on-dark (and dark-mode inverted) fill. */
+function ComposerRunIcon({ className }: { className?: string }) {
+  // Self-animating matrix loader (SMIL inside the SVG); runs on its own as an
+  // <img>, so it needs none of the <video> autoplay/loop plumbing.
+  return <img className={className} src="/composer-matrix-loader.svg" alt="" aria-hidden />;
 }
 
 function workspaceContextIcon(item: WorkspaceContextItem): IconName {

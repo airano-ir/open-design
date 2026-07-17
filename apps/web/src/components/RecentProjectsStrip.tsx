@@ -9,6 +9,8 @@
 import type { CSSProperties } from 'react';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Dialog, DialogDescription, DialogFooter, DialogTitle } from '@open-design/components';
+
+const MOVE_CONFIRM_SKIP_KEY = 'od.projects.moveConfirmSkip';
 import { useT } from '../i18n';
 import { fetchProjectFiles, fetchProjectFileText, projectFileUrl } from '../providers/registry';
 import type { DesignSystemSummary, Project, ProjectDisplayStatus, ProjectFile } from '../types';
@@ -242,6 +244,39 @@ export function RecentProjectsStrip({
   const menuContainerRef = useRef<HTMLDivElement | null>(null);
   const renameTitleId = useId();
   const confirmTitleId = useId();
+  const moveTitleId = useId();
+  // #5517 move confirmation: moving a project in/out of the team space asks
+  // once, with a persisted 不再提示 opt-out (the demo keeps it per-session;
+  // the product remembers the choice).
+  const [moveTarget, setMoveTarget] = useState<{ project: Project; action: 'to-team' | 'to-personal' } | null>(null);
+  const [moveDontRemind, setMoveDontRemind] = useState<boolean>(() => {
+    try {
+      return window.localStorage.getItem(MOVE_CONFIRM_SKIP_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+  function requestMove(project: Project, action: 'to-team' | 'to-personal') {
+    if (moveDontRemind) {
+      void (action === 'to-team' ? handleShareToTeam(project) : handleUnshareFromTeam(project));
+      return;
+    }
+    setMenuOpenId(null);
+    setMoveTarget({ project, action });
+  }
+  function commitMove() {
+    if (!moveTarget) return;
+    if (moveDontRemind) {
+      try {
+        window.localStorage.setItem(MOVE_CONFIRM_SKIP_KEY, '1');
+      } catch {
+        // best-effort persistence
+      }
+    }
+    const { project, action } = moveTarget;
+    setMoveTarget(null);
+    void (action === 'to-team' ? handleShareToTeam(project) : handleUnshareFromTeam(project));
+  }
   const actionsAvailable = Boolean(onDelete || onDuplicate || onRename || collaborationAvailable);
 
   useEffect(() => {
@@ -346,7 +381,12 @@ export function RecentProjectsStrip({
   // above the plugin gallery. We also skip rendering during the
   // load window so the section doesn't pop in and then collapse;
   // the prompt hero is enough chrome on its own.
-  if (visibleProjects.length === 0) {
+  // Home rail only: an empty rail is dropped entirely (dashed empty chrome is
+  // noise over the plugin gallery). The FULL-PAGE grids (drafts/all-projects)
+  // must keep their header + filter toolbar even when the current owner/type
+  // filter matches nothing — collapsing them stranded the user with no way to
+  // change the filter back.
+  if (visibleProjects.length === 0 && !fullPageGrid) {
     return null;
   }
 
@@ -814,7 +854,7 @@ export function RecentProjectsStrip({
                           type="button"
                           role="menuitem"
                           disabled={unsharingId === project.id}
-                          onClick={() => void handleUnshareFromTeam(project)}
+                          onClick={() => requestMove(project, 'to-personal')}
                         >
                           <Icon name="close" size={12} />
                           <span>
@@ -829,7 +869,7 @@ export function RecentProjectsStrip({
                           role="menuitem"
                           disabled={sharingId === project.id || shared || !creator.ownedBySelf}
                           title={!creator.ownedBySelf ? t('recentProjects.ownOnlyMutation') : undefined}
-                          onClick={() => void handleShareToTeam(project)}
+                          onClick={() => requestMove(project, 'to-team')}
                         >
                           <Icon name="share" size={12} />
                           <span>
@@ -924,6 +964,54 @@ export function RecentProjectsStrip({
             </button>
             <button type="button" className="primary danger" onClick={() => void commitDelete()}>
               {t('designs.menuDelete')}
+            </button>
+          </DialogFooter>
+        </Dialog>
+      ) : null}
+      {moveTarget ? (
+        <Dialog
+          className="modal-confirm"
+          role="alertdialog"
+          onClose={() => setMoveTarget(null)}
+          closeOnEscape
+          ariaLabelledBy={moveTitleId}
+        >
+          <DialogTitle id={moveTitleId}>
+            {moveTarget.action === 'to-team'
+              ? t('recentProjects.moveToTeam')
+              : t('recentProjects.moveOutOfTeam')}
+          </DialogTitle>
+          <DialogDescription>
+            {moveTarget.action === 'to-team' ? (
+              <>
+                {t('recentProjects.moveToTeamDescPre')}
+                <strong>{t('recentProjects.moveToTeamDescStrong')}</strong>
+                {t('recentProjects.moveToTeamDescPost')}
+              </>
+            ) : (
+              <>
+                {t('recentProjects.moveToPersonalDescPre')}
+                <strong>{t('recentProjects.moveToPersonalDescStrong')}</strong>
+                {t('recentProjects.moveToPersonalDescPost')}
+              </>
+            )}
+          </DialogDescription>
+          <DialogFooter className="row">
+            <label className="recent-projects__move-remind">
+              <input
+                type="checkbox"
+                checked={moveDontRemind}
+                onChange={(event) => setMoveDontRemind(event.target.checked)}
+              />
+              {t('recentProjects.moveDontRemind')}
+            </label>
+            <button type="button" onClick={() => setMoveTarget(null)}>
+              {t('designs.renameCancel')}
+            </button>
+            <button type="button" className="primary" onClick={commitMove}>
+              {moveTarget.action === 'to-team'
+                ? t('recentProjects.confirmMoveToTeam')
+                : t('recentProjects.confirmMoveToPersonal')}
             </button>
           </DialogFooter>
         </Dialog>

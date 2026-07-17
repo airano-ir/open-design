@@ -788,6 +788,10 @@ export function ExtensionsMarketplace({
   // My own member id, to keep the Personal tab to resources I actually own.
   const { context: workspaceContext } = useWorkspaceContext();
   const myMemberId = workspaceContext?.workspaceMemberId ?? null;
+  // The 团队 scope is a team-workspace surface: B's resource plane is
+  // team-only, so signed-out and personal-workspace users get no team pill
+  // (#5517 hides every team surface in the signed-out form).
+  const hasTeamWorkspace = Boolean(workspaceContext?.teamId);
   const pageViewFiredRef = useRef(false);
   useEffect(() => {
     if (pageViewFiredRef.current) return;
@@ -799,6 +803,9 @@ export function ExtensionsMarketplace({
   // #5517 lands on the official catalog first — a new workspace's personal
   // scope is empty, and the official list is the marketplace's front door.
   const [scope, setScope] = useState<MarketScope>('official');
+  useEffect(() => {
+    if (scope === 'team' && !hasTeamWorkspace) setScope('official');
+  }, [scope, hasTeamWorkspace]);
   const [query, setQuery] = useState('');
   const [menuId, setMenuId] = useState<string | null>(null);
 
@@ -1268,7 +1275,7 @@ export function ExtensionsMarketplace({
 
       <div className="plugin-marketplace__filter-block">
         <div className="plugin-marketplace__filters" aria-label={t('pluginsView.marketplaceSourceFiltersAria')}>
-          {MARKET_SCOPES.map((item) => (
+          {MARKET_SCOPES.filter((item) => item.id !== 'team' || hasTeamWorkspace).map((item) => (
             <button
               key={item.id}
               type="button"

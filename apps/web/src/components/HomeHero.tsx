@@ -2111,17 +2111,6 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
                     }}
                   />
                 </RailGroup>
-                {onStartBlankProject ? (
-                  <button
-                    type="button"
-                    className="home-hero__blank-project"
-                    data-testid="home-hero-blank-project"
-                    onClick={onStartBlankProject}
-                  >
-                    {t('homeHero.startBlankProject')}
-                    <Icon name="chevron-right" size={13} aria-hidden />
-                  </button>
-                ) : null}
               </div>
             </div>
           ) : null}

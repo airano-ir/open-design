@@ -15,6 +15,7 @@ import type {
   TrackingDesignSystemStatusValue,
 } from '@open-design/contracts/analytics';
 import { useI18n } from '../i18n';
+import { useWorkspaceContext } from '../collab/useWorkspaceContext';
 import type { Locale } from '../i18n/types';
 import {
   localizeDesignSystemCategory,
@@ -170,6 +171,14 @@ export function DesignSystemsTab({
     notifyAction('loading', message);
   };
   const [designSystemCollection, setDesignSystemCollection] = useState<DesignSystemCollection>('mine');
+  // The 团队 collection is a team-workspace surface (B's resource plane is
+  // team-only): signed-out / personal-workspace users get no team tab, and a
+  // sign-out while on it falls back to 你的体系 (#5517 signed-out form).
+  const { context: workspaceContext } = useWorkspaceContext();
+  const hasTeamWorkspace = Boolean(workspaceContext?.teamId);
+  useEffect(() => {
+    if (designSystemCollection === 'team' && !hasTeamWorkspace) setDesignSystemCollection('mine');
+  }, [designSystemCollection, hasTeamWorkspace]);
   // Ids of the caller's design systems shared into the team scope. The daemon is
   // the source of truth (it publishes them to the resource hub); we mirror the
   // list here so the "team" collection and the per-system share action stay in
@@ -591,7 +600,9 @@ export function DesignSystemsTab({
 
   const scopeTabs = [
     { value: 'mine' as const, label: t('dsManager.yourSystems'), count: userSearched.length },
-    { value: 'team' as const, label: t('pluginsView.tab.team'), count: teamSearched.length },
+    ...(hasTeamWorkspace
+      ? [{ value: 'team' as const, label: t('pluginsView.tab.team'), count: teamSearched.length }]
+      : []),
     { value: 'official' as const, label: t('dsManager.officialPresets'), count: queryScoped.length },
     { value: 'enterprise' as const, label: t('dsManager.enterprise'), comingSoon: true },
   ];
