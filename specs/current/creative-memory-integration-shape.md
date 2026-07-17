@@ -218,11 +218,13 @@ agent identity, or feature flag.
 - Critique theater addendum — gated on `cfg.enabled`, suppressed on media.
 - Active-design visual-direction override — gated on the brand being bound.
 - Connected external MCP directive — gated on connected MCP servers.
-- Claude-only `AskUserQuestion` clarifying-questions block — gated on
-  agent identity.
+- Mid-conversation `<question-form>` clarification guidance — available to
+  every agent because the form is UI-parsed assistant-text markup, not a
+  native tool call.
 
-Source: `apps/daemon/src/prompts/system.ts:430-650`. The exact line numbers
-are unstable; the gating conditions and order are the durable shape.
+Source: the tail assembly in `buildSystemPrompt` in
+`apps/daemon/src/prompts/system.ts`. The exact line numbers are unstable; the
+gating conditions and order are the durable shape.
 
 The existing precedence rule, declared in the `## Personal memory` block's
 own narrative, is: **personal memory is preferences, not hard rules; brand
