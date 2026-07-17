@@ -63,6 +63,12 @@ interface VelaWorkspaceContextOptions {
   readSession?: typeof readVelaControlApiContext;
   /** OD-local active workspace selection. Vela Web does not own this. */
   getActiveWorkspaceId?: () => string | null | undefined;
+  /**
+   * Persist a LOCAL default selection (fresh account with no selection
+   * anywhere). Never writes B's account-level Active Workspace — per the
+   * explicit-workspace handoff only a deliberate user switch PUTs current.
+   */
+  setLocalSelection?: (workspaceId: string) => void | Promise<void>;
   timeoutMs?: number;
 }
 
@@ -229,16 +235,19 @@ export function createVelaWorkspaceContextProvider(
   }
 
   /**
-   * New-user self-heal. B's workspace selection is server-side state: a fresh
-   * account has NO current workspace until something PUTs one, and until then
-   * every workspace-scoped call fails `403 missing_principal` — the client
-   * would be dead on arrival. When the current-context read reports exactly
-   * that, list the account's workspaces and select a default (the OD-active
-   * selection when it exists in the directory, else the personal workspace,
-   * else the first active membership), then let the caller re-read once.
+   * Fresh-account default pick. B's workspace selection is server-side state
+   * and a new account has NO current workspace, so every workspace-scoped
+   * call fails `403 missing_principal` until something selects one. The
+   * client picks a LOCAL default — the OD-active selection when listed, else
+   * the personal workspace, else the first active membership — and persists
+   * it locally only. It never PUTs B's Active Workspace (handoff rule: only a
+   * deliberate user switch may), with a failure cooldown so the poller can't
+   * hammer the directory.
    */
-  async function bootstrapDefaultWorkspace(session: VelaSession): Promise<boolean> {
-    if (Date.now() - lastBootstrapFailureAt < BOOTSTRAP_FAILURE_COOLDOWN_MS) return false;
+  async function pickDefaultWorkspace(
+    session: VelaSession,
+  ): Promise<WorkspaceDirectoryItem | null> {
+    if (Date.now() - lastBootstrapFailureAt < BOOTSTRAP_FAILURE_COOLDOWN_MS) return null;
     const items = await listVelaWorkspaceDirectory({
       fetch: fetchImpl,
       readSession: () => session,
@@ -254,11 +263,28 @@ export function createVelaWorkspaceContextProvider(
       candidates[0];
     if (!pick) {
       lastBootstrapFailureAt = Date.now();
-      return false;
+      return null;
     }
-    const ok = await putCurrentWorkspace(session, pick.workspaceId);
-    if (!ok) lastBootstrapFailureAt = Date.now();
-    return ok;
+    return pick;
+  }
+
+  /** Resolve the pinned workspace from the membership directory (fail-closed). */
+  async function contextFromDirectory(
+    session: VelaSession,
+    workspaceId: string,
+  ): Promise<WorkspaceCollabContext | null> {
+    const items = await listVelaWorkspaceDirectory({
+      fetch: fetchImpl,
+      readSession: () => session,
+      timeoutMs,
+    });
+    const item = items.find(
+      (entry) =>
+        entry.workspaceId === workspaceId &&
+        entry.memberStatus === 'active' &&
+        entry.lifecycleState !== 'deleted',
+    );
+    return item ? synthesizeContext(item) : null;
   }
 
   return {
@@ -271,26 +297,43 @@ export function createVelaWorkspaceContextProvider(
       const session = readSession();
       if (!session || !session.controlKey || !session.apiUrl) return null;
       try {
-        const activeWorkspaceId = options.getActiveWorkspaceId?.()?.trim() || undefined;
-        let response = await fetchCurrent(session, activeWorkspaceId);
-        if (!response.ok) {
-          // 401 = signed out at the vela layer → single-player, never bootstrap.
-          // 403 missing_principal = authenticated but no current workspace on
-          // B (fresh account) → self-heal once, then re-read.
-          if (response.status === 403 && (await responseIsMissingPrincipal(response))) {
-            if (await bootstrapDefaultWorkspace(session)) {
-              response = await fetchCurrent(session, activeWorkspaceId);
-            }
+        const localSelection = options.getActiveWorkspaceId?.()?.trim() || undefined;
+        // B's current is enrichment, not authority (explicit-workspace
+        // handoff): the daemon serves the LOCALLY pinned workspace. B's
+        // answer is adopted only when it matches — a switch made on another
+        // device/surface must not re-aim this daemon.
+        const response = await fetchCurrent(session, localSelection);
+        if (response.ok) {
+          const body: unknown = await response.json();
+          const mapped = mapVelaWorkspaceContext(body);
+          if (mapped && (!localSelection || mapped.workspaceId === localSelection)) {
+            return withDisplayName(mapped, session);
           }
-          if (!response.ok) return null;
+          if (localSelection) {
+            // Server disagrees with the pinned scope → synthesize from the
+            // membership directory instead of silently following the server.
+            return withDisplayName(await contextFromDirectory(session, localSelection), session);
+          }
+          return null;
         }
-        const body: unknown = await response.json();
-        const context = mapVelaWorkspaceContext(body);
-        if (context && !context.displayName) {
-          const displayName = velaUserDisplayName(session.user);
-          if (displayName) context.displayName = displayName;
+        // 401 = signed out at the vela layer → single-player, never bootstrap.
+        if (response.status === 401) return null;
+        const missingPrincipal =
+          response.status === 403 && (await responseIsMissingPrincipal(response));
+        if (localSelection) {
+          // The pinned workspace could not be read from current — resolve it
+          // from the directory (fail-closed when the membership is gone).
+          return withDisplayName(await contextFromDirectory(session, localSelection), session);
         }
-        return context;
+        if (missingPrincipal) {
+          // Fresh account: B has no current workspace and the client has no
+          // selection. Pick a LOCAL default (personal first) — no PUT.
+          const picked = await pickDefaultWorkspace(session);
+          if (!picked) return null;
+          await options.setLocalSelection?.(picked.workspaceId);
+          return withDisplayName(synthesizeContext(picked), session);
+        }
+        return null;
       } catch {
         // Never let a workspace-context failure throw into collab — degrade to
         // single-player. A transient B outage must not break the local editor.
@@ -307,6 +350,51 @@ async function responseIsMissingPrincipal(response: Response): Promise<boolean> 
   } catch {
     return false;
   }
+}
+
+/**
+ * Synthesize a workspace context from a membership directory item — the
+ * explicit-workspace path where B's `current` is absent or disagrees with the
+ * client's pinned scope. The directory carries identity + role + lifecycle;
+ * billing-plane fields default conservatively (no plan, derived permissions)
+ * until a per-workspace context endpoint exists on B.
+ */
+function synthesizeContext(item: WorkspaceDirectoryItem): WorkspaceCollabContext {
+  const context: WorkspaceCollabContext = {
+    workspaceId: item.workspaceId,
+    workspaceType: item.workspaceType,
+    workspaceMemberId: item.workspaceMemberId,
+    role: item.role,
+    memberStatus: item.memberStatus,
+    lifecycleState: item.lifecycleState,
+    billingState: billingStateFromLifecycle(item.lifecycleState),
+    planId: null,
+    providerMode: 'platform_credits',
+    seatSummary: buildWorkspaceSeatSummary({ seatLimit: 0, usedSeats: 0 }),
+    permissions: buildWorkspacePermissions({
+      role: item.role,
+      lifecycleState: item.lifecycleState,
+      memberStatus: item.memberStatus,
+    }),
+  };
+  if (item.workspaceType === 'team') {
+    context.teamId = item.workspaceId;
+    context.teamName = item.workspaceName;
+    const settingsUrl = resolveWorkspaceSettingsUrl(item.workspaceId, undefined);
+    if (settingsUrl) context.workspaceSettingsUrl = settingsUrl;
+  }
+  return context;
+}
+
+function withDisplayName(
+  context: WorkspaceCollabContext | null,
+  session: { user: VelaUser | null },
+): WorkspaceCollabContext | null {
+  if (context && !context.displayName) {
+    const displayName = velaUserDisplayName(session.user);
+    if (displayName) context.displayName = displayName;
+  }
+  return context;
 }
 
 function velaUserDisplayName(user: VelaUser | null): string {
@@ -350,7 +438,7 @@ export async function listVelaWorkspaceDirectory(
  */
 export function createWorkspaceContextProviderFromEnv(
   env: NodeJS.ProcessEnv = process.env,
-  options: Pick<VelaWorkspaceContextOptions, 'getActiveWorkspaceId'> = {},
+  options: Pick<VelaWorkspaceContextOptions, 'getActiveWorkspaceId' | 'setLocalSelection'> = {},
 ): WorkspaceContextProvider {
   if (env.OD_WORKSPACE_CONTEXT_SOURCE?.trim() === 'vela') {
     return createVelaWorkspaceContextProvider(options);

@@ -129,12 +129,13 @@ describe('createVelaWorkspaceContextProvider', () => {
   });
 });
 
-// New-user red line: B's server-side workspace selection means a fresh account
-// has NO current workspace until something PUTs one — every workspace-scoped
-// call then 403s with `missing_principal` and the client is dead on arrival.
-// The provider must self-heal: list the directory, select a default (personal
-// first), and re-read.
-describe('createVelaWorkspaceContextProvider missing_principal bootstrap', () => {
+// B-line explicit-workspace handoff: the client must not perceive (or write)
+// B's account-level Active Workspace. The provider serves the LOCALLY selected
+// workspace — enriched from B when B agrees, synthesized from the workspace
+// directory when it does not — and only falls back to B's current when the
+// client has no selection at all. A fresh account (no current anywhere) picks
+// a LOCAL default (personal first) without ever PUTting server state.
+describe('createVelaWorkspaceContextProvider explicit local scope', () => {
   const B_PERSONAL_CONTEXT = {
     ...B_TEAM_CONTEXT,
     workspaceId: 'ws-personal-1',
@@ -165,37 +166,77 @@ describe('createVelaWorkspaceContextProvider missing_principal bootstrap', () =>
     ],
   };
 
-  it('selects a default workspace (personal first) and retries when B has no current workspace', async () => {
-    const calls: Array<{ url: string; method: string; body?: unknown }> = [];
+  function scriptedFetch(handlers: {
+    current?: () => Response;
+    directory?: () => Response;
+    put?: () => Response;
+  }) {
+    const calls: Array<{ url: string; method: string }> = [];
     const fetchImpl = vi.fn(async (url: URL | string, init?: RequestInit) => {
       const method = init?.method ?? 'GET';
-      calls.push({ url: String(url), method, body: init?.body ? JSON.parse(String(init.body)) : undefined });
       const u = String(url);
-      if (u.includes('/workspaces/current') && method === 'GET') {
-        // First read: no principal yet; after the PUT the retry succeeds.
-        const putHappened = calls.some((c) => c.method === 'PUT');
-        return putHappened
-          ? jsonResponse(200, B_PERSONAL_CONTEXT)
-          : jsonResponse(403, { error: 'missing_principal' });
-      }
-      if (u.endsWith('/api/v1/workspaces') && method === 'GET') {
-        return jsonResponse(200, DIRECTORY);
-      }
-      if (u.includes('/workspaces/current') && method === 'PUT') {
-        return jsonResponse(200, {});
-      }
+      calls.push({ url: u, method });
+      if (u.includes('/workspaces/current') && method === 'GET' && handlers.current) return handlers.current();
+      if (u.endsWith('/api/v1/workspaces') && method === 'GET' && handlers.directory) return handlers.directory();
+      if (u.includes('/workspaces/current') && method === 'PUT' && handlers.put) return handlers.put();
       throw new Error(`unexpected fetch ${method} ${u}`);
     }) as unknown as typeof fetch;
+    return { fetchImpl, calls };
+  }
 
+  it('picks a LOCAL default (personal first) with no server write when B has no current', async () => {
+    const { fetchImpl, calls } = scriptedFetch({
+      current: () => jsonResponse(403, { error: 'missing_principal' }),
+      directory: () => jsonResponse(200, DIRECTORY),
+    });
+    const selected: string[] = [];
     const provider = createVelaWorkspaceContextProvider({
       fetch: fetchImpl,
       readSession: () => SESSION,
+      setLocalSelection: (id) => { selected.push(id); },
     });
     const context = await provider.current({});
+    expect(selected).toEqual(['ws-personal-1']);
     expect(context?.workspaceId).toBe('ws-personal-1');
-    // Personal wins over the team entry even though the team is listed first.
-    const put = calls.find((c) => c.method === 'PUT');
-    expect(put?.body).toEqual({ workspaceId: 'ws-personal-1' });
+    expect(context?.workspaceType).toBe('personal');
+    expect(context?.workspaceMemberId).toBe('wm-p1');
+    // Resource semantics from the handoff: a plain read NEVER writes the
+    // account-level Active Workspace.
+    expect(calls.some((c) => c.method === 'PUT')).toBe(false);
+  });
+
+  it('serves the local selection and ignores a mismatched server current', async () => {
+    const { fetchImpl } = scriptedFetch({
+      current: () => jsonResponse(200, B_PERSONAL_CONTEXT),
+      directory: () => jsonResponse(200, DIRECTORY),
+    });
+    const provider = createVelaWorkspaceContextProvider({
+      fetch: fetchImpl,
+      readSession: () => SESSION,
+      getActiveWorkspaceId: () => 'ws-team-1',
+    });
+    const context = await provider.current({});
+    // Another device switched B's Active Workspace to personal; this daemon's
+    // pinned scope must not follow it.
+    expect(context?.workspaceId).toBe('ws-team-1');
+    expect(context?.workspaceType).toBe('team');
+    expect(context?.teamId).toBe('ws-team-1');
+    expect(context?.workspaceMemberId).toBe('wm-1');
+  });
+
+  it('enriches from B when the server current matches the local selection', async () => {
+    const { fetchImpl } = scriptedFetch({
+      current: () => jsonResponse(200, B_TEAM_CONTEXT),
+    });
+    const provider = createVelaWorkspaceContextProvider({
+      fetch: fetchImpl,
+      readSession: () => SESSION,
+      getActiveWorkspaceId: () => 'ws-team-1',
+    });
+    const context = await provider.current({});
+    expect(context?.workspaceId).toBe('ws-team-1');
+    // Rich billing data only B carries — proof the mapped body was used.
+    expect(context?.planId).toBe('team-pro');
   });
 
   it('does not bootstrap on 401 (signed out is not a missing principal)', async () => {
@@ -205,26 +246,18 @@ describe('createVelaWorkspaceContextProvider missing_principal bootstrap', () =>
     expect((fetchImpl as unknown as ReturnType<typeof vi.fn>).mock.calls.length).toBe(1);
   });
 
-  it('cools down after a failed bootstrap instead of hammering the directory', async () => {
-    const fetchImpl = vi.fn(async (url: URL | string, init?: RequestInit) => {
-      const method = init?.method ?? 'GET';
-      const u = String(url);
-      if (u.includes('/workspaces/current') && method === 'GET') {
-        return jsonResponse(403, { error: 'missing_principal' });
-      }
-      // Empty directory → bootstrap cannot pick anything.
-      if (u.endsWith('/api/v1/workspaces')) return jsonResponse(200, { items: [] });
-      throw new Error(`unexpected fetch ${method} ${u}`);
-    }) as unknown as typeof fetch;
+  it('cools down after a failed default pick instead of hammering the directory', async () => {
+    const { fetchImpl, calls } = scriptedFetch({
+      current: () => jsonResponse(403, { error: 'missing_principal' }),
+      directory: () => jsonResponse(200, { items: [] }),
+    });
     const provider = createVelaWorkspaceContextProvider({
       fetch: fetchImpl,
       readSession: () => SESSION,
     });
     expect(await provider.current({})).toBeNull();
     expect(await provider.current({})).toBeNull();
-    const mock = fetchImpl as unknown as ReturnType<typeof vi.fn>;
-    const directoryCalls = mock.mock.calls.filter(([u]) => String(u).endsWith('/api/v1/workspaces'));
-    // Second current() within the cooldown must not re-list.
+    const directoryCalls = calls.filter((c) => c.url.endsWith('/api/v1/workspaces'));
     expect(directoryCalls.length).toBe(1);
   });
 });

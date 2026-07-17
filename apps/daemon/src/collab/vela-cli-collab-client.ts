@@ -132,6 +132,7 @@ export function createVelaCliCollabClient(options: VelaCliCollabClientOptions = 
     async heartbeatPresence(
       projectId: string,
       input: VelaCliPresenceHeartbeatInput,
+      workspaceId?: string,
     ): Promise<CollabPresenceMember[]> {
       const args = [
         'presence',
@@ -146,22 +147,23 @@ export function createVelaCliCollabClient(options: VelaCliCollabClientOptions = 
       if (input.activity !== undefined && input.activity !== null) {
         args.push('--activity-json', JSON.stringify(input.activity));
       }
-      const payload = await runJson<{ viewers?: PresenceWire[] }>(args);
+      const payload = await runJson<{ viewers?: PresenceWire[] }>(args, workspaceId);
       return Array.isArray(payload.viewers) ? payload.viewers.map(toPresenceMember) : [];
     },
 
-    async listPresence(projectId: string): Promise<CollabPresenceMember[]> {
+    async listPresence(projectId: string, workspaceId?: string): Promise<CollabPresenceMember[]> {
       const payload = await runJson<{ viewers?: PresenceWire[] }>([
         'presence',
         'list',
         projectId,
-      ]);
+      ], workspaceId);
       return Array.isArray(payload.viewers) ? payload.viewers.map(toPresenceMember) : [];
     },
 
     async leavePresence(
       projectId: string,
       input: VelaCliPresenceLeaveInput,
+      workspaceId?: string,
     ): Promise<CollabPresenceMember[]> {
       const payload = await runJson<{ viewers?: PresenceWire[] }>([
         'presence',
@@ -169,7 +171,7 @@ export function createVelaCliCollabClient(options: VelaCliCollabClientOptions = 
         projectId,
         '--client-id',
         input.clientId ?? input.memberId,
-      ]);
+      ], workspaceId);
       return Array.isArray(payload.viewers) ? payload.viewers.map(toPresenceMember) : [];
     },
   };

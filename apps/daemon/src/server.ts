@@ -522,6 +522,7 @@ import {
   getPreviewComment,
   getProject,
   countWorkspaceProjectRefs,
+  findTeamWorkspaceIdForProject,
   getWorkspaceProject,
   getTemplate,
   ensureWorkspaceProject,
@@ -633,6 +634,7 @@ import { registerTeamResourceRoutes } from './routes/team-resources.js';
 import { registerTeamResourceShareRoutes } from './routes/team-resource-share.js';
 import { createCollabRuntime } from './collab/runtime.js';
 import { createActiveWorkspaceSelectionStore } from './collab/active-workspace-selection.js';
+import { resolveWorkspaceScope } from './collab/workspace-scope.js';
 import { createWorkspaceContextProviderFromEnv } from './collab/vela-workspace-context.js';
 import { startHubEventsSubscriber } from './collab/hub-events-subscriber.js';
 import { readVelaControlApiContext } from './integrations/vela.js';
@@ -2595,6 +2597,7 @@ export async function startServer({
     : velaCliWorkspaceTeamProjectCatalog;
   const workspaceContext = createWorkspaceContextProviderFromEnv(process.env, {
     getActiveWorkspaceId: () => activeWorkspace.get(),
+    setLocalSelection: (workspaceId: string) => activeWorkspace.set(workspaceId),
   });
   function persistWorkspaceProjectSyncState(
     projectId: string,
@@ -2824,9 +2827,25 @@ export async function startServer({
   const isSharedTeamProject = async (projectId: string): Promise<boolean> => {
     return (await resolveSharedProject(projectId)) != null;
   };
+  // B-line explicit-workspace handoff: presence is a project-scoped call, so
+  // every relay pins the PROJECT's team workspace (its team projection row)
+  // ahead of the account-level selection — a workspace switch on another
+  // device/surface must never re-aim an open project's heartbeats.
+  const presenceScopeFor = (projectId: string): string | undefined =>
+    resolveWorkspaceScope({
+      projectWorkspaceId: findTeamWorkspaceIdForProject(db, projectId),
+      localSelection: activeWorkspace.get(),
+    }).workspaceId;
   registerCollabPresenceRoutes(app, {
     collab,
-    cloud: velaCliCollabClient,
+    cloud: {
+      heartbeatPresence: (projectId, input) =>
+        velaCliCollabClient.heartbeatPresence(projectId, input, presenceScopeFor(projectId)),
+      listPresence: (projectId) =>
+        velaCliCollabClient.listPresence(projectId, presenceScopeFor(projectId)),
+      leavePresence: (projectId, input) =>
+        velaCliCollabClient.leavePresence(projectId, input, presenceScopeFor(projectId)),
+    },
     isProjectShared: isSharedTeamProject,
   });
   // Author-side publish TRIGGER (C spec §D1): watch the projects THIS daemon's

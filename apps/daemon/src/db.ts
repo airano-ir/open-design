@@ -920,6 +920,23 @@ export function deleteWorkspaceProject(db: SqliteDb, workspaceId: string, projec
   ).run(workspaceId, projectId);
 }
 
+/**
+ * The workspace a project's TEAM projection lives in — the project's pinned
+ * scope for hub-facing calls (presence, comments). A project shared to (or
+ * pulled from) a team has exactly one team-visibility row; personal drafts
+ * have none and resolve to null so callers fall back to the local selection.
+ */
+export function findTeamWorkspaceIdForProject(db: SqliteDb, projectId: string): string | null {
+  const row = db.prepare(
+    `SELECT workspace_id AS workspaceId
+       FROM workspace_projects
+      WHERE project_id = ? AND visibility = 'team'
+      LIMIT 1`,
+  ).get(projectId) as { workspaceId?: string } | undefined;
+  const workspaceId = typeof row?.workspaceId === 'string' ? row.workspaceId.trim() : '';
+  return workspaceId || null;
+}
+
 export function countWorkspaceProjectRefs(db: SqliteDb, projectId: string): number {
   const row = db.prepare(
     `SELECT COUNT(*) AS count
