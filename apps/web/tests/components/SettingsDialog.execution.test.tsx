@@ -679,7 +679,7 @@ describe('SettingsDialog execution settings BYOK interactions', () => {
             apiConfig: expect.objectContaining({
               apiKey: '',
               baseUrl: 'https://api.deepseek.com',
-              model: 'deepseek-chat',
+              model: 'deepseek-v4-flash',
             }),
           }),
           'openai:https://api.openai.com/v1': expect.objectContaining({
@@ -1496,7 +1496,15 @@ describe('SettingsDialog execution settings BYOK interactions', () => {
       onPersist,
       expect.objectContaining({
         apiProtocol: 'openai',
-        model: '',
+        model: 'gpt-4o',
+        byokPendingProviderKey: 'openai:https://api.openai.com/v1',
+        byokProviderConfigDrafts: expect.objectContaining({
+          'openai:https://api.openai.com/v1': expect.objectContaining({
+            apiConfig: expect.objectContaining({
+              model: '',
+            }),
+          }),
+        }),
       }),
       {},
     );
