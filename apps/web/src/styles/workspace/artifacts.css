@@ -1605,6 +1605,15 @@ button.agent-group-rescan-btn:hover:not(:disabled) {
 .amr-auth-anchor {
   position: relative;
   display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  /* Account actions (Upgrade / console / sign-out) belong to the card's
+     header row — top-aligned with the agent logo + name + benefit badges —
+     instead of floating vertically centered mid-card. The top margin matches
+     the active card's select padding so the action pills line up with the
+     name row. */
+  align-self: flex-start;
+  margin: 13px 16px 0 8px;
 }
 .amr-coachmark {
   position: absolute;
@@ -2000,6 +2009,35 @@ button.agent-group-rescan-btn:hover:not(:disabled) {
   font-weight: 700;
   line-height: 1.2;
 }
+.agent-card-plan-badge-slot {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+/* Balance rides on the same account row as the email + plan/profile chips
+   (row 2 of the card), separated by a hairline instead of its own row. */
+.agent-card-amr-email .agent-card-amr-balance {
+  margin-left: 4px;
+  padding-left: 10px;
+  border-left: 1px solid var(--border-soft);
+}
+.agent-card-amr-balance {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  flex: 0 0 auto;
+  font-size: 12px;
+  line-height: 1.35;
+}
+.agent-card-amr-balance-label {
+  color: var(--text-soft);
+  font-weight: 600;
+}
+.agent-card-amr-balance-value {
+  color: var(--text);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
 .agent-card-amr-wallet {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -2081,15 +2119,14 @@ button.agent-group-rescan-btn:hover:not(:disabled) {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* The auth pill is one cluster of header-row actions; the old full-height
+   divider column (border-left + stretch + centered) is gone — the actions sit
+   inline with the Upgrade CTA inside `.amr-auth-anchor`. */
 .agent-card-amr-auth {
-  align-self: stretch;
-  flex: 0 1 auto;
-  min-width: 112px;
-  max-width: 280px;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
-  justify-content: center;
-  border-left: 1px solid var(--border-soft);
+  justify-content: flex-end;
 }
 .agent-card-amr-auth--placeholder {
   visibility: hidden;
@@ -2098,10 +2135,34 @@ button.agent-group-rescan-btn:hover:not(:disabled) {
 .agent-card-amr-auth .amr-account-control {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   min-width: 0;
   gap: 6px;
-  padding: 0 10px;
+  padding: 0;
+}
+/* Upgrade is the card's primary account CTA: a solid accent pill sized like
+   the neighboring account-control actions so the header action cluster reads
+   as one row of coherent buttons. */
+.agent-card-amr-upgrade {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-height: 32px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--accent-contrast, #fff);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 120ms var(--ease-out), transform 120ms var(--ease-out);
+}
+.agent-card-amr-upgrade:hover:not(:disabled) {
+  background: var(--accent-strong, var(--accent));
+  transform: translateY(-1px);
 }
 .agent-card-amr-auth .amr-account-control__status {
   display: inline-flex;

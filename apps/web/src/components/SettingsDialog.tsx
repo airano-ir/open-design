@@ -4582,24 +4582,22 @@ export function SettingsDialog({
                                               {amrCardProfileBadge}
                                             </span>
                                           ) : null}
-                                        </div>
-                                      ) : null}
-                                      {amrWalletVisible ? (
-                                        <div className="agent-card-amr-meta-row">
-                                          <span className="agent-card-amr-balance">
-                                            <span className="agent-card-amr-balance-label">
-                                              {t('settings.amrBalance')}
+                                          {amrWalletVisible ? (
+                                            <span className="agent-card-amr-balance">
+                                              <span className="agent-card-amr-balance-label">
+                                                {t('settings.amrBalance')}
+                                              </span>
+                                              <span className="agent-card-amr-balance-value">
+                                                {amrWalletValueLabel({
+                                                  balance: amrCardBalanceLabel,
+                                                  loadingLabel: t('common.loading'),
+                                                  ready: amrWalletReady || Boolean(amrCardBalanceLabel),
+                                                  snapshot: amrWalletSnapshot,
+                                                  unavailableLabel: t('settings.amrWalletUnavailable'),
+                                                })}
+                                              </span>
                                             </span>
-                                            <span className="agent-card-amr-balance-value">
-                                              {amrWalletValueLabel({
-                                                balance: amrCardBalanceLabel,
-                                                loadingLabel: t('common.loading'),
-                                                ready: amrWalletReady || Boolean(amrCardBalanceLabel),
-                                                snapshot: amrWalletSnapshot,
-                                                unavailableLabel: t('settings.amrWalletUnavailable'),
-                                              })}
-                                            </span>
-                                          </span>
+                                          ) : null}
                                         </div>
                                       ) : null}
                                       {!active && modelSummary ? (
@@ -7271,6 +7269,50 @@ function MediaProvidersSection({
       return next;
     });
   };
+  // #5517 redesign: the section renders a pill selector (one pill per
+  // available provider, with a configured-state dot) plus ONE detail card
+  // for the selected provider, instead of a flat stack of rows.
+  //
+  // The initial selection is pinned eagerly (not left null): the pill order
+  // re-sorts live as entries become configured/cleared, so deriving the
+  // default from `availableProviders[0]` on every render would make the
+  // detail card jump to a different provider mid-edit (e.g. right after
+  // Clear). Pinning keeps the card stable; clicking a pill re-pins.
+  const [activeProviderId, setActiveProviderId] = useState<string | null>(
+    () => availableProviders[0]?.id ?? null,
+  );
+  const activeProvider = availableProviders.find((p) => p.id === activeProviderId)
+    ?? availableProviders[0]
+    ?? null;
+  // Capability chip copy is derived from the provider's marketing hint —
+  // deliberately English tags ("Image · Audio · Custom model"), matching
+  // the reference design.
+  const providerCapabilityLabel = (provider: MediaProvider) => {
+    const hint = provider.hint.toLowerCase();
+    const parts: string[] = [];
+    if (/image|imagen|flux|dall|banana|leonardo|gpt-image|seedream/.test(hint)) parts.push('Image');
+    if (/video|sora|veo|wan|seedance|grok-imagine/.test(hint)) parts.push('Video');
+    if (/voice|speech|audio|sfx|tts|clone/.test(hint) || provider.id === 'senseaudio') parts.push('Audio');
+    if (/research|search/.test(hint)) parts.push('Research');
+    if (provider.supportsCustomModel) parts.push('Custom model');
+    if (parts.length === 0) {
+      return provider.credentialsRequired === false
+        ? t('settings.mediaProviderNoKeyRequired')
+        : 'API key';
+    }
+    return parts.slice(0, 3).join(' · ');
+  };
+  const activeEntry = activeProvider
+    ? cfg.mediaProviders?.[activeProvider.id] ?? { apiKey: '', baseUrl: '', model: '' }
+    : null;
+  const activeHasPendingEdit = Boolean(activeEntry?.apiKey.trim());
+  const activeIsSavedState = Boolean(
+    activeEntry && (activeHasPendingEdit || activeEntry.apiKeyConfigured) && !activeHasPendingEdit,
+  );
+  const activeTail = activeEntry?.apiKeyTail?.trim();
+  const activeClearable = Boolean(activeEntry && isStoredMediaProviderEntryPresent(activeEntry));
+  const activeApiKeyVisible = activeProvider ? visibleApiKeys.has(activeProvider.id) : false;
+  const activeRequiresCredentials = activeProvider?.credentialsRequired !== false;
 
   return (
     <section className="settings-section">
@@ -7292,8 +7334,12 @@ function MediaProvidersSection({
           {reloadNotice.message}
         </VisuallyHidden>
       ) : null}
-      {onReloadMediaProviders ? (
-        <div className="media-provider-reload-row">
+      <div className="media-provider-page-head">
+        <div>
+          <h3>{t('settings.mediaProviders')}</h3>
+          <p>{t('settings.mediaProvidersHint')}</p>
+        </div>
+        {onReloadMediaProviders ? (
           <button
             type="button"
             className={`ghost media-provider-reload-btn${
@@ -7324,169 +7370,213 @@ function MediaProvidersSection({
               </>
             )}
           </button>
+        ) : null}
+      </div>
+      <div
+        className="protocol-chips protocol-chips--providers media-provider-tabs"
+        role="tablist"
+        aria-label={t('settings.mediaProviders')}
+      >
+        <div className="protocol-chip-group protocol-chip-group--providers">
+          <span className="protocol-chip-group-label">{t('settings.mediaProviderModelProviders')}</span>
+          <div className="protocol-chip-group-options">
+            {availableProviders.map((provider) => {
+              const active = activeProvider?.id === provider.id;
+              const entry = cfg.mediaProviders?.[provider.id];
+              const connected = provider.credentialsRequired === false
+                || isStoredMediaProviderEntryPresent(entry);
+              const statusLabel = connected
+                ? t('settings.mediaProviderConfigured')
+                : t('settings.mediaProviderUnset');
+              return (
+                <button
+                  key={provider.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  className={'protocol-chip' + (active ? ' active' : '')}
+                  title={`${provider.label} · ${statusLabel}`}
+                  onClick={() => setActiveProviderId(provider.id)}
+                >
+                  <span
+                    className={`media-provider-chip-status${connected ? ' is-connected' : ' is-disconnected'}`}
+                    aria-hidden
+                  />
+                  <span>{provider.label}</span>
+                  <VisuallyHidden>{statusLabel}</VisuallyHidden>
+                </button>
+              );
+            })}
+          </div>
         </div>
-      ) : null}
-      <div className="media-provider-list">
-        {availableProviders.map((provider) => {
-          const entry = cfg.mediaProviders?.[provider.id] ?? { apiKey: '', baseUrl: '', model: '' };
-          const hasPendingEdit = Boolean(entry.apiKey.trim());
-          const isSavedState = Boolean((hasPendingEdit || entry.apiKeyConfigured) && !hasPendingEdit);
-          const tail = entry.apiKeyTail?.trim();
-          // Every provider rendered in the main list is integrated by
-          // construction (see availableProviders filter), so the inputs
-          // are always editable here. Non-integrated entries live in
-          // the "Coming soon" <details> below.
-          const disabled = false;
-          const supportsCustomModel = provider.supportsCustomModel === true;
-          const requiresCredentials = provider.credentialsRequired !== false;
-          const clearable = isStoredMediaProviderEntryPresent(entry);
-          const apiKeyVisible = visibleApiKeys.has(provider.id);
-          return (
-            <div key={provider.id} className="media-provider-row">
-              <div className="media-provider-head">
-                <div className="media-provider-meta">
-                  {/*
-                    Provider name + "Saved" badge sit on a single row.
-                    The badge used to render below the name with a green
-                    success-pill treatment, which clashed with the green
-                    "Integrated" badge on the right of the same row and
-                    pushed the model hint two lines down. Inline + a
-                    neutral muted treatment keeps the row scannable: green
-                    means "we support this", blue means "you configured
-                    it", gray means "your key is persisted" — three
-                    distinct hues, three distinct meanings.
-                  */}
-                  <div className="media-provider-name-row">
-                    <span className="media-provider-name">{provider.label}</span>
-                    {isSavedState ? (
-                      <span
-                        className="field-status-badge field-status-badge--inline"
-                        title={t('settings.connectorsSavedTitle')}
-                      >
-                        {tail
-                          ? t('settings.connectorsSavedWithTail', { tail })
-                          : t('settings.connectorsSaved')}
-                      </span>
-                    ) : null}
-                  </div>
-                  <span className="media-provider-hint">{provider.hint}</span>
-                </div>
-                {/*
-                  Right-side badges deliberately omitted now: every row
-                  in this list is "Integrated" by definition and the
-                  "Configured" pill duplicated the inline "Saved" chip
-                  next to the provider name. Three pills per row read
-                  as warnings; one chip reads as status.
-                */}
+      </div>
+      {activeProvider && activeEntry ? (
+        <article className="media-provider-detail">
+          <div className="media-provider-detail-head">
+            <div className="media-provider-meta">
+              <div className="media-provider-name-row">
+                <h3>{activeProvider.label}</h3>
+                {activeIsSavedState ? (
+                  <span
+                    className="field-status-badge field-status-badge--inline"
+                    title={t('settings.connectorsSavedTitle')}
+                  >
+                    {activeTail
+                      ? t('settings.connectorsSavedWithTail', { tail: activeTail })
+                      : t('settings.connectorsSaved')}
+                  </span>
+                ) : null}
               </div>
-              {provider.id === 'grok' ? <XaiOAuthControl /> : null}
-              {requiresCredentials ? (
-                <div className="media-provider-body">
-                  <div className="media-provider-secret-field">
-                    <input
-                      type={apiKeyVisible ? 'text' : 'password'}
-                      value={entry.apiKey}
-                      placeholder={isSavedState ? t('settings.connectorsReplaceKeyPlaceholder') : t('settings.mediaProviderPlaceholder')}
-                      aria-label={`${provider.label} ${t('settings.mediaProviderApiKey')}`}
-                      disabled={disabled}
-                      onFocus={() => {
-                        trackSettingsMediaProvidersClick(analytics.track, {
-                          page_name: 'settings',
-                          area: 'media_providers',
-                          element: 'key_input',
-                          providers_id: provider.id,
-                          is_configured: clearable,
-                        });
-                      }}
-                      onChange={(e) => updateProvider(provider, { apiKey: e.target.value })}
-                    />
-                    <button
-                      type="button"
-                      className="secret-visibility-button"
-                      disabled={disabled}
-                      aria-label={
-                        apiKeyVisible
-                          ? `${provider.label} ${t('settings.hideKey')}`
-                          : `${provider.label} ${t('settings.showKey')}`
-                      }
-                      aria-pressed={apiKeyVisible}
-                      onClick={() => toggleApiKeyVisibility(provider.id)}
-                    >
-                        <Icon name={apiKeyVisible ? 'eye' : 'eye-off'} size={15} />
-                      </button>
-                    </div>
+              <p>{activeProvider.hint || providerCapabilityLabel(activeProvider)}</p>
+            </div>
+            <div className="media-provider-badges">
+              <span className="media-provider-badge integrated">
+                {providerCapabilityLabel(activeProvider)}
+              </span>
+              {activeProvider.credentialsRequired === false ? (
+                <span className="media-provider-badge on">
+                  {t('settings.mediaProviderNoKeyRequired')}
+                </span>
+              ) : null}
+            </div>
+          </div>
+          {activeProvider.id === 'grok' ? <XaiOAuthControl /> : null}
+          {activeRequiresCredentials ? (
+            <div className="media-provider-detail-grid">
+              <label className="media-provider-detail-field">
+                <span>{t('settings.mediaProviderApiKey')}</span>
+                <div className="media-provider-secret-field">
                   <input
-                    value={entry.baseUrl}
-                    placeholder={provider.defaultBaseUrl || t('settings.mediaProviderBaseUrlPlaceholder')}
-                    aria-label={`${provider.label} ${t('settings.mediaProviderBaseUrl')}`}
-                    disabled={disabled}
+                    type={activeApiKeyVisible ? 'text' : 'password'}
+                    value={activeEntry.apiKey}
+                    placeholder={activeIsSavedState ? t('settings.connectorsReplaceKeyPlaceholder') : t('settings.mediaProviderPlaceholder')}
+                    aria-label={`${activeProvider.label} ${t('settings.mediaProviderApiKey')}`}
                     onFocus={() => {
                       trackSettingsMediaProvidersClick(analytics.track, {
                         page_name: 'settings',
                         area: 'media_providers',
-                        element: 'url_input',
-                        providers_id: provider.id,
-                        is_configured: clearable,
+                        element: 'key_input',
+                        providers_id: activeProvider.id,
+                        is_configured: activeClearable,
                       });
                     }}
-                    onChange={(e) => updateProvider(provider, { baseUrl: e.target.value })}
+                    onChange={(e) => updateProvider(activeProvider, { apiKey: e.target.value })}
                   />
-                  {supportsCustomModel ? (
-                    <input
-                      value={entry.model ?? ''}
-                      placeholder="gemini-3.1-flash-image-preview"
-                      aria-label={`${provider.label} model`}
-                      disabled={disabled}
-                      onChange={(e) => updateProvider(provider, { model: e.target.value })}
-                    />
-                  ) : null}
                   <button
                     type="button"
-                    className="ghost"
-                    disabled={!clearable}
-                    onClick={() => {
-                      trackSettingsMediaProvidersClick(analytics.track, {
-                        page_name: 'settings',
-                        area: 'media_providers',
-                        element: 'clear',
-                        providers_id: provider.id,
-                        // The click reports the state at the moment the
-                        // user pressed Clear; the actual clear only lands
-                        // after they confirm the dialog below, but the
-                        // dashboard cares about the intent signal.
-                        is_configured: clearable,
-                      });
-                      // Match the existing window.confirm guard the rest of
-                      // the app uses for destructive actions (conversation
-                      // delete, design delete, file delete in FileWorkspace).
-                      // Without this a stray click on the row's Clear button
-                      // wipes the saved key with no recovery. Issue #737.
-                      if (
-                        !confirm(
-                          t('settings.mediaProviderClearConfirm', {
-                            name: provider.label,
-                          }),
-                        )
-                      ) {
-                        return;
-                      }
-                      updateProvider(provider, {
-                        apiKey: '',
-                        baseUrl: '',
-                        model: '',
-                        apiKeyConfigured: false,
-                        apiKeyTail: '',
-                      });
-                    }}
+                    className="secret-visibility-button"
+                    aria-label={
+                      activeApiKeyVisible
+                        ? `${activeProvider.label} ${t('settings.hideKey')}`
+                        : `${activeProvider.label} ${t('settings.showKey')}`
+                    }
+                    aria-pressed={activeApiKeyVisible}
+                    onClick={() => toggleApiKeyVisibility(activeProvider.id)}
                   >
-                    {t('settings.mediaProviderClear')}
+                    <Icon name={activeApiKeyVisible ? 'eye' : 'eye-off'} size={15} />
                   </button>
                 </div>
-              ) : null}
+              </label>
+              <label className="media-provider-detail-field">
+                <span>{t('settings.mediaProviderBaseUrl')}</span>
+                <input
+                  value={activeEntry.baseUrl}
+                  placeholder={activeProvider.defaultBaseUrl || t('settings.mediaProviderBaseUrlPlaceholder')}
+                  aria-label={`${activeProvider.label} ${t('settings.mediaProviderBaseUrl')}`}
+                  onFocus={() => {
+                    trackSettingsMediaProvidersClick(analytics.track, {
+                      page_name: 'settings',
+                      area: 'media_providers',
+                      element: 'url_input',
+                      providers_id: activeProvider.id,
+                      is_configured: activeClearable,
+                    });
+                  }}
+                  onChange={(e) => updateProvider(activeProvider, { baseUrl: e.target.value })}
+                />
+              </label>
+              <label className="media-provider-detail-field">
+                <span>{t('settings.mediaProviderModel')}</span>
+                <input
+                  value={activeEntry.model ?? ''}
+                  placeholder={activeProvider.customModelPlaceholder ?? t('settings.mediaProviderModelPlaceholder')}
+                  aria-label={`${activeProvider.label} ${t('settings.mediaProviderModel')}`}
+                  onChange={(e) => updateProvider(activeProvider, { model: e.target.value })}
+                />
+              </label>
             </div>
-          );
-        })}
-      </div>
+          ) : (
+            <div className="media-provider-no-key">
+              <Icon name="check" size={15} />
+              <div>
+                <strong>{t('settings.mediaProviderNoKeyRequired')}</strong>
+                <span>{t('settings.mediaProviderNoKeyHint')}</span>
+              </div>
+            </div>
+          )}
+          <div className="media-provider-docs-callout">
+            <div>
+              <strong>{t('settings.mediaProviderDocsTitle')}</strong>
+              <span>{t('settings.mediaProviderDocsHint')}</span>
+            </div>
+            {activeProvider.docsUrl ? (
+              <a
+                href={sanitizeHttpsUrl(activeProvider.docsUrl) ?? undefined}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ghost-link"
+              >
+                {t('settings.agentInstall.docs')}
+                <Icon name="external-link" size={14} />
+              </a>
+            ) : null}
+          </div>
+          <div className="media-provider-detail-actions">
+            <span className="hint">{t('settings.mediaProviderSaveHint')}</span>
+            <button
+              type="button"
+              className="ghost"
+              disabled={!activeClearable}
+              onClick={() => {
+                trackSettingsMediaProvidersClick(analytics.track, {
+                  page_name: 'settings',
+                  area: 'media_providers',
+                  element: 'clear',
+                  providers_id: activeProvider.id,
+                  // The click reports the state at the moment the
+                  // user pressed Clear; the actual clear only lands
+                  // after they confirm the dialog below, but the
+                  // dashboard cares about the intent signal.
+                  is_configured: activeClearable,
+                });
+                // Match the existing window.confirm guard the rest of
+                // the app uses for destructive actions (conversation
+                // delete, design delete, file delete in FileWorkspace).
+                // Without this a stray click on the Clear button wipes
+                // the saved key with no recovery. Issue #737.
+                if (
+                  !confirm(
+                    t('settings.mediaProviderClearConfirm', {
+                      name: activeProvider.label,
+                    }),
+                  )
+                ) {
+                  return;
+                }
+                updateProvider(activeProvider, {
+                  apiKey: '',
+                  baseUrl: '',
+                  model: '',
+                  apiKeyConfigured: false,
+                  apiKeyTail: '',
+                });
+              }}
+            >
+              {t('settings.mediaProviderClear')}
+            </button>
+          </div>
+        </article>
+      ) : null}
       {comingSoonProviders.length > 0 ? (
         // Roadmap drawer. We still want to advertise that we know
         // these providers exist (so users don't ask "where is Fal?"),

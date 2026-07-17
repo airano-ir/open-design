@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SettingsDialog } from '../../src/components/SettingsDialog';
 import { DEFAULT_CONFIG } from '../../src/state/config';
@@ -74,10 +73,13 @@ describe('SettingsDialog media providers', () => {
 
     await waitFor(() => {
       expect(reloadMock).toHaveBeenCalledTimes(1);
-      expect(screen.getByText('Saved · ••••9876')).toBeTruthy();
       expect(screen.getByText('Reloaded media provider settings from the local daemon.')).toBeTruthy();
     });
 
+    // The redesigned section shows one detail card at a time; select the
+    // OpenAI pill to inspect the daemon-refreshed entry.
+    fireEvent.click(screen.getByRole('tab', { name: /OpenAI/ }));
+    expect(screen.getByText('Saved · ••••9876')).toBeTruthy();
     expect((screen.getByLabelText('OpenAI Base URL') as HTMLInputElement).value).toBe(
       'https://daemon.example/v1',
     );
@@ -196,6 +198,10 @@ describe('SettingsDialog media providers', () => {
       expect(screen.getByText('Reloaded media provider settings from the local daemon.')).toBeTruthy();
     });
 
+    // Both openai and fal start configured, so the default detail card is
+    // Fal.ai (configured providers sort alphabetically). Switch to OpenAI to
+    // verify the daemon-refreshed values.
+    fireEvent.click(screen.getByRole('tab', { name: /OpenAI/ }));
     expect((screen.getByLabelText('OpenAI Base URL') as HTMLInputElement).value).toBe(
       'https://daemon.example/v1',
     );
@@ -402,6 +408,9 @@ describe('SettingsDialog media providers', () => {
       },
     );
 
+    // One detail card renders at a time; select OpenAI first (the default
+    // selection is Nano Banana, alphabetically first among configured).
+    fireEvent.click(screen.getByRole('tab', { name: /OpenAI/ }));
     fireEvent.change(screen.getByLabelText('OpenAI API key'), {
       target: { value: 'sk-openai-first-save' },
     });
@@ -414,6 +423,8 @@ describe('SettingsDialog media providers', () => {
     });
     expect(onPersist).toHaveBeenCalledTimes(1);
 
+    // Switch the card to Nano Banana for the newer pending edits.
+    fireEvent.click(screen.getByRole('tab', { name: /Nano Banana/ }));
     fireEvent.change(screen.getByLabelText('Nano Banana API key'), {
       target: { value: 'sk-nanobanana-pending' },
     });
@@ -458,9 +469,12 @@ describe('SettingsDialog media providers', () => {
       { onPersist },
     );
 
-    const openaiRow = screen.getByText('OpenAI').closest('.media-provider-row') as HTMLElement | null;
-    if (!openaiRow) throw new Error('Expected OpenAI media provider row');
-    fireEvent.click(within(openaiRow).getByRole('button', { name: 'Clear' }));
+    // Select the OpenAI pill and confirm its detail card is showing before
+    // hitting the card's Clear action (the card renders one provider at a
+    // time, with the provider name as the card heading).
+    fireEvent.click(screen.getByRole('tab', { name: /OpenAI/ }));
+    expect(screen.getByRole('heading', { name: 'OpenAI' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
 
     await waitFor(() => {
       expect(onPersist).toHaveBeenCalledWith(
@@ -492,15 +506,17 @@ describe('SettingsDialog media providers', () => {
       { onPersist },
     );
 
-    const row = screen.getByText('Nano Banana').closest('.media-provider-row') as HTMLElement | null;
-    if (!row) throw new Error('Expected Nano Banana media provider row');
+    // Nano Banana is the only configured provider, so it is the default
+    // detail card; select its pill explicitly and verify the card heading.
+    fireEvent.click(screen.getByRole('tab', { name: /Nano Banana/ }));
+    expect(screen.getByRole('heading', { name: 'Nano Banana' })).toBeTruthy();
 
     expect(screen.getByText('Saved · ••••5555')).toBeTruthy();
     expect(screen.getByLabelText('Nano Banana API key').getAttribute('placeholder')).toBe(
       'Paste a new key to replace the saved one',
     );
 
-    fireEvent.click(within(row).getByRole('button', { name: 'Clear' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
 
     await waitFor(() => {
       expect(onPersist).toHaveBeenCalledWith(
@@ -509,7 +525,7 @@ describe('SettingsDialog media providers', () => {
       );
     });
 
-    expect((screen.getByLabelText('Nano Banana model') as HTMLInputElement).value).toBe('');
+    expect((screen.getByLabelText('Nano Banana Model') as HTMLInputElement).value).toBe('');
     expect(confirmSpy).toHaveBeenCalledTimes(1);
     confirmSpy.mockRestore();
   });

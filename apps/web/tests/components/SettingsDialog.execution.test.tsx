@@ -3520,10 +3520,16 @@ describe('SettingsDialog media providers interactions', () => {
       { initialSection: 'media' },
     );
 
-    const names = Array.from(document.querySelectorAll('.media-provider-name')).map((node) =>
-      node.textContent?.trim(),
+    // #5517 layout: providers render as selector pills (configured first),
+    // each carrying a status dot; the pill title encodes label + state.
+    const pills = Array.from(
+      document.querySelectorAll('.media-provider-tabs .protocol-chip'),
     );
-    expect(names.slice(0, 2)).toEqual(['MiniMax', 'OpenAI']);
+    const titles = pills.map((pill) => pill.getAttribute('title'));
+    expect(titles.slice(0, 2)).toEqual(['MiniMax · Configured', 'OpenAI · Configured']);
+    expect(pills[0]?.querySelector('.media-provider-chip-status.is-connected')).toBeTruthy();
+    expect(pills[1]?.querySelector('.media-provider-chip-status.is-connected')).toBeTruthy();
+    expect(pills[2]?.querySelector('.media-provider-chip-status.is-connected')).toBeFalsy();
   });
 
   it('renders non-integrated providers in the coming-soon section without input fields', () => {
@@ -3545,6 +3551,10 @@ describe('SettingsDialog media providers interactions', () => {
       { mode: 'daemon', agentId: 'codex' },
       { initialSection: 'media' },
     );
+
+    // #5517 layout: one detail card at a time — select the provider pill
+    // before asserting on its fields.
+    fireEvent.click(screen.getByRole('tab', { name: /ElevenLabs/ }));
 
     const apiKeyInput = screen.getByLabelText('ElevenLabs API key') as HTMLInputElement;
     const baseUrlInput = screen.getByLabelText('ElevenLabs Base URL') as HTMLInputElement;
@@ -3623,6 +3633,10 @@ describe('SettingsDialog media providers interactions', () => {
       { initialSection: 'media' },
     );
 
+    // #5517 layout: one detail card at a time — select the provider pill
+    // before editing its fields.
+    fireEvent.click(screen.getByRole('tab', { name: /FishAudio/ }));
+
     fireEvent.change(screen.getByLabelText('FishAudio API key'), {
       target: { value: 'fish-key' },
     });
@@ -3685,13 +3699,18 @@ describe('SettingsDialog media providers interactions', () => {
       { initialSection: 'media' },
     );
 
+    // #5517 layout: one detail card at a time — select the provider pill
+    // before editing its fields. The model override renders as a labeled
+    // "Model" field in the detail card.
+    fireEvent.click(screen.getByRole('tab', { name: /Nano Banana/ }));
+
     fireEvent.change(screen.getByLabelText('Nano Banana API key'), {
       target: { value: 'banana-key' },
     });
     fireEvent.change(screen.getByLabelText('Nano Banana Base URL'), {
       target: { value: 'https://gateway.example.com' },
     });
-    fireEvent.change(screen.getByLabelText('Nano Banana model'), {
+    fireEvent.change(screen.getByLabelText('Nano Banana Model'), {
       target: { value: 'gemini-3.1-flash-image-preview' },
     });
 
@@ -3724,6 +3743,9 @@ describe('SettingsDialog media providers interactions', () => {
       );
       onPersist.mockRejectedValueOnce(rejection);
 
+      // #5517 layout: select the OpenAI pill first — nothing is configured
+      // here, so the default detail card is the first alphabetical provider.
+      fireEvent.click(screen.getByRole('tab', { name: /OpenAI/ }));
       fireEvent.change(screen.getByLabelText('OpenAI API key'), {
         target: { value: 'sk-unmount-media' },
       });
@@ -3755,6 +3777,8 @@ describe('SettingsDialog media providers interactions', () => {
       { initialSection: 'media' },
     );
 
+    // #5517 layout: select the OpenAI pill before editing its detail card.
+    fireEvent.click(screen.getByRole('tab', { name: /OpenAI/ }));
     fireEvent.change(screen.getByLabelText('OpenAI API key'), {
       target: { value: 'sk-unsaved-media' },
     });
@@ -3767,6 +3791,7 @@ describe('SettingsDialog media providers interactions', () => {
       { mode: 'daemon', agentId: 'codex' },
       { initialSection: 'media' },
     );
+    fireEvent.click(screen.getByRole('tab', { name: /OpenAI/ }));
     fireEvent.change(screen.getByLabelText('OpenAI API key'), {
       target: { value: 'sk-unsaved-media-2' },
     });
