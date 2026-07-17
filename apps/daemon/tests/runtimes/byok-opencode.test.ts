@@ -151,6 +151,65 @@ describe('byok-opencode runtime config', () => {
     });
   });
 
+  it.each([
+    {
+      name: 'MiniMax',
+      baseUrl: 'https://api.minimax.io/anthropic',
+      expectedBaseUrl: 'https://api.minimax.io/anthropic/v1',
+    },
+    {
+      name: 'DeepSeek',
+      baseUrl: 'https://api.deepseek.com/anthropic',
+      expectedBaseUrl: 'https://api.deepseek.com/anthropic/v1',
+    },
+    {
+      name: 'MiMo',
+      baseUrl: 'https://token-plan-cn.xiaomimimo.com/anthropic',
+      expectedBaseUrl: 'https://token-plan-cn.xiaomimimo.com/anthropic/v1',
+    },
+  ])(
+    'adds the Anthropic API version to the $name compatibility base URL',
+    ({ baseUrl, expectedBaseUrl }) => {
+      expect(buildOpenCodeByokProviderConfig(
+        {
+          protocol: 'anthropic',
+          apiKey: 'anthropic-compatible-key',
+          baseUrl,
+        },
+        'anthropic-compatible-model',
+      )?.config).toMatchObject({
+        provider: {
+          [BYOK_OPENCODE_PROVIDER_ID]: {
+            npm: '@ai-sdk/anthropic',
+            options: {
+              baseURL: expectedBaseUrl,
+            },
+          },
+        },
+      });
+    },
+  );
+
+  it('preserves an Anthropic compatibility base URL that already has a version segment', () => {
+    expect(buildOpenCodeByokProviderConfig(
+      {
+        protocol: 'anthropic',
+        apiKey: 'anthropic-compatible-key',
+        baseUrl: 'https://gateway.example.com/anthropic/v2/proxy',
+      },
+      'anthropic-compatible-model',
+    )?.config).toMatchObject({
+      provider: {
+        [BYOK_OPENCODE_PROVIDER_ID]: {
+          npm: '@ai-sdk/anthropic',
+          options: {
+            baseURL: 'https://gateway.example.com/anthropic/v2/proxy',
+          },
+        },
+      },
+    });
+  });
+
   it('maps other native BYOK protocols to provider packages', () => {
     expect(buildOpenCodeByokProviderConfig(
       { protocol: 'anthropic', apiKey: 'sk-ant', baseUrl: 'https://api.anthropic.com' },

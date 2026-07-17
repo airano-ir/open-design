@@ -101,8 +101,8 @@ function normalizeProviderBaseUrl(
 ): string {
   const trimmed = baseUrl.trim().replace(/\/+$/, '');
   if (!trimmed) return trimmed;
-  if (protocol === 'anthropic' && isExactOrigin(trimmed, 'https://api.anthropic.com')) {
-    return 'https://api.anthropic.com/v1';
+  if (protocol === 'anthropic' && !hasVersionedApiPath(trimmed)) {
+    return `${trimmed}/v1`;
   }
   if (protocol === 'openai' && isExactOrigin(trimmed, 'https://api.openai.com')) {
     return 'https://api.openai.com/v1';
@@ -253,6 +253,10 @@ function safeUrlPathname(value: string): string {
   } catch {
     return '';
   }
+}
+
+function hasVersionedApiPath(value: string): boolean {
+  return /\/v\d+(?:\/|$)/.test(safeUrlPathname(value));
 }
 
 function apiVersionOption(
