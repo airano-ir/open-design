@@ -9,6 +9,11 @@ import {
   orderedCreateChips,
   type HomeHeroChip,
 } from './home-hero/chips';
+import {
+  ENTRY_RAIL_STATE_EVENT,
+  ENTRY_RAIL_TOGGLE_EVENT,
+  readStoredRailOpen,
+} from './entryRailBridge';
 import { homeHeroChipLabel } from './home-hero/chip-labels';
 
 type WorkspaceChromeTab =
@@ -462,6 +467,21 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
   // both the "+" button and the Cmd/Ctrl+T shortcut from one place.
   const onboardingActive = route.kind === 'home' && route.view === 'onboarding';
 
+  // Mirror of EntryShell's entry nav-rail open state, only used to reflect it
+  // on the pinned Home tab's sidebar toggle (aria-expanded). EntryShell owns
+  // the state and broadcasts changes as a window event because it renders in a
+  // sibling React tree; the localStorage seed covers the frames before the
+  // first broadcast arrives.
+  const [entryRailOpen, setEntryRailOpen] = useState<boolean>(readStoredRailOpen);
+  useEffect(() => {
+    const onRailState = (event: Event) => {
+      const open = (event as CustomEvent<{ open?: unknown }>).detail?.open;
+      if (typeof open === 'boolean') setEntryRailOpen(open);
+    };
+    window.addEventListener(ENTRY_RAIL_STATE_EVENT, onRailState);
+    return () => window.removeEventListener(ENTRY_RAIL_STATE_EVENT, onRailState);
+  }, []);
+
   function clearHoverTimer() {
     if (hoverTimerRef.current !== null) {
       window.clearTimeout(hoverTimerRef.current);
@@ -783,6 +803,14 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
       dragSuppressClickRef.current = false;
       return;
     }
+    // Clicking the pinned Home tab always lands on the home page, whatever
+    // entry section (projects / design-systems / …) the tab last showed.
+    // Keyboard tab-cycling goes through activateTab directly and keeps the
+    // remembered section.
+    if (tab.kind === 'entry' && tab.view !== 'home') {
+      activateTab({ ...tab, view: 'home' });
+      return;
+    }
     activateTab(tab);
   }
 
@@ -1079,30 +1107,71 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
               onMouseEnter={(event) => scheduleHoverPreview(tab.id, event.currentTarget)}
               onMouseLeave={dismissHoverPreview}
             >
-              <button
-                type="button"
-                className="workspace-tab__main"
-                onClick={() => openTab(tab)}
-                onFocus={(event) => scheduleHoverPreview(tab.id, event.currentTarget.parentElement ?? event.currentTarget)}
-                onBlur={dismissHoverPreview}
-              >
-                <span className="workspace-tab__icon" aria-hidden>
-                  <Icon name={display.icon} size={14} />
-                </span>
-                <span className="workspace-tab__label">{display.title}</span>
-              </button>
-              {isPinned ? null : (
+              {isPinned && active && tab.view === 'home' ? (
+                /* Home view only: the pinned tab is the sidebar toggle — a Home
+                   button would be redundant since you are already home. */
                 <button
                   type="button"
-                  className="workspace-tab__close od-tooltip"
-                  aria-label={t('common.close')}
-                  title={t('common.close')}
-                  data-tooltip={t('common.close')}
+                  className="workspace-tab__rail-toggle od-tooltip"
+                  aria-label={entryRailOpen ? t('entry.navCollapse') : t('entry.navExpand')}
+                  aria-expanded={entryRailOpen}
+                  title={entryRailOpen ? t('entry.navCollapse') : t('entry.navExpand')}
+                  data-tooltip={entryRailOpen ? t('entry.navCollapse') : t('entry.navExpand')}
                   data-tooltip-placement="bottom"
-                  onClick={() => closeTab(tab.id)}
+                  data-testid="workspace-home-rail-toggle"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    window.dispatchEvent(new CustomEvent(ENTRY_RAIL_TOGGLE_EVENT));
+                  }}
                 >
-                  <Icon name="close" size={10} />
+                  <Icon name="panel-left" size={14} />
                 </button>
+              ) : isPinned && active ? (
+                /* Any other entry section (settings / all-projects / community /
+                   design-systems …): show the Home icon; clicking returns home. */
+                <button
+                  type="button"
+                  className="workspace-tab__rail-toggle od-tooltip"
+                  aria-label={t('entry.navHome')}
+                  title={t('entry.navHome')}
+                  data-tooltip={t('entry.navHome')}
+                  data-tooltip-placement="bottom"
+                  data-testid="workspace-home-nav"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    openTab(tab);
+                  }}
+                >
+                  <Icon name="home" size={14} />
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="workspace-tab__main"
+                    onClick={() => openTab(tab)}
+                    onFocus={(event) => scheduleHoverPreview(tab.id, event.currentTarget.parentElement ?? event.currentTarget)}
+                    onBlur={dismissHoverPreview}
+                  >
+                    <span className="workspace-tab__icon" aria-hidden>
+                      <Icon name={display.icon} size={14} />
+                    </span>
+                    <span className="workspace-tab__label">{display.title}</span>
+                  </button>
+                  {isPinned ? null : (
+                    <button
+                      type="button"
+                      className="workspace-tab__close od-tooltip"
+                      aria-label={t('common.close')}
+                      title={t('common.close')}
+                      data-tooltip={t('common.close')}
+                      data-tooltip-placement="bottom"
+                      onClick={() => closeTab(tab.id)}
+                    >
+                      <Icon name="close" size={10} />
+                    </button>
+                  )}
+                </>
               )}
             </div>
           );

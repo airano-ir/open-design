@@ -94,6 +94,7 @@ import { DesignsTab } from './DesignsTab';
 import { DesignSystemsTab } from './DesignSystemsTab';
 import { BrandsTab } from './BrandsTab';
 import { EntryNavRail, type EntryView as EntryViewKind } from './EntryNavRail';
+import { CloudSignInTip } from './CloudSignInTip';
 import { LibrarySection } from './LibrarySection';
 import { UpdaterPopup } from './UpdaterPopup';
 import { WhatsNewPopup } from './WhatsNewPopup';
@@ -173,21 +174,21 @@ import {
   providerModelsCacheKey,
   type ProviderModelsCache,
 } from './providerModelsCache';
+import {
+  ENTRY_RAIL_STATE_EVENT,
+  ENTRY_RAIL_TOGGLE_EVENT,
+  RAIL_OPEN_STORAGE_KEY,
+  readStoredRailOpen,
+} from './entryRailBridge';
 
 // Persist the entry nav-rail open/collapsed state so it survives both a
 // home -> project -> home navigation (EntryShell unmounts on the project
 // route) and a full reload. Without this the rail always reset to its
-// collapsed default on return.
-const RAIL_OPEN_STORAGE_KEY = 'od.entry.railOpen';
-
-function readStoredRailOpen(): boolean {
-  if (typeof window === 'undefined') return false;
-  try {
-    return window.localStorage.getItem(RAIL_OPEN_STORAGE_KEY) === 'true';
-  } catch {
-    return false;
-  }
-}
+// collapsed default on return. The storage key, the rail toggle/state window
+// events, and the seed reader live in `entryRailBridge` so the pinned Home
+// tab's sidebar toggle (WorkspaceTabsBar, a sibling React tree) can share
+// them without importing this module's graph.
+export { ENTRY_RAIL_STATE_EVENT, ENTRY_RAIL_TOGGLE_EVENT };
 
 function writeStoredRailOpen(open: boolean): void {
   if (typeof window === 'undefined') return;
@@ -693,7 +694,20 @@ export function EntryShell({
   const [railOpen, setRailOpen] = useState<boolean>(readStoredRailOpen);
   useEffect(() => {
     writeStoredRailOpen(railOpen);
+    // Broadcast the state so chrome outside this tree (the pinned Home tab's
+    // sidebar toggle) can mirror it via aria-expanded.
+    window.dispatchEvent(
+      new CustomEvent(ENTRY_RAIL_STATE_EVENT, { detail: { open: railOpen } }),
+    );
   }, [railOpen]);
+
+  // The pinned Home tab (WorkspaceTabsBar) carries a sidebar toggle; it lives
+  // in a sibling tree, so the request arrives as a window event.
+  useEffect(() => {
+    const onToggle = () => setRailOpen((v) => !v);
+    window.addEventListener(ENTRY_RAIL_TOGGLE_EVENT, onToggle);
+    return () => window.removeEventListener(ENTRY_RAIL_TOGGLE_EVENT, onToggle);
+  }, []);
   const [localProviderModelsCache, setLocalProviderModelsCache] =
     useState<ProviderModelsCache>({});
   const hasSharedProviderModelsCache =
@@ -953,21 +967,34 @@ export function EntryShell({
   // the credits chip + account row. Without a cloud identity there is no
   // account menu (the rail shows the brand logo instead), so the settings
   // chip stays in the footer as the only settings entry for local/BYOK use.
-  const railFooterActions = workspaceContext ? null : (
-    <button
-      type="button"
-      className="entry-settings-chip od-tooltip"
-      onClick={() => onOpenSettings()}
-      data-tooltip={t('entry.openSettingsTitle')}
-      data-tooltip-placement="right"
-      aria-label={t('entry.openSettingsAria')}
-      data-testid="entry-settings-button"
-    >
-      <span className="entry-settings-chip__icon" aria-hidden>
-        <Icon name="settings" size={13} />
-      </span>
-      <span className="entry-settings-chip__label">{t('settings.title')}</span>
-    </button>
+  // The updater popup host also lives here (the entry topbar is gone — the
+  // rail toggle is the pinned Home tab in the workspace tabs bar); it renders
+  // nothing until an update is in flight.
+  const railFooterActions = (
+    <>
+      <UpdaterPopup
+        allowSilentUpdates={config.allowSilentUpdates}
+        onAllowSilentUpdatesChange={(allowSilentUpdates) =>
+          onConfigPersist({ ...config, allowSilentUpdates })
+        }
+      />
+      {workspaceContext ? null : (
+        <button
+          type="button"
+          className="entry-settings-chip od-tooltip"
+          onClick={() => onOpenSettings()}
+          data-tooltip={t('entry.openSettingsTitle')}
+          data-tooltip-placement="right"
+          aria-label={t('entry.openSettingsAria')}
+          data-testid="entry-settings-button"
+        >
+          <span className="entry-settings-chip__icon" aria-hidden>
+            <Icon name="settings" size={13} />
+          </span>
+          <span className="entry-settings-chip__label">{t('settings.title')}</span>
+        </button>
+      )}
+    </>
   );
 
   // Drop the personalized recommendation. Fired when the user browses all
@@ -1096,60 +1123,36 @@ export function EntryShell({
           onInvite={() => changeView('members')}
           onSignInCloud={() => navigate({ kind: 'home', view: 'onboarding' })}
           footerExtra={railFooterActions}
+          footerNotice={!workspaceContext && !workspaceLoading ? <CloudSignInTip /> : null}
         />
         <main className="entry-main entry-main--scroll" ref={entryMainScrollRef}>
-          <div
-            className={[
-              'entry-main__topbar',
-              view === 'home' && railOpen ? 'entry-main__topbar--home-clean' : '',
-            ].filter(Boolean).join(' ')}
-          >
-            <button
-              type="button"
-              className="entry-rail-toggle"
-              onClick={() => setRailOpen((prev) => !prev)}
-              aria-label={t('entry.navExpand')}
-              aria-expanded={railOpen}
-              data-testid="entry-rail-toggle"
-            >
-              <Icon name="panel-left" size={20} />
-            </button>
-            {/* #5517 clean topbar: the workspace-teams link, run switcher, and
-                use-everywhere chip are dropped from the entry topbar so the
-                content rises (the settings cog + social/updater actions live in
-                the nav rail footer). The run switcher stays available in the
-                project chrome header / home hero; use-everywhere and the teams
-                link stay reachable via the extensions nav and settings. */}
-            <UpdaterPopup
-              allowSilentUpdates={config.allowSilentUpdates}
-              onAllowSilentUpdatesChange={(allowSilentUpdates) =>
-                onConfigPersist({ ...config, allowSilentUpdates })
-              }
+          {/* #5517: no entry topbar. The rail toggle is the pinned Home tab in
+              the workspace tabs bar (entryRailBridge), the updater popup host
+              lives in the rail footer, and everything below is fixed-position
+              or portalled so it occupies no layout space here. */}
+          <WhatsNewPopup active={view === 'home'} />
+          {amrBalanceGateBlock ? (
+            <AmrBalanceDialog
+              reason={amrBalanceGateBlock.reason}
+              balanceUsd={amrBalanceGateBlock.snapshot.balanceUsd}
+              profile={amrBalanceGateBlock.snapshot.profile}
+              entrySource="home_balance_gate_upgrade"
+              metricsConsent={config.telemetry?.metrics === true}
+              installationId={config.installationId}
+              onClose={() => amrBalanceGateBlock.resolve('dismiss')}
+              onResolved={() => amrBalanceGateBlock.resolve('retry')}
             />
-            <WhatsNewPopup active={view === 'home'} />
-            {amrBalanceGateBlock ? (
-              <AmrBalanceDialog
-                reason={amrBalanceGateBlock.reason}
-                balanceUsd={amrBalanceGateBlock.snapshot.balanceUsd}
-                profile={amrBalanceGateBlock.snapshot.profile}
-                entrySource="home_balance_gate_upgrade"
-                metricsConsent={config.telemetry?.metrics === true}
-                installationId={config.installationId}
-                onClose={() => amrBalanceGateBlock.resolve('dismiss')}
-                onResolved={() => amrBalanceGateBlock.resolve('retry')}
-              />
-            ) : null}
-            {amrLowBalanceWarn ? (
-              <AmrLowBalanceDialog
-                balanceUsd={amrLowBalanceWarn.snapshot.balanceUsd}
-                profile={amrLowBalanceWarn.snapshot.profile}
-                entrySource="home_low_balance_warn_recharge"
-                metricsConsent={config.telemetry?.metrics === true}
-                installationId={config.installationId}
-                onDecision={amrLowBalanceWarn.resolve}
-              />
-            ) : null}
-          </div>
+          ) : null}
+          {amrLowBalanceWarn ? (
+            <AmrLowBalanceDialog
+              balanceUsd={amrLowBalanceWarn.snapshot.balanceUsd}
+              profile={amrLowBalanceWarn.snapshot.profile}
+              entrySource="home_low_balance_warn_recharge"
+              metricsConsent={config.telemetry?.metrics === true}
+              installationId={config.installationId}
+              onDecision={amrLowBalanceWarn.resolve}
+            />
+          ) : null}
           <div
             className={[
               'entry-main__inner',

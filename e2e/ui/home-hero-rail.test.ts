@@ -463,7 +463,7 @@ test('[P1] home left rail expands and collapses from the shell controls', async 
 
   const shell = page.locator('.entry');
   const rail = page.locator('.entry-nav-rail');
-  const expand = page.getByTestId('entry-rail-toggle');
+  const expand = page.getByTestId('workspace-home-rail-toggle');
 
   await expect(shell).not.toHaveClass(/entry--rail-open/);
   await expect(rail).toHaveAttribute('aria-hidden', 'true');

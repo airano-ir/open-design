@@ -14,8 +14,9 @@ test('[P0] @critical home loads with the primary entry controls', async ({ page 
   await gotoEntryHome(page);
 
   // The rail is collapsed by default — the hero owns the first screen and the
-  // only chrome affordance is the topbar toggle. Expand to reach the rail nav.
-  await expect(page.getByTestId('entry-rail-toggle')).toBeVisible();
+  // only chrome affordance is the pinned Home tab's sidebar toggle in the
+  // workspace tabs bar. Expand to reach the rail nav.
+  await expect(page.getByTestId('workspace-home-rail-toggle')).toBeVisible();
   await expect(page.getByTestId('home-hero-input')).toBeVisible();
   await ensureRailOpen(page);
   await expect(page.getByTestId('entry-nav-logo')).toBeVisible();

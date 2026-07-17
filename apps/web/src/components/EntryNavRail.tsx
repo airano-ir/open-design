@@ -461,6 +461,9 @@ export function EntryNavRail({
                           </button>
                         ) : null}
                       </div>
+                      {/* #5517 rows: 积分 (opens the credits panel) + a static
+                          附加积分 0 — vela reports one combined balance, so the
+                          bonus row mirrors the demo's constant. */}
                       <button
                         type="button"
                         className="entry-nav-rail__menu-credits-row"
@@ -470,19 +473,36 @@ export function EntryNavRail({
                         }}
                       >
                         <span className="entry-nav-rail__menu-credits-label">
-                          <RemixIcon name="battery-charge-line" size={14} /> {t('entry.creditsRemaining')}
+                          <RemixIcon name="battery-charge-line" size={14} /> {t('entry.credits')}
                         </span>
                         <span className="entry-nav-rail__menu-credits-value">
                           {creditsBalance != null ? creditsBalance.toLocaleString('en-US') : '—'}
                           <Icon name="chevron-right" size={14} />
                         </span>
                       </button>
+                      <div className="entry-nav-rail__menu-credits-row">
+                        <span className="entry-nav-rail__menu-credits-label">
+                          <RemixIcon name="battery-charge-line" size={14} /> {t('entry.creditsBonus')}
+                        </span>
+                        <span className="entry-nav-rail__menu-credits-value">0</span>
+                      </div>
                     </div>
                   ) : null}
+                  <button
+                    type="button"
+                    className="entry-nav-rail__menu-item"
+                    role="menuitem"
+                    onClick={() => {
+                      setAccountOpen(false);
+                      onOpenSettings?.();
+                    }}
+                  >
+                    <Icon name="settings" size={15} /> {t('entry.accountSettings')}
+                  </button>
                   {onToggleTheme ? (
                     <button
                       type="button"
-                      className="entry-nav-rail__menu-item is-primary"
+                      className="entry-nav-rail__menu-item"
                       role="menuitem"
                       onClick={() => {
                         setAccountOpen(false);
@@ -544,17 +564,7 @@ export function EntryNavRail({
                       </div>
                     ) : null}
                   </div>
-                  <button
-                    type="button"
-                    className="entry-nav-rail__menu-item"
-                    role="menuitem"
-                    onClick={() => {
-                      setAccountOpen(false);
-                      onOpenSettings?.();
-                    }}
-                  >
-                    <Icon name="settings" size={15} /> {t('entry.accountSettings')}
-                  </button>
+                  
                   <div className="entry-nav-rail__menu-divider" />
                   <a
                     className="entry-nav-rail__menu-item"

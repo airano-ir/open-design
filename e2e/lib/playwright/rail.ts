@@ -4,16 +4,27 @@ import type { Page } from '@playwright/test';
 
 /**
  * The entry nav rail is collapsed by default; its destinations
- * (`entry-nav-*`) only become interactable once the rail is expanded via the
- * topbar toggle. This helper is idempotent — when the rail is already docked
- * the toggle is hidden, so it no-ops. Call it before clicking any rail nav
- * item or asserting the rail/logo is visible.
+ * (`entry-nav-*`) only become interactable once the rail is expanded. The
+ * expand affordance is the pinned Home tab's sidebar toggle in the workspace
+ * tabs bar (#5517 removed the entry topbar) — it only renders on the Home
+ * view; on any other entry view the pinned tab is a Home shortcut instead,
+ * so this helper returns Home first when it needs to expand. Idempotent —
+ * no-ops when the rail is already docked open.
  */
 export async function ensureRailOpen(page: Page): Promise<void> {
-  const toggle = page.getByTestId('entry-rail-toggle');
-  // The toggle is only present while collapsed (it's display:none once docked).
-  if (await toggle.isVisible().catch(() => false)) {
-    await toggle.scrollIntoViewIfNeeded();
+  const shell = page.locator('.entry');
+  const alreadyOpen = await shell
+    .evaluate((el) => el.classList.contains('entry--rail-open'))
+    .catch(() => false);
+  if (!alreadyOpen) {
+    const toggle = page.getByTestId('workspace-home-rail-toggle');
+    if (!(await toggle.isVisible().catch(() => false))) {
+      const homeNav = page.getByTestId('workspace-home-nav');
+      if (await homeNav.isVisible().catch(() => false)) {
+        await homeNav.click();
+      }
+    }
+    await expect(toggle).toBeVisible();
     await toggle.click();
   }
   await expect(page.locator('.entry')).toHaveClass(/entry--rail-open/);

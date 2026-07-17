@@ -5,6 +5,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { EntryShell } from '../../src/components/EntryShell';
+import { ENTRY_RAIL_TOGGLE_EVENT } from '../../src/components/entryRailBridge';
 import { AMR_LOGIN_TIMEOUT_MS } from '../../src/components/amrLoginPolling';
 import { I18nProvider } from '../../src/i18n';
 import type { AgentInfo, AppConfig } from '../../src/types';
@@ -375,7 +376,11 @@ describe('EntryShell new project rail', () => {
     globalThis.fetch = fetchMock as typeof fetch;
     const props = renderHome();
 
-    fireEvent.click(screen.getByTestId('entry-rail-toggle'));
+    // The rail toggle lives in the workspace tabs bar (a sibling tree), which
+    // this render doesn't mount — expand through the bridge event instead.
+    act(() => {
+      window.dispatchEvent(new CustomEvent(ENTRY_RAIL_TOGGLE_EVENT));
+    });
     fireEvent.click(screen.getByTestId('entry-nav-new-project'));
 
     await waitFor(() => {

@@ -532,6 +532,34 @@
   background: var(--bg-subtle);
   color: var(--text);
 }
+/* While the vela device-auth flow is pending the card stops being a button:
+   the body swaps to a progress line + cancel, so the hover lift would lie. */
+.entry-local-mode-tip.is-signing {
+  cursor: default;
+}
+.entry-local-mode-tip.is-signing:hover {
+  transform: none;
+  border-color: var(--border);
+  background: var(--bg-panel);
+}
+.entry-local-mode-tip__cancel {
+  justify-self: start;
+  margin-top: 2px;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: border-color 120ms, background 120ms, color 120ms;
+}
+.entry-local-mode-tip__cancel:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-subtle);
+  color: var(--text);
+}
 
 /* ---------- Right-side hover tooltip (rail items only) ----------
    The rail is icon-only, so each button advertises its label via a
@@ -5947,6 +5975,26 @@
   min-height: 26px;
   font-size: 13px;
   color: #fafafa;
+}
+/* The 积分 row is a button (opens the credits panel) — reset the primitives
+   button chrome so it reads as the same flat row as the static bonus line
+   (#5517), not an inset pill. */
+button.entry-nav-rail__menu-credits-row {
+  width: 100%;
+  border: 0;
+  background: none;
+  padding: 0;
+  border-radius: 6px;
+  font: inherit;
+  box-shadow: none;
+  cursor: pointer;
+}
+button.entry-nav-rail__menu-credits-row:hover:not(:disabled) {
+  background: color-mix(in srgb, #fafafa 8%, transparent);
+  border-color: transparent;
+}
+button.entry-nav-rail__menu-credits-row:active:not(:disabled) {
+  transform: none;
 }
 .entry-nav-rail__menu-credits-label {
   display: inline-flex;

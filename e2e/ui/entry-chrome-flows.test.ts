@@ -136,10 +136,10 @@ test('[P0] @critical entry chrome exposes the primary home creation surface and 
 
   await gotoEntryHome(page);
   await expect(page.getByTestId('recent-projects-strip')).toHaveCount(0);
-  // The nav rail is collapsed by default — only the topbar toggle shows.
-  // Expand it to assert the rail and its logo are reachable.
-  await expect(page.getByTestId('entry-rail-toggle')).toBeVisible();
-  await page.getByTestId('entry-rail-toggle').click();
+  // The nav rail is collapsed by default — the pinned Home tab in the
+  // workspace tabs bar is the expand toggle (#5517: no entry topbar).
+  await expect(page.getByTestId('workspace-home-rail-toggle')).toBeVisible();
+  await page.getByTestId('workspace-home-rail-toggle').click();
   await expect(page.locator('.entry-nav-rail')).toBeVisible();
   await expect(page.getByTestId('entry-nav-logo')).toBeVisible();
   await expect(page.locator('.entry-brand')).toHaveCount(0);

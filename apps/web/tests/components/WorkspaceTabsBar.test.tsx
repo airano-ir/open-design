@@ -82,6 +82,22 @@ function createDataTransfer(): DataTransfer {
   } as unknown as DataTransfer;
 }
 
+// The active entry tab renders icon-only (sidebar toggle on the home view,
+// Home nav pill on any other section), so its current section is no longer
+// observable through textContent. Read it from the persisted tab state.
+function storedEntryTabView(): string | null {
+  const raw = window.localStorage.getItem('open-design:workspace-tabs:v1');
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as {
+      tabs?: Array<{ kind?: string; view?: string }>;
+    };
+    return parsed.tabs?.find((tab) => tab.kind === 'entry')?.view ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function mockTabRect(element: HTMLElement, left: number, width = 100) {
   Object.defineProperty(element, 'getBoundingClientRect', {
     configurable: true,
@@ -135,8 +151,9 @@ describe('WorkspaceTabsBar navigation semantics', () => {
     fireEvent.click(screen.getByRole('button', { name: 'New tab' }));
 
     await waitFor(() => {
-      const labels = screen.getAllByRole('tab').map((tab) => tab.textContent ?? '');
-      expect(labels.filter((label) => label.includes('Home'))).toHaveLength(1);
+      expect(screen.getAllByRole('tab')).toHaveLength(1);
+      // The active Home tab renders as the sidebar toggle (icon-only pill).
+      expect(screen.getAllByTestId('workspace-home-rail-toggle')).toHaveLength(1);
     });
 
     // Navigate to projectRoute using rerender with a fresh object reference
@@ -155,9 +172,11 @@ describe('WorkspaceTabsBar navigation semantics', () => {
     await waitFor(() => {
       const tabs = screen.getAllByRole('tab');
       const labels = tabs.map((tab) => tab.textContent ?? '');
-      // Expect that we still have 2 tabs (Home and Project Alpha)
+      // Expect that we still have 2 tabs (Home and Project Alpha). The active
+      // Home tab is the icon-only sidebar toggle, so assert its testid rather
+      // than a text label.
       expect(tabs).toHaveLength(2);
-      expect(labels.filter((label) => label.includes('Home'))).toHaveLength(1);
+      expect(screen.getAllByTestId('workspace-home-rail-toggle')).toHaveLength(1);
       expect(labels.filter((label) => label.includes('Project Alpha'))).toHaveLength(1);
     });
   });
@@ -172,8 +191,11 @@ describe('WorkspaceTabsBar navigation semantics', () => {
     );
 
     await waitFor(() => {
-      const labels = screen.getAllByRole('tab').map((tab) => tab.textContent ?? '');
-      expect(labels.some((label) => label.includes('Welcome'))).toBe(true);
+      // The active entry tab is icon-only (Home nav pill) on non-home views,
+      // so assert the parked Welcome view through the persisted tab state.
+      expect(screen.getAllByRole('tab')).toHaveLength(1);
+      expect(screen.getByTestId('workspace-home-nav')).toBeTruthy();
+      expect(storedEntryTabView()).toBe('onboarding');
     });
 
     // Completing onboarding via the design-system path navigates to a fresh
@@ -204,8 +226,9 @@ describe('WorkspaceTabsBar navigation semantics', () => {
     );
 
     await waitFor(() => {
-      const labels = screen.getAllByRole('tab').map((tab) => tab.textContent ?? '');
-      expect(labels.some((label) => label.includes('Welcome'))).toBe(true);
+      expect(screen.getAllByRole('tab')).toHaveLength(1);
+      expect(screen.getByTestId('workspace-home-nav')).toBeTruthy();
+      expect(storedEntryTabView()).toBe('onboarding');
     });
 
     rerender(
@@ -217,8 +240,7 @@ describe('WorkspaceTabsBar navigation semantics', () => {
     );
 
     await waitFor(() => {
-      const labels = screen.getAllByRole('tab').map((tab) => tab.textContent ?? '');
-      expect(labels.some((label) => label.includes('Design systems'))).toBe(true);
+      expect(storedEntryTabView()).toBe('design-systems');
     });
 
     rerender(
@@ -281,8 +303,11 @@ describe('WorkspaceTabsBar navigation semantics', () => {
       await waitFor(() => {
         const tabs = screen.getAllByRole('tab');
         // Exactly one tab the whole time — the section just switches the view.
+        // The active entry tab is the icon-only Home nav pill on non-home
+        // sections, so read the section from the persisted tab state.
         expect(tabs).toHaveLength(1);
-        expect(tabs[0]?.textContent ?? '').toContain(section.label);
+        expect(screen.getByTestId('workspace-home-nav')).toBeTruthy();
+        expect(storedEntryTabView()).toBe(section.view);
       });
     }
 
@@ -295,9 +320,9 @@ describe('WorkspaceTabsBar navigation semantics', () => {
       <WorkspaceTabsBar route={{ kind: 'home', view: 'design-systems' }} projects={[project]} />,
     );
     await waitFor(() => {
-      const labels = screen.getAllByRole('tab').map((tab) => tab.textContent ?? '');
-      expect(labels).toHaveLength(1);
-      expect(labels[0]).toContain('Design systems');
+      expect(screen.getAllByRole('tab')).toHaveLength(1);
+      expect(screen.getByTestId('workspace-home-nav')).toBeTruthy();
+      expect(storedEntryTabView()).toBe('design-systems');
     });
 
     // Opening a project from the design-systems view must APPEND a project tab,
@@ -315,7 +340,7 @@ describe('WorkspaceTabsBar navigation semantics', () => {
     await waitFor(() => {
       const labels = screen.getAllByRole('tab').map((tab) => tab.textContent ?? '');
       expect(labels).toHaveLength(2);
-      expect(labels.some((label) => label.includes('Automations'))).toBe(true);
+      expect(storedEntryTabView()).toBe('tasks');
       expect(labels.some((label) => label.includes('Project Alpha'))).toBe(true);
     });
   });
@@ -333,9 +358,9 @@ describe('WorkspaceTabsBar navigation semantics', () => {
     );
     render(<WorkspaceTabsBar route={{ kind: 'home', view: 'projects' }} projects={[project]} />);
     await waitFor(() => {
-      const tabs = screen.getAllByRole('tab');
-      expect(tabs).toHaveLength(1);
-      expect(tabs[0]?.textContent ?? '').toContain('Projects');
+      expect(screen.getAllByRole('tab')).toHaveLength(1);
+      expect(screen.getByTestId('workspace-home-nav')).toBeTruthy();
+      expect(storedEntryTabView()).toBe('projects');
     });
   });
 
@@ -389,7 +414,8 @@ describe('WorkspaceTabsBar navigation semantics', () => {
     await waitFor(() => {
       const labels = screen.getAllByRole('tab').map((tab) => tab.textContent ?? '');
       expect(labels).toHaveLength(2);
-      expect(labels.filter((label) => label.includes('Home'))).toHaveLength(1);
+      // The active Home tab renders as the icon-only sidebar toggle.
+      expect(screen.getAllByTestId('workspace-home-rail-toggle')).toHaveLength(1);
       expect(labels.filter((label) => label.includes('Project Alpha'))).toHaveLength(1);
     });
   });
@@ -465,9 +491,10 @@ describe('WorkspaceTabsBar navigation semantics', () => {
     render(<WorkspaceTabsBar route={{ kind: 'home', view: 'home' }} projects={[project]} />);
 
     await waitFor(() => {
-      const labels = screen.getAllByRole('tab').map((tab) => tab.textContent ?? '');
-      // Expect that the duplicate Home tabs are deduplicated to exactly one Home tab
-      expect(labels.filter((label) => label.includes('Home'))).toHaveLength(1);
+      // Expect that the duplicate Home tabs are deduplicated to exactly one
+      // Home tab — rendered as the sidebar toggle since it is active on home.
+      expect(screen.getAllByRole('tab')).toHaveLength(1);
+      expect(screen.getAllByTestId('workspace-home-rail-toggle')).toHaveLength(1);
     });
   });
 
@@ -478,9 +505,9 @@ describe('WorkspaceTabsBar navigation semantics', () => {
     // no way to remove the last remaining tab.
     expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
 
-    const labels = screen.getAllByRole('tab').map((tab) => tab.textContent ?? '');
-    expect(labels).toHaveLength(1);
-    expect(labels[0]).toContain('Home');
+    expect(screen.getAllByRole('tab')).toHaveLength(1);
+    // Active on the home view, the pinned tab renders as the sidebar toggle.
+    expect(screen.getByTestId('workspace-home-rail-toggle')).toBeTruthy();
   });
 
   it('maps the browser new-tab shortcut to the workspace new-tab action', async () => {
@@ -495,7 +522,9 @@ describe('WorkspaceTabsBar navigation semantics', () => {
     await waitFor(() => {
       const labels = screen.getAllByRole('tab').map((tab) => tab.textContent ?? '');
       expect(labels).toHaveLength(2);
-      expect(labels.some((label) => label.includes('Home'))).toBe(true);
+      // The shortcut activates the Home tab, which then renders as the
+      // icon-only sidebar toggle.
+      expect(screen.getAllByTestId('workspace-home-rail-toggle')).toHaveLength(1);
       expect(labels.some((label) => label.includes('Project Alpha'))).toBe(true);
     });
     expect(navigate).toHaveBeenCalledWith(homeRoute);
@@ -560,9 +589,10 @@ describe('WorkspaceTabsBar navigation semantics', () => {
 
     expect(allowedDefault).toBe(false);
     await waitFor(() => {
-      const labels = screen.getAllByRole('tab').map((tab) => tab.textContent ?? '');
-      expect(labels).toHaveLength(1);
-      expect(labels[0]).toContain('Home');
+      // Closing the project tab falls back to the Home tab, which is active on
+      // the home view and therefore renders as the icon-only sidebar toggle.
+      expect(screen.getAllByRole('tab')).toHaveLength(1);
+      expect(screen.getByTestId('workspace-home-rail-toggle')).toBeTruthy();
     });
     expect(navigate).toHaveBeenCalledWith(homeRoute);
   });
