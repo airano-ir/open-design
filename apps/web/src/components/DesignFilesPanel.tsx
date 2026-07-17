@@ -767,6 +767,226 @@ export function DesignFilesPanel({
     );
   }
 
+  // HTML pages render as thumbnail cards (live page preview + meta strip)
+  // instead of compact list rows — the #5517 reference card grid. Only the
+  // visual shell changes: interactions keep this panel's contract (single
+  // click previews in the right-hand pane, double-click opens a workspace
+  // tab, the hover ⋯ menu carries rename / download / delete).
+  function renderPageCard(f: ProjectFile, category: FileCategory) {
+    const active = preview === f.name;
+    const isSelected = selected.has(f.name);
+    const renameState = renaming?.name === f.name ? renaming : null;
+    const displayName = currentDir === '' ? f.name : f.name.slice(currentDir.length + 1);
+    const openLabel = `${t('designFiles.previewOpen')} ${f.name}`;
+    return (
+      <div
+        key={f.name}
+        data-testid={`design-file-row-${f.name}`}
+        className={`df-card ${active ? 'active' : ''} ${isSelected ? 'selected' : ''}`}
+      >
+        <span
+          className="df-card-check"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (viewerOnly) return; // read-only viewer cannot batch-select files
+            toggleSelect(f.name);
+          }}
+          role={viewerOnly ? undefined : 'checkbox'}
+          aria-checked={viewerOnly ? undefined : isSelected}
+          aria-disabled={viewerOnly ? 'true' : undefined}
+          tabIndex={viewerOnly ? -1 : 0}
+          onKeyDown={(e) => {
+            if (viewerOnly) return;
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              e.stopPropagation();
+              toggleSelect(f.name);
+            }
+          }}
+        >
+          {viewerOnly ? null : (
+            <RemixIcon name={isSelected ? 'checkbox-line' : 'checkbox-blank-line'} size={14} />
+          )}
+        </span>
+        <button
+          type="button"
+          className="df-card-thumb"
+          onClick={() => setPreview(f.name)}
+          onDoubleClick={() => onOpenFile(f.name)}
+          title={openLabel}
+          aria-label={openLabel}
+        >
+          <HtmlCardThumbnail projectId={projectId} file={f} />
+        </button>
+        <div className="df-card-meta">
+          <div className="df-card-meta-text">
+            {renameState ? (
+              <input
+                autoFocus
+                className="df-rename-input"
+                value={renameState.draft}
+                disabled={renameState.saving}
+                onChange={(e) => setRenaming({ ...renameState, draft: e.target.value })}
+                onClick={(e) => e.stopPropagation()}
+                onDoubleClick={(e) => e.stopPropagation()}
+                onBlur={(e) => {
+                  if (e.currentTarget.dataset.skipRenameCommit === '1') return;
+                  void commitRename(f.name, renameState.draft);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    e.currentTarget.dataset.skipRenameCommit = '1';
+                    void commitRename(f.name, renameState.draft);
+                  } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    e.currentTarget.dataset.skipRenameCommit = '1';
+                    setRenaming(null);
+                  }
+                }}
+              />
+            ) : (
+              <button
+                type="button"
+                className="df-card-name-btn"
+                onClick={() => setPreview(f.name)}
+                onDoubleClick={() => onOpenFile(f.name)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    const now = Date.now();
+                    const last = lastKeyPress.current.get(f.name) ?? 0;
+                    if (now - last < 300) {
+                      lastKeyPress.current.delete(f.name);
+                      onOpenFile(f.name);
+                    } else {
+                      lastKeyPress.current.set(f.name, now);
+                      setPreview(f.name);
+                    }
+                  }
+                }}
+              >
+                <span className="df-card-name" title={displayName}>{displayName}</span>
+              </button>
+            )}
+            <span className="df-card-sub">
+              {categoryLabel(category, t)} · {relativeTime(f.mtime, t)}
+            </span>
+          </div>
+          {viewerOnly ? (
+            // Read-only viewer: the ⋯ menu is a mutation entry point, so keep
+            // an inert placeholder that preserves the meta-strip layout.
+            <span className="df-row-menu df-row-menu-placeholder" aria-hidden />
+          ) : (
+            <span
+              data-testid={`design-file-menu-${f.name}`}
+              className="df-row-menu"
+              style={active ? { opacity: 1 } : undefined}
+              role="button"
+              tabIndex={0}
+              aria-label={t('designFiles.rowMenu')}
+              onClick={(e) => {
+                e.stopPropagation();
+                openMenuFor(f.name, e.target as HTMLElement);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  openMenuFor(f.name, e.currentTarget as HTMLElement);
+                }
+              }}
+            >
+              ⋯
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Images in the masonry waterfall: bare image cards — no name/meta strip,
+  // the picture IS the card. Check chip floats top-left and the row menu
+  // (rename/delete live there) floats top-right, both hover-revealed. The
+  // click contract stays ours: single click previews, double click opens.
+  function renderImageCard(f: ProjectFile, _category: FileCategory) {
+    const active = preview === f.name;
+    const isSelected = selected.has(f.name);
+    const openLabel = `${t('designFiles.previewOpen')} ${f.name}`;
+    return (
+      <div
+        key={f.name}
+        data-testid={`design-file-row-${f.name}`}
+        className={`df-card df-card--image ${active ? 'active' : ''} ${isSelected ? 'selected' : ''}`}
+      >
+        <span
+          className="df-card-check"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (viewerOnly) return; // read-only viewer cannot batch-select files
+            toggleSelect(f.name);
+          }}
+          role={viewerOnly ? undefined : 'checkbox'}
+          aria-checked={viewerOnly ? undefined : isSelected}
+          aria-disabled={viewerOnly ? 'true' : undefined}
+          tabIndex={viewerOnly ? -1 : 0}
+          onKeyDown={(e) => {
+            if (viewerOnly) return;
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              e.stopPropagation();
+              toggleSelect(f.name);
+            }
+          }}
+        >
+          {viewerOnly ? null : (
+            <RemixIcon name={isSelected ? 'checkbox-line' : 'checkbox-blank-line'} size={14} />
+          )}
+        </span>
+        <button
+          type="button"
+          className="df-card-thumb"
+          onClick={() => setPreview(f.name)}
+          onDoubleClick={() => onOpenFile(f.name)}
+          title={openLabel}
+          aria-label={openLabel}
+        >
+          <img
+            src={`${projectRawUrl(projectId, f.name)}?v=${Math.round(f.mtime)}`}
+            alt=""
+            loading="lazy"
+          />
+        </button>
+        {/* Positioned overlay — rendered after the thumb so the card's first
+            button stays the primary preview/open target (mirrors list rows,
+            where controls never precede the openable name). */}
+        {viewerOnly ? null : (
+          <span
+            data-testid={`design-file-menu-${f.name}`}
+            className="df-row-menu df-card-menu-overlay"
+            style={active ? { opacity: 1 } : undefined}
+            role="button"
+            tabIndex={0}
+            aria-label={t('designFiles.rowMenu')}
+            onClick={(e) => {
+              e.stopPropagation();
+              openMenuFor(f.name, e.target as HTMLElement);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+                openMenuFor(f.name, e.currentTarget as HTMLElement);
+              }
+            }}
+          >
+            ⋯
+          </span>
+        )}
+      </div>
+    );
+  }
+
   function renderDirRow(dirName: string) {
     const fullPath = currentDir === '' ? dirName : `${currentDir}/${dirName}`;
     const prefix = `${fullPath}/`;
@@ -1282,7 +1502,21 @@ export function DesignFilesPanel({
               {sections.map(([category, sectionFiles]) =>
                 resolvedTab === `cat:${category}` ? (
                   <div className="df-section" key={`cat:${category}`}>
-                    {sectionFiles.map((f) => renderFileRow(f, category))}
+                    {category === 'html' ? (
+                      // Page cards are self-describing — a straight grid
+                      // under the tab bar.
+                      <div className="df-card-grid">
+                        {sectionFiles.map((f) => renderPageCard(f, category))}
+                      </div>
+                    ) : category === 'image' ? (
+                      // Images read as their own preview — a masonry waterfall
+                      // of natural-aspect thumbnails instead of list rows.
+                      <div className="df-image-masonry" data-testid="design-files-image-masonry">
+                        {sectionFiles.map((f) => renderImageCard(f, category))}
+                      </div>
+                    ) : (
+                      sectionFiles.map((f) => renderFileRow(f, category))
+                    )}
                   </div>
                 ) : null,
               )}
@@ -1521,6 +1755,95 @@ function HtmlPreviewThumbnail({
       sandbox="allow-scripts allow-downloads"
       loading="lazy"
     />
+  );
+}
+
+// Pages are laid out at a desktop-ish width and scaled down to the card, so
+// the thumbnail reads as a zoomed-out page preview instead of the page's
+// narrow mobile layout cropped to the card's top-left corner.
+const PAGE_THUMB_LAYOUT_WIDTH = 1200;
+// Matches the card thumb's 16/9 aspect-ratio box.
+const PAGE_THUMB_LAYOUT_HEIGHT = Math.round(PAGE_THUMB_LAYOUT_WIDTH * (9 / 16));
+
+// Card-grid variant of the HTML thumbnail. Same srcdoc pipeline as the
+// preview pane's HtmlPreviewThumbnail (fetch + buildSrcdoc, guarded by the
+// inline size cap), plus the #5517 reference's fixed-layout iframe scaled to
+// the card width. While no srcdoc is available (too large, still fetching, or
+// fetch failed) the glyph placeholder shows instead of URL-loading the iframe.
+function HtmlCardThumbnail({
+  projectId,
+  file,
+}: {
+  projectId: string;
+  file: ProjectFile;
+}) {
+  const tooLargeForThumbnail = file.size > HTML_THUMBNAIL_INLINE_MAX_BYTES;
+  const url = projectFileUrl(projectId, file.name);
+  const [srcDoc, setSrcDoc] = useState<string | null>(null);
+  const hostRef = useRef<HTMLDivElement | null>(null);
+  const [scale, setScale] = useState<number | null>(null);
+
+  useEffect(() => {
+    setSrcDoc(null);
+    if (tooLargeForThumbnail) return;
+    const controller = new AbortController();
+    let cancelled = false;
+    void fetch(`${url}?v=${Math.round(file.mtime)}`, { signal: controller.signal })
+      .then((response) => (response.ok ? response.text() : null))
+      .then((html) => {
+        if (cancelled || html === null) return;
+        const nextSrcDoc = buildSrcdoc(html, { baseHref: projectRawUrl(projectId, baseDirForFile(file.name)) });
+        if (!cancelled) setSrcDoc(nextSrcDoc);
+      })
+      .catch((err) => {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        if (!cancelled) setSrcDoc(null);
+      });
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [file.mtime, file.name, projectId, tooLargeForThumbnail, url]);
+
+  // Track the host width so the fixed-layout iframe scales with the card.
+  // Environments without ResizeObserver (jsdom) fall back to an unscaled
+  // fill-the-box iframe.
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host || typeof ResizeObserver === 'undefined') return;
+    const update = () => {
+      const width = host.clientWidth;
+      if (width > 0) setScale(width / PAGE_THUMB_LAYOUT_WIDTH);
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(host);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={hostRef} className="df-thumb-scale-host">
+      {tooLargeForThumbnail || srcDoc === null ? (
+        <FilePreviewPlaceholder file={file} />
+      ) : (
+        <iframe
+          title={file.name}
+          srcDoc={srcDoc}
+          sandbox="allow-scripts allow-downloads"
+          loading="lazy"
+          style={
+            scale
+              ? {
+                  width: PAGE_THUMB_LAYOUT_WIDTH,
+                  height: PAGE_THUMB_LAYOUT_HEIGHT,
+                  transform: `scale(${scale})`,
+                  transformOrigin: '0 0',
+                }
+              : undefined
+          }
+        />
+      )}
+    </div>
   );
 }
 

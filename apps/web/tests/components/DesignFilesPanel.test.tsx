@@ -228,10 +228,15 @@ describe("DesignFilesPanel sections", () => {
   });
 
   it('shows the file size beside the modified time while preserving the type subtitle', () => {
-    renderPanel([file({ name: 'chart.png', kind: 'image', size: 4096 })]);
+    // Images now render as bare masonry cards without a meta strip, so the
+    // list-row size/subtitle contract is asserted on a stylesheet file, which
+    // still renders as a compact row.
+    renderPanel([
+      file({ name: 'styles.css', kind: 'code', mime: 'text/css', size: 4096 }),
+    ]);
 
-    const row = screen.getByTestId('design-file-row-chart.png');
-    expect(row.querySelector('.df-row-sub')?.textContent).toBe('Image');
+    const row = screen.getByTestId('design-file-row-styles.css');
+    expect(row.querySelector('.df-row-sub')?.textContent).toBe('Stylesheet');
     expect(row.querySelector('.df-row-size')?.textContent).toBe('4.0 KB');
   });
 
@@ -249,11 +254,11 @@ describe("DesignFilesPanel sections", () => {
 describe("DesignFilesPanel large list", () => {
   afterEach(() => cleanup());
 
-  it("renders every row of the active tab at once (no pagination)", () => {
+  it("renders every entry of the active tab at once (no pagination)", () => {
     const { container } = renderPanel(generateFiles(500));
     // 500 files cycle through 6 kinds; the default Pages tab holds the
-    // ⌈500/6⌉ = 84 html files, all rendered without pagination.
-    expect(container.querySelectorAll(".df-file-row").length).toBe(84);
+    // ⌈500/6⌉ = 84 html files, all rendered as page cards without pagination.
+    expect(container.querySelectorAll(".df-card-grid .df-card").length).toBe(84);
     expect(document.querySelector(".df-pagination")).toBeNull();
   });
 
@@ -274,17 +279,18 @@ describe("DesignFilesPanel selection", () => {
     const { container, onDeleteFiles } = renderPanel(files);
 
     // Selection spans category tabs: pick one file on the default Pages tab
-    // and a second one behind the Images tab.
+    // and a second one behind the Images tab. Both categories render as cards
+    // with the floating check chip.
     fireEvent.click(
       screen
         .getByTestId("design-file-row-file-1.html")
-        .querySelector(".df-row-check")!,
+        .querySelector(".df-card-check")!,
     );
     clickTab("cat:image");
     fireEvent.click(
       screen
         .getByTestId("design-file-row-file-2.png")
-        .querySelector(".df-row-check")!,
+        .querySelector(".df-card-check")!,
     );
 
     expect(
@@ -298,18 +304,18 @@ describe("DesignFilesPanel selection", () => {
     expect(onDeleteFiles).toHaveBeenCalledWith(["file-1.html", "file-2.png"]);
   });
 
-  it("does not preview or open files from row controls", () => {
+  it("does not preview or open files from card controls", () => {
     const files = generateFiles(1);
     const { container, onOpenFile } = renderPanel(files);
-    const row = container.querySelector(".df-file-row")!;
+    const card = container.querySelector(".df-card")!;
 
-    fireEvent.click(row.querySelector(".df-row-check")!);
+    fireEvent.click(card.querySelector(".df-card-check")!);
     expect(
       container.querySelector('[data-testid="design-file-preview"]'),
     ).toBeNull();
     expect(onOpenFile).not.toHaveBeenCalled();
 
-    fireEvent.click(row.querySelector(".df-row-menu")!);
+    fireEvent.click(card.querySelector(".df-row-menu")!);
     expect(
       container.querySelector('[data-testid="design-file-preview"]'),
     ).toBeNull();
@@ -356,22 +362,22 @@ describe("DesignFilesPanel selection", () => {
     }
   });
 
-  it("uses non-control row targets to preview and open", () => {
+  it("uses non-control card targets to preview and open", () => {
     const files = generateFiles(1);
     const { container, onOpenFile } = renderPanel(files);
-    const row = container.querySelector(".df-file-row")!;
+    const card = container.querySelector(".df-card")!;
 
-    fireEvent.click(row.querySelector(".df-row-icon")!);
+    fireEvent.click(card.querySelector(".df-card-thumb")!);
     expect(
       container.querySelector('[data-testid="design-file-preview"]')
         ?.textContent,
     ).toContain("file-1.html");
 
-    fireEvent.doubleClick(row.querySelector(".df-row-name-btn")!);
+    fireEvent.doubleClick(card.querySelector(".df-card-name-btn")!);
     expect(onOpenFile).toHaveBeenCalledWith("file-1.html");
     onOpenFile.mockClear();
 
-    fireEvent.doubleClick(row.querySelector(".df-row-time")!);
+    fireEvent.doubleClick(card.querySelector(".df-card-thumb")!);
     expect(onOpenFile).toHaveBeenCalledWith("file-1.html");
   });
 });
@@ -383,7 +389,7 @@ describe("DesignFilesPanel preview", () => {
     const { container } = renderPanel([
       file({ name: "chart.png", kind: "image", size: 4096 }),
     ]);
-    fireEvent.click(container.querySelector(".df-file-row .df-row-icon")!);
+    fireEvent.click(container.querySelector(".df-card .df-card-thumb")!);
 
     const stats =
       container.querySelector(".df-preview-stats")?.textContent ?? "";
@@ -402,10 +408,13 @@ describe("DesignFilesPanel preview", () => {
       }),
     ]);
 
-    fireEvent.click(container.querySelector(".df-file-row .df-row-name-btn")!);
+    fireEvent.click(container.querySelector(".df-card .df-card-name-btn")!);
 
     expect(fetchMock).not.toHaveBeenCalled();
     expect(container.querySelector(".df-preview-thumb iframe")).toBeNull();
+    // Neither the page card thumb nor the preview pane iframes the file; both
+    // fall back to the glyph placeholder.
+    expect(container.querySelector(".df-card-thumb iframe")).toBeNull();
     expect(container.querySelector(".df-preview-placeholder")?.textContent).toContain("⟨⟩");
   });
 
@@ -428,7 +437,7 @@ describe("DesignFilesPanel preview", () => {
       }),
     ]);
 
-    fireEvent.click(container.querySelector(".df-file-row .df-row-name-btn")!);
+    fireEvent.click(container.querySelector(".df-card .df-card-name-btn")!);
 
     expect(container.querySelector(".df-preview-thumb iframe")).toBeNull();
     await waitFor(() => {
@@ -521,9 +530,11 @@ describe("DesignFilesPanel directory navigation", () => {
   });
 
   it("clicking a folder row navigates into it and shows only basenames and nested dirs", () => {
+    // Text files keep the list-row shell (images are bare masonry cards with
+    // no visible name), so the basename contract is asserted on rows.
     renderPanel([
-      file({ name: "assets/logo.png", kind: "image" }),
-      file({ name: "assets/icons/star.svg", kind: "image" }),
+      file({ name: "assets/notes.txt", kind: "text", mime: "text/plain" }),
+      file({ name: "assets/icons/readme.txt", kind: "text", mime: "text/plain" }),
     ]);
 
     fireEvent.click(document.querySelector(".df-dir-row .df-row-name-btn")!);
@@ -538,9 +549,9 @@ describe("DesignFilesPanel directory navigation", () => {
     expect(dirRows.length).toBe(1);
     expect(dirRows[0]!.textContent).toContain("icons");
 
-    clickTab("cat:image");
-    const fileRow = screen.getByTestId("design-file-row-assets/logo.png");
-    expect(fileRow.querySelector(".df-row-name")?.textContent).toBe("logo.png");
+    clickTab("cat:text");
+    const fileRow = screen.getByTestId("design-file-row-assets/notes.txt");
+    expect(fileRow.querySelector(".df-row-name")?.textContent).toBe("notes.txt");
     expect(fileRow.querySelector(".df-row-name")?.textContent).not.toContain(
       "assets/",
     );
@@ -674,16 +685,20 @@ describe("DesignFilesPanel directory navigation", () => {
       file({ name: "top.html", kind: "html" }),
     ]);
 
-    const topRow = screen.getByTestId("design-file-row-top.html");
-    fireEvent.click(topRow.querySelector(".df-row-check")!);
-    expect(topRow.classList.contains("selected")).toBe(true);
+    const topCard = screen.getByTestId("design-file-row-top.html");
+    fireEvent.click(topCard.querySelector(".df-card-check")!);
+    expect(topCard.classList.contains("selected")).toBe(true);
 
     clickTab("folders");
     fireEvent.click(document.querySelector(".df-dir-row .df-row-name-btn")!);
-    expect(document.querySelectorAll(".df-file-row.selected").length).toBe(0);
+    expect(
+      document.querySelectorAll(".df-file-row.selected, .df-card.selected").length,
+    ).toBe(0);
 
     fireEvent.click(document.querySelector(".df-breadcrumb-btn")!);
-    expect(document.querySelectorAll(".df-file-row.selected").length).toBe(0);
+    expect(
+      document.querySelectorAll(".df-file-row.selected, .df-card.selected").length,
+    ).toBe(0);
   });
 
   it("resets currentDir automatically when all files in the current subdirectory are removed", () => {

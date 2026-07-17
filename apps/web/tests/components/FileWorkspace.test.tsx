@@ -912,10 +912,11 @@ describe('FileWorkspace upload input', () => {
       );
     });
 
+    // Images render as masonry cards; the thumb is the single-click preview target.
     const row = screen.getByTestId('design-file-row-mock.png');
-    const nameButton = row.querySelector<HTMLButtonElement>('.df-row-name-btn');
-    if (!nameButton) throw new Error('Could not find file name button');
-    fireEvent.click(nameButton);
+    const thumbButton = row.querySelector<HTMLButtonElement>('.df-card-thumb');
+    if (!thumbButton) throw new Error('Could not find file thumb button');
+    fireEvent.click(thumbButton);
 
     expect(screen.getByTestId('design-file-preview')).toBeTruthy();
     expect(screen.queryByTestId('upload-error-banner')).toBeNull();
