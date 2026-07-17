@@ -364,11 +364,11 @@ The engine defaults to `<package install dir>/memory/<userId>/preferences.json`
 overridable via `MEMORY_STORAGE_ROOT`. For Open Design integration, two
 decisions:
 
-- **Default location.** Lean: `<OD_DATA_DIR>/memory/<userId>/preferences.json`
-  so memory follows the same `OD_DATA_DIR` precedence as other daemon state
-  (`AGENTS.md` FAQ "Where is data written?"). Packaged installs and Home
-  Manager / NixOS modules already point `OD_DATA_DIR` at a writable directory;
-  memory should ride that contract.
+- **Default ownership.** Memory is daemon-managed state. The integration must
+  receive an explicit storage root derived from the daemon's already-resolved
+  `RUNTIME_DATA_DIR`; it must not independently reinterpret `OD_DATA_DIR` or
+  choose a cwd-relative fallback. The exact daemon path is intentionally left
+  to root [`AGENTS.md`](../../AGENTS.md) → **Daemon data directory contract**.
 - **Portability.** `od memory export --to <path>` and `od memory import <path>`
   for moving memory across machines without a cloud sync layer. The engine's
   storage is already plain JSON; this is just CLI plumbing.
