@@ -165,6 +165,25 @@ describe('od:// protocol transient retry', () => {
     expect(calls).toBe(2);
   });
 
+  it('retries the bodyless logout POST because logout is idempotent', async () => {
+    let calls = 0;
+    const fetchImpl: typeof fetch = async () => {
+      calls += 1;
+      if (calls === 1) throw transientSocketError();
+      return new Response(JSON.stringify({ ok: true }), { status: 200 });
+    };
+
+    const response = await handleOdRequest(
+      new Request('od://app/api/integrations/vela/logout', { method: 'POST' }),
+      'http://127.0.0.1:17579/',
+      fetchImpl,
+      noDelay,
+    );
+
+    expect(response.status).toBe(200);
+    expect(calls).toBe(2);
+  });
+
   it('gives up after the bounded attempt budget and returns the 502 proxy-failure document', async () => {
     let calls = 0;
     const fetchImpl: typeof fetch = async () => {

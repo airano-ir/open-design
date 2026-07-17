@@ -27,6 +27,15 @@ function toWebRuntimeUrl(webRuntimeUrl: string, requestUrl: string): string {
 }
 
 const OD_PROXY_RETRYABLE_METHODS = new Set(["GET", "HEAD"]);
+// Most POST requests change state and must never be replayed after an
+// indeterminate socket failure. Logout is deliberately idempotent, though:
+// either attempt leaves the local credential store signed out. Retrying this
+// bodyless request keeps the Settings action usable when Electron's local
+// `net.fetch` hits the same transient socket failures we already absorb for
+// document and asset requests.
+const OD_PROXY_RETRYABLE_POST_PATHS = new Set([
+  "/api/integrations/vela/logout",
+]);
 const OD_PROXY_RETRY_ATTEMPTS = 3;
 const OD_PROXY_RETRY_BACKOFF_MS = 150; // 150ms, 300ms — throw path only, ~450ms worst-case added
 
@@ -38,6 +47,12 @@ type OdProxyRetryOptions = {
 
 const defaultRetryDelay = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
+
+function isRetryableOdProxyRequest(request: Request): boolean {
+  if (OD_PROXY_RETRYABLE_METHODS.has(request.method)) return true;
+  if (request.method !== "POST" || request.body !== null) return false;
+  return OD_PROXY_RETRYABLE_POST_PATHS.has(new URL(request.url).pathname);
+}
 
 /**
  * Fetch the rewritten sidecar target, absorbing transient socket throws
@@ -64,7 +79,7 @@ async function fetchOdTargetWithTransientRetry(
   fetchImpl: OdProtocolFetch,
   options: OdProxyRetryOptions,
 ): Promise<Response> {
-  const attempts = OD_PROXY_RETRYABLE_METHODS.has(request.method)
+  const attempts = isRetryableOdProxyRequest(request)
     ? (options.attempts ?? OD_PROXY_RETRY_ATTEMPTS)
     : 1;
   const backoffMs = options.backoffMs ?? OD_PROXY_RETRY_BACKOFF_MS;
