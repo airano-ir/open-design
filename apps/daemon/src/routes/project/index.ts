@@ -161,6 +161,16 @@ function projectAccess(wp: WorkspaceProjectAccessInput, ctx: WorkspaceProjectCon
   const selfCreated = wp.createdByWorkspaceMemberId != null && wp.createdByWorkspaceMemberId === ctx.workspaceMemberId;
   const privileged = ctx.role === 'owner' || ctx.role === 'admin';
   const canMutate = !frozen && ctx.canWriteSyncedFiles && ctx.memberStatus === 'active' && (privileged || selfCreated);
+  // Sharing is the one mutation that must ALSO work on an unattributed row:
+  // lazy projection never assigns ownership to the reader (adoption red
+  // line), yet a local project physically exists only on this user's disk —
+  // sharing it stamps the sharer as owner (see ownerForTeamShare). Without
+  // this, a plain member's own drafts could never be shared. Destructive
+  // actions (delete/rename/unshare) stay on the strict `canMutate`.
+  const unattributed = wp.createdByWorkspaceMemberId == null;
+  const canShareLocal =
+    !frozen && ctx.canWriteSyncedFiles && ctx.memberStatus === 'active' &&
+    (privileged || selfCreated || unattributed);
   const disabledReason = frozen
     ? ctx.lifecycleState === 'deleted' || wp.resourceState === 'deleted'
       ? 'workspace_deleted'
@@ -173,7 +183,7 @@ function projectAccess(wp: WorkspaceProjectAccessInput, ctx: WorkspaceProjectCon
     canRename: canMutate,
     canDelete: canMutate,
     canDuplicate: canMutate,
-    canMoveToTeam: canMutate && ctx.canShareProjects && wp.visibility === 'personal',
+    canMoveToTeam: canShareLocal && ctx.canShareProjects && wp.visibility === 'personal',
     canMoveToPersonal: canMutate && ctx.canShareProjects && wp.visibility === 'team',
     canExport: !frozen && ctx.memberStatus === 'active',
     canSendTo: !frozen && ctx.memberStatus === 'active',

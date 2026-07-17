@@ -51,6 +51,9 @@ const TEAM_CONTEXT_PARSED = {
   providerMode: 'platform_credits',
   seatSummary: buildWorkspaceSeatSummary({ seatLimit: 5, usedSeats: 1 }),
   permissions: buildWorkspacePermissions({ role: 'member', lifecycleState: 'active' }),
+  // Invariant: a team context always carries teamId (the workspace IS the
+  // team scope) — collab gates on it, so the parser pins it when omitted.
+  teamId: 'wm-1',
   displayName: 'Ma Shu',
 };
 

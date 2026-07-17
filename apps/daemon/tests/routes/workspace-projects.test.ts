@@ -410,6 +410,39 @@ describe('workspace project routes', () => {
     expect(deleted.status).toBe(404);
   });
 
+  it('lets a plain member share their unattributed local project to the team', async () => {
+    // A lazily-projected local row carries createdByWorkspaceMemberId=null
+    // (projection never assigns ownership to the reader — see the adoption
+    // red line above). But the project physically lives only on this user's
+    // machine, so SHARING it must not require prior attribution: the share
+    // itself stamps the sharer as owner. A plain member (canShareProjects)
+    // was 403ed here, which dead-ended every member's own drafts.
+    const projectId = `workspace-member-share-${Date.now()}`;
+    await createProject(projectId, 'Member share project');
+
+    const moveResp = await fetch(`${baseUrl}/api/workspaces/${workspaceId}/projects/${projectId}/move`, {
+      method: 'POST',
+      headers: headers('member-plain-sharer'),
+      body: JSON.stringify({ visibility: 'team' }),
+    });
+    expect(moveResp.status).toBe(200);
+    const moved = await moveResp.json() as { project: any };
+    expect(moved.project).toMatchObject({
+      id: projectId,
+      visibility: 'team',
+      createdByWorkspaceMemberId: 'member-plain-sharer',
+    });
+
+    // Destructive actions stay strict: a DIFFERENT member still cannot
+    // delete or unshare what this member now owns.
+    const strangerMove = await fetch(`${baseUrl}/api/workspaces/${workspaceId}/projects/${projectId}/move`, {
+      method: 'POST',
+      headers: headers('member-other'),
+      body: JSON.stringify({ visibility: 'personal' }),
+    });
+    expect(strangerMove.status).toBe(403);
+  });
+
   it('stamps the sharing member as owner when a legacy project moves to team', async () => {
     const projectId = `workspace-share-owner-${Date.now()}`;
     await createProject(projectId, 'Share owner project');
