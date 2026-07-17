@@ -109,6 +109,9 @@ async function validatePackage(pluginRoot: string): Promise<void> {
   assert(skill.includes('If the Open Design MCP tools are unavailable'), 'plugin skill must fail closed when its MCP is unavailable');
   assert(skill.includes('fully quit and relaunch Codex'), 'plugin skill must require a full Codex relaunch after a stale install');
   assert(skill.includes('Do not synthesize a substitute form'), 'plugin skill must forbid fallback text forms');
+  assert(skill.includes('The brief UI is choice-only'), 'plugin skill must define the brief as choice-only');
+  assert(skill.includes('Every user-facing question must render as a radio or checkbox option'), 'plugin skill must forbid typed brief questions');
+  assert(skill.includes('preserve it as a preselected `From your brief` option'), 'plugin skill must preserve supplied prose as a selectable option');
   assert(pluginInterface?.logo === './assets/logo.svg', 'plugin list logo must use the square logo asset');
   const logoSvg = await readFile(resolve(pluginRoot, 'assets/logo.svg'), 'utf8');
   assert(/viewBox="0 0 64 64"/u.test(logoSvg), 'plugin list logo must keep a square viewBox');
@@ -177,7 +180,10 @@ async function validateEndpoint(endpoint: string): Promise<void> {
   assert(widgetHtml.includes('id="brief-audience-options"'), 'Artifact card brief is missing audience choices');
   assert(widgetHtml.includes('id="brief-content-options"'), 'Artifact card brief is missing content choices');
   assert(widgetHtml.includes('id="brief-visual-options"'), 'Artifact card brief is missing visual choices');
-  assert(!widgetHtml.includes('<textarea'), 'Artifact card brief still requires free-text fields');
+  assert(!/<textarea\b/iu.test(widgetHtml), 'Artifact card brief still requires a textarea');
+  assert(!/<input\b[^>]*\btype\s*=\s*['"](?:text|email|url|tel|search|number|password)['"]/iu.test(widgetHtml), 'Artifact card brief still contains a text-like input');
+  assert(!/\binput\.type\s*=\s*['"](?:text|email|url|tel|search|number|password)['"]/iu.test(widgetHtml), 'Artifact card brief still creates a text-like input');
+  assert(!/contenteditable/iu.test(widgetHtml), 'Artifact card brief still creates an editable text surface');
   assert(!widgetHtml.includes('}, 1000);'), 'Artifact card still abandons the MCP Apps handshake after one second');
   assert(widgetHtml.includes('ui/notifications/size-changed'), 'Artifact card does not publish intrinsic size changes');
 

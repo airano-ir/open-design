@@ -28,6 +28,7 @@ After installing or updating the plugin, merely refreshing the plugin page or op
 
 1. Confirm the deliverable, audience, goal, required content, visual references, and must-have constraints.
    - Call `collect_brief` whenever any of the five required brief fields is missing. Pass the known values so the OpenDesign Custom UI preserves them as preselected choices, then offers simple goal, audience, content, and visual-style options for anything missing. Do not ask those questions as prose. Do not emit `<question-form>` or JSON form markup; ChatGPT/Codex displays that markup as plain text.
+   - The brief UI is choice-only. Every user-facing question must render as a radio or checkbox option; never ask the user to type a project name, audience, outcome, content/flows, visual direction, output format, or constraints into a text field. Infer the project name and output format from the request. When the user already supplied custom wording, preserve it as a preselected `From your brief` option instead of putting it in an editable field.
    - The form submits a user message beginning `[OpenDesign brief confirmed]`. Treat its values as the approved brief and continue without asking for the same information again.
    - If the user already supplied all five fields, skip `collect_brief` and continue directly.
 2. Call `get_cloud_account` before a generation run.
@@ -53,7 +54,7 @@ Before the first run, summarize the working brief in a compact confirmation:
 - Visual direction or design-system source
 - Output format
 
-If the user already supplied all five, proceed without an extra confirmation turn. Otherwise the confirmation must happen through the `collect_brief` Custom UI, never through a literal text form.
+If the user already supplied all five, proceed without an extra confirmation turn. Otherwise the confirmation must happen through the choice-only `collect_brief` Custom UI, never through a literal text form or editable text field.
 
 ## Safety and quality
 

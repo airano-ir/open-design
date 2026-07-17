@@ -152,7 +152,10 @@ describe('ChatGPT Streamable HTTP MCP', () => {
       expect(widgetHtml).toContain('id="brief-visual-options"');
       expect(widgetHtml).toContain("definition.multiple ? 'checkbox' : 'radio'");
       expect(widgetHtml).toContain('Create with these choices');
-      expect(widgetHtml).not.toContain('<textarea');
+      expect(widgetHtml).not.toMatch(/<textarea\b/iu);
+      expect(widgetHtml).not.toMatch(/<input\b[^>]*\btype\s*=\s*['"](?:text|email|url|tel|search|number|password)['"]/iu);
+      expect(widgetHtml).not.toMatch(/\binput\.type\s*=\s*['"](?:text|email|url|tel|search|number|password)['"]/iu);
+      expect(widgetHtml).not.toMatch(/contenteditable/iu);
       const widgetScript = widgetHtml.match(/<script>([\s\S]+)<\/script>/u)?.[1];
       expect(widgetScript).toBeTruthy();
       expect(() => new Script(widgetScript ?? '')).not.toThrow();
@@ -222,6 +225,9 @@ describe('ChatGPT Streamable HTTP MCP', () => {
     expect(skill).toContain('If the Open Design MCP tools are unavailable');
     expect(skill).toContain('fully quit and relaunch Codex');
     expect(skill).toContain('Do not synthesize a substitute form');
+    expect(skill).toContain('The brief UI is choice-only');
+    expect(skill).toContain('Every user-facing question must render as a radio or checkbox option');
+    expect(skill).toContain('preserve it as a preselected `From your brief` option');
     expect(repositoryInstructions).toContain('only apply inside the Open Design daemon and `apps/web` chat host');
     expect(repositoryInstructions).toContain('must fail closed instead of synthesizing a form');
   });

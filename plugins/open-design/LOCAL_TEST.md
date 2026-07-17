@@ -47,7 +47,9 @@ pnpm exec tsx plugins/open-design/scripts/preview-local-card.ts
 
 Open `http://127.0.0.1:17640/` and switch between `running`, `complete`, and
 `recharge`. In the `brief` state, confirm that goal, audience, content, and
-visual style render as preselected choices with no free-text fields. The gallery loads the card HTML from the live MCP resource and
+visual style render only as preselected radio/checkbox choices, with no text
+input, textarea, or editable surface. Project name and output format are inferred
+instead of being requested from the user. The gallery loads the card HTML from the live MCP resource and
 provides a small host simulator for refresh, versions, restore, export, and
 external-link actions; it does not maintain a separate copy of the card.
 
