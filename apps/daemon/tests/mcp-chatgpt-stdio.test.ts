@@ -70,7 +70,7 @@ function runChatGptStdioProbe(): Promise<{ code: number | null; stderr: string; 
         jsonrpc: '2.0',
         id: 4,
         method: 'resources/read',
-        params: { uri: 'ui://open-design/artifact-card-v6.html' },
+        params: { uri: 'ui://open-design/artifact-card-v7.html' },
       },
     ]) {
       child.stdin.write(`${JSON.stringify(message)}\n`);
@@ -100,7 +100,7 @@ describe('ChatGPT stdio MCP surface', () => {
       'cancel_run',
     ]);
     expect(tools.find((tool) => tool.name === 'collect_brief')?._meta).toMatchObject({
-      'ui/resourceUri': 'ui://open-design/artifact-card-v6.html',
+      'ui/resourceUri': 'ui://open-design/artifact-card-v7.html',
     });
 
     const brief = responses.find((response) => response.id === 3)?.result as {
@@ -117,6 +117,8 @@ describe('ChatGPT stdio MCP surface', () => {
     };
     expect(resource.contents?.[0]?.mimeType).toBe('text/html;profile=mcp-app');
     expect(resource.contents?.[0]?.text).toContain('id="brief-form"');
-    expect(resource.contents?.[0]?.text).toContain('Confirm your brief');
+    expect(resource.contents?.[0]?.text).toContain('Choose a direction');
+    expect(resource.contents?.[0]?.text).toContain('id="brief-goal-options"');
+    expect(resource.contents?.[0]?.text).not.toContain('<textarea');
   }, 20_000);
 });

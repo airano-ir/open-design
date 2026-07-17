@@ -21284,14 +21284,15 @@ function classifyAmrAccountFailure(text) {
 
 // ../daemon/src/mcp.ts
 var SERVER_NAME = "open-design";
-var SERVER_VERSION = "0.2.11";
+var SERVER_VERSION = "0.2.12";
 var MCP_STDIO_IDLE_EXIT_MS = 30 * 60 * 1e3;
-var CHATGPT_WIDGET_URI = "ui://open-design/artifact-card-v6.html";
+var CHATGPT_WIDGET_URI = "ui://open-design/artifact-card-v7.html";
 var LEGACY_CHATGPT_WIDGET_URIS = /* @__PURE__ */ new Set([
   "ui://open-design/artifact-card-v2.html",
   "ui://open-design/artifact-card-v3.html",
   "ui://open-design/artifact-card-v4.html",
-  "ui://open-design/artifact-card-v5.html"
+  "ui://open-design/artifact-card-v5.html",
+  "ui://open-design/artifact-card-v6.html"
 ]);
 function isChatGptWidgetResourceUri(value) {
   const uri = typeof value === "string" ? value : "";
@@ -21489,17 +21490,24 @@ var CHATGPT_WIDGET_HTML = `<!doctype html>
     .brief-copy { margin: 0 0 16px; }
     .brief-title { margin: 0; font-size: 17px; font-weight: 650; letter-spacing: -.015em; }
     .brief-detail { margin: 4px 0 0; color: var(--text-muted); font-size: 12px; line-height: 1.45; }
-    .brief-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-    .brief-field { display: grid; gap: 6px; min-width: 0; }
-    .brief-field.wide { grid-column: 1 / -1; }
-    .brief-field span { color: var(--text-muted); font-size: 11px; font-weight: 600; }
-    input, textarea {
-      width: 100%; border: 1px solid var(--border); border-radius: 9px; padding: 9px 10px;
-      background: var(--fill); color: var(--text); font: inherit; font-size: 13px; line-height: 1.4;
-      outline: none; transition: border-color 140ms cubic-bezier(.23,1,.32,1), box-shadow 140ms cubic-bezier(.23,1,.32,1);
+    .brief-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 16px; }
+    .brief-group { min-width: 0; margin: 0; padding: 0; border: 0; }
+    .brief-group.wide { grid-column: 1 / -1; }
+    .brief-group legend { margin: 0 0 8px; padding: 0; color: var(--text); font-size: 12px; font-weight: 650; }
+    .brief-group legend small { margin-left: 5px; color: var(--text-muted); font-size: 10px; font-weight: 500; }
+    .choice-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 7px; }
+    .choice { position: relative; min-width: 0; cursor: pointer; }
+    .choice input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+    .choice span {
+      min-height: 38px; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      border: 1px solid var(--border); border-radius: 9px; padding: 8px 10px;
+      background: var(--fill); color: var(--text); font-size: 12px; line-height: 1.3;
+      transition: border-color 140ms cubic-bezier(.23,1,.32,1), background 140ms cubic-bezier(.23,1,.32,1), color 140ms cubic-bezier(.23,1,.32,1), transform 140ms cubic-bezier(.23,1,.32,1);
     }
-    textarea { min-height: 72px; resize: vertical; }
-    input:focus, textarea:focus { border-color: color-mix(in srgb, var(--text) 46%, var(--border)); box-shadow: 0 0 0 3px var(--fill); }
+    .choice:hover span { transform: translateY(-1px); border-color: color-mix(in srgb, var(--text) 30%, var(--border)); }
+    .choice input:checked + span { border-color: var(--button); background: var(--button); color: var(--button-text); }
+    .choice input:checked + span::after { content: "\u2713"; flex: 0 0 auto; font-size: 11px; font-weight: 700; }
+    .choice input:focus-visible + span { box-shadow: 0 0 0 3px color-mix(in srgb, var(--text) 12%, transparent); }
     .brief-actions { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
     .brief-error { margin: 0; color: #b42318; font-size: 12px; line-height: 1.4; }
     .brief-error[data-tone="pending"] { color: var(--text-muted); }
@@ -21511,7 +21519,7 @@ var CHATGPT_WIDGET_HTML = `<!doctype html>
     .card[data-view="brief"] .compact,
     .card[data-view="brief"] .preview,
     .card[data-view="brief"] .body { display: none; }
-    @media (max-width: 560px) { .brief-grid { grid-template-columns: 1fr; } .brief-field.wide { grid-column: auto; } }
+    @media (max-width: 560px) { .brief-groups { grid-template-columns: 1fr; } .brief-group.wide { grid-column: auto; } }
     @media (prefers-reduced-motion: reduce) { .card, .state-dot { animation: none !important; } }
     @media (prefers-reduced-transparency: reduce) { .card { background: var(--surface-strong); -webkit-backdrop-filter: none; backdrop-filter: none; } }
   </style>
@@ -21521,18 +21529,15 @@ var CHATGPT_WIDGET_HTML = `<!doctype html>
     <header class="head"><span class="mark" aria-hidden="true"><svg viewBox="0 0 64 64"><path fill="#fff" fill-rule="evenodd" d="M32 8C45.3 8 56 18.7 56 32S45.3 56 32 56H11a3 3 0 0 1-3-3V32C8 18.7 18.7 8 32 8Zm0 7C22.6 15 15 22.6 15 32v17h17c9.4 0 17-7.6 17-17S41.4 15 32 15Z"/><path fill="#fff" d="M23.7 22.6c-.9-.4-1.8.5-1.4 1.4l6.4 17.7c.4 1.1 2 .8 2-.4v-9.7h10.5c1.2 0 1.5-1.6.4-2l-17.9-7Z"/></svg></span><div><h1 class="title">OpenDesign</h1><p class="sub" id="subtitle">Artifact ready</p></div></header>
     <section class="compact" id="compact"><div class="state"><span class="state-dot" id="state-dot"></span><div class="state-copy"><strong class="state-title" id="state-title"></strong><p class="state-detail" id="state-detail"></p></div></div><div class="balance" id="balance" hidden><span class="balance-label">Remaining balance</span><strong class="balance-value" id="balance-value"></strong></div><button id="account-action" hidden></button></section>
     <section class="brief" id="brief-form" hidden>
-      <div class="brief-copy"><h2 class="brief-title">Confirm your brief</h2><p class="brief-detail">Review the suggested details, fill any gaps, then continue. OpenDesign will use this as the generation contract.</p></div>
+      <div class="brief-copy"><h2 class="brief-title">Choose a direction</h2><p class="brief-detail">Pick what fits best. Recommended choices are already selected, and you can refine the result later in OpenDesign.</p></div>
       <form id="brief-fields">
-        <div class="brief-grid">
-          <label class="brief-field"><span>Project name</span><input id="brief-project" name="project" required autocomplete="off"></label>
-          <label class="brief-field"><span>Audience</span><input id="brief-audience" name="audience" required autocomplete="off"></label>
-          <label class="brief-field wide"><span>Outcome</span><textarea id="brief-outcome" name="outcome" required></textarea></label>
-          <label class="brief-field wide"><span>Content and flows</span><textarea id="brief-content" name="contentAndFlows" required></textarea></label>
-          <label class="brief-field wide"><span>Visual direction</span><textarea id="brief-visual" name="visualDirection" required></textarea></label>
-          <label class="brief-field wide"><span>Output format</span><input id="brief-output" name="outputFormat" required autocomplete="off"></label>
-          <label class="brief-field wide"><span>Constraints <small>(optional)</small></span><textarea id="brief-constraints" name="constraints"></textarea></label>
+        <div class="brief-groups">
+          <fieldset class="brief-group"><legend>Primary goal</legend><div class="choice-grid" id="brief-goal-options"></div></fieldset>
+          <fieldset class="brief-group"><legend>Audience</legend><div class="choice-grid" id="brief-audience-options"></div></fieldset>
+          <fieldset class="brief-group wide"><legend>Include <small>Choose all that apply</small></legend><div class="choice-grid" id="brief-content-options"></div></fieldset>
+          <fieldset class="brief-group wide"><legend>Visual style</legend><div class="choice-grid" id="brief-visual-options"></div></fieldset>
         </div>
-        <div class="brief-actions"><button id="brief-submit" type="submit">Continue with this brief</button><p class="brief-error" id="brief-error" role="status"></p></div>
+        <div class="brief-actions"><button id="brief-submit" type="submit">Create with these choices</button><p class="brief-error" id="brief-error" role="status"></p></div>
       </form>
     </section>
     <section class="preview" id="preview"><div class="placeholder"><div class="pulse" id="pulse"></div><strong id="preview-title">Preparing your design</strong></div></section>
@@ -21661,18 +21666,155 @@ var CHATGPT_WIDGET_HTML = `<!doctype html>
       };
       return formats[artifactType] || '';
     }
+    const briefChoice = (label, value, recommended = false) => ({ label, value, recommended });
+    const VISUAL_CHOICES = [
+      briefChoice('Clean & focused', 'Use a clean, focused visual system with clear hierarchy, generous spacing, and restrained color.', true),
+      briefChoice('Bold & editorial', 'Use a bold editorial direction with expressive typography, strong composition, and memorable contrast.'),
+      briefChoice('Warm & approachable', 'Use a warm, approachable direction with friendly color, soft geometry, and inviting imagery.'),
+      briefChoice('Modern tech', 'Use a modern technology aesthetic with precise grids, crisp interfaces, and subtle depth or motion.'),
+      briefChoice('Premium & restrained', 'Use a premium, restrained direction with refined typography, muted color, and polished details.'),
+    ];
+    const BRIEF_CHOICE_PRESETS = {
+      website: {
+        goal: [
+          briefChoice('Explain & convert', 'Explain the offering clearly and drive visitors toward the primary conversion.', true),
+          briefChoice('Launch something', 'Introduce and launch a new product, service, feature, or campaign.'),
+          briefChoice('Build trust', 'Build credibility through a clear story, proof, and a professional presentation.'),
+          briefChoice('Sell online', 'Help visitors evaluate the offer and complete a purchase or sales inquiry.'),
+        ],
+        audience: [
+          briefChoice('Potential customers', 'Potential customers evaluating whether this offering is right for them.', true),
+          briefChoice('Existing users', 'Existing users who already know the product and need guidance or updates.'),
+          briefChoice('Business buyers', 'Business buyers and decision-makers comparing solutions and expected value.'),
+          briefChoice('General audience', 'A broad public audience with mixed levels of familiarity.'),
+        ],
+        content: [
+          briefChoice('Hero & CTA', 'A strong opening message with one clear primary call to action.', true),
+          briefChoice('Key benefits', 'A concise benefits and feature story that explains why the offering matters.', true),
+          briefChoice('Social proof', 'Trust signals such as customer quotes, results, logos, or evidence.', true),
+          briefChoice('How it works', 'A simple step-by-step explanation of the experience or process.'),
+          briefChoice('Pricing', 'Pricing or plan information with a clear comparison and next step.'),
+          briefChoice('FAQ & contact', 'Frequently asked questions plus a direct contact or final conversion path.'),
+        ],
+      },
+      'product-prototype': {
+        goal: [
+          briefChoice('Validate an idea', 'Make the product concept tangible enough to validate the value proposition and interaction model.', true),
+          briefChoice('Demo the core flow', 'Demonstrate the most important end-to-end workflow in a convincing interactive prototype.'),
+          briefChoice('Run a user test', 'Create a focused prototype suitable for observing usability and task completion.'),
+          briefChoice('Support a review', 'Communicate the proposed product behavior clearly for stakeholder or product review.'),
+        ],
+        audience: [
+          briefChoice('New users', 'First-time users who need a clear, guided path through the product.', true),
+          briefChoice('Power users', 'Experienced users who value speed, control, and information density.'),
+          briefChoice('Internal teams', 'Internal product, design, engineering, or operations collaborators.'),
+          briefChoice('Decision-makers', 'Stakeholders or buyers evaluating the product concept and business value.'),
+        ],
+        content: [
+          briefChoice('Core workflow', 'The primary task flow from entry through successful completion.', true),
+          briefChoice('Navigation & states', 'Navigation plus realistic empty, loading, success, and error states.', true),
+          briefChoice('Dashboard & data', 'A useful overview with realistic metrics, records, or progress information.'),
+          briefChoice('Search & discovery', 'Search, filtering, browsing, or recommendation interactions.'),
+          briefChoice('Create & edit', 'Creation and editing interactions with clear feedback and validation.'),
+          briefChoice('Settings', 'Account, preference, permission, or configuration surfaces.'),
+        ],
+      },
+      presentation: {
+        goal: [
+          briefChoice('Pitch an idea', 'Persuade the audience to support an idea, product, company, or initiative.', true),
+          briefChoice('Share strategy', 'Explain a strategic direction, priorities, and the reasoning behind them.'),
+          briefChoice('Report progress', 'Communicate results, learnings, current status, and next steps.'),
+          briefChoice('Teach a topic', 'Help the audience understand and remember a topic through a clear narrative.'),
+        ],
+        audience: [
+          briefChoice('Leadership', 'Executives and senior leaders who need concise decisions, evidence, and implications.', true),
+          briefChoice('Customers', 'Customers or prospects evaluating an offer, proposal, or solution.'),
+          briefChoice('Investors', 'Investors assessing the opportunity, traction, differentiation, and plan.'),
+          briefChoice('Internal team', 'An internal cross-functional team aligning around context and action.'),
+        ],
+        content: [
+          briefChoice('Clear story arc', 'A strong beginning, logical narrative arc, and memorable conclusion.', true),
+          briefChoice('Evidence & data', 'Focused evidence, metrics, examples, or proof that supports the argument.', true),
+          briefChoice('Recommendation', 'A clear proposal or recommendation with rationale and trade-offs.'),
+          briefChoice('Product story', 'A visual explanation of the product, experience, or solution.'),
+          briefChoice('Roadmap', 'A phased plan, milestones, priorities, or future direction.'),
+          briefChoice('Next steps', 'Specific decisions, owners, calls to action, or immediate next steps.', true),
+        ],
+      },
+      'design-system': {
+        goal: [
+          briefChoice('Unify a product', 'Create a consistent visual and interaction foundation across an existing product.', true),
+          briefChoice('Start a new product', 'Define a practical design foundation for a new product from the beginning.'),
+          briefChoice('Refresh the brand', 'Translate an updated brand direction into usable digital product rules.'),
+          briefChoice('Scale delivery', 'Help design and engineering teams ship consistent interfaces more efficiently.'),
+        ],
+        audience: [
+          briefChoice('Product teams', 'Cross-functional product teams using shared rules to design and build experiences.', true),
+          briefChoice('Designers', 'Designers who need foundations, components, patterns, and clear usage guidance.'),
+          briefChoice('Developers', 'Frontend engineers implementing reusable components and product patterns.'),
+          briefChoice('Brand teams', 'Brand and marketing teams extending the visual language across digital surfaces.'),
+        ],
+        content: [
+          briefChoice('Foundations', 'Color, typography, spacing, layout, shape, elevation, and motion foundations.', true),
+          briefChoice('Core components', 'A practical set of reusable interface components and their states.', true),
+          briefChoice('Usage guidance', 'Clear rules, examples, and do-and-don\u2019t guidance for consistent application.', true),
+          briefChoice('Accessibility', 'Accessibility requirements for contrast, focus, semantics, motion, and input.'),
+          briefChoice('Product patterns', 'Reusable patterns for navigation, forms, feedback, data, and common flows.'),
+          briefChoice('Governance', 'Contribution, naming, ownership, versioning, and maintenance guidance.'),
+        ],
+      },
+    };
+    function conciseChoiceLabel(value) {
+      const normalized = String(value).trim().replace(/\\s+/g, ' ');
+      return normalized.length > 64 ? normalized.slice(0, 61) + '\u2026' : normalized;
+    }
+    function resolvedBriefChoices(options, suggestedValue) {
+      const suggestion = typeof suggestedValue === 'string' ? suggestedValue.trim() : '';
+      if (!suggestion) return options;
+      const exact = options.find((item) => item.value.toLowerCase() === suggestion.toLowerCase());
+      if (exact) return options.map((item) => ({ ...item, recommended: item === exact }));
+      return [
+        briefChoice('From your brief \xB7 ' + conciseChoiceLabel(suggestion), suggestion, true),
+        ...options.map((item) => ({ ...item, recommended: false })),
+      ];
+    }
+    function renderBriefChoiceGroup(containerId, name, definition, suggestedValue) {
+      const host = byId(containerId);
+      host.replaceChildren();
+      const options = resolvedBriefChoices(definition.options, suggestedValue);
+      options.forEach((item) => {
+        const label = document.createElement('label');
+        label.className = 'choice';
+        const input = document.createElement('input');
+        input.type = definition.multiple ? 'checkbox' : 'radio';
+        input.name = name;
+        input.value = item.value;
+        input.checked = item.recommended === true;
+        const text = document.createElement('span');
+        text.textContent = item.label;
+        label.append(input, text);
+        host.append(label);
+      });
+    }
+    function selectedBriefChoice(name, multiple = false) {
+      const selected = Array.from(document.querySelectorAll('input[name="' + name + '"]:checked'));
+      if (multiple) return selected.map((input) => input.value).join('; ');
+      return selected[0]?.value || '';
+    }
     function renderBrief(output) {
       const brief = output.brief && typeof output.brief === 'object' ? output.brief : {};
       const hydrationKey = JSON.stringify({ artifactType: output.artifactType, title: output.title, brief });
       if (hydrationKey !== briefHydratedKey) {
         briefHydratedKey = hydrationKey;
-        byId('brief-project').value = safeText(output.title, 'New Open Design project');
-        byId('brief-audience').value = safeText(brief.audience, '');
-        byId('brief-outcome').value = safeText(brief.outcome, '');
-        byId('brief-content').value = safeText(brief.contentAndFlows, '');
-        byId('brief-visual').value = safeText(brief.visualDirection, '');
-        byId('brief-output').value = safeText(brief.outputFormat, defaultOutputFormat(output.artifactType));
-        byId('brief-constraints').value = safeText(brief.constraints, '');
+        const preset = BRIEF_CHOICE_PRESETS[output.artifactType] || BRIEF_CHOICE_PRESETS.website;
+        renderBriefChoiceGroup('brief-goal-options', 'brief-goal', { options: preset.goal, multiple: false }, brief.outcome);
+        renderBriefChoiceGroup('brief-audience-options', 'brief-audience', { options: preset.audience, multiple: false }, brief.audience);
+        renderBriefChoiceGroup('brief-content-options', 'brief-content', { options: preset.content, multiple: true }, brief.contentAndFlows);
+        renderBriefChoiceGroup('brief-visual-options', 'brief-visual', { options: VISUAL_CHOICES, multiple: false }, brief.visualDirection);
+        const submit = byId('brief-submit');
+        submit.disabled = false;
+        submit.textContent = 'Create with these choices';
+        byId('brief-error').textContent = '';
       }
       const form = byId('brief-fields');
       form.onsubmit = async (event) => {
@@ -21681,14 +21823,14 @@ var CHATGPT_WIDGET_HTML = `<!doctype html>
         const error = byId('brief-error');
         const payload = {
           artifactType: output.artifactType,
-          title: byId('brief-project').value.trim(),
+          title: safeText(output.title, 'New Open Design project').trim(),
           brief: {
-            audience: byId('brief-audience').value.trim(),
-            outcome: byId('brief-outcome').value.trim(),
-            contentAndFlows: byId('brief-content').value.trim(),
-            visualDirection: byId('brief-visual').value.trim(),
-            outputFormat: byId('brief-output').value.trim(),
-            constraints: byId('brief-constraints').value.trim(),
+            audience: selectedBriefChoice('brief-audience'),
+            outcome: selectedBriefChoice('brief-goal'),
+            contentAndFlows: selectedBriefChoice('brief-content', true),
+            visualDirection: selectedBriefChoice('brief-visual'),
+            outputFormat: safeText(brief.outputFormat, defaultOutputFormat(output.artifactType)).trim(),
+            constraints: safeText(brief.constraints, '').trim(),
           },
         };
         const missing = [

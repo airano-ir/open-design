@@ -16,7 +16,7 @@ const EXPECTED_TOOLS = [
   'start_run',
 ] as const;
 
-const WIDGET_URI = 'ui://open-design/artifact-card-v6.html';
+const WIDGET_URI = 'ui://open-design/artifact-card-v7.html';
 
 interface JsonRpcResponse {
   error?: { message?: string };
@@ -170,6 +170,11 @@ async function validateEndpoint(endpoint: string): Promise<void> {
   assert(widgetHtml.includes("rpcRequest('ui/message'"), 'Artifact card cannot submit the Custom UI brief');
   assert(widgetHtml.includes("content: [{ type: 'text', text }]"), 'Artifact card submits an invalid ui/message content shape');
   assert(widgetHtml.includes('id="brief-form"'), 'Artifact card does not contain the Custom UI brief form');
+  assert(widgetHtml.includes('id="brief-goal-options"'), 'Artifact card brief is missing goal choices');
+  assert(widgetHtml.includes('id="brief-audience-options"'), 'Artifact card brief is missing audience choices');
+  assert(widgetHtml.includes('id="brief-content-options"'), 'Artifact card brief is missing content choices');
+  assert(widgetHtml.includes('id="brief-visual-options"'), 'Artifact card brief is missing visual choices');
+  assert(!widgetHtml.includes('<textarea'), 'Artifact card brief still requires free-text fields');
   assert(!widgetHtml.includes('}, 1000);'), 'Artifact card still abandons the MCP Apps handshake after one second');
   assert(widgetHtml.includes('ui/notifications/size-changed'), 'Artifact card does not publish intrinsic size changes');
 
@@ -178,6 +183,7 @@ async function validateEndpoint(endpoint: string): Promise<void> {
     'ui://open-design/artifact-card-v3.html',
     'ui://open-design/artifact-card-v4.html',
     'ui://open-design/artifact-card-v5.html',
+    'ui://open-design/artifact-card-v6.html',
   ].entries()) {
     const legacyReadResource = await rpc(endpoint, 5 + index, 'resources/read', { uri: legacyUri });
     const legacyContents = legacyReadResource.contents as Array<Record<string, unknown>> | undefined;
@@ -185,7 +191,7 @@ async function validateEndpoint(endpoint: string): Promise<void> {
     assert(legacyWidget?.text === widgetHtml, `${legacyUri} is not mapped to the latest widget`);
   }
 
-  const briefCall = await rpc(endpoint, 9, 'tools/call', {
+  const briefCall = await rpc(endpoint, 10, 'tools/call', {
     name: 'collect_brief',
     arguments: { artifactType: 'website', title: 'Local website', outcome: 'Explain the product.' },
   });
@@ -193,7 +199,7 @@ async function validateEndpoint(endpoint: string): Promise<void> {
   assert(brief?.view === 'brief-form', 'collect_brief did not return the Custom UI state');
   assert((briefCall._meta as Record<string, unknown>)?.['openai/outputTemplate'] === WIDGET_URI, 'collect_brief is not connected to the Artifact card');
 
-  const accountCall = await rpc(endpoint, 10, 'tools/call', { name: 'get_cloud_account', arguments: {} });
+  const accountCall = await rpc(endpoint, 11, 'tools/call', { name: 'get_cloud_account', arguments: {} });
   const account = accountCall.structuredContent as Record<string, unknown> | undefined;
   assert(account && typeof account.balanceStatus === 'string', 'Cloud account tool did not return a balance status');
   assert((accountCall._meta as Record<string, unknown>)?.['openai/outputTemplate'] === WIDGET_URI, 'Cloud account result is not connected to the Artifact card');
