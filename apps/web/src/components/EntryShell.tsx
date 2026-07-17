@@ -2760,6 +2760,30 @@ function OnboardingView({
               {amrLoginError}
             </span>
           ) : null}
+          {/* Manual device-auth fallback, mirroring Settings' AmrLoginPill:
+              vela auto-opens the browser, but when that fails silently (e.g.
+              corp-managed hosts) the pending login otherwise looks like a
+              dead button — surface the activation link the status poll
+              already carries. */}
+          {cloudBusy && amrStatus?.activationUrl ? (
+            <div className="amr-login-activation" role="group">
+              <span className="amr-login-activation__hint">
+                {amrStatus.browserOpenFailed
+                  ? t('settings.amrActivationBrowserFailed')
+                  : t('settings.amrActivationHint')}
+              </span>
+              <div className="amr-login-activation__actions">
+                <a
+                  className="amr-login-activation__open"
+                  href={amrStatus.activationUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {t('settings.amrActivationOpen')}
+                </a>
+              </div>
+            </div>
+          ) : null}
           {cloudBusy ? (
             <button
               type="button"
