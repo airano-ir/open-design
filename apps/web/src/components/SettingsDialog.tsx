@@ -391,6 +391,13 @@ export function deriveAboutUpdateControl(
 }
 
 interface Props {
+  /**
+   * How the settings surface is hosted. `'modal'` (default) renders the
+   * classic dialog inside a backdrop; `'page'` renders the same surface as
+   * the full-page `/settings` route — no backdrop, no dialog chrome, with a
+   * back-to-home nav head above the section list.
+   */
+  presentation?: 'modal' | 'page';
   initial: AppConfig;
   agents: AgentInfo[];
   agentsLoading?: boolean;
@@ -1340,6 +1347,7 @@ export function switchApiProtocolConfig(
 }
 
 export function SettingsDialog({
+  presentation = 'modal',
   initial,
   agents,
   agentsLoading = false,
@@ -3882,19 +3890,20 @@ export function SettingsDialog({
   const settingsFullscreenLabel = settingsFullscreen
     ? t('common.exitFullscreen')
     : t('common.fullscreen');
+  const pageMode = presentation === 'page';
 
-  return (
-    <div className="modal-backdrop" onClick={onClose}>
+  const surface = (
       <div
         className={
           'modal modal-settings' +
+          (pageMode ? ' settings-page-surface' : '') +
           (settingsSidebarCollapsed ? ' settings-sidebar-collapsed' : '') +
-          (settingsFullscreen ? ' settings-fullscreen' : '')
+          (!pageMode && settingsFullscreen ? ' settings-fullscreen' : '')
         }
-        role="dialog"
-        aria-modal="true"
+        role={pageMode ? 'region' : 'dialog'}
+        aria-modal={pageMode ? undefined : true}
         aria-labelledby="settings-dialog-title"
-        onClick={(e) => e.stopPropagation()}
+        onClick={pageMode ? undefined : (e) => e.stopPropagation()}
       >
         {/* Top-right chrome strip — anchored to the modal corner so the
             autosave indicator and the close button float above the
@@ -3934,20 +3943,22 @@ export function SettingsDialog({
               </>
             ) : null}
           </div>
-          <button
-            type="button"
-            className="settings-chrome-btn settings-fullscreen-toggle"
-            onClick={() => setSettingsFullscreen((current) => !current)}
-            aria-label={settingsFullscreenLabel}
-            aria-pressed={settingsFullscreen}
-            title={settingsFullscreenLabel}
-          >
-            <Icon
-              name={settingsFullscreen ? 'minimize' : 'maximize'}
-              size={15}
-              strokeWidth={2}
-            />
-          </button>
+          {pageMode ? null : (
+            <button
+              type="button"
+              className="settings-chrome-btn settings-fullscreen-toggle"
+              onClick={() => setSettingsFullscreen((current) => !current)}
+              aria-label={settingsFullscreenLabel}
+              aria-pressed={settingsFullscreen}
+              title={settingsFullscreenLabel}
+            >
+              <Icon
+                name={settingsFullscreen ? 'minimize' : 'maximize'}
+                size={15}
+                strokeWidth={2}
+              />
+            </button>
+          )}
           <button
             type="button"
             className="settings-chrome-btn settings-close"
@@ -3998,6 +4009,23 @@ export function SettingsDialog({
             aria-label="Settings sections"
             aria-hidden={settingsSidebarCollapsed ? true : undefined}
           >
+            {pageMode ? (
+              <div className="settings-page-nav-head">
+                <button
+                  type="button"
+                  className="settings-page-back"
+                  onClick={onClose}
+                >
+                  <Icon name="arrow-left" size={15} />
+                  <span>{t('settings.pageBackToHome')}</span>
+                </button>
+                <label className="settings-page-search">
+                  <Icon name="search" size={14} />
+                  <input type="search" placeholder={t('settings.pageSearchPlaceholder')} readOnly />
+                </label>
+                <span className="settings-page-nav-group">{t('settings.pageNavGroupPersonal')}</span>
+              </div>
+            ) : null}
             <button
               type="button"
               className={`settings-nav-item${activeSection === 'general' ? ' active' : ''}`}
@@ -5733,6 +5761,19 @@ export function SettingsDialog({
           </div>
         </div>
       </div>
+  );
+
+  if (pageMode) {
+    return (
+      <div className="settings-page-shell">
+        {surface}
+      </div>
+    );
+  }
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      {surface}
     </div>
   );
 }

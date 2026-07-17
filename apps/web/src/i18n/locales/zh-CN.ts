@@ -4924,6 +4924,10 @@ export const zhCN: Dict = {
   'settings.workspaceAutoRechargeHint': '余额不足时自动充值额度。',
   'settings.workspaceTeamSpace': '团队空间',
   'settings.workspaceTeamSpaceHint': '团队的共享项目与可见性。',
+  // Full-page Settings (`/settings`): sidebar nav head above the section list.
+  'settings.pageBackToHome': '返回首页',
+  'settings.pageSearchPlaceholder': '搜索设置...',
+  'settings.pageNavGroupPersonal': '个人',
   "newproj.startFromLabel": "起点",
   "newproj.startBlank": "空白",
   "newproj.startBlankHint": "从零开始",

@@ -1373,6 +1373,7 @@ function displayTabFor(
     members: t('entry.navMembers'),
     board: t('entry.navBoard'),
     'workspace-settings': t('entry.navWorkspaceSettings'),
+    settings: t('settings.title'),
   };
   const entryIcon: Record<EntryHomeView, IconName> = {
     home: 'home',
@@ -1390,6 +1391,7 @@ function displayTabFor(
     members: 'users',
     board: 'kanban',
     'workspace-settings': 'settings',
+    settings: 'settings',
   };
   return {
     id: tab.id,

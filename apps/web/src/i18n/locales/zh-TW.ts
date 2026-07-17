@@ -4932,6 +4932,10 @@ export const zhTW: Dict = {
   'settings.workspaceAutoRechargeHint': '餘額不足時自動儲值額度。',
   'settings.workspaceTeamSpace': '團隊空間',
   'settings.workspaceTeamSpaceHint': '團隊的共享專案與可見性。',
+  // Full-page Settings (`/settings`): sidebar nav head above the section list.
+  'settings.pageBackToHome': '返回首頁',
+  'settings.pageSearchPlaceholder': '搜尋設定...',
+  'settings.pageNavGroupPersonal': '個人',
   "newproj.startFromLabel": "起點",
   "newproj.startBlank": "空白",
   "newproj.startBlankHint": "從零開始",
