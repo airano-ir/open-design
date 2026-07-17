@@ -6,7 +6,7 @@ import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
-import { BrowserWindow, app, dialog, ipcMain, nativeImage, screen, session, shell } from "electron";
+import { BrowserWindow, app, dialog, ipcMain, nativeImage, nativeTheme, screen, session, shell } from "electron";
 import {
   DESKTOP_UPDATE_CHANNELS,
   DESKTOP_UPDATE_MODES,
@@ -2407,6 +2407,19 @@ export async function createDesktopRuntime(options: DesktopRuntimeOptions): Prom
     else petWindow.hide();
   });
 
+  ipcMain.removeAllListeners("od:appearance:set-theme");
+  ipcMain.on("od:appearance:set-theme", (event, theme: unknown) => {
+    if (window.isDestroyed() || event.sender !== window.webContents) return;
+    if (theme !== "light" && theme !== "dark" && theme !== "system") return;
+    // Pin the native appearance to the app theme. The macOS frosted window
+    // (vibrancy: under-window) draws its glass in the SYSTEM appearance by
+    // default, so an explicitly light app over a dark OS sat on dark glass
+    // and read as a muddy gray (#94); forcing the native theme keeps the
+    // glass material in step with the app's tokens. `system` restores
+    // following the OS for the follow-system theme setting.
+    nativeTheme.themeSource = theme;
+  });
+
   ipcMain.removeHandler('od:print-pdf');
   ipcMain.handle('od:print-pdf', async (_event, html: unknown, nonce: unknown, options: unknown): Promise<void> => {
     if (typeof html !== 'string') {
@@ -2776,6 +2789,7 @@ export async function createDesktopRuntime(options: DesktopRuntimeOptions): Prom
       }
       unsubscribeUpdater();
       ipcMain.removeAllListeners("desktop-pet:set-visible");
+      ipcMain.removeAllListeners("od:appearance:set-theme");
       for (const channel of UPDATER_IPC_CHANNELS) {
         ipcMain.removeHandler(channel);
       }

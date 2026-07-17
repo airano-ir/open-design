@@ -12,6 +12,7 @@
 export {
   OPEN_DESIGN_HOST_GLOBAL,
   OPEN_DESIGN_HOST_VERSION,
+  OPEN_DESIGN_HOST_APPEARANCE_THEMES,
   OPEN_DESIGN_HOST_CLIENT_TYPES,
   OPEN_DESIGN_HOST_UPDATER_ACTIONS,
   OPEN_DESIGN_HOST_UPDATER_STATES,
@@ -33,6 +34,7 @@ export type {
   OpenDesignHostCaptureOptions,
   OpenDesignHostCaptureSuccess,
   OpenDesignHostCaptureResult,
+  OpenDesignHostAppearanceTheme,
   OpenDesignHostBrowserClearDataOptions,
   OpenDesignHostUpdaterAction,
   OpenDesignHostUpdaterState,

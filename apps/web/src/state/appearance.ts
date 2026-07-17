@@ -1,3 +1,4 @@
+import { getOpenDesignHost } from '@open-design/host';
 import type { AppTheme } from '../types';
 
 const ACCENT_VARS = [
@@ -55,6 +56,14 @@ export function applyAppearanceToDocument({
   } else {
     root.removeAttribute('data-theme');
   }
+  // Desktop shell: keep the native window appearance (the macOS vibrancy
+  // glass material) in step with the app theme. Without this the glass
+  // follows the OS appearance, so an explicitly light app over a dark OS sat
+  // on dark glass and read as a muddy gray (#94). Feature-detected — browsers
+  // and older host builds have no appearance capability.
+  getOpenDesignHost()?.appearance?.setTheme(
+    theme === 'light' || theme === 'dark' ? theme : 'system',
+  );
 
   const normalized = resolveAccentColor(accentColor);
   const vars = accentVars(normalized);

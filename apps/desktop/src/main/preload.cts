@@ -286,6 +286,12 @@ const hostBridge = {
     platform: process.platform,
     ...(osLocale !== undefined ? { osLocale } : {}),
   },
+  appearance: {
+    // Pin the native window appearance (macOS vibrancy glass material) to the
+    // app theme. Fire-and-forget: the main process validates the value.
+    setTheme: (theme: 'light' | 'dark' | 'system'): void =>
+      ipcRenderer.send('od:appearance:set-theme', theme),
+  },
   shell,
   browser,
   capture,

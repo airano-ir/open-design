@@ -106,6 +106,22 @@ export type OpenDesignHostBrowserClearDataOptions = {
   storage?: boolean;
 };
 
+/**
+ * App theme values the renderer may pin the host window appearance to.
+ * `light`/`dark` force the native window material (macOS under-window
+ * vibrancy glass follows the OS appearance by default, which reads as a
+ * muddy gray when the OS is dark but the app theme is explicitly light);
+ * `system` restores following the OS.
+ */
+export const OPEN_DESIGN_HOST_APPEARANCE_THEMES = Object.freeze({
+  DARK: "dark",
+  LIGHT: "light",
+  SYSTEM: "system",
+} as const);
+
+export type OpenDesignHostAppearanceTheme =
+  (typeof OPEN_DESIGN_HOST_APPEARANCE_THEMES)[keyof typeof OPEN_DESIGN_HOST_APPEARANCE_THEMES];
+
 export const OPEN_DESIGN_HOST_UPDATER_ACTIONS = Object.freeze({
   CHECK: "check",
   DOWNLOAD: "download",
@@ -278,6 +294,11 @@ export type OpenDesignHostUpdaterResult =
 export type OpenDesignHostUpdaterStatusListener = (status: OpenDesignHostUpdaterStatusSnapshot) => void;
 
 export type OpenDesignHostBridge = {
+  // Optional so older host builds still satisfy the bridge shape; callers
+  // must feature-detect before invoking.
+  appearance?: {
+    setTheme(theme: OpenDesignHostAppearanceTheme): void;
+  };
   browser: {
     clearData(options?: OpenDesignHostBrowserClearDataOptions): Promise<OpenDesignHostActionResult>;
   };
