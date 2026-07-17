@@ -116,7 +116,7 @@ That file walks through:
 - **PR description template** — drop into your PR body and fill in.
 - **Common rejection patterns** — the close reasons we've used recently, with concrete examples.
 
-The protocol spec (full frontmatter grammar — typed inputs, slider parameters, craft references, testing primitives) lives separately in [`docs/skills-protocol.md`](docs/skills-protocol.md).
+The protocol spec (active frontmatter grammar, craft references, and testing primitives) lives separately in [`docs/skills-protocol.md`](docs/skills-protocol.md); older portable fields such as `od.inputs`, `od.parameters`, and `od.capabilities_required` may still appear in external bundles but are not consumed by the skill/template registry.
 
 ---
 

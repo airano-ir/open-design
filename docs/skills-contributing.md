@@ -109,10 +109,10 @@ od:
   featured: 1               # any positive integer surfaces under "Showcase examples"
   preview:
     type: html              # html | jsx | pptx | markdown
-    entry: index.html
   design_system:
     requires: true          # does the template read the active DESIGN.md?
-    sections: [color, typography, layout, components]
+  craft:
+    requires: [typography, color, anti-ai-slop]
   example_prompt: "A copy-pastable prompt that nicely shows what this template does."
 ---
 
@@ -123,7 +123,7 @@ Numbered steps work well. Lift the format from design-templates/dating-web/SKILL
 or design-templates/guizang-ppt/SKILL.md.
 ```
 
-Full grammar — typed inputs, slider parameters (`od.parameters`), capability gating (`od.capabilities_required`), `od.craft.requires` for cross-brand craft references — lives in [`skills-protocol.md`](skills-protocol.md). You don't need any of those to ship v1.
+Full active grammar (`od.mode`, `od.surface`, `od.craft.requires`, `od.critique.policy`, gallery hints, and more) lives in [`skills-protocol.md`](skills-protocol.md). Older portable fields such as `od.inputs`, `od.parameters`, and `od.capabilities_required` may still appear in external bundles but are not consumed by the skill/template registry.
 
 ---
 
