@@ -2,7 +2,30 @@
 
 import { createServer } from 'node:http';
 
-const WIDGET_URI = 'ui://open-design/artifact-card-v8.html';
+const ARTIFACT_TYPES = [
+  'website',
+  'product-prototype',
+  'presentation',
+  'design-system',
+  'image',
+  'video',
+  'audio',
+  'document',
+] as const;
+type ArtifactType = (typeof ARTIFACT_TYPES)[number];
+
+const ARTIFACT_LABELS: Record<ArtifactType, string> = {
+  website: 'Website',
+  'product-prototype': 'Product prototype',
+  presentation: 'Presentation',
+  'design-system': 'Design system',
+  image: 'Image',
+  video: 'Video',
+  audio: 'Audio',
+  document: 'Document',
+};
+
+const WIDGET_URI = 'ui://open-design/artifact-card-v9.html';
 
 interface JsonRpcResponse {
   error?: { message?: string };
@@ -15,6 +38,44 @@ function option(name: string, fallback: string): string {
   const value = process.argv[index + 1];
   if (!value) throw new Error(`${name} requires a value`);
   return value;
+}
+
+function isArtifactType(value: string): value is ArtifactType {
+  return ARTIFACT_TYPES.some((artifactType) => artifactType === value);
+}
+
+function artifactTypeOption(name: string, fallback: ArtifactType): ArtifactType {
+  const value = option(name, fallback);
+  if (!isArtifactType(value)) throw new Error(`${name} must be one of: ${ARTIFACT_TYPES.join(', ')}`);
+  return value;
+}
+
+function defaultOutputFormat(artifactType: ArtifactType): string {
+  const formats: Record<ArtifactType, string> = {
+    website: 'Responsive browser website',
+    'product-prototype': 'Interactive responsive product prototype',
+    presentation: 'Browser presentation with a real preview',
+    'design-system': 'Reusable DESIGN.md design system',
+    image: 'Square PNG image · 1:1',
+    video: 'Landscape MP4 video · 16:9',
+    audio: '60-second music track',
+    document: 'Markdown source + print-ready HTML',
+  };
+  return formats[artifactType];
+}
+
+function entryFileFor(artifactType: ArtifactType): string {
+  const entries: Record<ArtifactType, string> = {
+    website: 'index.html',
+    'product-prototype': 'index.html',
+    presentation: 'index.html',
+    'design-system': 'DESIGN.md',
+    image: 'open-design-image.png',
+    video: 'open-design-video.mp4',
+    audio: 'open-design-audio.mp3',
+    document: 'index.html',
+  };
+  return entries[artifactType];
 }
 
 function parseMcpBody(text: string, contentType: string): JsonRpcResponse {
@@ -50,16 +111,15 @@ async function readWidget(endpoint: string): Promise<string> {
   return html;
 }
 
-function stateOutput(state: string, origin: string): Record<string, unknown> {
+function stateOutput(state: string, origin: string, artifactType: ArtifactType): Record<string, unknown> {
+  const artifactLabel = ARTIFACT_LABELS[artifactType];
   if (state === 'brief') {
     return {
       view: 'brief-form',
-      artifactType: 'website',
-      title: 'Launch website',
+      artifactType,
+      title: `Local ${artifactLabel}`,
       brief: {
-        audience: 'Product teams evaluating AI design tools',
-        outcome: 'Explain the product clearly and convert qualified visitors.',
-        outputFormat: 'Responsive browser website',
+        outputFormat: defaultOutputFormat(artifactType),
       },
     };
   }
@@ -86,12 +146,12 @@ function stateOutput(state: string, origin: string): Record<string, unknown> {
       id: 'run-local-001',
       runId: 'run-local-001',
       projectId: 'local-card-gallery',
-      projectName: 'Launch website',
-      artifactType: 'website',
+      projectName: `Local ${artifactLabel}`,
+      artifactType,
       briefConfirmed: true,
       stage: 'generating',
       status: 'running',
-      hint: 'Open Design is translating your confirmed brief into a responsive website.',
+      hint: `Open Design is producing the confirmed ${artifactLabel.toLowerCase()} deliverable.`,
     };
   }
   if (state === 'recharge') {
@@ -110,13 +170,13 @@ function stateOutput(state: string, origin: string): Record<string, unknown> {
     id: 'run-local-001',
     runId: 'run-local-001',
     projectId: 'local-card-gallery',
-    projectName: 'Launch website',
-    artifactType: 'website',
+    projectName: `Local ${artifactLabel}`,
+    artifactType,
     briefConfirmed: true,
     stage: 'ready',
     status: 'succeeded',
-    entryFile: 'index.html',
-    previewUrl: `${origin}/artifact`,
+    entryFile: entryFileFor(artifactType),
+    previewUrl: `${origin}/artifact?artifactType=${encodeURIComponent(artifactType)}`,
     studioUrl: `${origin}/studio`,
     hint: 'Review the result here, then continue detailed editing, versions, and export in Open Design.',
   };
@@ -129,8 +189,8 @@ function scriptJson(value: unknown): string {
     .replaceAll('\u2029', '\\u2029');
 }
 
-function mcpAppsHostScript(output: Record<string, unknown>, origin: string, widget: string): string {
-  const complete = stateOutput('complete', origin);
+function mcpAppsHostScript(output: Record<string, unknown>, origin: string, widget: string, artifactType: ArtifactType): string {
+  const complete = stateOutput('complete', origin, artifactType);
   return `<script>
     (() => {
       const frame = document.getElementById('artifact-card');
@@ -266,8 +326,14 @@ function mcpAppsHostScript(output: Record<string, unknown>, origin: string, widg
   </script>`;
 }
 
-function galleryHtml(widget: string, state: string, origin: string): string {
-  const output = stateOutput(state, origin);
+function galleryHtml(widget: string, state: string, origin: string, artifactType: ArtifactType): string {
+  const output = stateOutput(state, origin, artifactType);
+  const stateLinks = ['brief', 'account', 'authorized', 'running', 'recharge', 'complete']
+    .map((item) => `<a href="/?state=${item}&amp;artifactType=${encodeURIComponent(artifactType)}" aria-current="${item === state}">${item}</a>`)
+    .join('');
+  const artifactLinks = ARTIFACT_TYPES
+    .map((item) => `<a href="/?state=brief&amp;artifactType=${encodeURIComponent(item)}" aria-current="${state === 'brief' && item === artifactType}">${ARTIFACT_LABELS[item]}</a>`)
+    .join('');
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Open Design · Local Card Gallery</title>
     <style>
@@ -276,31 +342,38 @@ function galleryHtml(widget: string, state: string, origin: string): string {
       header { max-width: 760px; margin: 0 auto 20px; }
       h1 { margin: 0 0 6px; font-size: 24px; letter-spacing: -.03em; }
       p { margin: 0; color: #666; font-size: 13px; }
-      nav { display: flex; gap: 8px; margin-top: 16px; }
+      nav { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
       nav a { color: #222; text-decoration: none; padding: 7px 11px; border-radius: 999px; background: #fff; border: 1px solid #ddd8ce; font-size: 12px; font-weight: 700; }
       nav a[aria-current=true] { color: #fff; background: #111; border-color: #111; }
+      .artifact-types { margin-top: 10px; }
+      .artifact-types a { font-weight: 600; }
       iframe { display: block; width: min(760px, 100%); height: 570px; margin: 0 auto; border: 0; transition: height 200ms cubic-bezier(.23, 1, .32, 1); }
       #local-host-status { max-width: 720px; margin: 12px auto 0; min-height: 18px; color: #666; font-size: 12px; }
     </style></head><body>
-    <header><h1>Open Design Artifact Card</h1><p>Real MCP Apps resource with a local host simulator.</p>
-      <nav>${['brief', 'account', 'authorized', 'running', 'recharge', 'complete'].map((item) => `<a href="/?state=${item}" aria-current="${item === state}">${item}</a>`).join('')}</nav>
+    <header><h1>Open Design Artifact Card v9</h1><p>Real MCP Apps resource with a local host simulator. Brief artifact: ${ARTIFACT_LABELS[artifactType]}.</p>
+      <nav>${stateLinks}</nav>
+      <nav class="artifact-types" aria-label="Brief artifact type">${artifactLinks}</nav>
     </header>
     <iframe id="artifact-card" title="Open Design Artifact Card"></iframe>
     <div id="local-host-status"></div>
-    ${mcpAppsHostScript(output, origin, widget)}
+    ${mcpAppsHostScript(output, origin, widget, artifactType)}
   </body></html>`;
 }
 
 const endpoint = option('--endpoint', 'http://127.0.0.1:17456/mcp');
 const port = Number(option('--port', '17640'));
 if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('--port must be between 1 and 65535');
+const defaultArtifactType = artifactTypeOption('--artifact-type', 'website');
 const widget = await readWidget(endpoint);
 const origin = `http://127.0.0.1:${port}`;
 const server = createServer((request, response) => {
   const url = new URL(request.url ?? '/', origin);
   if (url.pathname === '/artifact') {
+    const requestedArtifactType = url.searchParams.get('artifactType') ?? defaultArtifactType;
+    const artifactType = isArtifactType(requestedArtifactType) ? requestedArtifactType : defaultArtifactType;
+    const label = ARTIFACT_LABELS[artifactType];
     response.setHeader('content-type', 'text/html; charset=utf-8');
-    response.end('<!doctype html><html><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:linear-gradient(135deg,#15171c,#414b6d);color:white;font-family:system-ui}.hero{text-align:center}.pill{display:inline-block;padding:6px 10px;border:1px solid #ffffff44;border-radius:999px;font-size:12px}h1{font-size:36px;margin:14px 0 8px}p{margin:0;color:#d9def0}</style><body><div class="hero"><span class="pill">OPEN DESIGN</span><h1>Build what matters.</h1><p>A generated website preview inside the ChatGPT card.</p></div></body></html>');
+    response.end(`<!doctype html><html><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:linear-gradient(135deg,#15171c,#414b6d);color:white;font-family:system-ui}.hero{text-align:center}.pill{display:inline-block;padding:6px 10px;border:1px solid #ffffff44;border-radius:999px;font-size:12px}h1{font-size:36px;margin:14px 0 8px}p{margin:0;color:#d9def0}</style><body><div class="hero"><span class="pill">OPEN DESIGN</span><h1>${label}</h1><p>A generated ${label.toLowerCase()} preview inside the host card.</p></div></body></html>`);
     return;
   }
   if (url.pathname === '/studio') {
@@ -312,12 +385,20 @@ const server = createServer((request, response) => {
   const state = ['brief', 'account', 'authorized', 'running', 'recharge', 'complete'].includes(url.searchParams.get('state') ?? '')
     ? String(url.searchParams.get('state'))
     : 'complete';
+  const requestedArtifactType = url.searchParams.get('artifactType') ?? defaultArtifactType;
+  if (!isArtifactType(requestedArtifactType)) {
+    response.statusCode = 400;
+    response.setHeader('content-type', 'text/plain; charset=utf-8');
+    response.end(`artifactType must be one of: ${ARTIFACT_TYPES.join(', ')}`);
+    return;
+  }
   response.setHeader('content-type', 'text/html; charset=utf-8');
-  response.end(galleryHtml(widget, state, origin));
+  response.end(galleryHtml(widget, state, origin, requestedArtifactType));
 });
 
 server.listen(port, '127.0.0.1', () => {
-  process.stdout.write(`Open Design local card gallery: ${origin}/?state=complete\n`);
+  process.stdout.write(`Open Design local card gallery: ${origin}/?state=brief&artifactType=${defaultArtifactType}\n`);
+  process.stdout.write(`Brief artifact types: ${ARTIFACT_TYPES.join(', ')}\n`);
 });
 
 const shutdown = () => server.close(() => process.exit(0));

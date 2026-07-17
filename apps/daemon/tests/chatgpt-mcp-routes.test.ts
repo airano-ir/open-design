@@ -84,7 +84,7 @@ describe('ChatGPT Streamable HTTP MCP', () => {
         'create_artifact',
       ]));
       const startRun = tools.tools.find((tool) => tool.name === 'start_run');
-      const widgetUri = 'ui://open-design/artifact-card-v8.html';
+      const widgetUri = 'ui://open-design/artifact-card-v9.html';
       const collectBrief = tools.tools.find((tool) => tool.name === 'collect_brief');
       expect(collectBrief?._meta?.['openai/outputTemplate']).toBe(widgetUri);
       expect((collectBrief?._meta as any)?.ui?.resourceUri).toBe(widgetUri);
@@ -102,9 +102,18 @@ describe('ChatGPT Streamable HTTP MCP', () => {
         'product-prototype',
         'presentation',
         'design-system',
+        'image',
+        'video',
+        'audio',
+        'document',
       ]);
       expect((startRun?.inputSchema as any).properties.plugin).toBeUndefined();
       expect((startRun?.inputSchema as any).properties.agent).toBeUndefined();
+      const createProject = tools.tools.find((tool) => tool.name === 'create_project');
+      expect((createProject?.inputSchema as any).required).toEqual(['name', 'artifactType']);
+      expect((createProject?.inputSchema as any).properties.artifactType.enum).toEqual(
+        (startRun?.inputSchema as any).properties.artifactType.enum,
+      );
 
       const resources = await client.listResources();
       expect(resources.resources).toContainEqual(expect.objectContaining({
@@ -126,6 +135,7 @@ describe('ChatGPT Streamable HTTP MCP', () => {
         'ui://open-design/artifact-card-v5.html',
         'ui://open-design/artifact-card-v6.html',
         'ui://open-design/artifact-card-v7.html',
+        'ui://open-design/artifact-card-v8.html',
       ]) {
         const legacyWidget = await client.readResource({ uri: legacyUri });
         expect(legacyWidget.contents[0]).toEqual(expect.objectContaining({
@@ -144,12 +154,17 @@ describe('ChatGPT Streamable HTTP MCP', () => {
       expect(widgetHtml).toContain("rpcRequest('ui/update-model-context'");
       expect(widgetHtml).toContain(String.raw`const text = lines.join('\n')`);
       expect(widgetHtml).toContain('id="brief-form"');
-      expect(widgetHtml).toContain('.card[data-view="brief"] .head { display: none; }');
-      expect(widgetHtml).toContain('<header class="head">');
+      expect(widgetHtml).not.toContain('<header class="head">');
+      expect(widgetHtml).not.toContain('<h1 class="title">OpenDesign</h1>');
+      expect(widgetHtml).not.toContain('id="subtitle"');
       expect(widgetHtml).toContain('id="brief-goal-options"');
       expect(widgetHtml).toContain('id="brief-audience-options"');
       expect(widgetHtml).toContain('id="brief-content-options"');
       expect(widgetHtml).toContain('id="brief-visual-options"');
+      expect(widgetHtml).toContain('id="brief-output-options"');
+      for (const artifactType of ['website', 'product-prototype', 'presentation', 'design-system', 'image', 'video', 'audio', 'document']) {
+        expect(widgetHtml).toContain(artifactType.includes('-') ? `'${artifactType}': {` : `${artifactType}: {`);
+      }
       expect(widgetHtml).toContain("definition.multiple ? 'checkbox' : 'radio'");
       expect(widgetHtml).toContain('Create with these choices');
       expect(widgetHtml).not.toMatch(/<textarea\b/iu);
@@ -210,24 +225,44 @@ describe('ChatGPT Streamable HTTP MCP', () => {
     }
   });
 
-  it('teaches the plugin to collect missing brief fields through Custom UI', async () => {
-    const skill = await readFile(
-      new URL('../../../plugins/open-design/skills/create-with-open-design/SKILL.md', import.meta.url),
+  it('publishes one shared Open Design operating skill and eight artifact-specific skills', async () => {
+    const skillNames = [
+      'open-design-basics',
+      'create-website-with-open-design',
+      'create-prototype-with-open-design',
+      'create-presentation-with-open-design',
+      'create-design-system-with-open-design',
+      'create-image-with-open-design',
+      'create-video-with-open-design',
+      'create-audio-with-open-design',
+      'create-document-with-open-design',
+    ];
+    const skills = await Promise.all(skillNames.map((skillName) => readFile(
+      new URL(`../../../plugins/open-design/skills/${skillName}/SKILL.md`, import.meta.url),
       'utf8',
-    );
+    )));
+    const basics = skills[0] ?? '';
     const repositoryInstructions = await readFile(
       new URL('../../../AGENTS.md', import.meta.url),
       'utf8',
     );
-    expect(skill).toContain('Call `collect_brief`');
-    expect(skill).toContain('Do not emit `<question-form>`');
-    expect(skill).toContain('Custom UI');
-    expect(skill).toContain('If the Open Design MCP tools are unavailable');
-    expect(skill).toContain('fully quit and relaunch Codex');
-    expect(skill).toContain('Do not synthesize a substitute form');
-    expect(skill).toContain('The brief UI is choice-only');
-    expect(skill).toContain('Every user-facing question must render as a radio or checkbox option');
-    expect(skill).toContain('preserve it as a preselected `From your brief` option');
+    expect(basics).toMatch(/call `collect_brief`/iu);
+    expect(basics).toMatch(/never fall back[^\n]+`<question-form>`/iu);
+    expect(basics).toContain('Custom UI');
+    expect(basics).toContain('Fail closed when tools are unavailable');
+    expect(basics).toContain('fully quit and relaunch Codex');
+    expect(basics).toContain('Do not create substitute');
+    expect(basics).toContain('choice-only');
+    expect(basics).toContain('radio buttons for one choice and checkboxes for multiple choices');
+    expect(basics).toMatch(/preselected \*\*From your brief\*\* choice/iu);
+    expect(skills.slice(1).every((skill) => skill.includes('`collect_brief`'))).toBe(true);
+    expect(skills.slice(1).every((skill) => /Offer only selectable/iu.test(skill))).toBe(true);
+    expect(skills.slice(1).every((skill) => skill.includes('`create_project`'))).toBe(true);
+    expect(skills.slice(1).every((skill) => skill.includes('`start_run`'))).toBe(true);
+    expect(skills[5]).toContain('`artifactType: image`');
+    expect(skills[6]).toContain('`artifactType: video`');
+    expect(skills[7]).toContain('`artifactType: audio`');
+    expect(skills[8]).toContain('`artifactType: document`');
     expect(repositoryInstructions).toContain('only apply inside the Open Design daemon and `apps/web` chat host');
     expect(repositoryInstructions).toContain('must fail closed instead of synthesizing a form');
   });
@@ -624,15 +659,32 @@ describe('ChatGPT Streamable HTTP MCP', () => {
         text: expect.stringContaining('Use cobalt for primary actions.'),
       });
 
-      await client.callTool({
-        name: 'create_project',
-        arguments: { name: 'Launch', designSystem: 'acme' },
-      });
-      expect(createdBodies).toEqual([expect.objectContaining({
-        name: 'Launch',
-        designSystemId: 'acme',
+      const projectCases = [
+        ['website', { kind: 'prototype' }],
+        ['product-prototype', { kind: 'prototype' }],
+        ['presentation', { kind: 'deck' }],
+        ['design-system', { kind: 'brand' }],
+        ['image', { kind: 'image' }],
+        ['video', { kind: 'video' }],
+        ['audio', { kind: 'audio' }],
+        ['document', { kind: 'other', intent: 'document' }],
+      ] as const;
+      for (const [artifactType] of projectCases) {
+        await client.callTool({
+          name: 'create_project',
+          arguments: {
+            name: artifactType === 'website' ? 'Launch' : `New ${artifactType}`,
+            artifactType,
+            ...(artifactType === 'website' ? { designSystem: 'acme' } : {}),
+          },
+        });
+      }
+      expect(createdBodies).toEqual(projectCases.map(([artifactType, metadata]) => expect.objectContaining({
+        name: artifactType === 'website' ? 'Launch' : `New ${artifactType}`,
+        ...(artifactType === 'website' ? { designSystemId: 'acme' } : {}),
+        metadata,
         skipDiscoveryBrief: true,
-      })]);
+      })));
 
       const unconfirmed = await client.callTool({
         name: 'start_run',
@@ -675,30 +727,28 @@ describe('ChatGPT Streamable HTTP MCP', () => {
         stage: 'queued',
       });
       expect(started._meta).toMatchObject({
-        'openai/outputTemplate': 'ui://open-design/artifact-card-v8.html',
-        'ui/resourceUri': 'ui://open-design/artifact-card-v8.html',
+        'openai/outputTemplate': 'ui://open-design/artifact-card-v9.html',
+        'ui/resourceUri': 'ui://open-design/artifact-card-v9.html',
       });
-      expect(runBodies).toEqual([{
+      expect(runBodies).toEqual([expect.objectContaining({
         projectId: 'p1',
-        message: [
-          'Artifact type: website',
-          'Audience: Prospective teams',
-          'Outcome: Explain the product and drive signups',
-          'Content and flows: Hero, proof, feature sections, pricing CTA',
-          'Visual direction: Use the attached Acme Design System',
-          'Output format: Responsive website',
-          'Delivery contract: write the actual deliverable files inside the current project working directory. Project files are discovered automatically; there is no separate artifact registration command to run. For a browser artifact, create a real HTML entry file and verify it can be read back before finishing. If any write or verification tool reports an error, report that error and do not claim the file exists.',
-        ].join('\n'),
+        message: expect.stringContaining('Website deliverable: create a polished responsive website with a real index.html entry file'),
         skillId: 'frontend-design',
         agentId: 'amr',
-      }]);
+      })]);
+      expect((runBodies[0] as any).message).toContain('Audience: Prospective teams');
+      expect((runBodies[0] as any).message).toContain('Delivery contract: write the actual deliverable files');
 
       const mappingCases = [
-        ['product-prototype', 'Interactive prototype', 'frontend-design'],
-        ['presentation', 'Browser deck', 'slides'],
-        ['design-system', 'DESIGN.md', 'design-md'],
+        ['product-prototype', 'Interactive prototype', 'frontend-design', null],
+        ['presentation', 'Browser deck', 'slides', null],
+        ['design-system', 'DESIGN.md', 'design-md', null],
+        ['image', 'Square PNG image · 1:1', null, 'od-media-generation'],
+        ['video', 'Landscape MP4 video · 16:9', null, 'od-media-generation'],
+        ['audio', '60-second music track', null, 'od-media-generation'],
+        ['document', 'Markdown source + print-ready HTML', 'frontend-design', null],
       ] as const;
-      for (const [artifactType, outputFormat, expectedSkill] of mappingCases) {
+      for (const [artifactType, outputFormat, expectedSkill, expectedPlugin] of mappingCases) {
         await client.callTool({
           name: 'start_run',
           arguments: {
@@ -714,8 +764,13 @@ describe('ChatGPT Streamable HTTP MCP', () => {
             confirmed: true,
           },
         });
-        expect((runBodies.at(-1) as any)?.skillId).toBe(expectedSkill);
-        expect((runBodies.at(-1) as any)?.agentId).toBe('amr');
+        const lastRun = runBodies.at(-1) as any;
+        expect(lastRun?.skillId ?? null).toBe(expectedSkill);
+        expect(lastRun?.pluginId ?? null).toBe(expectedPlugin);
+        expect(lastRun?.agentId).toBe('amr');
+        if (['image', 'video', 'audio'].includes(artifactType)) {
+          expect(lastRun?.pluginInputs).toMatchObject({ mediaKind: artifactType });
+        }
       }
 
       const progress = await client.callTool({ name: 'get_run', arguments: { runId: 'r1' } }) as any;
@@ -730,7 +785,7 @@ describe('ChatGPT Streamable HTTP MCP', () => {
         name: 'start_run',
         arguments: {
           project: 'p1',
-          artifactType: 'video',
+          artifactType: 'model-3d',
           brief: {
             audience: 'Everyone', outcome: 'Make a video', contentAndFlows: 'Scenes', visualDirection: 'Cinematic', outputFormat: 'MP4',
           },
@@ -759,10 +814,10 @@ describe('ChatGPT Streamable HTTP MCP', () => {
           balanceStatus: 'empty',
         },
         _meta: {
-          'openai/outputTemplate': 'ui://open-design/artifact-card-v8.html',
+          'openai/outputTemplate': 'ui://open-design/artifact-card-v9.html',
         },
       });
-      expect(runBodies).toHaveLength(4);
+      expect(runBodies).toHaveLength(8);
     } finally {
       await client.close();
     }
@@ -807,6 +862,17 @@ describe('ChatGPT Streamable HTTP MCP', () => {
       artifactCount: 1,
       exitCode: 0,
     }));
+    for (const mediaKind of ['image', 'video', 'audio']) {
+      daemon.get(`/api/runs/r-${mediaKind}`, (_request, response) => response.json({
+        id: `r-${mediaKind}`,
+        projectId: `p-${mediaKind}`,
+        conversationId: `c-${mediaKind}`,
+        pluginId: 'od-media-generation',
+        status: 'succeeded',
+        artifactCount: 1,
+        exitCode: 0,
+      }));
+    }
     daemon.get('/api/runs/r-no-studio', (_request, response) => response.json({
       id: 'r-no-studio',
       projectId: 'p-no-studio',
@@ -846,6 +912,23 @@ describe('ChatGPT Streamable HTTP MCP', () => {
       files: [{ name: 'index.html' }],
     }));
     daemon.get('/api/projects/p-success/raw/index.html', (_request, response) => response.type('html').send('<!doctype html><title>Success</title>'));
+    const mediaFiles = {
+      image: { path: 'media/result.png', type: 'image/png' },
+      video: { path: 'media/result.mp4', type: 'video/mp4' },
+      audio: { path: 'media/result.mp3', type: 'audio/mpeg' },
+    } as const;
+    for (const [mediaKind, media] of Object.entries(mediaFiles)) {
+      daemon.get(`/api/projects/p-${mediaKind}`, (_request, response) => response.json({
+        project: { id: `p-${mediaKind}`, metadata: { kind: mediaKind } },
+      }));
+      daemon.get(`/api/projects/p-${mediaKind}/files`, (_request, response) => response.json({
+        files: [{ name: media.path.split('/').at(-1), path: media.path, kind: mediaKind }],
+      }));
+      daemon.get(`/api/projects/p-${mediaKind}/raw/media/${media.path.split('/').at(-1)}`, (_request, response) => {
+        response.setHeader('content-type', media.type);
+        response.send(Buffer.from('preview'));
+      });
+    }
     daemon.get('/api/projects/p-no-studio', (_request, response) => response.json({
       project: { id: 'p-no-studio', metadata: { entryFile: 'index.html' } },
     }));
@@ -932,6 +1015,21 @@ describe('ChatGPT Streamable HTTP MCP', () => {
       });
       expect(success.structuredContent.previewUrl).toContain('/api/projects/p-success/raw/index.html');
       expect(success.structuredContent.hint).toContain('studioUrl and previewUrl in two separate tabs');
+
+      for (const mediaKind of ['image', 'video', 'audio']) {
+        const media = await client.callTool({
+          name: 'get_run',
+          arguments: { runId: `r-${mediaKind}` },
+        }) as any;
+        expect(media.structuredContent).toMatchObject({
+          status: 'succeeded',
+          stage: 'ready',
+          artifactCount: 1,
+          pluginId: 'od-media-generation',
+        });
+        expect(media.structuredContent.previewUrl).toContain(`/api/projects/p-${mediaKind}/raw/media/result.`);
+        expect(media.structuredContent.studioUrl).toContain(`/projects/p-${mediaKind}/conversations/c-${mediaKind}/files/media/result.`);
+      }
 
       const noStudio = await client.callTool({
         name: 'get_run',

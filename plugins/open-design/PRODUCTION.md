@@ -6,6 +6,7 @@ The repository now contains the ChatGPT plugin package, MCP Apps UI, and a Strea
 
 ```text
 ChatGPT plugin
+  -> open-design-basics + one of eight artifact skills
   -> .app.json (ChatGPT-assigned asdk_app id)
   -> https://<Open Design MCP host>/mcp
   -> Open Design user OAuth + managed tenant routing
@@ -66,7 +67,7 @@ After the production HTTPS endpoint and OAuth metadata are live:
 1. Enable ChatGPT Developer Mode.
 2. Create an app pointing to `https://<Open Design MCP host>/mcp`.
 3. Complete OAuth configuration and add the ChatGPT callback URL to the authorization server allowlist.
-4. Validate tools, resources, and the Artifact card in MCP Inspector and ChatGPT.
+4. Validate the nine V1 tools, all eight artifact types, resources, and Artifact Card v9 in MCP Inspector and ChatGPT.
 5. Copy the assigned `asdk_app_...` id into `.app.json`:
 
 ```json
@@ -127,9 +128,23 @@ must preserve the original public `Host`, expose the signed ChatGPT paths plus
 the static Studio and `/api/*`, and leave `OD_API_TOKEN` enabled. Requests with
 neither the private daemon bearer nor a valid Studio cookie must receive 401.
 
-Each published tool declares its authentication policy in its descriptor. `collect_brief` and its exact widget resources are public so ChatGPT can render the brief before sign-in; account, catalog, project, run, version, and export operations remain OAuth-protected. The server emits both the current top-level `securitySchemes` form and the `_meta.securitySchemes` compatibility form because the repository's MCP SDK currently preserves extension metadata while older MCP clients may strip unknown top-level fields. Runtime authorization reuses the same tool-to-scope mapping, so the consent description and enforcement cannot drift independently.
+Each published tool declares its authentication policy in its descriptor. `collect_brief` and its exact widget resources are public so ChatGPT can render the brief before sign-in; account, project, run, version, and export operations remain OAuth-protected. The server emits both the current top-level `securitySchemes` form and the `_meta.securitySchemes` compatibility form because the repository's MCP SDK currently preserves extension metadata while older MCP clients may strip unknown top-level fields. Runtime authorization reuses the same tool-to-scope mapping, so the consent description and enforcement cannot drift independently.
 
-The ChatGPT V1 server exposes only account, catalog, project creation, Cloud generation/progress, version, and export operations. Local active-context, local-agent execution, arbitrary file mutation, plugin execution, and deletion tools are not published with the ChatGPT plugin. When Cloud balance is insufficient, the card offers recharge first and explains that local Code Agent/BYOK modes remain available inside Open Design.
+The ChatGPT V1 server exposes only nine operations: choice-only brief collection, account status, project creation, Cloud generation/progress/cancel, version list/restore, and export. Local active-context, local-agent execution, arbitrary file mutation, generic plugin execution, and deletion tools are not published with the ChatGPT plugin. When Cloud balance is insufficient, the card offers recharge first and explains that local Code Agent/BYOK modes remain available inside Open Design.
+
+The package contributes nine skills: shared `open-design-basics` plus focused
+website, product-prototype, presentation, design-system, image, video, audio,
+and document skills. The retired catch-all `create-with-open-design` skill must
+not ship. The three typed calls—`collect_brief`, `create_project`, and
+`start_run`—must carry the same explicit `artifactType`; in particular,
+`create_project` requires it so the server initializes the matching project
+kind before generation.
+
+Artifact Card v9 collects goal, audience, content/flows, creative direction,
+and output using radio or checkbox choices only. Supplied wording is preserved
+as a preselected **From your brief** choice. Every artifact preset includes an
+output choice, and the card does not repeat the host's Open Design identity
+with an internal header, logo, or subtitle.
 
 ## Release acceptance
 
@@ -161,13 +176,17 @@ wallet, but does not create a project or spend balance.
 
 - A new ChatGPT user is sent through Open Design sign-in and consent.
 - The account card shows that user's identity and wallet, never a shared service account.
-- Website, prototype, presentation, and design-system runs write only to that user's tenant.
-- The server maps the four supported artifact types to `frontend-design`, `frontend-design`, `slides`, and `design-md`; unsupported artifact types are rejected.
+- Website, product-prototype, presentation, design-system, image, video, audio, and document runs write only to that user's tenant.
+- The server accepts exactly those eight artifact types. Website and product prototype map to `frontend-design`, presentation to `slides`, design system to `design-md`, image/video/audio to `od-media-generation`, and Document V1 to the web-first document contract on `frontend-design`; unsupported artifact types are rejected.
+- Image, video, and audio runs produce readable media binaries in the project. A prompt, plan, storyboard, placeholder, or metadata-only response fails acceptance.
+- Document V1 produces an editable `document.md` and polished print-ready `index.html` browser preview suitable for later PDF export. It must not claim native DOCX output.
+- `create_project` rejects descriptors that omit `artifactType`, and all later calls preserve the same type.
 - A generation run cannot start until the five-field working brief is marked confirmed.
 - Tool descriptors expose the minimum OAuth scope for every V1 operation, and a token missing that scope receives an OAuth challenge.
 - Insufficient balance offers recharge first and local Code Agent/BYOK as a handoff, without exposing credentials.
 - Progress survives repeated polling and a ChatGPT conversation restart.
-- The completed Artifact card shows a real preview.
+- The choice-only brief includes output choices and no editable text surface; Artifact Card v9 has no internal OpenDesign header, logo, or subtitle.
+- The completed Artifact card shows a real preview for websites, prototypes, presentations, media, and documents. Design systems instead show a real generated `DESIGN.md` in Studio.
 - Preview and Studio URLs contain no loopback host, raw OAuth subject, OAuth token, or Vela runtime credential; tampered and expired capabilities fail closed.
 - Opening Studio routes API reads and writes to the same subject and project that produced the ChatGPT result.
 - Version list/restore works against the correct artifact.

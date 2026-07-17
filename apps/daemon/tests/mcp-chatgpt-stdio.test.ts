@@ -70,7 +70,7 @@ function runChatGptStdioProbe(): Promise<{ code: number | null; stderr: string; 
         jsonrpc: '2.0',
         id: 4,
         method: 'resources/read',
-        params: { uri: 'ui://open-design/artifact-card-v8.html' },
+        params: { uri: 'ui://open-design/artifact-card-v9.html' },
       },
     ]) {
       child.stdin.write(`${JSON.stringify(message)}\n`);
@@ -100,7 +100,7 @@ describe('ChatGPT stdio MCP surface', () => {
       'cancel_run',
     ]);
     expect(tools.find((tool) => tool.name === 'collect_brief')?._meta).toMatchObject({
-      'ui/resourceUri': 'ui://open-design/artifact-card-v8.html',
+      'ui/resourceUri': 'ui://open-design/artifact-card-v9.html',
     });
 
     const brief = responses.find((response) => response.id === 3)?.result as {

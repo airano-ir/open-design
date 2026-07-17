@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { access, readFile } from 'node:fs/promises';
+import { access, readFile, readdir } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -16,7 +16,39 @@ const EXPECTED_TOOLS = [
   'start_run',
 ] as const;
 
-const WIDGET_URI = 'ui://open-design/artifact-card-v8.html';
+const EXPECTED_ARTIFACT_TYPES = [
+  'website',
+  'product-prototype',
+  'presentation',
+  'design-system',
+  'image',
+  'video',
+  'audio',
+  'document',
+] as const;
+
+const EXPECTED_SKILLS = [
+  { name: 'open-design-basics', artifactType: null },
+  { name: 'create-website-with-open-design', artifactType: 'website' },
+  { name: 'create-prototype-with-open-design', artifactType: 'product-prototype' },
+  { name: 'create-presentation-with-open-design', artifactType: 'presentation' },
+  { name: 'create-design-system-with-open-design', artifactType: 'design-system' },
+  { name: 'create-image-with-open-design', artifactType: 'image' },
+  { name: 'create-video-with-open-design', artifactType: 'video' },
+  { name: 'create-audio-with-open-design', artifactType: 'audio' },
+  { name: 'create-document-with-open-design', artifactType: 'document' },
+] as const;
+
+const WIDGET_URI = 'ui://open-design/artifact-card-v9.html';
+const LEGACY_WIDGET_URIS = [
+  'ui://open-design/artifact-card-v2.html',
+  'ui://open-design/artifact-card-v3.html',
+  'ui://open-design/artifact-card-v4.html',
+  'ui://open-design/artifact-card-v5.html',
+  'ui://open-design/artifact-card-v6.html',
+  'ui://open-design/artifact-card-v7.html',
+  'ui://open-design/artifact-card-v8.html',
+] as const;
 
 interface JsonRpcResponse {
   error?: { message?: string };
@@ -56,6 +88,29 @@ async function json(path: string): Promise<Record<string, unknown>> {
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
+}
+
+async function exists(path: string): Promise<boolean> {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function toolInputSchema(tool: Record<string, unknown> | undefined): Record<string, unknown> {
+  return (tool?.inputSchema as Record<string, unknown> | undefined) ?? {};
+}
+
+function toolArtifactTypes(tool: Record<string, unknown> | undefined): unknown {
+  const properties = toolInputSchema(tool).properties as Record<string, unknown> | undefined;
+  return (properties?.artifactType as Record<string, unknown> | undefined)?.enum;
+}
+
+function toolRequiredFields(tool: Record<string, unknown> | undefined): string[] {
+  const required = toolInputSchema(tool).required;
+  return Array.isArray(required) ? required.map(String) : [];
 }
 
 function parseMcpBody(text: string, contentType: string): JsonRpcResponse {
@@ -105,13 +160,51 @@ async function validatePackage(pluginRoot: string): Promise<void> {
   assert((entry.source as Record<string, unknown>)?.path === './plugins/open-design', 'marketplace source path is invalid');
   assert((entry.policy as Record<string, unknown>)?.installation === 'AVAILABLE', 'plugin must be available');
   assert((entry.policy as Record<string, unknown>)?.authentication === 'ON_USE', 'Cloud sign-in must happen on use');
-  const skill = await readFile(resolve(pluginRoot, 'skills/create-with-open-design/SKILL.md'), 'utf8');
-  assert(skill.includes('If the Open Design MCP tools are unavailable'), 'plugin skill must fail closed when its MCP is unavailable');
-  assert(skill.includes('fully quit and relaunch Codex'), 'plugin skill must require a full Codex relaunch after a stale install');
-  assert(skill.includes('Do not synthesize a substitute form'), 'plugin skill must forbid fallback text forms');
-  assert(skill.includes('The brief UI is choice-only'), 'plugin skill must define the brief as choice-only');
-  assert(skill.includes('Every user-facing question must render as a radio or checkbox option'), 'plugin skill must forbid typed brief questions');
-  assert(skill.includes('preserve it as a preselected `From your brief` option'), 'plugin skill must preserve supplied prose as a selectable option');
+  const keywords = manifest.keywords as unknown[] | undefined;
+  assert(Array.isArray(keywords), 'plugin keywords are required');
+  for (const artifactType of EXPECTED_ARTIFACT_TYPES) {
+    assert(keywords.includes(artifactType), `plugin keywords must include ${artifactType}`);
+  }
+
+  const skillsRoot = resolve(pluginRoot, 'skills');
+  const installedSkillNames: string[] = [];
+  for (const entry of await readdir(skillsRoot, { withFileTypes: true })) {
+    if (entry.isDirectory() && await exists(resolve(skillsRoot, entry.name, 'SKILL.md'))) {
+      installedSkillNames.push(entry.name);
+    }
+  }
+  installedSkillNames.sort();
+  const expectedSkillNames = EXPECTED_SKILLS.map((skill) => skill.name).sort();
+  assert(
+    JSON.stringify(installedSkillNames) === JSON.stringify(expectedSkillNames),
+    `plugin skills must be exactly Basics + eight artifact skills; found: ${installedSkillNames.join(', ')}`,
+  );
+  assert(!installedSkillNames.includes('create-with-open-design'), 'legacy create-with-open-design skill must not be present');
+
+  for (const expectedSkill of EXPECTED_SKILLS) {
+    const skillRoot = resolve(skillsRoot, expectedSkill.name);
+    const skill = await readFile(resolve(skillRoot, 'SKILL.md'), 'utf8');
+    assert(skill.includes(`name: ${expectedSkill.name}`), `${expectedSkill.name} frontmatter name is invalid`);
+    await access(resolve(skillRoot, 'agents/openai.yaml'));
+    if (expectedSkill.artifactType) {
+      assert(skill.includes('Apply `$open-design-basics`'), `${expectedSkill.name} must apply the shared Basics skill`);
+      assert(
+        skill.includes(`Use \`artifactType: ${expectedSkill.artifactType}\``),
+        `${expectedSkill.name} must pin artifactType: ${expectedSkill.artifactType}`,
+      );
+      assert(/selectable|choice-only/iu.test(skill), `${expectedSkill.name} must keep its brief choice-only`);
+    } else {
+      assert(skill.includes('If the tools are missing, stop.'), 'Basics must fail closed when its MCP is unavailable');
+      assert(skill.includes('fully quit and relaunch Codex'), 'Basics must require a full Codex relaunch after a stale install');
+      assert(skill.includes('Never fall back to prose questions'), 'Basics must forbid fallback text forms');
+      assert(skill.includes('Keep every user-facing field choice-only'), 'Basics must define the brief as choice-only');
+      assert(skill.includes('Never request typed project names'), 'Basics must forbid typed brief questions');
+      assert(skill.includes('preselected **From your brief** choice'), 'Basics must preserve supplied prose as a selectable option');
+      assert(skill.includes('create_project` with a concise human-readable name and the selected `artifactType`'), 'Basics must require artifactType when creating projects');
+    }
+  }
+
+  assert(!(await exists(resolve(skillsRoot, 'create-with-open-design/SKILL.md'))), 'legacy create-with-open-design skill must not exist');
   assert(pluginInterface?.logo === './assets/logo.svg', 'plugin list logo must use the square logo asset');
   const logoSvg = await readFile(resolve(pluginRoot, 'assets/logo.svg'), 'utf8');
   assert(/viewBox="0 0 64 64"/u.test(logoSvg), 'plugin list logo must keep a square viewBox');
@@ -125,15 +218,10 @@ async function validatePackage(pluginRoot: string): Promise<void> {
   await access(resolve(pluginRoot, 'mcp/server.bundle.mjs'));
 
   for (const forbidden of ['.claude-plugin']) {
-    try {
-      await access(resolve(pluginRoot, forbidden));
-      throw new Error(`${forbidden} must not be present in the V1 package`);
-    } catch (error) {
-      if (error instanceof Error && error.message.includes('must not be present')) throw error;
-    }
+    assert(!(await exists(resolve(pluginRoot, forbidden))), `${forbidden} must not be present in the V1 package`);
   }
 
-  process.stdout.write(`package ok: open-design@${String(manifest.version)} (hosted ChatGPT app + bundled Codex MCP)\n`);
+  process.stdout.write(`package ok: open-design@${String(manifest.version)} (9 skills · 8 artifact types · hosted ChatGPT app + bundled Codex MCP)\n`);
 }
 
 async function validateEndpoint(endpoint: string): Promise<void> {
@@ -153,14 +241,27 @@ async function validateEndpoint(endpoint: string): Promise<void> {
 
   const startRun = tools.find((tool) => tool.name === 'start_run');
   const collectBrief = tools.find((tool) => tool.name === 'collect_brief');
+  const createProject = tools.find((tool) => tool.name === 'create_project');
   const collectBriefMeta = collectBrief?._meta as Record<string, unknown> | undefined;
   const collectBriefSecuritySchemes = collectBriefMeta?.securitySchemes as Array<Record<string, unknown>> | undefined;
   assert(collectBriefSecuritySchemes?.[0]?.type === 'noauth', 'collect_brief must be directly callable without OAuth');
   const startRunMeta = startRun?._meta as Record<string, unknown> | undefined;
   assert(startRunMeta?.['openai/outputTemplate'] === WIDGET_URI, 'start_run is not connected to the Artifact card');
   assert(startRunMeta?.['ui/resourceUri'] === WIDGET_URI, 'start_run is missing the MCP Apps compatibility resource URI');
-  const artifactType = (((startRun?.inputSchema as Record<string, unknown>)?.properties as Record<string, unknown>)?.artifactType as Record<string, unknown>)?.enum;
-  assert(JSON.stringify(artifactType) === JSON.stringify(['website', 'product-prototype', 'presentation', 'design-system']), 'V1 artifact types do not match the product contract');
+  for (const [toolName, tool] of [
+    ['collect_brief', collectBrief],
+    ['create_project', createProject],
+    ['start_run', startRun],
+  ] as const) {
+    assert(
+      JSON.stringify(toolArtifactTypes(tool)) === JSON.stringify(EXPECTED_ARTIFACT_TYPES),
+      `${toolName} artifact types do not match the eight-type V1 contract`,
+    );
+  }
+  assert(toolRequiredFields(collectBrief).includes('artifactType'), 'collect_brief must require artifactType');
+  assert(toolRequiredFields(createProject).includes('artifactType'), 'create_project must require artifactType');
+  assert(toolRequiredFields(createProject).includes('name'), 'create_project must require name');
+  assert(toolRequiredFields(startRun).includes('artifactType'), 'start_run must require artifactType');
 
   const listedResources = await rpc(endpoint, 3, 'resources/list', {});
   const resources = listedResources.resources as Array<Record<string, unknown>> | undefined;
@@ -180,42 +281,52 @@ async function validateEndpoint(endpoint: string): Promise<void> {
   assert(widgetHtml.includes('id="brief-audience-options"'), 'Artifact card brief is missing audience choices');
   assert(widgetHtml.includes('id="brief-content-options"'), 'Artifact card brief is missing content choices');
   assert(widgetHtml.includes('id="brief-visual-options"'), 'Artifact card brief is missing visual choices');
+  assert(widgetHtml.includes('id="brief-output-options"'), 'Artifact card brief is missing output choices');
+  assert(widgetHtml.includes("renderBriefChoiceGroup('brief-output-options'"), 'Artifact card does not render output choices');
+  assert(widgetHtml.includes("selectedBriefChoice('brief-output')"), 'Artifact card does not submit the selected output choice');
+  const presetSource = widgetHtml.split('const BRIEF_CHOICE_PRESETS = {')[1]?.split('function conciseChoiceLabel')[0];
+  assert(presetSource, 'Artifact card brief choice presets are missing');
+  for (const artifactType of EXPECTED_ARTIFACT_TYPES) {
+    const escaped = artifactType.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+    assert(new RegExp(`["']?${escaped}["']?\\s*:\\s*\\{`, 'u').test(presetSource), `Artifact card is missing ${artifactType} choices`);
+  }
+  assert((presetSource.match(/\boutput:\s*\[/gu) ?? []).length === EXPECTED_ARTIFACT_TYPES.length, 'every artifact type must define output choices');
   assert(!/<textarea\b/iu.test(widgetHtml), 'Artifact card brief still requires a textarea');
   assert(!/<input\b[^>]*\btype\s*=\s*['"](?:text|email|url|tel|search|number|password)['"]/iu.test(widgetHtml), 'Artifact card brief still contains a text-like input');
   assert(!/\binput\.type\s*=\s*['"](?:text|email|url|tel|search|number|password)['"]/iu.test(widgetHtml), 'Artifact card brief still creates a text-like input');
   assert(!/contenteditable/iu.test(widgetHtml), 'Artifact card brief still creates an editable text surface');
+  assert(!/<header\b/iu.test(widgetHtml), 'Artifact card must not duplicate the host with an internal header');
+  assert(!/class=["'][^"']*\bmark\b/iu.test(widgetHtml), 'Artifact card must not render an internal OpenDesign logo');
+  assert(!/id=["']subtitle["']/iu.test(widgetHtml), 'Artifact card must not render an internal subtitle');
+  assert(!/<h1\b[^>]*>\s*OpenDesign\s*<\/h1>/iu.test(widgetHtml), 'Artifact card must not render an internal OpenDesign title');
   assert(!widgetHtml.includes('}, 1000);'), 'Artifact card still abandons the MCP Apps handshake after one second');
   assert(widgetHtml.includes('ui/notifications/size-changed'), 'Artifact card does not publish intrinsic size changes');
 
-  for (const [index, legacyUri] of [
-    'ui://open-design/artifact-card-v2.html',
-    'ui://open-design/artifact-card-v3.html',
-    'ui://open-design/artifact-card-v4.html',
-    'ui://open-design/artifact-card-v5.html',
-    'ui://open-design/artifact-card-v6.html',
-    'ui://open-design/artifact-card-v7.html',
-  ].entries()) {
+  for (const [index, legacyUri] of LEGACY_WIDGET_URIS.entries()) {
     const legacyReadResource = await rpc(endpoint, 5 + index, 'resources/read', { uri: legacyUri });
     const legacyContents = legacyReadResource.contents as Array<Record<string, unknown>> | undefined;
     const legacyWidget = legacyContents?.find((content) => content.uri === legacyUri);
     assert(legacyWidget?.text === widgetHtml, `${legacyUri} is not mapped to the latest widget`);
   }
 
-  const briefCall = await rpc(endpoint, 10, 'tools/call', {
-    name: 'collect_brief',
-    arguments: { artifactType: 'website', title: 'Local website', outcome: 'Explain the product.' },
-  });
-  const brief = briefCall.structuredContent as Record<string, unknown> | undefined;
-  assert(brief?.view === 'brief-form', 'collect_brief did not return the Custom UI state');
-  assert((briefCall._meta as Record<string, unknown>)?.['openai/outputTemplate'] === WIDGET_URI, 'collect_brief is not connected to the Artifact card');
+  for (const [index, artifactType] of EXPECTED_ARTIFACT_TYPES.entries()) {
+    const briefCall = await rpc(endpoint, 20 + index, 'tools/call', {
+      name: 'collect_brief',
+      arguments: { artifactType, title: `Local ${artifactType}`, outcome: 'Explain the requested artifact.' },
+    });
+    const brief = briefCall.structuredContent as Record<string, unknown> | undefined;
+    assert(brief?.view === 'brief-form', `collect_brief did not return the ${artifactType} Custom UI state`);
+    assert(brief.artifactType === artifactType, `collect_brief returned the wrong artifact type for ${artifactType}`);
+    assert((briefCall._meta as Record<string, unknown>)?.['openai/outputTemplate'] === WIDGET_URI, `collect_brief ${artifactType} is not connected to the Artifact card`);
+  }
 
-  const accountCall = await rpc(endpoint, 11, 'tools/call', { name: 'get_cloud_account', arguments: {} });
+  const accountCall = await rpc(endpoint, 40, 'tools/call', { name: 'get_cloud_account', arguments: {} });
   const account = accountCall.structuredContent as Record<string, unknown> | undefined;
   assert(account && typeof account.balanceStatus === 'string', 'Cloud account tool did not return a balance status');
   assert((accountCall._meta as Record<string, unknown>)?.['openai/outputTemplate'] === WIDGET_URI, 'Cloud account result is not connected to the Artifact card');
 
   process.stdout.write(`endpoint ok: ${endpoint}\n`);
-  process.stdout.write(`server: ${String(serverInfo.version ?? 'unknown')} · tools: ${names.join(', ')} · UI: ${WIDGET_URI}\n`);
+  process.stdout.write(`server: ${String(serverInfo.version ?? 'unknown')} · tools: ${names.join(', ')} · artifacts: ${EXPECTED_ARTIFACT_TYPES.join(', ')} · UI: ${WIDGET_URI}\n`);
   process.stdout.write(`Cloud account: ${String(account.balanceStatus)}${account.nextAction ? ` · next: ${String(account.nextAction)}` : ''}\n`);
 }
 

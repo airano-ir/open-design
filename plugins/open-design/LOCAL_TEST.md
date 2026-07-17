@@ -10,7 +10,7 @@ From the repository root:
 pnpm exec tsx plugins/open-design/scripts/verify-local.ts --package-only
 ```
 
-This checks the repo marketplace entry, plugin and app manifests, skill path, Cloud sign-in policy, and bundled Codex MCP entry.
+This checks the repo marketplace entry, plugin and app manifests, Cloud sign-in policy, and bundled Codex MCP entry. It also requires the exact nine-skill package—`open-design-basics` plus eight artifact skills—and fails if the retired `create-with-open-design` folder is still present. The artifact keywords must cover all eight V1 types.
 
 ## 2. Start the local gateway
 
@@ -34,8 +34,10 @@ The verifier connects to `http://127.0.0.1:17456/mcp` and proves that:
 
 - the server identifies as Open Design;
 - only the nine Cloud V1 tools are published;
-- `start_run` accepts website, product prototype, presentation, and Design System;
-- the MCP Apps Artifact card resource is registered.
+- `collect_brief`, `create_project`, and `start_run` expose the same eight artifact types: website, product prototype, presentation, design system, image, video, audio, and document;
+- `create_project` requires both `name` and `artifactType`;
+- Artifact Card v9 is registered, every artifact type has output choices, and v2–v8 resource URIs resolve to the current card;
+- the Custom UI stays choice-only and does not duplicate the host with an internal OpenDesign header, logo, or subtitle.
 
 You can also connect MCP Inspector to `http://127.0.0.1:17456/mcp` to call tools and render the card interactively.
 
@@ -45,19 +47,43 @@ To inspect the real MCP Apps card without a ChatGPT host, start the local Card G
 pnpm exec tsx plugins/open-design/scripts/preview-local-card.ts
 ```
 
-Open `http://127.0.0.1:17640/` and switch between `running`, `complete`, and
-`recharge`. In the `brief` state, confirm that goal, audience, content, and
-visual style render only as preselected radio/checkbox choices, with no text
-input, textarea, or editable surface. Project name and output format are inferred
-instead of being requested from the user. The gallery loads the card HTML from the live MCP resource and
-provides a small host simulator for refresh, versions, restore, export, and
-external-link actions; it does not maintain a separate copy of the card.
+The gallery defaults to the website brief. Preview another type either with the
+startup flag:
+
+```bash
+pnpm exec tsx plugins/open-design/scripts/preview-local-card.ts \
+  --artifact-type document
+```
+
+or with the page query:
+
+```text
+http://127.0.0.1:17640/?state=brief&artifactType=document
+```
+
+Valid values are `website`, `product-prototype`, `presentation`,
+`design-system`, `image`, `video`, `audio`, and `document`. The gallery also
+renders links for switching among them while preserving the other card states.
+
+In the `brief` state, confirm that goal, audience, content, creative direction,
+and output render only as preselected radio/checkbox choices, with no text
+input, textarea, or editable surface. Known user wording should appear as a
+preselected **From your brief** choice. The card itself should begin with the
+brief or status content; Open Design identity belongs to the host, so the card
+must not repeat an internal header, logo, or subtitle. The gallery loads the
+card HTML from the live MCP resource and provides a small host simulator for
+refresh, versions, restore, export, and external-link actions; it does not
+maintain a separate copy of the card.
+
+For the added V1 lanes, also confirm that image/video/audio briefs expose
+media-specific format choices and that the document brief offers Markdown plus
+print-ready or PDF-ready HTML—not native DOCX.
 
 ## 4. Install the repository plugin in Codex
 
 Open the repository marketplace from the Codex deep link in the project handoff and install **Open Design**. After every install or update—including a manifest, skill, bundle, or cachebuster change—fully quit and relaunch Codex, then create a fresh task and select Open Design again. The plugin-page Refresh control and a fresh task by themselves do not reload an already-running MCP process.
 
-The installed plugin must contribute both the workflow skill and an `open-design` stdio MCP. The acceptance signal is a real `collect_brief` tool call whose Custom UI card appears in the fresh task; prose questions or literal `<question-form>` markup mean the tool snapshot is still stale. `collect_brief` works while the Open Design daemon is offline; account and generation calls additionally require Open Design to be running.
+The installed plugin must contribute `open-design-basics`, the eight artifact skills, and an `open-design` stdio MCP. The acceptance signal is a real `collect_brief` tool call whose choice-only Custom UI card appears in the fresh task; prose questions or literal `<question-form>` markup mean the tool snapshot is still stale. `collect_brief` works while the Open Design daemon is offline; account and generation calls additionally require Open Design to be running.
 
 The checked-in `.app.json` remains empty until ChatGPT Developer Mode assigns the real `asdk_app_...` identifier. That identifier belongs to the hosted app registration and must not be replaced with a fake local id.
 

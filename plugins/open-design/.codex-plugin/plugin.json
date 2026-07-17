@@ -1,7 +1,7 @@
 {
   "name": "open-design",
-  "version": "0.2.12+codex.20260717152600",
-  "description": "Create websites, product prototypes, presentations, and reusable design systems with Open Design from ChatGPT.",
+  "version": "0.2.12+codex.20260717094318",
+  "description": "Create websites, product prototypes, presentations, design systems, media, and web-first documents from choice-only briefs with Open Design.",
   "author": {
     "name": "OpenDesign",
     "email": "support@open-design.ai",
@@ -10,24 +10,43 @@
   "homepage": "https://open-design.ai",
   "repository": "https://github.com/nexu-io/open-design",
   "license": "Apache-2.0",
-  "keywords": ["design", "website", "prototype", "presentation", "design-system"],
+  "keywords": [
+    "design",
+    "website",
+    "product-prototype",
+    "presentation",
+    "design-system",
+    "image",
+    "video",
+    "audio",
+    "document",
+    "custom-ui"
+  ],
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "apps": "./.app.json",
   "interface": {
     "displayName": "Open Design",
-    "shortDescription": "Turn a brief into a real design artifact.",
-    "longDescription": "Create and refine websites, product prototypes, presentations, and reusable design systems through Open Design. Review progress and results in ChatGPT, then open the full Open Design studio for detailed editing, versions, and export.",
+    "shortDescription": "Create eight artifact types from guided choices.",
+    "longDescription": "Use Open Design Basics plus a focused skill to create websites, product prototypes, presentations, design systems, images, videos, audio, and web-first documents. Confirm a choice-only brief, review real progress and output in the host, then open Open Design studio for detailed editing, versions, and export. Document V1 delivers Markdown plus print-ready HTML rather than native DOCX.",
     "developerName": "OpenDesign",
     "category": "Creativity",
-    "capabilities": ["Interactive", "Write"],
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
     "websiteURL": "https://open-design.ai",
     "privacyPolicyURL": "https://github.com/nexu-io/open-design/blob/main/PRIVACY.md",
     "termsOfServiceURL": "https://open-design.ai/terms/",
     "defaultPrompt": [
-      "Create a polished website from my brief.",
+      "Create a responsive website through a choice-only brief.",
       "Turn this product idea into an interactive prototype.",
-      "Create a presentation with a coherent visual system."
+      "Create a presentation with a coherent visual system.",
+      "Extract a reusable design system from this reference.",
+      "Generate a campaign image in the format I choose.",
+      "Create a short product video with selectable pacing and aspect.",
+      "Produce an audio track with selectable type, duration, and direction.",
+      "Create a web-first report with Markdown and print-ready HTML."
     ],
     "brandColor": "#111111",
     "composerIcon": "./assets/icon.svg",

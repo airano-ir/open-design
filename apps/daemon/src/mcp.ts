@@ -29,7 +29,7 @@ const SERVER_VERSION = '0.2.12';
 const MCP_STDIO_IDLE_EXIT_MS = 30 * 60 * 1000;
 // MCP Apps hosts cache widget resources by URI. Bump this whenever the
 // embedded HTML/CSS/JS changes so a failed or stale sandbox is not reused.
-const CHATGPT_WIDGET_URI = 'ui://open-design/artifact-card-v8.html';
+const CHATGPT_WIDGET_URI = 'ui://open-design/artifact-card-v9.html';
 // A running host can retain tool metadata across a daemon/plugin refresh and
 // keep reading the previous URI. Serve the latest widget at that URI too so
 // existing conversations recover without requiring a Codex restart.
@@ -40,7 +40,29 @@ const LEGACY_CHATGPT_WIDGET_URIS = new Set([
   'ui://open-design/artifact-card-v5.html',
   'ui://open-design/artifact-card-v6.html',
   'ui://open-design/artifact-card-v7.html',
+  'ui://open-design/artifact-card-v8.html',
 ]);
+
+const CHATGPT_ARTIFACT_TYPES = [
+  'website',
+  'product-prototype',
+  'presentation',
+  'design-system',
+  'image',
+  'video',
+  'audio',
+  'document',
+] as const;
+type ChatGptArtifactType = (typeof CHATGPT_ARTIFACT_TYPES)[number];
+const CHATGPT_ARTIFACT_TYPE_SET = new Set<string>(CHATGPT_ARTIFACT_TYPES);
+
+function isChatGptArtifactType(value: unknown): value is ChatGptArtifactType {
+  return typeof value === 'string' && CHATGPT_ARTIFACT_TYPE_SET.has(value);
+}
+
+function chatGptArtifactTypeError(): string {
+  return `artifactType must be one of: ${CHATGPT_ARTIFACT_TYPES.join(', ')}.`;
+}
 
 export function isChatGptWidgetResourceUri(value: unknown): value is string {
   const uri = typeof value === 'string' ? value : '';
@@ -87,7 +109,7 @@ function chatGptV1OutputSchema(toolName: string): JsonObject {
   const schemas: Record<string, JsonObject> = {
     collect_brief: {
       view: { type: 'string', enum: ['brief-form'] },
-      artifactType: { type: 'string', enum: ['website', 'product-prototype', 'presentation', 'design-system'] },
+      artifactType: { type: 'string', enum: [...CHATGPT_ARTIFACT_TYPES] },
       title: stringValue,
       brief: { type: 'object' },
     },
@@ -111,7 +133,7 @@ function chatGptV1OutputSchema(toolName: string): JsonObject {
       conversationId: stringValue,
       status: stringValue,
       stage: { type: 'string', enum: ['queued', 'generating', 'ready', 'failed', 'canceled'] },
-      artifactType: { type: 'string', enum: ['website', 'product-prototype', 'presentation', 'design-system'] },
+      artifactType: { type: 'string', enum: [...CHATGPT_ARTIFACT_TYPES] },
       briefConfirmed: { type: 'boolean' },
       studioUrl: stringValue,
     },
@@ -207,11 +229,6 @@ const CHATGPT_WIDGET_HTML = `<!doctype html>
       animation: card-in 200ms cubic-bezier(.23, 1, .32, 1) both;
     }
     @keyframes card-in { from { opacity: 0; transform: translateY(4px); } }
-    .head { display: flex; align-items: center; gap: 10px; padding: 16px 16px 0; }
-    .mark { width: 32px; height: 32px; border-radius: 8px; overflow: hidden; background: #10110d; flex: 0 0 auto; }
-    .mark svg { display: block; width: 100%; height: 100%; }
-    .title { margin: 0; font-size: 14px; font-weight: 650; letter-spacing: -.01em; }
-    .sub { margin: 2px 0 0; color: var(--text-muted); font-size: 12px; }
     .compact { display: grid; gap: 16px; padding: 22px 16px 16px; }
     .state { display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
     .state-dot { width: 8px; height: 8px; margin-top: 5px; border-radius: 50%; flex: 0 0 auto; background: var(--text-soft); }
@@ -224,7 +241,7 @@ const CHATGPT_WIDGET_HTML = `<!doctype html>
     .balance { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-top: 14px; border-top: 1px solid var(--border); }
     .balance-label { color: var(--text-muted); font-size: 12px; }
     .balance-value { font-size: 16px; font-weight: 650; font-variant-numeric: tabular-nums; }
-    .preview { min-height: 148px; margin-top: 14px; border-block: 1px solid var(--border); background: var(--fill); display: grid; place-items: center; position: relative; }
+    .preview { min-height: 148px; border-bottom: 1px solid var(--border); background: var(--fill); display: grid; place-items: center; position: relative; }
     .preview iframe { width: 100%; height: 240px; border: 0; background: white; }
     .placeholder { text-align: center; padding: 30px; }
     .pulse { width: 28px; height: 28px; margin: 0 auto 12px; border-radius: 50%; border: 2px solid var(--border); border-top-color: var(--text); animation: spin 1s linear infinite; }
@@ -266,11 +283,9 @@ const CHATGPT_WIDGET_HTML = `<!doctype html>
     .brief-error { margin: 0; color: #b42318; font-size: 12px; line-height: 1.4; }
     .brief-error[data-tone="pending"] { color: var(--text-muted); }
     .brief-error[data-tone="success"] { color: var(--success); }
-    .card[data-view="compact"] .sub,
     .card[data-view="compact"] .preview,
     .card[data-view="compact"] .body { display: none; }
     .card[data-view="artifact"] .compact { display: none; }
-    .card[data-view="brief"] .head { display: none; }
     .card[data-view="brief"] .compact,
     .card[data-view="brief"] .preview,
     .card[data-view="brief"] .body { display: none; }
@@ -281,7 +296,6 @@ const CHATGPT_WIDGET_HTML = `<!doctype html>
 </head>
 <body>
   <main class="card" id="card" data-view="compact">
-    <header class="head"><span class="mark" aria-hidden="true"><svg viewBox="0 0 64 64"><path fill="#fff" fill-rule="evenodd" d="M32 8C45.3 8 56 18.7 56 32S45.3 56 32 56H11a3 3 0 0 1-3-3V32C8 18.7 18.7 8 32 8Zm0 7C22.6 15 15 22.6 15 32v17h17c9.4 0 17-7.6 17-17S41.4 15 32 15Z"/><path fill="#fff" d="M23.7 22.6c-.9-.4-1.8.5-1.4 1.4l6.4 17.7c.4 1.1 2 .8 2-.4v-9.7h10.5c1.2 0 1.5-1.6.4-2l-17.9-7Z"/></svg></span><div><h1 class="title">OpenDesign</h1><p class="sub" id="subtitle">Artifact ready</p></div></header>
     <section class="compact" id="compact"><div class="state"><span class="state-dot" id="state-dot"></span><div class="state-copy"><strong class="state-title" id="state-title"></strong><p class="state-detail" id="state-detail"></p></div></div><div class="balance" id="balance" hidden><span class="balance-label">Remaining balance</span><strong class="balance-value" id="balance-value"></strong></div><button id="account-action" hidden></button></section>
     <section class="brief" id="brief-form" hidden>
       <div class="brief-copy"><h2 class="brief-title">Choose a direction</h2><p class="brief-detail">Pick what fits best. Recommended choices are already selected, and you can refine the result later in OpenDesign.</p></div>
@@ -291,6 +305,7 @@ const CHATGPT_WIDGET_HTML = `<!doctype html>
           <fieldset class="brief-group"><legend>Audience</legend><div class="choice-grid" id="brief-audience-options"></div></fieldset>
           <fieldset class="brief-group wide"><legend>Include <small>Choose all that apply</small></legend><div class="choice-grid" id="brief-content-options"></div></fieldset>
           <fieldset class="brief-group wide"><legend>Visual style</legend><div class="choice-grid" id="brief-visual-options"></div></fieldset>
+          <fieldset class="brief-group wide"><legend>Output</legend><div class="choice-grid" id="brief-output-options"></div></fieldset>
         </div>
         <div class="brief-actions"><button id="brief-submit" type="submit">Create with these choices</button><p class="brief-error" id="brief-error" role="status"></p></div>
       </form>
@@ -418,17 +433,14 @@ const CHATGPT_WIDGET_HTML = `<!doctype html>
         'product-prototype': 'Interactive responsive product prototype',
         presentation: 'Browser presentation with a real preview',
         'design-system': 'Reusable DESIGN.md design system',
+        image: 'Square PNG image · 1:1',
+        video: 'Landscape MP4 video · 16:9',
+        audio: '60-second music track',
+        document: 'Markdown source + print-ready HTML',
       };
       return formats[artifactType] || '';
     }
     const briefChoice = (label, value, recommended = false) => ({ label, value, recommended });
-    const VISUAL_CHOICES = [
-      briefChoice('Clean & focused', 'Use a clean, focused visual system with clear hierarchy, generous spacing, and restrained color.', true),
-      briefChoice('Bold & editorial', 'Use a bold editorial direction with expressive typography, strong composition, and memorable contrast.'),
-      briefChoice('Warm & approachable', 'Use a warm, approachable direction with friendly color, soft geometry, and inviting imagery.'),
-      briefChoice('Modern tech', 'Use a modern technology aesthetic with precise grids, crisp interfaces, and subtle depth or motion.'),
-      briefChoice('Premium & restrained', 'Use a premium, restrained direction with refined typography, muted color, and polished details.'),
-    ];
     const BRIEF_CHOICE_PRESETS = {
       website: {
         goal: [
@@ -450,6 +462,17 @@ const CHATGPT_WIDGET_HTML = `<!doctype html>
           briefChoice('How it works', 'A simple step-by-step explanation of the experience or process.'),
           briefChoice('Pricing', 'Pricing or plan information with a clear comparison and next step.'),
           briefChoice('FAQ & contact', 'Frequently asked questions plus a direct contact or final conversion path.'),
+        ],
+        visual: [
+          briefChoice('Clean product', 'Use a clean product-marketing system with strong hierarchy, generous whitespace, and restrained color.', true),
+          briefChoice('Bold editorial', 'Use expressive typography, strong composition, and memorable editorial contrast.'),
+          briefChoice('Warm brand', 'Use friendly color, soft geometry, and inviting imagery.'),
+          briefChoice('Premium minimal', 'Use refined typography, muted color, and polished details.'),
+        ],
+        output: [
+          briefChoice('Responsive website', 'Responsive browser website', true),
+          briefChoice('Desktop-first site', 'Desktop-first browser website with responsive fallbacks'),
+          briefChoice('Mobile-first site', 'Mobile-first responsive browser website'),
         ],
       },
       'product-prototype': {
@@ -473,6 +496,17 @@ const CHATGPT_WIDGET_HTML = `<!doctype html>
           briefChoice('Create & edit', 'Creation and editing interactions with clear feedback and validation.'),
           briefChoice('Settings', 'Account, preference, permission, or configuration surfaces.'),
         ],
+        visual: [
+          briefChoice('Polished product UI', 'Use a polished product-interface direction with clear hierarchy, realistic density, and precise component states.', true),
+          briefChoice('Calm workspace', 'Use a calm workspace aesthetic with restrained color and task-focused layouts.'),
+          briefChoice('Expressive consumer', 'Use an expressive consumer-product direction with friendly color, motion, and bold moments.'),
+          briefChoice('Data dense', 'Use a compact, data-dense professional interface optimized for power users.'),
+        ],
+        output: [
+          briefChoice('Responsive prototype', 'Interactive responsive product prototype', true),
+          briefChoice('Desktop prototype', 'Interactive desktop product prototype'),
+          briefChoice('Mobile prototype', 'Interactive mobile product prototype'),
+        ],
       },
       presentation: {
         goal: [
@@ -495,6 +529,17 @@ const CHATGPT_WIDGET_HTML = `<!doctype html>
           briefChoice('Roadmap', 'A phased plan, milestones, priorities, or future direction.'),
           briefChoice('Next steps', 'Specific decisions, owners, calls to action, or immediate next steps.', true),
         ],
+        visual: [
+          briefChoice('Executive minimal', 'Use an executive presentation style with concise typography, disciplined grids, and restrained color.', true),
+          briefChoice('Editorial story', 'Use an editorial storytelling direction with expressive type, full-bleed visuals, and strong pacing.'),
+          briefChoice('Data forward', 'Use a data-forward presentation system with legible charts, annotations, and evidence-first layouts.'),
+          briefChoice('Product showcase', 'Use a product-showcase direction with interface mockups, visual sequences, and polished demonstrations.'),
+        ],
+        output: [
+          briefChoice('Browser deck', 'Browser presentation with a real preview', true),
+          briefChoice('PPTX-ready deck', 'Browser deck structured for later PPTX export in Open Design'),
+          briefChoice('PDF-ready deck', 'Browser deck structured for later PDF export in Open Design'),
+        ],
       },
       'design-system': {
         goal: [
@@ -516,6 +561,147 @@ const CHATGPT_WIDGET_HTML = `<!doctype html>
           briefChoice('Accessibility', 'Accessibility requirements for contrast, focus, semantics, motion, and input.'),
           briefChoice('Product patterns', 'Reusable patterns for navigation, forms, feedback, data, and common flows.'),
           briefChoice('Governance', 'Contribution, naming, ownership, versioning, and maintenance guidance.'),
+        ],
+        visual: [
+          briefChoice('Product foundation', 'Define a practical digital-product foundation with accessible tokens, components, and interaction patterns.', true),
+          briefChoice('Brand-led system', 'Translate a distinctive brand language into reusable digital foundations and components.'),
+          briefChoice('Enterprise system', 'Prioritize accessibility, density, governance, and durable multi-team patterns.'),
+          briefChoice('Expressive system', 'Define a more expressive system with strong typography, color, motion, and signature components.'),
+        ],
+        output: [
+          briefChoice('DESIGN.md', 'Reusable DESIGN.md design system', true),
+          briefChoice('Tokens & guidance', 'DESIGN.md with detailed tokens, components, and usage guidance'),
+          briefChoice('Migration-ready', 'DESIGN.md with migration rules and component mapping'),
+        ],
+      },
+      image: {
+        goal: [
+          briefChoice('Campaign visual', 'Create a launch-ready campaign visual that communicates one clear idea.', true),
+          briefChoice('Product showcase', 'Present a product or feature as a premium hero image.'),
+          briefChoice('Social creative', 'Create a high-impact image designed for social sharing and fast comprehension.'),
+          briefChoice('Editorial illustration', 'Turn the concept into a distinctive editorial illustration.'),
+        ],
+        audience: [
+          briefChoice('Potential customers', 'Potential customers encountering the product or campaign for the first time.', true),
+          briefChoice('Social audience', 'A broad social audience scrolling quickly through a visual feed.'),
+          briefChoice('Business buyers', 'Professional decision-makers evaluating quality and credibility.'),
+          briefChoice('Internal team', 'Internal stakeholders reviewing a visual direction or concept.'),
+        ],
+        content: [
+          briefChoice('Hero subject', 'One unmistakable hero subject with a clear focal point.', true),
+          briefChoice('Brand cues', 'Recognizable brand color, material, typography, or visual motifs.', true),
+          briefChoice('Context', 'A setting or environment that explains the subject and mood.'),
+          briefChoice('Text-safe space', 'Deliberate negative space for a headline or campaign copy.'),
+          briefChoice('Product detail', 'Close-up product detail, material, interface, or craftsmanship.'),
+        ],
+        visual: [
+          briefChoice('Premium studio', 'Use premium product-studio lighting, controlled materials, and polished commercial detail.', true),
+          briefChoice('Cinematic', 'Use cinematic lighting, atmosphere, depth, and dramatic composition.'),
+          briefChoice('Graphic editorial', 'Use bold graphic composition, expressive typography-safe geometry, and editorial contrast.'),
+          briefChoice('Warm lifestyle', 'Use natural light, human warmth, and an approachable lifestyle setting.'),
+        ],
+        output: [
+          briefChoice('Square · 1:1', 'Square PNG image · 1:1', true),
+          briefChoice('Landscape · 16:9', 'Landscape PNG image · 16:9'),
+          briefChoice('Portrait · 3:4', 'Portrait PNG image · 3:4'),
+          briefChoice('Story · 9:16', 'Vertical PNG image · 9:16'),
+        ],
+      },
+      video: {
+        goal: [
+          briefChoice('Product promo', 'Create a concise product-promotion video with a clear value proposition.', true),
+          briefChoice('Launch teaser', 'Build anticipation for a launch through a short visual teaser.'),
+          briefChoice('Feature demo', 'Demonstrate a product feature or experience through a clear visual sequence.'),
+          briefChoice('Brand story', 'Communicate a brand idea through mood, narrative, and memorable imagery.'),
+        ],
+        audience: [
+          briefChoice('Potential customers', 'Potential customers evaluating the offer or product.', true),
+          briefChoice('Social audience', 'A social audience expecting an immediate hook and quick pacing.'),
+          briefChoice('Existing users', 'Existing users learning about a feature, release, or workflow.'),
+          briefChoice('Stakeholders', 'Internal or external stakeholders reviewing a concept or launch direction.'),
+        ],
+        content: [
+          briefChoice('Opening hook', 'A strong opening image or action in the first seconds.', true),
+          briefChoice('Hero sequence', 'A focused visual sequence centered on the product, subject, or core idea.', true),
+          briefChoice('Story beats', 'A beginning, progression, and satisfying closing beat.'),
+          briefChoice('Product moments', 'Clear product, interface, feature, or usage moments.'),
+          briefChoice('Closing CTA', 'A final branded call to action or memorable end frame.'),
+        ],
+        visual: [
+          briefChoice('Cinematic product', 'Use cinematic product cinematography, deliberate camera movement, and polished lighting.', true),
+          briefChoice('Kinetic social', 'Use fast, kinetic social-video pacing with bold framing and immediate visual hooks.'),
+          briefChoice('Documentary', 'Use grounded documentary imagery, natural movement, and authentic texture.'),
+          briefChoice('Motion graphic', 'Use graphic shapes, interface motion, typography-safe composition, and designed transitions.'),
+        ],
+        output: [
+          briefChoice('Landscape · 16:9', 'Landscape MP4 video · 16:9', true),
+          briefChoice('Vertical · 9:16', 'Vertical MP4 video · 9:16'),
+          briefChoice('Square · 1:1', 'Square MP4 video · 1:1'),
+        ],
+      },
+      audio: {
+        goal: [
+          briefChoice('Brand music', 'Create a distinctive music bed or sonic identity for a brand or product.', true),
+          briefChoice('Voiceover', 'Create a clear spoken narration for a product, story, or presentation.'),
+          briefChoice('Soundscape', 'Create an atmospheric soundscape that establishes mood and place.'),
+          briefChoice('Sound effect', 'Create a focused sound effect or short sonic cue.'),
+        ],
+        audience: [
+          briefChoice('General listeners', 'A broad audience listening through common consumer devices.', true),
+          briefChoice('Customers', 'Customers hearing the audio inside a product, campaign, or launch asset.'),
+          briefChoice('Presentation audience', 'An audience listening alongside a presentation or visual narrative.'),
+          briefChoice('Internal team', 'Internal reviewers evaluating direction, tone, and usability.'),
+        ],
+        content: [
+          briefChoice('Clear opening', 'A recognizable opening motif, phrase, or sonic hook.', true),
+          briefChoice('Structured progression', 'A deliberate beginning, development, and ending.', true),
+          briefChoice('Voice or lead', 'A clear lead voice, melody, or featured sound.'),
+          briefChoice('Background bed', 'A supportive atmospheric or musical bed with room for other content.'),
+          briefChoice('Clean ending', 'A resolved ending suitable for editing or looping.'),
+        ],
+        visual: [
+          briefChoice('Modern & polished', 'Use a modern, polished sonic direction with clear production and restrained detail.', true),
+          briefChoice('Warm & human', 'Use warm instrumentation, natural voice, and an approachable emotional tone.'),
+          briefChoice('Cinematic', 'Use cinematic scale, atmosphere, dynamic contrast, and emotional progression.'),
+          briefChoice('Minimal electronic', 'Use minimal electronic texture, precise rhythm, and a clean technology tone.'),
+        ],
+        output: [
+          briefChoice('60s music', '60-second music track', true),
+          briefChoice('30s voiceover', '30-second spoken voiceover'),
+          briefChoice('15s soundscape', '15-second atmospheric soundscape'),
+          briefChoice('5s sound effect', '5-second sound effect'),
+        ],
+      },
+      document: {
+        goal: [
+          briefChoice('Decision report', 'Create a concise report that helps readers understand evidence and make a decision.', true),
+          briefChoice('Proposal', 'Present a persuasive proposal with context, recommendation, and next steps.'),
+          briefChoice('Brief', 'Turn the material into a clear working brief with requirements and open decisions.'),
+          briefChoice('One-pager', 'Condense the message into a focused, highly scannable one-page document.'),
+        ],
+        audience: [
+          briefChoice('Leadership', 'Executives and senior leaders who need concise evidence, implications, and decisions.', true),
+          briefChoice('Customers', 'Customers or prospects evaluating a proposal, service, or recommendation.'),
+          briefChoice('Project team', 'A cross-functional team aligning on context, requirements, and action.'),
+          briefChoice('General readers', 'A broad audience that needs plain language and clear structure.'),
+        ],
+        content: [
+          briefChoice('Executive summary', 'A concise summary of the situation, key message, and decision.', true),
+          briefChoice('Structured sections', 'Clear sections with a logical reading order and descriptive headings.', true),
+          briefChoice('Evidence & data', 'Relevant facts, evidence, examples, tables, or charts.'),
+          briefChoice('Recommendation', 'A concrete recommendation with rationale and trade-offs.'),
+          briefChoice('Next steps', 'Specific actions, owners, timing, or follow-up decisions.', true),
+        ],
+        visual: [
+          briefChoice('Editorial report', 'Use a polished editorial-report layout with strong hierarchy, readable measure, and refined typography.', true),
+          briefChoice('Executive minimal', 'Use a minimal business-document direction with concise spacing, restrained color, and clear decisions.'),
+          briefChoice('Data first', 'Use a data-first layout with prominent evidence, tables, charts, and annotations.'),
+          briefChoice('Branded magazine', 'Use a more expressive branded-magazine direction with visual pacing and editorial details.'),
+        ],
+        output: [
+          briefChoice('Markdown + HTML', 'Markdown source + print-ready HTML', true),
+          briefChoice('HTML document', 'Polished browser-previewable HTML document'),
+          briefChoice('PDF-ready', 'Print-ready HTML document prepared for PDF export in Open Design'),
         ],
       },
     };
@@ -565,7 +751,8 @@ const CHATGPT_WIDGET_HTML = `<!doctype html>
         renderBriefChoiceGroup('brief-goal-options', 'brief-goal', { options: preset.goal, multiple: false }, brief.outcome);
         renderBriefChoiceGroup('brief-audience-options', 'brief-audience', { options: preset.audience, multiple: false }, brief.audience);
         renderBriefChoiceGroup('brief-content-options', 'brief-content', { options: preset.content, multiple: true }, brief.contentAndFlows);
-        renderBriefChoiceGroup('brief-visual-options', 'brief-visual', { options: VISUAL_CHOICES, multiple: false }, brief.visualDirection);
+        renderBriefChoiceGroup('brief-visual-options', 'brief-visual', { options: preset.visual, multiple: false }, brief.visualDirection);
+        renderBriefChoiceGroup('brief-output-options', 'brief-output', { options: preset.output, multiple: false }, brief.outputFormat);
         const submit = byId('brief-submit');
         submit.disabled = false;
         submit.textContent = 'Create with these choices';
@@ -584,7 +771,7 @@ const CHATGPT_WIDGET_HTML = `<!doctype html>
             outcome: selectedBriefChoice('brief-goal'),
             contentAndFlows: selectedBriefChoice('brief-content', true),
             visualDirection: selectedBriefChoice('brief-visual'),
-            outputFormat: safeText(brief.outputFormat, defaultOutputFormat(output.artifactType)).trim(),
+            outputFormat: selectedBriefChoice('brief-output') || defaultOutputFormat(output.artifactType),
             constraints: safeText(brief.constraints, '').trim(),
           },
         };
@@ -631,7 +818,6 @@ const CHATGPT_WIDGET_HTML = `<!doctype html>
       byId('brief-form').hidden = !briefMode;
       if (briefMode) {
         byId('card').dataset.view = 'brief';
-        byId('subtitle').textContent = [current.title, current.artifactType].filter(Boolean).join(' · ') || 'Working brief';
         renderBrief(current);
         scheduleSizeChanged();
         return;
@@ -641,11 +827,8 @@ const CHATGPT_WIDGET_HTML = `<!doctype html>
       const status = safeText(current.status || (current.nextAction === 'recharge' ? 'recharge' : current.loggedIn === true ? 'connected' : current.loggedIn === false ? 'sign in' : 'ready')).toLowerCase();
       const running = status === 'queued' || status === 'running';
       const completed = status === 'succeeded' || Boolean(current.previewUrl);
-      const artifactLabels = { website: 'Website', 'product-prototype': 'Product prototype', presentation: 'Presentation', 'design-system': 'Design System' };
-      const artifactLabel = artifactLabels[current.artifactType] || current.kind || '';
       const projectLabel = current.name || current.projectName || '';
-      byId('subtitle').textContent = [projectLabel, artifactLabel].filter(Boolean).join(' · ') || (current.loggedIn === true ? 'Open Design Cloud connected' : running ? 'Generating with Open Design' : completed ? 'Artifact ready' : 'Ready to create');
-      byId('note').textContent = current.hint || (current.loggedIn === false ? 'Sign in to Open Design Cloud before starting a Cloud run.' : completed ? 'Review the result here, then continue detailed editing, versions, and export in Open Design.' : running ? 'Open Design is working. Long thinking intervals are normal.' : 'Create a website, product prototype, presentation, or reusable design system.');
+      byId('note').textContent = current.hint || (current.loggedIn === false ? 'Sign in to Open Design Cloud before starting a Cloud run.' : completed ? 'Review the result here, then continue detailed editing, versions, and export in Open Design.' : running ? 'Open Design is working. Long thinking intervals are normal.' : 'Create an Open Design artifact from the confirmed brief.');
       const balance = current.balanceUsd ?? account.balanceUsd ?? wallet.balanceUsd;
       const rechargeMode = current.nextAction === 'recharge';
       const compactMode = running || rechargeMode || (!completed && current.loggedIn !== undefined);
@@ -1139,6 +1322,11 @@ const TOOL_DEFS = [
       type: 'object',
       properties: {
         name: { type: 'string', description: 'Human-readable project name.' },
+        artifactType: {
+          type: 'string',
+          enum: [...CHATGPT_ARTIFACT_TYPES],
+          description: 'Artifact type used to initialize the matching Open Design project kind.',
+        },
         id: {
           type: 'string',
           description: 'Optional project id slug ([A-Za-z0-9._-], <=128 chars). Derived from name when omitted.',
@@ -1171,7 +1359,7 @@ const TOOL_DEFS = [
       properties: {
         artifactType: {
           type: 'string',
-          enum: ['website', 'product-prototype', 'presentation', 'design-system'],
+          enum: [...CHATGPT_ARTIFACT_TYPES],
           description: 'The requested Open Design deliverable type.',
         },
         title: { type: 'string', description: 'Suggested human-readable project name.' },
@@ -1650,12 +1838,12 @@ export function createOpenDesignMcpServer({
     {
       capabilities: { tools: {}, resources: {} },
       instructions: [
-        'Open Design creates and refines websites, product prototypes, presentations, and design systems.',
+        'Open Design creates and refines websites, product prototypes, presentations, design systems, images, videos, audio, and documents.',
         'Confirm audience, outcome, content/flows, visual direction, and output format before calling start_run with confirmed:true. If any field is missing, call collect_brief so the Custom UI form collects it; never emit <question-form> or JSON form markup as assistant text.',
         'Before Cloud generation call get_cloud_account. Use create_project, then start_run; its card polls get_run and updates in place.',
         'Open Design runs can take 5–30 minutes. Do not cancel unless the user asks.',
         'A browser-artifact run is delivered only when get_run returns status:succeeded plus artifactCount greater than zero and a real previewUrl. A Design System run instead requires status:succeeded plus artifactCount greater than zero.',
-        'For a delivered website, prototype, or presentation, use the host in-app browser to open studioUrl and previewUrl in two separate tabs before replying. Never replace either with the Open Design root or /onboarding. If no in-app browser capability exists, show both as clickable links.',
+        'For every delivered browser or media artifact, use the host in-app browser to open studioUrl and previewUrl in two separate tabs before replying. Never replace either with the Open Design root or /onboarding. If no in-app browser capability exists, show both as clickable links.',
         'Complex editing stays in Open Design.',
       ].join('\n'),
     },
@@ -1773,7 +1961,7 @@ function chatGptV1ToolDefinition(tool: (typeof TOOL_DEFS)[number]): any {
           project: PROJECT_ARG,
           artifactType: {
             type: 'string',
-            enum: ['website', 'product-prototype', 'presentation', 'design-system'],
+            enum: [...CHATGPT_ARTIFACT_TYPES],
             description: 'The V1 deliverable type. The server maps it to the approved Open Design workflow.',
           },
           brief: {
@@ -1783,7 +1971,7 @@ function chatGptV1ToolDefinition(tool: (typeof TOOL_DEFS)[number]): any {
               outcome: { type: 'string', description: 'The result this artifact must achieve.' },
               contentAndFlows: { type: 'string', description: 'Required content, sections, product flows, and interactions.' },
               visualDirection: { type: 'string', description: 'Visual direction, references, brand constraints, or instruction to use the attached Design System.' },
-              outputFormat: { type: 'string', description: 'Expected output, for example responsive website, interactive prototype, browser deck, PPTX-ready deck, or DESIGN.md.' },
+              outputFormat: { type: 'string', description: 'Expected output selected in the artifact-specific Custom UI.' },
               constraints: { type: 'string', description: 'Optional must-have or must-avoid constraints.' },
             },
             required: ['audience', 'outcome', 'contentAndFlows', 'visualDirection', 'outputFormat'],
@@ -1809,10 +1997,15 @@ function chatGptV1ToolDefinition(tool: (typeof TOOL_DEFS)[number]): any {
         type: 'object',
         properties: {
           name: { type: 'string', description: 'Human-readable project name.' },
+          artifactType: {
+            type: 'string',
+            enum: [...CHATGPT_ARTIFACT_TYPES],
+            description: 'Artifact type used to initialize the matching Open Design project kind.',
+          },
           id: { type: 'string', description: 'Optional project id slug.' },
           designSystem: { type: 'string', description: 'Optional Design System id to apply.' },
         },
-        required: ['name'],
+        required: ['name', 'artifactType'],
         additionalProperties: false,
       },
     };
@@ -1915,9 +2108,8 @@ function publicChatGptResult(name: string, result: any): any {
 
 async function handleChatGptV1ToolCall(baseUrl: string, name: string, args: McpArgs): Promise<any> {
   if (name === 'collect_brief') {
-    const artifactTypes = new Set(['website', 'product-prototype', 'presentation', 'design-system']);
-    if (typeof args.artifactType !== 'string' || !artifactTypes.has(args.artifactType)) {
-      return errorResult('artifactType must be website, product-prototype, presentation, or design-system.');
+    if (!isChatGptArtifactType(args.artifactType)) {
+      return errorResult(chatGptArtifactTypeError());
     }
     const brief = Object.fromEntries(
       ['audience', 'outcome', 'contentAndFlows', 'visualDirection', 'outputFormat', 'constraints']
@@ -1949,7 +2141,9 @@ async function handleChatGptV1ToolCall(baseUrl: string, name: string, args: McpA
     callArgs = {
       project: args.project,
       prompt: prepared.prompt,
-      skill: prepared.skill,
+      ...(prepared.skill ? { skill: prepared.skill } : {}),
+      ...(prepared.plugin ? { plugin: prepared.plugin } : {}),
+      ...(prepared.inputs ? { inputs: prepared.inputs } : {}),
       agent: 'amr',
     };
   }
@@ -1965,18 +2159,21 @@ async function handleChatGptV1ToolCall(baseUrl: string, name: string, args: McpA
   return publicChatGptResult(name, result);
 }
 
-function prepareChatGptV1Run(args: McpArgs): { skill: string; prompt: string } | { error: string } {
-  const skillByArtifact: Record<string, string> = {
-    website: 'frontend-design',
-    'product-prototype': 'frontend-design',
-    presentation: 'slides',
-    'design-system': 'design-md',
-  };
-  if (typeof args.artifactType !== 'string') {
-    return { error: 'artifactType must be website, product-prototype, presentation, or design-system.' };
+interface PreparedChatGptV1Run {
+  prompt: string;
+  skill?: string;
+  plugin?: string;
+  inputs?: JsonObject;
+}
+
+function mediaAspectFromOutputFormat(outputFormat: string): string | undefined {
+  return outputFormat.match(/(?:^|\s|·)(1:1|16:9|9:16|4:3|3:4)(?:$|\s)/u)?.[1];
+}
+
+function prepareChatGptV1Run(args: McpArgs): PreparedChatGptV1Run | { error: string } {
+  if (!isChatGptArtifactType(args.artifactType)) {
+    return { error: chatGptArtifactTypeError() };
   }
-  const skill = skillByArtifact[args.artifactType];
-  if (!skill) return { error: 'artifactType must be website, product-prototype, presentation, or design-system.' };
   if (args.confirmed !== true) {
     return { error: 'confirmed:true is required after the user has supplied or approved the working brief.' };
   }
@@ -1990,19 +2187,52 @@ function prepareChatGptV1Run(args: McpArgs): { skill: string; prompt: string } |
       return { error: `brief.${field} is required.` };
     }
   }
-  const lines = [
+  const lines: string[] = [
     `Artifact type: ${args.artifactType}`,
     `Audience: ${brief.audience}`,
     `Outcome: ${brief.outcome}`,
     `Content and flows: ${brief.contentAndFlows}`,
     `Visual direction: ${brief.visualDirection}`,
     `Output format: ${brief.outputFormat}`,
-    'Delivery contract: write the actual deliverable files inside the current project working directory. Project files are discovered automatically; there is no separate artifact registration command to run. For a browser artifact, create a real HTML entry file and verify it can be read back before finishing. If any write or verification tool reports an error, report that error and do not claim the file exists.',
   ];
   if (typeof brief.constraints === 'string' && brief.constraints.trim()) {
     lines.push(`Constraints: ${brief.constraints}`);
   }
-  return { skill, prompt: lines.join('\n') };
+  lines.push('Delivery contract: write the actual deliverable files inside the current project working directory. Project files are discovered automatically; there is no separate artifact registration command to run. Verify every required file can be read back before finishing. If any write or verification tool reports an error, report that error and do not claim the file exists.');
+
+  switch (args.artifactType) {
+    case 'website':
+      lines.push('Website deliverable: create a polished responsive website with a real index.html entry file and verify the rendered desktop and mobile layouts.');
+      return { skill: 'frontend-design', prompt: lines.join('\n') };
+    case 'product-prototype':
+      lines.push('Prototype deliverable: create a realistic interactive product prototype with a real index.html entry file, working core flows, and responsive behavior appropriate to the selected output.');
+      return { skill: 'frontend-design', prompt: lines.join('\n') };
+    case 'presentation':
+      lines.push('Presentation deliverable: create a complete browser-rendered slide deck with a real index.html entry file, coherent narrative pacing, and no clipped or overflowing slide content.');
+      return { skill: 'slides', prompt: lines.join('\n') };
+    case 'design-system':
+      lines.push('Design-system deliverable: create a reusable DESIGN.md with concrete foundations, tokens, components, states, accessibility guidance, and application rules.');
+      return { skill: 'design-md', prompt: lines.join('\n') };
+    case 'document':
+      lines.push('Document deliverable: create both document.md as the editable source and a polished print-ready index.html browser preview. The HTML must be suitable for later PDF export. Do not claim to create a native DOCX file.');
+      return { skill: 'frontend-design', prompt: lines.join('\n') };
+    case 'image':
+    case 'video':
+    case 'audio': {
+      lines.push(`Media deliverable: use the Open Design media-generation workflow to produce and save a real ${args.artifactType} binary in the project. Do not stop at a prompt, plan, placeholder, or textual description.`);
+      const aspect = mediaAspectFromOutputFormat(String(brief.outputFormat));
+      return {
+        plugin: 'od-media-generation',
+        prompt: lines.join('\n'),
+        inputs: {
+          mediaKind: args.artifactType,
+          subject: `${String(brief.outcome).trim()}. ${String(brief.contentAndFlows).trim()}`,
+          style: String(brief.visualDirection).trim(),
+          ...(aspect ? { aspect } : {}),
+        },
+      };
+    }
+  }
 }
 
 function ok(payload: unknown) {
@@ -2048,7 +2278,7 @@ async function handleMcpToolCall(baseUrl: string, name: unknown, args: McpArgs):
         const project = data?.project ?? data;
         const resolvedDir = typeof data?.resolvedDir === 'string' ? data.resolvedDir : null;
         const declaredEntry = project?.metadata?.entryFile ?? null;
-        const entryFile = await resolveProjectEntry(baseUrl, id, declaredEntry);
+        const entryFile = await resolveProjectEntry(baseUrl, id, declaredEntry, project?.metadata?.kind);
         const previewUrl = await validatePreviewUrl(rawPreviewUrl(baseUrl, id, entryFile));
         // Build the studio deep link too — needs the project's
         // default conversation, which we look up once. Cheap to skip
@@ -2222,7 +2452,8 @@ function encodeProjectRelativePath(filePath: string): string {
 async function resolveVersionPath(baseUrl: string, projectId: string, requested: unknown): Promise<string> {
   if (typeof requested === 'string' && requested.length > 0) return requested;
   const project = await getJson<ProjectPayload>(`${baseUrl}/api/projects/${encodeURIComponent(projectId)}`);
-  const entry = await resolveProjectEntry(baseUrl, projectId, project.project?.metadata?.entryFile ?? project.metadata?.entryFile ?? null);
+  const metadata = project.project?.metadata ?? project.metadata;
+  const entry = await resolveProjectEntry(baseUrl, projectId, metadata?.entryFile ?? null, metadata?.kind);
   if (!entry) throw new Error('path is required because this project has no resolvable entry file');
   return entry;
 }
@@ -2391,13 +2622,37 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
 // <question-form> output ends up dropped from the MCP response because
 // no project file is produced. Better to let the outer agent gather
 // requirements directly and pass a precise prompt to start_run.
+function projectMetadataForArtifactType(artifactType: ChatGptArtifactType): JsonObject {
+  switch (artifactType) {
+    case 'website':
+    case 'product-prototype':
+      return { kind: 'prototype' };
+    case 'presentation':
+      return { kind: 'deck' };
+    case 'design-system':
+      return { kind: 'brand' };
+    case 'image':
+    case 'video':
+    case 'audio':
+      return { kind: artifactType };
+    case 'document':
+      return { kind: 'other', intent: 'document' };
+  }
+}
+
 async function createProject(baseUrl: string, args: McpArgs) {
   requireString(args.name, 'name');
+  if (args.artifactType !== undefined && !isChatGptArtifactType(args.artifactType)) {
+    throw new Error(chatGptArtifactTypeError());
+  }
   const id =
     typeof args.id === 'string' && args.id.length > 0
       ? args.id
       : slugifyProjectId(args.name);
   const body: JsonObject = { id, name: args.name, skipDiscoveryBrief: true };
+  if (isChatGptArtifactType(args.artifactType)) {
+    body.metadata = projectMetadataForArtifactType(args.artifactType);
+  }
   if (typeof args.designSystem === 'string' && args.designSystem.length > 0) {
     body.designSystemId = args.designSystem;
   }
@@ -2691,7 +2946,28 @@ async function getDefaultConversationId(baseUrl: string, projectId: string): Pro
 // index.html exists at the project root — without the fallback,
 // get_project/get_run would silently omit previewUrl and force the
 // outer agent to guess a file:// path.
-async function resolveProjectEntry(baseUrl: string, projectId: string, declared: unknown): Promise<string | null> {
+const PREVIEWABLE_MEDIA_EXTENSIONS: Record<'image' | 'video' | 'audio', Set<string>> = {
+  image: new Set(['png', 'jpg', 'jpeg', 'webp', 'gif', 'avif', 'svg']),
+  video: new Set(['mp4', 'webm', 'mov', 'm4v']),
+  audio: new Set(['mp3', 'wav', 'm4a', 'ogg', 'aac', 'flac']),
+};
+
+function projectFilePath(file: { path?: string; name?: string }): string | null {
+  if (typeof file.path === 'string' && file.path.length > 0) return file.path;
+  if (typeof file.name === 'string' && file.name.length > 0) return file.name;
+  return null;
+}
+
+function fileExtension(filePath: string): string {
+  return filePath.split('.').at(-1)?.toLowerCase() ?? '';
+}
+
+async function resolveProjectEntry(
+  baseUrl: string,
+  projectId: string,
+  declared: unknown,
+  projectKind?: unknown,
+): Promise<string | null> {
   if (typeof declared === 'string' && declared.length > 0) return declared;
   try {
     const data = await getJson<{ files?: Array<{ path?: string; name?: string; kind?: string }> }>(
@@ -2700,13 +2976,33 @@ async function resolveProjectEntry(baseUrl: string, projectId: string, declared:
     const files = data?.files ?? [];
     // index.html wins at any level — the conventional entry signal.
     const indexHtml = files.find((f) => f?.path === 'index.html' || f?.name === 'index.html');
-    if (indexHtml?.path) return indexHtml.path;
+    if (indexHtml) return projectFilePath(indexHtml);
     // Otherwise: if exactly one .html sits at the project root, that
     // is unambiguous enough to pick. Don't guess past one match.
     const htmlAtRoot = files.filter(
       (f) => typeof f?.path === 'string' && !f.path.includes('/') && f.path.toLowerCase().endsWith('.html'),
     );
     if (htmlAtRoot.length === 1 && htmlAtRoot[0]?.path) return htmlAtRoot[0].path;
+
+    const preferredMediaKind = projectKind === 'image' || projectKind === 'video' || projectKind === 'audio'
+      ? projectKind
+      : null;
+    if (preferredMediaKind) {
+      const media = files.find((file) => {
+        const path = projectFilePath(file);
+        return path !== null && (
+          file.kind === preferredMediaKind || PREVIEWABLE_MEDIA_EXTENSIONS[preferredMediaKind].has(fileExtension(path))
+        );
+      });
+      if (media) return projectFilePath(media);
+    }
+
+    const anyMedia = files.find((file) => {
+      const path = projectFilePath(file);
+      return path !== null && Object.values(PREVIEWABLE_MEDIA_EXTENSIONS)
+        .some((extensions) => extensions.has(fileExtension(path)));
+    });
+    if (anyMedia) return projectFilePath(anyMedia);
     return null;
   } catch {
     return null;
@@ -2730,7 +3026,12 @@ async function validatePreviewUrl(url: string | null): Promise<string | null> {
     const response = await fetch(url, { method: 'GET' });
     if (!response.ok) return null;
     const contentType = response.headers.get('content-type')?.toLowerCase() ?? '';
-    if (!contentType.startsWith('text/html')) {
+    const previewable = contentType.startsWith('text/html')
+      || contentType.startsWith('image/')
+      || contentType.startsWith('video/')
+      || contentType.startsWith('audio/')
+      || contentType.startsWith('application/pdf');
+    if (!previewable) {
       try {
         await response.body?.cancel();
       } catch {
@@ -2741,7 +3042,7 @@ async function validatePreviewUrl(url: string | null): Promise<string | null> {
     try {
       await response.body?.cancel();
     } catch {
-      // The successful HTML response already proved that the entry is reachable.
+      // The successful browser-renderable response already proved that the entry is reachable.
     }
     return url;
   } catch {
@@ -2759,8 +3060,8 @@ async function buildRunPreviewUrl(baseUrl: string, projectId: string): Promise<s
       `${baseUrl}/api/projects/${encodeURIComponent(projectId)}`,
     );
     const project = data?.project ?? data;
-    const declared = (project as { metadata?: JsonObject } | undefined)?.metadata?.entryFile;
-    const entry = await resolveProjectEntry(baseUrl, projectId, declared);
+    const metadata = (project as { metadata?: JsonObject } | undefined)?.metadata;
+    const entry = await resolveProjectEntry(baseUrl, projectId, metadata?.entryFile, metadata?.kind);
     return await validatePreviewUrl(rawPreviewUrl(baseUrl, projectId, entry));
   } catch {
     return null;
