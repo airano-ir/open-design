@@ -211,9 +211,36 @@ async function verify(options: Options): Promise<CheckResult[]> {
   assert(publicBriefSchemes?.[0]?.type === 'noauth', 'collect_brief is not published as an anonymous tool');
   const publicBriefCall = await rpc(options.mcpUrl, 3, 'tools/call', {
     name: 'collect_brief',
-    arguments: { artifactType: 'website', title: 'Production verification' },
+    arguments: {
+      artifactType: 'website',
+      projectTitle: 'Production verification',
+      knownAnswers: { audience: 'Open Design production verifier' },
+      questionForm: {
+        id: 'production-website-brief',
+        title: 'Confirm the production website direction',
+        description: 'These choices are specific to this verification request.',
+        lang: 'en',
+        submitLabel: 'Confirm and continue',
+        questions: [
+          {
+            id: 'primaryCta',
+            label: 'What should the primary action be?',
+            type: 'radio',
+            required: true,
+            allowCustom: false,
+            defaultValue: 'inspect-plugin',
+            options: [
+              { label: 'Inspect the plugin', value: 'inspect-plugin' },
+              { label: 'Open the generated site', value: 'open-site' },
+            ],
+          },
+        ],
+      },
+    },
   });
-  assert((publicBriefCall.structuredContent as Record<string, unknown> | undefined)?.view === 'brief-form', 'anonymous collect_brief did not return the Custom UI state');
+  const publicBriefOutput = publicBriefCall.structuredContent as Record<string, unknown> | undefined;
+  assert(publicBriefOutput?.view === 'brief-form', 'anonymous collect_brief did not return the Custom UI state');
+  assert((publicBriefOutput?.questionForm as Record<string, unknown> | undefined)?.id === 'production-website-brief', 'anonymous collect_brief did not preserve the dynamic QuestionForm');
   const publicWidgetUri = String(publicBriefMeta?.['openai/outputTemplate'] ?? '');
   assert(publicWidgetUri.startsWith('ui://open-design/artifact-card-'), 'collect_brief is missing its widget URI');
   const publicWidget = await rpc(options.mcpUrl, 4, 'resources/read', { uri: publicWidgetUri });

@@ -7,16 +7,18 @@ description: Create or refine a web-first document with Open Design, including r
 
 Apply `$open-design-basics`, then execute this document contract.
 
-## Brief and execution
+## Dynamic decision dimensions and execution
 
 - Use `artifactType: document` for `collect_brief`, `create_project`, and `start_run`.
-- Offer only selectable document presets:
-  - Goal: **Report findings**, **Make a proposal**, **Write a brief**, **Create a guide**, or **Publish an editorial piece**.
-  - Audience: **Leadership**, **Customers**, **Internal team**, **Partners**, or **General readers**.
-  - Sections, multi-select: **Executive summary**, **Context**, **Evidence and data**, **Analysis**, **Recommendation**, **Next steps**, and **Appendix**.
-  - Direction: **Clean report**, **Editorial publication**, **Formal proposal**, **Modern technical**, or **Premium restrained**.
-  - Format: **Markdown source and print-ready HTML** or **Markdown source and PDF-ready HTML preview**.
-- Preserve supplied outline, evidence, copy, citations, and brand constraints as preselected choices. Never request a free-text document brief.
+- Treat the following as decision dimensions to consider only when unknown and outcome-changing, never as fixed form rows or a checklist to ask in full:
+  - Document purpose, reader decision, and success condition.
+  - Audience, reading context, and expected subject familiarity.
+  - Document genre, section structure, and narrative order.
+  - Evidence, citations, supplied source material, and recommendation depth.
+  - Length, level of detail, editorial tone, and brand treatment.
+  - Print-ready, PDF-ready, and native `.docx` expectations.
+- Tailor choices to the requested document. A board memo, research report, customer proposal, and public guide need different structure, evidence, and depth options.
+- Put supplied outline, evidence, copy, citations, audience, and brand constraints in `knownAnswers`; do not re-ask them or request a free-text document brief.
 - If the user requires a native `.docx`, explain before starting that this Open Design workflow does not produce one. Do not label HTML, Markdown, or PDF-ready output as DOCX.
 - Call `create_project`, then `start_run` with the confirmed structured brief. The server maps `document` to the Open Design document/new-generation workflow.
 

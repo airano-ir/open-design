@@ -17,6 +17,52 @@ import {
 import { createChatGptCapabilityToken } from '../src/services/chatgpt-capabilities.js';
 import { chatGptTenantKey } from '../src/services/chatgpt-tenant-daemons.js';
 
+const CHOICE_ONLY_QUESTION_TYPES = [
+  'radio',
+  'checkbox',
+  'select',
+  'switch',
+  'direction-cards',
+] as const;
+
+function choiceQuestion(
+  id: string,
+  label = id,
+  type: (typeof CHOICE_ONLY_QUESTION_TYPES)[number] = 'radio',
+) {
+  if (type === 'switch') {
+    return { id, label, type, required: true, defaultValue: 'true' };
+  }
+  return {
+    id,
+    label,
+    type,
+    required: true,
+    allowCustom: false,
+    default: `${id}-recommended`,
+    options: [
+      { label: `${label} · Recommended`, value: `${id}-recommended`, description: 'Recommended from the brief.' },
+      { label: `${label} · Alternative`, value: `${id}-alternative` },
+    ],
+    ...(type === 'checkbox' ? { maxSelections: 2 } : {}),
+  };
+}
+
+function tailoredQuestionForm(id: string, questionIds: string[]) {
+  return {
+    id,
+    title: `Confirm ${id}`,
+    description: 'Only answer the decisions that are still unknown.',
+    lang: 'en',
+    submitLabel: 'Continue with these choices',
+    questions: questionIds.map((questionId, index) => choiceQuestion(
+      questionId,
+      questionId,
+      index === 1 ? 'checkbox' : 'radio',
+    )),
+  };
+}
+
 describe('ChatGPT Streamable HTTP MCP', () => {
   const servers: Array<{ close: (callback: (error?: Error) => void) => void }> = [];
 
@@ -84,7 +130,7 @@ describe('ChatGPT Streamable HTTP MCP', () => {
         'create_artifact',
       ]));
       const startRun = tools.tools.find((tool) => tool.name === 'start_run');
-      const widgetUri = 'ui://open-design/artifact-card-v9.html';
+      const widgetUri = 'ui://open-design/artifact-card-v10.html';
       const collectBrief = tools.tools.find((tool) => tool.name === 'collect_brief');
       expect(collectBrief?._meta?.['openai/outputTemplate']).toBe(widgetUri);
       expect((collectBrief?._meta as any)?.ui?.resourceUri).toBe(widgetUri);
@@ -114,6 +160,40 @@ describe('ChatGPT Streamable HTTP MCP', () => {
       expect((createProject?.inputSchema as any).properties.artifactType.enum).toEqual(
         (startRun?.inputSchema as any).properties.artifactType.enum,
       );
+      const collectBriefInput = collectBrief?.inputSchema as any;
+      expect(collectBriefInput.required).toEqual(['artifactType', 'questionForm']);
+      expect(collectBriefInput.properties.projectTitle).toMatchObject({ type: 'string' });
+      expect(collectBriefInput.properties.knownAnswers).toMatchObject({ type: 'object' });
+      expect(collectBriefInput.properties.questionForm).toMatchObject({
+        type: 'object',
+        required: ['id', 'title', 'questions'],
+        additionalProperties: false,
+      });
+      expect(collectBriefInput.properties.questionForm.properties.questions).toMatchObject({
+        type: 'array',
+        minItems: 1,
+        maxItems: 5,
+      });
+      expect(collectBriefInput.properties.questionForm.properties.questions.items.allOf).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ anyOf: [{ required: ['default'] }, { required: ['defaultValue'] }] }),
+        ]),
+      );
+      expect(collectBriefInput.properties.questionForm.properties.questions.items.properties.type.enum).toEqual(
+        CHOICE_ONLY_QUESTION_TYPES,
+      );
+      expect(collectBriefInput.properties.questionForm.properties.questions.items.properties.options.items).toMatchObject({
+        type: 'object',
+        required: ['label', 'value'],
+        additionalProperties: false,
+      });
+      expect((collectBrief?.outputSchema as any).properties).toMatchObject({
+        projectTitle: { type: 'string' },
+        knownAnswers: { type: 'object' },
+        questionForm: { type: 'object' },
+      });
+      expect(collectBrief?.description).toMatch(/tailor|dynamic/iu);
+      expect(collectBrief?.description).toMatch(/already (?:known|answered)|do not re-ask/iu);
 
       const resources = await client.listResources();
       expect(resources.resources).toContainEqual(expect.objectContaining({
@@ -136,6 +216,7 @@ describe('ChatGPT Streamable HTTP MCP', () => {
         'ui://open-design/artifact-card-v6.html',
         'ui://open-design/artifact-card-v7.html',
         'ui://open-design/artifact-card-v8.html',
+        'ui://open-design/artifact-card-v9.html',
       ]) {
         const legacyWidget = await client.readResource({ uri: legacyUri });
         expect(legacyWidget.contents[0]).toEqual(expect.objectContaining({
@@ -157,16 +238,18 @@ describe('ChatGPT Streamable HTTP MCP', () => {
       expect(widgetHtml).not.toContain('<header class="head">');
       expect(widgetHtml).not.toContain('<h1 class="title">OpenDesign</h1>');
       expect(widgetHtml).not.toContain('id="subtitle"');
-      expect(widgetHtml).toContain('id="brief-goal-options"');
-      expect(widgetHtml).toContain('id="brief-audience-options"');
-      expect(widgetHtml).toContain('id="brief-content-options"');
-      expect(widgetHtml).toContain('id="brief-visual-options"');
-      expect(widgetHtml).toContain('id="brief-output-options"');
-      for (const artifactType of ['website', 'product-prototype', 'presentation', 'design-system', 'image', 'video', 'audio', 'document']) {
-        expect(widgetHtml).toContain(artifactType.includes('-') ? `'${artifactType}': {` : `${artifactType}: {`);
-      }
-      expect(widgetHtml).toContain("definition.multiple ? 'checkbox' : 'radio'");
-      expect(widgetHtml).toContain('Create with these choices');
+      expect(widgetHtml).toContain('id="brief-questions"');
+      expect(widgetHtml).not.toContain('id="brief-goal-options"');
+      expect(widgetHtml).not.toContain('id="brief-audience-options"');
+      expect(widgetHtml).not.toContain('id="brief-content-options"');
+      expect(widgetHtml).not.toContain('id="brief-visual-options"');
+      expect(widgetHtml).not.toContain('id="brief-output-options"');
+      expect(widgetHtml).not.toContain('BRIEF_CHOICE_PRESETS');
+      expect(widgetHtml).toContain('questionForm.questions');
+      expect(widgetHtml).toContain('questionForm.submitLabel');
+      expect(widgetHtml).toContain('[form answers — ');
+      expect(widgetHtml).toContain('[value: ');
+      expect(widgetHtml).not.toContain('[OpenDesign brief confirmed]');
       expect(widgetHtml).not.toMatch(/<textarea\b/iu);
       expect(widgetHtml).not.toMatch(/<input\b[^>]*\btype\s*=\s*['"](?:text|email|url|tel|search|number|password)['"]/iu);
       expect(widgetHtml).not.toMatch(/\binput\.type\s*=\s*['"](?:text|email|url|tel|search|number|password)['"]/iu);
@@ -174,7 +257,7 @@ describe('ChatGPT Streamable HTTP MCP', () => {
       const widgetScript = widgetHtml.match(/<script>([\s\S]+)<\/script>/u)?.[1];
       expect(widgetScript).toBeTruthy();
       expect(() => new Script(widgetScript ?? '')).not.toThrow();
-      expect(widgetHtml).toContain("version: '0.2.12'");
+      expect(widgetHtml).toContain("version: '0.2.13'");
       expect(widgetHtml).toContain('data-view="compact"');
       expect(widgetHtml).toContain('Authorization complete');
       expect(widgetHtml).toContain('Sign in / Register');
@@ -205,21 +288,265 @@ describe('ChatGPT Streamable HTTP MCP', () => {
       const briefResult = await client.callTool({
         name: 'collect_brief',
         arguments: {
-          artifactType: 'website',
-          title: 'Launch website',
-          outcome: 'Explain the product and convert visitors.',
+          artifactType: 'presentation',
+          projectTitle: 'Series A story',
+          knownAnswers: {
+            audience: 'Seed-stage investors',
+            scale: '10 slides',
+          },
+          questionForm: {
+            id: 'presentation-fundraising',
+            title: '补充融资演示信息',
+            description: '只确认尚未从需求中获得的信息。',
+            lang: 'zh-CN',
+            submitLabel: '确认并继续',
+            questions: [
+              choiceQuestion('audience', '主要受众'),
+              choiceQuestion('fundingAsk', '融资诉求'),
+              choiceQuestion('tractionFocus', '重点数据', 'checkbox'),
+              choiceQuestion('speakerNotes', '是否需要演讲者备注', 'switch'),
+            ],
+          },
         },
       }) as any;
       expect(briefResult.structuredContent).toMatchObject({
         view: 'brief-form',
-        artifactType: 'website',
-        title: 'Launch website',
-        brief: { outcome: 'Explain the product and convert visitors.' },
+        artifactType: 'presentation',
+        projectTitle: 'Series A story',
+        knownAnswers: {
+          audience: 'Seed-stage investors',
+          scale: '10 slides',
+        },
+        questionForm: {
+          id: 'presentation-fundraising',
+          title: '补充融资演示信息',
+          lang: 'zh-CN',
+        },
       });
+      expect(briefResult.structuredContent.questionForm.questions.map((question: any) => question.id)).toEqual([
+        'fundingAsk',
+        'tractionFocus',
+        'speakerNotes',
+      ]);
+      expect(briefResult.structuredContent.questionForm.questions).not.toEqual(expect.arrayContaining([
+        expect.objectContaining({ id: 'audience' }),
+      ]));
+      expect(briefResult.structuredContent.questionForm.questions
+        .filter((question: any) => question.type !== 'switch')
+        .every((question: any) => question.allowCustom === false)).toBe(true);
+
+      const reviewBrief = await client.callTool({
+        name: 'collect_brief',
+        arguments: {
+          artifactType: 'presentation',
+          projectTitle: 'Quarterly product review',
+          knownAnswers: { audience: 'Internal leadership' },
+          questionForm: tailoredQuestionForm('presentation-quarterly-review', [
+            'keyMetrics',
+            'learnings',
+            'nextDecision',
+          ]),
+        },
+      }) as any;
+      const fundraisingQuestionIds = briefResult.structuredContent.questionForm.questions
+        .map((question: any) => question.id);
+      const reviewQuestionIds = reviewBrief.structuredContent.questionForm.questions
+        .map((question: any) => question.id);
+      expect(reviewQuestionIds).toEqual(['keyMetrics', 'learnings', 'nextDecision']);
+      expect(reviewQuestionIds).not.toEqual(fundraisingQuestionIds);
       expect(briefResult._meta).toMatchObject({
         'openai/outputTemplate': widgetUri,
         'ui/resourceUri': widgetUri,
       });
+    } finally {
+      await client.close();
+    }
+  });
+
+  it('uses one adaptive QuestionForm pipeline for all eight artifact types', async () => {
+    const app = express();
+    app.use(express.json());
+    registerChatGptMcpRoutes(app, { getDaemonUrl: () => 'http://127.0.0.1:9', env: {} });
+    const httpServer = app.listen(0, '127.0.0.1');
+    servers.push(httpServer);
+    await new Promise<void>((resolve) => httpServer.once('listening', resolve));
+    const { port } = httpServer.address() as AddressInfo;
+
+    const client = new Client({ name: 'chatgpt-adaptive-brief-test', version: '1.0.0' });
+    const transport = new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${port}/mcp`));
+    await client.connect(transport as unknown as Parameters<typeof client.connect>[0]);
+    try {
+      const cases = [
+        ['website', ['primaryCta', 'proof', 'brand']],
+        ['product-prototype', ['coreFlow', 'fidelity', 'states']],
+        ['presentation', ['fundingAsk', 'traction', 'speakerNotes']],
+        ['design-system', ['scope', 'componentDepth', 'governance']],
+        ['image', ['heroSubject', 'copyPolicy', 'variants']],
+        ['video', ['sceneArc', 'audioTreatment', 'cta']],
+        ['audio', ['voiceStyle', 'pacing', 'musicBed']],
+        ['document', ['evidence', 'recommendation', 'sections']],
+      ] as const;
+
+      for (const [artifactType, questionIds] of cases) {
+        const result = await client.callTool({
+          name: 'collect_brief',
+          arguments: {
+            artifactType,
+            projectTitle: `${artifactType} tailored project`,
+            knownAnswers: {
+              audience: `${artifactType} audience supplied by the user`,
+              output: `${artifactType} output supplied by the user`,
+            },
+            questionForm: {
+              ...tailoredQuestionForm(`${artifactType}-brief`, ['audience', ...questionIds]),
+              questions: [
+                choiceQuestion('audience', 'Audience already supplied'),
+                ...questionIds.map((questionId, index) => choiceQuestion(
+                  questionId,
+                  questionId,
+                  index === 1 ? 'checkbox' : 'radio',
+                )),
+              ],
+            },
+          },
+        }) as any;
+
+        expect(result.isError, JSON.stringify(result.content)).not.toBe(true);
+        expect(result.structuredContent).toMatchObject({
+          artifactType,
+          projectTitle: `${artifactType} tailored project`,
+          questionForm: { id: `${artifactType}-brief` },
+        });
+        expect(result.structuredContent.questionForm.questions.map((question: any) => question.id)).toEqual(
+          questionIds,
+        );
+        expect(result.structuredContent.questionForm.questions).toHaveLength(3);
+        expect(result.structuredContent.questionForm.questions.every((question: any) => (
+          CHOICE_ONLY_QUESTION_TYPES.includes(question.type)
+        ))).toBe(true);
+        expect(result.structuredContent.questionForm.questions
+          .filter((question: any) => question.type !== 'switch')
+          .every((question: any) => question.allowCustom === false)).toBe(true);
+      }
+    } finally {
+      await client.close();
+    }
+  });
+
+  it('treats Open Design metadata aliases as already answered brief decisions', async () => {
+    const app = express();
+    app.use(express.json());
+    registerChatGptMcpRoutes(app, { getDaemonUrl: () => 'http://127.0.0.1:9', env: {} });
+    const httpServer = app.listen(0, '127.0.0.1');
+    servers.push(httpServer);
+    await new Promise<void>((resolve) => httpServer.once('listening', resolve));
+    const { port } = httpServer.address() as AddressInfo;
+
+    const client = new Client({ name: 'chatgpt-brief-alias-test', version: '1.0.0' });
+    const transport = new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${port}/mcp`));
+    await client.connect(transport as unknown as Parameters<typeof client.connect>[0]);
+    try {
+      const result = await client.callTool({
+        name: 'collect_brief',
+        arguments: {
+          artifactType: 'presentation',
+          knownAnswers: {
+            slideCount: '10 slides',
+            platform: 'browser',
+            designSystem: 'Open Design brand',
+          },
+          questionForm: {
+            ...tailoredQuestionForm('presentation-alias-brief', ['slides', 'surface', 'brand', 'evidence']),
+            questions: [
+              choiceQuestion('slides', 'How many slides?'),
+              choiceQuestion('surface', 'Which platform?'),
+              choiceQuestion('brand', 'Which brand direction?'),
+              choiceQuestion('evidence', 'Which evidence should lead?'),
+            ],
+          },
+        },
+      }) as any;
+
+      expect(result.isError, JSON.stringify(result.content)).not.toBe(true);
+      expect(result.structuredContent.questionForm.questions.map((question: any) => question.id)).toEqual([
+        'evidence',
+      ]);
+    } finally {
+      await client.close();
+    }
+  });
+
+  it('rejects non-choice, overlong, duplicate, and free-form-override QuestionForms', async () => {
+    const app = express();
+    app.use(express.json());
+    registerChatGptMcpRoutes(app, { getDaemonUrl: () => 'http://127.0.0.1:9', env: {} });
+    const httpServer = app.listen(0, '127.0.0.1');
+    servers.push(httpServer);
+    await new Promise<void>((resolve) => httpServer.once('listening', resolve));
+    const { port } = httpServer.address() as AddressInfo;
+
+    const client = new Client({ name: 'chatgpt-brief-validation-test', version: '1.0.0' });
+    const transport = new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${port}/mcp`));
+    await client.connect(transport as unknown as Parameters<typeof client.connect>[0]);
+    try {
+      const invalidForms = [
+        {
+          ...tailoredQuestionForm('typed-answer', ['audience']),
+          questions: [{ id: 'audience', label: 'Audience', type: 'text', required: true }],
+        },
+        tailoredQuestionForm('too-many', ['one', 'two', 'three', 'four', 'five', 'six']),
+        {
+          ...tailoredQuestionForm('duplicate-ids', ['tone']),
+          questions: [choiceQuestion('tone'), choiceQuestion('tone')],
+        },
+        {
+          ...tailoredQuestionForm('free-form-override', ['tone']),
+          questions: [{ ...choiceQuestion('tone'), allowCustom: true }],
+        },
+        {
+          ...tailoredQuestionForm('unstable-string-options', ['tone']),
+          questions: [{
+            id: 'tone',
+            label: 'Tone',
+            type: 'radio',
+            defaultValue: 'Editorial',
+            allowCustom: false,
+            options: ['Editorial', 'Utility'],
+          }],
+        },
+        {
+          ...tailoredQuestionForm('mismatched-direction-cards', ['direction']),
+          questions: [{
+            id: 'direction',
+            label: 'Direction',
+            type: 'direction-cards',
+            defaultValue: 'editorial',
+            allowCustom: false,
+            options: [
+              { label: 'Editorial', value: 'editorial' },
+              { label: 'Utility', value: 'utility' },
+            ],
+            cards: [
+              { id: 'editorial', label: 'Editorial', mood: 'Magazine-led' },
+              { id: 'playful', label: 'Playful', mood: 'Expressive' },
+            ],
+          }],
+        },
+      ];
+
+      for (const questionForm of invalidForms) {
+        const result = await client.callTool({
+          name: 'collect_brief',
+          arguments: {
+            artifactType: 'website',
+            projectTitle: 'Invalid brief test',
+            knownAnswers: {},
+            questionForm,
+          },
+        }) as any;
+        expect(result, questionForm.id).toMatchObject({ isError: true });
+        expect(JSON.stringify(result.content)).toMatch(/question|choice|five|duplicate|custom|direction/iu);
+      }
     } finally {
       await client.close();
     }
@@ -254,9 +581,18 @@ describe('ChatGPT Streamable HTTP MCP', () => {
     expect(basics).toContain('Do not create substitute');
     expect(basics).toContain('choice-only');
     expect(basics).toContain('radio buttons for one choice and checkboxes for multiple choices');
-    expect(basics).toMatch(/preselected \*\*From your brief\*\* choice/iu);
+    expect(basics).toMatch(/QuestionForm|question form/iu);
+    expect(basics).toMatch(/drop|omit|do not re-ask/iu);
+    expect(basics).toMatch(/already (?:answered|known|supplied)/iu);
+    expect(basics).toMatch(/2[–-]3|two to three/iu);
+    expect(basics).toMatch(/(?:at most|maximum|hard cap)[^\n]*5/iu);
+    expect(basics).toContain('[form answers —');
+    expect(basics).toMatch(/every fresh creation/iu);
+    expect(basics).toMatch(/only skip/iu);
+    expect(basics).not.toMatch(/preselected \*\*From your brief\*\* choice/iu);
     expect(skills.slice(1).every((skill) => skill.includes('`collect_brief`'))).toBe(true);
-    expect(skills.slice(1).every((skill) => /Offer only selectable/iu.test(skill))).toBe(true);
+    expect(skills.slice(1).every((skill) => /tailor|adaptive|dynamically/iu.test(skill))).toBe(true);
+    expect(skills.slice(1).every((skill) => /already (?:answered|known|supplied)|do not re-ask/iu.test(skill))).toBe(true);
     expect(skills.slice(1).every((skill) => skill.includes('`create_project`'))).toBe(true);
     expect(skills.slice(1).every((skill) => skill.includes('`start_run`'))).toBe(true);
     expect(skills[5]).toContain('`artifactType: image`');
@@ -411,9 +747,18 @@ describe('ChatGPT Streamable HTTP MCP', () => {
       ]));
       const brief = await publicClient.callTool({
         name: 'collect_brief',
-        arguments: { artifactType: 'website', title: 'Public brief' },
+        arguments: {
+          artifactType: 'website',
+          projectTitle: 'Public brief',
+          knownAnswers: { audience: 'Public users' },
+          questionForm: tailoredQuestionForm('public-website-brief', ['primaryCta', 'brand']),
+        },
       }) as any;
-      expect(brief.structuredContent).toMatchObject({ view: 'brief-form' });
+      expect(brief.structuredContent).toMatchObject({
+        view: 'brief-form',
+        projectTitle: 'Public brief',
+        questionForm: { id: 'public-website-brief' },
+      });
       for (const uri of [
         'ui://open-design/artifact-card-v2.html',
         'ui://open-design/artifact-card-v3.html',
@@ -727,8 +1072,8 @@ describe('ChatGPT Streamable HTTP MCP', () => {
         stage: 'queued',
       });
       expect(started._meta).toMatchObject({
-        'openai/outputTemplate': 'ui://open-design/artifact-card-v9.html',
-        'ui/resourceUri': 'ui://open-design/artifact-card-v9.html',
+        'openai/outputTemplate': 'ui://open-design/artifact-card-v10.html',
+        'ui/resourceUri': 'ui://open-design/artifact-card-v10.html',
       });
       expect(runBodies).toEqual([expect.objectContaining({
         projectId: 'p1',
@@ -814,7 +1159,7 @@ describe('ChatGPT Streamable HTTP MCP', () => {
           balanceStatus: 'empty',
         },
         _meta: {
-          'openai/outputTemplate': 'ui://open-design/artifact-card-v9.html',
+          'openai/outputTemplate': 'ui://open-design/artifact-card-v10.html',
         },
       });
       expect(runBodies).toHaveLength(8);

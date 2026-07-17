@@ -7,15 +7,18 @@ description: Create or refine a browser-rendered presentation with Open Design, 
 
 Apply `$open-design-basics`, then execute this presentation contract.
 
-## Brief and execution
+## Dynamic decision dimensions and execution
 
 - Use `artifactType: presentation` for `collect_brief`, `create_project`, and `start_run`.
-- Offer only selectable presentation presets:
-  - Goal: **Pitch an idea**, **Share strategy**, **Report progress**, or **Teach a topic**.
-  - Audience: **Leadership**, **Customers**, **Investors**, or **Internal team**.
-  - Story, multi-select: **Clear story arc**, **Evidence and data**, **Recommendation**, **Product story**, **Roadmap**, and **Next steps**.
-  - Direction: **Clean and focused**, **Bold and editorial**, **Warm and approachable**, **Modern tech**, or **Premium and restrained**.
-- Infer the output as a browser presentation with a real rendered preview. Preserve supplied narrative, data, slide count, and brand constraints as preselected choices.
+- Treat the following as decision dimensions to consider only when unknown and outcome-changing, never as fixed form rows or a checklist to ask in full:
+  - The audience, room, and decision the deck should drive.
+  - Narrative objective, core claim, and desired ending.
+  - Slide count, presentation duration, and story structure.
+  - Required evidence, data, source material, and content gaps.
+  - Speaker notes, collaboration, and native PowerPoint requirements.
+  - Brand source, reference deck, and visual cadence.
+- Tailor choices around the requested story. An investor pitch, quarterly review, and teaching deck should receive different narrative and evidence options.
+- Infer the normal output as a browser presentation with a real rendered preview. Put supplied narrative, data, slide count, audience, and brand constraints in `knownAnswers`; do not re-ask them.
 - If the user requires a real `.pptx`, confirm that requirement before starting. Do not describe the browser deck as a native PowerPoint file.
 - Call `create_project`, then `start_run` with the confirmed structured brief. The server maps `presentation` to the Open Design `slides` workflow.
 

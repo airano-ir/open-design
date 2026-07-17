@@ -7,16 +7,18 @@ description: Create or refine a static image artifact with Open Design, includin
 
 Apply `$open-design-basics`, then execute this image contract.
 
-## Brief and execution
+## Dynamic decision dimensions and execution
 
 - Use `artifactType: image` for `collect_brief`, `create_project`, and `start_run`.
-- Offer only selectable image presets:
-  - Goal: **Campaign key visual**, **Product marketing image**, **Editorial illustration**, **Poster**, or **Social graphic**.
-  - Audience: **Potential customers**, **Existing users**, **Business buyers**, **Community**, or **Internal team**.
-  - Content, multi-select: **Primary subject**, **Product or UI**, **Environment**, **Text-safe area**, **Brand assets**, and **Variant set**.
-  - Direction: **Photoreal**, **Editorial illustration**, **Graphic poster**, **Dimensional 3D**, or **Minimal product**.
-  - Format: **Square 1:1**, **Landscape 16:9**, **Portrait 9:16**, **Landscape 4:3**, or **Portrait 3:4**.
-- Keep supplied subject, copy, palette, reference assets, and aspect as preselected choices. Never request a free-text image prompt.
+- Treat the following as decision dimensions to consider only when unknown and outcome-changing, never as fixed form rows or a checklist to ask in full:
+  - The image's use, placement, and communication job.
+  - Primary subject, message, and required product or brand assets.
+  - Aspect ratio, crop behavior, text-safe area, and variant count.
+  - Composition, environment, camera or illustration posture, and emphasis.
+  - Visual medium, reference style, palette, and brand fidelity.
+  - Audience or channel only when it changes the composition or tone.
+- Tailor choices to the requested use. A hero image, app-store graphic, editorial illustration, and event poster need different composition and format options.
+- Put supplied subject, copy, palette, reference assets, aspect, and placement in `knownAnswers`; do not re-ask them or request a free-text image prompt.
 - Call `create_project`, then `start_run` with the confirmed structured brief. The server maps `image` to the Open Design image media-generation workflow.
 
 ## Delivery standard

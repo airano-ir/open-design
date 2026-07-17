@@ -26,6 +26,26 @@ const EXPECTED_ARTIFACT_TYPES = [
   'audio',
   'document',
 ] as const;
+type ArtifactType = (typeof EXPECTED_ARTIFACT_TYPES)[number];
+
+const CHOICE_ONLY_QUESTION_TYPES = [
+  'radio',
+  'checkbox',
+  'select',
+  'switch',
+  'direction-cards',
+] as const;
+
+const ARTIFACT_QUESTION_IDS: Record<ArtifactType, readonly [string, string, string]> = {
+  website: ['primaryCta', 'proof', 'visualDirection'],
+  'product-prototype': ['coreFlow', 'edgeStates', 'fidelity'],
+  presentation: ['narrative', 'evidence', 'closingDecision'],
+  'design-system': ['scope', 'governance', 'accessibility'],
+  image: ['heroSubject', 'composition', 'copyPolicy'],
+  video: ['sceneArc', 'audioTreatment', 'endingCta'],
+  audio: ['mood', 'voiceStyle', 'mixFocus'],
+  document: ['documentPurpose', 'evidence', 'recommendation'],
+};
 
 const EXPECTED_SKILLS = [
   { name: 'open-design-basics', artifactType: null },
@@ -39,7 +59,7 @@ const EXPECTED_SKILLS = [
   { name: 'create-document-with-open-design', artifactType: 'document' },
 ] as const;
 
-const WIDGET_URI = 'ui://open-design/artifact-card-v9.html';
+const WIDGET_URI = 'ui://open-design/artifact-card-v10.html';
 const LEGACY_WIDGET_URIS = [
   'ui://open-design/artifact-card-v2.html',
   'ui://open-design/artifact-card-v3.html',
@@ -48,6 +68,7 @@ const LEGACY_WIDGET_URIS = [
   'ui://open-design/artifact-card-v6.html',
   'ui://open-design/artifact-card-v7.html',
   'ui://open-design/artifact-card-v8.html',
+  'ui://open-design/artifact-card-v9.html',
 ] as const;
 
 interface JsonRpcResponse {
@@ -111,6 +132,40 @@ function toolArtifactTypes(tool: Record<string, unknown> | undefined): unknown {
 function toolRequiredFields(tool: Record<string, unknown> | undefined): string[] {
   const required = toolInputSchema(tool).required;
   return Array.isArray(required) ? required.map(String) : [];
+}
+
+function dynamicQuestion(id: string, type: (typeof CHOICE_ONLY_QUESTION_TYPES)[number] = 'radio'): Record<string, unknown> {
+  return {
+    id,
+    label: `Choose ${id}`,
+    type,
+    options: [
+      { label: 'Recommended', value: `${id}-recommended`, description: 'Inferred from the current request.' },
+      { label: 'Alternative', value: `${id}-alternative` },
+      { label: 'Explore', value: `${id}-explore` },
+    ],
+    required: true,
+    defaultValue: type === 'checkbox' ? [`${id}-recommended`] : `${id}-recommended`,
+    allowCustom: false,
+    ...(type === 'checkbox' ? { maxSelections: 2 } : {}),
+  };
+}
+
+function dynamicQuestionForm(
+  artifactType: ArtifactType,
+  questionIds: readonly string[] = ARTIFACT_QUESTION_IDS[artifactType],
+): Record<string, unknown> {
+  return {
+    id: `${artifactType}-adaptive-brief`,
+    title: `Confirm the remaining ${artifactType} decisions`,
+    description: 'Only decisions not already answered by the user are shown.',
+    lang: 'en',
+    submitLabel: 'Confirm and continue',
+    questions: [
+      dynamicQuestion('knownDecision'),
+      ...questionIds.map((id, index) => dynamicQuestion(id, index === 1 ? 'checkbox' : 'radio')),
+    ],
+  };
 }
 
 function parseMcpBody(text: string, contentType: string): JsonRpcResponse {
@@ -192,14 +247,17 @@ async function validatePackage(pluginRoot: string): Promise<void> {
         skill.includes(`Use \`artifactType: ${expectedSkill.artifactType}\``),
         `${expectedSkill.name} must pin artifactType: ${expectedSkill.artifactType}`,
       );
-      assert(/selectable|choice-only/iu.test(skill), `${expectedSkill.name} must keep its brief choice-only`);
+      assert(skill.includes('Dynamic decision dimensions'), `${expectedSkill.name} must define adaptive decision dimensions`);
+      assert(skill.includes('knownAnswers'), `${expectedSkill.name} must preserve decisions already supplied by the user`);
+      assert(/tailor|different|outcome-changing/iu.test(skill), `${expectedSkill.name} must tailor questions to the current request`);
     } else {
       assert(skill.includes('If the tools are missing, stop.'), 'Basics must fail closed when its MCP is unavailable');
       assert(skill.includes('fully quit and relaunch Codex'), 'Basics must require a full Codex relaunch after a stale install');
       assert(skill.includes('Never fall back to prose questions'), 'Basics must forbid fallback text forms');
-      assert(skill.includes('Keep every user-facing field choice-only'), 'Basics must define the brief as choice-only');
-      assert(skill.includes('Never request typed project names'), 'Basics must forbid typed brief questions');
-      assert(skill.includes('preselected **From your brief** choice'), 'Basics must preserve supplied prose as a selectable option');
+      assert(skill.includes('Construct one `questionForm` dynamically'), 'Basics must dynamically author each QuestionForm');
+      assert(skill.includes('Keep the form choice-only'), 'Basics must define the brief as choice-only');
+      assert(/Do not re-ask[^\n]+already known[^\n]+`knownAnswers`/iu.test(skill), 'Basics must not re-ask known decisions');
+      assert(skill.includes('[form answers —'), 'Basics must use the standard Open Design answer envelope');
       assert(skill.includes('create_project` with a concise human-readable name and the selected `artifactType`'), 'Basics must require artifactType when creating projects');
     }
   }
@@ -258,7 +316,32 @@ async function validateEndpoint(endpoint: string): Promise<void> {
       `${toolName} artifact types do not match the eight-type V1 contract`,
     );
   }
-  assert(toolRequiredFields(collectBrief).includes('artifactType'), 'collect_brief must require artifactType');
+  assert(
+    JSON.stringify(toolRequiredFields(collectBrief)) === JSON.stringify(['artifactType', 'questionForm']),
+    'collect_brief must require artifactType and the agent-authored dynamic questionForm',
+  );
+  const collectBriefSchema = toolInputSchema(collectBrief);
+  const collectBriefProperties = collectBriefSchema.properties as Record<string, Record<string, unknown>> | undefined;
+  assert(collectBriefProperties?.projectTitle?.type === 'string', 'collect_brief must accept an inferred projectTitle');
+  assert(collectBriefProperties?.knownAnswers?.type === 'object', 'collect_brief must accept knownAnswers');
+  const questionFormSchema = collectBriefProperties?.questionForm;
+  assert(questionFormSchema?.type === 'object', 'collect_brief must accept a QuestionForm object');
+  assert(
+    JSON.stringify(questionFormSchema.required) === JSON.stringify(['id', 'title', 'questions']),
+    'questionForm must require id, title, and questions',
+  );
+  assert(questionFormSchema.additionalProperties === false, 'questionForm must reject unknown top-level fields');
+  const questionFormProperties = questionFormSchema.properties as Record<string, Record<string, unknown>> | undefined;
+  const questionsSchema = questionFormProperties?.questions;
+  assert(questionsSchema?.type === 'array', 'questionForm.questions must be an array');
+  assert(questionsSchema.minItems === 1, 'questionForm must contain at least one question');
+  assert(questionsSchema.maxItems === 5, 'questionForm must contain at most five questions');
+  const questionItems = questionsSchema.items as Record<string, unknown> | undefined;
+  const questionProperties = questionItems?.properties as Record<string, Record<string, unknown>> | undefined;
+  assert(
+    JSON.stringify(questionProperties?.type?.enum) === JSON.stringify(CHOICE_ONLY_QUESTION_TYPES),
+    'questionForm must expose only the five supported choice controls',
+  );
   assert(toolRequiredFields(createProject).includes('artifactType'), 'create_project must require artifactType');
   assert(toolRequiredFields(createProject).includes('name'), 'create_project must require name');
   assert(toolRequiredFields(startRun).includes('artifactType'), 'start_run must require artifactType');
@@ -277,20 +360,23 @@ async function validateEndpoint(endpoint: string): Promise<void> {
   assert(widgetHtml.includes("rpcRequest('ui/message'"), 'Artifact card cannot submit the Custom UI brief');
   assert(widgetHtml.includes("content: [{ type: 'text', text }]"), 'Artifact card submits an invalid ui/message content shape');
   assert(widgetHtml.includes('id="brief-form"'), 'Artifact card does not contain the Custom UI brief form');
-  assert(widgetHtml.includes('id="brief-goal-options"'), 'Artifact card brief is missing goal choices');
-  assert(widgetHtml.includes('id="brief-audience-options"'), 'Artifact card brief is missing audience choices');
-  assert(widgetHtml.includes('id="brief-content-options"'), 'Artifact card brief is missing content choices');
-  assert(widgetHtml.includes('id="brief-visual-options"'), 'Artifact card brief is missing visual choices');
-  assert(widgetHtml.includes('id="brief-output-options"'), 'Artifact card brief is missing output choices');
-  assert(widgetHtml.includes("renderBriefChoiceGroup('brief-output-options'"), 'Artifact card does not render output choices');
-  assert(widgetHtml.includes("selectedBriefChoice('brief-output')"), 'Artifact card does not submit the selected output choice');
-  const presetSource = widgetHtml.split('const BRIEF_CHOICE_PRESETS = {')[1]?.split('function conciseChoiceLabel')[0];
-  assert(presetSource, 'Artifact card brief choice presets are missing');
-  for (const artifactType of EXPECTED_ARTIFACT_TYPES) {
-    const escaped = artifactType.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
-    assert(new RegExp(`["']?${escaped}["']?\\s*:\\s*\\{`, 'u').test(presetSource), `Artifact card is missing ${artifactType} choices`);
+  assert(widgetHtml.includes('id="brief-questions"'), 'Artifact card needs one dynamic QuestionForm mount point');
+  assert(widgetHtml.includes('questionForm.questions'), 'Artifact card does not render questions from tool output');
+  assert(widgetHtml.includes('questionForm.submitLabel'), 'Artifact card does not render the dynamic submit label');
+  assert(widgetHtml.includes('[form answers — '), 'Artifact card does not use the Open Design answer protocol');
+  assert(widgetHtml.includes('[value: '), 'Artifact card does not preserve option values in answer messages');
+  assert(widgetHtml.includes("rpcRequest('ui/update-model-context'"), 'Artifact card does not return structured answers to model context');
+  assert(!widgetHtml.includes('BRIEF_CHOICE_PRESETS'), 'Artifact Card still contains artifact-type-specific static presets');
+  assert(!widgetHtml.includes('[OpenDesign brief confirmed]'), 'Artifact Card still uses the legacy answer wrapper');
+  for (const oldId of [
+    'brief-goal-options',
+    'brief-audience-options',
+    'brief-content-options',
+    'brief-visual-options',
+    'brief-output-options',
+  ]) {
+    assert(!widgetHtml.includes(`id="${oldId}"`), `Artifact card still hardcodes the legacy ${oldId} field`);
   }
-  assert((presetSource.match(/\boutput:\s*\[/gu) ?? []).length === EXPECTED_ARTIFACT_TYPES.length, 'every artifact type must define output choices');
   assert(!/<textarea\b/iu.test(widgetHtml), 'Artifact card brief still requires a textarea');
   assert(!/<input\b[^>]*\btype\s*=\s*['"](?:text|email|url|tel|search|number|password)['"]/iu.test(widgetHtml), 'Artifact card brief still contains a text-like input');
   assert(!/\binput\.type\s*=\s*['"](?:text|email|url|tel|search|number|password)['"]/iu.test(widgetHtml), 'Artifact card brief still creates a text-like input');
@@ -310,15 +396,65 @@ async function validateEndpoint(endpoint: string): Promise<void> {
   }
 
   for (const [index, artifactType] of EXPECTED_ARTIFACT_TYPES.entries()) {
+    const questionIds = ARTIFACT_QUESTION_IDS[artifactType];
     const briefCall = await rpc(endpoint, 20 + index, 'tools/call', {
       name: 'collect_brief',
-      arguments: { artifactType, title: `Local ${artifactType}`, outcome: 'Explain the requested artifact.' },
+      arguments: {
+        artifactType,
+        projectTitle: `Local ${artifactType} adaptive brief`,
+        knownAnswers: {
+          knownDecision: `The user's ${artifactType} request already answered this decision.`,
+          output: `${artifactType} delivery`,
+        },
+        questionForm: dynamicQuestionForm(artifactType),
+      },
     });
     const brief = briefCall.structuredContent as Record<string, unknown> | undefined;
     assert(brief?.view === 'brief-form', `collect_brief did not return the ${artifactType} Custom UI state`);
     assert(brief.artifactType === artifactType, `collect_brief returned the wrong artifact type for ${artifactType}`);
+    assert(brief.projectTitle === `Local ${artifactType} adaptive brief`, `collect_brief lost the inferred ${artifactType} project title`);
+    const knownAnswers = brief.knownAnswers as Record<string, unknown> | undefined;
+    assert(knownAnswers?.knownDecision, `collect_brief lost known answers for ${artifactType}`);
+    const questionForm = brief.questionForm as Record<string, unknown> | undefined;
+    const questions = questionForm?.questions as Array<Record<string, unknown>> | undefined;
+    assert(Array.isArray(questions), `collect_brief did not return dynamic questions for ${artifactType}`);
+    assert(questions.length === questionIds.length && questions.length <= 5, `${artifactType} brief must keep a concise question count`);
+    assert(
+      JSON.stringify(questions.map((question) => question.id)) === JSON.stringify(questionIds),
+      `${artifactType} brief did not filter the already-known question`,
+    );
+    assert(!questions.some((question) => question.id === 'knownDecision'), `${artifactType} brief re-asked a known decision`);
+    assert(
+      questions.every((question) => CHOICE_ONLY_QUESTION_TYPES.includes(String(question.type) as (typeof CHOICE_ONLY_QUESTION_TYPES)[number])),
+      `${artifactType} brief contains a non-choice question`,
+    );
+    assert(
+      questions.every((question) => question.allowCustom === false),
+      `${artifactType} brief allows free-form custom answers`,
+    );
     assert((briefCall._meta as Record<string, unknown>)?.['openai/outputTemplate'] === WIDGET_URI, `collect_brief ${artifactType} is not connected to the Artifact card`);
   }
+
+  const alternatePresentationIds = ['fundingAsk', 'tractionFocus', 'speakerNotes'] as const;
+  const alternatePresentationCall = await rpc(endpoint, 35, 'tools/call', {
+    name: 'collect_brief',
+    arguments: {
+      artifactType: 'presentation',
+      projectTitle: 'Series A presentation',
+      knownAnswers: { knownDecision: 'Investor audience supplied in the request.' },
+      questionForm: dynamicQuestionForm('presentation', alternatePresentationIds),
+    },
+  });
+  const alternateForm = (alternatePresentationCall.structuredContent as Record<string, unknown>)?.questionForm as Record<string, unknown> | undefined;
+  const alternateQuestions = alternateForm?.questions as Array<Record<string, unknown>> | undefined;
+  assert(
+    JSON.stringify(alternateQuestions?.map((question) => question.id)) === JSON.stringify(alternatePresentationIds),
+    'the same artifact type must support a different QuestionForm for different user input',
+  );
+  assert(
+    JSON.stringify(alternatePresentationIds) !== JSON.stringify(ARTIFACT_QUESTION_IDS.presentation),
+    'presentation context fixtures must exercise genuinely different questions',
+  );
 
   const accountCall = await rpc(endpoint, 40, 'tools/call', { name: 'get_cloud_account', arguments: {} });
   const account = accountCall.structuredContent as Record<string, unknown> | undefined;

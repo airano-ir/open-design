@@ -7,16 +7,18 @@ description: Create or refine an audio artifact with Open Design, including musi
 
 Apply `$open-design-basics`, then execute this audio contract.
 
-## Brief and execution
+## Dynamic decision dimensions and execution
 
 - Use `artifactType: audio` for `collect_brief`, `create_project`, and `start_run`.
-- Offer only selectable audio presets:
-  - Type and goal: **Background music**, **Theme or sting**, **Narration**, **Spoken announcement**, or **Sound effect**.
-  - Use context: **Product experience**, **Presentation**, **Marketing**, **Social content**, **Podcast**, or **Internal communication**.
-  - Content, multi-select: **Instrumental arc**, **Spoken script**, **Brand motif**, **Transition cue**, **Loopable ending**, and **Variant set**.
-  - Sonic direction: **Warm and organic**, **Modern electronic**, **Cinematic**, **Minimal and ambient**, **Energetic**, or **Clear and neutral voice**.
-  - Format: **Short cue**, **Standard clip**, or **Extended track**, with **Music**, **Speech**, or **SFX** output selected explicitly.
-- Normalize the sonic-direction choice into the structured brief's creative-direction field. Keep supplied wording, pronunciation, mood, duration, and reference audio as preselected choices. Never request a free-text audio prompt.
+- Treat the following as decision dimensions to consider only when unknown and outcome-changing, never as fixed form rows or a checklist to ask in full:
+  - The audio's job, use context, and listening environment.
+  - Audio type: music, speech, narration, announcement, sound effect, or a combination.
+  - Listener, channel, and desired response when they affect delivery.
+  - Duration, loop behavior, cue structure, and variant count.
+  - Sonic mood, energy, instrumentation, reference audio, and brand motif.
+  - Spoken language, voice character, pronunciation, captions or transcript, and output format.
+- Tailor choices to the requested use. A UI success sound, podcast narration, and launch-film score should not receive the same duration, structure, or sonic options.
+- Normalize selected sonic direction into the structured brief's creative-direction field. Put supplied script, pronunciation, mood, duration, and reference audio in `knownAnswers`; do not re-ask them or request a free-text audio prompt.
 - Call `create_project`, then `start_run` with the confirmed structured brief. The server maps `audio` to the Open Design audio media-generation workflow.
 
 ## Delivery standard

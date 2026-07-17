@@ -1,11 +1,11 @@
 ---
 name: open-design-basics
-description: Shared execution contract for the Open Design artifact skills. Use together with a specific create-*-with-open-design skill after the user explicitly selects or names Open Design; do not use as a generic design-artifact router.
+description: Shared execution and dynamic-discovery contract for the Open Design artifact skills. Use together with a specific create-*-with-open-design skill after the user explicitly selects or names Open Design; do not use as a generic design-artifact router.
 ---
 
 # Open Design Basics
 
-Apply this contract before executing any Open Design artifact skill. Let the artifact-specific skill choose the `artifactType`, brief presets, internal workflow, and delivery checks.
+Apply this contract before executing any Open Design artifact skill. Let the artifact-specific skill choose the `artifactType`, candidate decision dimensions, internal workflow, and delivery checks.
 
 ## Fail closed when tools are unavailable
 
@@ -14,14 +14,53 @@ Apply this contract before executing any Open Design artifact skill. Let the art
 - Treat a real `collect_brief` tool call with a rendered Custom UI card as the reload signal. Refreshing the plugin page or merely opening another task is not proof.
 - Never fall back to prose questions, `<question-form>`, `<ask-question>`, JSON, Markdown form markup, or a hand-written pseudo-form. Those surfaces render as text instead of the Open Design Custom UI.
 
-## Confirm the brief through choice-only UI
+## Derive a dynamic brief
 
-1. Establish the audience, outcome, content or flows, creative direction, output format, and must-have constraints.
-2. If any required value is missing, call `collect_brief` with the artifact-specific `artifactType` and every known value.
-3. Keep every user-facing field choice-only: radio buttons for one choice and checkboxes for multiple choices. Never request typed project names, audience, outcome, content, visual or sonic direction, format, duration, aspect, or constraints.
-4. Infer the project name and fixed output contract. Preserve user-supplied wording as a preselected **From your brief** choice instead of placing it in an editable field.
-5. Treat a submitted message beginning `[OpenDesign brief confirmed]` as the approved brief. Do not ask for those values again.
-6. If all required values were already supplied, skip `collect_brief` and continue directly.
+Use the same decision policy and `QuestionForm` contract as Open Design's in-product discovery form. Do not reuse a universal list of audience, outcome, content, direction, and format questions for every request.
+
+1. Read the complete current request, attachments, project context, prior user messages, and any submitted `[form answers — ...]` block.
+2. Extract every explicitly settled decision into `knownAnswers`. Preserve exact user wording, URLs, attachments, project metadata, prior form answers, requested output, active design system, scale, platform, constraints, and stable option values. An inferred recommendation is not a known answer: use it as the question's `defaultValue` so the user can confirm or change it.
+3. Read the artifact skill's candidate decision dimensions. Consider a dimension only when it is both unknown and likely to materially change what Open Design builds.
+4. Rank the remaining decisions by outcome impact. Ask 2–3 high-impact questions in a normal brief, with a hard cap of 5. Do not ask a low-value question merely to fill a category. The form applies to every fresh creation, even when the incoming brief is detailed; use the remaining visual, narrative, variation, or delivery choices instead of repeating supplied facts.
+5. Only skip the form when the user explicitly says to skip questions or just build, the current message begins with `[form answers — ...]`, or the user is making a narrow refinement inside an existing design. When an explicit skip applies, retain inferred defaults in the final structured brief and continue.
+
+## Build the Open Design QuestionForm
+
+Construct one `questionForm` dynamically for this request. The same artifact type may produce different questions for different user inputs.
+
+- Use the shared shape `QuestionForm { id, title, description?, lang?, questions, submitLabel? }`. Use a stable id such as `open-design-brief` and keep each question `id` and option `value` stable, concise, and English machine identifiers.
+- Localize `title`, `description`, `submitLabel`, question labels, help text, and option labels to the user's chat language. Set `lang` to its BCP-47 tag.
+- Keep the form choice-only: use radio buttons for one choice and checkboxes for multiple choices, with `select`, `switch`, or `direction-cards` when they communicate the decision better. Do not emit `text`, `textarea`, number, range, date/time, URL, email, telephone, file, color, or any other editable input.
+- Give every radio, checkbox, select, and direction-card option an explicit localized `label` plus stable `value`. Tailor the choices to the current request; do not copy a fixed preset list just because it exists in an artifact skill.
+- Prefill every question through `defaultValue` with the best recommendation inferred from the request and known context. Use one option value for a single choice and an array of values for checkboxes. The form should be safe to submit unchanged.
+- Use `required: true` only for a decision that generation cannot safely infer. Add `maxSelections` to a checkbox when the user should make a focused choice.
+- Do not re-ask a user-supplied decision that is already known through `knownAnswers`, even as a disabled or prefilled duplicate.
+- Do not add an internal OpenDesign logo, name, subtitle, or product header; the host tool card already supplies identity.
+
+Call `collect_brief` with the dynamically authored contract:
+
+```text
+collect_brief({
+  artifactType,
+  projectTitle?,
+  knownAnswers,
+  questionForm
+})
+```
+
+The `collect_brief` tool renders the supplied form; it does not decide which questions to ask. Never emit literal `<question-form>`, JSON form markup, prose questions, or a hand-written pseudo-form as assistant text.
+
+## Continue from submitted answers
+
+- Expect the Custom UI to return the standard Open Design answer envelope:
+
+```text
+[form answers — open-design-brief]
+- <localized question label>: <localized selected label> [value: <stable value>]
+```
+
+- Match the envelope id to `questionForm.id`. Prefer each `[value: ...]` machine value over the visible localized label, merge the selections into `knownAnswers`, and preserve the human-readable labels for the final structured brief.
+- A submitted form is approval of those decisions. Do not ask the same questions again or show another form unless a later user change creates a genuinely new, outcome-changing ambiguity.
 
 ## Check Cloud access
 

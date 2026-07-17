@@ -29,9 +29,9 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/codegen/code.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/codegen/code.js
 var require_code = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/codegen/code.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/codegen/code.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.regexpCode = exports.getEsmExportName = exports.getProperty = exports.safeStringify = exports.stringify = exports.strConcat = exports.addCodeArg = exports.str = exports._ = exports.nil = exports._Code = exports.Name = exports.IDENTIFIER = exports._CodeOrName = void 0;
@@ -183,9 +183,9 @@ var require_code = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/codegen/scope.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/codegen/scope.js
 var require_scope = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/codegen/scope.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/codegen/scope.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ValueScope = exports.ValueScopeName = exports.Scope = exports.varKinds = exports.UsedValueState = void 0;
@@ -328,9 +328,9 @@ var require_scope = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/codegen/index.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/codegen/index.js
 var require_codegen = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/codegen/index.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/codegen/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.or = exports.and = exports.not = exports.CodeGen = exports.operators = exports.varKinds = exports.ValueScopeName = exports.ValueScope = exports.Scope = exports.Name = exports.regexpCode = exports.stringify = exports.getProperty = exports.nil = exports.strConcat = exports.str = exports._ = void 0;
@@ -1048,9 +1048,9 @@ var require_codegen = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/util.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/util.js
 var require_util = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/util.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/util.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.checkStrictMode = exports.getErrorPath = exports.Type = exports.useFunc = exports.setEvaluated = exports.evaluatedPropsToName = exports.mergeEvaluated = exports.eachItem = exports.unescapeJsonPointer = exports.escapeJsonPointer = exports.escapeFragment = exports.unescapeFragment = exports.schemaRefOrVal = exports.schemaHasRulesButRef = exports.schemaHasRules = exports.checkUnknownRules = exports.alwaysValidSchema = exports.toHash = void 0;
@@ -1215,9 +1215,9 @@ var require_util = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/names.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/names.js
 var require_names = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/names.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/names.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -1254,9 +1254,9 @@ var require_names = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/errors.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/errors.js
 var require_errors = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/errors.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/errors.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.extendErrors = exports.resetErrorsCount = exports.reportExtraError = exports.reportError = exports.keyword$DataError = exports.keywordError = void 0;
@@ -1376,9 +1376,9 @@ var require_errors = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/boolSchema.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/boolSchema.js
 var require_boolSchema = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/boolSchema.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/boolSchema.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.boolOrEmptySchema = exports.topBoolOrEmptySchema = void 0;
@@ -1427,9 +1427,9 @@ var require_boolSchema = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/rules.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/rules.js
 var require_rules = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/rules.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/rules.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.getRules = exports.isJSONType = void 0;
@@ -1458,9 +1458,9 @@ var require_rules = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/applicability.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/applicability.js
 var require_applicability = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/applicability.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/applicability.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.shouldUseRule = exports.shouldUseGroup = exports.schemaHasRulesForType = void 0;
@@ -1481,9 +1481,9 @@ var require_applicability = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/dataType.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/dataType.js
 var require_dataType = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/dataType.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/dataType.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.reportTypeError = exports.checkDataTypes = exports.checkDataType = exports.coerceAndCheckDataType = exports.getJSONTypes = exports.getSchemaTypes = exports.DataType = void 0;
@@ -1665,9 +1665,9 @@ var require_dataType = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/defaults.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/defaults.js
 var require_defaults = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/defaults.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/defaults.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.assignDefaults = void 0;
@@ -1702,9 +1702,9 @@ var require_defaults = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/code.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/code.js
 var require_code2 = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/code.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/code.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.validateUnion = exports.validateArray = exports.usePattern = exports.callValidateCode = exports.schemaProperties = exports.allSchemaProperties = exports.noPropertyInData = exports.propertyInData = exports.isOwnProperty = exports.hasPropFunc = exports.reportMissingProp = exports.checkMissingProp = exports.checkReportMissingProp = void 0;
@@ -1835,9 +1835,9 @@ var require_code2 = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/keyword.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/keyword.js
 var require_keyword = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/keyword.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/keyword.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.validateKeywordUsage = exports.validSchemaType = exports.funcKeywordCode = exports.macroKeywordCode = void 0;
@@ -1953,9 +1953,9 @@ var require_keyword = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/subschema.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/subschema.js
 var require_subschema = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/subschema.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/subschema.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.extendSubschemaMode = exports.extendSubschemaData = exports.getSubschema = void 0;
@@ -2036,9 +2036,9 @@ var require_subschema = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/fast-deep-equal@3.1.3/node_modules/fast-deep-equal/index.js
+// node_modules/.pnpm/fast-deep-equal@3.1.3/node_modules/fast-deep-equal/index.js
 var require_fast_deep_equal = __commonJS({
-  "../../node_modules/.pnpm/fast-deep-equal@3.1.3/node_modules/fast-deep-equal/index.js"(exports, module) {
+  "node_modules/.pnpm/fast-deep-equal@3.1.3/node_modules/fast-deep-equal/index.js"(exports, module) {
     "use strict";
     module.exports = function equal(a, b) {
       if (a === b) return true;
@@ -2071,9 +2071,9 @@ var require_fast_deep_equal = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/json-schema-traverse@1.0.0/node_modules/json-schema-traverse/index.js
+// node_modules/.pnpm/json-schema-traverse@1.0.0/node_modules/json-schema-traverse/index.js
 var require_json_schema_traverse = __commonJS({
-  "../../node_modules/.pnpm/json-schema-traverse@1.0.0/node_modules/json-schema-traverse/index.js"(exports, module) {
+  "node_modules/.pnpm/json-schema-traverse@1.0.0/node_modules/json-schema-traverse/index.js"(exports, module) {
     "use strict";
     var traverse = module.exports = function(schema, opts, cb) {
       if (typeof opts == "function") {
@@ -2159,9 +2159,9 @@ var require_json_schema_traverse = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/resolve.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/resolve.js
 var require_resolve = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/resolve.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/resolve.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.getSchemaRefs = exports.resolveUrl = exports.normalizeId = exports._getFullPath = exports.getFullPath = exports.inlineRef = void 0;
@@ -2315,9 +2315,9 @@ var require_resolve = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/index.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/index.js
 var require_validate = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/index.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/validate/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.getData = exports.KeywordCxt = exports.validateFunctionCode = void 0;
@@ -2823,9 +2823,9 @@ var require_validate = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/runtime/validation_error.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/runtime/validation_error.js
 var require_validation_error = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/runtime/validation_error.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/runtime/validation_error.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var ValidationError = class extends Error {
@@ -2839,9 +2839,9 @@ var require_validation_error = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/ref_error.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/ref_error.js
 var require_ref_error = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/ref_error.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/ref_error.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var resolve_1 = require_resolve();
@@ -2856,9 +2856,9 @@ var require_ref_error = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/index.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/index.js
 var require_compile = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/index.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.resolveSchema = exports.getCompilingSchema = exports.resolveRef = exports.compileSchema = exports.SchemaEnv = void 0;
@@ -3080,9 +3080,9 @@ var require_compile = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/refs/data.json
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/refs/data.json
 var require_data = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/refs/data.json"(exports, module) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/refs/data.json"(exports, module) {
     module.exports = {
       $id: "https://raw.githubusercontent.com/ajv-validator/ajv/master/lib/refs/data.json#",
       description: "Meta-schema for $data reference (JSON AnySchema extension proposal)",
@@ -3099,9 +3099,9 @@ var require_data = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/fast-uri@3.1.2/node_modules/fast-uri/lib/utils.js
+// node_modules/.pnpm/fast-uri@3.1.2/node_modules/fast-uri/lib/utils.js
 var require_utils = __commonJS({
-  "../../node_modules/.pnpm/fast-uri@3.1.2/node_modules/fast-uri/lib/utils.js"(exports, module) {
+  "node_modules/.pnpm/fast-uri@3.1.2/node_modules/fast-uri/lib/utils.js"(exports, module) {
     "use strict";
     var isUUID = RegExp.prototype.test.bind(/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/iu);
     var isIPv4 = RegExp.prototype.test.bind(/^(?:(?:25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)$/u);
@@ -3412,9 +3412,9 @@ var require_utils = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/fast-uri@3.1.2/node_modules/fast-uri/lib/schemes.js
+// node_modules/.pnpm/fast-uri@3.1.2/node_modules/fast-uri/lib/schemes.js
 var require_schemes = __commonJS({
-  "../../node_modules/.pnpm/fast-uri@3.1.2/node_modules/fast-uri/lib/schemes.js"(exports, module) {
+  "node_modules/.pnpm/fast-uri@3.1.2/node_modules/fast-uri/lib/schemes.js"(exports, module) {
     "use strict";
     var { isUUID } = require_utils();
     var URN_REG = /([\da-z][\d\-a-z]{0,31}):((?:[\w!$'()*+,\-.:;=@]|%[\da-f]{2})+)/iu;
@@ -3622,9 +3622,9 @@ var require_schemes = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/fast-uri@3.1.2/node_modules/fast-uri/index.js
+// node_modules/.pnpm/fast-uri@3.1.2/node_modules/fast-uri/index.js
 var require_fast_uri = __commonJS({
-  "../../node_modules/.pnpm/fast-uri@3.1.2/node_modules/fast-uri/index.js"(exports, module) {
+  "node_modules/.pnpm/fast-uri@3.1.2/node_modules/fast-uri/index.js"(exports, module) {
     "use strict";
     var { normalizeIPv6, removeDotSegments, recomposeAuthority, normalizePercentEncoding, normalizePathEncoding, escapePreservingEscapes, reescapeHostDelimiters, isIPv4, nonSimpleDomain } = require_utils();
     var { SCHEMES, getSchemeHandler } = require_schemes();
@@ -3908,9 +3908,9 @@ var require_fast_uri = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/runtime/uri.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/runtime/uri.js
 var require_uri = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/runtime/uri.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/runtime/uri.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var uri = require_fast_uri();
@@ -3919,9 +3919,9 @@ var require_uri = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/core.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/core.js
 var require_core = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/core.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/core.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.CodeGen = exports.Name = exports.nil = exports.stringify = exports.str = exports._ = exports.KeywordCxt = void 0;
@@ -4530,9 +4530,9 @@ var require_core = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/core/id.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/core/id.js
 var require_id = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/core/id.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/core/id.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var def = {
@@ -4545,9 +4545,9 @@ var require_id = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/core/ref.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/core/ref.js
 var require_ref = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/core/ref.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/core/ref.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.callRef = exports.getValidate = void 0;
@@ -4667,9 +4667,9 @@ var require_ref = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/core/index.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/core/index.js
 var require_core2 = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/core/index.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/core/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var id_1 = require_id();
@@ -4688,9 +4688,9 @@ var require_core2 = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/limitNumber.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/limitNumber.js
 var require_limitNumber = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/limitNumber.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/limitNumber.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -4720,9 +4720,9 @@ var require_limitNumber = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/multipleOf.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/multipleOf.js
 var require_multipleOf = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/multipleOf.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/multipleOf.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -4748,9 +4748,9 @@ var require_multipleOf = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/runtime/ucs2length.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/runtime/ucs2length.js
 var require_ucs2length = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/runtime/ucs2length.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/runtime/ucs2length.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     function ucs2length(str) {
@@ -4774,9 +4774,9 @@ var require_ucs2length = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/limitLength.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/limitLength.js
 var require_limitLength = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/limitLength.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/limitLength.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -4806,9 +4806,9 @@ var require_limitLength = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/pattern.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/pattern.js
 var require_pattern = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/pattern.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/pattern.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var code_1 = require_code2();
@@ -4843,9 +4843,9 @@ var require_pattern = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/limitProperties.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/limitProperties.js
 var require_limitProperties = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/limitProperties.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/limitProperties.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -4872,9 +4872,9 @@ var require_limitProperties = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/required.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/required.js
 var require_required = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/required.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/required.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var code_1 = require_code2();
@@ -4954,9 +4954,9 @@ var require_required = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/limitItems.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/limitItems.js
 var require_limitItems = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/limitItems.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/limitItems.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -4983,9 +4983,9 @@ var require_limitItems = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/runtime/equal.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/runtime/equal.js
 var require_equal = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/runtime/equal.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/runtime/equal.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var equal = require_fast_deep_equal();
@@ -4994,9 +4994,9 @@ var require_equal = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/uniqueItems.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/uniqueItems.js
 var require_uniqueItems = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/uniqueItems.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/uniqueItems.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var dataType_1 = require_dataType();
@@ -5061,9 +5061,9 @@ var require_uniqueItems = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/const.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/const.js
 var require_const = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/const.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/const.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -5090,9 +5090,9 @@ var require_const = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/enum.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/enum.js
 var require_enum = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/enum.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/enum.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -5139,9 +5139,9 @@ var require_enum = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/index.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/index.js
 var require_validation = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/index.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/validation/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var limitNumber_1 = require_limitNumber();
@@ -5177,9 +5177,9 @@ var require_validation = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/additionalItems.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/additionalItems.js
 var require_additionalItems = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/additionalItems.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/additionalItems.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.validateAdditionalItems = void 0;
@@ -5230,9 +5230,9 @@ var require_additionalItems = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/items.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/items.js
 var require_items = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/items.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/items.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.validateTuple = void 0;
@@ -5287,9 +5287,9 @@ var require_items = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/prefixItems.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/prefixItems.js
 var require_prefixItems = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/prefixItems.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/prefixItems.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var items_1 = require_items();
@@ -5304,9 +5304,9 @@ var require_prefixItems = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/items2020.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/items2020.js
 var require_items2020 = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/items2020.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/items2020.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -5339,9 +5339,9 @@ var require_items2020 = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/contains.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/contains.js
 var require_contains = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/contains.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/contains.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -5433,9 +5433,9 @@ var require_contains = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/dependencies.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/dependencies.js
 var require_dependencies = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/dependencies.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/dependencies.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.validateSchemaDeps = exports.validatePropertyDeps = exports.error = void 0;
@@ -5527,9 +5527,9 @@ var require_dependencies = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/propertyNames.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/propertyNames.js
 var require_propertyNames = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/propertyNames.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/propertyNames.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -5570,9 +5570,9 @@ var require_propertyNames = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/additionalProperties.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/additionalProperties.js
 var require_additionalProperties = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/additionalProperties.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/additionalProperties.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var code_1 = require_code2();
@@ -5676,9 +5676,9 @@ var require_additionalProperties = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/properties.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/properties.js
 var require_properties = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/properties.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/properties.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var validate_1 = require_validate();
@@ -5734,9 +5734,9 @@ var require_properties = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/patternProperties.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/patternProperties.js
 var require_patternProperties = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/patternProperties.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/patternProperties.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var code_1 = require_code2();
@@ -5808,9 +5808,9 @@ var require_patternProperties = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/not.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/not.js
 var require_not = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/not.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/not.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var util_1 = require_util();
@@ -5839,9 +5839,9 @@ var require_not = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/anyOf.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/anyOf.js
 var require_anyOf = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/anyOf.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/anyOf.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var code_1 = require_code2();
@@ -5856,9 +5856,9 @@ var require_anyOf = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/oneOf.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/oneOf.js
 var require_oneOf = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/oneOf.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/oneOf.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -5914,9 +5914,9 @@ var require_oneOf = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/allOf.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/allOf.js
 var require_allOf = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/allOf.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/allOf.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var util_1 = require_util();
@@ -5941,9 +5941,9 @@ var require_allOf = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/if.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/if.js
 var require_if = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/if.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/if.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -6010,9 +6010,9 @@ var require_if = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/thenElse.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/thenElse.js
 var require_thenElse = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/thenElse.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/thenElse.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var util_1 = require_util();
@@ -6028,9 +6028,9 @@ var require_thenElse = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/index.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/index.js
 var require_applicator = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/index.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/applicator/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var additionalItems_1 = require_additionalItems();
@@ -6076,9 +6076,9 @@ var require_applicator = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/format/format.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/format/format.js
 var require_format = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/format/format.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/format/format.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -6166,9 +6166,9 @@ var require_format = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/format/index.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/format/index.js
 var require_format2 = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/format/index.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/format/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var format_1 = require_format();
@@ -6177,9 +6177,9 @@ var require_format2 = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/metadata.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/metadata.js
 var require_metadata = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/metadata.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/metadata.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.contentVocabulary = exports.metadataVocabulary = void 0;
@@ -6200,9 +6200,9 @@ var require_metadata = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/draft7.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/draft7.js
 var require_draft7 = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/draft7.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/draft7.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var core_1 = require_core2();
@@ -6222,9 +6222,9 @@ var require_draft7 = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/discriminator/types.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/discriminator/types.js
 var require_types = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/discriminator/types.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/discriminator/types.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.DiscrError = void 0;
@@ -6236,9 +6236,9 @@ var require_types = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/discriminator/index.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/discriminator/index.js
 var require_discriminator = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/discriminator/index.js"(exports) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/vocabularies/discriminator/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var codegen_1 = require_codegen();
@@ -6341,9 +6341,9 @@ var require_discriminator = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/refs/json-schema-draft-07.json
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/refs/json-schema-draft-07.json
 var require_json_schema_draft_07 = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/refs/json-schema-draft-07.json"(exports, module) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/refs/json-schema-draft-07.json"(exports, module) {
     module.exports = {
       $schema: "http://json-schema.org/draft-07/schema#",
       $id: "http://json-schema.org/draft-07/schema#",
@@ -6498,9 +6498,9 @@ var require_json_schema_draft_07 = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/ajv.js
+// node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/ajv.js
 var require_ajv = __commonJS({
-  "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/ajv.js"(exports, module) {
+  "node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/ajv.js"(exports, module) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.MissingRefError = exports.ValidationError = exports.CodeGen = exports.Name = exports.nil = exports.stringify = exports.str = exports._ = exports.KeywordCxt = exports.Ajv = void 0;
@@ -6568,9 +6568,9 @@ var require_ajv = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv-formats@3.0.1_ajv@8.20.0/node_modules/ajv-formats/dist/formats.js
+// node_modules/.pnpm/ajv-formats@3.0.1_ajv@8.20.0/node_modules/ajv-formats/dist/formats.js
 var require_formats = __commonJS({
-  "../../node_modules/.pnpm/ajv-formats@3.0.1_ajv@8.20.0/node_modules/ajv-formats/dist/formats.js"(exports) {
+  "node_modules/.pnpm/ajv-formats@3.0.1_ajv@8.20.0/node_modules/ajv-formats/dist/formats.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.formatNames = exports.fastFormats = exports.fullFormats = void 0;
@@ -6771,9 +6771,9 @@ var require_formats = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv-formats@3.0.1_ajv@8.20.0/node_modules/ajv-formats/dist/limit.js
+// node_modules/.pnpm/ajv-formats@3.0.1_ajv@8.20.0/node_modules/ajv-formats/dist/limit.js
 var require_limit = __commonJS({
-  "../../node_modules/.pnpm/ajv-formats@3.0.1_ajv@8.20.0/node_modules/ajv-formats/dist/limit.js"(exports) {
+  "node_modules/.pnpm/ajv-formats@3.0.1_ajv@8.20.0/node_modules/ajv-formats/dist/limit.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.formatLimitDefinition = void 0;
@@ -6843,9 +6843,9 @@ var require_limit = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ajv-formats@3.0.1_ajv@8.20.0/node_modules/ajv-formats/dist/index.js
+// node_modules/.pnpm/ajv-formats@3.0.1_ajv@8.20.0/node_modules/ajv-formats/dist/index.js
 var require_dist = __commonJS({
-  "../../node_modules/.pnpm/ajv-formats@3.0.1_ajv@8.20.0/node_modules/ajv-formats/dist/index.js"(exports, module) {
+  "node_modules/.pnpm/ajv-formats@3.0.1_ajv@8.20.0/node_modules/ajv-formats/dist/index.js"(exports, module) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var formats_1 = require_formats();
@@ -6885,7 +6885,7 @@ var require_dist = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/core/core.js
+// node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/core/core.js
 var _a;
 // @__NO_SIDE_EFFECTS__
 function $constructor(name, initializer3, params) {
@@ -6958,7 +6958,7 @@ function config(newConfig) {
   return globalConfig;
 }
 
-// ../../node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/core/util.js
+// node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/core/util.js
 var util_exports = {};
 __export(util_exports, {
   BIGINT_FORMAT_RANGES: () => BIGINT_FORMAT_RANGES,
@@ -7654,7 +7654,7 @@ var Class = class {
   }
 };
 
-// ../../node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/core/errors.js
+// node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/core/errors.js
 var initializer = (inst, def) => {
   inst.name = "$ZodError";
   Object.defineProperty(inst, "_zod", {
@@ -7723,7 +7723,7 @@ function formatError(error2, mapper = (issue2) => issue2.message) {
   return fieldErrors;
 }
 
-// ../../node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/core/parse.js
+// node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/core/parse.js
 var _parse = (_Err) => (schema, value, _ctx, _params) => {
   const ctx = _ctx ? { ..._ctx, async: false } : { async: false };
   const result = schema._zod.run({ value, issues: [] }, ctx);
@@ -7801,7 +7801,7 @@ var _safeDecodeAsync = (_Err) => async (schema, value, _ctx) => {
   return _safeParseAsync(_Err)(schema, value, _ctx);
 };
 
-// ../../node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/core/regexes.js
+// node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/core/regexes.js
 var cuid = /^[cC][0-9a-z]{6,}$/;
 var cuid2 = /^[0-9a-z]+$/;
 var ulid = /^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$/;
@@ -7859,7 +7859,7 @@ var _null = /^null$/i;
 var lowercase = /^[^A-Z]*$/;
 var uppercase = /^[^a-z]*$/;
 
-// ../../node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/core/checks.js
+// node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/core/checks.js
 var $ZodCheck = /* @__PURE__ */ $constructor("$ZodCheck", (inst, def) => {
   var _a3;
   inst._zod ?? (inst._zod = {});
@@ -8249,7 +8249,7 @@ var $ZodCheckOverwrite = /* @__PURE__ */ $constructor("$ZodCheckOverwrite", (ins
   };
 });
 
-// ../../node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/core/doc.js
+// node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/core/doc.js
 var Doc = class {
   constructor(args = []) {
     this.content = [];
@@ -8285,14 +8285,14 @@ var Doc = class {
   }
 };
 
-// ../../node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/core/versions.js
+// node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/core/versions.js
 var version = {
   major: 4,
   minor: 4,
   patch: 2
 };
 
-// ../../node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/core/schemas.js
+// node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/core/schemas.js
 var $ZodType = /* @__PURE__ */ $constructor("$ZodType", (inst, def) => {
   var _a3;
   inst ?? (inst = {});
@@ -9768,7 +9768,7 @@ function handleRefineResult(result, payload, input, inst) {
   }
 }
 
-// ../../node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/locales/en.js
+// node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/locales/en.js
 var error = () => {
   const Sizable = {
     string: { unit: "characters", verb: "to have" },
@@ -9881,7 +9881,7 @@ function en_default() {
   };
 }
 
-// ../../node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/core/registries.js
+// node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/core/registries.js
 var _a2;
 var $ZodRegistry = class {
   constructor() {
@@ -9929,7 +9929,7 @@ function registry() {
 (_a2 = globalThis).__zod_globalRegistry ?? (_a2.__zod_globalRegistry = registry());
 var globalRegistry = globalThis.__zod_globalRegistry;
 
-// ../../node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/core/api.js
+// node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/core/api.js
 // @__NO_SIDE_EFFECTS__
 function _string(Class2, params) {
   return new Class2({
@@ -10457,7 +10457,7 @@ function _check(fn, params) {
   return ch;
 }
 
-// ../../node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/core/to-json-schema.js
+// node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/core/to-json-schema.js
 function initializeContext(params) {
   let target = params?.target ?? "draft-2020-12";
   if (target === "draft-4")
@@ -10816,7 +10816,7 @@ var createStandardJSONSchemaMethod = (schema, io, processors = {}) => (params) =
   return finalize(ctx, schema);
 };
 
-// ../../node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/core/json-schema-processors.js
+// node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/core/json-schema-processors.js
 var formatMap = {
   guid: "uuid",
   url: "uri",
@@ -11149,7 +11149,7 @@ var optionalProcessor = (schema, ctx, _json, params) => {
   seen.ref = def.innerType;
 };
 
-// ../../node_modules/.pnpm/@modelcontextprotocol+sdk@1.29.0_zod@4.4.2/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-compat.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1.29.0_zod@4.4.2/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-compat.js
 function isZ4Schema(s) {
   const schema = s;
   return !!schema._zod;
@@ -11212,7 +11212,7 @@ function getLiteralValue(schema) {
   return void 0;
 }
 
-// ../../node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/classic/iso.js
+// node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/classic/iso.js
 var iso_exports = {};
 __export(iso_exports, {
   ZodISODate: () => ZodISODate,
@@ -11253,7 +11253,7 @@ function duration2(params) {
   return _isoDuration(ZodISODuration, params);
 }
 
-// ../../node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/classic/errors.js
+// node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/classic/errors.js
 var initializer2 = (inst, issues) => {
   $ZodError.init(inst, issues);
   inst.name = "ZodError";
@@ -11292,7 +11292,7 @@ var ZodRealError = /* @__PURE__ */ $constructor("ZodError", initializer2, {
   Parent: Error
 });
 
-// ../../node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/classic/parse.js
+// node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/classic/parse.js
 var parse2 = /* @__PURE__ */ _parse(ZodRealError);
 var parseAsync2 = /* @__PURE__ */ _parseAsync(ZodRealError);
 var safeParse3 = /* @__PURE__ */ _safeParse(ZodRealError);
@@ -11306,7 +11306,7 @@ var safeDecode2 = /* @__PURE__ */ _safeDecode(ZodRealError);
 var safeEncodeAsync2 = /* @__PURE__ */ _safeEncodeAsync(ZodRealError);
 var safeDecodeAsync2 = /* @__PURE__ */ _safeDecodeAsync(ZodRealError);
 
-// ../../node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/classic/schemas.js
+// node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/classic/schemas.js
 var _installedGroups = /* @__PURE__ */ new WeakMap();
 function _installLazyMethods(inst, group, methods) {
   const proto = Object.getPrototypeOf(inst);
@@ -12146,10 +12146,10 @@ function preprocess(fn, schema) {
   });
 }
 
-// ../../node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/classic/external.js
+// node_modules/.pnpm/zod@4.4.2/node_modules/zod/v4/classic/external.js
 config(en_default());
 
-// ../../node_modules/.pnpm/@modelcontextprotocol+sdk@1.29.0_zod@4.4.2/node_modules/@modelcontextprotocol/sdk/dist/esm/types.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1.29.0_zod@4.4.2/node_modules/@modelcontextprotocol/sdk/dist/esm/types.js
 var LATEST_PROTOCOL_VERSION = "2025-11-25";
 var SUPPORTED_PROTOCOL_VERSIONS = [LATEST_PROTOCOL_VERSION, "2025-06-18", "2025-03-26", "2024-11-05", "2024-10-07"];
 var RELATED_TASK_META_KEY = "io.modelcontextprotocol/related-task";
@@ -13668,15 +13668,15 @@ var UrlElicitationRequiredError = class extends McpError {
   }
 };
 
-// ../../node_modules/.pnpm/@modelcontextprotocol+sdk@1.29.0_zod@4.4.2/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/interfaces.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1.29.0_zod@4.4.2/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/interfaces.js
 function isTerminal(status) {
   return status === "completed" || status === "failed" || status === "cancelled";
 }
 
-// ../../node_modules/.pnpm/zod-to-json-schema@3.25.2_zod@4.4.2/node_modules/zod-to-json-schema/dist/esm/parsers/string.js
+// node_modules/.pnpm/zod-to-json-schema@3.25.2_zod@4.4.2/node_modules/zod-to-json-schema/dist/esm/parsers/string.js
 var ALPHA_NUMERIC = new Set("ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvxyz0123456789");
 
-// ../../node_modules/.pnpm/@modelcontextprotocol+sdk@1.29.0_zod@4.4.2/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-json-schema-compat.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1.29.0_zod@4.4.2/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-json-schema-compat.js
 function getMethodLiteral(schema) {
   const shape = getObjectShape(schema);
   const methodSchema = shape?.method;
@@ -13697,7 +13697,7 @@ function parseWithCompat(schema, data) {
   return result.data;
 }
 
-// ../../node_modules/.pnpm/@modelcontextprotocol+sdk@1.29.0_zod@4.4.2/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/protocol.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1.29.0_zod@4.4.2/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/protocol.js
 var DEFAULT_REQUEST_TIMEOUT_MSEC = 6e4;
 var Protocol = class {
   constructor(_options) {
@@ -14651,7 +14651,7 @@ function mergeCapabilities(base, additional) {
   return result;
 }
 
-// ../../node_modules/.pnpm/@modelcontextprotocol+sdk@1.29.0_zod@4.4.2/node_modules/@modelcontextprotocol/sdk/dist/esm/validation/ajv-provider.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1.29.0_zod@4.4.2/node_modules/@modelcontextprotocol/sdk/dist/esm/validation/ajv-provider.js
 var import_ajv = __toESM(require_ajv(), 1);
 var import_ajv_formats = __toESM(require_dist(), 1);
 function createDefaultAjvInstance() {
@@ -14719,7 +14719,7 @@ var AjvJsonSchemaValidator = class {
   }
 };
 
-// ../../node_modules/.pnpm/@modelcontextprotocol+sdk@1.29.0_zod@4.4.2/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/server.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1.29.0_zod@4.4.2/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/server.js
 var ExperimentalServerTasks = class {
   constructor(_server) {
     this._server = _server;
@@ -14932,7 +14932,7 @@ var ExperimentalServerTasks = class {
   }
 };
 
-// ../../node_modules/.pnpm/@modelcontextprotocol+sdk@1.29.0_zod@4.4.2/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/helpers.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1.29.0_zod@4.4.2/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/helpers.js
 function assertToolsCallTaskCapability(requests, method, entityName) {
   if (!requests) {
     throw new Error(`${entityName} does not support task creation (required for ${method})`);
@@ -14967,7 +14967,7 @@ function assertClientRequestTaskCapability(requests, method, entityName) {
   }
 }
 
-// ../../node_modules/.pnpm/@modelcontextprotocol+sdk@1.29.0_zod@4.4.2/node_modules/@modelcontextprotocol/sdk/dist/esm/server/index.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1.29.0_zod@4.4.2/node_modules/@modelcontextprotocol/sdk/dist/esm/server/index.js
 var Server = class extends Protocol {
   /**
    * Initializes this server with the given name and version information.
@@ -15347,10 +15347,10 @@ var Server = class extends Protocol {
   }
 };
 
-// ../../node_modules/.pnpm/@modelcontextprotocol+sdk@1.29.0_zod@4.4.2/node_modules/@modelcontextprotocol/sdk/dist/esm/server/stdio.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1.29.0_zod@4.4.2/node_modules/@modelcontextprotocol/sdk/dist/esm/server/stdio.js
 import process3 from "node:process";
 
-// ../../node_modules/.pnpm/@modelcontextprotocol+sdk@1.29.0_zod@4.4.2/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/stdio.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1.29.0_zod@4.4.2/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/stdio.js
 var ReadBuffer = class {
   append(chunk) {
     this._buffer = this._buffer ? Buffer.concat([this._buffer, chunk]) : chunk;
@@ -15378,7 +15378,7 @@ function serializeMessage(message) {
   return JSON.stringify(message) + "\n";
 }
 
-// ../../node_modules/.pnpm/@modelcontextprotocol+sdk@1.29.0_zod@4.4.2/node_modules/@modelcontextprotocol/sdk/dist/esm/server/stdio.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1.29.0_zod@4.4.2/node_modules/@modelcontextprotocol/sdk/dist/esm/server/stdio.js
 var StdioServerTransport = class {
   constructor(_stdin = process3.stdin, _stdout = process3.stdout) {
     this._stdin = _stdin;
@@ -15439,7 +15439,7 @@ var StdioServerTransport = class {
   }
 };
 
-// ../../node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/external.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/external.js
 var external_exports = {};
 __export(external_exports, {
   BRAND: () => BRAND,
@@ -15551,7 +15551,7 @@ __export(external_exports, {
   void: () => voidType
 });
 
-// ../../node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/util.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/util.js
 var util;
 (function(util2) {
   util2.assertEqual = (_) => {
@@ -15685,7 +15685,7 @@ var getParsedType2 = (data) => {
   }
 };
 
-// ../../node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/ZodError.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/ZodError.js
 var ZodIssueCode = util.arrayToEnum([
   "invalid_type",
   "invalid_literal",
@@ -15803,7 +15803,7 @@ ZodError.create = (issues) => {
   return error2;
 };
 
-// ../../node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/locales/en.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/locales/en.js
 var errorMap = (issue2, _ctx) => {
   let message;
   switch (issue2.code) {
@@ -15906,7 +15906,7 @@ var errorMap = (issue2, _ctx) => {
 };
 var en_default2 = errorMap;
 
-// ../../node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/errors.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/errors.js
 var overrideErrorMap = en_default2;
 function setErrorMap(map) {
   overrideErrorMap = map;
@@ -15915,7 +15915,7 @@ function getErrorMap() {
   return overrideErrorMap;
 }
 
-// ../../node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/parseUtil.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue = (params) => {
   const { data, path, errorMaps, issueData } = params;
   const fullPath = [...path, ...issueData.path || []];
@@ -16025,14 +16025,14 @@ var isDirty = (x) => x.status === "dirty";
 var isValid = (x) => x.status === "valid";
 var isAsync = (x) => typeof Promise !== "undefined" && x instanceof Promise;
 
-// ../../node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/errorUtil.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/errorUtil.js
 var errorUtil;
 (function(errorUtil2) {
   errorUtil2.errToObj = (message) => typeof message === "string" ? { message } : message || {};
   errorUtil2.toString = (message) => typeof message === "string" ? message : message?.message;
 })(errorUtil || (errorUtil = {}));
 
-// ../../node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/types.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/types.js
 var ParseInputLazyPath = class {
   constructor(parent, value, path, key) {
     this._cachedPath = [];
@@ -19480,7 +19480,7 @@ var coerce = {
 };
 var NEVER = INVALID;
 
-// dist/index.mjs
+// packages/contracts/dist/index.mjs
 var LIVE_ARTIFACT_BOUNDED_JSON_CONSTRAINTS = {
   maxDepth: 8,
   maxObjectKeys: 100,
@@ -19526,6 +19526,12 @@ var exampleProjectRawPreviewUrl = buildProjectRawFileUrl(
   "project_1",
   "screens/main page.html"
 ) ?? "";
+var QUESTION_FORM_DECISION_ALIAS_GROUPS = [
+  ["platform", "surface", "platformTargets", "target"],
+  ["slideCount", "slides", "pageCount"],
+  ["artifactKind", "mode", "taskKind"],
+  ["designSystem", "brand"]
+];
 var DECK_SLIDE_SELECTOR = ".slide, [data-screen-label], .deck-slide, .ppt-slide";
 var DECK_STAGE_FALLBACK_SCRIPT = `<script data-od-deck-stage-fallback>(function(){
   if (window.__odDeckStageFallbackInstalled) return;
@@ -21183,13 +21189,13 @@ var PluginAgentEventSchema = external_exports.union([
   GenUISurfaceEventSchema
 ]);
 
-// ../../apps/daemon/src/mcp.ts
+// apps/daemon/src/mcp.ts
 import { randomUUID } from "node:crypto";
 
-// ../../apps/daemon/src/artifacts/manifest.ts
+// apps/daemon/src/artifacts/manifest.ts
 var MAX_METADATA_BYTES = 16 * 1024;
 
-// ../../apps/daemon/src/artifacts/create.ts
+// apps/daemon/src/artifacts/create.ts
 function buildCreateArtifactRequestBody(input) {
   return {
     name: input.name,
@@ -21230,7 +21236,7 @@ async function postCreateArtifactRequest(args) {
   return body;
 }
 
-// ../../apps/daemon/src/integrations/vela-errors.ts
+// apps/daemon/src/integrations/vela-errors.ts
 var DEFAULT_AMR_RECHARGE_URL = "https://open-design.ai/amr/wallet?source=open_design";
 var AMR_AUTH_REQUIRED_MESSAGE = "AMR sign-in is required. Sign in to AMR Cloud again, then retry this run.";
 var AMR_INSUFFICIENT_BALANCE_MESSAGE = `AMR Cloud reported insufficient balance for this model. Recharge your AMR wallet at ${DEFAULT_AMR_RECHARGE_URL}, then retry this run.`;
@@ -21282,11 +21288,11 @@ function classifyAmrAccountFailure(text) {
   return null;
 }
 
-// ../../apps/daemon/src/mcp.ts
+// apps/daemon/src/mcp.ts
 var SERVER_NAME = "open-design";
-var SERVER_VERSION = "0.2.12";
+var SERVER_VERSION = "0.2.13";
 var MCP_STDIO_IDLE_EXIT_MS = 30 * 60 * 1e3;
-var CHATGPT_WIDGET_URI = "ui://open-design/artifact-card-v9.html";
+var CHATGPT_WIDGET_URI = "ui://open-design/artifact-card-v10.html";
 var LEGACY_CHATGPT_WIDGET_URIS = /* @__PURE__ */ new Set([
   "ui://open-design/artifact-card-v2.html",
   "ui://open-design/artifact-card-v3.html",
@@ -21294,7 +21300,8 @@ var LEGACY_CHATGPT_WIDGET_URIS = /* @__PURE__ */ new Set([
   "ui://open-design/artifact-card-v5.html",
   "ui://open-design/artifact-card-v6.html",
   "ui://open-design/artifact-card-v7.html",
-  "ui://open-design/artifact-card-v8.html"
+  "ui://open-design/artifact-card-v8.html",
+  "ui://open-design/artifact-card-v9.html"
 ]);
 var CHATGPT_ARTIFACT_TYPES = [
   "website",
@@ -21307,6 +21314,16 @@ var CHATGPT_ARTIFACT_TYPES = [
   "document"
 ];
 var CHATGPT_ARTIFACT_TYPE_SET = new Set(CHATGPT_ARTIFACT_TYPES);
+var CHATGPT_BRIEF_QUESTION_TYPES = [
+  "radio",
+  "checkbox",
+  "select",
+  "switch",
+  "direction-cards"
+];
+var CHATGPT_BRIEF_QUESTION_TYPE_SET = new Set(CHATGPT_BRIEF_QUESTION_TYPES);
+var CHATGPT_BRIEF_MAX_QUESTIONS = 5;
+var CHATGPT_BRIEF_MAX_OPTIONS = 10;
 function isChatGptArtifactType(value) {
   return typeof value === "string" && CHATGPT_ARTIFACT_TYPE_SET.has(value);
 }
@@ -21351,14 +21368,140 @@ function chatGptV1RequiredScopes(toolName) {
       return [];
   }
 }
+function chatGptQuestionFormInputSchema() {
+  const optionSchema = {
+    type: "object",
+    properties: {
+      label: { type: "string" },
+      value: { type: "string" },
+      description: { type: "string" }
+    },
+    required: ["label", "value"],
+    additionalProperties: false
+  };
+  const defaultValueRequirement = {
+    anyOf: [
+      { required: ["default"] },
+      { required: ["defaultValue"] }
+    ]
+  };
+  const optionsRequirement = {
+    if: {
+      properties: {
+        type: { enum: ["radio", "checkbox", "select"] }
+      },
+      required: ["type"]
+    },
+    then: { required: ["options"] }
+  };
+  const cardsRequirement = {
+    if: {
+      properties: { type: { const: "direction-cards" } },
+      required: ["type"]
+    },
+    then: { required: ["cards"] }
+  };
+  const cardSchema = {
+    type: "object",
+    properties: {
+      id: { type: "string" },
+      label: { type: "string" },
+      mood: { type: "string" },
+      references: { type: "array", items: { type: "string" }, maxItems: 6 },
+      palette: { type: "array", items: { type: "string" }, maxItems: 8 },
+      displayFont: { type: "string" },
+      bodyFont: { type: "string" }
+    },
+    required: ["id", "label"],
+    additionalProperties: false
+  };
+  return {
+    type: "object",
+    description: "Open Design QuestionForm schema authored for this exact user input. Ask only unresolved decisions that would materially change the artifact.",
+    properties: {
+      id: { type: "string", description: "Stable English form id, such as presentation-brief." },
+      title: { type: "string", description: "Localized user-visible form title." },
+      description: { type: "string", description: "Localized explanation of why these remaining decisions matter." },
+      lang: { type: "string", description: "BCP-47 language tag matching the user, such as zh-CN." },
+      submitLabel: { type: "string", description: "Localized submit button label." },
+      questions: {
+        type: "array",
+        minItems: 1,
+        maxItems: CHATGPT_BRIEF_MAX_QUESTIONS,
+        description: "Two or three high-impact unresolved questions are preferred; never exceed five.",
+        items: {
+          type: "object",
+          properties: {
+            id: { type: "string", description: "Stable English semantic id. Reuse knownAnswers keys for equivalent decisions." },
+            label: { type: "string", description: "Localized user-visible question." },
+            type: { type: "string", enum: [...CHATGPT_BRIEF_QUESTION_TYPES] },
+            options: {
+              type: "array",
+              minItems: 2,
+              maxItems: CHATGPT_BRIEF_MAX_OPTIONS,
+              items: optionSchema
+            },
+            cards: {
+              type: "array",
+              minItems: 2,
+              maxItems: 6,
+              items: cardSchema
+            },
+            help: { type: "string" },
+            required: { type: "boolean" },
+            default: {
+              oneOf: [
+                { type: "string" },
+                { type: "boolean" },
+                { type: "array", items: { type: "string" } }
+              ],
+              description: "Recommended option value inferred from the current brief."
+            },
+            defaultValue: {
+              oneOf: [
+                { type: "string" },
+                { type: "boolean" },
+                { type: "array", items: { type: "string" } }
+              ]
+            },
+            maxSelections: { type: "integer", minimum: 1 },
+            allowCustom: {
+              type: "boolean",
+              enum: [false],
+              description: "Must remain false so the Plugin brief stays choice-only."
+            }
+          },
+          required: ["id", "label", "type"],
+          allOf: [defaultValueRequirement, optionsRequirement, cardsRequirement],
+          additionalProperties: false
+        }
+      }
+    },
+    required: ["id", "title", "questions"],
+    additionalProperties: false
+  };
+}
+function chatGptKnownAnswersInputSchema() {
+  return {
+    type: "object",
+    description: "Decisions already answered by the user input, project metadata, attachments, or active design system. Questions with matching ids are removed server-side.",
+    additionalProperties: {
+      oneOf: [
+        { type: "string" },
+        { type: "array", items: { type: "string" } }
+      ]
+    }
+  };
+}
 function chatGptV1OutputSchema(toolName) {
   const stringValue = { type: "string" };
   const schemas = {
     collect_brief: {
       view: { type: "string", enum: ["brief-form"] },
       artifactType: { type: "string", enum: [...CHATGPT_ARTIFACT_TYPES] },
-      title: stringValue,
-      brief: { type: "object" }
+      projectTitle: stringValue,
+      questionForm: chatGptQuestionFormInputSchema(),
+      knownAnswers: chatGptKnownAnswersInputSchema()
     },
     get_cloud_account: {
       loggedIn: { type: "boolean" },
@@ -21512,14 +21655,18 @@ var CHATGPT_WIDGET_HTML = `<!doctype html>
     .choice-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 7px; }
     .choice { position: relative; min-width: 0; cursor: pointer; }
     .choice input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-    .choice span {
+    .choice > span {
       min-height: 38px; display: flex; align-items: center; justify-content: space-between; gap: 8px;
       border: 1px solid var(--border); border-radius: 9px; padding: 8px 10px;
       background: var(--fill); color: var(--text); font-size: 12px; line-height: 1.3;
       transition: border-color 140ms cubic-bezier(.23,1,.32,1), background 140ms cubic-bezier(.23,1,.32,1), color 140ms cubic-bezier(.23,1,.32,1), transform 140ms cubic-bezier(.23,1,.32,1);
     }
-    .choice:hover span { transform: translateY(-1px); border-color: color-mix(in srgb, var(--text) 30%, var(--border)); }
+    .choice-copy { display: grid; gap: 2px; min-width: 0; }
+    .choice-label { font-weight: 600; }
+    .choice-detail { color: var(--text-muted); font-size: 10px; line-height: 1.35; }
+    .choice:hover > span { transform: translateY(-1px); border-color: color-mix(in srgb, var(--text) 30%, var(--border)); }
     .choice input:checked + span { border-color: var(--button); background: var(--button); color: var(--button-text); }
+    .choice input:checked + span .choice-detail { color: color-mix(in srgb, var(--button-text) 72%, transparent); }
     .choice input:checked + span::after { content: "\u2713"; flex: 0 0 auto; font-size: 11px; font-weight: 700; }
     .choice input:focus-visible + span { box-shadow: 0 0 0 3px color-mix(in srgb, var(--text) 12%, transparent); }
     .brief-actions { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
@@ -21541,16 +21688,10 @@ var CHATGPT_WIDGET_HTML = `<!doctype html>
   <main class="card" id="card" data-view="compact">
     <section class="compact" id="compact"><div class="state"><span class="state-dot" id="state-dot"></span><div class="state-copy"><strong class="state-title" id="state-title"></strong><p class="state-detail" id="state-detail"></p></div></div><div class="balance" id="balance" hidden><span class="balance-label">Remaining balance</span><strong class="balance-value" id="balance-value"></strong></div><button id="account-action" hidden></button></section>
     <section class="brief" id="brief-form" hidden>
-      <div class="brief-copy"><h2 class="brief-title">Choose a direction</h2><p class="brief-detail">Pick what fits best. Recommended choices are already selected, and you can refine the result later in OpenDesign.</p></div>
+      <div class="brief-copy"><h2 class="brief-title" id="brief-title"></h2><p class="brief-detail" id="brief-detail"></p></div>
       <form id="brief-fields">
-        <div class="brief-groups">
-          <fieldset class="brief-group"><legend>Primary goal</legend><div class="choice-grid" id="brief-goal-options"></div></fieldset>
-          <fieldset class="brief-group"><legend>Audience</legend><div class="choice-grid" id="brief-audience-options"></div></fieldset>
-          <fieldset class="brief-group wide"><legend>Include <small>Choose all that apply</small></legend><div class="choice-grid" id="brief-content-options"></div></fieldset>
-          <fieldset class="brief-group wide"><legend>Visual style</legend><div class="choice-grid" id="brief-visual-options"></div></fieldset>
-          <fieldset class="brief-group wide"><legend>Output</legend><div class="choice-grid" id="brief-output-options"></div></fieldset>
-        </div>
-        <div class="brief-actions"><button id="brief-submit" type="submit">Create with these choices</button><p class="brief-error" id="brief-error" role="status"></p></div>
+        <div class="brief-groups" id="brief-questions"></div>
+        <div class="brief-actions"><button id="brief-submit" type="submit"></button><p class="brief-error" id="brief-error" role="status"></p></div>
       </form>
     </section>
     <section class="preview" id="preview"><div class="placeholder"><div class="pulse" id="pulse"></div><strong id="preview-title">Preparing your design</strong></div></section>
@@ -21641,27 +21782,117 @@ var CHATGPT_WIDGET_HTML = `<!doctype html>
       }
       window.open(url, '_blank', 'noopener,noreferrer');
     }
-    async function sendBriefMessage(payload) {
-      const lines = [
-        '[OpenDesign brief confirmed]',
-        'Project name: ' + payload.title,
-        'Artifact type: ' + payload.artifactType,
-        'Audience: ' + payload.brief.audience,
-        'Outcome: ' + payload.brief.outcome,
-        'Content and flows: ' + payload.brief.contentAndFlows,
-        'Visual direction: ' + payload.brief.visualDirection,
-        'Output format: ' + payload.brief.outputFormat,
-      ];
-      if (payload.brief.constraints) lines.push('Constraints: ' + payload.brief.constraints);
-      lines.push('Create the Open Design project and start the Cloud run with confirmed:true. Do not ask for the same brief again.');
+    function briefOptionList(question) {
+      const rawOptions = Array.isArray(question?.options) ? question.options : [];
+      const cards = Array.isArray(question?.cards) ? question.cards : [];
+      return rawOptions.map((rawOption) => {
+        const option = typeof rawOption === 'string'
+          ? { label: rawOption, value: rawOption }
+          : rawOption && typeof rawOption === 'object'
+            ? {
+                label: safeText(rawOption.label, rawOption.value),
+                value: safeText(rawOption.value, rawOption.label),
+                description: safeText(rawOption.description, ''),
+              }
+            : null;
+        if (!option || !option.label || !option.value) return null;
+        const card = cards.find((candidate) => candidate && candidate.id === option.value);
+        return {
+          label: option.label,
+          value: option.value,
+          description: option.description || safeText(card?.mood, ''),
+        };
+      }).filter(Boolean);
+    }
+    function briefDefaultValues(question) {
+      const raw = question?.defaultValue;
+      if (Array.isArray(raw)) return raw.map((value) => String(value));
+      if (raw === undefined || raw === null || raw === '') return [];
+      return [String(raw)];
+    }
+    function briefUiCopy(questionForm) {
+      const chinese = safeText(questionForm?.lang, '').toLowerCase().startsWith('zh');
+      return chinese ? {
+        chooseOne: '\u8BF7\u9009\u62E9',
+        chooseAll: '\u53EF\u591A\u9009',
+        chooseUpTo: (count) => '\u6700\u591A\u9009\u62E9 ' + count + ' \u9879',
+        maxError: (label, count) => label + '\uFF1A\u6700\u591A\u9009\u62E9 ' + count + ' \u9879\u3002',
+        noChoices: '\u5F53\u524D\u6CA1\u6709\u53EF\u9009\u62E9\u7684\u95EE\u9898\u3002',
+        continue: '\u786E\u8BA4\u5E76\u7EE7\u7EED',
+        missing: (labels) => '\u8BF7\u9009\u62E9\uFF1A' + labels.join('\u3001') + '\u3002',
+        exceeded: (labels) => '\u4EE5\u4E0B\u95EE\u9898\u9009\u62E9\u8FC7\u591A\uFF1A' + labels.join('\u3001') + '\u3002',
+        submitting: '\u6B63\u5728\u63D0\u4EA4\u2026',
+        submitted: '\u5DF2\u63D0\u4EA4',
+        submittedStatus: '\u5DF2\u63D0\u4EA4\u3002',
+        submitFailed: '\u6682\u65F6\u65E0\u6CD5\u63D0\u4EA4\uFF0C\u8BF7\u91CD\u8BD5\u3002',
+      } : {
+        chooseOne: 'Choose one',
+        chooseAll: 'Choose all that apply',
+        chooseUpTo: (count) => 'Choose up to ' + count,
+        maxError: (label, count) => label + ': choose no more than ' + count + '.',
+        noChoices: 'No choices are available for this brief.',
+        continue: 'Continue',
+        missing: (labels) => 'Choose an option for: ' + labels.join(', ') + '.',
+        exceeded: (labels) => 'Too many choices selected for: ' + labels.join(', ') + '.',
+        submitting: 'Submitting\u2026',
+        submitted: 'Submitted',
+        submittedStatus: 'Brief submitted.',
+        submitFailed: 'Could not submit the brief.',
+      };
+    }
+    function briefQuestionHelp(question, copy) {
+      if (typeof question?.help === 'string' && question.help.trim()) return question.help.trim();
+      if (question?.type !== 'checkbox') return '';
+      if (Number.isInteger(question.maxSelections) && question.maxSelections > 0) {
+        return copy.chooseUpTo(question.maxSelections);
+      }
+      return copy.chooseAll;
+    }
+    function briefAnswerDisplay(question, value) {
+      const option = briefOptionList(question).find(
+        (candidate) => candidate.value === value || candidate.label === value,
+      );
+      if (!option) return value;
+      return option.label === option.value
+        ? option.label
+        : option.label + ' [value: ' + option.value + ']';
+    }
+    function formatQuestionFormAnswers(questionForm, answers) {
+      const lines = ['[form answers \u2014 ' + questionForm.id + ']'];
+      questionForm.questions.forEach((question) => {
+        const answer = answers[question.id];
+        let display = '(skipped)';
+        if (Array.isArray(answer) && answer.length > 0) {
+          display = answer.map((value) => briefAnswerDisplay(question, value)).join(', ');
+        } else if (typeof answer === 'string' && answer.trim()) {
+          display = briefAnswerDisplay(question, answer.trim());
+        }
+        lines.push('- ' + question.label + ': ' + display);
+      });
       const text = lines.join('\\n');
+      return text;
+    }
+    async function sendQuestionFormAnswers(output, questionForm, answers) {
+      const text = formatQuestionFormAnswers(questionForm, answers);
+      const modelContext = {
+        artifactType: safeText(output.artifactType, ''),
+        projectTitle: safeText(output.projectTitle, 'New Open Design project').trim(),
+        questionForm,
+        knownAnswers: output.knownAnswers && typeof output.knownAnswers === 'object'
+          ? output.knownAnswers
+          : {},
+        answers,
+      };
       if (await bridgeReady) {
         try {
           await rpcRequest('ui/update-model-context', {
-            structuredContent: { openDesignBrief: { ...payload, confirmed: true } },
+            structuredContent: { openDesignBrief: { ...modelContext, confirmed: true } },
           });
         } catch {}
-        await rpcRequest('ui/message', { role: 'user', content: [{ type: 'text', text }] });
+        await rpcRequest('ui/message', {
+          role: 'user',
+          content: [{ type: 'text', text }],
+        });
         return;
       }
       if (window.openai?.sendFollowUpMessage) {
@@ -21670,379 +21901,153 @@ var CHATGPT_WIDGET_HTML = `<!doctype html>
       }
       throw new Error('This host cannot submit Custom UI messages.');
     }
-    function defaultOutputFormat(artifactType) {
-      const formats = {
-        website: 'Responsive browser website',
-        'product-prototype': 'Interactive responsive product prototype',
-        presentation: 'Browser presentation with a real preview',
-        'design-system': 'Reusable DESIGN.md design system',
-        image: 'Square PNG image \xB7 1:1',
-        video: 'Landscape MP4 video \xB7 16:9',
-        audio: '60-second music track',
-        document: 'Markdown source + print-ready HTML',
-      };
-      return formats[artifactType] || '';
-    }
-    const briefChoice = (label, value, recommended = false) => ({ label, value, recommended });
-    const BRIEF_CHOICE_PRESETS = {
-      website: {
-        goal: [
-          briefChoice('Explain & convert', 'Explain the offering clearly and drive visitors toward the primary conversion.', true),
-          briefChoice('Launch something', 'Introduce and launch a new product, service, feature, or campaign.'),
-          briefChoice('Build trust', 'Build credibility through a clear story, proof, and a professional presentation.'),
-          briefChoice('Sell online', 'Help visitors evaluate the offer and complete a purchase or sales inquiry.'),
-        ],
-        audience: [
-          briefChoice('Potential customers', 'Potential customers evaluating whether this offering is right for them.', true),
-          briefChoice('Existing users', 'Existing users who already know the product and need guidance or updates.'),
-          briefChoice('Business buyers', 'Business buyers and decision-makers comparing solutions and expected value.'),
-          briefChoice('General audience', 'A broad public audience with mixed levels of familiarity.'),
-        ],
-        content: [
-          briefChoice('Hero & CTA', 'A strong opening message with one clear primary call to action.', true),
-          briefChoice('Key benefits', 'A concise benefits and feature story that explains why the offering matters.', true),
-          briefChoice('Social proof', 'Trust signals such as customer quotes, results, logos, or evidence.', true),
-          briefChoice('How it works', 'A simple step-by-step explanation of the experience or process.'),
-          briefChoice('Pricing', 'Pricing or plan information with a clear comparison and next step.'),
-          briefChoice('FAQ & contact', 'Frequently asked questions plus a direct contact or final conversion path.'),
-        ],
-        visual: [
-          briefChoice('Clean product', 'Use a clean product-marketing system with strong hierarchy, generous whitespace, and restrained color.', true),
-          briefChoice('Bold editorial', 'Use expressive typography, strong composition, and memorable editorial contrast.'),
-          briefChoice('Warm brand', 'Use friendly color, soft geometry, and inviting imagery.'),
-          briefChoice('Premium minimal', 'Use refined typography, muted color, and polished details.'),
-        ],
-        output: [
-          briefChoice('Responsive website', 'Responsive browser website', true),
-          briefChoice('Desktop-first site', 'Desktop-first browser website with responsive fallbacks'),
-          briefChoice('Mobile-first site', 'Mobile-first responsive browser website'),
-        ],
-      },
-      'product-prototype': {
-        goal: [
-          briefChoice('Validate an idea', 'Make the product concept tangible enough to validate the value proposition and interaction model.', true),
-          briefChoice('Demo the core flow', 'Demonstrate the most important end-to-end workflow in a convincing interactive prototype.'),
-          briefChoice('Run a user test', 'Create a focused prototype suitable for observing usability and task completion.'),
-          briefChoice('Support a review', 'Communicate the proposed product behavior clearly for stakeholder or product review.'),
-        ],
-        audience: [
-          briefChoice('New users', 'First-time users who need a clear, guided path through the product.', true),
-          briefChoice('Power users', 'Experienced users who value speed, control, and information density.'),
-          briefChoice('Internal teams', 'Internal product, design, engineering, or operations collaborators.'),
-          briefChoice('Decision-makers', 'Stakeholders or buyers evaluating the product concept and business value.'),
-        ],
-        content: [
-          briefChoice('Core workflow', 'The primary task flow from entry through successful completion.', true),
-          briefChoice('Navigation & states', 'Navigation plus realistic empty, loading, success, and error states.', true),
-          briefChoice('Dashboard & data', 'A useful overview with realistic metrics, records, or progress information.'),
-          briefChoice('Search & discovery', 'Search, filtering, browsing, or recommendation interactions.'),
-          briefChoice('Create & edit', 'Creation and editing interactions with clear feedback and validation.'),
-          briefChoice('Settings', 'Account, preference, permission, or configuration surfaces.'),
-        ],
-        visual: [
-          briefChoice('Polished product UI', 'Use a polished product-interface direction with clear hierarchy, realistic density, and precise component states.', true),
-          briefChoice('Calm workspace', 'Use a calm workspace aesthetic with restrained color and task-focused layouts.'),
-          briefChoice('Expressive consumer', 'Use an expressive consumer-product direction with friendly color, motion, and bold moments.'),
-          briefChoice('Data dense', 'Use a compact, data-dense professional interface optimized for power users.'),
-        ],
-        output: [
-          briefChoice('Responsive prototype', 'Interactive responsive product prototype', true),
-          briefChoice('Desktop prototype', 'Interactive desktop product prototype'),
-          briefChoice('Mobile prototype', 'Interactive mobile product prototype'),
-        ],
-      },
-      presentation: {
-        goal: [
-          briefChoice('Pitch an idea', 'Persuade the audience to support an idea, product, company, or initiative.', true),
-          briefChoice('Share strategy', 'Explain a strategic direction, priorities, and the reasoning behind them.'),
-          briefChoice('Report progress', 'Communicate results, learnings, current status, and next steps.'),
-          briefChoice('Teach a topic', 'Help the audience understand and remember a topic through a clear narrative.'),
-        ],
-        audience: [
-          briefChoice('Leadership', 'Executives and senior leaders who need concise decisions, evidence, and implications.', true),
-          briefChoice('Customers', 'Customers or prospects evaluating an offer, proposal, or solution.'),
-          briefChoice('Investors', 'Investors assessing the opportunity, traction, differentiation, and plan.'),
-          briefChoice('Internal team', 'An internal cross-functional team aligning around context and action.'),
-        ],
-        content: [
-          briefChoice('Clear story arc', 'A strong beginning, logical narrative arc, and memorable conclusion.', true),
-          briefChoice('Evidence & data', 'Focused evidence, metrics, examples, or proof that supports the argument.', true),
-          briefChoice('Recommendation', 'A clear proposal or recommendation with rationale and trade-offs.'),
-          briefChoice('Product story', 'A visual explanation of the product, experience, or solution.'),
-          briefChoice('Roadmap', 'A phased plan, milestones, priorities, or future direction.'),
-          briefChoice('Next steps', 'Specific decisions, owners, calls to action, or immediate next steps.', true),
-        ],
-        visual: [
-          briefChoice('Executive minimal', 'Use an executive presentation style with concise typography, disciplined grids, and restrained color.', true),
-          briefChoice('Editorial story', 'Use an editorial storytelling direction with expressive type, full-bleed visuals, and strong pacing.'),
-          briefChoice('Data forward', 'Use a data-forward presentation system with legible charts, annotations, and evidence-first layouts.'),
-          briefChoice('Product showcase', 'Use a product-showcase direction with interface mockups, visual sequences, and polished demonstrations.'),
-        ],
-        output: [
-          briefChoice('Browser deck', 'Browser presentation with a real preview', true),
-          briefChoice('PPTX-ready deck', 'Browser deck structured for later PPTX export in Open Design'),
-          briefChoice('PDF-ready deck', 'Browser deck structured for later PDF export in Open Design'),
-        ],
-      },
-      'design-system': {
-        goal: [
-          briefChoice('Unify a product', 'Create a consistent visual and interaction foundation across an existing product.', true),
-          briefChoice('Start a new product', 'Define a practical design foundation for a new product from the beginning.'),
-          briefChoice('Refresh the brand', 'Translate an updated brand direction into usable digital product rules.'),
-          briefChoice('Scale delivery', 'Help design and engineering teams ship consistent interfaces more efficiently.'),
-        ],
-        audience: [
-          briefChoice('Product teams', 'Cross-functional product teams using shared rules to design and build experiences.', true),
-          briefChoice('Designers', 'Designers who need foundations, components, patterns, and clear usage guidance.'),
-          briefChoice('Developers', 'Frontend engineers implementing reusable components and product patterns.'),
-          briefChoice('Brand teams', 'Brand and marketing teams extending the visual language across digital surfaces.'),
-        ],
-        content: [
-          briefChoice('Foundations', 'Color, typography, spacing, layout, shape, elevation, and motion foundations.', true),
-          briefChoice('Core components', 'A practical set of reusable interface components and their states.', true),
-          briefChoice('Usage guidance', 'Clear rules, examples, and do-and-don\u2019t guidance for consistent application.', true),
-          briefChoice('Accessibility', 'Accessibility requirements for contrast, focus, semantics, motion, and input.'),
-          briefChoice('Product patterns', 'Reusable patterns for navigation, forms, feedback, data, and common flows.'),
-          briefChoice('Governance', 'Contribution, naming, ownership, versioning, and maintenance guidance.'),
-        ],
-        visual: [
-          briefChoice('Product foundation', 'Define a practical digital-product foundation with accessible tokens, components, and interaction patterns.', true),
-          briefChoice('Brand-led system', 'Translate a distinctive brand language into reusable digital foundations and components.'),
-          briefChoice('Enterprise system', 'Prioritize accessibility, density, governance, and durable multi-team patterns.'),
-          briefChoice('Expressive system', 'Define a more expressive system with strong typography, color, motion, and signature components.'),
-        ],
-        output: [
-          briefChoice('DESIGN.md', 'Reusable DESIGN.md design system', true),
-          briefChoice('Tokens & guidance', 'DESIGN.md with detailed tokens, components, and usage guidance'),
-          briefChoice('Migration-ready', 'DESIGN.md with migration rules and component mapping'),
-        ],
-      },
-      image: {
-        goal: [
-          briefChoice('Campaign visual', 'Create a launch-ready campaign visual that communicates one clear idea.', true),
-          briefChoice('Product showcase', 'Present a product or feature as a premium hero image.'),
-          briefChoice('Social creative', 'Create a high-impact image designed for social sharing and fast comprehension.'),
-          briefChoice('Editorial illustration', 'Turn the concept into a distinctive editorial illustration.'),
-        ],
-        audience: [
-          briefChoice('Potential customers', 'Potential customers encountering the product or campaign for the first time.', true),
-          briefChoice('Social audience', 'A broad social audience scrolling quickly through a visual feed.'),
-          briefChoice('Business buyers', 'Professional decision-makers evaluating quality and credibility.'),
-          briefChoice('Internal team', 'Internal stakeholders reviewing a visual direction or concept.'),
-        ],
-        content: [
-          briefChoice('Hero subject', 'One unmistakable hero subject with a clear focal point.', true),
-          briefChoice('Brand cues', 'Recognizable brand color, material, typography, or visual motifs.', true),
-          briefChoice('Context', 'A setting or environment that explains the subject and mood.'),
-          briefChoice('Text-safe space', 'Deliberate negative space for a headline or campaign copy.'),
-          briefChoice('Product detail', 'Close-up product detail, material, interface, or craftsmanship.'),
-        ],
-        visual: [
-          briefChoice('Premium studio', 'Use premium product-studio lighting, controlled materials, and polished commercial detail.', true),
-          briefChoice('Cinematic', 'Use cinematic lighting, atmosphere, depth, and dramatic composition.'),
-          briefChoice('Graphic editorial', 'Use bold graphic composition, expressive typography-safe geometry, and editorial contrast.'),
-          briefChoice('Warm lifestyle', 'Use natural light, human warmth, and an approachable lifestyle setting.'),
-        ],
-        output: [
-          briefChoice('Square \xB7 1:1', 'Square PNG image \xB7 1:1', true),
-          briefChoice('Landscape \xB7 16:9', 'Landscape PNG image \xB7 16:9'),
-          briefChoice('Portrait \xB7 3:4', 'Portrait PNG image \xB7 3:4'),
-          briefChoice('Story \xB7 9:16', 'Vertical PNG image \xB7 9:16'),
-        ],
-      },
-      video: {
-        goal: [
-          briefChoice('Product promo', 'Create a concise product-promotion video with a clear value proposition.', true),
-          briefChoice('Launch teaser', 'Build anticipation for a launch through a short visual teaser.'),
-          briefChoice('Feature demo', 'Demonstrate a product feature or experience through a clear visual sequence.'),
-          briefChoice('Brand story', 'Communicate a brand idea through mood, narrative, and memorable imagery.'),
-        ],
-        audience: [
-          briefChoice('Potential customers', 'Potential customers evaluating the offer or product.', true),
-          briefChoice('Social audience', 'A social audience expecting an immediate hook and quick pacing.'),
-          briefChoice('Existing users', 'Existing users learning about a feature, release, or workflow.'),
-          briefChoice('Stakeholders', 'Internal or external stakeholders reviewing a concept or launch direction.'),
-        ],
-        content: [
-          briefChoice('Opening hook', 'A strong opening image or action in the first seconds.', true),
-          briefChoice('Hero sequence', 'A focused visual sequence centered on the product, subject, or core idea.', true),
-          briefChoice('Story beats', 'A beginning, progression, and satisfying closing beat.'),
-          briefChoice('Product moments', 'Clear product, interface, feature, or usage moments.'),
-          briefChoice('Closing CTA', 'A final branded call to action or memorable end frame.'),
-        ],
-        visual: [
-          briefChoice('Cinematic product', 'Use cinematic product cinematography, deliberate camera movement, and polished lighting.', true),
-          briefChoice('Kinetic social', 'Use fast, kinetic social-video pacing with bold framing and immediate visual hooks.'),
-          briefChoice('Documentary', 'Use grounded documentary imagery, natural movement, and authentic texture.'),
-          briefChoice('Motion graphic', 'Use graphic shapes, interface motion, typography-safe composition, and designed transitions.'),
-        ],
-        output: [
-          briefChoice('Landscape \xB7 16:9', 'Landscape MP4 video \xB7 16:9', true),
-          briefChoice('Vertical \xB7 9:16', 'Vertical MP4 video \xB7 9:16'),
-          briefChoice('Square \xB7 1:1', 'Square MP4 video \xB7 1:1'),
-        ],
-      },
-      audio: {
-        goal: [
-          briefChoice('Brand music', 'Create a distinctive music bed or sonic identity for a brand or product.', true),
-          briefChoice('Voiceover', 'Create a clear spoken narration for a product, story, or presentation.'),
-          briefChoice('Soundscape', 'Create an atmospheric soundscape that establishes mood and place.'),
-          briefChoice('Sound effect', 'Create a focused sound effect or short sonic cue.'),
-        ],
-        audience: [
-          briefChoice('General listeners', 'A broad audience listening through common consumer devices.', true),
-          briefChoice('Customers', 'Customers hearing the audio inside a product, campaign, or launch asset.'),
-          briefChoice('Presentation audience', 'An audience listening alongside a presentation or visual narrative.'),
-          briefChoice('Internal team', 'Internal reviewers evaluating direction, tone, and usability.'),
-        ],
-        content: [
-          briefChoice('Clear opening', 'A recognizable opening motif, phrase, or sonic hook.', true),
-          briefChoice('Structured progression', 'A deliberate beginning, development, and ending.', true),
-          briefChoice('Voice or lead', 'A clear lead voice, melody, or featured sound.'),
-          briefChoice('Background bed', 'A supportive atmospheric or musical bed with room for other content.'),
-          briefChoice('Clean ending', 'A resolved ending suitable for editing or looping.'),
-        ],
-        visual: [
-          briefChoice('Modern & polished', 'Use a modern, polished sonic direction with clear production and restrained detail.', true),
-          briefChoice('Warm & human', 'Use warm instrumentation, natural voice, and an approachable emotional tone.'),
-          briefChoice('Cinematic', 'Use cinematic scale, atmosphere, dynamic contrast, and emotional progression.'),
-          briefChoice('Minimal electronic', 'Use minimal electronic texture, precise rhythm, and a clean technology tone.'),
-        ],
-        output: [
-          briefChoice('60s music', '60-second music track', true),
-          briefChoice('30s voiceover', '30-second spoken voiceover'),
-          briefChoice('15s soundscape', '15-second atmospheric soundscape'),
-          briefChoice('5s sound effect', '5-second sound effect'),
-        ],
-      },
-      document: {
-        goal: [
-          briefChoice('Decision report', 'Create a concise report that helps readers understand evidence and make a decision.', true),
-          briefChoice('Proposal', 'Present a persuasive proposal with context, recommendation, and next steps.'),
-          briefChoice('Brief', 'Turn the material into a clear working brief with requirements and open decisions.'),
-          briefChoice('One-pager', 'Condense the message into a focused, highly scannable one-page document.'),
-        ],
-        audience: [
-          briefChoice('Leadership', 'Executives and senior leaders who need concise evidence, implications, and decisions.', true),
-          briefChoice('Customers', 'Customers or prospects evaluating a proposal, service, or recommendation.'),
-          briefChoice('Project team', 'A cross-functional team aligning on context, requirements, and action.'),
-          briefChoice('General readers', 'A broad audience that needs plain language and clear structure.'),
-        ],
-        content: [
-          briefChoice('Executive summary', 'A concise summary of the situation, key message, and decision.', true),
-          briefChoice('Structured sections', 'Clear sections with a logical reading order and descriptive headings.', true),
-          briefChoice('Evidence & data', 'Relevant facts, evidence, examples, tables, or charts.'),
-          briefChoice('Recommendation', 'A concrete recommendation with rationale and trade-offs.'),
-          briefChoice('Next steps', 'Specific actions, owners, timing, or follow-up decisions.', true),
-        ],
-        visual: [
-          briefChoice('Editorial report', 'Use a polished editorial-report layout with strong hierarchy, readable measure, and refined typography.', true),
-          briefChoice('Executive minimal', 'Use a minimal business-document direction with concise spacing, restrained color, and clear decisions.'),
-          briefChoice('Data first', 'Use a data-first layout with prominent evidence, tables, charts, and annotations.'),
-          briefChoice('Branded magazine', 'Use a more expressive branded-magazine direction with visual pacing and editorial details.'),
-        ],
-        output: [
-          briefChoice('Markdown + HTML', 'Markdown source + print-ready HTML', true),
-          briefChoice('HTML document', 'Polished browser-previewable HTML document'),
-          briefChoice('PDF-ready', 'Print-ready HTML document prepared for PDF export in Open Design'),
-        ],
-      },
-    };
-    function conciseChoiceLabel(value) {
-      const normalized = String(value).trim().replace(/\\s+/g, ' ');
-      return normalized.length > 64 ? normalized.slice(0, 61) + '\u2026' : normalized;
-    }
-    function resolvedBriefChoices(options, suggestedValue) {
-      const suggestion = typeof suggestedValue === 'string' ? suggestedValue.trim() : '';
-      if (!suggestion) return options;
-      const exact = options.find((item) => item.value.toLowerCase() === suggestion.toLowerCase());
-      if (exact) return options.map((item) => ({ ...item, recommended: item === exact }));
-      return [
-        briefChoice('From your brief \xB7 ' + conciseChoiceLabel(suggestion), suggestion, true),
-        ...options.map((item) => ({ ...item, recommended: false })),
-      ];
-    }
-    function renderBriefChoiceGroup(containerId, name, definition, suggestedValue) {
-      const host = byId(containerId);
-      host.replaceChildren();
-      const options = resolvedBriefChoices(definition.options, suggestedValue);
-      options.forEach((item) => {
+    let briefQuestionControls = [];
+    function renderBriefQuestion(question, questionIndex, questionCount, copy) {
+      const fieldset = document.createElement('fieldset');
+      fieldset.className = 'brief-group';
+      if (questionCount === 1 || question.type === 'checkbox' || question.type === 'direction-cards') {
+        fieldset.classList.add('wide');
+      }
+      const legend = document.createElement('legend');
+      legend.append(document.createTextNode(safeText(question.label, copy.chooseOne)));
+      const help = briefQuestionHelp(question, copy);
+      if (help) {
+        const helpText = document.createElement('small');
+        helpText.textContent = help;
+        legend.append(helpText);
+      }
+      const choices = document.createElement('div');
+      choices.className = 'choice-grid';
+      const multiple = question.type === 'checkbox';
+      const defaults = new Set(briefDefaultValues(question));
+      const options = briefOptionList(question);
+      const inputs = [];
+      options.forEach((option) => {
         const label = document.createElement('label');
         label.className = 'choice';
         const input = document.createElement('input');
-        input.type = definition.multiple ? 'checkbox' : 'radio';
-        input.name = name;
-        input.value = item.value;
-        input.checked = item.recommended === true;
-        const text = document.createElement('span');
-        text.textContent = item.label;
-        label.append(input, text);
-        host.append(label);
+        input.type = multiple ? 'checkbox' : 'radio';
+        input.name = 'brief-question-' + questionIndex;
+        input.value = option.value;
+        input.checked = defaults.has(option.value) || defaults.has(option.label);
+        const card = document.createElement('span');
+        const copy = document.createElement('span');
+        copy.className = 'choice-copy';
+        const optionLabel = document.createElement('span');
+        optionLabel.className = 'choice-label';
+        optionLabel.textContent = option.label;
+        copy.append(optionLabel);
+        if (option.description) {
+          const detail = document.createElement('span');
+          detail.className = 'choice-detail';
+          detail.textContent = option.description;
+          copy.append(detail);
+        }
+        card.append(copy);
+        label.append(input, card);
+        choices.append(label);
+        inputs.push(input);
       });
+      if (multiple && Number.isInteger(question.maxSelections) && question.maxSelections > 0) {
+        inputs.forEach((input) => {
+          input.addEventListener('change', () => {
+            const selectedCount = inputs.filter((candidate) => candidate.checked).length;
+            if (selectedCount <= question.maxSelections) return;
+            input.checked = false;
+            const error = byId('brief-error');
+            error.dataset.tone = 'error';
+            error.textContent = copy.maxError(safeText(question.label, copy.chooseOne), question.maxSelections);
+            scheduleSizeChanged();
+          });
+        });
+      }
+      fieldset.append(legend, choices);
+      briefQuestionControls.push({ question, inputs });
+      return fieldset;
     }
-    function selectedBriefChoice(name, multiple = false) {
-      const selected = Array.from(document.querySelectorAll('input[name="' + name + '"]:checked'));
-      if (multiple) return selected.map((input) => input.value).join('; ');
-      return selected[0]?.value || '';
+    function collectQuestionFormAnswers(questionForm) {
+      const answers = {};
+      const missing = [];
+      const exceeded = [];
+      briefQuestionControls.forEach(({ question, inputs }) => {
+        const selected = inputs.filter((input) => input.checked).map((input) => input.value);
+        if (question.type === 'checkbox') {
+          answers[question.id] = selected;
+          if (Number.isInteger(question.maxSelections) && selected.length > question.maxSelections) {
+            exceeded.push(safeText(question.label, question.id));
+          }
+        } else {
+          answers[question.id] = selected[0] || '';
+        }
+        if (question.required === true && selected.length === 0) {
+          missing.push(safeText(question.label, question.id));
+        }
+      });
+      return { answers, missing, exceeded };
     }
     function renderBrief(output) {
-      const brief = output.brief && typeof output.brief === 'object' ? output.brief : {};
-      const hydrationKey = JSON.stringify({ artifactType: output.artifactType, title: output.title, brief });
+      const questionForm = output.questionForm && typeof output.questionForm === 'object'
+        ? output.questionForm
+        : {};
+      const questions = Array.isArray(questionForm.questions) ? questionForm.questions : [];
+      const copy = briefUiCopy(questionForm);
+      const hydrationKey = JSON.stringify({
+        artifactType: output.artifactType,
+        projectTitle: output.projectTitle,
+        questionForm,
+        knownAnswers: output.knownAnswers,
+      });
       if (hydrationKey !== briefHydratedKey) {
         briefHydratedKey = hydrationKey;
-        const preset = BRIEF_CHOICE_PRESETS[output.artifactType] || BRIEF_CHOICE_PRESETS.website;
-        renderBriefChoiceGroup('brief-goal-options', 'brief-goal', { options: preset.goal, multiple: false }, brief.outcome);
-        renderBriefChoiceGroup('brief-audience-options', 'brief-audience', { options: preset.audience, multiple: false }, brief.audience);
-        renderBriefChoiceGroup('brief-content-options', 'brief-content', { options: preset.content, multiple: true }, brief.contentAndFlows);
-        renderBriefChoiceGroup('brief-visual-options', 'brief-visual', { options: preset.visual, multiple: false }, brief.visualDirection);
-        renderBriefChoiceGroup('brief-output-options', 'brief-output', { options: preset.output, multiple: false }, brief.outputFormat);
+        byId('brief-form').lang = safeText(questionForm.lang, 'en');
+        byId('brief-title').textContent = safeText(questionForm.title, 'A few quick questions');
+        const description = byId('brief-detail');
+        description.textContent = safeText(questionForm.description, '');
+        description.hidden = !description.textContent;
+        const questionHost = byId('brief-questions');
+        questionHost.replaceChildren();
+        briefQuestionControls = [];
+        questions.forEach((question, index) => {
+          questionHost.append(renderBriefQuestion(question, index, questions.length, copy));
+        });
         const submit = byId('brief-submit');
-        submit.disabled = false;
-        submit.textContent = 'Create with these choices';
-        byId('brief-error').textContent = '';
+        submit.disabled = questions.length === 0;
+        submit.textContent = safeText(questionForm.submitLabel, copy.continue);
+        const error = byId('brief-error');
+        error.dataset.tone = questions.length === 0 ? 'error' : '';
+        error.textContent = questions.length === 0 ? copy.noChoices : '';
       }
       const form = byId('brief-fields');
       form.onsubmit = async (event) => {
         event.preventDefault();
         const submit = byId('brief-submit');
         const error = byId('brief-error');
-        const payload = {
-          artifactType: output.artifactType,
-          title: safeText(output.title, 'New Open Design project').trim(),
-          brief: {
-            audience: selectedBriefChoice('brief-audience'),
-            outcome: selectedBriefChoice('brief-goal'),
-            contentAndFlows: selectedBriefChoice('brief-content', true),
-            visualDirection: selectedBriefChoice('brief-visual'),
-            outputFormat: selectedBriefChoice('brief-output') || defaultOutputFormat(output.artifactType),
-            constraints: safeText(brief.constraints, '').trim(),
-          },
-        };
-        const missing = [
-          ['Project name', payload.title],
-          ['Audience', payload.brief.audience],
-          ['Outcome', payload.brief.outcome],
-          ['Content and flows', payload.brief.contentAndFlows],
-          ['Visual direction', payload.brief.visualDirection],
-          ['Output format', payload.brief.outputFormat],
-        ].filter(([, value]) => !value).map(([label]) => label);
-        if (missing.length) {
+        const result = collectQuestionFormAnswers(questionForm);
+        if (result.missing.length > 0) {
           error.dataset.tone = 'error';
-          error.textContent = 'Complete: ' + missing.join(', ') + '.';
+          error.textContent = copy.missing(result.missing);
+          scheduleSizeChanged();
+          return;
+        }
+        if (result.exceeded.length > 0) {
+          error.dataset.tone = 'error';
+          error.textContent = copy.exceeded(result.exceeded);
           scheduleSizeChanged();
           return;
         }
         submit.disabled = true;
         error.dataset.tone = 'pending';
-        error.textContent = 'Submitting\u2026';
+        error.textContent = copy.submitting;
         try {
-          await sendBriefMessage(payload);
+          await sendQuestionFormAnswers(output, questionForm, result.answers);
           error.dataset.tone = 'success';
-          error.textContent = 'Brief submitted.';
-          submit.textContent = 'Submitted';
+          error.textContent = copy.submittedStatus;
+          submit.textContent = copy.submitted;
         } catch (submitError) {
           error.dataset.tone = 'error';
-          error.textContent = submitError instanceof Error ? submitError.message : 'Could not submit the brief.';
+          error.textContent = submitError instanceof Error
+            ? submitError.message
+            : copy.submitFailed;
           submit.disabled = false;
         }
         scheduleSizeChanged();
@@ -22474,7 +22479,7 @@ var TOOL_DEFS = [
   // reference material the caller opts into, not something to run.
   {
     name: "collect_brief",
-    description: "Show the interactive Open Design Custom UI brief form. Call this instead of asking prose questions or emitting <question-form> text whenever audience, outcome, content/flows, visual direction, or output format is missing. Pass every detail already known so the form is prefilled.",
+    description: "Show a dynamic Open Design QuestionForm in Custom UI. Author the questionForm from the current user input using the same discovery policy as Open Design: omit decisions already known from the request, metadata, or knownAnswers; add only two or three artifact-specific questions whose answers materially change the result; never exceed five; localize visible copy; and preselect an inferred recommendation. Use only choice controls; never emit <question-form> markup or ask the same questions in prose.",
     inputSchema: {
       type: "object",
       properties: {
@@ -22483,15 +22488,11 @@ var TOOL_DEFS = [
           enum: [...CHATGPT_ARTIFACT_TYPES],
           description: "The requested Open Design deliverable type."
         },
-        title: { type: "string", description: "Suggested human-readable project name." },
-        audience: { type: "string", description: "Known or inferred target audience." },
-        outcome: { type: "string", description: "Known or inferred result the artifact should achieve." },
-        contentAndFlows: { type: "string", description: "Known required content, sections, flows, and interactions." },
-        visualDirection: { type: "string", description: "Known visual direction, references, or brand constraints." },
-        outputFormat: { type: "string", description: "Known expected output format." },
-        constraints: { type: "string", description: "Known must-have or must-avoid constraints." }
+        projectTitle: { type: "string", description: "Suggested human-readable project name inferred from the request." },
+        knownAnswers: chatGptKnownAnswersInputSchema(),
+        questionForm: chatGptQuestionFormInputSchema()
       },
-      required: ["artifactType"],
+      required: ["artifactType", "questionForm"],
       additionalProperties: false
     },
     annotations: { ...READ_ANNOTATIONS, title: "Complete Open Design brief" },
@@ -22681,7 +22682,7 @@ function createOpenDesignMcpServer({
       capabilities: { tools: {}, resources: {} },
       instructions: [
         "Open Design creates and refines websites, product prototypes, presentations, design systems, images, videos, audio, and documents.",
-        "Confirm audience, outcome, content/flows, visual direction, and output format before calling start_run with confirmed:true. If any field is missing, call collect_brief so the Custom UI form collects it; never emit <question-form> or JSON form markup as assistant text.",
+        "Before calling start_run with confirmed:true, resolve only the artifact-specific decisions that materially affect this request. If an important decision remains unknown, author a request-specific choice-only QuestionForm and call collect_brief; never reuse a universal questionnaire or emit <question-form>, JSON form markup, or prose questions as assistant text.",
         "Before Cloud generation call get_cloud_account. Use create_project, then start_run; its card polls get_run and updates in place.",
         "Open Design runs can take 5\u201330 minutes. Do not cancel unless the user asks.",
         "A browser-artifact run is delivered only when get_run returns status:succeeded plus artifactCount greater than zero and a real previewUrl. A Design System run instead requires status:succeeded plus artifactCount greater than zero.",
@@ -22861,6 +22862,226 @@ function removePublicSecrets(value) {
     Object.entries(value).filter(([key]) => !blocked.has(key.replace(/[_-]/gu, "").toLowerCase())).map(([key, child]) => [key, removePublicSecrets(child)])
   );
 }
+function requiredBriefString(value, field, maxLength) {
+  if (typeof value !== "string" || !value.trim()) {
+    throw new Error(`${field} is required.`);
+  }
+  const normalized = value.trim();
+  if (normalized.length > maxLength) {
+    throw new Error(`${field} must be ${maxLength} characters or fewer.`);
+  }
+  return normalized;
+}
+function optionalBriefString(value, field, maxLength) {
+  if (value === void 0 || value === null || value === "") return void 0;
+  return requiredBriefString(value, field, maxLength);
+}
+function normalizeChatGptKnownAnswers(raw) {
+  if (raw === void 0) return {};
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    throw new Error("knownAnswers must be an object.");
+  }
+  const entries = Object.entries(raw);
+  if (entries.length > 32) throw new Error("knownAnswers must contain 32 fields or fewer.");
+  const normalized = {};
+  for (const [rawId, rawValue] of entries) {
+    const id = requiredBriefString(rawId, "knownAnswers id", 80);
+    if (Object.hasOwn(normalized, id)) throw new Error(`knownAnswers ids must be unique: ${id}.`);
+    if (Array.isArray(rawValue)) {
+      if (rawValue.length > CHATGPT_BRIEF_MAX_OPTIONS) {
+        throw new Error(`knownAnswers.${id} must contain ${CHATGPT_BRIEF_MAX_OPTIONS} values or fewer.`);
+      }
+      normalized[id] = rawValue.map((value) => requiredBriefString(value, `knownAnswers.${id}`, 500));
+      continue;
+    }
+    normalized[id] = requiredBriefString(rawValue, `knownAnswers.${id}`, 500);
+  }
+  return normalized;
+}
+function normalizeBriefDecisionId(value) {
+  return value.replace(/[^a-z0-9]/giu, "").toLowerCase();
+}
+var QUESTION_FORM_DECISION_ALIAS_LOOKUP = new Map(
+  QUESTION_FORM_DECISION_ALIAS_GROUPS.flatMap((group) => {
+    const canonical = normalizeBriefDecisionId(group[0]);
+    return group.map((alias) => [normalizeBriefDecisionId(alias), canonical]);
+  })
+);
+function canonicalBriefDecisionId(value) {
+  const normalized = normalizeBriefDecisionId(value);
+  return QUESTION_FORM_DECISION_ALIAS_LOOKUP.get(normalized) ?? normalized;
+}
+function normalizeChatGptFormOption(raw, field) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    throw new Error(`${field} must be an option object with localized label and stable value.`);
+  }
+  const option = raw;
+  const label = requiredBriefString(option.label, `${field}.label`, 160);
+  const value = requiredBriefString(option.value, `${field}.value`, 200);
+  const description = optionalBriefString(option.description, `${field}.description`, 300);
+  return { label, value, ...description ? { description } : {} };
+}
+function normalizeChatGptDirectionCard(raw, field) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    throw new Error(`${field} must be a direction card object.`);
+  }
+  const card = raw;
+  const strings = (value, name, maxItems) => {
+    if (value === void 0) return [];
+    if (!Array.isArray(value) || value.length > maxItems) {
+      throw new Error(`${name} must contain ${maxItems} strings or fewer.`);
+    }
+    return value.map((entry) => requiredBriefString(entry, name, 120));
+  };
+  return {
+    id: requiredBriefString(card.id, `${field}.id`, 80),
+    label: requiredBriefString(card.label, `${field}.label`, 160),
+    mood: optionalBriefString(card.mood, `${field}.mood`, 300) ?? "",
+    references: strings(card.references, `${field}.references`, 6),
+    palette: strings(card.palette, `${field}.palette`, 8),
+    displayFont: optionalBriefString(card.displayFont, `${field}.displayFont`, 160) ?? "Georgia, serif",
+    bodyFont: optionalBriefString(card.bodyFont, `${field}.bodyFont`, 160) ?? "-apple-system, system-ui, sans-serif"
+  };
+}
+function localizedSwitchOptions(lang) {
+  if (lang?.toLowerCase().startsWith("zh")) {
+    return [{ label: "\u662F", value: "true" }, { label: "\u5426", value: "false" }];
+  }
+  return [{ label: "Yes", value: "true" }, { label: "No", value: "false" }];
+}
+function normalizeChatGptDefaultValue(raw, type, options, field) {
+  if (raw === void 0 || raw === null) {
+    throw new Error(`${field} is required so the dynamic form is preselected.`);
+  }
+  const normalizeValue = (value) => {
+    const normalized = typeof value === "boolean" ? String(value) : requiredBriefString(value, field, 200);
+    if (!options.some((option) => option.value === normalized || option.label === normalized)) {
+      throw new Error(`${field} must match one of the question option values.`);
+    }
+    return options.find((option) => option.label === normalized)?.value ?? normalized;
+  };
+  if (type === "checkbox") {
+    const values = Array.isArray(raw) ? raw : [raw];
+    if (values.length === 0) throw new Error(`${field} must select at least one option.`);
+    const normalized = values.map(normalizeValue);
+    if (new Set(normalized).size !== normalized.length) {
+      throw new Error(`${field} must not contain duplicate option values.`);
+    }
+    return normalized;
+  }
+  if (Array.isArray(raw)) throw new Error(`${field} must be a single option value.`);
+  return normalizeValue(raw);
+}
+function normalizeChatGptQuestionForm(raw, knownAnswers) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    throw new Error("questionForm is required.");
+  }
+  const form = raw;
+  const id = requiredBriefString(form.id, "questionForm.id", 80);
+  const title = requiredBriefString(form.title, "questionForm.title", 160);
+  const description = optionalBriefString(form.description, "questionForm.description", 500);
+  const lang = optionalBriefString(form.lang, "questionForm.lang", 40);
+  const submitLabel = optionalBriefString(form.submitLabel, "questionForm.submitLabel", 80);
+  if (!Array.isArray(form.questions)) throw new Error("questionForm.questions is required.");
+  if (form.questions.length < 1 || form.questions.length > CHATGPT_BRIEF_MAX_QUESTIONS) {
+    throw new Error(`questionForm.questions must contain 1\u2013${CHATGPT_BRIEF_MAX_QUESTIONS} questions.`);
+  }
+  const seenIds = /* @__PURE__ */ new Set();
+  const knownDecisionIds = new Set(Object.keys(knownAnswers).map(canonicalBriefDecisionId));
+  const questions = [];
+  form.questions.forEach((rawQuestion, index) => {
+    if (!rawQuestion || typeof rawQuestion !== "object" || Array.isArray(rawQuestion)) {
+      throw new Error(`questionForm.questions[${index}] must be an object.`);
+    }
+    const question = rawQuestion;
+    const questionId = requiredBriefString(question.id, `questionForm.questions[${index}].id`, 80);
+    if (seenIds.has(questionId)) throw new Error(`questionForm question ids must be unique: ${questionId}.`);
+    seenIds.add(questionId);
+    if (knownDecisionIds.has(canonicalBriefDecisionId(questionId))) return;
+    const rawType = requiredBriefString(question.type, `questionForm.questions[${index}].type`, 40);
+    if (!CHATGPT_BRIEF_QUESTION_TYPE_SET.has(rawType)) {
+      throw new Error(`questionForm question type must be one of: ${CHATGPT_BRIEF_QUESTION_TYPES.join(", ")}.`);
+    }
+    const type = rawType;
+    if (question.allowCustom === true) {
+      throw new Error("questionForm choice questions must set allowCustom:false or omit it.");
+    }
+    const cards = Array.isArray(question.cards) ? question.cards.map((card, cardIndex) => normalizeChatGptDirectionCard(
+      card,
+      `questionForm.questions[${index}].cards[${cardIndex}]`
+    )) : void 0;
+    if (cards && type !== "direction-cards") {
+      throw new Error(`questionForm.questions[${index}].cards is only valid for direction-cards.`);
+    }
+    if (type === "direction-cards" && (!cards || cards.length < 2 || cards.length > 6)) {
+      throw new Error(`questionForm.questions[${index}].cards must contain 2\u20136 direction cards.`);
+    }
+    if (cards && new Set(cards.map((card) => card.id)).size !== cards.length) {
+      throw new Error(`questionForm.questions[${index}] direction card ids must be unique.`);
+    }
+    let options = Array.isArray(question.options) ? question.options.map((option, optionIndex) => normalizeChatGptFormOption(
+      option,
+      `questionForm.questions[${index}].options[${optionIndex}]`
+    )) : void 0;
+    if (type === "direction-cards" && cards) {
+      const cardIds = new Set(cards.map((card) => card.id));
+      if (options && (options.length !== cards.length || options.some((option) => !cardIds.has(option.value)))) {
+        throw new Error(`questionForm.questions[${index}] direction-card options must match card ids.`);
+      }
+      options = cards.map((card) => ({
+        label: card.label,
+        value: card.id,
+        ...card.mood ? { description: card.mood } : {}
+      }));
+    }
+    if ((!options || options.length === 0) && type === "switch") {
+      options = localizedSwitchOptions(lang);
+    }
+    if (!options || options.length < 2 || options.length > CHATGPT_BRIEF_MAX_OPTIONS) {
+      throw new Error(`questionForm.questions[${index}].options must contain 2\u2013${CHATGPT_BRIEF_MAX_OPTIONS} choices.`);
+    }
+    if (new Set(options.map((option) => option.value)).size !== options.length) {
+      throw new Error(`questionForm.questions[${index}] option values must be unique.`);
+    }
+    const rawDefault = question.defaultValue ?? question.default;
+    const defaultValue = normalizeChatGptDefaultValue(
+      rawDefault,
+      type,
+      options,
+      `questionForm.questions[${index}].defaultValue`
+    );
+    const maxSelections = type === "checkbox" && question.maxSelections !== void 0 ? Number(question.maxSelections) : void 0;
+    if (maxSelections !== void 0 && (!Number.isInteger(maxSelections) || maxSelections < 1 || maxSelections > options.length)) {
+      throw new Error(`questionForm.questions[${index}].maxSelections is invalid.`);
+    }
+    if (maxSelections !== void 0 && Array.isArray(defaultValue) && defaultValue.length > maxSelections) {
+      throw new Error(`questionForm.questions[${index}].defaultValue exceeds maxSelections.`);
+    }
+    questions.push({
+      id: questionId,
+      label: requiredBriefString(question.label, `questionForm.questions[${index}].label`, 200),
+      type,
+      options,
+      ...question.help ? { help: requiredBriefString(question.help, `questionForm.questions[${index}].help`, 300) } : {},
+      ...question.required === true ? { required: true } : {},
+      defaultValue,
+      ...maxSelections !== void 0 ? { maxSelections } : {},
+      allowCustom: false,
+      ...cards ? { cards } : {}
+    });
+  });
+  if (questions.length === 0) {
+    throw new Error("All proposed questions are already answered. Skip collect_brief and continue with the known brief.");
+  }
+  return {
+    id,
+    title,
+    questions,
+    ...description ? { description } : {},
+    ...submitLabel ? { submitLabel } : {},
+    ...lang ? { lang } : {}
+  };
+}
 function publicChatGptResult(name, result) {
   if (!result?.structuredContent || typeof result.structuredContent !== "object") return result;
   const structuredContent = removePublicSecrets(result.structuredContent);
@@ -22913,15 +23134,19 @@ async function handleChatGptV1ToolCall(baseUrl, name, args) {
     if (!isChatGptArtifactType(args.artifactType)) {
       return errorResult(chatGptArtifactTypeError());
     }
-    const brief = Object.fromEntries(
-      ["audience", "outcome", "contentAndFlows", "visualDirection", "outputFormat", "constraints"].filter((field) => typeof args[field] === "string" && String(args[field]).trim()).map((field) => [field, String(args[field]).trim()])
-    );
-    return ok({
-      view: "brief-form",
-      artifactType: args.artifactType,
-      title: typeof args.title === "string" && args.title.trim() ? args.title.trim() : `New Open Design ${args.artifactType}`,
-      brief
-    });
+    try {
+      const knownAnswers = normalizeChatGptKnownAnswers(args.knownAnswers);
+      const questionForm = normalizeChatGptQuestionForm(args.questionForm, knownAnswers);
+      return ok({
+        view: "brief-form",
+        artifactType: args.artifactType,
+        projectTitle: typeof args.projectTitle === "string" && args.projectTitle.trim() ? args.projectTitle.trim() : `New Open Design ${args.artifactType}`,
+        knownAnswers,
+        questionForm
+      });
+    } catch (error2) {
+      return errorResult(error2 instanceof Error ? error2.message : "Invalid dynamic QuestionForm.");
+    }
   }
   let callArgs = args;
   if (name === "start_run") {
@@ -24049,7 +24274,7 @@ function errorMessage(err) {
   return err instanceof Error ? err.message : String(err);
 }
 
-// ../../plugins/open-design/mcp/server.ts
+// plugins/open-design/mcp/server.ts
 var DEFAULT_DAEMON_URL = "http://127.0.0.1:7456";
 var LOCAL_TEST_DAEMON_URL = "http://127.0.0.1:18456";
 async function isReachable(baseUrl) {

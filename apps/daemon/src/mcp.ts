@@ -18,18 +18,27 @@ import {
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import { buildProjectRawFileUrl } from '@open-design/contracts';
+import {
+  buildProjectRawFileUrl,
+  QUESTION_FORM_DECISION_ALIAS_GROUPS,
+} from '@open-design/contracts';
+import type {
+  DirectionCard,
+  FormOption,
+  FormQuestion,
+  QuestionForm,
+} from '@open-design/contracts';
 import { randomUUID } from 'node:crypto';
 
 import { postCreateArtifactRequest } from './artifacts/create.js';
 import { classifyAmrAccountFailure } from './integrations/vela-errors.js';
 
 const SERVER_NAME = 'open-design';
-const SERVER_VERSION = '0.2.12';
+const SERVER_VERSION = '0.2.13';
 const MCP_STDIO_IDLE_EXIT_MS = 30 * 60 * 1000;
 // MCP Apps hosts cache widget resources by URI. Bump this whenever the
 // embedded HTML/CSS/JS changes so a failed or stale sandbox is not reused.
-const CHATGPT_WIDGET_URI = 'ui://open-design/artifact-card-v9.html';
+const CHATGPT_WIDGET_URI = 'ui://open-design/artifact-card-v10.html';
 // A running host can retain tool metadata across a daemon/plugin refresh and
 // keep reading the previous URI. Serve the latest widget at that URI too so
 // existing conversations recover without requiring a Codex restart.
@@ -41,6 +50,7 @@ const LEGACY_CHATGPT_WIDGET_URIS = new Set([
   'ui://open-design/artifact-card-v6.html',
   'ui://open-design/artifact-card-v7.html',
   'ui://open-design/artifact-card-v8.html',
+  'ui://open-design/artifact-card-v9.html',
 ]);
 
 const CHATGPT_ARTIFACT_TYPES = [
@@ -55,6 +65,17 @@ const CHATGPT_ARTIFACT_TYPES = [
 ] as const;
 type ChatGptArtifactType = (typeof CHATGPT_ARTIFACT_TYPES)[number];
 const CHATGPT_ARTIFACT_TYPE_SET = new Set<string>(CHATGPT_ARTIFACT_TYPES);
+const CHATGPT_BRIEF_QUESTION_TYPES = [
+  'radio',
+  'checkbox',
+  'select',
+  'switch',
+  'direction-cards',
+] as const;
+type ChatGptBriefQuestionType = (typeof CHATGPT_BRIEF_QUESTION_TYPES)[number];
+const CHATGPT_BRIEF_QUESTION_TYPE_SET = new Set<string>(CHATGPT_BRIEF_QUESTION_TYPES);
+const CHATGPT_BRIEF_MAX_QUESTIONS = 5;
+const CHATGPT_BRIEF_MAX_OPTIONS = 10;
 
 function isChatGptArtifactType(value: unknown): value is ChatGptArtifactType {
   return typeof value === 'string' && CHATGPT_ARTIFACT_TYPE_SET.has(value);
@@ -104,14 +125,142 @@ export function chatGptV1RequiredScopes(toolName: string): string[] {
   }
 }
 
+function chatGptQuestionFormInputSchema(): JsonObject {
+  const optionSchema: JsonObject = {
+    type: 'object',
+    properties: {
+      label: { type: 'string' },
+      value: { type: 'string' },
+      description: { type: 'string' },
+    },
+    required: ['label', 'value'],
+    additionalProperties: false,
+  };
+  const defaultValueRequirement: JsonObject = {
+    anyOf: [
+      { required: ['default'] },
+      { required: ['defaultValue'] },
+    ],
+  };
+  const optionsRequirement: JsonObject = {
+    if: {
+      properties: {
+        type: { enum: ['radio', 'checkbox', 'select'] },
+      },
+      required: ['type'],
+    },
+    then: { required: ['options'] },
+  };
+  const cardsRequirement: JsonObject = {
+    if: {
+      properties: { type: { const: 'direction-cards' } },
+      required: ['type'],
+    },
+    then: { required: ['cards'] },
+  };
+  const cardSchema: JsonObject = {
+    type: 'object',
+    properties: {
+      id: { type: 'string' },
+      label: { type: 'string' },
+      mood: { type: 'string' },
+      references: { type: 'array', items: { type: 'string' }, maxItems: 6 },
+      palette: { type: 'array', items: { type: 'string' }, maxItems: 8 },
+      displayFont: { type: 'string' },
+      bodyFont: { type: 'string' },
+    },
+    required: ['id', 'label'],
+    additionalProperties: false,
+  };
+  return {
+    type: 'object',
+    description: 'Open Design QuestionForm schema authored for this exact user input. Ask only unresolved decisions that would materially change the artifact.',
+    properties: {
+      id: { type: 'string', description: 'Stable English form id, such as presentation-brief.' },
+      title: { type: 'string', description: 'Localized user-visible form title.' },
+      description: { type: 'string', description: 'Localized explanation of why these remaining decisions matter.' },
+      lang: { type: 'string', description: 'BCP-47 language tag matching the user, such as zh-CN.' },
+      submitLabel: { type: 'string', description: 'Localized submit button label.' },
+      questions: {
+        type: 'array',
+        minItems: 1,
+        maxItems: CHATGPT_BRIEF_MAX_QUESTIONS,
+        description: 'Two or three high-impact unresolved questions are preferred; never exceed five.',
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', description: 'Stable English semantic id. Reuse knownAnswers keys for equivalent decisions.' },
+            label: { type: 'string', description: 'Localized user-visible question.' },
+            type: { type: 'string', enum: [...CHATGPT_BRIEF_QUESTION_TYPES] },
+            options: {
+              type: 'array',
+              minItems: 2,
+              maxItems: CHATGPT_BRIEF_MAX_OPTIONS,
+              items: optionSchema,
+            },
+            cards: {
+              type: 'array',
+              minItems: 2,
+              maxItems: 6,
+              items: cardSchema,
+            },
+            help: { type: 'string' },
+            required: { type: 'boolean' },
+            default: {
+              oneOf: [
+                { type: 'string' },
+                { type: 'boolean' },
+                { type: 'array', items: { type: 'string' } },
+              ],
+              description: 'Recommended option value inferred from the current brief.',
+            },
+            defaultValue: {
+              oneOf: [
+                { type: 'string' },
+                { type: 'boolean' },
+                { type: 'array', items: { type: 'string' } },
+              ],
+            },
+            maxSelections: { type: 'integer', minimum: 1 },
+            allowCustom: {
+              type: 'boolean',
+              enum: [false],
+              description: 'Must remain false so the Plugin brief stays choice-only.',
+            },
+          },
+          required: ['id', 'label', 'type'],
+          allOf: [defaultValueRequirement, optionsRequirement, cardsRequirement],
+          additionalProperties: false,
+        },
+      },
+    },
+    required: ['id', 'title', 'questions'],
+    additionalProperties: false,
+  };
+}
+
+function chatGptKnownAnswersInputSchema(): JsonObject {
+  return {
+    type: 'object',
+    description: 'Decisions already answered by the user input, project metadata, attachments, or active design system. Questions with matching ids are removed server-side.',
+    additionalProperties: {
+      oneOf: [
+        { type: 'string' },
+        { type: 'array', items: { type: 'string' } },
+      ],
+    },
+  };
+}
+
 function chatGptV1OutputSchema(toolName: string): JsonObject {
   const stringValue = { type: 'string' };
   const schemas: Record<string, JsonObject> = {
     collect_brief: {
       view: { type: 'string', enum: ['brief-form'] },
       artifactType: { type: 'string', enum: [...CHATGPT_ARTIFACT_TYPES] },
-      title: stringValue,
-      brief: { type: 'object' },
+      projectTitle: stringValue,
+      questionForm: chatGptQuestionFormInputSchema(),
+      knownAnswers: chatGptKnownAnswersInputSchema(),
     },
     get_cloud_account: {
       loggedIn: { type: 'boolean' },
@@ -269,14 +418,18 @@ const CHATGPT_WIDGET_HTML = `<!doctype html>
     .choice-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 7px; }
     .choice { position: relative; min-width: 0; cursor: pointer; }
     .choice input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-    .choice span {
+    .choice > span {
       min-height: 38px; display: flex; align-items: center; justify-content: space-between; gap: 8px;
       border: 1px solid var(--border); border-radius: 9px; padding: 8px 10px;
       background: var(--fill); color: var(--text); font-size: 12px; line-height: 1.3;
       transition: border-color 140ms cubic-bezier(.23,1,.32,1), background 140ms cubic-bezier(.23,1,.32,1), color 140ms cubic-bezier(.23,1,.32,1), transform 140ms cubic-bezier(.23,1,.32,1);
     }
-    .choice:hover span { transform: translateY(-1px); border-color: color-mix(in srgb, var(--text) 30%, var(--border)); }
+    .choice-copy { display: grid; gap: 2px; min-width: 0; }
+    .choice-label { font-weight: 600; }
+    .choice-detail { color: var(--text-muted); font-size: 10px; line-height: 1.35; }
+    .choice:hover > span { transform: translateY(-1px); border-color: color-mix(in srgb, var(--text) 30%, var(--border)); }
     .choice input:checked + span { border-color: var(--button); background: var(--button); color: var(--button-text); }
+    .choice input:checked + span .choice-detail { color: color-mix(in srgb, var(--button-text) 72%, transparent); }
     .choice input:checked + span::after { content: "✓"; flex: 0 0 auto; font-size: 11px; font-weight: 700; }
     .choice input:focus-visible + span { box-shadow: 0 0 0 3px color-mix(in srgb, var(--text) 12%, transparent); }
     .brief-actions { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
@@ -298,16 +451,10 @@ const CHATGPT_WIDGET_HTML = `<!doctype html>
   <main class="card" id="card" data-view="compact">
     <section class="compact" id="compact"><div class="state"><span class="state-dot" id="state-dot"></span><div class="state-copy"><strong class="state-title" id="state-title"></strong><p class="state-detail" id="state-detail"></p></div></div><div class="balance" id="balance" hidden><span class="balance-label">Remaining balance</span><strong class="balance-value" id="balance-value"></strong></div><button id="account-action" hidden></button></section>
     <section class="brief" id="brief-form" hidden>
-      <div class="brief-copy"><h2 class="brief-title">Choose a direction</h2><p class="brief-detail">Pick what fits best. Recommended choices are already selected, and you can refine the result later in OpenDesign.</p></div>
+      <div class="brief-copy"><h2 class="brief-title" id="brief-title"></h2><p class="brief-detail" id="brief-detail"></p></div>
       <form id="brief-fields">
-        <div class="brief-groups">
-          <fieldset class="brief-group"><legend>Primary goal</legend><div class="choice-grid" id="brief-goal-options"></div></fieldset>
-          <fieldset class="brief-group"><legend>Audience</legend><div class="choice-grid" id="brief-audience-options"></div></fieldset>
-          <fieldset class="brief-group wide"><legend>Include <small>Choose all that apply</small></legend><div class="choice-grid" id="brief-content-options"></div></fieldset>
-          <fieldset class="brief-group wide"><legend>Visual style</legend><div class="choice-grid" id="brief-visual-options"></div></fieldset>
-          <fieldset class="brief-group wide"><legend>Output</legend><div class="choice-grid" id="brief-output-options"></div></fieldset>
-        </div>
-        <div class="brief-actions"><button id="brief-submit" type="submit">Create with these choices</button><p class="brief-error" id="brief-error" role="status"></p></div>
+        <div class="brief-groups" id="brief-questions"></div>
+        <div class="brief-actions"><button id="brief-submit" type="submit"></button><p class="brief-error" id="brief-error" role="status"></p></div>
       </form>
     </section>
     <section class="preview" id="preview"><div class="placeholder"><div class="pulse" id="pulse"></div><strong id="preview-title">Preparing your design</strong></div></section>
@@ -398,27 +545,117 @@ const CHATGPT_WIDGET_HTML = `<!doctype html>
       }
       window.open(url, '_blank', 'noopener,noreferrer');
     }
-    async function sendBriefMessage(payload) {
-      const lines = [
-        '[OpenDesign brief confirmed]',
-        'Project name: ' + payload.title,
-        'Artifact type: ' + payload.artifactType,
-        'Audience: ' + payload.brief.audience,
-        'Outcome: ' + payload.brief.outcome,
-        'Content and flows: ' + payload.brief.contentAndFlows,
-        'Visual direction: ' + payload.brief.visualDirection,
-        'Output format: ' + payload.brief.outputFormat,
-      ];
-      if (payload.brief.constraints) lines.push('Constraints: ' + payload.brief.constraints);
-      lines.push('Create the Open Design project and start the Cloud run with confirmed:true. Do not ask for the same brief again.');
+    function briefOptionList(question) {
+      const rawOptions = Array.isArray(question?.options) ? question.options : [];
+      const cards = Array.isArray(question?.cards) ? question.cards : [];
+      return rawOptions.map((rawOption) => {
+        const option = typeof rawOption === 'string'
+          ? { label: rawOption, value: rawOption }
+          : rawOption && typeof rawOption === 'object'
+            ? {
+                label: safeText(rawOption.label, rawOption.value),
+                value: safeText(rawOption.value, rawOption.label),
+                description: safeText(rawOption.description, ''),
+              }
+            : null;
+        if (!option || !option.label || !option.value) return null;
+        const card = cards.find((candidate) => candidate && candidate.id === option.value);
+        return {
+          label: option.label,
+          value: option.value,
+          description: option.description || safeText(card?.mood, ''),
+        };
+      }).filter(Boolean);
+    }
+    function briefDefaultValues(question) {
+      const raw = question?.defaultValue;
+      if (Array.isArray(raw)) return raw.map((value) => String(value));
+      if (raw === undefined || raw === null || raw === '') return [];
+      return [String(raw)];
+    }
+    function briefUiCopy(questionForm) {
+      const chinese = safeText(questionForm?.lang, '').toLowerCase().startsWith('zh');
+      return chinese ? {
+        chooseOne: '请选择',
+        chooseAll: '可多选',
+        chooseUpTo: (count) => '最多选择 ' + count + ' 项',
+        maxError: (label, count) => label + '：最多选择 ' + count + ' 项。',
+        noChoices: '当前没有可选择的问题。',
+        continue: '确认并继续',
+        missing: (labels) => '请选择：' + labels.join('、') + '。',
+        exceeded: (labels) => '以下问题选择过多：' + labels.join('、') + '。',
+        submitting: '正在提交…',
+        submitted: '已提交',
+        submittedStatus: '已提交。',
+        submitFailed: '暂时无法提交，请重试。',
+      } : {
+        chooseOne: 'Choose one',
+        chooseAll: 'Choose all that apply',
+        chooseUpTo: (count) => 'Choose up to ' + count,
+        maxError: (label, count) => label + ': choose no more than ' + count + '.',
+        noChoices: 'No choices are available for this brief.',
+        continue: 'Continue',
+        missing: (labels) => 'Choose an option for: ' + labels.join(', ') + '.',
+        exceeded: (labels) => 'Too many choices selected for: ' + labels.join(', ') + '.',
+        submitting: 'Submitting…',
+        submitted: 'Submitted',
+        submittedStatus: 'Brief submitted.',
+        submitFailed: 'Could not submit the brief.',
+      };
+    }
+    function briefQuestionHelp(question, copy) {
+      if (typeof question?.help === 'string' && question.help.trim()) return question.help.trim();
+      if (question?.type !== 'checkbox') return '';
+      if (Number.isInteger(question.maxSelections) && question.maxSelections > 0) {
+        return copy.chooseUpTo(question.maxSelections);
+      }
+      return copy.chooseAll;
+    }
+    function briefAnswerDisplay(question, value) {
+      const option = briefOptionList(question).find(
+        (candidate) => candidate.value === value || candidate.label === value,
+      );
+      if (!option) return value;
+      return option.label === option.value
+        ? option.label
+        : option.label + ' [value: ' + option.value + ']';
+    }
+    function formatQuestionFormAnswers(questionForm, answers) {
+      const lines = ['[form answers — ' + questionForm.id + ']'];
+      questionForm.questions.forEach((question) => {
+        const answer = answers[question.id];
+        let display = '(skipped)';
+        if (Array.isArray(answer) && answer.length > 0) {
+          display = answer.map((value) => briefAnswerDisplay(question, value)).join(', ');
+        } else if (typeof answer === 'string' && answer.trim()) {
+          display = briefAnswerDisplay(question, answer.trim());
+        }
+        lines.push('- ' + question.label + ': ' + display);
+      });
       const text = lines.join('\\n');
+      return text;
+    }
+    async function sendQuestionFormAnswers(output, questionForm, answers) {
+      const text = formatQuestionFormAnswers(questionForm, answers);
+      const modelContext = {
+        artifactType: safeText(output.artifactType, ''),
+        projectTitle: safeText(output.projectTitle, 'New Open Design project').trim(),
+        questionForm,
+        knownAnswers: output.knownAnswers && typeof output.knownAnswers === 'object'
+          ? output.knownAnswers
+          : {},
+        answers,
+      };
       if (await bridgeReady) {
         try {
           await rpcRequest('ui/update-model-context', {
-            structuredContent: { openDesignBrief: { ...payload, confirmed: true } },
+            structuredContent: { openDesignBrief: { ...modelContext, confirmed: true } },
           });
         } catch {}
-        await rpcRequest('ui/message', { role: 'user', content: [{ type: 'text', text }] });
+        await rpcRequest('ui/message', {
+          role: 'user',
+          content: [{ type: 'text', text }],
+        });
         return;
       }
       if (window.openai?.sendFollowUpMessage) {
@@ -427,379 +664,153 @@ const CHATGPT_WIDGET_HTML = `<!doctype html>
       }
       throw new Error('This host cannot submit Custom UI messages.');
     }
-    function defaultOutputFormat(artifactType) {
-      const formats = {
-        website: 'Responsive browser website',
-        'product-prototype': 'Interactive responsive product prototype',
-        presentation: 'Browser presentation with a real preview',
-        'design-system': 'Reusable DESIGN.md design system',
-        image: 'Square PNG image · 1:1',
-        video: 'Landscape MP4 video · 16:9',
-        audio: '60-second music track',
-        document: 'Markdown source + print-ready HTML',
-      };
-      return formats[artifactType] || '';
-    }
-    const briefChoice = (label, value, recommended = false) => ({ label, value, recommended });
-    const BRIEF_CHOICE_PRESETS = {
-      website: {
-        goal: [
-          briefChoice('Explain & convert', 'Explain the offering clearly and drive visitors toward the primary conversion.', true),
-          briefChoice('Launch something', 'Introduce and launch a new product, service, feature, or campaign.'),
-          briefChoice('Build trust', 'Build credibility through a clear story, proof, and a professional presentation.'),
-          briefChoice('Sell online', 'Help visitors evaluate the offer and complete a purchase or sales inquiry.'),
-        ],
-        audience: [
-          briefChoice('Potential customers', 'Potential customers evaluating whether this offering is right for them.', true),
-          briefChoice('Existing users', 'Existing users who already know the product and need guidance or updates.'),
-          briefChoice('Business buyers', 'Business buyers and decision-makers comparing solutions and expected value.'),
-          briefChoice('General audience', 'A broad public audience with mixed levels of familiarity.'),
-        ],
-        content: [
-          briefChoice('Hero & CTA', 'A strong opening message with one clear primary call to action.', true),
-          briefChoice('Key benefits', 'A concise benefits and feature story that explains why the offering matters.', true),
-          briefChoice('Social proof', 'Trust signals such as customer quotes, results, logos, or evidence.', true),
-          briefChoice('How it works', 'A simple step-by-step explanation of the experience or process.'),
-          briefChoice('Pricing', 'Pricing or plan information with a clear comparison and next step.'),
-          briefChoice('FAQ & contact', 'Frequently asked questions plus a direct contact or final conversion path.'),
-        ],
-        visual: [
-          briefChoice('Clean product', 'Use a clean product-marketing system with strong hierarchy, generous whitespace, and restrained color.', true),
-          briefChoice('Bold editorial', 'Use expressive typography, strong composition, and memorable editorial contrast.'),
-          briefChoice('Warm brand', 'Use friendly color, soft geometry, and inviting imagery.'),
-          briefChoice('Premium minimal', 'Use refined typography, muted color, and polished details.'),
-        ],
-        output: [
-          briefChoice('Responsive website', 'Responsive browser website', true),
-          briefChoice('Desktop-first site', 'Desktop-first browser website with responsive fallbacks'),
-          briefChoice('Mobile-first site', 'Mobile-first responsive browser website'),
-        ],
-      },
-      'product-prototype': {
-        goal: [
-          briefChoice('Validate an idea', 'Make the product concept tangible enough to validate the value proposition and interaction model.', true),
-          briefChoice('Demo the core flow', 'Demonstrate the most important end-to-end workflow in a convincing interactive prototype.'),
-          briefChoice('Run a user test', 'Create a focused prototype suitable for observing usability and task completion.'),
-          briefChoice('Support a review', 'Communicate the proposed product behavior clearly for stakeholder or product review.'),
-        ],
-        audience: [
-          briefChoice('New users', 'First-time users who need a clear, guided path through the product.', true),
-          briefChoice('Power users', 'Experienced users who value speed, control, and information density.'),
-          briefChoice('Internal teams', 'Internal product, design, engineering, or operations collaborators.'),
-          briefChoice('Decision-makers', 'Stakeholders or buyers evaluating the product concept and business value.'),
-        ],
-        content: [
-          briefChoice('Core workflow', 'The primary task flow from entry through successful completion.', true),
-          briefChoice('Navigation & states', 'Navigation plus realistic empty, loading, success, and error states.', true),
-          briefChoice('Dashboard & data', 'A useful overview with realistic metrics, records, or progress information.'),
-          briefChoice('Search & discovery', 'Search, filtering, browsing, or recommendation interactions.'),
-          briefChoice('Create & edit', 'Creation and editing interactions with clear feedback and validation.'),
-          briefChoice('Settings', 'Account, preference, permission, or configuration surfaces.'),
-        ],
-        visual: [
-          briefChoice('Polished product UI', 'Use a polished product-interface direction with clear hierarchy, realistic density, and precise component states.', true),
-          briefChoice('Calm workspace', 'Use a calm workspace aesthetic with restrained color and task-focused layouts.'),
-          briefChoice('Expressive consumer', 'Use an expressive consumer-product direction with friendly color, motion, and bold moments.'),
-          briefChoice('Data dense', 'Use a compact, data-dense professional interface optimized for power users.'),
-        ],
-        output: [
-          briefChoice('Responsive prototype', 'Interactive responsive product prototype', true),
-          briefChoice('Desktop prototype', 'Interactive desktop product prototype'),
-          briefChoice('Mobile prototype', 'Interactive mobile product prototype'),
-        ],
-      },
-      presentation: {
-        goal: [
-          briefChoice('Pitch an idea', 'Persuade the audience to support an idea, product, company, or initiative.', true),
-          briefChoice('Share strategy', 'Explain a strategic direction, priorities, and the reasoning behind them.'),
-          briefChoice('Report progress', 'Communicate results, learnings, current status, and next steps.'),
-          briefChoice('Teach a topic', 'Help the audience understand and remember a topic through a clear narrative.'),
-        ],
-        audience: [
-          briefChoice('Leadership', 'Executives and senior leaders who need concise decisions, evidence, and implications.', true),
-          briefChoice('Customers', 'Customers or prospects evaluating an offer, proposal, or solution.'),
-          briefChoice('Investors', 'Investors assessing the opportunity, traction, differentiation, and plan.'),
-          briefChoice('Internal team', 'An internal cross-functional team aligning around context and action.'),
-        ],
-        content: [
-          briefChoice('Clear story arc', 'A strong beginning, logical narrative arc, and memorable conclusion.', true),
-          briefChoice('Evidence & data', 'Focused evidence, metrics, examples, or proof that supports the argument.', true),
-          briefChoice('Recommendation', 'A clear proposal or recommendation with rationale and trade-offs.'),
-          briefChoice('Product story', 'A visual explanation of the product, experience, or solution.'),
-          briefChoice('Roadmap', 'A phased plan, milestones, priorities, or future direction.'),
-          briefChoice('Next steps', 'Specific decisions, owners, calls to action, or immediate next steps.', true),
-        ],
-        visual: [
-          briefChoice('Executive minimal', 'Use an executive presentation style with concise typography, disciplined grids, and restrained color.', true),
-          briefChoice('Editorial story', 'Use an editorial storytelling direction with expressive type, full-bleed visuals, and strong pacing.'),
-          briefChoice('Data forward', 'Use a data-forward presentation system with legible charts, annotations, and evidence-first layouts.'),
-          briefChoice('Product showcase', 'Use a product-showcase direction with interface mockups, visual sequences, and polished demonstrations.'),
-        ],
-        output: [
-          briefChoice('Browser deck', 'Browser presentation with a real preview', true),
-          briefChoice('PPTX-ready deck', 'Browser deck structured for later PPTX export in Open Design'),
-          briefChoice('PDF-ready deck', 'Browser deck structured for later PDF export in Open Design'),
-        ],
-      },
-      'design-system': {
-        goal: [
-          briefChoice('Unify a product', 'Create a consistent visual and interaction foundation across an existing product.', true),
-          briefChoice('Start a new product', 'Define a practical design foundation for a new product from the beginning.'),
-          briefChoice('Refresh the brand', 'Translate an updated brand direction into usable digital product rules.'),
-          briefChoice('Scale delivery', 'Help design and engineering teams ship consistent interfaces more efficiently.'),
-        ],
-        audience: [
-          briefChoice('Product teams', 'Cross-functional product teams using shared rules to design and build experiences.', true),
-          briefChoice('Designers', 'Designers who need foundations, components, patterns, and clear usage guidance.'),
-          briefChoice('Developers', 'Frontend engineers implementing reusable components and product patterns.'),
-          briefChoice('Brand teams', 'Brand and marketing teams extending the visual language across digital surfaces.'),
-        ],
-        content: [
-          briefChoice('Foundations', 'Color, typography, spacing, layout, shape, elevation, and motion foundations.', true),
-          briefChoice('Core components', 'A practical set of reusable interface components and their states.', true),
-          briefChoice('Usage guidance', 'Clear rules, examples, and do-and-don’t guidance for consistent application.', true),
-          briefChoice('Accessibility', 'Accessibility requirements for contrast, focus, semantics, motion, and input.'),
-          briefChoice('Product patterns', 'Reusable patterns for navigation, forms, feedback, data, and common flows.'),
-          briefChoice('Governance', 'Contribution, naming, ownership, versioning, and maintenance guidance.'),
-        ],
-        visual: [
-          briefChoice('Product foundation', 'Define a practical digital-product foundation with accessible tokens, components, and interaction patterns.', true),
-          briefChoice('Brand-led system', 'Translate a distinctive brand language into reusable digital foundations and components.'),
-          briefChoice('Enterprise system', 'Prioritize accessibility, density, governance, and durable multi-team patterns.'),
-          briefChoice('Expressive system', 'Define a more expressive system with strong typography, color, motion, and signature components.'),
-        ],
-        output: [
-          briefChoice('DESIGN.md', 'Reusable DESIGN.md design system', true),
-          briefChoice('Tokens & guidance', 'DESIGN.md with detailed tokens, components, and usage guidance'),
-          briefChoice('Migration-ready', 'DESIGN.md with migration rules and component mapping'),
-        ],
-      },
-      image: {
-        goal: [
-          briefChoice('Campaign visual', 'Create a launch-ready campaign visual that communicates one clear idea.', true),
-          briefChoice('Product showcase', 'Present a product or feature as a premium hero image.'),
-          briefChoice('Social creative', 'Create a high-impact image designed for social sharing and fast comprehension.'),
-          briefChoice('Editorial illustration', 'Turn the concept into a distinctive editorial illustration.'),
-        ],
-        audience: [
-          briefChoice('Potential customers', 'Potential customers encountering the product or campaign for the first time.', true),
-          briefChoice('Social audience', 'A broad social audience scrolling quickly through a visual feed.'),
-          briefChoice('Business buyers', 'Professional decision-makers evaluating quality and credibility.'),
-          briefChoice('Internal team', 'Internal stakeholders reviewing a visual direction or concept.'),
-        ],
-        content: [
-          briefChoice('Hero subject', 'One unmistakable hero subject with a clear focal point.', true),
-          briefChoice('Brand cues', 'Recognizable brand color, material, typography, or visual motifs.', true),
-          briefChoice('Context', 'A setting or environment that explains the subject and mood.'),
-          briefChoice('Text-safe space', 'Deliberate negative space for a headline or campaign copy.'),
-          briefChoice('Product detail', 'Close-up product detail, material, interface, or craftsmanship.'),
-        ],
-        visual: [
-          briefChoice('Premium studio', 'Use premium product-studio lighting, controlled materials, and polished commercial detail.', true),
-          briefChoice('Cinematic', 'Use cinematic lighting, atmosphere, depth, and dramatic composition.'),
-          briefChoice('Graphic editorial', 'Use bold graphic composition, expressive typography-safe geometry, and editorial contrast.'),
-          briefChoice('Warm lifestyle', 'Use natural light, human warmth, and an approachable lifestyle setting.'),
-        ],
-        output: [
-          briefChoice('Square · 1:1', 'Square PNG image · 1:1', true),
-          briefChoice('Landscape · 16:9', 'Landscape PNG image · 16:9'),
-          briefChoice('Portrait · 3:4', 'Portrait PNG image · 3:4'),
-          briefChoice('Story · 9:16', 'Vertical PNG image · 9:16'),
-        ],
-      },
-      video: {
-        goal: [
-          briefChoice('Product promo', 'Create a concise product-promotion video with a clear value proposition.', true),
-          briefChoice('Launch teaser', 'Build anticipation for a launch through a short visual teaser.'),
-          briefChoice('Feature demo', 'Demonstrate a product feature or experience through a clear visual sequence.'),
-          briefChoice('Brand story', 'Communicate a brand idea through mood, narrative, and memorable imagery.'),
-        ],
-        audience: [
-          briefChoice('Potential customers', 'Potential customers evaluating the offer or product.', true),
-          briefChoice('Social audience', 'A social audience expecting an immediate hook and quick pacing.'),
-          briefChoice('Existing users', 'Existing users learning about a feature, release, or workflow.'),
-          briefChoice('Stakeholders', 'Internal or external stakeholders reviewing a concept or launch direction.'),
-        ],
-        content: [
-          briefChoice('Opening hook', 'A strong opening image or action in the first seconds.', true),
-          briefChoice('Hero sequence', 'A focused visual sequence centered on the product, subject, or core idea.', true),
-          briefChoice('Story beats', 'A beginning, progression, and satisfying closing beat.'),
-          briefChoice('Product moments', 'Clear product, interface, feature, or usage moments.'),
-          briefChoice('Closing CTA', 'A final branded call to action or memorable end frame.'),
-        ],
-        visual: [
-          briefChoice('Cinematic product', 'Use cinematic product cinematography, deliberate camera movement, and polished lighting.', true),
-          briefChoice('Kinetic social', 'Use fast, kinetic social-video pacing with bold framing and immediate visual hooks.'),
-          briefChoice('Documentary', 'Use grounded documentary imagery, natural movement, and authentic texture.'),
-          briefChoice('Motion graphic', 'Use graphic shapes, interface motion, typography-safe composition, and designed transitions.'),
-        ],
-        output: [
-          briefChoice('Landscape · 16:9', 'Landscape MP4 video · 16:9', true),
-          briefChoice('Vertical · 9:16', 'Vertical MP4 video · 9:16'),
-          briefChoice('Square · 1:1', 'Square MP4 video · 1:1'),
-        ],
-      },
-      audio: {
-        goal: [
-          briefChoice('Brand music', 'Create a distinctive music bed or sonic identity for a brand or product.', true),
-          briefChoice('Voiceover', 'Create a clear spoken narration for a product, story, or presentation.'),
-          briefChoice('Soundscape', 'Create an atmospheric soundscape that establishes mood and place.'),
-          briefChoice('Sound effect', 'Create a focused sound effect or short sonic cue.'),
-        ],
-        audience: [
-          briefChoice('General listeners', 'A broad audience listening through common consumer devices.', true),
-          briefChoice('Customers', 'Customers hearing the audio inside a product, campaign, or launch asset.'),
-          briefChoice('Presentation audience', 'An audience listening alongside a presentation or visual narrative.'),
-          briefChoice('Internal team', 'Internal reviewers evaluating direction, tone, and usability.'),
-        ],
-        content: [
-          briefChoice('Clear opening', 'A recognizable opening motif, phrase, or sonic hook.', true),
-          briefChoice('Structured progression', 'A deliberate beginning, development, and ending.', true),
-          briefChoice('Voice or lead', 'A clear lead voice, melody, or featured sound.'),
-          briefChoice('Background bed', 'A supportive atmospheric or musical bed with room for other content.'),
-          briefChoice('Clean ending', 'A resolved ending suitable for editing or looping.'),
-        ],
-        visual: [
-          briefChoice('Modern & polished', 'Use a modern, polished sonic direction with clear production and restrained detail.', true),
-          briefChoice('Warm & human', 'Use warm instrumentation, natural voice, and an approachable emotional tone.'),
-          briefChoice('Cinematic', 'Use cinematic scale, atmosphere, dynamic contrast, and emotional progression.'),
-          briefChoice('Minimal electronic', 'Use minimal electronic texture, precise rhythm, and a clean technology tone.'),
-        ],
-        output: [
-          briefChoice('60s music', '60-second music track', true),
-          briefChoice('30s voiceover', '30-second spoken voiceover'),
-          briefChoice('15s soundscape', '15-second atmospheric soundscape'),
-          briefChoice('5s sound effect', '5-second sound effect'),
-        ],
-      },
-      document: {
-        goal: [
-          briefChoice('Decision report', 'Create a concise report that helps readers understand evidence and make a decision.', true),
-          briefChoice('Proposal', 'Present a persuasive proposal with context, recommendation, and next steps.'),
-          briefChoice('Brief', 'Turn the material into a clear working brief with requirements and open decisions.'),
-          briefChoice('One-pager', 'Condense the message into a focused, highly scannable one-page document.'),
-        ],
-        audience: [
-          briefChoice('Leadership', 'Executives and senior leaders who need concise evidence, implications, and decisions.', true),
-          briefChoice('Customers', 'Customers or prospects evaluating a proposal, service, or recommendation.'),
-          briefChoice('Project team', 'A cross-functional team aligning on context, requirements, and action.'),
-          briefChoice('General readers', 'A broad audience that needs plain language and clear structure.'),
-        ],
-        content: [
-          briefChoice('Executive summary', 'A concise summary of the situation, key message, and decision.', true),
-          briefChoice('Structured sections', 'Clear sections with a logical reading order and descriptive headings.', true),
-          briefChoice('Evidence & data', 'Relevant facts, evidence, examples, tables, or charts.'),
-          briefChoice('Recommendation', 'A concrete recommendation with rationale and trade-offs.'),
-          briefChoice('Next steps', 'Specific actions, owners, timing, or follow-up decisions.', true),
-        ],
-        visual: [
-          briefChoice('Editorial report', 'Use a polished editorial-report layout with strong hierarchy, readable measure, and refined typography.', true),
-          briefChoice('Executive minimal', 'Use a minimal business-document direction with concise spacing, restrained color, and clear decisions.'),
-          briefChoice('Data first', 'Use a data-first layout with prominent evidence, tables, charts, and annotations.'),
-          briefChoice('Branded magazine', 'Use a more expressive branded-magazine direction with visual pacing and editorial details.'),
-        ],
-        output: [
-          briefChoice('Markdown + HTML', 'Markdown source + print-ready HTML', true),
-          briefChoice('HTML document', 'Polished browser-previewable HTML document'),
-          briefChoice('PDF-ready', 'Print-ready HTML document prepared for PDF export in Open Design'),
-        ],
-      },
-    };
-    function conciseChoiceLabel(value) {
-      const normalized = String(value).trim().replace(/\\s+/g, ' ');
-      return normalized.length > 64 ? normalized.slice(0, 61) + '…' : normalized;
-    }
-    function resolvedBriefChoices(options, suggestedValue) {
-      const suggestion = typeof suggestedValue === 'string' ? suggestedValue.trim() : '';
-      if (!suggestion) return options;
-      const exact = options.find((item) => item.value.toLowerCase() === suggestion.toLowerCase());
-      if (exact) return options.map((item) => ({ ...item, recommended: item === exact }));
-      return [
-        briefChoice('From your brief · ' + conciseChoiceLabel(suggestion), suggestion, true),
-        ...options.map((item) => ({ ...item, recommended: false })),
-      ];
-    }
-    function renderBriefChoiceGroup(containerId, name, definition, suggestedValue) {
-      const host = byId(containerId);
-      host.replaceChildren();
-      const options = resolvedBriefChoices(definition.options, suggestedValue);
-      options.forEach((item) => {
+    let briefQuestionControls = [];
+    function renderBriefQuestion(question, questionIndex, questionCount, copy) {
+      const fieldset = document.createElement('fieldset');
+      fieldset.className = 'brief-group';
+      if (questionCount === 1 || question.type === 'checkbox' || question.type === 'direction-cards') {
+        fieldset.classList.add('wide');
+      }
+      const legend = document.createElement('legend');
+      legend.append(document.createTextNode(safeText(question.label, copy.chooseOne)));
+      const help = briefQuestionHelp(question, copy);
+      if (help) {
+        const helpText = document.createElement('small');
+        helpText.textContent = help;
+        legend.append(helpText);
+      }
+      const choices = document.createElement('div');
+      choices.className = 'choice-grid';
+      const multiple = question.type === 'checkbox';
+      const defaults = new Set(briefDefaultValues(question));
+      const options = briefOptionList(question);
+      const inputs = [];
+      options.forEach((option) => {
         const label = document.createElement('label');
         label.className = 'choice';
         const input = document.createElement('input');
-        input.type = definition.multiple ? 'checkbox' : 'radio';
-        input.name = name;
-        input.value = item.value;
-        input.checked = item.recommended === true;
-        const text = document.createElement('span');
-        text.textContent = item.label;
-        label.append(input, text);
-        host.append(label);
+        input.type = multiple ? 'checkbox' : 'radio';
+        input.name = 'brief-question-' + questionIndex;
+        input.value = option.value;
+        input.checked = defaults.has(option.value) || defaults.has(option.label);
+        const card = document.createElement('span');
+        const copy = document.createElement('span');
+        copy.className = 'choice-copy';
+        const optionLabel = document.createElement('span');
+        optionLabel.className = 'choice-label';
+        optionLabel.textContent = option.label;
+        copy.append(optionLabel);
+        if (option.description) {
+          const detail = document.createElement('span');
+          detail.className = 'choice-detail';
+          detail.textContent = option.description;
+          copy.append(detail);
+        }
+        card.append(copy);
+        label.append(input, card);
+        choices.append(label);
+        inputs.push(input);
       });
+      if (multiple && Number.isInteger(question.maxSelections) && question.maxSelections > 0) {
+        inputs.forEach((input) => {
+          input.addEventListener('change', () => {
+            const selectedCount = inputs.filter((candidate) => candidate.checked).length;
+            if (selectedCount <= question.maxSelections) return;
+            input.checked = false;
+            const error = byId('brief-error');
+            error.dataset.tone = 'error';
+            error.textContent = copy.maxError(safeText(question.label, copy.chooseOne), question.maxSelections);
+            scheduleSizeChanged();
+          });
+        });
+      }
+      fieldset.append(legend, choices);
+      briefQuestionControls.push({ question, inputs });
+      return fieldset;
     }
-    function selectedBriefChoice(name, multiple = false) {
-      const selected = Array.from(document.querySelectorAll('input[name="' + name + '"]:checked'));
-      if (multiple) return selected.map((input) => input.value).join('; ');
-      return selected[0]?.value || '';
+    function collectQuestionFormAnswers(questionForm) {
+      const answers = {};
+      const missing = [];
+      const exceeded = [];
+      briefQuestionControls.forEach(({ question, inputs }) => {
+        const selected = inputs.filter((input) => input.checked).map((input) => input.value);
+        if (question.type === 'checkbox') {
+          answers[question.id] = selected;
+          if (Number.isInteger(question.maxSelections) && selected.length > question.maxSelections) {
+            exceeded.push(safeText(question.label, question.id));
+          }
+        } else {
+          answers[question.id] = selected[0] || '';
+        }
+        if (question.required === true && selected.length === 0) {
+          missing.push(safeText(question.label, question.id));
+        }
+      });
+      return { answers, missing, exceeded };
     }
     function renderBrief(output) {
-      const brief = output.brief && typeof output.brief === 'object' ? output.brief : {};
-      const hydrationKey = JSON.stringify({ artifactType: output.artifactType, title: output.title, brief });
+      const questionForm = output.questionForm && typeof output.questionForm === 'object'
+        ? output.questionForm
+        : {};
+      const questions = Array.isArray(questionForm.questions) ? questionForm.questions : [];
+      const copy = briefUiCopy(questionForm);
+      const hydrationKey = JSON.stringify({
+        artifactType: output.artifactType,
+        projectTitle: output.projectTitle,
+        questionForm,
+        knownAnswers: output.knownAnswers,
+      });
       if (hydrationKey !== briefHydratedKey) {
         briefHydratedKey = hydrationKey;
-        const preset = BRIEF_CHOICE_PRESETS[output.artifactType] || BRIEF_CHOICE_PRESETS.website;
-        renderBriefChoiceGroup('brief-goal-options', 'brief-goal', { options: preset.goal, multiple: false }, brief.outcome);
-        renderBriefChoiceGroup('brief-audience-options', 'brief-audience', { options: preset.audience, multiple: false }, brief.audience);
-        renderBriefChoiceGroup('brief-content-options', 'brief-content', { options: preset.content, multiple: true }, brief.contentAndFlows);
-        renderBriefChoiceGroup('brief-visual-options', 'brief-visual', { options: preset.visual, multiple: false }, brief.visualDirection);
-        renderBriefChoiceGroup('brief-output-options', 'brief-output', { options: preset.output, multiple: false }, brief.outputFormat);
+        byId('brief-form').lang = safeText(questionForm.lang, 'en');
+        byId('brief-title').textContent = safeText(questionForm.title, 'A few quick questions');
+        const description = byId('brief-detail');
+        description.textContent = safeText(questionForm.description, '');
+        description.hidden = !description.textContent;
+        const questionHost = byId('brief-questions');
+        questionHost.replaceChildren();
+        briefQuestionControls = [];
+        questions.forEach((question, index) => {
+          questionHost.append(renderBriefQuestion(question, index, questions.length, copy));
+        });
         const submit = byId('brief-submit');
-        submit.disabled = false;
-        submit.textContent = 'Create with these choices';
-        byId('brief-error').textContent = '';
+        submit.disabled = questions.length === 0;
+        submit.textContent = safeText(questionForm.submitLabel, copy.continue);
+        const error = byId('brief-error');
+        error.dataset.tone = questions.length === 0 ? 'error' : '';
+        error.textContent = questions.length === 0 ? copy.noChoices : '';
       }
       const form = byId('brief-fields');
       form.onsubmit = async (event) => {
         event.preventDefault();
         const submit = byId('brief-submit');
         const error = byId('brief-error');
-        const payload = {
-          artifactType: output.artifactType,
-          title: safeText(output.title, 'New Open Design project').trim(),
-          brief: {
-            audience: selectedBriefChoice('brief-audience'),
-            outcome: selectedBriefChoice('brief-goal'),
-            contentAndFlows: selectedBriefChoice('brief-content', true),
-            visualDirection: selectedBriefChoice('brief-visual'),
-            outputFormat: selectedBriefChoice('brief-output') || defaultOutputFormat(output.artifactType),
-            constraints: safeText(brief.constraints, '').trim(),
-          },
-        };
-        const missing = [
-          ['Project name', payload.title],
-          ['Audience', payload.brief.audience],
-          ['Outcome', payload.brief.outcome],
-          ['Content and flows', payload.brief.contentAndFlows],
-          ['Visual direction', payload.brief.visualDirection],
-          ['Output format', payload.brief.outputFormat],
-        ].filter(([, value]) => !value).map(([label]) => label);
-        if (missing.length) {
+        const result = collectQuestionFormAnswers(questionForm);
+        if (result.missing.length > 0) {
           error.dataset.tone = 'error';
-          error.textContent = 'Complete: ' + missing.join(', ') + '.';
+          error.textContent = copy.missing(result.missing);
+          scheduleSizeChanged();
+          return;
+        }
+        if (result.exceeded.length > 0) {
+          error.dataset.tone = 'error';
+          error.textContent = copy.exceeded(result.exceeded);
           scheduleSizeChanged();
           return;
         }
         submit.disabled = true;
         error.dataset.tone = 'pending';
-        error.textContent = 'Submitting…';
+        error.textContent = copy.submitting;
         try {
-          await sendBriefMessage(payload);
+          await sendQuestionFormAnswers(output, questionForm, result.answers);
           error.dataset.tone = 'success';
-          error.textContent = 'Brief submitted.';
-          submit.textContent = 'Submitted';
+          error.textContent = copy.submittedStatus;
+          submit.textContent = copy.submitted;
         } catch (submitError) {
           error.dataset.tone = 'error';
-          error.textContent = submitError instanceof Error ? submitError.message : 'Could not submit the brief.';
+          error.textContent = submitError instanceof Error
+            ? submitError.message
+            : copy.submitFailed;
           submit.disabled = false;
         }
         scheduleSizeChanged();
@@ -969,7 +980,7 @@ interface ProjectPayload { project?: ProjectSummary; id?: string; name?: string;
 interface ActiveContext { active?: boolean; projectId?: string; projectName?: string | null; fileName?: string | null; ageMs?: number | null }
 type ResolvedProject = { id: string; name: string; source: 'uuid' | 'id' | 'exact' | 'slug' | 'substring' };
 interface ProjectListCache { baseUrl: string; t: number; list: ProjectSummary[] }
-interface McpArgs extends JsonObject { project?: unknown; entry?: unknown; include?: unknown; maxBytes?: unknown; path?: unknown; offset?: unknown; limit?: unknown; since?: unknown; query?: unknown; pattern?: unknown; max?: unknown; name?: unknown; title?: unknown; content?: unknown; encoding?: unknown; artifactManifest?: unknown; confirm?: unknown; confirmed?: unknown; prompt?: unknown; plugin?: unknown; inputs?: unknown; agent?: unknown; model?: unknown; runId?: unknown; id?: unknown; designSystem?: unknown; skill?: unknown; artifactType?: unknown; brief?: unknown; audience?: unknown; outcome?: unknown; contentAndFlows?: unknown; visualDirection?: unknown; outputFormat?: unknown; constraints?: unknown; includeUnavailable?: unknown; versionId?: unknown }
+interface McpArgs extends JsonObject { project?: unknown; entry?: unknown; include?: unknown; maxBytes?: unknown; path?: unknown; offset?: unknown; limit?: unknown; since?: unknown; query?: unknown; pattern?: unknown; max?: unknown; name?: unknown; title?: unknown; projectTitle?: unknown; content?: unknown; encoding?: unknown; artifactManifest?: unknown; confirm?: unknown; confirmed?: unknown; prompt?: unknown; plugin?: unknown; inputs?: unknown; agent?: unknown; model?: unknown; runId?: unknown; id?: unknown; designSystem?: unknown; skill?: unknown; artifactType?: unknown; brief?: unknown; knownAnswers?: unknown; questionForm?: unknown; audience?: unknown; outcome?: unknown; contentAndFlows?: unknown; visualDirection?: unknown; outputFormat?: unknown; constraints?: unknown; includeUnavailable?: unknown; versionId?: unknown }
 interface ProjectFileBundleEntry { name: string; mime: string; size: number | null; content: string | null; binary: boolean }
 interface BundleInput { project: ProjectPayload | ProjectSummary; entry: string; files: ProjectFileBundleEntry[]; truncated: boolean; active: ActiveContext | null; resolved?: ResolvedProject | null }
 
@@ -1353,7 +1364,7 @@ const TOOL_DEFS = [
   // reference material the caller opts into, not something to run.
   {
     name: 'collect_brief',
-    description: 'Show the interactive Open Design Custom UI brief form. Call this instead of asking prose questions or emitting <question-form> text whenever audience, outcome, content/flows, visual direction, or output format is missing. Pass every detail already known so the form is prefilled.',
+    description: 'Show a dynamic Open Design QuestionForm in Custom UI. Author the questionForm from the current user input using the same discovery policy as Open Design: omit decisions already known from the request, metadata, or knownAnswers; add only two or three artifact-specific questions whose answers materially change the result; never exceed five; localize visible copy; and preselect an inferred recommendation. Use only choice controls; never emit <question-form> markup or ask the same questions in prose.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1362,15 +1373,11 @@ const TOOL_DEFS = [
           enum: [...CHATGPT_ARTIFACT_TYPES],
           description: 'The requested Open Design deliverable type.',
         },
-        title: { type: 'string', description: 'Suggested human-readable project name.' },
-        audience: { type: 'string', description: 'Known or inferred target audience.' },
-        outcome: { type: 'string', description: 'Known or inferred result the artifact should achieve.' },
-        contentAndFlows: { type: 'string', description: 'Known required content, sections, flows, and interactions.' },
-        visualDirection: { type: 'string', description: 'Known visual direction, references, or brand constraints.' },
-        outputFormat: { type: 'string', description: 'Known expected output format.' },
-        constraints: { type: 'string', description: 'Known must-have or must-avoid constraints.' },
+        projectTitle: { type: 'string', description: 'Suggested human-readable project name inferred from the request.' },
+        knownAnswers: chatGptKnownAnswersInputSchema(),
+        questionForm: chatGptQuestionFormInputSchema(),
       },
-      required: ['artifactType'],
+      required: ['artifactType', 'questionForm'],
       additionalProperties: false,
     },
     annotations: { ...READ_ANNOTATIONS, title: 'Complete Open Design brief' },
@@ -1839,7 +1846,7 @@ export function createOpenDesignMcpServer({
       capabilities: { tools: {}, resources: {} },
       instructions: [
         'Open Design creates and refines websites, product prototypes, presentations, design systems, images, videos, audio, and documents.',
-        'Confirm audience, outcome, content/flows, visual direction, and output format before calling start_run with confirmed:true. If any field is missing, call collect_brief so the Custom UI form collects it; never emit <question-form> or JSON form markup as assistant text.',
+        'Before calling start_run with confirmed:true, resolve only the artifact-specific decisions that materially affect this request. If an important decision remains unknown, author a request-specific choice-only QuestionForm and call collect_brief; never reuse a universal questionnaire or emit <question-form>, JSON form markup, or prose questions as assistant text.',
         'Before Cloud generation call get_cloud_account. Use create_project, then start_run; its card polls get_run and updates in place.',
         'Open Design runs can take 5–30 minutes. Do not cancel unless the user asks.',
         'A browser-artifact run is delivered only when get_run returns status:succeeded plus artifactCount greater than zero and a real previewUrl. A Design System run instead requires status:succeeded plus artifactCount greater than zero.',
@@ -2035,6 +2042,262 @@ function removePublicSecrets(value: unknown): unknown {
   );
 }
 
+type ChatGptKnownAnswers = Record<string, string | string[]>;
+
+function requiredBriefString(value: unknown, field: string, maxLength: number): string {
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new Error(`${field} is required.`);
+  }
+  const normalized = value.trim();
+  if (normalized.length > maxLength) {
+    throw new Error(`${field} must be ${maxLength} characters or fewer.`);
+  }
+  return normalized;
+}
+
+function optionalBriefString(value: unknown, field: string, maxLength: number): string | undefined {
+  if (value === undefined || value === null || value === '') return undefined;
+  return requiredBriefString(value, field, maxLength);
+}
+
+function normalizeChatGptKnownAnswers(raw: unknown): ChatGptKnownAnswers {
+  if (raw === undefined) return {};
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw new Error('knownAnswers must be an object.');
+  }
+  const entries = Object.entries(raw as JsonObject);
+  if (entries.length > 32) throw new Error('knownAnswers must contain 32 fields or fewer.');
+  const normalized: ChatGptKnownAnswers = {};
+  for (const [rawId, rawValue] of entries) {
+    const id = requiredBriefString(rawId, 'knownAnswers id', 80);
+    if (Object.hasOwn(normalized, id)) throw new Error(`knownAnswers ids must be unique: ${id}.`);
+    if (Array.isArray(rawValue)) {
+      if (rawValue.length > CHATGPT_BRIEF_MAX_OPTIONS) {
+        throw new Error(`knownAnswers.${id} must contain ${CHATGPT_BRIEF_MAX_OPTIONS} values or fewer.`);
+      }
+      normalized[id] = rawValue.map((value) => requiredBriefString(value, `knownAnswers.${id}`, 500));
+      continue;
+    }
+    normalized[id] = requiredBriefString(rawValue, `knownAnswers.${id}`, 500);
+  }
+  return normalized;
+}
+
+function normalizeBriefDecisionId(value: string): string {
+  return value.replace(/[^a-z0-9]/giu, '').toLowerCase();
+}
+
+const QUESTION_FORM_DECISION_ALIAS_LOOKUP = new Map<string, string>(
+  QUESTION_FORM_DECISION_ALIAS_GROUPS.flatMap((group) => {
+    const canonical = normalizeBriefDecisionId(group[0]);
+    return group.map((alias) => [normalizeBriefDecisionId(alias), canonical] as const);
+  }),
+);
+
+function canonicalBriefDecisionId(value: string): string {
+  const normalized = normalizeBriefDecisionId(value);
+  return QUESTION_FORM_DECISION_ALIAS_LOOKUP.get(normalized) ?? normalized;
+}
+
+function normalizeChatGptFormOption(raw: unknown, field: string): FormOption {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw new Error(`${field} must be an option object with localized label and stable value.`);
+  }
+  const option = raw as JsonObject;
+  const label = requiredBriefString(option.label, `${field}.label`, 160);
+  const value = requiredBriefString(option.value, `${field}.value`, 200);
+  const description = optionalBriefString(option.description, `${field}.description`, 300);
+  return { label, value, ...(description ? { description } : {}) };
+}
+
+function normalizeChatGptDirectionCard(raw: unknown, field: string): DirectionCard {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw new Error(`${field} must be a direction card object.`);
+  }
+  const card = raw as JsonObject;
+  const strings = (value: unknown, name: string, maxItems: number): string[] => {
+    if (value === undefined) return [];
+    if (!Array.isArray(value) || value.length > maxItems) {
+      throw new Error(`${name} must contain ${maxItems} strings or fewer.`);
+    }
+    return value.map((entry) => requiredBriefString(entry, name, 120));
+  };
+  return {
+    id: requiredBriefString(card.id, `${field}.id`, 80),
+    label: requiredBriefString(card.label, `${field}.label`, 160),
+    mood: optionalBriefString(card.mood, `${field}.mood`, 300) ?? '',
+    references: strings(card.references, `${field}.references`, 6),
+    palette: strings(card.palette, `${field}.palette`, 8),
+    displayFont: optionalBriefString(card.displayFont, `${field}.displayFont`, 160) ?? 'Georgia, serif',
+    bodyFont: optionalBriefString(card.bodyFont, `${field}.bodyFont`, 160) ?? '-apple-system, system-ui, sans-serif',
+  };
+}
+
+function localizedSwitchOptions(lang: string | undefined): FormOption[] {
+  if (lang?.toLowerCase().startsWith('zh')) {
+    return [{ label: '是', value: 'true' }, { label: '否', value: 'false' }];
+  }
+  return [{ label: 'Yes', value: 'true' }, { label: 'No', value: 'false' }];
+}
+
+function normalizeChatGptDefaultValue(
+  raw: unknown,
+  type: ChatGptBriefQuestionType,
+  options: FormOption[],
+  field: string,
+): string | string[] {
+  if (raw === undefined || raw === null) {
+    throw new Error(`${field} is required so the dynamic form is preselected.`);
+  }
+  const normalizeValue = (value: unknown): string => {
+    const normalized = typeof value === 'boolean'
+      ? String(value)
+      : requiredBriefString(value, field, 200);
+    if (!options.some((option) => option.value === normalized || option.label === normalized)) {
+      throw new Error(`${field} must match one of the question option values.`);
+    }
+    return options.find((option) => option.label === normalized)?.value ?? normalized;
+  };
+  if (type === 'checkbox') {
+    const values = Array.isArray(raw) ? raw : [raw];
+    if (values.length === 0) throw new Error(`${field} must select at least one option.`);
+    const normalized = values.map(normalizeValue);
+    if (new Set(normalized).size !== normalized.length) {
+      throw new Error(`${field} must not contain duplicate option values.`);
+    }
+    return normalized;
+  }
+  if (Array.isArray(raw)) throw new Error(`${field} must be a single option value.`);
+  return normalizeValue(raw);
+}
+
+function normalizeChatGptQuestionForm(
+  raw: unknown,
+  knownAnswers: ChatGptKnownAnswers,
+): QuestionForm {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw new Error('questionForm is required.');
+  }
+  const form = raw as JsonObject;
+  const id = requiredBriefString(form.id, 'questionForm.id', 80);
+  const title = requiredBriefString(form.title, 'questionForm.title', 160);
+  const description = optionalBriefString(form.description, 'questionForm.description', 500);
+  const lang = optionalBriefString(form.lang, 'questionForm.lang', 40);
+  const submitLabel = optionalBriefString(form.submitLabel, 'questionForm.submitLabel', 80);
+  if (!Array.isArray(form.questions)) throw new Error('questionForm.questions is required.');
+  if (form.questions.length < 1 || form.questions.length > CHATGPT_BRIEF_MAX_QUESTIONS) {
+    throw new Error(`questionForm.questions must contain 1–${CHATGPT_BRIEF_MAX_QUESTIONS} questions.`);
+  }
+  const seenIds = new Set<string>();
+  const knownDecisionIds = new Set(Object.keys(knownAnswers).map(canonicalBriefDecisionId));
+  const questions: FormQuestion[] = [];
+  form.questions.forEach((rawQuestion, index) => {
+    if (!rawQuestion || typeof rawQuestion !== 'object' || Array.isArray(rawQuestion)) {
+      throw new Error(`questionForm.questions[${index}] must be an object.`);
+    }
+    const question = rawQuestion as JsonObject;
+    const questionId = requiredBriefString(question.id, `questionForm.questions[${index}].id`, 80);
+    if (seenIds.has(questionId)) throw new Error(`questionForm question ids must be unique: ${questionId}.`);
+    seenIds.add(questionId);
+    if (knownDecisionIds.has(canonicalBriefDecisionId(questionId))) return;
+    const rawType = requiredBriefString(question.type, `questionForm.questions[${index}].type`, 40);
+    if (!CHATGPT_BRIEF_QUESTION_TYPE_SET.has(rawType)) {
+      throw new Error(`questionForm question type must be one of: ${CHATGPT_BRIEF_QUESTION_TYPES.join(', ')}.`);
+    }
+    const type = rawType as ChatGptBriefQuestionType;
+    if (question.allowCustom === true) {
+      throw new Error('questionForm choice questions must set allowCustom:false or omit it.');
+    }
+    const cards = Array.isArray(question.cards)
+      ? question.cards.map((card, cardIndex) => normalizeChatGptDirectionCard(
+          card,
+          `questionForm.questions[${index}].cards[${cardIndex}]`,
+        ))
+      : undefined;
+    if (cards && type !== 'direction-cards') {
+      throw new Error(`questionForm.questions[${index}].cards is only valid for direction-cards.`);
+    }
+    if (type === 'direction-cards' && (!cards || cards.length < 2 || cards.length > 6)) {
+      throw new Error(`questionForm.questions[${index}].cards must contain 2–6 direction cards.`);
+    }
+    if (cards && new Set(cards.map((card) => card.id)).size !== cards.length) {
+      throw new Error(`questionForm.questions[${index}] direction card ids must be unique.`);
+    }
+    let options = Array.isArray(question.options)
+      ? question.options.map((option, optionIndex) => normalizeChatGptFormOption(
+          option,
+          `questionForm.questions[${index}].options[${optionIndex}]`,
+        ))
+      : undefined;
+    if (type === 'direction-cards' && cards) {
+      const cardIds = new Set(cards.map((card) => card.id));
+      if (options && (
+        options.length !== cards.length
+        || options.some((option) => !cardIds.has(option.value))
+      )) {
+        throw new Error(`questionForm.questions[${index}] direction-card options must match card ids.`);
+      }
+      options = cards.map((card) => ({
+        label: card.label,
+        value: card.id,
+        ...(card.mood ? { description: card.mood } : {}),
+      }));
+    }
+    if ((!options || options.length === 0) && type === 'switch') {
+      options = localizedSwitchOptions(lang);
+    }
+    if (!options || options.length < 2 || options.length > CHATGPT_BRIEF_MAX_OPTIONS) {
+      throw new Error(`questionForm.questions[${index}].options must contain 2–${CHATGPT_BRIEF_MAX_OPTIONS} choices.`);
+    }
+    if (new Set(options.map((option) => option.value)).size !== options.length) {
+      throw new Error(`questionForm.questions[${index}] option values must be unique.`);
+    }
+    const rawDefault = question.defaultValue ?? question.default;
+    const defaultValue = normalizeChatGptDefaultValue(
+      rawDefault,
+      type,
+      options,
+      `questionForm.questions[${index}].defaultValue`,
+    );
+    const maxSelections = type === 'checkbox' && question.maxSelections !== undefined
+      ? Number(question.maxSelections)
+      : undefined;
+    if (maxSelections !== undefined && (
+      !Number.isInteger(maxSelections)
+      || maxSelections < 1
+      || maxSelections > options.length
+    )) {
+      throw new Error(`questionForm.questions[${index}].maxSelections is invalid.`);
+    }
+    if (maxSelections !== undefined && Array.isArray(defaultValue) && defaultValue.length > maxSelections) {
+      throw new Error(`questionForm.questions[${index}].defaultValue exceeds maxSelections.`);
+    }
+    questions.push({
+      id: questionId,
+      label: requiredBriefString(question.label, `questionForm.questions[${index}].label`, 200),
+      type,
+      options,
+      ...(question.help ? { help: requiredBriefString(question.help, `questionForm.questions[${index}].help`, 300) } : {}),
+      ...(question.required === true ? { required: true } : {}),
+      defaultValue,
+      ...(maxSelections !== undefined ? { maxSelections } : {}),
+      allowCustom: false,
+      ...(cards ? { cards } : {}),
+    });
+  });
+  if (questions.length === 0) {
+    throw new Error('All proposed questions are already answered. Skip collect_brief and continue with the known brief.');
+  }
+  return {
+    id,
+    title,
+    questions,
+    ...(description ? { description } : {}),
+    ...(submitLabel ? { submitLabel } : {}),
+    ...(lang ? { lang } : {}),
+  };
+}
+
 function publicChatGptResult(name: string, result: any): any {
   if (!result?.structuredContent || typeof result.structuredContent !== 'object') return result;
   const structuredContent = removePublicSecrets(result.structuredContent) as JsonObject;
@@ -2111,19 +2374,21 @@ async function handleChatGptV1ToolCall(baseUrl: string, name: string, args: McpA
     if (!isChatGptArtifactType(args.artifactType)) {
       return errorResult(chatGptArtifactTypeError());
     }
-    const brief = Object.fromEntries(
-      ['audience', 'outcome', 'contentAndFlows', 'visualDirection', 'outputFormat', 'constraints']
-        .filter((field) => typeof args[field] === 'string' && String(args[field]).trim())
-        .map((field) => [field, String(args[field]).trim()]),
-    );
-    return ok({
-      view: 'brief-form',
-      artifactType: args.artifactType,
-      title: typeof args.title === 'string' && args.title.trim()
-        ? args.title.trim()
-        : `New Open Design ${args.artifactType}`,
-      brief,
-    });
+    try {
+      const knownAnswers = normalizeChatGptKnownAnswers(args.knownAnswers);
+      const questionForm = normalizeChatGptQuestionForm(args.questionForm, knownAnswers);
+      return ok({
+        view: 'brief-form',
+        artifactType: args.artifactType,
+        projectTitle: typeof args.projectTitle === 'string' && args.projectTitle.trim()
+          ? args.projectTitle.trim()
+          : `New Open Design ${args.artifactType}`,
+        knownAnswers,
+        questionForm,
+      });
+    } catch (error) {
+      return errorResult(error instanceof Error ? error.message : 'Invalid dynamic QuestionForm.');
+    }
   }
   let callArgs = args;
   if (name === 'start_run') {

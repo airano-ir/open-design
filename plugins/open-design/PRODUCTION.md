@@ -7,6 +7,7 @@ The repository now contains the ChatGPT plugin package, MCP Apps UI, and a Strea
 ```text
 ChatGPT plugin
   -> open-design-basics + one of eight artifact skills
+  -> request-specific knownAnswers + QuestionForm discovery
   -> .app.json (ChatGPT-assigned asdk_app id)
   -> https://<Open Design MCP host>/mcp
   -> Open Design user OAuth + managed tenant routing
@@ -67,7 +68,7 @@ After the production HTTPS endpoint and OAuth metadata are live:
 1. Enable ChatGPT Developer Mode.
 2. Create an app pointing to `https://<Open Design MCP host>/mcp`.
 3. Complete OAuth configuration and add the ChatGPT callback URL to the authorization server allowlist.
-4. Validate the nine V1 tools, all eight artifact types, resources, and Artifact Card v9 in MCP Inspector and ChatGPT.
+4. Validate the nine V1 tools, all eight artifact types, resources, and Artifact Card v10 in MCP Inspector and ChatGPT.
 5. Copy the assigned `asdk_app_...` id into `.app.json`:
 
 ```json
@@ -130,6 +131,15 @@ neither the private daemon bearer nor a valid Studio cookie must receive 401.
 
 Each published tool declares its authentication policy in its descriptor. `collect_brief` and its exact widget resources are public so ChatGPT can render the brief before sign-in; account, project, run, version, and export operations remain OAuth-protected. The server emits both the current top-level `securitySchemes` form and the `_meta.securitySchemes` compatibility form because the repository's MCP SDK currently preserves extension metadata while older MCP clients may strip unknown top-level fields. Runtime authorization reuses the same tool-to-scope mapping, so the consent description and enforcement cannot drift independently.
 
+Dynamic discovery stays on the host-model side of that public boundary. The
+active Basics plus artifact skill reads the current user request, extracts
+settled decisions into `knownAnswers`, and constructs a request-specific
+`questionForm` using the shared Open Design QuestionForm contract. The public
+`collect_brief` tool validates and renders those supplied values; it does not
+launch an anonymous Open Design agent run or choose questions from a universal
+preset. This keeps pre-sign-in rendering narrow while matching the Open Design
+client's dynamic decision policy.
+
 The ChatGPT V1 server exposes only nine operations: choice-only brief collection, account status, project creation, Cloud generation/progress/cancel, version list/restore, and export. Local active-context, local-agent execution, arbitrary file mutation, generic plugin execution, and deletion tools are not published with the ChatGPT plugin. When Cloud balance is insufficient, the card offers recharge first and explains that local Code Agent/BYOK modes remain available inside Open Design.
 
 The package contributes nine skills: shared `open-design-basics` plus focused
@@ -140,11 +150,13 @@ not ship. The three typed calls—`collect_brief`, `create_project`, and
 `create_project` requires it so the server initializes the matching project
 kind before generation.
 
-Artifact Card v9 collects goal, audience, content/flows, creative direction,
-and output using radio or checkbox choices only. Supplied wording is preserved
-as a preselected **From your brief** choice. Every artifact preset includes an
-output choice, and the card does not repeat the host's Open Design identity
-with an internal header, logo, or subtitle.
+Artifact Card v10 renders the `questionForm` supplied by the active skill. A
+normal incomplete brief asks 2–3 unknown, outcome-changing decisions and no
+generated form exceeds 5 questions. Known decisions are removed; remaining
+questions are localized, use stable English ids and values, and are prefilled
+with recommended defaults. Only radio, checkbox, select, switch, and
+direction-card controls are allowed. The card does not repeat the host's Open
+Design identity with an internal header, logo, or subtitle.
 
 ## Release acceptance
 
@@ -181,11 +193,15 @@ wallet, but does not create a project or spend balance.
 - Image, video, and audio runs produce readable media binaries in the project. A prompt, plan, storyboard, placeholder, or metadata-only response fails acceptance.
 - Document V1 produces an editable `document.md` and polished print-ready `index.html` browser preview suitable for later PDF export. It must not claim native DOCX output.
 - `create_project` rejects descriptors that omit `artifactType`, and all later calls preserve the same type.
-- A generation run cannot start until the five-field working brief is marked confirmed.
+- A generation run cannot start until the request-specific high-impact decisions are either known, inferred under an explicit “just build” instruction, or confirmed through the dynamic brief.
 - Tool descriptors expose the minimum OAuth scope for every V1 operation, and a token missing that scope receives an OAuth challenge.
 - Insufficient balance offers recharge first and local Code Agent/BYOK as a handoff, without exposing credentials.
 - Progress survives repeated polling and a ChatGPT conversation restart.
-- The choice-only brief includes output choices and no editable text surface; Artifact Card v9 has no internal OpenDesign header, logo, or subtitle.
+- Two materially different requests for the same artifact type produce decision questions and options tailored to each request, not an identical generic questionnaire.
+- Decisions already supplied by the user appear in `knownAnswers` and are absent from `questionForm.questions`; a normal form asks 2–3 questions and every form stays within the hard maximum of 5.
+- Every dynamic question is localized to the chat language, has a valid recommended `defaultValue`, uses only radio, checkbox, select, switch, or direction cards, and exposes no editable text surface.
+- Submitting the Custom UI returns `[form answers — <questionForm.id>]` with stable `[value: ...]` values; the next turn consumes those values and does not ask the same decision again.
+- Artifact Card v10 has no internal OpenDesign header, logo, or subtitle.
 - The completed Artifact card shows a real preview for websites, prototypes, presentations, media, and documents. Design systems instead show a real generated `DESIGN.md` in Studio.
 - Preview and Studio URLs contain no loopback host, raw OAuth subject, OAuth token, or Vela runtime credential; tampered and expired capabilities fail closed.
 - Opening Studio routes API reads and writes to the same subject and project that produced the ChatGPT result.

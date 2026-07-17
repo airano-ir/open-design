@@ -7,15 +7,18 @@ description: Create or refine an interactive product prototype with Open Design,
 
 Apply `$open-design-basics`, then execute this prototype contract.
 
-## Brief and execution
+## Dynamic decision dimensions and execution
 
 - Use `artifactType: product-prototype` for `collect_brief`, `create_project`, and `start_run`.
-- Offer only selectable prototype presets:
-  - Goal: **Validate an idea**, **Demo the core flow**, **Run a user test**, or **Support a review**.
-  - Audience: **New users**, **Power users**, **Internal teams**, or **Decision-makers**.
-  - Flows, multi-select: **Core workflow**, **Navigation and states**, **Dashboard and data**, **Search and discovery**, **Create and edit**, and **Settings**.
-  - Direction: **Clean and focused**, **Bold and editorial**, **Warm and approachable**, **Modern tech**, or **Premium and restrained**.
-- Infer the output as an interactive responsive product prototype. Keep requested platforms, screens, flows, and states as preselected choices.
+- Treat the following as decision dimensions to consider only when unknown and outcome-changing, never as fixed form rows or a checklist to ask in full:
+  - The validation goal and decision the prototype must support.
+  - The target role and its starting context.
+  - The primary end-to-end flow and screen scope.
+  - Target platform, responsive posture, and required fidelity.
+  - State coverage, navigation behavior, and data realism.
+  - Existing brand, product UI, or reference direction.
+- Tailor choices to the requested workflow. A mobile onboarding test, an admin dashboard review, and a search concept need different flow and state options.
+- Infer the normal output as an interactive responsive product prototype. Put supplied platforms, screens, flows, states, and references in `knownAnswers`; do not re-ask them.
 - Call `create_project`, then `start_run` with the confirmed structured brief. The server maps `product-prototype` to `frontend-design` with explicit interaction and state requirements.
 
 ## Delivery standard

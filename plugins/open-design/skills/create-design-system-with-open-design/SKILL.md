@@ -7,15 +7,18 @@ description: Create, extract, or refine a reusable design system with Open Desig
 
 Apply `$open-design-basics`, then execute this design-system contract.
 
-## Brief and execution
+## Dynamic decision dimensions and execution
 
 - Use `artifactType: design-system` for `collect_brief`, `create_project`, and `start_run`.
-- Offer only selectable design-system presets:
-  - Goal: **Unify a product**, **Start a new product**, **Refresh the brand**, or **Scale delivery**.
-  - Audience: **Product teams**, **Designers**, **Developers**, or **Brand teams**.
-  - Scope, multi-select: **Foundations**, **Core components**, **Usage guidance**, **Accessibility**, **Product patterns**, and **Governance**.
-  - Direction: **Extract from the supplied reference**, **Evolve the existing system**, **Clean and focused**, **Expressive and editorial**, or **Premium and restrained**.
-- Infer the output as a reusable `DESIGN.md`. Preserve known design-system ids and source references as preselected choices; pass an existing `designSystem` when applying one.
+- Treat the following as decision dimensions to consider only when unknown and outcome-changing, never as fixed form rows or a checklist to ask in full:
+  - Adoption goal, product scope, and primary consumers of the system.
+  - Existing brand, UI source, design system, or migration baseline.
+  - Foundation, component, product-pattern, content, and documentation scope.
+  - Target platforms, frameworks, and token or implementation constraints.
+  - Accessibility level, contribution model, and governance maturity.
+  - Expected deliverable depth beyond the reusable `DESIGN.md` contract.
+- Tailor choices to the supplied organization and source material. A new mobile product and a multi-brand enterprise migration should not receive the same scope or governance options.
+- Infer the normal output as a reusable `DESIGN.md`. Put known design-system ids, source references, platforms, and governance requirements in `knownAnswers`; pass an existing `designSystem` when applying one and do not re-ask it.
 - Call `create_project`, then `start_run` with the confirmed structured brief. The server maps `design-system` to the Open Design `design-md` workflow.
 
 ## Delivery standard

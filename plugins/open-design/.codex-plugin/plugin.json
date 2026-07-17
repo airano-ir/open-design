@@ -1,7 +1,7 @@
 {
   "name": "open-design",
-  "version": "0.2.12+codex.20260717094318",
-  "description": "Create websites, product prototypes, presentations, design systems, media, and web-first documents from choice-only briefs with Open Design.",
+  "version": "0.2.13+codex.20260717104744",
+  "description": "Create websites, product prototypes, presentations, design systems, media, and web-first documents from adaptive choice-only briefs with Open Design.",
   "author": {
     "name": "OpenDesign",
     "email": "support@open-design.ai",
@@ -27,8 +27,8 @@
   "apps": "./.app.json",
   "interface": {
     "displayName": "Open Design",
-    "shortDescription": "Create eight artifact types from guided choices.",
-    "longDescription": "Use Open Design Basics plus a focused skill to create websites, product prototypes, presentations, design systems, images, videos, audio, and web-first documents. Confirm a choice-only brief, review real progress and output in the host, then open Open Design studio for detailed editing, versions, and export. Document V1 delivers Markdown plus print-ready HTML rather than native DOCX.",
+    "shortDescription": "Create eight artifact types from adaptive choices.",
+    "longDescription": "Use Open Design Basics plus a focused skill to create websites, product prototypes, presentations, design systems, images, videos, audio, and web-first documents. Confirm a request-specific choice-only brief that omits decisions you already supplied, review real progress and output in the host, then open Open Design studio for detailed editing, versions, and export. Document V1 delivers Markdown plus print-ready HTML rather than native DOCX.",
     "developerName": "OpenDesign",
     "category": "Creativity",
     "capabilities": [
