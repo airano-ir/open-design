@@ -180,7 +180,7 @@ export type LauncherPayloadExtractInput = {
 };
 
 type DesktopUpdaterLogger = Pick<Console, "error" | "warn"> & Partial<Pick<Console, "info">>;
-type DetachedProcess = { unref(): void };
+type DetachedProcess = Pick<ReturnType<typeof spawn>, "once" | "unref">;
 type LauncherPayloadCleanupTrigger = "activate" | "prepare-existing" | "prepare-promoted";
 type LauncherPayloadCleanupFailure = {
   error: NonNullable<LauncherCleanupEntry["error"]>;
@@ -1866,6 +1866,10 @@ async function launchPayloadAppAfterQuit(
       buildLauncherAfterQuitArgs({ targetPid: input.appPid, timeoutMs: input.timeoutMs }),
       { detached: true, stdio: "ignore", windowsHide: true },
     );
+    await new Promise<void>((resolveSpawn, rejectSpawn) => {
+      child.once("spawn", () => resolveSpawn());
+      child.once("error", rejectSpawn);
+    });
     child.unref();
     return {};
   } catch (error) {

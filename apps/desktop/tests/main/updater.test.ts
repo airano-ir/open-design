@@ -1565,6 +1565,13 @@ describe("desktop updater", () => {
     const launcherLaunchPath = join(root, "installed", "Open Design.exe");
     const spawned: Array<{ args: string[]; command: string; options: unknown }> = [];
     const unref = vi.fn();
+    const child = {
+      once: vi.fn((event: string, listener: (...args: unknown[]) => void) => {
+        if (event === "spawn") queueMicrotask(listener);
+        return child;
+      }),
+      unref,
+    };
     try {
       await mkdir(join(root, "installed"), { recursive: true });
       await writeFile(launcherLaunchPath, "");
@@ -1618,7 +1625,7 @@ describe("desktop updater", () => {
         processPid: 4245,
         spawnDetached: (command, args, options) => {
           spawned.push({ args, command, options });
-          return { unref };
+          return child as never;
         },
       });
 
@@ -1653,6 +1660,106 @@ describe("desktop updater", () => {
         LAUNCHER_AFTER_QUIT_TIMEOUT_MS_ARG,
         "600000",
       ]));
+    } finally {
+      await fixture.close();
+      rmSync(root, { force: true, recursive: true });
+    }
+  });
+
+  it("reports an asynchronous payload spawn error instead of freezing a successful install", async () => {
+    const root = makeRoot();
+    const fixture = await createUpdaterFixture({
+      artifactBody: "open design windows installer fixture",
+      channel: "beta",
+      includePayload: true,
+      payloadBody: "open design windows payload fixture",
+      platform: "win",
+      version: "1.0.0-beta.3",
+    });
+    const launcherRuntimePath = join(root, "launcher", "runtime.json");
+    const launcherRoot = root;
+    const launcherLaunchPath = join(root, "installed", "Open Design.exe");
+    const unref = vi.fn();
+    try {
+      await mkdir(join(root, "installed"), { recursive: true });
+      await writeFile(launcherLaunchPath, "");
+      await mkdir(join(root, "launcher"), { recursive: true });
+      await mkdir(join(
+        root,
+        "launcher",
+        "channels",
+        "beta",
+        "namespaces",
+        "release-beta-win",
+        "versions",
+        "1.0.0-beta.2",
+      ), { recursive: true });
+      await writeFile(
+        launcherRuntimePath,
+        `${JSON.stringify({
+          active: { generation: 0, version: "1.0.0-beta.2" },
+          channel: "beta",
+          lastSuccessful: { generation: 0, version: "1.0.0-beta.2" },
+          namespace: "release-beta-win",
+          schemaVersion: LAUNCHER_SCHEMA_VERSION,
+        })}\n`,
+      );
+      const child = {
+        once: vi.fn((event: string, listener: (...args: unknown[]) => void) => {
+          if (event === "error") queueMicrotask(() => listener(new Error("spawn ENOENT")));
+          return child;
+        }),
+        unref,
+      };
+      const updater = createDesktopUpdater({
+        arch: "x64",
+        currentVersion: "1.0.0-beta.2",
+        downloadRoot: join(root, "updates"),
+        env: {
+          ...updaterEnv(fixture.metadataUrl, "win32"),
+          [DESKTOP_UPDATE_ENV.CURRENT_VERSION]: "1.0.0-beta.2",
+          [DESKTOP_UPDATE_ENV.OPEN_DRY_RUN]: "0",
+        },
+        launcherRoot,
+        launcherLaunchPath,
+        launcherRuntimePath,
+        namespace: "release-beta-win",
+        source: SIDECAR_SOURCES.PACKAGED,
+      }, {
+        extractLauncherPayloadArchive: async ({ destinationRoot }) => {
+          await mkdir(join(destinationRoot, "payload", "resources", "open-design"), { recursive: true });
+          await writeFile(join(destinationRoot, "payload", "Open Design.exe"), "");
+          await writeFile(join(destinationRoot, "payload", "resources", "open-design-config.json"), "{}\n");
+          await writeFile(
+            join(destinationRoot, "manifest.json"),
+            `${JSON.stringify({
+              channel: "beta",
+              entry: {
+                cwd: "payload",
+                executable: "payload/Open Design.exe",
+              },
+              namespace: "release-beta-win",
+              payloadRoot: "payload",
+              platform: "win32",
+              schemaVersion: LAUNCHER_SCHEMA_VERSION,
+              version: "1.0.0-beta.3",
+            })}\n`,
+          );
+        },
+        processPid: 4245,
+        spawnDetached: () => child as never,
+      });
+
+      await updater.checkForUpdates();
+      const installed = await updater.installUpdate();
+
+      expect(installed.state).toBe(DESKTOP_UPDATE_STATES.ERROR);
+      expect(installed.error).toMatchObject({
+        code: "payload-relaunch-failed",
+        message: "spawn ENOENT",
+      });
+      expect(installed.installResult).toBeUndefined();
+      expect(unref).not.toHaveBeenCalled();
     } finally {
       await fixture.close();
       rmSync(root, { force: true, recursive: true });
@@ -1907,7 +2014,7 @@ describe("desktop updater", () => {
           processPid: 4242,
           spawnDetached: (command, args) => {
             spawned.push({ args, command });
-            return { unref: vi.fn() };
+            return { unref: vi.fn() } as never;
           },
         },
       );
@@ -1955,7 +2062,7 @@ describe("desktop updater", () => {
           processPid: 4242,
           spawnDetached: (command, args, options) => {
             spawned.push({ args, command, options });
-            return { unref };
+            return { unref } as never;
           },
         },
       );
