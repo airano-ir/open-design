@@ -101,6 +101,7 @@
 .close:focus-visible,
 .filter:focus-visible,
 .markAll:focus-visible,
+.syncStatus button:focus-visible,
 .itemSummary:focus-visible,
 .itemActions button:focus-visible,
 .primaryAction:focus-visible,
@@ -195,6 +196,32 @@
   padding: 12px 12px calc(28px + env(safe-area-inset-bottom, 0px));
   scroll-padding-block: 12px calc(28px + env(safe-area-inset-bottom, 0px));
   touch-action: pan-y;
+}
+
+.syncStatus {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--warning, #d9a441) 32%, var(--border));
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--warning, #d9a441) 10%, var(--bg));
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.syncStatus button {
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
 }
 
 .item {

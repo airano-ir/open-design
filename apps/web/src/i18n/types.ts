@@ -1005,7 +1005,7 @@ export interface Dict {
   'entry.navDesignSystems': string;
   'entry.navBrands': string;
   'entry.navIntegrations': string;
-  // Client message center demo
+  // Client message center
   'messageCenter.openAria': string;
   'messageCenter.unreadCount': string;
   'messageCenter.title': string;

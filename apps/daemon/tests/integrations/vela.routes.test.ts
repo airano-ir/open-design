@@ -1243,6 +1243,69 @@ describe('ALL /api/integrations/vela/api-proxy/*', () => {
   });
 });
 
+describe('ALL /api/integrations/vela/message-center/*', () => {
+  it('forwards only Message Center routes to the configured profile origin with its control key', async () => {
+    const requests: Array<{ url: string; method: string; authorization: string | undefined }> = [];
+    const upstream = createServer((req, res) => {
+      requests.push({
+        url: req.url ?? '',
+        method: req.method ?? '',
+        authorization: req.headers.authorization,
+      });
+      res.setHeader('content-type', 'application/json');
+      res.end(JSON.stringify({ messages: [], nextCursor: null, unreadCount: 0 }));
+    });
+    await new Promise<void>((resolve) => upstream.listen(0, '127.0.0.1', resolve));
+    const address = upstream.address() as AddressInfo;
+    seedLogin('local', { apiUrl: `http://127.0.0.1:${address.port}` });
+    try {
+      const response = await fetch(
+        `${baseUrl}/api/integrations/vela/message-center/messages?locale=en-US&limit=30`,
+        { headers: { authorization: 'Bearer browser-supplied-key' } },
+      );
+      expect(response.status).toBe(200);
+      expect(requests).toEqual([
+        {
+          url: '/api/v1/message-center/messages?locale=en-US&limit=30',
+          method: 'GET',
+          authorization: 'Bearer ck-seeded-key',
+        },
+      ]);
+      const markRead = await fetch(
+        `${baseUrl}/api/integrations/vela/message-center/messages/release/read`,
+        { method: 'POST' },
+      );
+      expect(markRead.status).toBe(200);
+      expect(requests).toEqual([
+        {
+          url: '/api/v1/message-center/messages?locale=en-US&limit=30',
+          method: 'GET',
+          authorization: 'Bearer ck-seeded-key',
+        },
+        {
+          url: '/api/v1/message-center/messages/release/read',
+          method: 'POST',
+          authorization: 'Bearer ck-seeded-key',
+        },
+      ]);
+      const rejected = await fetch(`${baseUrl}/api/integrations/vela/message-center/wallet/balance`);
+      expect(rejected.status).toBe(404);
+      expect(await rejected.json()).toEqual({ error: 'unknown_message_center_path' });
+      expect(requests).toHaveLength(2);
+    } finally {
+      await new Promise<void>((resolve) => upstream.close(() => resolve()));
+    }
+  });
+
+  it('fails visibly when no control key is configured', async () => {
+    const response = await fetch(
+      `${baseUrl}/api/integrations/vela/message-center/messages?locale=en-US`,
+    );
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ error: 'vela_control_key_required' });
+  });
+});
+
 describe('POST /api/integrations/vela/analytics-entry', () => {
   it('mirrors Open Design AMR entry clicks to the AMR analytics ingest shape', async () => {
     const requests: unknown[] = [];

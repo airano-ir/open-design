@@ -1,97 +1,29 @@
 import { Button } from '@open-design/components';
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import type { Dict } from '../i18n/types';
-import { useT } from '../i18n';
+import { useI18n } from '../i18n';
+import {
+  anonymousStartedAt,
+  clearAnonymousState,
+  isAmrLoggedIn,
+  markAccountMessageRead,
+  markAllAccountMessagesRead,
+  pullMessageCenter,
+  readAnonymousMessages,
+  readAnonymousReadIds,
+  type MessageCenterFilter,
+  type MessageCenterMessage,
+  writeAnonymousState,
+} from '../message-center-client';
 import { Icon } from './Icon';
 import styles from './MessageCenterDemo.module.css';
 
-type MessageFilter = 'all' | 'unread' | 'read';
-
-interface DemoMessage {
-  id: string;
-  typeKey: keyof Dict;
-  titleKey: keyof Dict;
-  summaryKey: keyof Dict;
-  bodyKey: keyof Dict;
-  actionKey: keyof Dict;
-  timeKey: keyof Dict;
-  unread: boolean;
-}
-
-interface DemoMessageState {
-  read: boolean;
-  expanded: boolean;
-}
-
-const FILTERS: Array<{ id: MessageFilter; labelKey: keyof Dict }> = [
-  { id: 'all', labelKey: 'messageCenter.filterAll' },
-  { id: 'unread', labelKey: 'messageCenter.filterUnread' },
-  { id: 'read', labelKey: 'messageCenter.filterRead' },
+const FILTERS: Array<{ id: MessageCenterFilter; label: 'messageCenter.filterAll' | 'messageCenter.filterUnread' | 'messageCenter.filterRead' }> = [
+  { id: 'all', label: 'messageCenter.filterAll' },
+  { id: 'unread', label: 'messageCenter.filterUnread' },
+  { id: 'read', label: 'messageCenter.filterRead' },
 ];
-
-const DEMO_MESSAGES: DemoMessage[] = [
-  {
-    id: 'release-0130',
-    typeKey: 'messageCenter.type.product',
-    titleKey: 'messageCenter.demo.release.title',
-    summaryKey: 'messageCenter.demo.release.summary',
-    bodyKey: 'messageCenter.demo.release.body',
-    actionKey: 'messageCenter.demo.release.action',
-    timeKey: 'messageCenter.time.today',
-    unread: true,
-  },
-  {
-    id: 'teams-preview',
-    typeKey: 'messageCenter.type.announcement',
-    titleKey: 'messageCenter.demo.teams.title',
-    summaryKey: 'messageCenter.demo.teams.summary',
-    bodyKey: 'messageCenter.demo.teams.body',
-    actionKey: 'messageCenter.demo.teams.action',
-    timeKey: 'messageCenter.time.yesterday',
-    unread: true,
-  },
-  {
-    id: 'credits-pack',
-    typeKey: 'messageCenter.type.benefit',
-    titleKey: 'messageCenter.demo.credits.title',
-    summaryKey: 'messageCenter.demo.credits.summary',
-    bodyKey: 'messageCenter.demo.credits.body',
-    actionKey: 'messageCenter.demo.credits.action',
-    timeKey: 'messageCenter.time.jun30',
-    unread: false,
-  },
-  {
-    id: 'maintenance',
-    typeKey: 'messageCenter.type.maintenance',
-    titleKey: 'messageCenter.demo.maintenance.title',
-    summaryKey: 'messageCenter.demo.maintenance.summary',
-    bodyKey: 'messageCenter.demo.maintenance.body',
-    actionKey: 'messageCenter.demo.maintenance.action',
-    timeKey: 'messageCenter.time.jun29',
-    unread: true,
-  },
-  {
-    id: 'templates',
-    typeKey: 'messageCenter.type.template',
-    titleKey: 'messageCenter.demo.templates.title',
-    summaryKey: 'messageCenter.demo.templates.summary',
-    bodyKey: 'messageCenter.demo.templates.body',
-    actionKey: 'messageCenter.demo.templates.action',
-    timeKey: 'messageCenter.time.jun27',
-    unread: false,
-  },
-];
-
-function createInitialState(): Record<string, DemoMessageState> {
-  return Object.fromEntries(
-    DEMO_MESSAGES.map((message) => [
-      message.id,
-      { read: !message.unread, expanded: false },
-    ]),
-  );
-}
 
 function unreadBadgeLabel(count: number): string {
   return count > 9 ? '9+' : String(count);
@@ -102,68 +34,128 @@ interface Props {
 }
 
 export function MessageCenterDemo({ onOpenNotificationSettings }: Props) {
-  const t = useT();
+  const { locale, t } = useI18n();
   const titleId = useId();
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLElement | null>(null);
-  const listRef = useRef<HTMLDivElement | null>(null);
-  const itemRefs = useRef<Map<string, HTMLElement>>(new Map());
   const [open, setOpen] = useState(false);
-  const [filter, setFilter] = useState<MessageFilter>('all');
-  const [messages, setMessages] = useState(createInitialState);
-  const [toast, setToast] = useState<string | null>(null);
+  const [filter, setFilter] = useState<MessageCenterFilter>('all');
+  const [messages, setMessages] = useState<MessageCenterMessage[]>([]);
+  const [readIds, setReadIds] = useState<Set<string>>(new Set());
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [syncError, setSyncError] = useState(false);
+  const loggedInRef = useRef(false);
+  const messagesRef = useRef<MessageCenterMessage[]>([]);
+  const readIdsRef = useRef<Set<string>>(new Set());
+  const pendingReadIdsRef = useRef<Set<string>>(new Set());
+  const syncRequestIdRef = useRef(0);
 
-  const unreadCount = useMemo(
-    () =>
-      DEMO_MESSAGES.filter((message) => {
-        const state = messages[message.id];
-        return state && !state.read;
-      }).length,
-    [messages],
+  const commitState = useCallback(
+    (nextMessages: MessageCenterMessage[], nextReadIds: Set<string>, options?: { persistAnonymous?: boolean }) => {
+      messagesRef.current = nextMessages;
+      readIdsRef.current = nextReadIds;
+      setMessages(nextMessages);
+      setReadIds(nextReadIds);
+      if (options?.persistAnonymous) writeAnonymousState(window.localStorage, nextMessages, nextReadIds);
+    },
+    [],
   );
 
+  const sync = useCallback(async () => {
+    const requestId = syncRequestIdRef.current + 1;
+    syncRequestIdRef.current = requestId;
+    const account = await isAmrLoggedIn();
+    const wasAccount = loggedInRef.current;
+    loggedInRef.current = account;
+    setLoggedIn(account);
+    if (wasAccount && !account) {
+      readIdsRef.current = new Set();
+      pendingReadIdsRef.current = new Set();
+    }
+    const startedAt = anonymousStartedAt(window.localStorage);
+    const pulled = await pullMessageCenter({ locale, loggedIn: account, startedAt });
+    if (requestId !== syncRequestIdRef.current) return;
+    const serverReadIds = new Set(pulled.filter((message) => Boolean(message.readAt)).map((message) => message.id));
+    if (account) {
+      pendingReadIdsRef.current = new Set(
+        [...pendingReadIdsRef.current].filter((messageId) => !serverReadIds.has(messageId)),
+      );
+    }
+    const overlayReadIds = new Set([
+      ...serverReadIds,
+      ...(account ? pendingReadIdsRef.current : []),
+      ...(!account ? readIdsRef.current : []),
+    ]);
+    const merged = pulled.map((message) => ({
+      ...message,
+      readAt: message.readAt ?? (overlayReadIds.has(message.id) ? new Date().toISOString() : null),
+    }));
+    if (account) clearAnonymousState(window.localStorage);
+    commitState(merged, overlayReadIds, { persistAnonymous: !account });
+    setSyncError(false);
+  }, [commitState, locale]);
+
+  const resolveLoggedInForWrite = useCallback(async () => {
+    const account = await isAmrLoggedIn();
+    loggedInRef.current = account;
+    setLoggedIn(account);
+    return account;
+  }, []);
+
+  const retrySync = useCallback(() => {
+    void sync().catch(() => setSyncError(true));
+  }, [sync]);
+
+  const invalidateSyncResponses = useCallback(() => {
+    syncRequestIdRef.current += 1;
+  }, []);
+
+  useEffect(() => {
+    anonymousStartedAt(window.localStorage);
+    commitState(
+      readAnonymousMessages(window.localStorage),
+      readAnonymousReadIds(window.localStorage),
+    );
+  }, [commitState]);
+
+  useEffect(() => {
+    retrySync();
+    const interval = window.setInterval(retrySync, 60_000);
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') retrySync();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [retrySync]);
+
+  useEffect(() => {
+    if (open) retrySync();
+  }, [open, retrySync]);
+
+  const unreadCount = messages.filter((message) => !message.readAt).length;
   const visibleMessages = useMemo(
-    () =>
-      DEMO_MESSAGES.filter((message) => {
-        const state = messages[message.id];
-        if (!state) return false;
-        if (filter === 'unread') return !state.read;
-        if (filter === 'read') return state.read;
-        return true;
-      }),
+    () => messages.filter((message) => filter === 'all' || (filter === 'read' ? Boolean(message.readAt) : !message.readAt)),
     [filter, messages],
   );
 
-  const expandedMessageId = useMemo(
-    () => visibleMessages.find((message) => messages[message.id]?.expanded)?.id ?? null,
-    [messages, visibleMessages],
-  );
-
-  const openLabel =
-    unreadCount > 0
-      ? `${t('messageCenter.openAria')} (${t('messageCenter.unreadCount', { count: unreadCount })})`
-      : t('messageCenter.openAria');
-
   const closePanel = () => {
     setOpen(false);
-    setToast(null);
     triggerRef.current?.focus();
   };
 
   useEffect(() => {
     if (!open) return;
     panelRef.current?.focus();
-
     const onPointerDown = (event: MouseEvent) => {
       const target = event.target as Node;
-      if (panelRef.current?.contains(target)) return;
-      if (triggerRef.current?.contains(target)) return;
-      closePanel();
+      if (!panelRef.current?.contains(target) && !triggerRef.current?.contains(target)) closePanel();
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') closePanel();
     };
-
     document.addEventListener('mousedown', onPointerDown);
     document.addEventListener('keydown', onKeyDown);
     return () => {
@@ -172,225 +164,86 @@ export function MessageCenterDemo({ onOpenNotificationSettings }: Props) {
     };
   }, [open]);
 
-  useEffect(() => {
-    if (!open || !expandedMessageId) return;
-
-    const timer = window.setTimeout(() => {
-      const list = listRef.current;
-      const item = itemRefs.current.get(expandedMessageId);
-      if (!list || !item) return;
-
-      const listRect = list.getBoundingClientRect();
-      const itemRect = item.getBoundingClientRect();
-      const topInset = 12;
-      const bottomInset = 24;
-
-      if (itemRect.bottom > listRect.bottom - bottomInset) {
-        list.scrollTop += itemRect.bottom - listRect.bottom + bottomInset;
-      } else if (itemRect.top < listRect.top + topInset) {
-        list.scrollTop -= listRect.top + topInset - itemRect.top;
-      }
-    }, 0);
-
-    return () => window.clearTimeout(timer);
-  }, [expandedMessageId, open]);
-
-  const toggleExpanded = (id: string) => {
-    setMessages((current) =>
-      Object.fromEntries(
-        Object.entries(current).map(([messageId, state]) => [
-          messageId,
-          messageId === id
-            ? { ...state, read: true, expanded: !state.expanded }
-            : { ...state, expanded: false },
-        ]),
-      ),
-    );
+  const markRead = async (messageId: string) => {
+    const message = messagesRef.current.find((item) => item.id === messageId);
+    if (!message || message.readAt) return;
+    const account = await resolveLoggedInForWrite();
+    const readAt = new Date().toISOString();
+    if (account) await markAccountMessageRead(messageId);
+    const nextIds = new Set(readIdsRef.current).add(messageId);
+    const nextMessages = messagesRef.current.map((item) => (item.id === messageId ? { ...item, readAt } : item));
+    if (account) {
+      pendingReadIdsRef.current = new Set(pendingReadIdsRef.current).add(messageId);
+      clearAnonymousState(window.localStorage);
+    }
+    invalidateSyncResponses();
+    commitState(nextMessages, nextIds, { persistAnonymous: !account });
   };
 
-  const markAllRead = () => {
-    setMessages((current) =>
-      Object.fromEntries(
-        Object.entries(current).map(([id, state]) => [id, { ...state, read: true }]),
-      ),
-    );
+  const markAllRead = async () => {
+    const account = await resolveLoggedInForWrite();
+    if (account) await markAllAccountMessagesRead();
+    const readAt = new Date().toISOString();
+    const nextIds = new Set(messagesRef.current.map((message) => message.id));
+    const nextMessages = messagesRef.current.map((message) => ({ ...message, readAt: message.readAt ?? readAt }));
+    if (account) {
+      pendingReadIdsRef.current = new Set(nextIds);
+      clearAnonymousState(window.localStorage);
+    }
+    invalidateSyncResponses();
+    commitState(nextMessages, nextIds, { persistAnonymous: !account });
   };
 
-  const emptyTitle =
-    filter === 'unread'
-      ? t('messageCenter.emptyUnreadTitle')
-      : filter === 'read'
-        ? t('messageCenter.emptyReadTitle')
-        : t('messageCenter.emptyAllTitle');
+  const openLabel = unreadCount > 0 ? `${t('messageCenter.openAria')} (${t('messageCenter.unreadCount', { count: unreadCount })})` : t('messageCenter.openAria');
+  const emptyTitle = filter === 'unread' ? t('messageCenter.emptyUnreadTitle') : filter === 'read' ? t('messageCenter.emptyReadTitle') : t('messageCenter.emptyAllTitle');
 
-  return (
-    <div className={styles.root}>
-      <button
-        ref={triggerRef}
-        type="button"
-        className={`settings-icon-btn od-tooltip ${styles.trigger}`}
-        onClick={() => setOpen((value) => !value)}
-        title={t('messageCenter.openAria')}
-        data-tooltip={t('messageCenter.openAria')}
-        data-tooltip-placement="bottom"
-        aria-label={openLabel}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        data-testid="message-center-trigger"
-      >
-        <Icon name="bell" size={17} />
-        {unreadCount > 0 ? (
-          <span className={styles.badge} aria-hidden>
-            {unreadBadgeLabel(unreadCount)}
-          </span>
+  return <div className={styles.root}>
+    <button ref={triggerRef} type="button" className={`settings-icon-btn od-tooltip ${styles.trigger}`} onClick={() => setOpen((value) => !value)} title={t('messageCenter.openAria')} data-tooltip={t('messageCenter.openAria')} data-tooltip-placement="bottom" aria-label={openLabel} aria-haspopup="dialog" aria-expanded={open} data-testid="message-center-trigger">
+      <Icon name="bell" size={17} />{unreadCount > 0 ? <span className={styles.badge} aria-hidden>{unreadBadgeLabel(unreadCount)}</span> : null}
+    </button>
+    {open ? createPortal(<div className={styles.backdrop} data-testid="message-center-backdrop"><aside ref={panelRef} className={styles.panel} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} data-testid="message-center-dialog">
+      <header className={styles.header}><div className={styles.headerCopy}><h2 id={titleId}>{t('messageCenter.title')}</h2><p>{t('messageCenter.subtitle')}</p></div><button type="button" className={styles.close} onClick={closePanel} aria-label={t('messageCenter.close')}><Icon name="close" size={15}/></button></header>
+      <div className={styles.controls}><div className={styles.filters} role="group" aria-label={t('messageCenter.title')}>{FILTERS.map((item) => <button key={item.id} type="button" className={`${styles.filter}${filter === item.id ? ` ${styles.filterActive}` : ''}`} aria-pressed={filter === item.id} onClick={() => setFilter(item.id)}>{t(item.label)}{item.id === 'unread' && unreadCount > 0 ? <span className={styles.filterBadge} aria-hidden>{unreadBadgeLabel(unreadCount)}</span> : null}</button>)}</div><button type="button" className={styles.markAll} onClick={() => void markAllRead().catch(() => setSyncError(true))} disabled={unreadCount === 0}>{t('messageCenter.markAllRead')}</button></div>
+      <div className={styles.list} aria-live="polite">
+        {syncError && messages.length > 0 ? (
+          <div className={styles.syncStatus} role="status">
+            <span>{t('settings.updateStatusFailed')}</span>
+            <button type="button" onClick={retrySync}>
+              {t('settings.updateRetry')}
+            </button>
+          </div>
         ) : null}
-      </button>
+        {syncError && messages.length === 0 ? <div className={styles.empty}><Icon name="bell" size={20}/><strong>{t('messageCenter.emptyAllTitle')}</strong><p>{t('messageCenter.emptyBody')}</p></div> : visibleMessages.length === 0 ? <div className={styles.empty}><Icon name="bell" size={20}/><strong>{emptyTitle}</strong><p>{t('messageCenter.emptyBody')}</p></div> : visibleMessages.map((message) => <MessageItem key={message.id} message={message} onRead={markRead} onError={() => setSyncError(true)}/>)}
+      </div>
+      <footer className={styles.footer}><p>{t('messageCenter.desktopSettingsHint')}</p>{onOpenNotificationSettings ? <Button variant="ghost" onClick={() => { closePanel(); onOpenNotificationSettings(); }}>{t('messageCenter.desktopSettings')}</Button> : null}</footer>
+    </aside></div>, document.body) : null}
+  </div>;
+}
 
-      {open
-        ? createPortal(
-            <div className={styles.backdrop} data-testid="message-center-backdrop">
-              <aside
-                ref={panelRef}
-                className={styles.panel}
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby={titleId}
-                tabIndex={-1}
-                data-testid="message-center-dialog"
-              >
-                <header className={styles.header}>
-                  <div className={styles.headerCopy}>
-                    <h2 id={titleId}>{t('messageCenter.title')}</h2>
-                    <p>{t('messageCenter.subtitle')}</p>
-                  </div>
-                  <button
-                    type="button"
-                    className={styles.close}
-                    onClick={closePanel}
-                    aria-label={t('messageCenter.close')}
-                  >
-                    <Icon name="close" size={15} />
-                  </button>
-                </header>
+function MessageItem({
+  message,
+  onRead,
+  onError,
+}: {
+  message: MessageCenterMessage;
+  onRead: (id: string) => Promise<void>;
+  onError: () => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const formatted = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(message.publishedAt));
+  const ctaUrl = safeExternalUrl(message.ctaUrl);
+  return <article className={`${styles.item}${message.readAt ? '' : ` ${styles.itemUnread}`}${expanded ? ` ${styles.itemExpanded}` : ''}`}>
+    <button type="button" className={styles.itemSummary} aria-expanded={expanded} onClick={() => { setExpanded((value) => !value); void onRead(message.id).catch(onError); }}><span className={styles.itemMeta}><span>{message.typeName}</span><time dateTime={message.publishedAt}>{formatted}</time></span><strong>{message.title}</strong><span className={styles.bodyPreview}>{message.body}</span></button>
+    {expanded && message.ctaLabel && ctaUrl ? <div className={styles.itemActions}><button type="button" className={styles.primaryAction} onClick={() => window.open(ctaUrl, '_blank', 'noopener,noreferrer')}>{message.ctaLabel}</button></div> : null}
+  </article>;
+}
 
-                <div className={styles.controls}>
-                  <div
-                    className={styles.filters}
-                    role="group"
-                    aria-label={t('messageCenter.title')}
-                  >
-                    {FILTERS.map((item) => (
-                      <button
-                        key={item.id}
-                        type="button"
-                        className={`${styles.filter}${filter === item.id ? ` ${styles.filterActive}` : ''}`}
-                        aria-pressed={filter === item.id}
-                        onClick={() => setFilter(item.id)}
-                      >
-                        {t(item.labelKey)}
-                        {item.id === 'unread' && unreadCount > 0 ? (
-                          <span className={styles.filterBadge} aria-hidden>
-                            {unreadBadgeLabel(unreadCount)}
-                          </span>
-                        ) : null}
-                      </button>
-                    ))}
-                  </div>
-                  <button
-                    type="button"
-                    className={styles.markAll}
-                    onClick={markAllRead}
-                    disabled={unreadCount === 0}
-                  >
-                    {t('messageCenter.markAllRead')}
-                  </button>
-                </div>
-
-                <div ref={listRef} className={styles.list} aria-live="polite">
-                  {visibleMessages.length === 0 ? (
-                    <div className={styles.empty}>
-                      <Icon name="bell" size={20} />
-                      <strong>{emptyTitle}</strong>
-                      <p>{t('messageCenter.emptyBody')}</p>
-                    </div>
-                  ) : (
-                    visibleMessages.map((message) => {
-                      const state = messages[message.id];
-                      if (!state) return null;
-                      return (
-                        <article
-                          key={message.id}
-                          ref={(node) => {
-                            if (node) itemRefs.current.set(message.id, node);
-                            else itemRefs.current.delete(message.id);
-                          }}
-                          className={`${styles.item}${state.read ? '' : ` ${styles.itemUnread}`}${state.expanded ? ` ${styles.itemExpanded}` : ''}`}
-                        >
-                          <button
-                            type="button"
-                            className={styles.itemSummary}
-                            aria-expanded={state.expanded}
-                            onClick={() => toggleExpanded(message.id)}
-                          >
-                            <span className={styles.itemMeta}>
-                              <span>{t(message.typeKey)}</span>
-                              <time>{t(message.timeKey)}</time>
-                            </span>
-                            <strong>{t(message.titleKey)}</strong>
-                            <span className={styles.bodyPreview}>{t(message.bodyKey)}</span>
-                          </button>
-
-                          {state.expanded ? (
-                            <div className={styles.itemActions}>
-                              <button
-                                type="button"
-                                className={styles.primaryAction}
-                                onClick={() =>
-                                  setToast(
-                                    t('messageCenter.actionToast', {
-                                      title: t(message.titleKey),
-                                    }),
-                                  )
-                                }
-                              >
-                                {t(message.actionKey)}
-                              </button>
-                            </div>
-                          ) : null}
-                        </article>
-                      );
-                    })
-                  )}
-                </div>
-
-                <footer className={styles.footer}>
-                  <p>{t('messageCenter.desktopSettingsHint')}</p>
-                  {onOpenNotificationSettings ? (
-                    <Button
-                      variant="ghost"
-                      onClick={() => {
-                        closePanel();
-                        onOpenNotificationSettings();
-                      }}
-                    >
-                      {t('messageCenter.desktopSettings')}
-                    </Button>
-                  ) : null}
-                </footer>
-
-                {toast ? (
-                  <div className={styles.toast} role="status">
-                    <span>{toast}</span>
-                    <button type="button" onClick={() => setToast(null)}>
-                      {t('messageCenter.toastDismiss')}
-                    </button>
-                  </div>
-                ) : null}
-              </aside>
-            </div>,
-            document.body,
-          )
-        : null}
-    </div>
-  );
+function safeExternalUrl(value: string | null): string | null {
+  if (!value) return null;
+  try {
+    const parsed = new URL(value, window.location.href);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed.toString() : null;
+  } catch {
+    return null;
+  }
 }
