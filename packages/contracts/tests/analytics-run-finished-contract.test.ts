@@ -89,6 +89,12 @@ describe('analytics run_finished contract', () => {
         live_artifact_seen: false,
         retry_attempt_count: 1,
         retry_final_result: 'success',
+        agent_cli_version: 'vela 0.0.26',
+        runtime_companion_name: 'opencode',
+        runtime_companion_version: 'opencode 1.2.3',
+        retry_original_failure_category: 'upstream_unavailable',
+        retry_original_failure_detail: 'stream_disconnected',
+        retry_original_failure_stage: 'first_token_wait',
       },
     } satisfies Extract<AnalyticsEventPayload, { event: 'run_finished' }>;
 
@@ -104,6 +110,9 @@ describe('analytics run_finished contract', () => {
     expect(payload.props.first_token_seen).toBe(true);
     expect(payload.props.retry_attempt_count).toBe(1);
     expect(payload.props.retry_final_result).toBe('success');
+    expect(payload.props.agent_cli_version).toBe('vela 0.0.26');
+    expect(payload.props.runtime_companion_version).toBe('opencode 1.2.3');
+    expect(payload.props.retry_original_failure_detail).toBe('stream_disconnected');
   });
 
   it('accepts retry attempted and finished lifecycle events', () => {

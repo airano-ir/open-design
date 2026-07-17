@@ -5393,6 +5393,7 @@ export async function startServer({
         sideEffects,
       });
       if (decision.shouldRetry && !design.runs.isTerminal(run.status)) {
+        run.retryOriginalFailure ??= failure ?? undefined;
         run.retryAttemptCount = decision.retryAttemptIndex;
         run.retryFinalResult = undefined;
         run.retrySuppressedReason = undefined;
