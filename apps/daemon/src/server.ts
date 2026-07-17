@@ -191,12 +191,14 @@ import {
   spawnEnvForAgent,
 } from './agents.js';
 import {
+  getKnownModelOption,
   getRememberedLiveModels,
   preferFreshLiveModels,
   rememberLiveModels,
   resolveDefaultModelFromOptions,
   resolveModelForAgent,
 } from './runtimes/models.js';
+import { evaluateModelContextBudget } from './runtimes/model-context-budget.js';
 import { loadMmdRouteLaunchEnv } from './runtimes/mmd-routes.js';
 import { preparePromptFileForAgent } from './runtimes/prompt-file.js';
 import { TerminalControlSequenceStripper } from './runtimes/terminal-control.js';
@@ -5790,6 +5792,41 @@ export async function startServer({
       // catalog can lag the live one, and a logged-in user picked a concrete
       // id; vela rejects a truly unsupported model at `session/set_model` with
       // a precise error, which beats a pre-emptive block on a flaky metadata read.
+    }
+
+    const contextBudget = evaluateModelContextBudget({
+      prompt: composed,
+      modelId: safeModel,
+      metadata: getKnownModelOption(
+        def,
+        safeModel,
+        requestedLiveModelScope,
+      )?.metadata,
+    });
+    run.contextBudget = contextBudget;
+    design.runs.emit(run, 'diagnostic', {
+      type: 'model_context_budget',
+      action: contextBudget.action,
+      source: contextBudget.source,
+      model_id: contextBudget.modelId,
+      estimated_prompt_tokens: contextBudget.estimatedPromptTokens,
+      context_window_tokens: contextBudget.contextWindowTokens,
+      reserved_output_tokens: contextBudget.reservedOutputTokens,
+      safety_margin_tokens: contextBudget.safetyMarginTokens,
+      input_budget_tokens: contextBudget.inputBudgetTokens,
+      context_budget_ratio: contextBudget.budgetRatio,
+    });
+    if (contextBudget.error) {
+      design.runs.emit(
+        run,
+        'error',
+        createSseErrorPayload(
+          contextBudget.error.code,
+          contextBudget.error.message,
+          { retryable: false },
+        ),
+      );
+      return design.runs.finish(run, 'failed', 1, null);
     }
 
     // Plain-streaming adapters that own a "continue most recent

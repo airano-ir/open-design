@@ -529,6 +529,8 @@ export type ModelCapability = 'standard' | 'advanced' | 'best_quality';
 export interface ModelMetadata {
   cost?: ModelCost;
   capability?: ModelCapability;
+  contextWindowTokens?: number;
+  maxOutputTokens?: number;
 }
 
 export interface AgentModelOption {

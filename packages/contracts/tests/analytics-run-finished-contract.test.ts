@@ -89,6 +89,13 @@ describe('analytics run_finished contract', () => {
         live_artifact_seen: false,
         retry_attempt_count: 1,
         retry_final_result: 'success',
+        context_budget_action: 'within_budget',
+        context_budget_source: 'model_metadata',
+        estimated_prompt_tokens: 120000,
+        context_window_tokens: 204800,
+        reserved_output_tokens: 8192,
+        input_budget_tokens: 186368,
+        context_budget_ratio: 120000 / 186368,
       },
     } satisfies Extract<AnalyticsEventPayload, { event: 'run_finished' }>;
 
@@ -104,6 +111,8 @@ describe('analytics run_finished contract', () => {
     expect(payload.props.first_token_seen).toBe(true);
     expect(payload.props.retry_attempt_count).toBe(1);
     expect(payload.props.retry_final_result).toBe('success');
+    expect(payload.props.context_budget_action).toBe('within_budget');
+    expect(payload.props.context_window_tokens).toBe(204800);
   });
 
   it('accepts retry attempted and finished lifecycle events', () => {
