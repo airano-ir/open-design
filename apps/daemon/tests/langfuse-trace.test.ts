@@ -2369,18 +2369,52 @@ describe('reportRunFeedback', () => {
     vi.unstubAllEnvs();
   });
 
-  it('skips feedback while completed-run telemetry is using Vela', async () => {
+  it('posts feedback scores to Vela when completed-run telemetry uses Vela', async () => {
     vi.stubEnv('VELA_CONTROL_KEY', 'ck_secret');
     vi.stubEnv('VELA_API_URL', 'https://vela.example.test');
     vi.stubEnv(
       'OPEN_DESIGN_TELEMETRY_RELAY_URL',
       'https://telemetry.open-design.ai/api/langfuse',
     );
-    const fetchSpy = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }));
+    const fetchSpy = vi.fn().mockResolvedValue(new Response(
+      JSON.stringify({
+        ok: true,
+        idempotencyKey: 'feedback-key',
+        receipt: {
+          clientTraceId: 'run-feedback-1',
+          scopedTraceId: 'scoped-run-feedback-1',
+        },
+      }),
+      { status: 202 },
+    ));
 
-    await reportRunFeedback(makeFeedbackCtx(), { fetchImpl: fetchSpy as any });
+    await reportRunFeedback(
+      makeFeedbackCtx({ reasonCodes: ['matched_request'] }),
+      { fetchImpl: fetchSpy as any },
+    );
 
-    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchSpy.mock.calls[0]!;
+    expect(url).toBe('https://vela.example.test/api/v1/open-design/telemetry');
+    expect(init.headers.Authorization).toBe('Bearer ck_secret');
+    const envelope = JSON.parse(init.body);
+    expect(envelope.installationId).toBe('install-uuid-1');
+    expect(envelope.events.map((event: { kind: string }) => event.kind)).toEqual([
+      'score',
+      'score',
+    ]);
+    expect(envelope.events[0].data).toMatchObject({
+      id: 'run-feedback-1-rating',
+      traceId: 'run-feedback-1',
+      name: 'user_rating',
+      value: 1,
+    });
+    expect(envelope.events[1].data).toMatchObject({
+      id: 'run-feedback-1-reason-matched_request',
+      traceId: 'run-feedback-1',
+      name: 'user_rating_reason',
+      value: 'matched_request',
+    });
   });
 
   it('skips when metrics consent is off', async () => {

@@ -339,7 +339,7 @@ export interface ReportRunOpts {
 }
 
 export interface ReportFeedbackOpts {
-  config?: TelemetrySinkConfig | LangfuseConfig | null;
+  config?: RunTelemetrySinkConfig | LangfuseConfig | null;
   fetchImpl?: typeof fetch;
   configuredEnv?: Record<string, string>;
 }
@@ -424,9 +424,10 @@ function isVelaTelemetryEnabled(env: NodeJS.ProcessEnv): boolean {
 }
 
 /**
- * Completed-run telemetry may use the authenticated Vela entry. Feedback keeps
- * using readTelemetrySinkConfig() until Vela exposes a server-owned receipt
- * protocol, so this resolver must not be reused by reportRunFeedback().
+ * Completed-run and feedback telemetry share the same sink selection: Vela when
+ * a Control Key is present, otherwise the anonymous relay / direct Langfuse.
+ * Feedback score-only batches keep the client run id as `data.traceId`; Vela
+ * re-scopes it with the same account hash as the original run batch.
  */
 export function readRunTelemetrySinkConfig(
   env: NodeJS.ProcessEnv = process.env,
@@ -458,16 +459,14 @@ export function readRunTelemetrySinkConfig(
 }
 
 /**
- * Scores cannot safely target Vela-scoped trace IDs until the server returns
- * an opaque receipt for the accepted run. Skip them while Vela is selected;
- * anonymous runs retain the existing relay/direct-Langfuse behavior.
+ * Feedback uses the same sink as completed-run telemetry. Vela accepts
+ * score-only batches on the same endpoint and binds them via client run id.
  */
 export function readFeedbackTelemetrySinkConfig(
   env: NodeJS.ProcessEnv = process.env,
   configuredEnv: Record<string, string> = {},
-): TelemetrySinkConfig | null {
-  const runSink = readRunTelemetrySinkConfig(env, configuredEnv);
-  return runSink?.kind === 'vela' ? null : readTelemetrySinkConfig(env);
+): RunTelemetrySinkConfig | null {
+  return readRunTelemetrySinkConfig(env, configuredEnv);
 }
 
 export function deriveLangfuseDeliveryState(
@@ -1919,6 +1918,7 @@ const LANGFUSE_TYPE_TO_VELA_KIND = {
   'span-create': 'span',
   'generation-create': 'generation',
   'event-create': 'event',
+  'score-create': 'score',
 } as const;
 
 type VelaSourceEventType = keyof typeof LANGFUSE_TYPE_TO_VELA_KIND;
@@ -2100,7 +2100,7 @@ function resolveRunReportConfig(
 
 function resolveFeedbackReportConfig(
   opts: ReportFeedbackOpts,
-): TelemetrySinkConfig | null {
+): RunTelemetrySinkConfig | null {
   if (opts.config === undefined) {
     return readFeedbackTelemetrySinkConfig(
       process.env,
@@ -2108,8 +2108,7 @@ function resolveFeedbackReportConfig(
     );
   }
   if (opts.config == null) return null;
-  if ('kind' in opts.config) return opts.config;
-  return { kind: 'langfuse', ...opts.config };
+  return normalizeRunTelemetrySinkConfig(opts.config);
 }
 
 function ingestionDropReasonFromStatus(
@@ -2397,6 +2396,21 @@ export async function reportRunFeedback(
   }
 
   const fetchImpl = opts.fetchImpl ?? globalThis.fetch;
+  if (config.kind === 'vela') {
+    const installationId = ctx.installationId?.trim() ?? '';
+    if (!installationId) {
+      const fallback = readTelemetrySinkConfig();
+      if (!fallback) return;
+      if (fallback.kind === 'relay') {
+        await postRelayBatch(fallback, serialized, fetchImpl);
+        return;
+      }
+      await postLangfuseBatch(fallback, batch, fetchImpl);
+      return;
+    }
+    await postVelaBatch(config, batch, installationId, fetchImpl);
+    return;
+  }
   if (config.kind === 'relay') {
     await postRelayBatch(config, serialized, fetchImpl);
     return;
