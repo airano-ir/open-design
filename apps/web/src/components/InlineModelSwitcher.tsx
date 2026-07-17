@@ -52,6 +52,7 @@ import {
 } from '../providers/daemon';
 import type { AgentInfo, ApiProtocol, AppConfig, ExecMode } from '../types';
 import { apiProtocolLabel } from '../utils/apiProtocol';
+import { isVisibleLocalCliAgent } from '../utils/visibleAgents';
 import { AgentIcon } from './AgentIcon';
 import { Icon } from './Icon';
 import { PlanBadge } from './PlanBadge';
@@ -64,8 +65,15 @@ import {
   notifyAmrLoginStatusChanged,
 } from './amrLoginPolling';
 import { orderAgentsWithOpenDesignFirst } from './agentOrdering';
-import { normalizeAgentModelChoice } from './agentModelSelection';
-import { SearchableModelSelect } from './modelOptions';
+import {
+  defaultAgentModelId,
+  effectiveAgentModelChoice,
+  normalizeAgentModelChoice,
+} from './agentModelSelection';
+import {
+  orderModelOptionsByAvailability,
+  SearchableModelSelect,
+} from './modelOptions';
 import {
   mergeProviderModelOptions,
   providerModelsCacheKey,
@@ -383,7 +391,10 @@ export function InlineModelSwitcher({
   }, [refreshAmrStatus, startAmrPolling, stopAmrPolling]);
 
   const installedAgents = useMemo(
-    () => orderAgentsWithOpenDesignFirst(agents.filter((a) => a.available)),
+    () =>
+      orderAgentsWithOpenDesignFirst(
+        agents.filter((a) => a.available && isVisibleLocalCliAgent(a)),
+      ),
     [agents],
   );
   const currentAgent = useMemo(
@@ -397,24 +408,23 @@ export function InlineModelSwitcher({
 
   const currentChoice =
     (config.agentId && config.agentModels?.[config.agentId]) || {};
-  const normalizedCurrentChoice = normalizeAgentModelChoice(
-    currentAgent,
-    currentChoice,
-  );
+  const normalizedCurrentChoice = normalizeAgentModelChoice(currentAgent, currentChoice);
+  const effectiveCurrentChoice = effectiveAgentModelChoice(currentAgent, currentChoice) ?? currentChoice;
   const currentAgentId = currentAgent?.id ?? null;
   const normalizedCurrentModelId = normalizedCurrentChoice?.model ?? null;
   const normalizedCurrentReasoning = normalizedCurrentChoice?.reasoning;
   const currentAgentModelIds = currentAgent?.models?.map((m) => m.id) ?? [];
   const configuredModelId =
-    typeof currentChoice.model === 'string' && currentChoice.model
-      ? currentChoice.model
+    typeof effectiveCurrentChoice.model === 'string' && effectiveCurrentChoice.model
+      ? effectiveCurrentChoice.model
       : null;
   const currentModelId =
     currentAgent?.id === 'amr' &&
     configuredModelId &&
+    configuredModelId !== 'default' &&
     !currentAgentModelIds.includes(configuredModelId)
-      ? currentAgent?.models?.[0]?.id ?? null
-      : configuredModelId ?? currentAgent?.models?.[0]?.id ?? null;
+      ? defaultAgentModelId(currentAgent)
+      : configuredModelId ?? defaultAgentModelId(currentAgent);
 
   useEffect(() => {
     if (!currentAgentId || !normalizedCurrentModelId) return;
@@ -431,6 +441,11 @@ export function InlineModelSwitcher({
 
   const currentModelLabel =
     currentAgent?.models?.find((m) => m.id === currentModelId)?.label ?? null;
+  const inlineAgentModelOptions = useMemo(() => {
+    const models = currentAgent?.models ?? [];
+    if (currentAgent?.id !== 'amr') return models;
+    return orderModelOptionsByAvailability(models);
+  }, [currentAgent]);
   const amrLoggedIn = amrStatus?.loggedIn === true;
 
   useEffect(() => {
@@ -573,8 +588,8 @@ export function InlineModelSwitcher({
     () =>
       Array.from(
         new Set(
-          providerForProtocol?.models?.length
-            ? providerForProtocol.models
+          providerForProtocol?.preferredModels.length
+            ? providerForProtocol.preferredModels
             : SUGGESTED_MODELS_BY_PROTOCOL[apiProtocol],
         ),
       ),
@@ -589,7 +604,7 @@ export function InlineModelSwitcher({
     [apiModelOptions],
   );
   const apiModelChoices = useMemo(
-    () => apiModelOptions.map((model) => ({ id: model.id, label: model.label })),
+    () => apiModelOptions.map((model) => ({ ...model, label: model.label })),
     [apiModelOptions],
   );
 
@@ -958,7 +973,7 @@ export function InlineModelSwitcher({
                     popoverTestId="inline-model-switcher-agent-model-popover"
                     searchPlaceholder={t('designs.searchPlaceholder')}
                     aria-label={t('inlineSwitcher.modelLabel')}
-                    models={currentAgent.models}
+                    models={inlineAgentModelOptions}
                     value={currentModelId ?? ''}
                     onChange={(nextValue) => {
                       trackExecutionSettingsPopoverClick(analytics.track, {
@@ -982,6 +997,48 @@ export function InlineModelSwitcher({
                               label: `${currentModelId} ${t('inlineSwitcher.customSuffix')}`,
                             },
                           ]
+                        : undefined
+                    }
+                    disabledOptionHint={
+                      currentAgent?.id === 'amr'
+                        ? (option) =>
+                            option.enabled === false
+                              ? t('settings.amrModelUpgradeHint')
+                              : null
+                        : undefined
+                    }
+                    onDisabledOptionUpgrade={
+                      currentAgent?.id === 'amr'
+                        ? () => {
+                            const attribution = recordAmrEntry(
+                              analytics.track,
+                              'inline_amr_upgrade',
+                              new Date(),
+                              {
+                                metricsConsent:
+                                  config.telemetry?.metrics === true,
+                              },
+                            );
+                            const deviceId = amrHandoffDeviceId({
+                              metricsConsent:
+                                config.telemetry?.metrics === true,
+                              resolvedDeviceId: getResolvedDeviceId(),
+                              installationId: config.installationId,
+                            });
+                            window.open(
+                              attributedAmrUrl(
+                                amrPlansUrlForProfile(
+                                  amrStatus?.profile ??
+                                    config.agentCliEnv?.amr
+                                      ?.OPEN_DESIGN_AMR_PROFILE,
+                                ),
+                                attribution,
+                                deviceId,
+                              ),
+                              '_blank',
+                              'noopener,noreferrer',
+                            );
+                          }
                         : undefined
                     }
                   />

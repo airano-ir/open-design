@@ -121,6 +121,7 @@ describe('OpenAI-compatible media providers', () => {
       expectedConfigExcludes?: string;
       expectedArgsIncludes?: string;
       expectedArgsExcludes?: string;
+      outputFileName?: string;
     } = {},
   ) {
     const codexBin = path.join(root, `${threadId}.mjs`);
@@ -133,6 +134,7 @@ const expectedConfigIncludes = ${JSON.stringify(options.expectedConfigIncludes ?
 const expectedConfigExcludes = ${JSON.stringify(options.expectedConfigExcludes ?? '')};
 const expectedArgsIncludes = ${JSON.stringify(options.expectedArgsIncludes ?? '')};
 const expectedArgsExcludes = ${JSON.stringify(options.expectedArgsExcludes ?? '')};
+const outputFileName = ${JSON.stringify(options.outputFileName ?? 'ig_0001.png')};
 const args = process.argv.slice(2);
 const addDirIndex = args.indexOf('--add-dir');
 const generatedRoot = addDirIndex >= 0 ? args[addDirIndex + 1] : '';
@@ -162,7 +164,7 @@ process.stdin.on('end', () => {
   if (!stdin.includes('$imagegen') || !generatedRoot) process.exit(7);
   const outDir = path.join(generatedRoot, '${threadId}');
   mkdirSync(outDir, { recursive: true });
-  writeFileSync(path.join(outDir, 'ig_0001.png'), Buffer.from(pngBase64, 'base64'));
+  writeFileSync(path.join(outDir, outputFileName), Buffer.from(pngBase64, 'base64'));
   process.stdout.write(JSON.stringify({ type: 'thread.started', thread_id: '${threadId}' }) + '\\n');
 });
 `, 'utf8');
@@ -531,6 +533,52 @@ process.stdin.on('end', () => {
     expect(bytes.length).toBeGreaterThan(0);
   });
 
+  it('ingests call-prefixed Codex subscription image output', async () => {
+    const generatedHome = path.join(root, 'call-prefixed-codex-home');
+    await writeCodexAuth(generatedHome, {
+      auth_mode: 'chatgpt',
+      OPENAI_API_KEY: null,
+    });
+    await installFakeCodex(generatedHome, 'call-prefixed-codex-thread', {
+      outputFileName: 'call_Er2KDML8Fof5QcOXdSovI85V.png',
+    });
+
+    const result = await generateMedia({
+      projectRoot,
+      projectsRoot,
+      projectId: 'project-1',
+      surface: 'image',
+      model: 'gpt-image-2',
+      prompt: 'A compact purple cat icon',
+      output: 'call-prefixed.png',
+    });
+
+    expect(result.providerId).toBe('codex');
+    const bytes = await readFile(path.join(projectsRoot, 'project-1', 'call-prefixed.png'));
+    expect(bytes.length).toBeGreaterThan(0);
+  });
+
+  it('ignores unrelated image files in the Codex generated thread directory', async () => {
+    const generatedHome = path.join(root, 'unrelated-image-codex-home');
+    await writeCodexAuth(generatedHome, {
+      auth_mode: 'chatgpt',
+      OPENAI_API_KEY: null,
+    });
+    await installFakeCodex(generatedHome, 'unrelated-image-codex-thread', {
+      outputFileName: 'preview.png',
+    });
+
+    await expect(generateMedia({
+      projectRoot,
+      projectsRoot,
+      projectId: 'project-1',
+      surface: 'image',
+      model: 'gpt-image-2',
+      prompt: 'A compact purple cat icon',
+      output: 'unrelated-image.png',
+    })).rejects.toThrow(/did not write an ig_\* or call_\* image/i);
+  });
+
   it('prefers the Codex subscription path for gpt-image-2 even when an OpenAI key is configured', async () => {
     const generatedHome = path.join(root, 'subscription-before-api-codex-home');
     await writeCodexAuth(generatedHome, {
@@ -698,6 +746,41 @@ process.stdin.on('end', () => {
     expect(result.providerNote).toContain('codex/gpt-image-2');
     const bytes = await readFile(path.join(projectsRoot, 'project-1', 'codex.png'));
     expect(bytes.length).toBeGreaterThan(0);
+  });
+
+  it('reports Codex preview-only imagegen output without leaking ENOENT', async () => {
+    const generatedHome = path.join(root, 'preview-only-codex-home');
+    const codexBin = path.join(root, 'preview-only-codex.mjs');
+    await writeFile(codexBin, `#!/usr/bin/env node
+let stdin = '';
+process.stdin.setEncoding('utf8');
+process.stdin.on('data', (chunk) => { stdin += chunk; });
+process.stdin.on('end', () => {
+  if (!stdin.includes('$imagegen')) process.exit(7);
+  process.stdout.write(JSON.stringify({ type: 'thread.started', thread_id: 'preview-only-thread' }) + '\\n');
+  process.stdout.write(JSON.stringify({
+    type: 'item.completed',
+    item: {
+      type: 'agent_message',
+      text: 'This is preview-only, so I generated it without saving a file to the project.'
+    }
+  }) + '\\n');
+  process.stdout.write(JSON.stringify({ type: 'turn.completed' }) + '\\n');
+});
+`, 'utf8');
+    await chmod(codexBin, 0o755);
+    process.env.CODEX_BIN = codexBin;
+    process.env.CODEX_HOME = generatedHome;
+
+    await expect(generateMedia({
+      projectRoot,
+      projectsRoot,
+      projectId: 'project-1',
+      surface: 'image',
+      model: 'codex-gpt-image-2',
+      prompt: 'A compact green app icon with a folded page motif',
+      output: 'codex-preview-only.png',
+    })).rejects.toThrow(/Codex imagegen completed in preview-only mode/i);
   });
 
   it('uses app-config Codex CLI env overrides for subscription image generation', async () => {

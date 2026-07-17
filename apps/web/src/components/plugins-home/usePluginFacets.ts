@@ -23,6 +23,12 @@ import {
 } from './facets';
 import { sortByVisualAppeal } from './visualScore';
 import { comparePluginGalleryOrder, isSunkToBottom } from './pluginPopularity';
+import {
+  readStoredSortOrder,
+  sortByNewest,
+  writeStoredSortOrder,
+  type PluginSortOrder,
+} from './sortOrder';
 
 // Push the sunk tiles (default seeds, no-preview, manually-sunk ugly previews)
 // to the end while keeping everything else in its incoming order. The per-facet
@@ -57,6 +63,8 @@ export interface UsePluginFacetsResult {
   setMode: (next: FilterMode) => void;
   query: string;
   setQuery: (next: string) => void;
+  sortOrder: PluginSortOrder;
+  setSortOrder: (next: PluginSortOrder) => void;
   totalVisible: number;
 }
 
@@ -74,6 +82,12 @@ export function usePluginFacets({
   const [mode, setMode] = useState<FilterMode>('all');
   const [selection, setSelection] = useState<FacetSelection>(EMPTY_SELECTION);
   const [query, setQuery] = useState('');
+  // Hot vs newest scan order, remembered per browser so a returning
+  // user keeps their preferred ordering (lazy read: storage is only
+  // touched once per mount).
+  const [sortOrder, setSortOrderState] = useState<PluginSortOrder>(
+    () => readStoredSortOrder(),
+  );
   // Apply the preferred default selection once, on the first render that
   // sees a non-empty catalog. Using a flag (instead of a useState lazy
   // initializer) handles the realistic case where `args.plugins` is
@@ -95,9 +109,18 @@ export function usePluginFacets({
     [plugins],
   );
 
+  // Re-rank for the "newest" order on top of the visual-appeal base:
+  // sortByNewest is stable, so same-timestamp batches (e.g. the bundled
+  // catalog seeded in one transaction) keep their appeal ranking
+  // instead of collapsing into raw daemon order.
+  const orderedPlugins = useMemo(
+    () => (sortOrder === 'newest' ? sortByNewest(visiblePlugins) : visiblePlugins),
+    [sortOrder, visiblePlugins],
+  );
+
   const savedList = useMemo(
-    () => visiblePlugins.filter((plugin) => savedPluginIds?.has(plugin.id)),
-    [savedPluginIds, visiblePlugins],
+    () => orderedPlugins.filter((plugin) => savedPluginIds?.has(plugin.id)),
+    [savedPluginIds, orderedPlugins],
   );
 
   const catalog = useMemo(() => buildFacetCatalog(visiblePlugins), [visiblePlugins]);
@@ -124,15 +147,26 @@ export function usePluginFacets({
   // cross-facet usage jumble. Array#sort is stable, so ties keep master order.
   const filtered = useMemo(() => {
     if (mode === 'saved') return filterByQuery(savedList, query, locale);
-    const slice = applyFacetSelection(visiblePlugins, selection);
-    const base = selection.category
-      ? [...slice].sort((a, b) => {
-          const curationGoverned = selection.category === 'prototype';
-          return comparePluginGalleryOrder(a.id, b.id, curationGoverned, curationGoverned);
-        })
-      : sinkToBottom(slice);
+    // Facet selection runs on `orderedPlugins` so the user's hot/newest sort
+    // choice flows through. OPEND-449 usage ordering is the default ("hot")
+    // experience: non-prototype facets lead by real usage, the Prototype facet
+    // keeps its curated order, and the default mode-seeds + no-preview tiles
+    // sink to the bottom. When the user explicitly switches to "newest",
+    // respect that chronological order and skip the usage re-sort.
+    const slice = applyFacetSelection(orderedPlugins, selection);
+    let base: InstalledPluginRecord[];
+    if (sortOrder === 'newest') {
+      base = slice;
+    } else if (selection.category) {
+      const curationGoverned = selection.category === 'prototype';
+      base = [...slice].sort((a, b) =>
+        comparePluginGalleryOrder(a.id, b.id, curationGoverned, curationGoverned),
+      );
+    } else {
+      base = sinkToBottom(slice);
+    }
     return filterByQuery(base, query, locale);
-  }, [mode, savedList, visiblePlugins, selection, query, locale]);
+  }, [mode, savedList, orderedPlugins, selection, query, locale, sortOrder]);
 
   function pickCategory(slug: string | null): void {
     if (mode === 'saved') setMode('all');
@@ -148,6 +182,11 @@ export function usePluginFacets({
       ...prev,
       subcategory: prev.subcategory === slug ? null : slug,
     }));
+  }
+
+  function setSortOrder(next: PluginSortOrder): void {
+    setSortOrderState(next);
+    writeStoredSortOrder(next);
   }
 
   function clearFacets(): void {
@@ -178,6 +217,8 @@ export function usePluginFacets({
     setMode,
     query,
     setQuery,
+    sortOrder,
+    setSortOrder,
     totalVisible: visiblePlugins.length,
   };
 }

@@ -17,6 +17,10 @@ import { join } from "node:path";
 import { app, dialog } from "electron";
 
 import { readPackagedConfig } from "./config.js";
+import {
+  claimPackagedDownloadAttribution,
+  discoverPackagedDownloadAttribution,
+} from "./download-attribution.js";
 import { writePackagedDesktopIdentity } from "./identity.js";
 import { PackagedPathAccessError } from "./errors.js";
 import { inspectExistingDesktopForLauncher, waitForLauncherAfterQuit } from "./launcher-after-quit.js";
@@ -55,6 +59,7 @@ let startupTelemetryContext:
       namespace: string;
       source: string;
       installationRoot: string;
+      nativeModulePath: string | null;
     }
   | null = null;
 
@@ -129,9 +134,25 @@ async function main(): Promise<void> {
     // Pass installationRoot explicitly: OD_INSTALLATION_DIR is only set in the
     // daemon child env, not this parent process (see startup-telemetry.ts).
     installationRoot: paths.installationRoot,
+    // Absolute path where the daemon's better-sqlite3 binding ships in the
+    // packaged bundle (`Contents/Resources/app/node_modules/...` — layout
+    // verified against the shipped 0.13.0 DMG). The fatal-exit report probes
+    // this to record whether the .node actually exists on the crashing machine.
+    nativeModulePath: join(
+      app.getAppPath(),
+      "node_modules",
+      "better-sqlite3",
+      "build",
+      "Release",
+      "better_sqlite3.node",
+    ),
   };
 
   await ensurePackagedNamespacePaths(paths);
+  const downloadAttribution = await discoverPackagedDownloadAttribution(paths, console).catch((error: unknown) => {
+    console.warn("[attribution] failed to discover packaged download attribution", error);
+    return null;
+  });
   packagedLogger = createPackagedDesktopLogger(paths);
   attachPackagedDesktopProcessLogging({ logger: packagedLogger, paths, stamp });
   applyPackagedElectronPathOverrides(paths);
@@ -199,6 +220,14 @@ async function main(): Promise<void> {
       setSplashStage(splash.window, stage);
     },
   });
+  if (sidecars.daemon.url) {
+    void claimPackagedDownloadAttribution({
+      attribution: downloadAttribution,
+      daemonUrl: sidecars.daemon.url,
+      installerObservationRoot: paths.installerObservationRoot,
+      logger: packagedLogger,
+    });
+  }
   // Sidecars are up; the remaining wait is the hidden main window loading and
   // mounting the web bundle (the runtime re-asserts this stage at its reveal
   // gate, which is a no-op when the label is already current).
@@ -284,6 +313,7 @@ void main().catch(async (error: unknown) => {
       appVersion: startupTelemetryContext.appVersion,
       namespace: startupTelemetryContext.namespace,
       source: startupTelemetryContext.source,
+      nativeModulePath: startupTelemetryContext.nativeModulePath,
     });
   }
   process.exit(1);

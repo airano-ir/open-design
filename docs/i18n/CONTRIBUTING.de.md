@@ -4,7 +4,7 @@ Danke, dass Sie über einen Beitrag nachdenken. OD ist bewusst klein gehalten �
 
 Dieser Leitfaden zeigt, wo Sie für welche Art Beitrag suchen sollten und welche Messlatte ein PR vor dem Merge erfüllen muss.
 
-<p align="center"><a href="../../CONTRIBUTING.md">English</a> · <a href="CONTRIBUTING.pt-BR.md">Português (Brasil)</a> · <b>Deutsch</b> · <a href="CONTRIBUTING.fr.md">Français</a> · <a href="CONTRIBUTING.zh-CN.md">简体中文</a> · <a href="CONTRIBUTING.ja-JP.md">日本語</a></p>
+<p align="center"><a href="../../CONTRIBUTING.md">English</a> · <a href="CONTRIBUTING.pt-BR.md">Português (Brasil)</a> · <b>Deutsch</b> · <a href="CONTRIBUTING.fr.md">Français</a> · <a href="CONTRIBUTING.zh-CN.md">简体中文</a> · <a href="CONTRIBUTING.ja-JP.md">日本語</a> · <a href="CONTRIBUTING.ko.md">한국어</a> · <a href="CONTRIBUTING.th.md">ภาษาไทย</a></p>
 
 ---
 
@@ -181,7 +181,7 @@ Eine neue Agent-CLI ist ein Eintrag in [`apps/daemon/src/agents.ts`](../../apps/
 }
 ```
 
-Der daemon erkennt sie im `PATH`, der Picker zeigt sie an und der Chat-Pfad funktioniert. Wenn die CLI **typed events** ausgibt, ergänzen Sie einen Parser in [`apps/daemon/src/claude-stream.ts`](../../apps/daemon/src/claude-stream.ts) und setzen `streamFormat`.
+Der daemon erkennt sie im `PATH`, der Picker zeigt sie an und der Chat-Pfad funktioniert. Wenn die CLI **typed events** ausgibt, ergänzen Sie einen Parser in [`apps/daemon/src/runtimes/claude-stream.ts`](../../apps/daemon/src/runtimes/claude-stream.ts) und setzen `streamFormat`.
 
 Merge-Bar:
 
