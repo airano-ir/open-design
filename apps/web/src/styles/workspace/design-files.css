@@ -235,11 +235,11 @@
   cursor: pointer;
 }
 
-/* Batch-selection action bar. Shown above the list when any row is selected. */
+/* Batch-selection action bar. Shown above the list when any row is selected.
+   Scrolls with the content (the sticky slot at top:0 belongs to the category
+   tab bar, which stays pinned; two sticky bars there would occlude each
+   other). */
 .df-batch-bar {
-  position: sticky;
-  top: 0;
-  z-index: 3;
   margin: 0 20px 8px;
   padding: 7px 12px;
   display: flex;
@@ -289,6 +289,61 @@
   color: var(--red);
 }
 .df-batch-clear { color: var(--text-faint); }
+/* Category tab bar — one group visible at a time; a tab only exists when
+   its group has content, so empty categories disappear entirely. Sticky so
+   long lists keep the switcher in reach. */
+.df-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  /* .df-body already owns the 20px page inset. Keep this bar on that same
+     content baseline instead of applying a second horizontal inset. */
+  padding: 8px 0 10px;
+  /* Sticky over the scrolling list: frost what slides beneath. */
+  background: var(--glass-regular);
+  -webkit-backdrop-filter: var(--glass-backdrop);
+  backdrop-filter: var(--glass-backdrop);
+}
+.df-tab {
+  all: unset;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  /* Pill shape wants more horizontal breathing room than the old rounded
+     rectangle. */
+  padding: 6px 14px;
+  border-radius: var(--radius-pill, 999px);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  transition: color 120ms cubic-bezier(0.23, 1, 0.32, 1), background 120ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.df-tab:hover {
+  color: var(--text-strong);
+  background: var(--bg-fill-tertiary);
+}
+.df-tab.active {
+  color: var(--text-strong);
+  background: var(--bg-fill-secondary);
+  font-weight: 600;
+}
+.df-tab:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 52%, transparent);
+  outline-offset: 1px;
+}
+.df-tab-count {
+  color: var(--text-faint);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.df-tab.active .df-tab-count {
+  color: var(--text-muted);
+}
 .df-section { display: flex; flex-direction: column; gap: 0; }
 .df-section + .df-section { margin-top: 0; }
 .df-section-label {
@@ -459,7 +514,7 @@
 .df-row.selected .df-row-sub,
 .df-row.selected .df-row-size,
 .df-row.selected .df-row-time { color: rgba(255, 255, 255, 0.82); }
-.df-row.selected .df-row-check { color: var(--blue); }
+.df-row.selected .df-row-check { color: #fff; }
 
 .df-row-check {
   display: inline-flex;
@@ -488,32 +543,9 @@
   outline: none;
   box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
 }
-.df-row-check-box {
-  width: 15px;
-  height: 15px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid color-mix(in srgb, var(--text-muted) 62%, transparent);
-  border-radius: 5px;
-  background: color-mix(in srgb, var(--bg-panel) 92%, transparent);
-  color: var(--accent-strong);
-  box-sizing: border-box;
-}
-.df-row-check[aria-checked="true"] .df-row-check-box {
-  border-color: var(--accent-strong);
-  background: var(--accent-strong);
-  color: #fff;
-}
-.df-row.selected .df-row-check .df-row-check-box {
-  border-color: rgba(255, 255, 255, 0.62);
-  background: transparent;
-}
-.df-row.selected .df-row-check[aria-checked="true"] .df-row-check-box {
-  border-color: rgba(255, 255, 255, 0.95);
-  background: #fff;
-  color: var(--blue);
-}
+/* The Remix checkbox glyph carries the box shape itself; the check span only
+   colors it. */
+.df-row-check[aria-checked="true"] { color: var(--accent-strong); }
 .df-dir-row .df-row-check { cursor: default; }
 
 .df-row-icon {

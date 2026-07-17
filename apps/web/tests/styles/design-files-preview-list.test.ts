@@ -81,20 +81,28 @@ describe('Design Files preview list styles', () => {
     );
   });
 
-  it('keeps selection actions sticky and renders rounded row checkboxes', () => {
+  it('pins the category tab bar, not the batch bar, and colors the glyph row checkboxes', () => {
+    const tabs = cssDeclarations(designFilesCss, '.df-tabs');
     const batchBar = cssDeclarations(designFilesCss, '.df-batch-bar');
     const row = cssDeclarations(designFilesCss, '.df-row');
     const selectedRow = cssDeclarations(designFilesCss, '.df-row.selected');
     const rowCheck = cssDeclarations(designFilesCss, '.df-row-check');
-    const rowCheckBox = cssDeclarations(designFilesCss, '.df-row-check-box');
+    const checkedRowCheck = cssDeclarations(
+      designFilesCss,
+      '.df-row-check[aria-checked="true"]',
+    );
     const rowSize = cssDeclarations(designFilesCss, '.df-row-size');
 
-    expect(ruleValue(batchBar, 'position')).toBe('sticky');
-    expect(ruleValue(batchBar, 'top')).toBe('0');
+    // The sticky top slot belongs to the category tab bar; the batch bar
+    // scrolls with the content so the two never pin over each other.
+    expect(ruleValue(tabs, 'position')).toBe('sticky');
+    expect(ruleValue(tabs, 'top')).toBe('0');
+    expect(batchBar).not.toMatch(/position\s*:/);
     expect(ruleValue(row, 'grid-template-columns')).toContain('minmax(56px, auto)');
     expect(ruleValue(selectedRow, 'border-radius')).toBe('8px');
     expect(ruleValue(rowCheck, 'border-radius')).toBe('7px');
-    expect(ruleValue(rowCheckBox, 'border-radius')).toBe('5px');
+    // The Remix checkbox glyph carries the box shape; the check span colors it.
+    expect(ruleValue(checkedRowCheck, 'color')).toBe('var(--accent-strong)');
     expect(ruleValue(rowSize, 'text-align')).toBe('right');
   });
 

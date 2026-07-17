@@ -125,10 +125,16 @@ function renderPanel(
   return { ...result, onDeleteFiles, onOpenFile, onClearUploadError };
 }
 
-function sectionLabels(): string[] {
-  return Array.from(
-    document.querySelectorAll<HTMLElement>(".df-section-label"),
-  ).map((el) => el.textContent ?? "");
+// The panel shows one group at a time behind the category tab bar; a tab only
+// exists when its group has content at the current directory level.
+function tabLabels(): string[] {
+  return Array.from(document.querySelectorAll<HTMLElement>(".df-tab")).map(
+    (el) => el.textContent ?? "",
+  );
+}
+
+function clickTab(id: string) {
+  fireEvent.click(screen.getByTestId(`design-files-tab-${id}`));
 }
 
 describe("DesignFilesPanel sections", () => {
@@ -186,31 +192,37 @@ describe("DesignFilesPanel sections", () => {
     expect(screen.getByTestId("design-files-empty-create-design-system")).toBeTruthy();
   });
 
-  it("groups files into semantic sections by category", () => {
+  it("groups files into category tabs and shows one group at a time", () => {
     renderPanel([
       file({ name: "page.html", kind: "html", mime: "text/html" }),
       file({ name: "chart.png", kind: "image", mime: "image/png" }),
     ]);
 
-    const labels = sectionLabels();
+    const labels = tabLabels();
     expect(labels.some((text) => text.includes("Pages"))).toBe(true);
     expect(labels.some((text) => text.includes("Images"))).toBe(true);
+    // Pages is the default tab; other groups render after picking their tab.
     expect(screen.getByTestId("design-file-row-page.html")).toBeTruthy();
+    expect(screen.queryByTestId("design-file-row-chart.png")).toBeNull();
+    clickTab("cat:image");
     expect(screen.getByTestId("design-file-row-chart.png")).toBeTruthy();
+    expect(screen.queryByTestId("design-file-row-page.html")).toBeNull();
   });
 
-  it("splits stylesheets into their own section with a Stylesheet subtitle", () => {
+  it("splits stylesheets into their own tab with a Stylesheet subtitle", () => {
     renderPanel([
       file({ name: "styles.css", kind: "code", mime: "text/css" }),
       file({ name: "app.ts", kind: "code", mime: "text/typescript" }),
     ]);
 
-    const labels = sectionLabels();
+    const labels = tabLabels();
     expect(labels.some((text) => text.includes("Stylesheets"))).toBe(true);
     expect(labels.some((text) => text.includes("Scripts"))).toBe(true);
 
+    clickTab("cat:stylesheet");
     const cssRow = screen.getByTestId("design-file-row-styles.css");
     expect(cssRow.querySelector(".df-row-sub")?.textContent).toBe("Stylesheet");
+    clickTab("cat:code");
     const tsRow = screen.getByTestId("design-file-row-app.ts");
     expect(tsRow.querySelector(".df-row-sub")?.textContent).toBe("Script");
   });
@@ -237,9 +249,12 @@ describe("DesignFilesPanel sections", () => {
 describe("DesignFilesPanel large list", () => {
   afterEach(() => cleanup());
 
-  it("renders all rows at once (no pagination)", () => {
+  it("renders every row of the active tab at once (no pagination)", () => {
     const { container } = renderPanel(generateFiles(500));
-    expect(container.querySelectorAll(".df-file-row").length).toBe(500);
+    // 500 files cycle through 6 kinds; the default Pages tab holds the
+    // ⌈500/6⌉ = 84 html files, all rendered without pagination.
+    expect(container.querySelectorAll(".df-file-row").length).toBe(84);
+    expect(document.querySelector(".df-pagination")).toBeNull();
   });
 
   it("renders 500 files within a reasonable time", () => {
@@ -257,16 +272,20 @@ describe("DesignFilesPanel selection", () => {
   it("shows the batch bar and passes every selected file to batch delete", () => {
     const files = generateFiles(3);
     const { container, onDeleteFiles } = renderPanel(files);
-    const rows = Array.from(container.querySelectorAll(".df-file-row"));
 
-    const firstName = rows[0]!
-      .getAttribute("data-testid")!
-      .replace(/^design-file-row-/, "");
-    const secondName = rows[1]!
-      .getAttribute("data-testid")!
-      .replace(/^design-file-row-/, "");
-    fireEvent.click(rows[0]!.querySelector(".df-row-check")!);
-    fireEvent.click(rows[1]!.querySelector(".df-row-check")!);
+    // Selection spans category tabs: pick one file on the default Pages tab
+    // and a second one behind the Images tab.
+    fireEvent.click(
+      screen
+        .getByTestId("design-file-row-file-1.html")
+        .querySelector(".df-row-check")!,
+    );
+    clickTab("cat:image");
+    fireEvent.click(
+      screen
+        .getByTestId("design-file-row-file-2.png")
+        .querySelector(".df-row-check")!,
+    );
 
     expect(
       container.querySelector('[data-testid="design-files-batch-bar"]'),
@@ -276,7 +295,7 @@ describe("DesignFilesPanel selection", () => {
       container.querySelector('[data-testid="design-files-batch-delete"]')!,
     );
     expect(onDeleteFiles).toHaveBeenCalledTimes(1);
-    expect(onDeleteFiles).toHaveBeenCalledWith([firstName, secondName]);
+    expect(onDeleteFiles).toHaveBeenCalledWith(["file-1.html", "file-2.png"]);
   });
 
   it("does not preview or open files from row controls", () => {
@@ -490,13 +509,15 @@ describe("DesignFilesPanel directory navigation", () => {
     expect(dirRows[0]!.textContent).toContain("2");
   });
 
-  it("pins folders into a Folders section", () => {
+  it("pins folders behind a Folders tab", () => {
     renderPanel([
       file({ name: "assets/logo.png", kind: "image" }),
       file({ name: "top.html", kind: "html" }),
     ]);
 
-    expect(sectionLabels().some((text) => text.includes("Folders"))).toBe(true);
+    expect(tabLabels().some((text) => text.includes("Folders"))).toBe(true);
+    clickTab("folders");
+    expect(document.querySelectorAll(".df-dir-row").length).toBe(1);
   });
 
   it("clicking a folder row navigates into it and shows only basenames and nested dirs", () => {
@@ -512,15 +533,17 @@ describe("DesignFilesPanel directory navigation", () => {
       "assets",
     );
 
+    // No pages at this level, so the Folders tab is the default view.
+    const dirRows = document.querySelectorAll(".df-dir-row");
+    expect(dirRows.length).toBe(1);
+    expect(dirRows[0]!.textContent).toContain("icons");
+
+    clickTab("cat:image");
     const fileRow = screen.getByTestId("design-file-row-assets/logo.png");
     expect(fileRow.querySelector(".df-row-name")?.textContent).toBe("logo.png");
     expect(fileRow.querySelector(".df-row-name")?.textContent).not.toContain(
       "assets/",
     );
-
-    const dirRows = document.querySelectorAll(".df-dir-row");
-    expect(dirRows.length).toBe(1);
-    expect(dirRows[0]!.textContent).toContain("icons");
   });
 
   it("always renders the root breadcrumb on the default-root view", () => {
@@ -553,6 +576,7 @@ describe("DesignFilesPanel directory navigation", () => {
       file({ name: "top.html", kind: "html" }),
     ]);
 
+    clickTab("folders");
     fireEvent.click(document.querySelector(".df-dir-row .df-row-name-btn")!);
     expect(document.querySelector(".df-breadcrumbs")).toBeTruthy();
 
@@ -561,7 +585,9 @@ describe("DesignFilesPanel directory navigation", () => {
     expect(
       document.querySelector(".df-breadcrumb-current")?.textContent,
     ).not.toBe("assets");
+    // Back at the root, the tab choice resets to the default Pages tab.
     expect(screen.getByTestId("design-file-row-top.html")).toBeTruthy();
+    clickTab("folders");
     expect(document.querySelectorAll(".df-dir-row").length).toBe(1);
   });
 
@@ -571,9 +597,12 @@ describe("DesignFilesPanel directory navigation", () => {
       file({ name: "top.html", kind: "html" }),
     ]);
 
-    expect(document.querySelectorAll(".df-dir-row").length).toBe(1);
-    expect(screen.getByTestId("design-file-row-assets/logo.png")).toBeTruthy();
     expect(screen.getByTestId("design-file-row-top.html")).toBeTruthy();
+    // The nested image is part of the root-level Images group.
+    clickTab("cat:image");
+    expect(screen.getByTestId("design-file-row-assets/logo.png")).toBeTruthy();
+    clickTab("folders");
+    expect(document.querySelectorAll(".df-dir-row").length).toBe(1);
   });
 
   it("preserves the current directory when remounted with navState from a previous render", () => {
@@ -608,6 +637,7 @@ describe("DesignFilesPanel directory navigation", () => {
 
     const { unmount } = render(makePanel());
 
+    fireEvent.click(screen.getByTestId("design-files-tab-folders"));
     fireEvent.click(document.querySelector(".df-dir-row .df-row-name-btn")!);
     expect(document.querySelector(".df-breadcrumb-current")?.textContent).toBe(
       "assets",
@@ -648,6 +678,7 @@ describe("DesignFilesPanel directory navigation", () => {
     fireEvent.click(topRow.querySelector(".df-row-check")!);
     expect(topRow.classList.contains("selected")).toBe(true);
 
+    clickTab("folders");
     fireEvent.click(document.querySelector(".df-dir-row .df-row-name-btn")!);
     expect(document.querySelectorAll(".df-file-row.selected").length).toBe(0);
 
@@ -683,6 +714,7 @@ describe("DesignFilesPanel directory navigation", () => {
       ]),
     );
 
+    fireEvent.click(screen.getByTestId("design-files-tab-folders"));
     fireEvent.click(document.querySelector(".df-dir-row .df-row-name-btn")!);
     expect(document.querySelector(".df-breadcrumb-current")?.textContent).toBe(
       "assets",
@@ -713,6 +745,7 @@ describe("DesignFilesPanel current-directory sync", () => {
     expect(onCurrentDirChange).toHaveBeenLastCalledWith("");
     // Navigate into the folder — the parent must learn the new target dir, or
     // upload / paste / new-sketch would create at the project root (#3358 regression).
+    clickTab("folders");
     fireEvent.click(document.querySelector(".df-dir-row .df-row-name-btn")!);
     expect(onCurrentDirChange).toHaveBeenLastCalledWith("assets");
   });
@@ -727,6 +760,7 @@ describe("DesignFilesPanel persisted (empty) folders", () => {
     renderPanel([file({ name: "top.html", kind: "html" })], {
       folders: [folder("assets")],
     });
+    clickTab("folders");
     const dirRows = [...document.querySelectorAll(".df-dir-row")];
     expect(dirRows.some((r) => r.textContent?.includes("assets"))).toBe(true);
   });

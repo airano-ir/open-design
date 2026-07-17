@@ -19,6 +19,7 @@ import type { PluginFolderAgentAction } from './design-files/pluginFolderActions
 import { getPluginFolderCandidates } from './design-files/pluginFolders';
 import { Icon } from './Icon';
 import { LiveArtifactBadges } from './LiveArtifactBadges';
+import { RemixIcon } from './RemixIcon';
 import { isRenderableSketchJson, SketchPreview } from './SketchPreview';
 
 type TranslateFn = (key: keyof Dict, vars?: Record<string, string | number>) => string;
@@ -342,11 +343,16 @@ export function DesignFilesPanel({
     );
   }, [filesAtCurrentDir]);
 
-  // Reset selection and renaming state when the user navigates into or out of
-  // a directory.
+  // Active category tab (null = default). Declared before the reset effect
+  // below that clears it on directory change.
+  const [activeTab, setActiveTab] = useState<string | null>(null);
+
+  // Reset selection, renaming, and the picked tab when the user navigates
+  // into or out of a directory — each level has its own set of groups.
   useEffect(() => {
     setSelected(new Set());
     setRenaming(null);
+    setActiveTab(null);
   }, [currentDir]);
 
   // Navigate up to the nearest ancestor that still exists when the current
@@ -372,6 +378,47 @@ export function DesignFilesPanel({
   }, [files, folders, currentDir]);
 
   const pluginFolders = useMemo(() => getPluginFolderCandidates(files), [files]);
+
+  // Category tabs: the panel shows one group at a time behind a tab bar
+  // instead of stacking every section into one long list. A tab exists only
+  // when its group has content at the current level, so an empty category
+  // simply has no tab.
+  const availableTabs = useMemo(() => {
+    const tabs: Array<{ id: string; label: string; count: number }> = [];
+    if (liveArtifacts.length > 0) {
+      tabs.push({
+        id: 'live-artifacts',
+        label: t('designFiles.sectionLiveArtifacts'),
+        count: liveArtifacts.length,
+      });
+    }
+    if (pluginFolders.length > 0) {
+      tabs.push({ id: 'plugin-folders', label: 'Plugin folders', count: pluginFolders.length });
+    }
+    if (dirsAtCurrentDir.length > 0) {
+      tabs.push({
+        id: 'folders',
+        label: t('designFiles.sectionFolders'),
+        count: dirsAtCurrentDir.length,
+      });
+    }
+    for (const [category, sectionFiles] of sections) {
+      tabs.push({
+        id: `cat:${category}`,
+        label: sectionLabel(category, t),
+        count: sectionFiles.length,
+      });
+    }
+    return tabs;
+  }, [liveArtifacts, pluginFolders, dirsAtCurrentDir, sections, t]);
+  // Pages are the primary artifact — land on them by default. Derived (not
+  // synced through an effect) so a picked tab that empties out (last file
+  // deleted, directory change) falls back instantly without a stale frame.
+  const resolvedTab = useMemo(() => {
+    if (activeTab && availableTabs.some((tab) => tab.id === activeTab)) return activeTab;
+    const pages = availableTabs.find((tab) => tab.id === 'cat:html');
+    return (pages ?? availableTabs[0])?.id ?? null;
+  }, [activeTab, availableTabs]);
 
   // Prune selections that no longer exist in the current file list
   // (e.g. after a refresh or delete within the same project).
@@ -603,9 +650,9 @@ export function DesignFilesPanel({
             }
           }}
         >
-          <span className="df-row-check-box" aria-hidden>
-            {viewerOnly ? null : isSelected ? <Icon name="check" size={12} /> : null}
-          </span>
+          {viewerOnly ? null : (
+            <RemixIcon name={isSelected ? 'checkbox-line' : 'checkbox-blank-line'} size={14} />
+          )}
         </span>
         <span
           className="df-row-icon df-row-openable"
@@ -1103,9 +1150,26 @@ export function DesignFilesPanel({
             </div>
           ) : (
             <>
-              {liveArtifacts.length > 0 ? (
+              {availableTabs.length > 0 ? (
+                <div className="df-tabs" role="tablist" data-testid="design-files-tabs">
+                  {availableTabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={resolvedTab === tab.id}
+                      className={`df-tab ${resolvedTab === tab.id ? 'active' : ''}`}
+                      data-testid={`design-files-tab-${tab.id}`}
+                      onClick={() => setActiveTab(tab.id)}
+                    >
+                      {tab.label}
+                      <span className="df-tab-count">{tab.count}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+              {resolvedTab === 'live-artifacts' ? (
                 <div className="df-section" key="live-artifacts">
-                  <div className="df-section-label">{t('designFiles.sectionLiveArtifacts')}</div>
                   {liveArtifacts.map((artifact) => (
                     <button
                       key={artifact.artifactId}
@@ -1138,12 +1202,8 @@ export function DesignFilesPanel({
                   ))}
                 </div>
               ) : null}
-              {pluginFolders.length > 0 ? (
+              {resolvedTab === 'plugin-folders' ? (
                 <div className="df-section" key="plugin-folders">
-                  <div className="df-section-label">
-                    Plugin folders
-                    <span className="df-section-count">{pluginFolders.length}</span>
-                  </div>
                   {installNotice ? (
                     <div className="df-inline-notice" role="status">
                       <ActionNoticeView notice={installNotice} />
@@ -1214,24 +1274,18 @@ export function DesignFilesPanel({
                   )})}
                 </div>
               ) : null}
-              {dirsAtCurrentDir.length > 0 ? (
+              {resolvedTab === 'folders' ? (
                 <div className="df-section" key="folders">
-                  <div className="df-section-label">
-                    {t('designFiles.sectionFolders')}
-                    <span className="df-section-count">{dirsAtCurrentDir.length}</span>
-                  </div>
                   {dirsAtCurrentDir.map((d) => renderDirRow(d))}
                 </div>
               ) : null}
-              {sections.map(([category, sectionFiles]) => (
-                <div className="df-section" key={`cat:${category}`}>
-                  <div className="df-section-label">
-                    {sectionLabel(category, t)}
-                    <span className="df-section-count">{sectionFiles.length}</span>
+              {sections.map(([category, sectionFiles]) =>
+                resolvedTab === `cat:${category}` ? (
+                  <div className="df-section" key={`cat:${category}`}>
+                    {sectionFiles.map((f) => renderFileRow(f, category))}
                   </div>
-                  {sectionFiles.map((f) => renderFileRow(f, category))}
-                </div>
-              ))}
+                ) : null,
+              )}
             </>
           )}
           {/* #5517 drops the always-on footer drop-hint strip — drag & drop
