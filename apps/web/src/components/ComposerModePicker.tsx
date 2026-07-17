@@ -108,9 +108,13 @@ const MENU_EST_HEIGHT = 290;
 export interface ComposerModePickerProps {
   value?: ComposerMode | null;
   onChange?: (mode: ComposerMode | null) => void;
+  /** Collapse the selected pill to icon + clear only (hide the mode name) —
+   *  used when the composer row is space-constrained, e.g. while a run streams
+   *  and the wide "思考中" button is showing. */
+  labelHidden?: boolean;
 }
 
-export function ComposerModePicker({ value, onChange }: ComposerModePickerProps) {
+export function ComposerModePicker({ value, onChange, labelHidden = false }: ComposerModePickerProps) {
   const [open, setOpen] = useState(false);
   const sharedModeValue = useSyncExternalStore(
     subscribeSharedMode,
@@ -199,7 +203,7 @@ export function ComposerModePicker({ value, onChange }: ComposerModePickerProps)
         title={activeMode ? activeMode.name : '模式'}
       >
         <span className="composer-mode__icon" aria-hidden>{triggerIcon}</span>
-        {activeMode ? (
+        {activeMode && !labelHidden ? (
           <span className="composer-mode__label">{activeMode.name}</span>
         ) : null}
       </button>

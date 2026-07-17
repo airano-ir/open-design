@@ -1611,6 +1611,9 @@
      run/stop pill is never pushed out of the rounded border. */
   flex-wrap: nowrap;
   min-width: 0;
+  /* Query container so the mode pill can drop its text label when the row is
+     too narrow to comfortably fit it alongside the model chip + run button. */
+  container-type: inline-size;
   /* Center the divider between the input above (8px composer gap) and the
      controls below (8px padding) so the toolbar isn't cramped against the
      border. */
@@ -1630,6 +1633,14 @@
    `flex-shrink: 0` (from .composer-send) and is never squeezed. */
 .composer-row > * {
   min-width: 0;
+}
+/* Below ~500px the row can't hold the mode name + a full model chip + run
+   button on one line, so the selected mode pill collapses to icon + clear;
+   above it (wide chat / full-width composer) the name shows again. */
+@container (max-width: 500px) {
+  .composer-row .composer-mode__label {
+    display: none;
+  }
 }
 .composer-row .inline-switcher {
   min-width: 0;
