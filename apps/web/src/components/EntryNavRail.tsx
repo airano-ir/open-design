@@ -31,7 +31,8 @@ import type {
   WorkspaceDirectoryItem,
   WorkspaceDirectoryResponse,
 } from '@open-design/contracts';
-import { fetchVelaLoginStatus } from '../providers/daemon';
+import { fetchVelaLoginStatus, velaLogout } from '../providers/daemon';
+import { notifyAmrLoginStatusChanged } from './amrLoginPolling';
 import { Icon } from './Icon';
 import { GITHUB_STARS_FALLBACK_LABEL, formatStars, useGithubStars } from './useGithubStars';
 import { PlanWordmark, planBadgeTierForLabel } from './PlanWordmark';
@@ -165,7 +166,9 @@ export function EntryNavRail({
   const { t, locale, setLocale } = useI18n();
   const brandLabel = t('app.brand');
   const communityLabel = t('pluginsHome.title');
-  const homeLabel = t('entry.navHome');
+  // #5517 reads the home view as "Recents" (the home IS the recent-projects
+  // grid), so the rail's first item says 最近, not 主页.
+  const homeLabel = t('entry.navRecents');
   const isHome = view === 'home';
 
   const isTeam = Boolean(context) && context!.workspaceType === 'team';
@@ -621,8 +624,17 @@ export function EntryNavRail({
                     className="entry-nav-rail__menu-item"
                     role="menuitem"
                     onClick={() => {
-                      // TODO(collab): sign-out via vela CLI 收口
                       setAccountOpen(false);
+                      // Real sign-out: clear the vela profile auth on the
+                      // daemon, then nudge every workspace surface to re-read
+                      // (the context read now resolves to null → the shell
+                      // falls back to the signed-out local form).
+                      void velaLogout().then(() => {
+                        notifyAmrLoginStatusChanged();
+                        notifyWorkspaceContextRefresh();
+                        notifyWorkspaceBillingRefresh();
+                        notifyTeamProjectsChanged();
+                      });
                     }}
                   >
                     <Icon name="log-out" size={15} /> {t('entry.accountSignOut')}

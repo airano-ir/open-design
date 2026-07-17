@@ -3797,14 +3797,3 @@
   font-size: 12px;
 }
 
-/* Restored from feat/workspace-team — the kept feat HomeHero/InlineModelSwitcher
-   emits this chip; keep its feat footprint (demo redesign resized it). */
-.home-hero__execution-switcher .inline-switcher__chip {
-  width: 58px;
-  height: 32px;
-  max-width: 58px;
-  justify-content: space-between;
-  padding: 0 8px 0 9px;
-  gap: 4px;
-  border-radius: var(--radius-sm);
-}

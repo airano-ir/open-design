@@ -4,6 +4,12 @@ import { useT } from '../i18n';
 import { navigate, type EntryHomeView, type Route } from '../router';
 import type { Project } from '../types';
 import { Icon, type IconName } from './Icon';
+import {
+  HOME_APPLY_TEMPLATE_EVENT,
+  orderedCreateChips,
+  type HomeHeroChip,
+} from './home-hero/chips';
+import { homeHeroChipLabel } from './home-hero/chip-labels';
 
 type WorkspaceChromeTab =
   | {
@@ -410,16 +416,26 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
   const t = useT();
   const [state, setState] = useState<WorkspaceTabsState>(() => initialTabsState(route));
   const [tabsMenuOpen, setTabsMenuOpen] = useState(false);
-  // #5517 corner fan: the "+" button opens a quarter-pie radial menu of
-  // entry-view shortcuts instead of immediately spawning a home tab.
+  // #5517 corner fan: the "+" button opens a corner-anchored radial menu of
+  // template wedges instead of immediately spawning a home tab.
   const [radialMenu, setRadialMenu] = useState<{ x: number; y: number } | null>(null);
+  const [radialHoverId, setRadialHoverId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!radialMenu) setRadialHoverId(null);
+  }, [radialMenu]);
   useEffect(() => {
     if (!radialMenu) return;
+    // Uniform page blur: filter on the shell blurs every descendant equally
+    // (backdrop-filter on the scrim sampled composited layers unevenly).
+    document.documentElement.classList.add('od-radial-open');
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setRadialMenu(null);
     };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    return () => {
+      document.documentElement.classList.remove('od-radial-open');
+      window.removeEventListener('keydown', onKey);
+    };
   }, [radialMenu]);
   const [query, setQuery] = useState('');
   const [hoverPreview, setHoverPreview] = useState<HoverPreviewState | null>(null);
@@ -770,17 +786,49 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
     activateTab(tab);
   }
 
-  // Corner-anchored radial fan menu on the "+" button (structure borrowed
-  // from a quarter-pie corner menu): sectors sweep down-left from the
-  // button, each one an entry-view shortcut. (#5517)
-  const RADIAL_SIZE = 264;
+  // Corner-anchored radial fan menu on the "+" button: three concentric bands
+  // sweep down-left from the button (the pivot at the top-right corner),
+  // carrying the composer Template picker's icons. Each band is a ring split
+  // into angular wedges — 3 / 4 from the inner bands outward, with the outer
+  // band absorbing every remaining template (see `radialSlots`).
+  // Picking a wedge opens the home tab with that template applied to the hero.
+  const RADIAL_SIZE = 300;
   const RADIAL_PAD = 24;
-  const RADIAL_ACTIONS: Array<{ label: string; view: EntryHomeView }> = [
-    { label: t('entry.navRecents'), view: 'home' },
-    { label: t('entry.navAllProjects'), view: 'all-projects' },
-    { label: t('entry.navDesignSystems'), view: 'design-systems' },
-    { label: t('pluginsHome.title'), view: 'community' },
-  ];
+  const RADIAL_R_IN = 56;
+  const RADIAL_R_OUT = 264;
+  const RADIAL_BANDS = [3, 4, 3];
+  const RADIAL_START = 96; // fan start angle (screen degrees) …
+  const RADIAL_SWEEP = 78; // … total arc, fanning toward the left
+  const RADIAL_GAP = 0; // wedges abut; hairline strokes are the dividers
+  const RADIAL_CX = RADIAL_SIZE - RADIAL_PAD;
+  const RADIAL_CY = RADIAL_PAD;
+
+  function radialBandRadius(band: number): number {
+    return RADIAL_R_IN + ((RADIAL_R_OUT - RADIAL_R_IN) * band) / RADIAL_BANDS.length;
+  }
+
+  // Per-template placement across the bands, aligned to template order.
+  const radialSlots = useMemo(() => {
+    const chips = orderedCreateChips().filter((chip) => chip.action.kind === 'apply-scenario');
+    const slots: Array<{ chip: HomeHeroChip; band: number; seg: number; segCount: number }> = [];
+    let cursor = 0;
+    RADIAL_BANDS.forEach((count, band) => {
+      const isLast = band === RADIAL_BANDS.length - 1;
+      const remaining = Math.max(chips.length - cursor, 0);
+      const take = isLast ? remaining : Math.min(count, remaining);
+      for (let seg = 0; seg < take; seg += 1) {
+        const chip = chips[cursor + seg];
+        if (chip) slots.push({ chip, band, seg, segCount: take });
+      }
+      cursor += take;
+    });
+    return slots;
+  }, []);
+
+  function radialWedgeAngles(seg: number, segCount: number): [number, number] {
+    const step = RADIAL_SWEEP / segCount;
+    return [RADIAL_START + seg * step + RADIAL_GAP / 2, RADIAL_START + (seg + 1) * step - RADIAL_GAP / 2];
+  }
 
   function radialSectorPath(cx: number, cy: number, a1: number, a2: number, r0: number, r1: number): string {
     const rad = (a: number) => (a * Math.PI) / 180;
@@ -799,6 +847,17 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
     }
     navigate({ kind: 'home', view });
     setRadialMenu(null);
+  }
+
+  function openTemplateFromRadial(chip: HomeHeroChip) {
+    openEntryView('home');
+    // Hand the pick to the hero once the home tab has mounted/activated —
+    // HomeHero applies the chip exactly as if its own picker was clicked.
+    window.setTimeout(() => {
+      window.dispatchEvent(
+        new CustomEvent(HOME_APPLY_TEMPLATE_EVENT, { detail: { chipId: chip.id } }),
+      );
+    }, 50);
   }
 
   function openRadialMenu(event: React.MouseEvent<HTMLButtonElement>) {
@@ -1154,41 +1213,63 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
       </div>
       {radialMenu ? createPortal(
         <div className="workspace-radial-layer" onMouseDown={() => setRadialMenu(null)}>
-          <svg
+          <div
             className="workspace-radial-menu"
-            style={{ left: radialMenu.x - (RADIAL_SIZE - RADIAL_PAD), top: radialMenu.y - RADIAL_PAD }}
-            width={RADIAL_SIZE}
-            height={RADIAL_SIZE}
-            viewBox={`0 0 ${RADIAL_SIZE} ${RADIAL_SIZE}`}
+            style={{ left: radialMenu.x - (RADIAL_SIZE - RADIAL_PAD), top: radialMenu.y - RADIAL_PAD, width: RADIAL_SIZE, height: RADIAL_SIZE }}
             onMouseDown={(event) => event.stopPropagation()}
           >
-            {RADIAL_ACTIONS.map((action, index) => {
-              const cx = RADIAL_SIZE - RADIAL_PAD;
-              const cy = RADIAL_PAD;
-              const start = 98;
-              const span = 68 / RADIAL_ACTIONS.length;
-              const gap = 2.4;
-              const a1 = start + index * span + gap / 2;
-              const a2 = start + (index + 1) * span - gap / 2;
+            <svg width={RADIAL_SIZE} height={RADIAL_SIZE} viewBox={`0 0 ${RADIAL_SIZE} ${RADIAL_SIZE}`}>
+              {radialSlots.map((slot) => {
+                const [a1, a2] = radialWedgeAngles(slot.seg, slot.segCount);
+                const r0 = radialBandRadius(slot.band);
+                const r1 = radialBandRadius(slot.band + 1);
+                const isHover = slot.chip.id === radialHoverId;
+                return (
+                  <path
+                    key={slot.chip.id}
+                    className={`workspace-radial-sector-path${isHover ? ' is-hover' : ''}`}
+                    d={radialSectorPath(RADIAL_CX, RADIAL_CY, a1, a2, r0, r1)}
+                    role="menuitem"
+                    aria-label={homeHeroChipLabel(slot.chip.id, t)}
+                    data-testid={`workspace-radial-template-${slot.chip.id}`}
+                    onMouseEnter={() => setRadialHoverId(slot.chip.id)}
+                    onMouseLeave={() => setRadialHoverId((v) => (v === slot.chip.id ? null : v))}
+                    onClick={() => openTemplateFromRadial(slot.chip)}
+                  />
+                );
+              })}
+            </svg>
+            {radialSlots.map((slot) => {
+              const [a1, a2] = radialWedgeAngles(slot.seg, slot.segCount);
               const mid = (a1 + a2) / 2;
-              const labelR = 158;
-              const lx = cx + labelR * Math.cos((mid * Math.PI) / 180);
-              const ly = cy + labelR * Math.sin((mid * Math.PI) / 180);
+              const rmid = (radialBandRadius(slot.band) + radialBandRadius(slot.band + 1)) / 2;
+              const ix = RADIAL_CX + rmid * Math.cos((mid * Math.PI) / 180);
+              const iy = RADIAL_CY + rmid * Math.sin((mid * Math.PI) / 180);
+              const isHover = slot.chip.id === radialHoverId;
               return (
-                <g
-                  key={action.view}
-                  className="workspace-radial-sector"
-                  role="menuitem"
-                  onClick={() => openEntryView(action.view)}
+                <span
+                  key={slot.chip.id}
+                  className={`workspace-radial-icon-btn${isHover ? ' is-hover' : ''}`}
+                  aria-hidden
+                  style={{ left: ix, top: iy }}
+                  title={homeHeroChipLabel(slot.chip.id, t)}
                 >
-                  <path d={radialSectorPath(cx, cy, a1, a2, 52, 224)} />
-                  <text x={lx} y={ly} textAnchor="middle" dominantBaseline="middle">
-                    {action.label}
-                  </text>
-                </g>
+                  <Icon name={slot.chip.icon} size={17} />
+                </span>
               );
             })}
-          </svg>
+          </div>
+          <button
+            type="button"
+            className="workspace-radial-close"
+            style={{ left: radialMenu.x, top: radialMenu.y }}
+            aria-label={t('common.close')}
+            title={t('common.close')}
+            onMouseDown={(event) => event.stopPropagation()}
+            onClick={() => setRadialMenu(null)}
+          >
+            <Icon name="plus" size={16} />
+          </button>
         </div>,
         document.body,
       ) : null}

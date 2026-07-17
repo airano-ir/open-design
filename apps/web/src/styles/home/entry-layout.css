@@ -978,6 +978,10 @@
   border: 1px solid transparent;
   border-radius: 8px;
   background: transparent;
+  /* The workspace console entries (成员/数据大盘/Workspace 设置) render as
+     anchors; the UA underline breaks the uniform nav-item look (#5517 rail
+     items are plain). */
+  text-decoration: none;
   /* Unselected: label matches the icon's muted tone (one uniform color); hover
      steps up to --text-strong, selection goes near-black on light gray. */
   color: color-mix(in srgb, var(--text) 52%, transparent);
