@@ -4510,6 +4510,10 @@ export const ko: Dict = {
   'settings.workspaceAutoRechargeHint': 'Automatically top up credits when the balance runs low.',
   'settings.workspaceTeamSpace': 'Team space',
   'settings.workspaceTeamSpaceHint': 'Shared projects and visibility for your team.',
+  // Full-page Settings (`/settings`): sidebar nav head above the section list.
+  'settings.pageBackToHome': 'Back to home',
+  'settings.pageSearchPlaceholder': 'Search settings...',
+  'settings.pageNavGroupPersonal': 'Personal',
   'newproj.startFromLabel': '시작 방식',
   'newproj.startBlank': '빈 화면',
   'newproj.startBlankHint': '처음부터 만들기',

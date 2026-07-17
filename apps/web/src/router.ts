@@ -29,7 +29,10 @@ export type EntryHomeView =
   | 'all-projects'
   | 'members'
   | 'board'
-  | 'workspace-settings';
+  | 'workspace-settings'
+  // Full-page personal Settings surface. `/settings` renders the same
+  // SettingsDialog component in its `page` presentation instead of the modal.
+  | 'settings';
 
 export type Route =
   | {
@@ -131,6 +134,9 @@ export function parseRoute(pathname: string): Route {
   if (parts[0] === 'integrations') {
     return { kind: 'home', view: 'integrations' };
   }
+  if (parts[0] === 'settings') {
+    return { kind: 'home', view: 'settings' };
+  }
   if (parts[0] === 'collab-demo') {
     return { kind: 'collab-demo', projectId: parts[1] ? decodeURIComponent(parts[1]) : null };
   }
@@ -186,6 +192,7 @@ export function buildPath(route: Route): string {
     if (route.view === 'members') return '/members';
     if (route.view === 'board') return '/board';
     if (route.view === 'workspace-settings') return '/workspace-settings';
+    if (route.view === 'settings') return '/settings';
     return '/';
   }
   if (route.kind === 'marketplace') return '/marketplace';

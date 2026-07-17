@@ -463,6 +463,11 @@ export interface Dict {
   'settings.workspaceAutoRechargeHint': string;
   'settings.workspaceTeamSpace': string;
   'settings.workspaceTeamSpaceHint': string;
+  // Full-page Settings (`/settings`): sidebar nav head above the section list
+  // (back-to-home link, decorative search field, personal group label).
+  'settings.pageBackToHome': string;
+  'settings.pageSearchPlaceholder': string;
+  'settings.pageNavGroupPersonal': string;
   'settings.amrModelUpgradeHint': string;
   'settings.amrLoginErrorCompact': string;
   'settings.apiSection': string;

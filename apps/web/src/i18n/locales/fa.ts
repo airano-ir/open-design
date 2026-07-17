@@ -4505,6 +4505,10 @@ export const fa: Dict = {
   'settings.workspaceAutoRechargeHint': 'Automatically top up credits when the balance runs low.',
   'settings.workspaceTeamSpace': 'Team space',
   'settings.workspaceTeamSpaceHint': 'Shared projects and visibility for your team.',
+  // Full-page Settings (`/settings`): sidebar nav head above the section list.
+  'settings.pageBackToHome': 'Back to home',
+  'settings.pageSearchPlaceholder': 'Search settings...',
+  'settings.pageNavGroupPersonal': 'Personal',
   'newproj.startFromLabel': 'شروع از',
   'newproj.startBlank': 'خالی',
   'newproj.startBlankHint': 'شروع از صفر',
