@@ -3711,23 +3711,6 @@ dialog.tpl-share-popover .detail-share-dialog-text {
  * (mono eyebrows, bolder tight headings, mono captions, generous rhythm, olive
  * accent). Scoped to .agent-rich-hub; presentation only, no other page moves.
  * ------------------------------------------------------------------------- */
-.agent-rich-hub .agent-rich-main { counter-reset: od-sec; }
-
-/* Numbered mono eyebrow above every content H2 (skips the FAQ appendix). */
-.agent-rich-hub .info-section:not(#faq) > h2 { position: relative; }
-.agent-rich-hub .info-section:not(#faq) > h2::before {
-  counter-increment: od-sec;
-  content: counter(od-sec, decimal-leading-zero);
-  display: block;
-  font-family: var(--mono);
-  font-size: 12px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--olive);
-  font-weight: 600;
-  margin-bottom: 14px;
-}
-
 /* Bolder, tighter headings like .v4h2. */
 .agent-rich-hub .info-section > h2 {
   font-size: clamp(25px, 3vw, 37px);
