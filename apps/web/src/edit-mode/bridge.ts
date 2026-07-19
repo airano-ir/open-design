@@ -797,6 +797,32 @@ export function buildManualEditBridge(enabled: boolean): string {
             removeEl.remove();
             applyOk = true;
           }
+        } else if (applyOp === 'apply-content') {
+          // Runtime-annotated targets (brand-kit ids stamped by this bridge)
+          // have no markup of their own in the saved source — their edits
+          // persist into the brand payload / runtime overrides. Mirror the
+          // same content onto the live element so the canvas reflects the
+          // save without a reload (matching what the override applier will
+          // render on the NEXT load).
+          var contentEl = findById(ev.data.id);
+          var contentFields = ev.data.fields || {};
+          if (contentEl) {
+            if (activeTextEdit && activeTextEdit.el === contentEl) finishActiveTextEdit(false);
+            if (typeof contentFields.html === 'string') contentEl.innerHTML = contentFields.html;
+            else if (typeof contentFields.text === 'string') contentEl.textContent = contentFields.text;
+            if (typeof contentFields.href === 'string') contentEl.setAttribute('href', contentFields.href);
+            if (typeof contentFields.src === 'string') contentEl.setAttribute('src', contentFields.src);
+            if (typeof contentFields.alt === 'string') contentEl.setAttribute('alt', contentFields.alt);
+            if (contentFields.attributes && typeof contentFields.attributes === 'object') {
+              Object.keys(contentFields.attributes).forEach(function(name){
+                if (!/^[a-zA-Z_:][a-zA-Z0-9_:.-]*$/.test(name) || /^data-od-/.test(name) || /^on/i.test(name)) return;
+                var attrValue = contentFields.attributes[name];
+                if (typeof attrValue !== 'string' || attrValue.trim() === '') contentEl.removeAttribute(name);
+                else contentEl.setAttribute(name, attrValue);
+              });
+            }
+            applyOk = true;
+          }
         } else if (typeof ev.data.html === 'string' && (applyOp === 'insert-after' || applyOp === 'append-child' || applyOp === 'prepend-child')) {
           var template = document.createElement('template');
           template.innerHTML = ev.data.html;

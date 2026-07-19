@@ -137,6 +137,15 @@
 2. **双击选词被折叠**:同元素二次点击的 `placeCaretFromClick` 把双击词选区折叠回光标;修复 = `clickEvent.detail >= 2` 时跳过(拖选幸免只因移动阈值抑制了 click 事件)。
 3. **apply-dom 替换/删除节点残留 selection**(防御性):被替换/删除节点内的 caret 会不可预期地重锚;`dropSelectionInside` 在变更前清掉。
 
+### v2.4 brand 页(运行时标注目标)原地化(2026-07-19,第五轮实测)
+
+用户实测:brand kit 页(`od-brand-payload`)编辑图片后再编辑文字,闪屏 + 跳顶。根因两层:
+
+1. **brand 元素的 id 是运行时标注的**(桥的 `annotateBrandKitRuntimeTargets` 在 live DOM 上 stamp `brand-*` id),保存源码里没有对应标记——补丁经 `applyDynamicBrandKitPatch` 落进 payload JSON / runtime overrides。因此 in-place 的 `readManualEditOuterHtml(saved, id)` 读回为空 → 每次编辑都走兜底重载。修复 = 新 `apply-dom` op **`apply-content`**:读回为空时把补丁字段(text/href/src/alt/html/attributes,属性名过滤 on*/data-od-*)直接镜像到 live 元素上——与 override applier 下次加载渲染的结果一致,DOM ≡ 落盘语义保持。`set-outer-html` 读回为空时用 patch.html 走 replace。
+2. **异步渲染页的滚动恢复窗口太短**:brand 页内容由脚本在 load 后渲染,兜底重载后的三连恢复(rAF/80/260ms)时文档还没高度,scrollTo 被 clamp 到 0 后放弃 → 跳顶。修复 = 恢复重试梯:260ms 内保持旧行为,600/1200/2400/4000ms 仅在「目标仍被 clamp(内容还不够高)」时补打,永不覆盖用户 260ms 后的主动滚动;快照 5s 过期。
+
+真浏览器验证(异步渲染 brand fixture):运行时 id 标注 ✓、文案落盘 override ✓、sentinel 零重载 ✓、滚动零位移 ✓、live DOM 与落盘同步 ✓。边界:brand 页的 undo/redo 仍走重载(旧值只存在于 payload 历史,无法泛化提取),由恢复重试梯保证不跳顶。
+
 ### v2.4 修复清单
 
 1. **工具栏 B/I/U/S 无高亮反馈**:元素级 draft 看不见选区级 span → 桥 `selectionFormatState()`(queryCommandState×4,try/catch)经 `od-edit-text-selection.format` 上报;`ManualEditTextToolbar` 新 `rangeFormat` prop,有值走选区真值。

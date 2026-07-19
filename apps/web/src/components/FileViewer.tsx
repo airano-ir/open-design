@@ -6402,15 +6402,43 @@ function HtmlViewer({
         }, '*');
       } catch {}
     };
+    // Pages that render from script (brand kit, data-driven docs) have no
+    // height yet on the early attempts — scrollTo clamps to 0 and a fixed
+    // three-shot restore gives up before the content exists, landing the
+    // canvas at the top. Keep retrying on a backoff ladder until the target
+    // takes, the user scrolls past it, or the snapshot expires; each retry is
+    // guarded so a newer snapshot or a manual scroll stops the ladder.
+    const stillClampedBelowTarget = () => {
+      try {
+        const frameDocument = iframeRef.current?.contentWindow?.document;
+        const frameTop = frameDocument?.scrollingElement?.scrollTop ?? 0;
+        const canvasTop = frameDocument?.querySelector<HTMLElement>('.design-canvas')?.scrollTop ?? 0;
+        return (
+          (snapshot.frameTop > 0 && frameTop + 2 < snapshot.frameTop) ||
+          (snapshot.canvasTop > 0 && canvasTop + 2 < snapshot.canvasTop)
+        );
+      } catch {
+        return false;
+      }
+    };
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
         apply();
-        window.setTimeout(apply, 80);
-        window.setTimeout(() => {
-          if (previewScrollRestoreRef.current === snapshot) {
+        for (const delay of [80, 260]) {
+          window.setTimeout(() => {
+            if (previewScrollRestoreRef.current === snapshot) apply();
+          }, delay);
+        }
+        // Late retries only while the target is still clamped (content not
+        // tall enough yet) — never override a user scroll made after 260ms.
+        for (const delay of [600, 1200, 2400, 4000]) {
+          window.setTimeout(() => {
+            if (previewScrollRestoreRef.current !== snapshot) return;
+            if (Date.now() > snapshot.expiresAt) return;
+            if (!stillClampedBelowTarget()) return;
             apply();
-          }
-        }, 260);
+          }, delay);
+        }
       });
     });
   }, []);
@@ -8715,19 +8743,22 @@ function HtmlViewer({
   // Sends one in-place DOM mutation to the bridge and resolves with its ack.
   // 'replace' swaps an element's outerHTML for its saved-source version;
   // 'insert-after'/'append-child'/'prepend-child' add a saved element in
-  // place; 'remove' deletes one. A detached/navigated iframe never acks —
-  // times out to false so the caller can fall back to a frozen-source reload.
+  // place; 'remove' deletes one; 'apply-content' mirrors patch fields onto a
+  // runtime-annotated element the saved source has no markup for (brand-kit
+  // targets). A detached/navigated iframe never acks — times out to false so
+  // the caller can fall back to a frozen-source reload.
   function applyManualEditDomOp(
     id: string,
     html: string,
-    op: 'replace' | 'insert-after' | 'append-child' | 'prepend-child' | 'remove',
+    op: 'replace' | 'insert-after' | 'append-child' | 'prepend-child' | 'remove' | 'apply-content',
+    fields?: Record<string, unknown>,
   ): Promise<boolean> {
     const win = iframeRef.current?.contentWindow;
     if (!win) return Promise.resolve(false);
     return new Promise<boolean>((resolve) => {
       const version = nextManualEditPreviewVersion();
       manualEditApplyDomAckRef.current = { version, resolve };
-      win.postMessage({ type: 'od-edit-apply-dom', id, html, op, version }, '*');
+      win.postMessage({ type: 'od-edit-apply-dom', id, html, op, fields, version }, '*');
       setTimeout(() => {
         if (manualEditApplyDomAckRef.current?.version === version) {
           manualEditApplyDomAckRef.current = null;
@@ -8735,6 +8766,19 @@ function HtmlViewer({
         }
       }, 800);
     });
+  }
+
+  // Content of a patch expressed as live-element fields, for targets whose
+  // markup never appears in the saved source (brand-kit runtime ids persist
+  // into the payload / runtime overrides instead). null = not expressible;
+  // the caller falls back to the reload path.
+  function manualEditPatchContentFields(patch: ManualEditPatch): Record<string, unknown> | null {
+    if (patch.kind === 'set-text') return { text: patch.value };
+    if (patch.kind === 'set-link') return { text: patch.text, href: patch.href };
+    if (patch.kind === 'set-image') return { src: patch.src, alt: patch.alt };
+    if (patch.kind === 'set-inner-html') return { html: patch.html };
+    if (patch.kind === 'set-attributes') return { attributes: patch.attributes };
+    return null;
   }
 
   /**
@@ -8767,8 +8811,16 @@ function HtmlViewer({
       patch.kind === 'set-outer-html'
     ) {
       const html = readManualEditOuterHtml(destSource, patch.id);
-      if (!html) return false;
-      return applyManualEditDomOp(patch.id, html, 'replace');
+      if (html) return applyManualEditDomOp(patch.id, html, 'replace');
+      // No markup for this id in the saved source → a runtime-annotated
+      // target (brand kit): the save landed in the payload / runtime
+      // overrides. Mirror the patch straight onto the live element instead of
+      // reloading — a brand-page reload flashes AND re-renders async, so the
+      // scroll restore window misses and the canvas jumps to the top.
+      if (patch.kind === 'set-outer-html') return applyManualEditDomOp(patch.id, patch.html, 'replace');
+      const fields = manualEditPatchContentFields(patch);
+      if (!fields) return false;
+      return applyManualEditDomOp(patch.id, '', 'apply-content', fields);
     }
     if (patch.kind === 'insert-html' || patch.kind === 'duplicate-element') {
       const inserted = readManualEditInsertedSibling(destSource, patch.id);

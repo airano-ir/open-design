@@ -840,6 +840,49 @@ describe('FileViewer manual edit regressions', () => {
     });
   });
 
+  it('applies brand-kit text commits in place instead of reloading (runtime-annotated ids)', async () => {
+    // Brand-kit targets get their data-od-id from the bridge at runtime — the
+    // saved source has no markup for them; edits persist into the payload.
+    const source = '<!doctype html><html><head><script id="od-brand-payload" type="application/json">{"status":"ready","brand":{"name":"Acme"}}</script></head><body><div id="root"></div></body></html>';
+    const { fetchMock, savedBodies } = manualEditWriteMock(source);
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={htmlPreviewFile()}
+        liveHtml={source}
+      />,
+    );
+    clickManualTool('manual-edit-mode-toggle');
+    const frame = await previewFrame();
+    const postSpy = vi.spyOn(frame.contentWindow!, 'postMessage');
+    await selectManualEditTarget({
+      ...heroTarget(),
+      id: 'brand-name',
+      label: 'Brand name',
+      text: 'Acme',
+      attributes: { 'data-od-id': 'brand-name' },
+      outerHtml: '<h1 data-od-id="brand-name">Acme</h1>',
+    });
+    const srcdocBefore = frame.srcdoc;
+
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-text-commit', id: 'brand-name', value: 'Acme Studios' },
+        source: frame.contentWindow,
+      }));
+    });
+
+    const applied = await ackApplyDom(frame, postSpy);
+    expect(applied.op).toBe('apply-content');
+    expect((applied as unknown as { fields?: { text?: string } }).fields?.text).toBe('Acme Studios');
+
+    await waitFor(() => expect(savedBodies).toHaveLength(1));
+    // The edit persisted into the brand payload…
+    expect(savedBodies[0]!.content).toContain('Acme Studios');
+    // …and the canvas was NOT reloaded.
+    expect(frame.srcdoc).toBe(srcdocBefore);
+  });
+
   it('undoes a commit in place and records an Undo version label', async () => {
     const source = '<!doctype html><html><body><main data-od-id="hero">Hero</main></body></html>';
     const { fetchMock, savedBodies } = manualEditWriteMock(source);
