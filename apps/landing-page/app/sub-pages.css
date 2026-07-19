@@ -3822,3 +3822,40 @@ dialog.tpl-share-popover .detail-share-dialog-text {
 .agent-rich-hub .agent-rich-main .info-cta .info-cta-meta .inline-link { color: rgba(255, 255, 255, 0.72); }
 .agent-rich-hub .agent-rich-main .info-cta .btn-primary { background: #fff; color: var(--ink); }
 .agent-rich-hub .agent-rich-main .info-cta .btn-ghost { background: transparent; color: #fff; border-color: rgba(255, 255, 255, 0.45); }
+
+/* Polished terminal-style code cards on the codex page (warm dark + window
+ * chrome), replacing the flat black block. Scoped to .agent-rich-hub. */
+.agent-rich-hub .agent-rich-main .agent-code {
+  position: relative;
+  margin: 24px 0;
+  padding: 42px 20px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  background: linear-gradient(160deg, #221f18, #1a1712);
+  box-shadow: 0 20px 48px -32px rgba(20, 18, 11, 0.62);
+}
+.agent-rich-hub .agent-rich-main .agent-code::before {
+  content: "";
+  position: absolute;
+  top: 16px;
+  left: 18px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #ff5f57;
+  box-shadow: 19px 0 0 #febc2e, 38px 0 0 #28c840;
+}
+.agent-rich-hub .agent-rich-main .agent-code::after {
+  content: "";
+  position: absolute;
+  top: 40px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.07);
+}
+.agent-rich-hub .agent-rich-main .agent-code code {
+  color: #e9e6dd;
+  font-size: 12.5px;
+  line-height: 1.75;
+}
