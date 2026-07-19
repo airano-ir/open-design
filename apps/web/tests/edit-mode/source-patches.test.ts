@@ -5,7 +5,9 @@ import {
   isManualEditFullHtmlDocument,
   readManualEditAttributes,
   readManualEditFields,
+  readManualEditInsertedSibling,
   readManualEditOuterHtml,
+  readManualEditRestoreDescriptor,
   readManualEditStyles,
 } from '../../src/edit-mode/source-patches';
 
@@ -308,6 +310,189 @@ describe('manual edit source patches', () => {
     expect(result.ok).toBe(true);
     expect(result.source).toContain('[data-od-id="brand-system-section"]');
     expect(result.source).toContain('display: none !important');
+  });
+
+  it('duplicates an element right after the original and strips identity attrs from the clone', () => {
+    const result = applyManualEditPatch(baseSource, { kind: 'duplicate-element', id: 'card' });
+
+    expect(result.ok).toBe(true);
+    const dom = new JSDOM(result.source);
+    const sections = dom.window.document.querySelectorAll('section');
+    expect(sections).toHaveLength(2);
+    // Clone directly follows the original as a sibling…
+    expect(sections[0]!.nextElementSibling).toBe(sections[1]!);
+    // …keeps the content and non-identity attributes…
+    expect(sections[1]!.textContent).toBe('Card');
+    expect(sections[1]!.getAttribute('data-keep')).toBe('yes');
+    expect(sections[1]!.getAttribute('class')).toBe('hero');
+    // …but never shares the manual-edit identity, which would make every
+    // later patch on either element ambiguous.
+    expect(sections[1]!.hasAttribute('data-od-id')).toBe(false);
+    expect(dom.window.document.querySelectorAll('[data-od-id="card"]')).toHaveLength(1);
+  });
+
+  it('strips identity attrs from clone descendants too', () => {
+    const result = applyManualEditPatch(baseSource, { kind: 'duplicate-element', id: 'nested-cta' });
+
+    expect(result.ok).toBe(true);
+    const dom = new JSDOM(result.source);
+    expect(dom.window.document.querySelectorAll('[data-od-id="nested-cta"]')).toHaveLength(1);
+    expect(dom.window.document.querySelectorAll('a[href="/nested"]')).toHaveLength(2);
+  });
+
+  it('inserts pasted HTML after the anchor, sanitized and identity-stripped', () => {
+    const result = applyManualEditPatch(baseSource, {
+      kind: 'insert-html',
+      id: 'card',
+      html: '<section class="hero" data-od-id="card" onclick="steal()">Pasted<script>evil()</script></section>',
+    });
+
+    expect(result.ok).toBe(true);
+    const dom = new JSDOM(result.source);
+    const sections = dom.window.document.querySelectorAll('section');
+    expect(sections).toHaveLength(2);
+    expect(sections[0]!.nextElementSibling).toBe(sections[1]!);
+    expect(sections[1]!.textContent).toBe('Pasted');
+    expect(sections[1]!.hasAttribute('onclick')).toBe(false);
+    expect(sections[1]!.querySelector('script')).toBeNull();
+    // The pasted block must never alias the copied element's identity.
+    expect(dom.window.document.querySelectorAll('[data-od-id="card"]')).toHaveLength(1);
+  });
+
+  it('appends pasted HTML to the end of the body for the __body__ anchor', () => {
+    const result = applyManualEditPatch(baseSource, {
+      kind: 'insert-html',
+      id: '__body__',
+      html: '<aside>Tail block</aside>',
+    });
+
+    expect(result.ok).toBe(true);
+    const dom = new JSDOM(result.source);
+    expect(dom.window.document.body.lastElementChild?.tagName.toLowerCase()).toBe('aside');
+  });
+
+  it('rejects pasted HTML without exactly one root element', () => {
+    const result = applyManualEditPatch(baseSource, {
+      kind: 'insert-html',
+      id: 'card',
+      html: '<b>one</b><b>two</b>',
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain('exactly one root element');
+  });
+
+  it('duplicates inside fragment sources and keeps the fragment shape', () => {
+    const result = applyManualEditPatch('<div data-od-id="only">Solo</div>', { kind: 'duplicate-element', id: 'only' });
+
+    expect(result.ok).toBe(true);
+    expect(result.source.match(/<div/g)).toHaveLength(2);
+    expect(result.source).not.toContain('<html');
+  });
+
+  it('persists inline formatting through set-inner-html', () => {
+    const result = applyManualEditPatch(baseSource, {
+      kind: 'set-inner-html',
+      id: 'hero-title',
+      html: 'Hello <span style="font-weight:700">bold</span> world',
+    });
+
+    expect(result.ok).toBe(true);
+    expect(readManualEditOuterHtml(result.source, 'hero-title')).toContain('<span style="font-weight:700">bold</span>');
+  });
+
+  it('sanitizes executable content out of set-inner-html commits', () => {
+    const result = applyManualEditPatch(baseSource, {
+      kind: 'set-inner-html',
+      id: 'hero-title',
+      html: 'Safe <script>alert(1)</script><span onclick="alert(2)" data-od-source-path="path-9">text</span><a href="javascript:alert(3)">link</a>',
+    });
+
+    expect(result.ok).toBe(true);
+    const outer = readManualEditOuterHtml(result.source, 'hero-title');
+    expect(outer).not.toContain('<script');
+    expect(outer).not.toContain('onclick');
+    expect(outer).not.toContain('javascript:');
+    expect(outer).not.toContain('data-od-source-path');
+    expect(outer).toContain('Safe');
+    expect(outer).toContain('<span');
+  });
+
+  // ---------------------------------------------------------------------------
+  // Saved-source readback for the in-place DOM pipeline: after an insert /
+  // duplicate / remove the host reconciles the live iframe from the SAVED
+  // source, so these helpers must locate the mutated element and describe it
+  // with an id the bridge can resolve.
+  // ---------------------------------------------------------------------------
+
+  it('reads back the element inserted after an authored-id anchor', () => {
+    const result = applyManualEditPatch(baseSource, {
+      id: 'hero-title',
+      kind: 'insert-html',
+      html: '<img src="pasted.png" alt="">',
+    });
+    expect(result.ok).toBe(true);
+
+    const inserted = readManualEditInsertedSibling(result.source, 'hero-title');
+    expect(inserted).not.toBeNull();
+    expect(inserted!.html).toContain('pasted.png');
+    // The pasted img carries no authored id, so it is addressed positionally:
+    // main is body child 0, hero-title is its child 0 → the img is child 1.
+    expect(inserted!.id).toBe('path-0-1');
+  });
+
+  it('reads back a duplicated element and a body-append insert', () => {
+    const duplicated = applyManualEditPatch(baseSource, { id: 'cta', kind: 'duplicate-element' });
+    expect(duplicated.ok).toBe(true);
+    const clone = readManualEditInsertedSibling(duplicated.source, 'cta');
+    expect(clone).not.toBeNull();
+    // The clone is stripped of identity, so its id is its position.
+    expect(clone!.id).toBe('path-0-2');
+    expect(clone!.html).toContain('Start');
+
+    const appended = applyManualEditPatch(baseSource, {
+      id: '__body__',
+      kind: 'insert-html',
+      html: '<footer>New footer</footer>',
+    });
+    expect(appended.ok).toBe(true);
+    const footer = readManualEditInsertedSibling(appended.source, '__body__');
+    expect(footer).not.toBeNull();
+    expect(footer!.html).toContain('New footer');
+    expect(footer!.id).toBe('path-1');
+  });
+
+  it('returns null for a missing insert anchor', () => {
+    expect(readManualEditInsertedSibling(baseSource, 'missing-anchor')).toBeNull();
+  });
+
+  it('describes how to restore a removed element next to its previous sibling', () => {
+    const restore = readManualEditRestoreDescriptor(baseSource, 'cta');
+    expect(restore).not.toBeNull();
+    expect(restore!.op).toBe('insert-after');
+    expect(restore!.anchorId).toBe('hero-title');
+    expect(restore!.html).toContain('Start');
+  });
+
+  it('describes how to restore a first child by prepending into its parent', () => {
+    const restore = readManualEditRestoreDescriptor(baseSource, 'hero-title');
+    expect(restore).not.toBeNull();
+    expect(restore!.op).toBe('prepend-child');
+    // main has no authored id → positional parent anchor.
+    expect(restore!.anchorId).toBe('path-0');
+    expect(restore!.html).toContain('Original title');
+  });
+
+  it('describes a first body child restore with the __body__ anchor', () => {
+    const source = '<!doctype html><html><body><main data-od-id="only">Only</main><footer data-od-id="footer">F</footer></body></html>';
+    const restore = readManualEditRestoreDescriptor(source, 'only');
+    expect(restore).not.toBeNull();
+    expect(restore!.op).toBe('prepend-child');
+    expect(restore!.anchorId).toBe('__body__');
+  });
+
+  it('returns null when the removed element cannot be located', () => {
+    expect(readManualEditRestoreDescriptor(baseSource, 'missing-element')).toBeNull();
   });
 });
 

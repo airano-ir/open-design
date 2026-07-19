@@ -8,6 +8,8 @@ import {
   isManualEditHostNode,
   isSourceMappableManualEditElement,
   manualEditDomPathForElement,
+  manualEditElementIsTextLike,
+  manualEditKindForElement,
   manualEditStableIdForElement,
 } from '../../src/edit-mode/bridge';
 
@@ -406,6 +408,33 @@ describe('manual edit bridge target normalization', () => {
     dom.window.close();
   });
 
+  // Chrome-picker parity: graphic leaves (canvas/svg/video) are pickable
+  // levels of their own — clicking one must select it, not its card. A canvas
+  // missing from the discovery selector was exactly the "child can't be
+  // selected" bug on generated art cells.
+  it('selects graphic leaf elements (canvas) instead of climbing to the card', () => {
+    const dom = new JSDOM(
+      `<main data-od-source-path="path-0"><div class="stat" data-od-source-path="path-0-0"><canvas data-od-source-path="path-0-0-0"></canvas><p data-od-source-path="path-0-0-1">Copy</p></div></main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+    const canvas = dom.window.document.querySelector('canvas') as HTMLElement;
+    canvas.getBoundingClientRect = () => ({
+      x: 0, y: 0, width: 220, height: 160,
+      top: 0, right: 220, bottom: 160, left: 0,
+      toJSON: () => ({}),
+    } as DOMRect);
+    const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
+
+    canvas.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+
+    expect(postMessage).toHaveBeenCalledWith({
+      type: 'od-edit-select',
+      target: expect.objectContaining({ id: 'path-0-0-0', tagName: 'canvas', kind: 'container' }),
+    }, '*');
+
+    dom.window.close();
+  });
+
   it('acks live preview style patches by id and version', () => {
     const bridge = buildManualEditBridge(true);
 
@@ -414,12 +443,66 @@ describe('manual edit bridge target normalization', () => {
     expect(bridge).toContain("ok: false, error: 'Target not found'");
   });
 
-  it('keeps edit-mode hover outlines visible over artifact CSS resets', () => {
+  it('reports resolved layout values so gesture math never adds px deltas to % offsets', () => {
+    const bridge = buildManualEditBridge(true);
+
+    // Computed position/left/top override the inline-first style read; 'auto'
+    // falls back to offset-parent geometry (margin corrected).
+    expect(bridge).toContain("styles.position = computed.position || ''");
+    expect(bridge).toContain('el.offsetLeft - marginLeft');
+    expect(bridge).toContain('el.offsetTop - marginTop');
+    expect(bridge).toContain('fixedRect.left - marginLeft');
+  });
+
+  it('applies od-edit-apply-dom by swapping one element in place and acks the result', () => {
+    const dom = new JSDOM(
+      `<main><h1 data-od-id="hero">Old title</h1></main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+    const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
+
+    dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
+      data: { type: 'od-edit-apply-dom', id: 'hero', html: '<h1 data-od-id="hero">Restored</h1>', version: 7 },
+    }));
+
+    expect(dom.window.document.querySelector('[data-od-id="hero"]')?.textContent).toBe('Restored');
+    expect(postMessage).toHaveBeenCalledWith(
+      { type: 'od-edit-apply-dom-result', version: 7, ok: true },
+      '*',
+    );
+
+    dom.window.close();
+  });
+
+  it('acks od-edit-apply-dom with ok:false when the element cannot be found', () => {
+    const dom = new JSDOM(
+      `<main><h1 data-od-id="hero">Old title</h1></main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+    const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
+
+    dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
+      data: { type: 'od-edit-apply-dom', id: 'missing', html: '<p>x</p>', version: 8 },
+    }));
+
+    expect(dom.window.document.querySelector('[data-od-id="hero"]')?.textContent).toBe('Old title');
+    expect(postMessage).toHaveBeenCalledWith(
+      { type: 'od-edit-apply-dom-result', version: 8, ok: false },
+      '*',
+    );
+
+    dom.window.close();
+  });
+
+  it('previews hover as a dashed outline and keeps the selected outline solid', () => {
     const style = buildManualEditBridgeStyle();
 
-    expect(style).toContain('outline: 1px dashed rgba(37, 99, 235, 0.35) !important');
-    expect(style).toContain('outline: 2px solid #2563eb !important');
-    expect(style).toContain('outline-offset: 3px !important');
+    // Hover = dashed preview; click = solid. The hover rule must skip the
+    // selected element so its solid frame never flickers dashed underneath
+    // the host-side ManualEditSelectionOverlay.
+    expect(style).toContain('outline: 1.5px dashed rgba(37, 99, 235, 0.65) !important');
+    expect(style).toContain(':hover:not([data-od-edit-selected])');
+    expect(style).toMatch(/\[data-od-edit-selected\]\s*\{\s*\n\s*outline: 1px solid/);
   });
 
   it('moves the runtime selected marker between selected targets', () => {
@@ -826,6 +909,515 @@ describe('manual edit bridge target normalization', () => {
     expect(result).toBe(false);
     expect(event.defaultPrevented).toBe(true);
     expect(clicked).not.toHaveBeenCalled();
+
+    dom.window.close();
+  });
+});
+
+describe('manual edit rich text sessions', () => {
+  it('classifies inline-formatted elements as text-like, blocks on block children', () => {
+    const dom = new JSDOM(
+      '<main><h1 id="rich">Hello <strong>bold <em>nested</em></strong></h1><div id="block">Text <p>para</p></div><p id="empty"></p></main>',
+    );
+    const doc = dom.window.document;
+
+    expect(manualEditElementIsTextLike(doc.getElementById('rich')!)).toBe(true);
+    expect(manualEditKindForElement(doc.getElementById('rich')!)).toBe('text');
+    expect(manualEditElementIsTextLike(doc.getElementById('block')!)).toBe(false);
+    expect(manualEditKindForElement(doc.getElementById('block')!)).toBe('container');
+    expect(manualEditElementIsTextLike(doc.getElementById('empty')!)).toBe(false);
+  });
+
+  it('starts an inline edit on elements with inline formatting children', () => {
+    const dom = new JSDOM(
+      `<main><h1 data-od-id="title">Hello <strong>bold</strong></h1></main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+    const title = dom.window.document.querySelector('[data-od-id="title"]') as HTMLElement;
+
+    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8 }));
+    expect(title.getAttribute('contenteditable')).toBe('plaintext-only');
+
+    dom.window.close();
+  });
+
+  it('escalates commits to od-edit-html-commit when the session produced inline markup', () => {
+    const dom = new JSDOM(
+      `<main><h1 data-od-id="title">Original title</h1></main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+    const title = dom.window.document.querySelector('[data-od-id="title"]') as HTMLElement;
+    const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
+
+    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8 }));
+    // Simulate what a formatting execCommand does to the live element.
+    title.innerHTML = 'Original <span style="font-weight:700">title</span>';
+
+    dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
+      data: { type: 'od-edit-text-finish', commit: true },
+    }));
+
+    expect(postMessage).toHaveBeenCalledWith({
+      type: 'od-edit-html-commit',
+      id: 'title',
+      value: 'Original <span style="font-weight:700">title</span>',
+    }, '*');
+    expect(postMessage).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'od-edit-text-commit' }), '*');
+
+    dom.window.close();
+  });
+
+  it('reverts to the original inline markup when the session is cancelled', () => {
+    const dom = new JSDOM(
+      `<main><h1 data-od-id="title">Keep <em>this</em></h1></main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+    const title = dom.window.document.querySelector('[data-od-id="title"]') as HTMLElement;
+
+    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8 }));
+    title.innerHTML = 'Trashed';
+
+    dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
+      data: { type: 'od-edit-text-finish', commit: false },
+    }));
+
+    expect(title.innerHTML).toBe('Keep <em>this</em>');
+
+    dom.window.close();
+  });
+
+  it('switches the session to rich editing when a format command arrives', () => {
+    const dom = new JSDOM(
+      `<main><h1 data-od-id="title">Original title</h1></main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+    const title = dom.window.document.querySelector('[data-od-id="title"]') as HTMLElement;
+
+    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8 }));
+    expect(title.getAttribute('contenteditable')).toBe('plaintext-only');
+
+    dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
+      data: { type: 'od-edit-format', command: 'bold' },
+    }));
+
+    // JSDOM has no execCommand — the upgrade to rich editing is the
+    // observable part of the format path here.
+    expect(title.getAttribute('contenteditable')).toBe('true');
+
+    dom.window.close();
+  });
+
+  it('consumes Home/End inside a session so the page never scrolls to its edges', () => {
+    // Chromium double-books Home/End in a contenteditable: the caret moves AND
+    // the document smooth-scrolls to its top/bottom. The session key handler
+    // must preventDefault and move the caret itself.
+    const dom = new JSDOM(
+      `<main><h1 data-od-id="title">Hello world</h1></main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+    const title = dom.window.document.querySelector('[data-od-id="title"]') as HTMLElement;
+    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8 }));
+    expect(title.getAttribute('contenteditable')).toBe('plaintext-only');
+
+    const endEvent = new dom.window.KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true });
+    title.dispatchEvent(endEvent);
+    expect(endEvent.defaultPrevented).toBe(true);
+    const selection = dom.window.getSelection()!;
+    expect(selection.isCollapsed).toBe(true);
+    // Caret parked at the element's content end (element-anchored range:
+    // offset counts child nodes, so end == childNodes.length).
+    expect(selection.anchorNode).toBe(title);
+    expect(selection.anchorOffset).toBe(title.childNodes.length);
+
+    const shiftHome = new dom.window.KeyboardEvent('keydown', { key: 'Home', shiftKey: true, bubbles: true, cancelable: true });
+    title.dispatchEvent(shiftHome);
+    expect(shiftHome.defaultPrevented).toBe(true);
+    // Shift+Home extends the selection back to the content start.
+    expect(dom.window.getSelection()!.isCollapsed).toBe(false);
+
+    dom.window.close();
+  });
+
+  it('keeps a double-click word selection instead of collapsing it to a caret', () => {
+    const dom = new JSDOM(
+      `<main><h1 data-od-id="title">Hello world</h1></main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+    const title = dom.window.document.querySelector('[data-od-id="title"]') as HTMLElement;
+    // First click starts the session.
+    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8 }));
+    expect(title.getAttribute('contenteditable')).toBe('plaintext-only');
+
+    // Simulate the browser's native dblclick word selection…
+    const range = dom.window.document.createRange();
+    range.selectNodeContents(title);
+    const selection = dom.window.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    // …then the click event that follows it (detail: 2). The bridge must NOT
+    // collapse the selection back to a caret.
+    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8, detail: 2 }));
+    expect(dom.window.getSelection()!.isCollapsed).toBe(false);
+
+    dom.window.close();
+  });
+
+  it('reports selection formatting state so the toolbar can highlight B/I/U/S', () => {
+    const dom = new JSDOM(
+      `<main><h1 data-od-id="title">Hello world</h1></main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+    const title = dom.window.document.querySelector('[data-od-id="title"]') as HTMLElement;
+    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8 }));
+    const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
+
+    // Select the whole text run and announce it — the toolbar reads `format`
+    // (queryCommandState-backed) rather than the element's inline styles.
+    const range = dom.window.document.createRange();
+    range.selectNodeContents(title);
+    const selection = dom.window.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+    dom.window.document.dispatchEvent(new dom.window.Event('selectionchange'));
+
+    expect(postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'od-edit-text-selection',
+        id: 'title',
+        hasRange: true,
+        format: expect.objectContaining({
+          bold: expect.any(Boolean),
+          italic: expect.any(Boolean),
+          underline: expect.any(Boolean),
+          strike: expect.any(Boolean),
+        }),
+      }),
+      '*',
+    );
+
+    dom.window.close();
+  });
+
+  it('inserts a pasted element in place via od-edit-apply-dom instead of reloading', () => {
+    const dom = new JSDOM(
+      `<main data-od-id="wrap"><p data-od-id="anchor">One</p></main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+    const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
+
+    dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
+      data: { type: 'od-edit-apply-dom', id: 'anchor', op: 'insert-after', html: '<img src="x.png" alt="">', version: 11 },
+    }));
+
+    const anchor = dom.window.document.querySelector('[data-od-id="anchor"]')!;
+    expect(anchor.nextElementSibling?.tagName.toLowerCase()).toBe('img');
+    expect(postMessage).toHaveBeenCalledWith(
+      { type: 'od-edit-apply-dom-result', version: 11, ok: true },
+      '*',
+    );
+
+    dom.window.close();
+  });
+
+  it('appends a pasted element to the body via od-edit-apply-dom append-child', () => {
+    const dom = new JSDOM(
+      `<main data-od-id="wrap"><p data-od-id="anchor">One</p></main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+    const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
+
+    dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
+      data: { type: 'od-edit-apply-dom', id: '__body__', op: 'append-child', html: '<img src="y.png" alt="">', version: 12 },
+    }));
+
+    const lastChild = dom.window.document.body.lastElementChild as HTMLElement | null;
+    expect(lastChild?.tagName.toLowerCase()).toBe('img');
+    expect(postMessage).toHaveBeenCalledWith(
+      { type: 'od-edit-apply-dom-result', version: 12, ok: true },
+      '*',
+    );
+
+    dom.window.close();
+  });
+
+  it('removes an element in place via od-edit-apply-dom remove and restamps siblings', () => {
+    const dom = new JSDOM(
+      `<main data-od-source-path="path-0">
+        <p data-od-source-path="path-0-0">First</p>
+        <p data-od-source-path="path-0-1">Second</p>
+        <p data-od-source-path="path-0-2">Third</p>
+      </main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+    const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
+
+    dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
+      data: { type: 'od-edit-apply-dom', id: 'path-0-1', op: 'remove', version: 13 },
+    }));
+
+    const paragraphs = dom.window.document.querySelectorAll('p');
+    expect(paragraphs).toHaveLength(2);
+    expect(paragraphs[0]!.textContent).toBe('First');
+    // Positional identity follows the shift: former path-0-2 is now path-0-1,
+    // so the next click patches the RIGHT source element.
+    expect(paragraphs[1]!.textContent).toBe('Third');
+    expect(paragraphs[1]!.getAttribute('data-od-source-path')).toBe('path-0-1');
+    expect(postMessage).toHaveBeenCalledWith(
+      { type: 'od-edit-apply-dom-result', version: 13, ok: true },
+      '*',
+    );
+
+    dom.window.close();
+  });
+
+  it('restamps positional ids after an in-place insert so later patches stay aligned', () => {
+    const dom = new JSDOM(
+      `<main data-od-source-path="path-0">
+        <p data-od-source-path="path-0-0" data-od-id="path-0-0">First</p>
+        <p data-od-source-path="path-0-1" data-od-id="path-0-1" data-od-runtime-id="path-0-1">Second</p>
+      </main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+
+    dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
+      data: { type: 'od-edit-apply-dom', id: 'path-0-0', op: 'insert-after', html: '<img src="x.png" alt="">', version: 14 },
+    }));
+
+    // The inserted element is stamped immediately (selectable without reload)…
+    const img = dom.window.document.querySelector('img')!;
+    expect(img.getAttribute('data-od-source-path')).toBe('path-0-1');
+    // …and the shifted sibling's positional stamps all move to the new
+    // position, including the auto-annotated data-od-id and the stale
+    // runtime-id (which is dropped for re-derivation).
+    const second = dom.window.document.querySelectorAll('p')[1]!;
+    expect(second.textContent).toBe('Second');
+    expect(second.getAttribute('data-od-source-path')).toBe('path-0-2');
+    expect(second.getAttribute('data-od-id')).toBe('path-0-2');
+    expect(second.getAttribute('data-od-runtime-id')).toBeNull();
+
+    dom.window.close();
+  });
+
+  it('never rewrites authored semantic data-od-id values during restamp', () => {
+    const dom = new JSDOM(
+      `<main data-od-source-path="path-0">
+        <p data-od-source-path="path-0-0" data-od-id="hero-title">First</p>
+        <p data-od-source-path="path-0-1" data-od-id="hero-subtitle">Second</p>
+      </main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+
+    dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
+      data: { type: 'od-edit-apply-dom', id: 'hero-title', op: 'insert-after', html: '<img src="x.png" alt="">', version: 15 },
+    }));
+
+    const second = dom.window.document.querySelectorAll('p')[1]!;
+    // Authored ids are position-independent identity — they must survive.
+    expect(second.getAttribute('data-od-id')).toBe('hero-subtitle');
+    // The positional source-path still tracks the shift underneath.
+    expect(second.getAttribute('data-od-source-path')).toBe('path-0-2');
+
+    dom.window.close();
+  });
+
+  it('prepends a restored element into its parent via od-edit-apply-dom prepend-child', () => {
+    const dom = new JSDOM(
+      `<main data-od-source-path="path-0">
+        <p data-od-source-path="path-0-0">Only</p>
+      </main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+    const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
+
+    dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
+      data: { type: 'od-edit-apply-dom', id: 'path-0', op: 'prepend-child', html: '<h1>Restored</h1>', version: 16 },
+    }));
+
+    const main = dom.window.document.querySelector('main')!;
+    expect(main.firstElementChild?.tagName.toLowerCase()).toBe('h1');
+    expect(main.firstElementChild?.getAttribute('data-od-source-path')).toBe('path-0-0');
+    expect(main.children[1]!.getAttribute('data-od-source-path')).toBe('path-0-1');
+    expect(postMessage).toHaveBeenCalledWith(
+      { type: 'od-edit-apply-dom-result', version: 16, ok: true },
+      '*',
+    );
+
+    dom.window.close();
+  });
+
+  it('keeps a replaced element source-mappable by restamping its clean saved markup', () => {
+    const dom = new JSDOM(
+      `<main data-od-source-path="path-0"><h1 data-od-source-path="path-0-0">Old</h1></main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+
+    // Saved-source html carries no annotations; without the restamp the
+    // replaced element would silently vanish from the targets broadcast.
+    dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
+      data: { type: 'od-edit-apply-dom', id: 'path-0-0', op: 'replace', html: '<h1>Restored title</h1>', version: 17 },
+    }));
+
+    const title = dom.window.document.querySelector('h1')!;
+    expect(title.textContent).toBe('Restored title');
+    expect(title.getAttribute('data-od-source-path')).toBe('path-0-0');
+
+    dom.window.close();
+  });
+});
+
+describe('manual edit keyboard forwarding', () => {
+  function loadDom() {
+    const dom = new JSDOM(
+      `<main><h1 data-od-id="title">Title</h1><p data-od-id="body">Body</p></main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+    return dom;
+  }
+
+  it('forwards Cmd/Ctrl+Z as undo and Shift+Cmd/Ctrl+Z as redo', () => {
+    const dom = loadDom();
+    const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
+
+    dom.window.document.body.dispatchEvent(new dom.window.KeyboardEvent('keydown', {
+      key: 'z', metaKey: true, bubbles: true, cancelable: true,
+    }));
+    expect(postMessage).toHaveBeenCalledWith({ type: 'od-edit-history', op: 'undo' }, '*');
+
+    dom.window.document.body.dispatchEvent(new dom.window.KeyboardEvent('keydown', {
+      key: 'z', metaKey: true, shiftKey: true, bubbles: true, cancelable: true,
+    }));
+    expect(postMessage).toHaveBeenCalledWith({ type: 'od-edit-history', op: 'redo' }, '*');
+
+    dom.window.close();
+  });
+
+  it('forwards Delete and Cmd/Ctrl+D for the selected target only', () => {
+    const dom = loadDom();
+    const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
+
+    // No selection → no delete/duplicate requests.
+    dom.window.document.body.dispatchEvent(new dom.window.KeyboardEvent('keydown', {
+      key: 'Delete', bubbles: true, cancelable: true,
+    }));
+    expect(postMessage).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'od-edit-delete-request' }), '*');
+
+    dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
+      data: { type: 'od-edit-selected-target', id: 'title' },
+    }));
+
+    dom.window.document.body.dispatchEvent(new dom.window.KeyboardEvent('keydown', {
+      key: 'Delete', bubbles: true, cancelable: true,
+    }));
+    expect(postMessage).toHaveBeenCalledWith({ type: 'od-edit-delete-request', id: 'title' }, '*');
+
+    dom.window.document.body.dispatchEvent(new dom.window.KeyboardEvent('keydown', {
+      key: 'd', metaKey: true, bubbles: true, cancelable: true,
+    }));
+    expect(postMessage).toHaveBeenCalledWith({ type: 'od-edit-duplicate-request', id: 'title' }, '*');
+
+    dom.window.close();
+  });
+
+  it('forwards Cmd/Ctrl+C as an element copy unless real text is selected', () => {
+    const dom = loadDom();
+    const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
+
+    dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
+      data: { type: 'od-edit-selected-target', id: 'title' },
+    }));
+
+    dom.window.document.body.dispatchEvent(new dom.window.KeyboardEvent('keydown', {
+      key: 'c', metaKey: true, bubbles: true, cancelable: true,
+    }));
+    expect(postMessage).toHaveBeenCalledWith({ type: 'od-edit-copy-request', id: 'title' }, '*');
+
+    // Highlighted text keeps native copy — Cmd+C is never hijacked then.
+    postMessage.mockClear();
+    dom.window.getSelection()!.selectAllChildren(dom.window.document.querySelector('[data-od-id="body"]')!);
+    dom.window.document.body.dispatchEvent(new dom.window.KeyboardEvent('keydown', {
+      key: 'c', metaKey: true, bubbles: true, cancelable: true,
+    }));
+    expect(postMessage).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'od-edit-copy-request' }), '*');
+
+    dom.window.close();
+  });
+
+  it('routes paste to element paste or image insert by clipboard payload', async () => {
+    const dom = loadDom();
+    const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
+    dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
+      data: { type: 'od-edit-selected-target', id: 'title' },
+    }));
+
+    const textPaste = new dom.window.Event('paste', { bubbles: true, cancelable: true });
+    Object.defineProperty(textPaste, 'clipboardData', { value: { files: [] } });
+    dom.window.document.body.dispatchEvent(textPaste);
+    expect(postMessage).toHaveBeenCalledWith({ type: 'od-edit-paste-request', id: 'title' }, '*');
+
+    // Images post BYTES, not the File handle — clipboard handles can be
+    // neutered after the event turn (net::ERR_UPLOAD_FILE_CHANGED on upload).
+    const image = new dom.window.File(['png-bytes'], 'shot.png', { type: 'image/png' });
+    const imagePaste = new dom.window.Event('paste', { bubbles: true, cancelable: true });
+    Object.defineProperty(imagePaste, 'clipboardData', { value: { files: [image] } });
+    dom.window.document.body.dispatchEvent(imagePaste);
+    await vi.waitFor(() => {
+      expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({
+        type: 'od-edit-paste-image', id: 'title', name: 'shot.png', mime: 'image/png',
+      }), '*');
+    });
+    const imageMessage = postMessage.mock.calls
+      .map(([message]) => message as { type?: string; buffer?: ArrayBuffer })
+      .find((message) => message.type === 'od-edit-paste-image')!;
+    expect(new TextDecoder().decode(imageMessage.buffer!)).toBe('png-bytes');
+
+    dom.window.close();
+  });
+
+  it('inserts a dropped image at the deepest selectable element under the drop point', async () => {
+    const dom = loadDom();
+    const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
+    const body = dom.window.document.querySelector('[data-od-id="body"]')!;
+    const image = new dom.window.File(['jpg-bytes'], 'photo.jpg', { type: 'image/jpeg' });
+    const drop = new dom.window.Event('drop', { bubbles: true, cancelable: true });
+    Object.defineProperty(drop, 'dataTransfer', { value: { files: [image] } });
+
+    body.dispatchEvent(drop);
+
+    await vi.waitFor(() => {
+      expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({
+        type: 'od-edit-paste-image', id: 'body', name: 'photo.jpg', mime: 'image/jpeg',
+      }), '*');
+    });
+
+    dom.window.close();
+  });
+
+  it('does not forward history keys while an inline edit session is live', () => {
+    const dom = loadDom();
+    const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
+    const title = dom.window.document.querySelector('[data-od-id="title"]') as HTMLElement;
+
+    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8 }));
+    postMessage.mockClear();
+
+    title.dispatchEvent(new dom.window.KeyboardEvent('keydown', {
+      key: 'z', metaKey: true, bubbles: true, cancelable: true,
+    }));
+    expect(postMessage).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'od-edit-history' }), '*');
+
+    dom.window.close();
+  });
+
+  it('re-broadcasts targets when the host asks for a refresh', () => {
+    const dom = loadDom();
+    const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
+
+    dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
+      data: { type: 'od-edit-refresh-targets' },
+    }));
+
+    expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'od-edit-targets' }), '*');
 
     dom.window.close();
   });

@@ -177,6 +177,9 @@ async function selectPreviewElementThroughBridge(
     await frame.locator(selector).click({ timeout: 5_000 });
     await expect(frame.locator(`${selector}[data-od-edit-selected="true"]`)).toHaveCount(1, { timeout: 2_000 });
   }).toPass({ timeout: 30_000 });
+  // Element clicks raise only the lightweight selection chrome; the full
+  // inspector opens through the action bar's "Edit parameters" button.
+  await page.getByTestId('manual-edit-open-inspector').click();
   await expect(page.locator('.manual-edit-modal')).toContainText(section);
 }
 
@@ -609,6 +612,9 @@ async function selectStyleRowInput(
       },
     }, '*');
   });
+  // Selection posts raise only the lightweight chrome; open the inspector
+  // through the action bar's "Edit parameters" button before reading rows.
+  await page.getByTestId('manual-edit-open-inspector').click();
   await expect(page.locator('.manual-edit-modal')).toContainText('TYPOGRAPHY');
   const row = inspectorSection(page, section).locator('.cc-row').filter({ hasText: label }).locator('input');
   await expect(row).toBeVisible();

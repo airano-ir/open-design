@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   FileViewer,
@@ -28,6 +28,8 @@ describe('FileViewer manual edit regressions', () => {
     });
   }
 
+  // Hover raises no host chrome at all — the dashed highlight lives in the
+  // iframe's bridge CSS. Posting the message must therefore be a no-op here.
   async function hoverManualEditTarget(target = heroTarget()) {
     const frame = await previewFrame();
     act(() => {
@@ -35,10 +37,6 @@ describe('FileViewer manual edit regressions', () => {
         data: { type: 'od-edit-hover', target },
         source: frame.contentWindow,
       }));
-    });
-    // Hover only surfaces the affordance; it must not open any panel.
-    await waitFor(() => {
-      expect(screen.getByTestId('manual-edit-hover-open')).toBeTruthy();
     });
   }
 
@@ -56,9 +54,9 @@ describe('FileViewer manual edit regressions', () => {
     });
   }
 
-  // Hover only surfaces the "edit params" affordance; pinning the inspector to
-  // a target now requires an explicit click (mirrors clicking that affordance
-  // or a container/image body in the bridge).
+  // Clicking an element raises only the lightweight selection chrome; the
+  // full inspector opens through the action bar's "Edit parameters" button.
+  // This helper walks that two-step flow.
   async function selectManualEditTarget(target = heroTarget()) {
     const frame = await previewFrame();
     act(() => {
@@ -67,6 +65,11 @@ describe('FileViewer manual edit regressions', () => {
         source: frame.contentWindow,
       }));
     });
+    await waitFor(() => {
+      expect(screen.getByTestId('manual-edit-selection-frame')).toBeTruthy();
+    });
+    expect(document.querySelector('.manual-edit-right')).toBeNull();
+    fireEvent.click(screen.getByTestId('manual-edit-open-inspector'));
     await waitFor(() => {
       expect(document.querySelector('.manual-edit-right')).not.toBeNull();
     });
@@ -128,11 +131,11 @@ describe('FileViewer manual edit regressions', () => {
     expect(document.querySelector('.manual-edit-right')).toBeNull();
     expect(screen.queryByText('PAGE')).toBeNull();
 
-    // Hovering surfaces only the click affordance, still no panel.
+    // Hovering surfaces nothing host-side, still no panel.
     await hoverManualEditTarget();
     expect(document.querySelector('.manual-edit-right')).toBeNull();
     expect(screen.queryByText('PAGE')).toBeNull();
-    expect(screen.getByTestId('manual-edit-hover-open')).toBeTruthy();
+    expect(screen.queryByTestId('manual-edit-hover-open')).toBeNull();
   });
 
   it('opens the compact page-styles card when the empty canvas is clicked', async () => {
@@ -154,7 +157,7 @@ describe('FileViewer manual edit regressions', () => {
     expect(document.querySelector('.manual-edit-page-card')).not.toBeNull();
   });
 
-  it('pins the inspector to a target only after clicking the hover affordance', async () => {
+  it('pins the inspector only through selection and the action bar, never on hover', async () => {
     const source = '<!doctype html><html><body><main data-od-id="hero">Hero</main></body></html>';
     vi.stubGlobal('fetch', vi.fn(async () =>
       new Response(source, { status: 200, headers: { 'Content-Type': 'text/html' } }),
@@ -168,16 +171,120 @@ describe('FileViewer manual edit regressions', () => {
 
     clickManualTool('manual-edit-mode-toggle');
     await hoverManualEditTarget();
-    // No panel until the affordance is clicked.
+    // Hover raises neither the panel nor any floating affordance.
     expect(document.querySelector('.manual-edit-right')).toBeNull();
+    expect(screen.queryByTestId('manual-edit-hover-open')).toBeNull();
 
-    fireEvent.click(screen.getByTestId('manual-edit-hover-open'));
+    // Selection chrome plus the action bar's "Edit parameters" button is the
+    // only path into the inspector.
+    await selectManualEditTarget();
 
     // Selected target inspector exposes the typography "Size" control.
     await findStyleInput('Size');
     expect(screen.queryByText('PAGE')).toBeNull();
-    // Affordance hides once its element is the pinned selection.
-    expect(screen.queryByTestId('manual-edit-hover-open')).toBeNull();
+  });
+
+  it('re-enters edit mode on the latest source after an external rewrite', async () => {
+    const v1 = '<!doctype html><html><body><main data-od-id="hero">Version One</main></body></html>';
+    const v2 = '<!doctype html><html><body><main data-od-id="hero">Version Two</main></body></html>';
+    let payload = v1;
+    vi.stubGlobal('fetch', vi.fn(async () =>
+      new Response(payload, { status: 200, headers: { 'Content-Type': 'text/html' } }),
+    ));
+    const fileV1 = htmlPreviewFile();
+    const { rerender } = render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={fileV1} />,
+    );
+
+    clickManualTool('manual-edit-mode-toggle');
+    await waitFor(() => {
+      const node = screen.getByTestId('artifact-preview-frame') as HTMLIFrameElement;
+      expect(node.srcdoc).toContain('Version One');
+    });
+
+    // Leave edit mode; the agent rewrites the file (mtime bump → re-fetch).
+    clickManualTool('manual-edit-mode-toggle');
+    payload = v2;
+    rerender(
+      <FileViewer projectId="project-1" projectKind="prototype"
+        file={{ ...fileV1, mtime: fileV1.mtime + 1000 }}
+      />,
+    );
+
+    clickManualTool('manual-edit-mode-toggle');
+    await waitFor(() => {
+      const node = screen.getByTestId('artifact-preview-frame') as HTMLIFrameElement;
+      expect(node.srcdoc).toContain('Version Two');
+      expect(node.srcdoc).not.toContain('Version One');
+    });
+  });
+
+  it('follows an external rewrite into the frozen canvas while edit mode stays open', async () => {
+    const v1 = '<!doctype html><html><body><main data-od-id="hero">Version One</main></body></html>';
+    const v2 = '<!doctype html><html><body><main data-od-id="hero">Version Two</main></body></html>';
+    let payload = v1;
+    vi.stubGlobal('fetch', vi.fn(async () =>
+      new Response(payload, { status: 200, headers: { 'Content-Type': 'text/html' } }),
+    ));
+    const fileV1 = htmlPreviewFile();
+    const { rerender } = render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={fileV1} />,
+    );
+
+    clickManualTool('manual-edit-mode-toggle');
+    await waitFor(() => {
+      expect((screen.getByTestId('artifact-preview-frame') as HTMLIFrameElement).srcdoc).toContain('Version One');
+    });
+
+    // Agent rewrite lands while edit mode is still open and idle.
+    payload = v2;
+    rerender(
+      <FileViewer projectId="project-1" projectKind="prototype"
+        file={{ ...fileV1, mtime: fileV1.mtime + 1000 }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect((screen.getByTestId('artifact-preview-frame') as HTMLIFrameElement).srcdoc).toContain('Version Two');
+    });
+  });
+
+  it('shows one toolbar layer at a time: action bar by default, text toolbar on a text range', async () => {
+    const source = '<!doctype html><html><body><main data-od-id="hero">Hero</main></body></html>';
+    vi.stubGlobal('fetch', vi.fn(async () =>
+      new Response(source, { status: 200, headers: { 'Content-Type': 'text/html' } }),
+    ));
+    render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={htmlPreviewFile()}
+        liveHtml={source}
+      />,
+    );
+
+    clickManualTool('manual-edit-mode-toggle');
+    const frame = await previewFrame();
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-select', target: heroTarget() },
+        source: frame.contentWindow,
+      }));
+    });
+    // Element selection: action bar only, no text toolbar underneath.
+    await waitFor(() => {
+      expect(screen.getByTestId('manual-edit-action-bar')).toBeTruthy();
+    });
+    expect(screen.queryByTestId('manual-edit-text-toolbar')).toBeNull();
+
+    // A live text range flips ownership to the text toolbar.
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-text-selection', id: 'hero', hasRange: true },
+        source: frame.contentWindow,
+      }));
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('manual-edit-text-toolbar')).toBeTruthy();
+      expect(screen.queryByTestId('manual-edit-action-bar')).toBeNull();
+    });
   });
 
   it('does not let a pending manual edit style save survive a file switch', async () => {
@@ -435,6 +542,65 @@ describe('FileViewer manual edit regressions', () => {
     expect(payload.content).not.toContain('<main data-od-id="hero">Hero</main>');
   });
 
+  it('undoes a style edit in place without reloading the preview iframe', async () => {
+    const source = '<!doctype html><html><body><main data-od-id="hero">Hero</main></body></html>';
+    let savedContent: string | null = null;
+    const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : input instanceof Request ? input.url : String(input);
+      if (url.includes('/api/projects/project-1/files') && init?.method === 'POST') {
+        savedContent = (JSON.parse(String(init.body)) as { content: string }).content;
+        return new Response(JSON.stringify({ file: htmlPreviewFile() }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      // Raw reads reflect the latest save so the undo path's history-source
+      // confirmation sees a consistent file.
+      return new Response(savedContent ?? source, { status: 200, headers: { 'Content-Type': 'text/html' } });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={htmlPreviewFile()}
+        liveHtml={source}
+      />,
+    );
+
+    clickManualTool('manual-edit-mode-toggle');
+    const frame = await previewFrame();
+    // Element selection raises the action bar only (one toolbar layer at a
+    // time); element-level styles route through the inspector.
+    await selectManualEditTarget();
+    expect(screen.queryByTestId('manual-edit-text-toolbar')).toBeNull();
+
+    const sizeInput = await findStyleInput('Size');
+    fireEvent.change(sizeInput, { target: { value: '48' } });
+    const modal = document.querySelector('.manual-edit-modal') as HTMLElement;
+    fireEvent.click(within(modal).getByRole('button', { name: /^Save$/ }));
+    await waitFor(() => {
+      expect(savedContent).toContain('font-size: 48px');
+    }, { timeout: 4000 });
+
+    const iframe = screen.getByTestId('artifact-preview-frame') as HTMLIFrameElement;
+    const srcdocBefore = iframe.srcdoc;
+    const postSpy = vi.spyOn(frame.contentWindow!, 'postMessage');
+
+    fireEvent.click(screen.getByTestId('manual-edit-undo'));
+    await waitFor(() => {
+      expect(savedContent).not.toContain('font-size: 48px');
+    }, { timeout: 4000 });
+
+    // The flash bug: undo used to swap the frozen srcDoc and reload the
+    // iframe. The style patch must instead revert through the preview channel.
+    expect((screen.getByTestId('artifact-preview-frame') as HTMLIFrameElement).srcdoc).toBe(srcdocBefore);
+    await waitFor(() => {
+      expect(postSpy.mock.calls.some(([message]) => {
+        const data = message as { type?: string; styles?: Record<string, string> };
+        return data?.type === 'od-edit-preview-style' && data.styles?.fontSize === '';
+      })).toBe(true);
+    });
+  });
+
   it('keeps the preview mounted and does not save when deleting the only rendered root', async () => {
     const source = '<!doctype html><html><body><main data-od-id="app-root">App</main><script>window.bootApp && window.bootApp();</script></body></html>';
     const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
@@ -464,7 +630,9 @@ describe('FileViewer manual edit regressions', () => {
       outerHtml: '<main data-od-id="app-root">App</main>',
     });
 
-    fireEvent.click(screen.getByLabelText('Delete element'));
+    // Both the selection-frame action bar and the panel footer expose a
+    // delete control now; either one drives the same remove-element patch.
+    fireEvent.click(screen.getAllByLabelText('Delete element')[0]!);
 
     await waitFor(() => {
       expect(screen.getByText('Cannot remove the last rendered element in the document.')).toBeTruthy();
@@ -474,6 +642,250 @@ describe('FileViewer manual edit regressions', () => {
       '/api/projects/project-1/files',
       expect.objectContaining({ method: 'POST' }),
     );
+  });
+
+  // ---------------------------------------------------------------------------
+  // In-place content pipeline: content commits mutate the live iframe DOM via
+  // od-edit-apply-dom instead of swapping srcDoc — no white flash, no scroll
+  // reset. These tests play the bridge's role: capture the apply-dom post and
+  // ack it, then assert the canvas was NOT reloaded (srcdoc unchanged).
+  // ---------------------------------------------------------------------------
+
+  type ApplyDomMessage = { type: string; id: string; html: string; op?: string; version: number };
+
+  function lastApplyDomMessage(spy: { mock: { calls: unknown[][] } }): ApplyDomMessage | null {
+    for (let i = spy.mock.calls.length - 1; i >= 0; i--) {
+      const msg = spy.mock.calls[i]?.[0] as { type?: string } | undefined;
+      if (msg?.type === 'od-edit-apply-dom') return msg as ApplyDomMessage;
+    }
+    return null;
+  }
+
+  async function ackApplyDom(frame: HTMLIFrameElement, spy: { mock: { calls: unknown[][] } }) {
+    const message = await waitFor(() => {
+      const found = lastApplyDomMessage(spy);
+      if (!found) throw new Error('no od-edit-apply-dom posted yet');
+      return found;
+    });
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-apply-dom-result', version: message.version, ok: true },
+        source: frame.contentWindow,
+      }));
+    });
+    return message;
+  }
+
+  function manualEditWriteMock(initialSource: string) {
+    const savedBodies: Array<{ content: string; versionLabel?: string; versionSource?: string }> = [];
+    const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : input instanceof Request ? input.url : String(input);
+      if (url.includes('/api/projects/project-1/upload') && init?.method === 'POST') {
+        return new Response(JSON.stringify({ files: [{ name: 'pasted-image.png', path: 'pasted-image.png' }] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      if (url.includes('/api/projects/project-1/files') && init?.method === 'POST') {
+        savedBodies.push(JSON.parse(String(init.body)) as (typeof savedBodies)[number]);
+        return new Response(JSON.stringify({ file: htmlPreviewFile() }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      if (url.includes('/api/projects/project-1/deployments')) {
+        return new Response(JSON.stringify({ deployments: [] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      if (url.includes('/api/projects/project-1/raw/preview.html')) {
+        // The latest saved content is the persisted truth; applyManualEdit's
+        // freshness confirm must see its own writes or it clears history.
+        const latest = savedBodies[savedBodies.length - 1]?.content ?? initialSource;
+        return new Response(latest, { status: 200, headers: { 'Content-Type': 'text/html' } });
+      }
+      return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
+    });
+    return { fetchMock, savedBodies };
+  }
+
+  it('applies a text commit in place without reloading the srcDoc canvas', async () => {
+    const source = '<!doctype html><html><body><main data-od-id="hero">Hero</main></body></html>';
+    const { fetchMock, savedBodies } = manualEditWriteMock(source);
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={htmlPreviewFile()}
+        liveHtml={source}
+      />,
+    );
+    clickManualTool('manual-edit-mode-toggle');
+    const frame = await previewFrame();
+    const postSpy = vi.spyOn(frame.contentWindow!, 'postMessage');
+    await selectManualEditTarget();
+    const srcdocBefore = frame.srcdoc;
+
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-text-commit', id: 'hero', value: 'Updated hero' },
+        source: frame.contentWindow,
+      }));
+    });
+
+    const applied = await ackApplyDom(frame, postSpy);
+    expect(applied.op ?? 'replace').toBe('replace');
+    expect(applied.id).toBe('hero');
+    expect(applied.html).toContain('Updated hero');
+
+    await waitFor(() => expect(savedBodies).toHaveLength(1));
+    expect(savedBodies[0]!.content).toContain('Updated hero');
+    expect(savedBodies[0]!.versionSource).toBe('manual');
+    // No srcDoc swap — the canvas kept its DOM (and therefore its scroll).
+    expect(frame.srcdoc).toBe(srcdocBefore);
+  });
+
+  it('deletes an element in place through the remove op', async () => {
+    const source = '<!doctype html><html><body><main data-od-id="hero">Hero</main><footer data-od-id="footer">Footer</footer></body></html>';
+    const { fetchMock, savedBodies } = manualEditWriteMock(source);
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={htmlPreviewFile()}
+        liveHtml={source}
+      />,
+    );
+    clickManualTool('manual-edit-mode-toggle');
+    const frame = await previewFrame();
+    const postSpy = vi.spyOn(frame.contentWindow!, 'postMessage');
+    await selectManualEditTarget();
+    const srcdocBefore = frame.srcdoc;
+
+    fireEvent.click(screen.getAllByLabelText('Delete element')[0]!);
+
+    const applied = await ackApplyDom(frame, postSpy);
+    expect(applied.op).toBe('remove');
+    expect(applied.id).toBe('hero');
+
+    await waitFor(() => expect(savedBodies).toHaveLength(1));
+    expect(savedBodies[0]!.content).not.toContain('data-od-id="hero"');
+    expect(frame.srcdoc).toBe(srcdocBefore);
+    // Selection chrome is gone with the element.
+    await waitFor(() => {
+      expect(screen.queryByTestId('manual-edit-selection-frame')).toBeNull();
+    });
+  });
+
+  it('inserts a pasted image in place and hands the selection to it', async () => {
+    const source = '<!doctype html><html><body><main data-od-id="hero">Hero</main></body></html>';
+    const { fetchMock, savedBodies } = manualEditWriteMock(source);
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={htmlPreviewFile()}
+        liveHtml={source}
+      />,
+    );
+    clickManualTool('manual-edit-mode-toggle');
+    const frame = await previewFrame();
+    const postSpy = vi.spyOn(frame.contentWindow!, 'postMessage');
+    await selectManualEditTarget();
+    const srcdocBefore = frame.srcdoc;
+
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: {
+          type: 'od-edit-paste-image',
+          id: 'hero',
+          name: 'pasted-image.png',
+          mime: 'image/png',
+          buffer: new Uint8Array([137, 80, 78, 71]).buffer,
+        },
+        source: frame.contentWindow,
+      }));
+    });
+
+    const applied = await ackApplyDom(frame, postSpy);
+    expect(applied.op).toBe('insert-after');
+    expect(applied.id).toBe('hero');
+    expect(applied.html).toContain('<img');
+    expect(applied.html).toContain('pasted-image.png');
+
+    await waitFor(() => expect(savedBodies).toHaveLength(1));
+    expect(frame.srcdoc).toBe(srcdocBefore);
+
+    // The bridge would re-broadcast targets after the in-place insert; the
+    // armed hand-off must select the new image element (positional path id
+    // read back from the saved source: hero is body child 0 → img is 1).
+    const imageTarget: ManualEditTarget = {
+      ...heroTarget(),
+      id: 'path-1',
+      kind: 'image',
+      label: 'Pasted image',
+      tagName: 'img',
+      text: '',
+      fields: { src: 'pasted-image.png', alt: '' },
+      attributes: {},
+      outerHtml: '<img src="pasted-image.png" alt="" style="max-width: 100%;">',
+    };
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-targets', targets: [heroTarget(), imageTarget] },
+        source: frame.contentWindow,
+      }));
+    });
+    // Image selection exposes the crop affordance in the action bar.
+    await waitFor(() => {
+      expect(screen.getByTestId('manual-edit-crop-start')).toBeTruthy();
+    });
+  });
+
+  it('undoes a commit in place and records an Undo version label', async () => {
+    const source = '<!doctype html><html><body><main data-od-id="hero">Hero</main></body></html>';
+    const { fetchMock, savedBodies } = manualEditWriteMock(source);
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={htmlPreviewFile()}
+        liveHtml={source}
+      />,
+    );
+    clickManualTool('manual-edit-mode-toggle');
+    const frame = await previewFrame();
+    const postSpy = vi.spyOn(frame.contentWindow!, 'postMessage');
+    await selectManualEditTarget();
+    const srcdocBefore = frame.srcdoc;
+
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-text-commit', id: 'hero', value: 'Updated hero' },
+        source: frame.contentWindow,
+      }));
+    });
+    await ackApplyDom(frame, postSpy);
+    await waitFor(() => expect(savedBodies).toHaveLength(1));
+
+    fireEvent.keyDown(window, { key: 'z', metaKey: true });
+
+    const applied = await waitFor(() => {
+      const found = lastApplyDomMessage(postSpy);
+      if (!found || !found.html.includes('>Hero<')) throw new Error('undo apply-dom not posted yet');
+      return found;
+    });
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-apply-dom-result', version: applied.version, ok: true },
+        source: frame.contentWindow,
+      }));
+    });
+    expect(applied.op ?? 'replace').toBe('replace');
+
+    await waitFor(() => expect(savedBodies).toHaveLength(2));
+    // The rollback is a first-class version list entry.
+    expect(savedBodies[1]!.versionSource).toBe('manual');
+    expect(savedBodies[1]!.versionLabel).toMatch(/^Undo /);
+    expect(savedBodies[1]!.content).toContain('>Hero<');
+    expect(frame.srcdoc).toBe(srcdocBefore);
   });
 });
 
