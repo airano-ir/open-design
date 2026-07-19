@@ -158,6 +158,28 @@ export function applyManualEditPatch(source: string, patch: ManualEditPatch): Ma
         error: 'error' in replaced ? replaced.error : 'Could not replace element HTML.',
       };
     }
+  } else if (patch.kind === 'set-inner-html') {
+    el.innerHTML = sanitizeInnerHtml(doc, patch.html);
+  } else if (patch.kind === 'insert-html') {
+    const pasted = parseInsertableElement(doc, patch.html);
+    if (!pasted) {
+      return { ok: false, source, error: 'Pasted HTML must contain exactly one root element.' };
+    }
+    // A `__body__` anchor appends to the end of the page; every element
+    // anchor pastes as the anchor's next sibling (the duplicate-element
+    // position contract, so path-id selection hand-off works the same way).
+    if (el === doc.body) {
+      el.appendChild(pasted);
+    } else if (el.parentElement) {
+      el.insertAdjacentElement('afterend', pasted);
+    } else {
+      return { ok: false, source, error: 'Cannot paste next to the root element.' };
+    }
+  } else if (patch.kind === 'duplicate-element') {
+    if (!el.parentElement) {
+      return { ok: false, source, error: 'Cannot duplicate the root element.' };
+    }
+    el.insertAdjacentElement('afterend', cloneWithoutManualEditIdentity(el));
   } else if (patch.kind === 'remove-element') {
     if (!el.parentElement) {
       return { ok: false, source, error: 'Cannot remove the root element.' };
@@ -217,6 +239,80 @@ export function readManualEditAttributes(source: string, id: string): Record<str
 export function readManualEditOuterHtml(source: string, id: string): string {
   const doc = parseSource(source);
   return (doc ? findEditableElement(doc, id)?.outerHTML : '') ?? '';
+}
+
+/**
+ * Positional path id (`path-a-b-c`) of an element in a parsed SOURCE document
+ * — mirror of `findElementByPath` in reverse, and of the srcDoc build-time
+ * annotators. The source is clean (no injected host nodes), so plain
+ * `parent.children` indexes are the canonical positions.
+ */
+function manualEditPositionalPathId(el: Element): string {
+  const parts: number[] = [];
+  let node: Element | null = el;
+  while (node && node !== node.ownerDocument.body) {
+    const parent: Element | null = node.parentElement;
+    if (!parent) break;
+    parts.unshift(Array.prototype.indexOf.call(parent.children, node));
+    node = parent;
+  }
+  return parts.length ? `path-${parts.join('-')}` : '';
+}
+
+/** The id a freshly saved element will be addressed by: an authored
+ * `data-od-id` when present, otherwise its positional path. */
+function manualEditElementId(el: Element): string {
+  return el.getAttribute('data-od-id') || manualEditPositionalPathId(el);
+}
+
+/**
+ * Reads back the element that an `insert-html` / `duplicate-element` patch
+ * just placed into the SAVED source: the anchor's next sibling, or the last
+ * body child for a `__body__` append. Returns its addressable id (for the
+ * selection hand-off) and its saved outerHTML (for the in-place DOM insert),
+ * so the live DOM can be reconciled to exactly what the source now holds.
+ */
+export function readManualEditInsertedSibling(
+  source: string,
+  anchorId: string,
+): { id: string; html: string } | null {
+  const doc = parseSource(source);
+  if (!doc) return null;
+  const inserted = anchorId === '__body__'
+    ? doc.body.lastElementChild
+    : findEditableElement(doc, anchorId)?.nextElementSibling ?? null;
+  if (!inserted) return null;
+  const id = manualEditElementId(inserted);
+  if (!id) return null;
+  return { id, html: inserted.outerHTML };
+}
+
+/**
+ * How to put a removed element back without reloading the iframe (undo of
+ * `remove-element`): read the element from the BEFORE source and describe the
+ * insertion — after its previous sibling when one exists, else prepended to
+ * its parent (`__body__` for direct body children). Returns null when the
+ * element cannot be located, in which case the caller falls back to the
+ * always-correct frozen-source reload.
+ */
+export function readManualEditRestoreDescriptor(
+  source: string,
+  removedId: string,
+): { op: 'insert-after' | 'prepend-child'; anchorId: string; html: string } | null {
+  const doc = parseSource(source);
+  const el = doc ? findEditableElement(doc, removedId) : null;
+  if (!el || el === doc?.body) return null;
+  const previous = el.previousElementSibling;
+  if (previous) {
+    const anchorId = manualEditElementId(previous);
+    if (!anchorId) return null;
+    return { op: 'insert-after', anchorId, html: el.outerHTML };
+  }
+  const parent = el.parentElement;
+  if (!parent) return null;
+  const anchorId = parent === doc?.body ? '__body__' : manualEditElementId(parent);
+  if (!anchorId) return null;
+  return { op: 'prepend-child', anchorId, html: el.outerHTML };
 }
 
 function parseSource(source: string): Document | null {
@@ -610,6 +706,66 @@ function setAttributes(el: Element, attributes: Record<string, string>): void {
     if (value.trim() === '') el.removeAttribute(name);
     else el.setAttribute(name, value);
   }
+}
+
+const MANUAL_EDIT_IDENTITY_ATTRS = [
+  'data-od-id',
+  'data-od-runtime-id',
+  'data-od-source-path',
+  'data-od-edit-selected',
+  'data-od-editing',
+] as const;
+
+/**
+ * Deep-clone an element for `duplicate-element`, stripping every manual-edit
+ * identity attribute from the clone and its descendants. Two elements sharing
+ * a `data-od-id` would make every later patch ambiguous; freshly stripped
+ * clones get re-annotated with stable ids on the next preview build.
+ */
+function cloneWithoutManualEditIdentity(el: Element): Element {
+  const clone = el.cloneNode(true) as Element;
+  const nodes = [clone, ...Array.from(clone.querySelectorAll('*'))];
+  for (const node of nodes) {
+    for (const attr of MANUAL_EDIT_IDENTITY_ATTRS) node.removeAttribute(attr);
+  }
+  return clone;
+}
+
+/**
+ * Parse the single element an `insert-html` patch pastes, sanitized like an
+ * innerHTML commit and stripped of every manual-edit identity attribute so
+ * the pasted block can never alias an existing target's ids. Returns null
+ * when the HTML does not contain exactly one root element.
+ */
+function parseInsertableElement(doc: Document, html: string): Element | null {
+  const template = doc.createElement('template');
+  template.innerHTML = sanitizeInnerHtml(doc, html.trim());
+  const elements = Array.from(template.content.children);
+  if (elements.length !== 1) return null;
+  return cloneWithoutManualEditIdentity(elements[0]!);
+}
+
+/**
+ * Sanitize an innerHTML commit coming back from the iframe's inline text
+ * session. The session only produces text plus inline formatting, so anything
+ * executable (scripts, inline handlers, javascript: URLs) is hostile input —
+ * strip it rather than persist it into the artifact.
+ */
+function sanitizeInnerHtml(doc: Document, html: string): string {
+  const template = doc.createElement('template');
+  template.innerHTML = html;
+  for (const node of Array.from(template.content.querySelectorAll('script, style, iframe, object, embed, link, meta'))) {
+    node.remove();
+  }
+  for (const node of Array.from(template.content.querySelectorAll('*'))) {
+    for (const attr of Array.from(node.attributes)) {
+      const name = attr.name.toLowerCase();
+      if (name.startsWith('on')) node.removeAttribute(attr.name);
+      else if ((name === 'href' || name === 'src') && /^\s*javascript:/i.test(attr.value)) node.removeAttribute(attr.name);
+      else if (name === 'data-od-runtime-id' || name === 'data-od-editing' || name === 'data-od-source-path') node.removeAttribute(attr.name);
+    }
+  }
+  return template.innerHTML;
 }
 
 function replaceOuterHtml(doc: Document, el: Element, html: string): { ok: true } | { ok: false; error: string } {
