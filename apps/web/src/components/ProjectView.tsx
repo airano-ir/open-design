@@ -215,6 +215,7 @@ import { AvatarMenu } from './AvatarMenu';
 import { EntrySettingsMenu } from './EntrySettingsMenu';
 import { HandoffButton } from './HandoffButton';
 import { Icon } from './Icon';
+import { ProjectHeaderMenu } from './ProjectHeaderMenu';
 import { localizePluginTitle } from './plugins-home/localization';
 import { DesignSystemPicker } from './DesignSystemPicker';
 import { PluginDetailsModal } from './PluginDetailsModal';
@@ -307,6 +308,15 @@ type ProjectChatSendMeta = ChatSendMeta & {
    *  the home submit (with any soft warning answered there); skip re-gating
    *  so the user is never double-prompted for one task. */
   amrGatePrechecked?: boolean;
+  /** Per-send design-system override. The inline inspiration picker applies
+   *  its pick to the project (async React state), so the same send must carry
+   *  the id explicitly or this first run would still see the stale project
+   *  value. */
+  designSystemId?: string | null;
+  /** Additional inspiration systems beyond the applied primary (inspiration
+   *  picker multi-select) — forwarded to the daemon as the run's
+   *  `inspirationDesignSystemIds` prompt metadata. */
+  inspirationDesignSystemIds?: string[];
 };
 
 export function mergeSavedPreviewComment(current: PreviewComment[], saved: PreviewComment): PreviewComment[] {
@@ -5880,7 +5890,10 @@ export function ProjectView({
           skillId: project.skillId ?? null,
           skillIds: Array.isArray(meta?.skillIds) ? meta.skillIds : [],
           context: runContext,
-          designSystemId: projectDesignSystemId ?? null,
+          designSystemId: meta?.designSystemId ?? projectDesignSystemId ?? null,
+          inspirationDesignSystemIds: Array.isArray(meta?.inspirationDesignSystemIds)
+            ? meta.inspirationDesignSystemIds
+            : [],
           attachments: runAttachments.map((a) => a.path),
           commentAttachments: runCommentAttachments,
           sessionMode: runSessionMode,
@@ -6040,7 +6053,10 @@ export function ProjectView({
           skillId: project.skillId ?? null,
           skillIds: Array.isArray(meta?.skillIds) ? meta.skillIds : [],
           context: runContext,
-          designSystemId: projectDesignSystemId ?? null,
+          designSystemId: meta?.designSystemId ?? projectDesignSystemId ?? null,
+          inspirationDesignSystemIds: Array.isArray(meta?.inspirationDesignSystemIds)
+            ? meta.inspirationDesignSystemIds
+            : [],
           attachments: runAttachments.map((a) => a.path),
           commentAttachments: runCommentAttachments,
           sessionMode: runSessionMode,
@@ -8575,9 +8591,27 @@ export function ProjectView({
               questionFormSubmitDisabled={currentConversationActionDisabled}
               onSubmitQuestionForm={(text, attachments = [], context) => {
                 if (currentConversationActionDisabled) return false;
+                const { applyDesignSystemId, inspirationDesignSystemIds, ...runContext } =
+                  context ?? {};
+                // The inspiration picker's design-system pick goes through the
+                // real project apply flow (same as the header picker) so it
+                // persists for later turns; the send below carries the id
+                // explicitly because the project state update is async.
+                if (applyDesignSystemId) {
+                  handleChangeDesignSystemId(applyDesignSystemId);
+                }
+                const hasRunContext = Object.keys(runContext).length > 0;
                 return handleSend(text, attachments, [], {
                   entryFrom: 'question_answer',
-                  ...(context ? { context } : {}),
+                  ...(applyDesignSystemId ? { designSystemId: applyDesignSystemId } : {}),
+                  ...(Array.isArray(inspirationDesignSystemIds) &&
+                  inspirationDesignSystemIds.length > 0
+                    ? { inspirationDesignSystemIds }
+                    : {}),
+                  ...(Array.isArray(runContext.skillIds) && runContext.skillIds.length > 0
+                    ? { skillIds: runContext.skillIds }
+                    : {}),
+                  ...(hasRunContext ? { context: runContext } : {}),
                 });
               }}
               onContinueRemainingTasks={handleContinueRemainingTasks}
@@ -8699,6 +8733,28 @@ export function ProjectView({
                   {projectTypeLabel ? (
                     <span className="meta" data-testid="project-meta">{projectTypeLabel}</span>
                   ) : null}
+                  <ProjectHeaderMenu
+                    projectName={project.name}
+                    onRename={handleProjectRename}
+                    onDuplicate={
+                      // The duplicate endpoint rejects design-system-like
+                      // projects (400 PROJECT_ALREADY_DESIGN_SYSTEM), so hide
+                      // the entry instead of offering an action that always
+                      // errors. `projectIsDesignSystemProject` mirrors the
+                      // daemon's `isDesignSystemLikeProject` guard exactly.
+                      onDuplicateProject && !projectIsDesignSystemProject
+                        ? handleDuplicateProject
+                        : undefined
+                    }
+                    duplicateBusy={projectDuplicateStarting}
+                    onDelete={
+                      onDeleteProject
+                        ? () => {
+                            void onDeleteProject(project.id);
+                          }
+                        : undefined
+                    }
+                  />
                 </span>
               )}
               designSystemPicker={(

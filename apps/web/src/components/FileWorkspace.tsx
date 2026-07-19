@@ -2201,7 +2201,10 @@ export function FileWorkspace({
       Array.from(e.dataTransfer?.types ?? []).includes('Files');
     const isAllowedDropTarget = (target: EventTarget | null) => {
       if (!(target instanceof Element)) return false;
-      return Boolean(target.closest('.df-panel, .composer'));
+      // `.qf-insp` is the inspiration picker inside question forms — its
+      // dropzone owns image drops; without this allowance the window-level
+      // `dropEffect = 'none'` below vetoes the drop before it lands.
+      return Boolean(target.closest('.df-panel, .composer, .qf-insp'));
     };
     const onDragOver = (e: DragEvent) => {
       if (!hasFiles(e) || isAllowedDropTarget(e.target)) return;

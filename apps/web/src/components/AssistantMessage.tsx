@@ -58,6 +58,7 @@ import {
   parseSubmittedAnswers,
   QuestionFormView,
   type QuestionFormFileSubmission,
+  type QuestionFormInspirationSubmission,
   type QuestionFormInteraction,
 } from "./QuestionForm";
 import {
@@ -107,10 +108,26 @@ type TranslateFn = (
 // The host reports whether it accepted the answer into a real chat turn. A
 // `false` result means a pre-run guard (for example the AMR balance gate)
 // prevented the send, so the inline form must remain editable.
+/**
+ * Run context reported by an inline question form on submit. Extends the
+ * standard per-run selection with the inspiration picker's design-system
+ * pick, which the host must APPLY (project design-system flow) rather than
+ * merely attach — `RunContextSelection` has no design-system slot.
+ */
+export type QuestionFormRunContext = RunContextSelection & {
+  applyDesignSystemId?: string;
+  /**
+   * Additional inspiration systems beyond the applied primary — forwarded
+   * as the run's `inspirationDesignSystemIds` prompt metadata (borrow
+   * accents/typography without replacing the primary system's tokens).
+   */
+  inspirationDesignSystemIds?: string[];
+};
+
 export type QuestionFormSubmitHandler = (
   text: string,
   attachments?: ChatAttachment[],
-  context?: RunContextSelection,
+  context?: QuestionFormRunContext,
 ) => boolean | void | Promise<boolean | void>;
 
 const DISCORD_INVITE_URL = "https://discord.gg/mHAjSMV6gz";
@@ -803,7 +820,7 @@ function AssistantMessageImpl({
     return splitOnQuestionForms(message.content).some(
       (seg) =>
         seg.kind === "form" &&
-        !(suppressDirectionForms && isDirectionForm(seg.form)) &&
+        !(suppressDirectionForms && (isDirectionForm(seg.form) || isInspirationForm(seg.form))) &&
         (!nextUserContent || !parseSubmittedAnswers(seg.form, nextUserContent)),
     );
   }, [message.content, nextUserContent, suppressDirectionForms]);
@@ -2519,7 +2536,7 @@ function ProseBlock({
     | { key: string; kind: "suppressed-direction" };
   const renderable = segments.flatMap((seg, idx): Renderable[] => {
     if (seg.kind === "form") {
-      if (suppressDirectionForms && isDirectionForm(seg.form)) {
+      if (suppressDirectionForms && (isDirectionForm(seg.form) || isInspirationForm(seg.form))) {
         return [{ key: `f-${idx}`, kind: "suppressed-direction" }];
       }
       return [{ key: `f-${idx}`, kind: "form", form: seg.form }];
@@ -2607,6 +2624,13 @@ function isDirectionForm(form: QuestionForm): boolean {
   if (form.id.toLowerCase() === "direction") return true;
   if (form.title.toLowerCase().includes("visual direction")) return true;
   return form.questions.some((q) => q.type === "direction-cards");
+}
+
+// An active design system already answers "what should this look like", so a
+// model-emitted inspiration picker is as redundant as a direction form —
+// both hide behind the same suppression flag (hasActiveDesignSystem).
+function isInspirationForm(form: QuestionForm): boolean {
+  return form.questions.some((q) => q.type === "inspiration");
 }
 
 function FormBlock({
@@ -2813,6 +2837,7 @@ function FormBlock({
       answers: Record<string, string | string[]>,
       source: "submit" | "skip" | "auto",
       fileSubmissions: QuestionFormFileSubmission[] = [],
+      inspiration?: QuestionFormInspirationSubmission,
     ) => {
       if (submittingRef.current) return;
       submittingRef.current = true;
@@ -2829,7 +2854,7 @@ function FormBlock({
         return;
       }
       let attachments: ChatAttachment[] = [];
-      let context: RunContextSelection | undefined;
+      let context: QuestionFormRunContext | undefined;
       let submittedText = text;
       if (fileSubmissions.length > 0) {
         if (!projectId) {
@@ -2877,6 +2902,43 @@ function FormBlock({
           fileSubmissions,
           attachments,
         );
+      }
+      if (inspiration) {
+        // Picked references must actually shape the next run: templates ride
+        // the per-turn ad-hoc skill channel (the daemon appends their
+        // SKILL.md bodies for this run only) and the design system flows
+        // through the host's apply flow via applyDesignSystemId. The
+        // workspace item keeps the pick visible in the run-context UI.
+        const templateIds = inspiration.templates.map((entry) => entry.id);
+        const designSystemPick = inspiration.designSystems[0];
+        // First pick = the applied primary system; any further picks ride
+        // along as additional inspiration (prompt metadata), not as the
+        // project's bound system.
+        const extraDesignSystemIds = inspiration.designSystems
+          .slice(1)
+          .map((entry) => entry.id);
+        if (templateIds.length > 0 || designSystemPick) {
+          context = {
+            ...(context ?? {}),
+            ...(templateIds.length > 0 ? { skillIds: templateIds } : {}),
+            ...(designSystemPick
+              ? {
+                  applyDesignSystemId: designSystemPick.id,
+                  ...(extraDesignSystemIds.length > 0
+                    ? { inspirationDesignSystemIds: extraDesignSystemIds }
+                    : {}),
+                  workspaceItems: [
+                    ...(context?.workspaceItems ?? []),
+                    ...inspiration.designSystems.map((entry) => ({
+                      id: `design-system:${entry.id}`,
+                      kind: "design-system" as const,
+                      label: entry.label,
+                    })),
+                  ],
+                }
+              : {}),
+          };
+        }
       }
       if (projectId) {
         const answeredCount = form.questions.filter((question) => {

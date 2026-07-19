@@ -473,6 +473,8 @@ describe('bootstrap route regressions', () => {
         readUserDesignSystemFile: async () => null,
         renderDesignSystemPreview: (id: string, body: string) =>
           `<!doctype html><title>${id} preview</title><main>${body}</main>`,
+        renderDesignSystemCard: (id: string, body: string) =>
+          `<!doctype html><title>${id} card</title><main>${body}</main>`,
         renderDesignSystemShowcase: (id: string, body: string) =>
           `<!doctype html><title>${id} showcase</title><main>${body}</main>`,
         updateUserDesignSystem: async () => null,
