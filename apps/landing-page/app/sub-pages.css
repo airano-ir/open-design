@@ -3705,3 +3705,71 @@ dialog.tpl-share-popover .detail-share-dialog-text {
   }
   .agent-rich-hub .agent-toc-rail .info-toc a { padding: 3px 0; }
 }
+
+/* ---------------------------------------------------------------------------
+ * codex-design editorial polish — echoes the /stories/ ".v4" magazine look
+ * (mono eyebrows, bolder tight headings, mono captions, generous rhythm, olive
+ * accent). Scoped to .agent-rich-hub; presentation only, no other page moves.
+ * ------------------------------------------------------------------------- */
+.agent-rich-hub .agent-rich-main { counter-reset: od-sec; }
+
+/* Numbered mono eyebrow above every content H2 (skips the FAQ appendix). */
+.agent-rich-hub .info-section:not(#faq) > h2 { position: relative; }
+.agent-rich-hub .info-section:not(#faq) > h2::before {
+  counter-increment: od-sec;
+  content: counter(od-sec, decimal-leading-zero);
+  display: block;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--olive);
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+/* Bolder, tighter headings like .v4h2. */
+.agent-rich-hub .info-section > h2 {
+  font-size: clamp(25px, 3vw, 37px);
+  line-height: 1.13;
+  letter-spacing: -0.024em;
+  font-weight: 760;
+  margin-bottom: 22px;
+}
+
+/* Editorial lead: larger, ink-dark opening paragraph. */
+.agent-rich-hub .agent-intro .agent-hero-lead {
+  font-size: clamp(18px, 1.9vw, 22px);
+  line-height: 1.5;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* More generous section rhythm. */
+.agent-rich-hub .agent-rich-main .info-section + .info-section { margin-top: 74px; }
+
+/* Cleaner, more editorial figures + mono captions. */
+.agent-rich-hub .agent-rich-main .agent-section-img img {
+  border: 1px solid var(--line-soft, var(--line));
+  border-radius: 12px;
+  background: transparent;
+  box-shadow: 0 18px 44px -30px rgba(20, 18, 11, 0.5);
+}
+.agent-rich-hub .agent-rich-main .agent-section-img figcaption {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  color: var(--ink-faint);
+  text-align: center;
+  margin-top: 12px;
+}
+.agent-rich-hub .agent-hero-banner > img {
+  box-shadow: 0 18px 44px -30px rgba(20, 18, 11, 0.5);
+}
+
+/* Section fade-in on scroll (paired with the inline observer). */
+.agent-rich-hub.reveal .info-section { opacity: 0; transform: translateY(16px); transition: opacity 0.6s cubic-bezier(0.22, 0.61, 0.36, 1), transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1); }
+.agent-rich-hub.reveal .info-section.inview { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .agent-rich-hub.reveal .info-section { opacity: 1; transform: none; transition: none; }
+}
