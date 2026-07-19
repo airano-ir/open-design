@@ -252,18 +252,6 @@ const jsonLd = [
               if (active && byId.get(active)) byId.get(active).classList.add('is-active');
             }, { rootMargin: '-80px 0px -70% 0px', threshold: 0 });
             document.querySelectorAll('.agent-rich-hub .info-section[id]').forEach((s) => spy.observe(s));
-
-            const hub = document.querySelector('.agent-rich-hub');
-            const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            if (hub && !reduce) {
-              hub.classList.add('reveal');
-              const reveal = new IntersectionObserver((entries) => {
-                for (const e of entries) {
-                  if (e.isIntersecting) { e.target.classList.add('inview'); reveal.unobserve(e.target); }
-                }
-              }, { threshold: 0.12, rootMargin: '0px 0px -7% 0px' });
-              hub.querySelectorAll('.info-section').forEach((s) => reveal.observe(s));
-            }
           })();`}
         </script>
       </>

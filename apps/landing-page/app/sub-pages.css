@@ -3766,10 +3766,3 @@ dialog.tpl-share-popover .detail-share-dialog-text {
 .agent-rich-hub .agent-hero-banner > img {
   box-shadow: 0 18px 44px -30px rgba(20, 18, 11, 0.5);
 }
-
-/* Section fade-in on scroll (paired with the inline observer). */
-.agent-rich-hub.reveal .info-section { opacity: 0; transform: translateY(16px); transition: opacity 0.6s cubic-bezier(0.22, 0.61, 0.36, 1), transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1); }
-.agent-rich-hub.reveal .info-section.inview { opacity: 1; transform: none; }
-@media (prefers-reduced-motion: reduce) {
-  .agent-rich-hub.reveal .info-section { opacity: 1; transform: none; transition: none; }
-}
