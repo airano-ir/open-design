@@ -205,6 +205,8 @@ describe('FileOpsSummary', () => {
     expect(row.querySelector('.file-ops-badge--edit')).toBeTruthy();
     expect(row.querySelector('.file-ops-badge--read')).toBeNull();
     expect(row.querySelectorAll('.file-ops-badge')).toHaveLength(1);
+    expect(row.querySelector('.file-ops-badge--edit svg')).toBeTruthy();
+    expect(row.querySelector('.file-ops-badge--edit')?.textContent).toBe('');
     expect(row.querySelector('.file-ops-row-status')).toBeNull();
     expect(screen.queryByText('running…')).toBeNull();
   });

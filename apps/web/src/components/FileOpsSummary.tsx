@@ -20,7 +20,7 @@ import {
   type FileOpEntry,
   type FileOpKind,
 } from '../runtime/file-ops';
-import { Icon } from './Icon';
+import { Icon, type IconName } from './Icon';
 
 interface Props {
   entries: FileOpEntry[];
@@ -40,9 +40,9 @@ const OP_LABEL_KEY: Record<ArtifactOpKind, keyof Dict> = {
   edit: 'tool.edit',
 };
 
-const OP_BADGE_GLYPH: Record<ArtifactOpKind, string> = {
-  write: 'W',
-  edit: 'E',
+const ARTIFACT_OP_ICON: Record<ArtifactOpKind, IconName> = {
+  write: 'file-code',
+  edit: 'pencil',
 };
 
 const COLLAPSE_AFTER_ENTRY_COUNT = 4;
@@ -182,7 +182,7 @@ function FileOpRow({
           title={t(OP_LABEL_KEY[artifactOp])}
           aria-hidden
         >
-          {OP_BADGE_GLYPH[artifactOp]}
+          <Icon name={ARTIFACT_OP_ICON[artifactOp]} size={13} />
         </span>
       ) : null}
       <code className="file-ops-row-path" title={entry.fullPath}>
