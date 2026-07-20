@@ -369,15 +369,16 @@ async function gotoEntryHome(page: Page) {
   await expect(page.getByTestId('home-hero-input')).toBeVisible({ timeout: T.long });
 }
 
+// Connectors live on the /integrations page, not in the Settings dialog. The
+// Settings left nav was converged to eight items and no longer carries a
+// Connectors entry, so this drives the surface users actually reach.
 async function openIntegrationsConnectors(page: Page): Promise<Locator> {
-  const settingsButton = page.getByTestId('entry-settings-button');
-  await expect(settingsButton).toBeVisible({ timeout: T.medium });
-  await settingsButton.evaluate((element: HTMLElement) => element.click());
-  const dialog = page.getByRole('dialog');
-  await expect(dialog).toBeVisible();
-  await dialog.getByTestId('settings-nav-connectors').click();
-  await expect(dialog.getByTestId('connector-grid-wrap')).toBeVisible();
-  return dialog;
+  await page.goto('/integrations', { waitUntil: 'domcontentloaded' });
+  const view = page.locator('.integrations-view');
+  await expect(view).toBeVisible({ timeout: T.long });
+  await view.getByTestId('integrations-tab-connectors').click();
+  await expect(view.getByTestId('connector-grid-wrap')).toBeVisible();
+  return view;
 }
 
 async function routeComposioConfig(

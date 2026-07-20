@@ -110,7 +110,11 @@ test('[P2] captures the plugins page surface', async ({ page }) => {
   await captureVisual(page, 'visual-plugins');
 });
 
-test('[P2] captures the integrations page surface', async ({ page }) => {
+// #5517 drops 连接器 from the settings nav. The section still renders, but its
+// only remaining UI entry is the new-project panel's "manage" link, which shows
+// solely once a connector is already configured — so there is no unconditional
+// path a visual capture can drive. Restore these when an entry point returns.
+test.skip('[P2] captures the integrations page surface', async ({ page }) => {
   await configureVisualPage(page);
   await gotoVisualHome(page);
 
@@ -132,7 +136,8 @@ test('[P2] captures the integrations use everywhere surface', async ({ page }) =
   await captureVisual(page, 'visual-integrations-use-everywhere');
 });
 
-test('[P2] captures the integrations MCP surface', async ({ page }) => {
+// Skipped for the same reason as the integrations capture above.
+test.skip('[P2] captures the integrations MCP surface', async ({ page }) => {
   await configureVisualPage(page);
   await gotoVisualHome(page);
 

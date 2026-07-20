@@ -31,43 +31,12 @@ function ruleValue(block: string, property: string): string {
 }
 
 describe('Design Files preview list styles', () => {
-  it('keeps preview-mode rows readable instead of collapsing the name cell', () => {
-    const previewNameCell = cssDeclarations(
-      routinesCss,
-      '.app .df-panel:not(.no-preview) .df-cell-name',
-    );
-    const rowSub = cssDeclarations(designFilesCss, '.df-row-sub');
-    const rowSubPart = cssDeclarations(designFilesCss, '.df-row-sub > span');
-
-    expect(ruleValue(previewNameCell, 'max-width')).toBe('none');
-    expect(ruleValue(rowSub, 'flex-wrap')).toBe('nowrap');
-    expect(ruleValue(rowSub, 'overflow')).toBe('hidden');
-    expect(ruleValue(rowSubPart, 'text-overflow')).toBe('ellipsis');
-  });
-
-  it('keeps the preview split from squeezing the file list toolbar', () => {
-    const previewGrid = cssDeclarations(routinesCss, '.app .df-panel:not(.no-preview)');
-    const topbar = cssDeclarations(designFilesCss, '.df-topbar');
-    const actions = cssDeclarations(designFilesCss, '.df-actions');
-    const topbarLeft = cssDeclarations(designFilesCss, '.df-topbar-left');
-
-    const cols = ruleValue(previewGrid, 'grid-template-columns');
-    // The file list keeps a usable minimum so its toolbar + names stay
-    // clickable on a narrow split…
-    expect(cols).toContain('minmax(280px, 1fr)');
-    // …while the preview pane YIELDS (minmax(0, …)) instead of pinning a
-    // rigid track, so the two columns never sum past the panel width and
-    // push the toolbar / preview off-screen.
-    expect(cols).toMatch(/minmax\(0,\s*\d+px\)/);
-    // The toolbar stays on a single row: it does NOT wrap; instead the
-    // breadcrumb (the growable/shrinkable side) yields while the action
-    // cluster holds its place on the right.
-    expect(ruleValue(topbar, 'flex-wrap')).toBe('nowrap');
-    expect(ruleValue(actions, 'flex-wrap')).toBe('nowrap');
-    expect(ruleValue(actions, 'flex-shrink')).toBe('0');
-    expect(ruleValue(topbarLeft, 'min-width')).toBe('0');
-  });
-
+  // The two preview-split cases that used to live here are gone with the
+  // pane itself (#5517: a click opens the file in a workspace tab). They
+  // asserted the `.df-panel:not(.no-preview)` grid and the name-cell rules
+  // that only existed to keep rows readable beside that pane; keeping them
+  // would pin CSS whose subject no longer renders. The invariants below are
+  // independent of the preview and stay.
   it('collapses toolbar actions to icons-only on a narrow list column', () => {
     const main = cssDeclarations(designFilesCss, '.df-main');
     // The list column is its own query container so the toolbar reacts to

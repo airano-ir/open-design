@@ -468,7 +468,8 @@ describe('SettingsDialog privacy settings interactions', () => {
       mode: 'daemon',
       agentId: null,
       installationId: null,
-      privacyDecisionAt: 1778244000000,
+      // Undecided: the consent card (and its Share button) only renders before
+      // a choice exists — deciding swaps it for the toggles it just set.
       telemetry: { metrics: false, content: false, artifactManifest: true },
     };
     const view = renderSettingsDialog(initial, { initialSection: 'privacy' });
@@ -493,8 +494,9 @@ describe('SettingsDialog privacy settings interactions', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: 'Share' }).getAttribute('aria-pressed'))
-      .toBe('true');
+    // The pending choice survives the unrelated parent update: the card is
+    // gone (a decision exists now) and the toggles it set are still on.
+    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
     expect((screen.getByLabelText('Anonymous ID') as HTMLInputElement).value).toBe('inst-new');
     expect(screen.getByRole('button', { name: /Anonymous metrics/ }).getAttribute('aria-pressed'))
       .toBe('true');

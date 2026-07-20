@@ -221,14 +221,26 @@ export type SettingsSection =
   | 'library'
   | 'about';
 
+// Maps a requested section token onto the section that actually owns a nav
+// item. Only tokens whose content is *folded into* another section belong
+// here: language / appearance / notifications / projectLocations /
+// critiqueTheater all render inside General, so a deep link to any of them
+// must land on General and highlight the General nav item.
+//
+// Sections that keep their own render block but no longer have a nav item
+// (workspace, mcpClient, composio, designSystems, pet) must NOT be listed:
+// they stay individually addressable through `initialSection`, and folding
+// them here would silently swallow a deep link into the wrong section.
+// `privacy` and `about` must not be listed either — they own nav items, and
+// mapping them to General used to send deep links to the wrong section with
+// the wrong nav item highlighted.
 function normalizeSettingsSection(section: SettingsSection): SettingsSection {
   switch (section) {
     case 'language':
     case 'appearance':
     case 'notifications':
     case 'projectLocations':
-    case 'privacy':
-    case 'about':
+    case 'critiqueTheater':
       return 'general';
     default:
       return section;
@@ -1479,9 +1491,13 @@ export function SettingsDialog({
   );
   const [activeSection, setActiveSection] = useState<SettingsSection>(() => normalizeSettingsSection(initialSection));
   // Workspace region gating (E-frontend, D4.3). One shared read of the workspace
-  // context; the Workspace nav item + section only appear for a team workspace
-  // whose viewer may see workspace settings. Gate on the folded permission bits,
+  // context; the Workspace section only renders for a team workspace whose
+  // viewer may see workspace settings. Gate on the folded permission bits,
   // never a role re-derivation (see `../collab/settings-access`).
+  // The Workspace nav item was removed to match the agreed 8-item nav, so this
+  // gate now guards the deep-link (`initialSection='workspace'`) path — it must
+  // stay, otherwise a deep link would hand workspace settings to a viewer the
+  // permission bits exclude.
   const { context: workspaceContext } = useWorkspaceContext();
   const showWorkspaceSettings = canShowWorkspaceSettings(workspaceContext);
   const [settingsSearch, setSettingsSearch] = useState('');
@@ -4062,21 +4078,6 @@ export function SettingsDialog({
                 <small>{t('settings.generalHint')}</small>
               </span>
             </button>
-            {showWorkspaceSettings ? (
-              <button
-                type="button"
-                className={`settings-nav-item${activeSection === 'workspace' ? ' active' : ''}`}
-                onClick={() => setActiveSection('workspace')}
-              hidden={!settingsNavMatch(t('settings.workspace'), t('settings.workspaceHint'))}
-                data-testid="settings-nav-workspace"
-              >
-                <Icon name="users" size={18} />
-                <span>
-                  <strong>{t('settings.workspace')}</strong>
-                  <small>{t('settings.workspaceHint')}</small>
-                </span>
-              </button>
-            ) : null}
             <button
               type="button"
               className={`settings-nav-item${activeSection === 'instructions' ? ' active' : ''}`}
@@ -4115,31 +4116,6 @@ export function SettingsDialog({
             </button>
             <button
               type="button"
-              className={`settings-nav-item${activeSection === 'mcpClient' ? ' active' : ''}`}
-              onClick={() => setActiveSection('mcpClient')}
-              hidden={!settingsNavMatch(t('settings.externalMcpTitle'), t('settings.externalMcpHint'))}
-            >
-              <Icon name="sparkles" size={18} />
-              <span>
-                <strong>{t('settings.externalMcpTitle')}</strong>
-                <small>{t('settings.externalMcpHint')}</small>
-              </span>
-            </button>
-            <button
-              type="button"
-              className={`settings-nav-item${activeSection === 'composio' ? ' active' : ''}`}
-              onClick={() => setActiveSection('composio')}
-              hidden={!settingsNavMatch(t('connectors.title'), t('settings.connectorsNavHint'))}
-              data-testid="settings-nav-connectors"
-            >
-              <Icon name="sliders" size={18} />
-              <span>
-                <strong>{t('connectors.title')}</strong>
-                <small>{t('settings.connectorsNavHint')}</small>
-              </span>
-            </button>
-            <button
-              type="button"
               className={`settings-nav-item${activeSection === 'integrations' ? ' active' : ''}`}
               onClick={() => setActiveSection('integrations')}
               hidden={!settingsNavMatch(t('settings.mcpServerTitle'), t('settings.mcpServerHint'))}
@@ -4148,42 +4124,6 @@ export function SettingsDialog({
               <span>
                 <strong>{t('settings.mcpServerTitle')}</strong>
                 <small>{t('settings.mcpServerHint')}</small>
-              </span>
-            </button>
-            <button
-              type="button"
-              className={`settings-nav-item${activeSection === 'critiqueTheater' ? ' active' : ''}`}
-              onClick={() => setActiveSection('critiqueTheater')}
-              hidden={!settingsNavMatch(t('critiqueTheater.settingsNav'), t('critiqueTheater.settingsNavHint'))}
-            >
-              <Icon name="comment" size={18} />
-              <span>
-                <strong>{t('critiqueTheater.settingsNav')}</strong>
-                <small>{t('critiqueTheater.settingsNavHint')}</small>
-              </span>
-            </button>
-            <button
-              type="button"
-              className={`settings-nav-item${activeSection === 'pet' ? ' active' : ''}`}
-              onClick={() => setActiveSection('pet')}
-              hidden={!settingsNavMatch(t('pet.navTitle'), t('pet.navHint'))}
-            >
-              <Icon name="sparkles" size={18} />
-              <span>
-                <strong>{t('pet.navTitle')}</strong>
-                <small>{t('pet.navHint')}</small>
-              </span>
-            </button>
-            <button
-              type="button"
-              className={`settings-nav-item${activeSection === 'designSystems' ? ' active' : ''}`}
-              onClick={() => setActiveSection('designSystems')}
-              hidden={!settingsNavMatch(t('settings.designSystems'), t('settings.designSystemsHint'))}
-            >
-              <Icon name="draw" size={18} />
-              <span>
-                <strong>{t('settings.designSystems')}</strong>
-                <small>{t('settings.designSystemsHint')}</small>
               </span>
             </button>
             <button
@@ -5611,10 +5551,6 @@ export function SettingsDialog({
             <AppearanceSection cfg={cfg} setCfg={setCfg} />
           ) : null}
 
-          {activeSection === 'critiqueTheater' ? (
-            <CritiqueTheaterSection />
-          ) : null}
-
           {activeSection === 'general' || activeSection === 'notifications' ? (
             <NotificationsSection cfg={cfg} setCfg={setCfg} />
           ) : null}
@@ -5634,6 +5570,10 @@ export function SettingsDialog({
 
           {activeSection === 'general' || activeSection === 'projectLocations' ? (
             <ProjectLocationsSection cfg={cfg} setCfg={setCfg} onProjectsRefresh={onProjectsRefresh} />
+          ) : null}
+
+          {activeSection === 'general' || activeSection === 'critiqueTheater' ? (
+            <CritiqueTheaterSection />
           ) : null}
 
           {activeSection === 'instructions' ? (
@@ -5794,7 +5734,7 @@ export function SettingsDialog({
             </section>
           ) : null}
 
-          {activeSection === 'workspace' ? (
+          {activeSection === 'workspace' && showWorkspaceSettings ? (
             <SettingsWorkspaceSection context={workspaceContext} />
           ) : null}
           {aboutToast ? (
