@@ -397,10 +397,6 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
   // Footer Template pill preview: the create-rail card the pointer is over,
   // so hovering a card below previews it in the pill (cleared on rail-leave).
   const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
-  // #5517 collapses the template card rail by default (it only auto-expands in
-  // the demo's onboarding-new scenario), so the home reads as a clean composer
-  // with a "从模板开始…" toggle instead of a persistent card grid.
-  const [templateSectionOpen, setTemplateSectionOpen] = useState(false);
   // A committed pick or Clear must win over a lingering hover-preview. The rail
   // that sets previewTemplateId unmounts the instant a template becomes active,
   // so its onMouseLeave never fires; without this reset the stale preview keeps
@@ -1228,18 +1224,6 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
     contextOnlyMcpServers.length > 0 ||
     contextOnlyConnectors.length > 0 ||
     contextWorkspaceItems.length > 0;
-  const blankProjectEntry = onStartBlankProject ? (
-    <button
-      type="button"
-      className="home-hero__blank-project"
-      data-testid="home-hero-blank-project"
-      onClick={onStartBlankProject}
-    >
-      {t('homeHero.startBlankProject')}
-      <Icon name="chevron-right" size={13} aria-hidden />
-    </button>
-  ) : null;
-
   let optionRenderIndex = 0;
 
   return (
@@ -2027,6 +2011,8 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
           ) : null}
           {onPickWorkingDir ? (
             <WorkingDirPicker
+              className="home-hero__working-dir-picker"
+              emptyLabel={t('homeWorkingDir.triggerShort')}
               workingDir={workingDir}
               recentDirs={recentDirs}
               onPickDirectory={() => {
@@ -2060,60 +2046,6 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
       </div>
 
       {recommendationSlot}
-
-      {activeCreateChip ? null : (
-        <div
-          className={`home-hero__template-section${templateSectionOpen ? ' is-expanded is-open' : ''}`}
-          data-testid="home-hero-template-section"
-        >
-          {/* #5517 renders one inline bar: 从模板开始… ⌄ or 创建一个空白项目 › */}
-          <div className="home-hero__template-bar">
-            <button
-              type="button"
-              className={`home-hero__template-toggle${templateSectionOpen ? ' is-open' : ''}`}
-              aria-expanded={templateSectionOpen}
-              data-testid="home-hero-template-toggle"
-              onClick={() => setTemplateSectionOpen((open) => !open)}
-            >
-              {t('homeHero.startWithTemplate')}
-              <Icon name="chevron-down" size={14} aria-hidden />
-            </button>
-            <span className="home-hero__template-or">or</span>
-            {blankProjectEntry}
-          </div>
-          {templateSectionOpen ? (
-            <div className="home-hero__template-body">
-              <div className="home-hero__template-body-inner">
-                <RailGroup
-                  group="create"
-                  activeChipId={activeChipId}
-                  pendingChipId={pendingChipId}
-                  pendingPluginId={pendingPluginId}
-                  pluginsLoading={pluginsLoading}
-                  onPickChip={handlePickTaskChip}
-                  variant="tabs"
-                  pulseChipId={guidePulseChipId}
-                  onHoverChip={setPreviewTemplateId}
-                >
-                  <ShortcutsMenu
-                    activeChipId={activeChipId}
-                    pendingChipId={pendingChipId}
-                    pendingPluginId={pendingPluginId}
-                    pluginsLoading={pluginsLoading}
-                    open={shortcutsOpen}
-                    refNode={shortcutsMenuRef}
-                    onOpenChange={setShortcutsOpen}
-                    onPickChip={(chip) => {
-                      setShortcutsOpen(false);
-                      handlePickTaskChip(chip);
-                    }}
-                  />
-                </RailGroup>
-              </div>
-            </div>
-          ) : null}
-        </div>
-      )}
 
       {activeSubChips.length > 0 && isSubChipParent(activeChipId) ? (
         <SubTypeRow

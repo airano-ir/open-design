@@ -112,12 +112,13 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-// #5517 collapses the template card rail by default behind the
-// "Start with a template…" bar toggle; expand it before reaching for the
-// home-hero-rail-* chips.
-async function openTemplateRail() {
-  const toggle = await screen.findByTestId('home-hero-template-toggle');
-  if (toggle.getAttribute('aria-expanded') !== 'true') fireEvent.click(toggle);
+// #5517 removed the inline template rail from Home; scenario templates are
+// picked from the composer footer's radial Template picker instead.
+async function pickHomeTemplate(id: string) {
+  const trigger = await screen.findByTestId('home-hero-template-trigger');
+  await waitFor(() => expect((trigger as HTMLButtonElement).disabled).toBe(false));
+  fireEvent.click(trigger);
+  fireEvent.click(await screen.findByTestId(`home-hero-template-wedge-${id}`));
 }
 
 describe('HomeView context picker', () => {
@@ -343,8 +344,7 @@ describe('HomeView context picker', () => {
       />,
     );
 
-    await openTemplateRail();
-    fireEvent.click(await screen.findByTestId('home-hero-rail-prototype'));
+    await pickHomeTemplate('prototype');
     await waitFor(() => {
       expect(screen.getByTestId('home-hero-template-trigger').textContent).toContain('Prototype');
     });
@@ -427,8 +427,7 @@ describe('HomeView context picker', () => {
       expect(screen.getByTestId('home-hero-active-skill')).toBeTruthy();
     });
 
-    await openTemplateRail();
-    fireEvent.click(await screen.findByTestId('home-hero-rail-prototype'));
+    await pickHomeTemplate('prototype');
     await waitFor(() => {
       expect(screen.getByTestId('home-hero-template-trigger').textContent).toContain('Prototype');
       expect(screen.queryByTestId('home-hero-active-skill')).toBeNull();

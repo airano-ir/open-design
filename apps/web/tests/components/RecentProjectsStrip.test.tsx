@@ -207,8 +207,10 @@ describe('RecentProjectsStrip', () => {
       expect(designSystemCard?.querySelector('img')?.getAttribute('src')).toBe(
         '/api/projects/project-ds/files/imagery/cover-0.png',
       );
-      expect(container.querySelector('.recent-projects__card-thumb-html iframe')).toBeNull();
-      expect(container.querySelector('.recent-projects__card-thumb-html .recent-projects__card-glyph')).toBeTruthy();
+      // HTML projects render their real artifact in the card thumbnail; the
+      // initial glyph is only the no-entry-file fallback.
+      expect(container.querySelector('.recent-projects__card-thumb-html iframe')).toBeTruthy();
+      expect(container.querySelector('.recent-projects__card-thumb-html .recent-projects__card-glyph')).toBeNull();
     });
   });
 

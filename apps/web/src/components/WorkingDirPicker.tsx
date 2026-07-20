@@ -20,6 +20,8 @@ interface Props {
   onClear?: () => void;
   /** Extra class applied to the outer wrapper, for layout by the host. */
   className?: string;
+  /** Optional empty-state label for hosts that need a shorter trigger. */
+  emptyLabel?: string;
   /** The selected directory no longer exists on disk — flag it in red. */
   invalid?: boolean;
   /**
@@ -51,6 +53,7 @@ export function WorkingDirPicker({
   onSelectRecent,
   onClear,
   className,
+  emptyLabel,
   placement = 'down',
   invalid = false,
   onOpen,
@@ -102,7 +105,7 @@ export function WorkingDirPicker({
         >
           <Icon name="folder" size={14} className={styles.triggerIcon} />
           <span className={styles.triggerLabel}>
-            {workingDir ? basename(workingDir) : t('homeWorkingDir.trigger')}
+            {workingDir ? basename(workingDir) : (emptyLabel ?? t('homeWorkingDir.trigger'))}
           </span>
           <Icon name="chevron-down" size={14} className={styles.triggerChevron} />
         </button>

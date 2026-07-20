@@ -9,6 +9,7 @@ vi.mock('../../src/components/home-hero/PlaceholderCarousel', () => ({
 }));
 
 import { HomeView } from '../../src/components/HomeView';
+import { requestHomeChip } from '../../src/runtime/home-intent';
 import {
   createPluginAuthoringHandoff,
   createPluginUseHandoff,
@@ -826,8 +827,7 @@ describe('HomeView prompt handoff', () => {
     );
 
     await clearActiveTypeChip();
-    await openTemplateRail();
-    fireEvent.click(await screen.findByTestId('home-hero-rail-prototype'));
+    await pickHomeTemplate('prototype');
 
     await waitFor(() => {
       expect(screen.getByTestId('home-hero-template-trigger').textContent).toContain('Prototype');
@@ -925,8 +925,7 @@ describe('HomeView prompt handoff', () => {
     );
 
     await clearActiveTypeChip();
-    await openTemplateRail();
-    fireEvent.click(await screen.findByTestId('home-hero-rail-document'));
+    await pickHomeTemplate('document');
 
     await waitFor(() => {
       expect(screen.getByTestId('home-hero-template-trigger').textContent).toContain('Document');
@@ -994,8 +993,7 @@ describe('HomeView prompt handoff', () => {
     );
 
     await clearActiveTypeChip();
-    await openTemplateRail();
-    fireEvent.click(await screen.findByTestId('home-hero-rail-prototype'));
+    await pickHomeTemplate('prototype');
 
     await waitFor(() => {
       expect(screen.getByTestId('home-hero-template-trigger').textContent).toContain('Prototype');
@@ -1058,8 +1056,7 @@ describe('HomeView prompt handoff', () => {
     );
 
     await clearActiveTypeChip();
-    await openTemplateRail();
-    fireEvent.click(await screen.findByTestId('home-hero-rail-prototype'));
+    await pickHomeTemplate('prototype');
 
     // The personal default pre-selects, as before.
     await waitFor(() => {
@@ -1123,8 +1120,7 @@ describe('HomeView prompt handoff', () => {
     );
 
     await clearActiveTypeChip();
-    await openTemplateRail();
-    fireEvent.click(await screen.findByTestId('home-hero-rail-prototype'));
+    await pickHomeTemplate('prototype');
     // Card body opens preview; the Use button is what seeds the composer input.
     fireEvent.click(await screen.findByTestId('home-hero-plugin-preset-use-example-web-prototype'));
 
@@ -1221,8 +1217,7 @@ describe('HomeView prompt handoff', () => {
     );
 
     await clearActiveTypeChip();
-    await openTemplateRail();
-    fireEvent.click(await screen.findByTestId('home-hero-rail-live-artifact'));
+    await pickHomeTemplate('live-artifact');
 
     await waitFor(() => {
       expect(screen.getAllByTestId('home-hero-plugin-preset').length).toBeGreaterThan(0);
@@ -1303,8 +1298,7 @@ describe('HomeView prompt handoff', () => {
     );
 
     await clearActiveTypeChip();
-    await openTemplateRail();
-    fireEvent.click(await screen.findByTestId('home-hero-rail-live-artifact'));
+    await pickHomeTemplate('live-artifact');
 
     await waitFor(() => {
       expect(screen.getByTestId('home-hero-template-trigger').textContent).toContain('Live artifact');
@@ -1374,8 +1368,7 @@ describe('HomeView prompt handoff', () => {
     );
 
     await clearActiveTypeChip();
-    await openTemplateRail();
-    fireEvent.click(await screen.findByTestId('home-hero-rail-deck'));
+    await pickHomeTemplate('deck');
 
     await waitFor(() => {
       expect(screen.getByTestId('home-hero-template-trigger').textContent).toContain('Slide deck');
@@ -1429,8 +1422,7 @@ describe('HomeView prompt handoff', () => {
     await screen.findByTestId('home-hero-input');
     await setPromptAndSettle('Keep my current brief');
     await clearActiveTypeChip();
-    await openTemplateRail();
-    fireEvent.click(await screen.findByTestId('home-hero-rail-prototype'));
+    await pickHomeTemplate('prototype');
 
     await waitFor(() => {
       expect(screen.getByTestId('home-hero-template-trigger').textContent).toContain('Prototype');
@@ -1479,8 +1471,7 @@ describe('HomeView prompt handoff', () => {
     );
 
     await clearActiveTypeChip();
-    await openTemplateRail();
-    fireEvent.click(await screen.findByTestId('home-hero-rail-deck'));
+    await pickHomeTemplate('deck');
     await waitFor(() => {
       expect(screen.getByTestId('home-hero-template-trigger').textContent).toContain('Slide deck');
     });
@@ -1497,8 +1488,7 @@ describe('HomeView prompt handoff', () => {
     });
 
     await clearActiveTypeChip();
-    await openTemplateRail();
-    fireEvent.click(await screen.findByTestId('home-hero-rail-prototype'));
+    await pickHomeTemplate('prototype');
     await waitFor(() => {
       expect(screen.getByTestId('home-hero-plugin-presets')).toBeTruthy();
     });
@@ -2049,18 +2039,28 @@ async function clearActiveTypeChip() {
   fireEvent.keyDown(document, { key: 'Escape' });
 }
 
-// #5517 collapses the template card rail by default behind the
-// "Start with a template…" bar toggle; expand it before reaching for the
-// home-hero-rail-* cards (or the shortcuts trigger inside the rail body).
-async function openTemplateRail() {
-  const toggle = await screen.findByTestId('home-hero-template-toggle');
-  if (toggle.getAttribute('aria-expanded') !== 'true') fireEvent.click(toggle);
-}
-
-async function clickHomeShortcut(id: string) {
-  await openTemplateRail();
-  const trigger = await screen.findByTestId('home-hero-shortcuts-trigger');
+// #5517 removed the inline template rail (and the "Start with a template…"
+// bar that held it) from Home. Scenario templates are now picked from the
+// composer footer's radial Template picker.
+async function pickHomeTemplate(id: string) {
+  const trigger = await screen.findByTestId('home-hero-template-trigger');
   await waitFor(() => expect((trigger as HTMLButtonElement).disabled).toBe(false));
   fireEvent.click(trigger);
-  fireEvent.click(await screen.findByTestId(`home-hero-rail-${id}`));
+  const wedge = await screen.findByTestId(`home-hero-template-wedge-${id}`);
+  await waitFor(() =>
+    expect(screen.getByTestId(`home-hero-template-wedge-${id}`).getAttribute('aria-disabled'))
+      .not.toBe('true'),
+  );
+  fireEvent.click(wedge);
+}
+
+// The migrate shortcuts (plugin authoring / Figma / template) left the Home
+// composer with the rail. Their surviving producers — the Extensions tab and
+// the Design systems tab — dispatch the same chip through `requestHomeChip`,
+// which is the entry this drives.
+async function clickHomeShortcut(id: string) {
+  await act(async () => {
+    requestHomeChip(id);
+    await Promise.resolve();
+  });
 }

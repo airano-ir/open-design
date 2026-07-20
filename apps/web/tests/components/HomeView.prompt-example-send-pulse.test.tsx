@@ -127,12 +127,12 @@ describe('static prompt-example send pulse', () => {
       </I18nProvider>,
     );
 
-    // #5517 collapses the template card rail by default; expand it before
-    // reaching for the home-hero-rail-* chips.
-    fireEvent.click(await screen.findByTestId('home-hero-template-toggle'));
+    // #5517 removed the inline template rail; templates are picked from the
+    // composer footer's radial Template picker.
+    fireEvent.click(await screen.findByTestId('home-hero-template-trigger'));
     // The chip's default plugin exists (so the chip binds) but no plugin
     // matches the example filter → fallback static prompt-example cards.
-    fireEvent.click(await screen.findByTestId('home-hero-rail-prototype'));
+    fireEvent.click(await screen.findByTestId('home-hero-template-wedge-prototype'));
     const exampleCards = await screen.findAllByTestId('home-hero-prompt-example');
     const firstExample = exampleCards[0];
     if (!firstExample) throw new Error('expected at least one prompt-example card');

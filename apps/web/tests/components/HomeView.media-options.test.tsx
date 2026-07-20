@@ -513,23 +513,18 @@ async function openOption(name: string) {
 }
 
 async function clickHomeRailChip(id: string) {
-  // Wait until the target control is enabled (plugins load asynchronously, so a
-  // freshly-rendered rail/grid card is briefly disabled) before clicking.
-  const enabledClick = async (testId: string) => {
-    await waitFor(() =>
-      expect((screen.getByTestId(testId) as HTMLButtonElement).disabled).toBe(false),
-    );
-    fireEvent.click(screen.getByTestId(testId));
-  };
-  // No template selected → the rail card is visible; click it directly.
-  if (screen.queryByTestId(`home-hero-rail-${id}`)) {
-    await enabledClick(`home-hero-rail-${id}`);
-    return;
-  }
-  // A template is selected → the rail is hidden; open the Template dropdown and
-  // pick from its grid (picking closes the dropdown, so the next open is clean).
-  fireEvent.click(await screen.findByTestId('home-hero-template-trigger'));
-  await enabledClick(`home-hero-template-card-${id}`);
+  // #5517 removed the inline template rail from Home: every scenario template
+  // is picked from the composer footer's radial Template picker. Wait until the
+  // trigger and the wedge are enabled first — plugins load asynchronously, so
+  // both are briefly disabled after mount.
+  const trigger = await screen.findByTestId('home-hero-template-trigger');
+  await waitFor(() => expect((trigger as HTMLButtonElement).disabled).toBe(false));
+  fireEvent.click(trigger);
+  const wedgeId = `home-hero-template-wedge-${id}`;
+  await waitFor(() =>
+    expect(screen.getByTestId(wedgeId).getAttribute('aria-disabled')).not.toBe('true'),
+  );
+  fireEvent.click(screen.getByTestId(wedgeId));
 }
 
 // Drive the Lexical editor and let the OnChange -> onPromptChange -> setPrompt
