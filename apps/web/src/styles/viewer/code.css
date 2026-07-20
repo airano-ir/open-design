@@ -1669,6 +1669,12 @@
   font-family: inherit;
 }
 .op-card-head:hover { background: var(--bg-fill-tertiary); }
+.op-card-head--static {
+  cursor: default;
+}
+.op-card-head--static:hover {
+  background: transparent;
+}
 .op-card-detail {
   padding: 8px 4px 8px 32px;
   display: flex;
@@ -1690,6 +1696,20 @@
 }
 .op-card-file-detail .op-open {
   flex: 0 0 auto;
+}
+.op-card-read-detail {
+  flex-direction: column;
+  align-items: stretch;
+}
+.op-card-file-path-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.op-card-file-path-row .op-path {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 .op-card-detail .op-command {
   margin: 0;

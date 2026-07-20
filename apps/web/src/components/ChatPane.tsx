@@ -1403,13 +1403,6 @@ export function ChatPane({
   const composerDraftStorageKey = projectId && activeConversationId
     ? `od:chat-composer:draft:${projectId}:${activeConversationId}`
     : undefined;
-  // Only the first user message gets the active-plugin chip — the
-  // plugin is project-scoped so re-stamping it on every reply would be
-  // noise. Subsequent messages still run under the same snapshot.
-  const firstUserMessageId = useMemo(
-    () => displayMessages.find((m) => m.role === 'user')?.id,
-    [displayMessages],
-  );
   const shouldBalanceFinishedTranscript =
     !loading &&
     !streaming &&
@@ -2404,7 +2397,6 @@ export function ChatPane({
                 shareToOpenDesignBusyMessageId={shareToOpenDesignBusyMessageId}
                 forceStreamingMessageIds={forceStreamingMessageIds}
                 lastAssistantId={lastAssistantId}
-                firstUserMessageId={firstUserMessageId}
                 activePluginSnapshot={activePluginSnapshot}
                 activeDesignSystem={activeDesignSystem}
                 hasActiveDesignSystem={hasActiveDesignSystem}
@@ -2822,6 +2814,11 @@ type ChatRenderItem = {
   message: ChatMessage;
 };
 
+type AppliedContextItem =
+  | { kind: 'plugin'; title: string; pluginId: string }
+  | { kind: 'skill'; title: string }
+  | { kind: 'design-system'; title: string; system?: DesignSystemSummary };
+
 function ChatConversationLoading({ t }: { t: TranslateFn }) {
   return (
     <div className="chat-loading-state" role="status" aria-live="polite">
@@ -2862,7 +2859,6 @@ function ChatRows({
   shareToOpenDesignBusyMessageId,
   forceStreamingMessageIds,
   lastAssistantId,
-  firstUserMessageId,
   activePluginSnapshot,
   activeDesignSystem,
   hasActiveDesignSystem,
@@ -2918,7 +2914,6 @@ function ChatRows({
   shareToOpenDesignBusyMessageId?: string | null;
   forceStreamingMessageIds?: Set<string>;
   lastAssistantId: string | undefined;
-  firstUserMessageId: string | undefined;
   activePluginSnapshot?: AppliedPluginSnapshot | null;
   activeDesignSystem?: DesignSystemSummary | null;
   hasActiveDesignSystem: boolean;
@@ -2958,6 +2953,58 @@ function ChatRows({
     () => buildChatRenderItems(messages),
     [messages],
   );
+  const appliedContextByMessageId = useMemo(() => {
+    const skillNames = new Map(
+      (nextStepSkills ?? []).map((skill) => [skill.id, skill.name || skill.id]),
+    );
+    const byMessageId = new Map<string, AppliedContextItem[]>();
+    let previousSignature = '';
+
+    for (const message of messages) {
+      if (message.role !== 'user') continue;
+      const pluginSnapshot = message.appliedPluginSnapshot ?? activePluginSnapshot ?? null;
+      const contextItems: AppliedContextItem[] = [];
+
+      if (pluginSnapshot) {
+        contextItems.push({
+          kind: 'plugin',
+          title: pluginSnapshot.pluginTitle ?? pluginSnapshot.pluginId,
+          pluginId: pluginSnapshot.pluginId,
+        });
+      }
+      for (const pluginId of message.runContext?.pluginIds ?? []) {
+        if (pluginSnapshot?.pluginId === pluginId) continue;
+        contextItems.push({ kind: 'plugin', title: pluginId, pluginId });
+      }
+      for (const skillId of message.runContext?.skillIds ?? []) {
+        contextItems.push({ kind: 'skill', title: skillNames.get(skillId) ?? skillId });
+      }
+      if (activeDesignSystem) {
+        contextItems.push({
+          kind: 'design-system',
+          title: activeDesignSystem.title,
+          system: activeDesignSystem,
+        });
+      }
+      for (const item of message.runContext?.workspaceItems ?? []) {
+        if (item.kind !== 'design-system') continue;
+        if (contextItems.some((candidate) => candidate.kind === 'design-system' && candidate.title === item.label)) {
+          continue;
+        }
+        contextItems.push({ kind: 'design-system', title: item.label });
+      }
+
+      const deduped = contextItems.filter((item, index, all) =>
+        all.findIndex((candidate) => candidate.kind === item.kind && candidate.title === item.title) === index,
+      );
+      const signature = deduped.map((item) => `${item.kind}:${item.title}`).join('|');
+      if (signature && signature !== previousSignature) {
+        byMessageId.set(message.id, deduped);
+      }
+      previousSignature = signature;
+    }
+    return byMessageId;
+  }, [activeDesignSystem, activePluginSnapshot, messages, nextStepSkills]);
   const virtualized = items.length > CHAT_MESSAGE_VIRTUALIZE_THRESHOLD;
   const virtualWindow = useMeasuredVirtualWindow(items, {
     enabled: virtualized,
@@ -2986,16 +3033,7 @@ function ChatRows({
           onRequestPluginDetails={onRequestPluginDetails}
           onRequestDesignSystemDetails={onRequestDesignSystemDetails}
           t={t}
-          activePluginSnapshot={
-            m.id === firstUserMessageId
-              ? activePluginSnapshot ?? null
-              : null
-          }
-          activeDesignSystem={
-            m.id === firstUserMessageId
-              ? activeDesignSystem ?? null
-              : null
-          }
+          appliedContextItems={appliedContextByMessageId.get(m.id) ?? []}
         />
       );
     }
@@ -3958,8 +3996,7 @@ function UserMessageImpl({
   onRequestPluginDetails,
   onRequestDesignSystemDetails,
   t,
-  activePluginSnapshot,
-  activeDesignSystem,
+  appliedContextItems,
 }: {
   message: ChatMessage;
   projectId: string | null;
@@ -3968,18 +4005,16 @@ function UserMessageImpl({
   onRequestPluginDetails?: (pluginId: string) => void;
   onRequestDesignSystemDetails?: (system: DesignSystemSummary) => void;
   t: TranslateFn;
-  activePluginSnapshot?: AppliedPluginSnapshot | null;
-  activeDesignSystem?: DesignSystemSummary | null;
+  appliedContextItems: AppliedContextItem[];
 }) {
   const attachments = sortChatAttachmentsForDisplay(message.attachments ?? []);
   const commentAttachments = message.commentAttachments ?? [];
   const workspaceItems = message.runContext?.workspaceItems ?? [];
-  const messagePluginSnapshot = message.appliedPluginSnapshot ?? activePluginSnapshot ?? null;
+  const visibleWorkspaceItems = workspaceItems.filter((item) => item.kind !== 'design-system');
   const hasRunContext = Boolean(
     message.sessionMode ||
-      workspaceItems.length > 0 ||
-      messagePluginSnapshot ||
-      activeDesignSystem,
+      visibleWorkspaceItems.length > 0 ||
+      appliedContextItems.length > 0,
   );
   const [copied, setCopied] = useState(false);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -4012,24 +4047,19 @@ function UserMessageImpl({
           {message.sessionMode ? (
             <MessageSessionModeChip mode={message.sessionMode} t={t} />
           ) : null}
-          {workspaceItems.map((item) => (
+          {visibleWorkspaceItems.map((item) => (
             <ActiveWorkspaceContextChip
               key={`${item.kind}:${item.id}`}
               item={item}
               onOpen={onRequestOpenFile}
             />
           ))}
-          {messagePluginSnapshot ? (
-            <ActivePluginChip
-              snapshot={messagePluginSnapshot}
+          {appliedContextItems.length > 0 ? (
+            <AppliedContextDisclosure
+              items={appliedContextItems}
               t={t}
-              onOpenDetails={onRequestPluginDetails}
-            />
-          ) : null}
-          {activeDesignSystem ? (
-            <ActiveDesignSystemChip
-              system={activeDesignSystem}
-              onOpenDetails={onRequestDesignSystemDetails}
+              onOpenPlugin={onRequestPluginDetails}
+              onOpenDesignSystem={onRequestDesignSystemDetails}
             />
           ) : null}
         </div>
@@ -4111,58 +4141,83 @@ function UserMessageImpl({
   );
 }
 
-// Context chip rendered above a user message when the project pinned a
-// plugin at create time (PluginLoopHome on Home). Replaces the noisy
-// in-composer plugin rail so the user is not re-prompted to pick
-// something they already chose; instead the active plugin lives inside
-// the run message it kicked off.
-function ActivePluginChip({
-  snapshot,
-  t: _t,
-  onOpenDetails,
+// Plugin, skill and design-system inputs are supporting context, not separate
+// cards. Collapse them into one line and only render that line when the
+// selection changes (the caller performs the conversation-level dedupe).
+function AppliedContextDisclosure({
+  items,
+  t,
+  onOpenPlugin,
+  onOpenDesignSystem,
 }: {
-  snapshot: AppliedPluginSnapshot;
+  items: AppliedContextItem[];
   t: TranslateFn;
-  onOpenDetails?: (pluginId: string) => void;
+  onOpenPlugin?: (pluginId: string) => void;
+  onOpenDesignSystem?: (system: DesignSystemSummary) => void;
 }) {
-  const title = snapshot.pluginTitle ?? snapshot.pluginId;
-  const version = snapshot.pluginVersion;
-  const taskKind = snapshot.taskKind;
-  const content = (
-    <>
-      <span className="msg-plugin-chip__dot" aria-hidden />
-      <span className="msg-plugin-chip__label">
-        <span className="msg-plugin-chip__kind">Plugin</span>
-        <span className="msg-plugin-chip__title">{title}</span>
-        {version ? (
-          <span className="msg-plugin-chip__version">@{version}</span>
-        ) : null}
-      </span>
-      {taskKind ? (
-        <span className="msg-plugin-chip__task">{taskKind}</span>
-      ) : null}
-    </>
-  );
-  // One clean chip per message — the plugin's full resolved context still
-  // rides the run via the persisted snapshot; we no longer fan it out into
-  // per-category (design-system / asset / skill) chips here.
+  const [open, setOpen] = useState(false);
+  const names = items.map((item) => item.title).join(' · ');
+  const summary = t('brand.appliedToChat', { name: names });
   return (
-    <div className="msg-plugin-context" data-testid="msg-plugin-context">
-      {onOpenDetails ? (
-        <button
-          type="button"
-          className="msg-plugin-chip msg-plugin-chip--action"
-          data-testid="msg-plugin-chip"
-          title={title}
-          onClick={() => onOpenDetails(snapshot.pluginId)}
-        >
-          {content}
-        </button>
-      ) : (
-        <div className="msg-plugin-chip" data-testid="msg-plugin-chip">
-          {content}
+    <div className="msg-applied-context" data-testid="msg-applied-context">
+      <button
+        type="button"
+        className="msg-applied-context__toggle"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+        title={summary}
+      >
+        <span className="msg-applied-context__icon" aria-hidden>
+          <Icon name="blocks" size={11} />
+        </span>
+        <span className="msg-applied-context__summary">{summary}</span>
+        <span className={`msg-applied-context__chevron${open ? ' is-open' : ''}`} aria-hidden>
+          <Icon name="chevron-down" size={11} />
+        </span>
+      </button>
+      <div className={`accordion-collapsible${open ? ' open' : ''}`}>
+        <div className="accordion-collapsible-inner">
+          <div className="msg-applied-context__details">
+            {items.map((item, index) => {
+              const label = item.kind === 'plugin'
+                ? 'Plugin'
+                : item.kind === 'skill'
+                  ? 'Skill'
+                  : 'Design System';
+              const canOpenPlugin = item.kind === 'plugin' && !!onOpenPlugin;
+              const canOpenSystem = item.kind === 'design-system' && !!item.system && !!onOpenDesignSystem;
+              const content = (
+                <>
+                  <span className="msg-applied-context__kind">{label}</span>
+                  <span>{item.title}</span>
+                </>
+              );
+              return canOpenPlugin || canOpenSystem ? (
+                <button
+                  key={`${item.kind}:${item.title}:${index}`}
+                  type="button"
+                  className="msg-applied-context__item is-action"
+                  onClick={() => {
+                    if (item.kind === 'plugin') onOpenPlugin?.(item.pluginId);
+                    if (item.kind === 'design-system' && item.system) {
+                      onOpenDesignSystem?.(item.system);
+                    }
+                  }}
+                >
+                  {content}
+                </button>
+              ) : (
+                <span
+                  key={`${item.kind}:${item.title}:${index}`}
+                  className="msg-applied-context__item"
+                >
+                  {content}
+                </span>
+              );
+            })}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -4189,45 +4244,6 @@ function MessageSessionModeChip({
       <Icon name={icon} size={12} />
       <span>{label}</span>
     </div>
-  );
-}
-
-function ActiveDesignSystemChip({
-  system,
-  onOpenDetails,
-}: {
-  system: DesignSystemSummary;
-  onOpenDetails?: (system: DesignSystemSummary) => void;
-}) {
-  const content = (
-    <>
-      <span className="msg-plugin-chip__dot" aria-hidden />
-      <span className="msg-plugin-chip__label">
-        <span className="msg-plugin-chip__kind">Design System</span>
-        <span className="msg-plugin-chip__title">{system.title}</span>
-      </span>
-      {system.category ? (
-        <span className="msg-plugin-chip__task">{system.category}</span>
-      ) : null}
-    </>
-  );
-  if (!onOpenDetails) {
-    return (
-      <div className="msg-plugin-chip msg-plugin-chip--design-system" data-testid="msg-design-system-chip">
-        {content}
-      </div>
-    );
-  }
-  return (
-    <button
-      type="button"
-      className="msg-plugin-chip msg-plugin-chip--design-system msg-plugin-chip--action"
-      data-testid="msg-design-system-chip"
-      title={system.title}
-      onClick={() => onOpenDetails(system)}
-    >
-      {content}
-    </button>
   );
 }
 

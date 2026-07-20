@@ -349,7 +349,7 @@ function FileWriteCard({
   const isRunning = runStreaming && !result;
   return (
     <div className="op-card op-file">
-      <button type="button" className="op-card-head" onClick={() => setOpen((o) => !o)}>
+      <button type="button" className="op-card-head" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
         <ResultBadge icon="file-code" result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
         <span className={`op-title${isRunning ? ' shimmer-text' : ''}`}>{t('tool.write')}</span>
         <span className="op-meta">{baseName}{lines !== null ? ` · ${t('tool.lines', { n: lines })}` : ''}</span>
@@ -399,7 +399,7 @@ function FileEditCard({
   const isRunning = runStreaming && !result;
   return (
     <div className="op-card op-file">
-      <button type="button" className="op-card-head" onClick={() => setOpen((o) => !o)}>
+      <button type="button" className="op-card-head" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
         <ResultBadge icon="pencil" result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
         <span className={`op-title${isRunning ? ' shimmer-text' : ''}`}>{t('tool.edit')}</span>
         <span className="op-meta">{baseName} · {editCount} {editCount === 1 ? t('tool.changeSingular') : t('tool.changePlural')}</span>
@@ -441,7 +441,7 @@ function FileReadCard({
   const isRunning = runStreaming && !result;
   return (
     <div className="op-card op-file">
-      <button type="button" className="op-card-head" onClick={() => setOpen((o) => !o)}>
+      <button type="button" className="op-card-head" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
         <ResultBadge icon="eye" result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
         <span className={`op-title${isRunning ? ' shimmer-text' : ''}`}>{t('tool.read')}</span>
         <span className="op-meta">{baseName}</span>
@@ -451,9 +451,14 @@ function FileReadCard({
       </button>
       <div className={`accordion-collapsible${open ? ' open' : ''}`}>
         <div className="accordion-collapsible-inner">
-          <div className="op-card-detail op-card-file-detail">
-            <code className="op-path">{file}</code>
-            <OpenInTabButton filePath={file} ctx={ctx} />
+          <div className="op-card-detail op-card-file-detail op-card-read-detail">
+            <div className="op-card-file-path-row">
+              <code className="op-path">{file}</code>
+              <OpenInTabButton filePath={file} ctx={ctx} />
+            </div>
+            {result?.content ? (
+              <pre className="op-output">{truncate(result.content, 4000)}</pre>
+            ) : null}
           </div>
         </div>
       </div>
@@ -471,7 +476,7 @@ function BashCard({ input, result, runStreaming, runSucceeded }: { input: unknow
   const isRunning = runStreaming && !result;
   return (
     <div className="op-card op-bash">
-      <button type="button" className="op-card-head" onClick={() => setOpen((o) => !o)}>
+      <button type="button" className="op-card-head" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
         <ResultBadge icon="terminal" result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
         <span className={`op-title${isRunning ? ' shimmer-text' : ''}`}>{t('tool.bash')}</span>
         {desc ? <span className="op-meta op-desc">{desc}</span> : null}
@@ -497,13 +502,15 @@ function GlobCard({ input, result, runStreaming, runSucceeded }: { input: unknow
   const t = useT();
   const obj = (input ?? {}) as { pattern?: string; path?: string };
   return (
-    <div className="op-card op-search">
-      <div className="op-card-head">
-        <ResultBadge icon="folder" result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
-        <span className="op-title">{t('tool.glob')}</span>
-        <span className="op-meta">{obj.pattern ?? '*'}{obj.path ? ` in ${obj.path}` : ''}</span>
-      </div>
-    </div>
+    <CompactResultCard
+      className="op-search"
+      icon="folder"
+      title={t('tool.glob')}
+      summary={`${obj.pattern ?? '*'}${obj.path ? ` in ${obj.path}` : ''}`}
+      result={result}
+      runStreaming={runStreaming}
+      runSucceeded={runSucceeded}
+    />
   );
 }
 
@@ -511,13 +518,15 @@ function GrepCard({ input, result, runStreaming, runSucceeded }: { input: unknow
   const t = useT();
   const obj = (input ?? {}) as { pattern?: string; path?: string; glob?: string };
   return (
-    <div className="op-card op-search">
-      <div className="op-card-head">
-        <ResultBadge icon="search" result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
-        <span className="op-title">{t('tool.grep')}</span>
-        <span className="op-meta">{obj.pattern ?? ''}{obj.path ? ` in ${obj.path}` : ''}</span>
-      </div>
-    </div>
+    <CompactResultCard
+      className="op-search"
+      icon="search"
+      title={t('tool.grep')}
+      summary={`${obj.pattern ?? ''}${obj.path ? ` in ${obj.path}` : ''}`}
+      result={result}
+      runStreaming={runStreaming}
+      runSucceeded={runSucceeded}
+    />
   );
 }
 
@@ -525,13 +534,15 @@ function WebFetchCard({ input, result, runStreaming, runSucceeded }: { input: un
   const t = useT();
   const obj = (input ?? {}) as { url?: string };
   return (
-    <div className="op-card op-web">
-      <div className="op-card-head">
-        <ResultBadge icon="globe" result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
-        <span className="op-title">{t('tool.fetch')}</span>
-        <span className="op-meta">{obj.url ?? ''}</span>
-      </div>
-    </div>
+    <CompactResultCard
+      className="op-web"
+      icon="globe"
+      title={t('tool.fetch')}
+      summary={obj.url ?? ''}
+      result={result}
+      runStreaming={runStreaming}
+      runSucceeded={runSucceeded}
+    />
   );
 }
 
@@ -539,12 +550,72 @@ function WebSearchCard({ input, result, runStreaming, runSucceeded }: { input: u
   const t = useT();
   const obj = (input ?? {}) as { query?: string };
   return (
-    <div className="op-card op-web">
-      <div className="op-card-head">
-        <ResultBadge icon="search" result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
-        <span className="op-title">{t('tool.search')}</span>
-        <span className="op-meta">{obj.query ?? ''}</span>
-      </div>
+    <CompactResultCard
+      className="op-web"
+      icon="search"
+      title={t('tool.search')}
+      summary={obj.query ?? ''}
+      result={result}
+      runStreaming={runStreaming}
+      runSucceeded={runSucceeded}
+    />
+  );
+}
+
+function CompactResultCard({
+  className,
+  icon,
+  title,
+  summary,
+  result,
+  runStreaming,
+  runSucceeded,
+}: {
+  className: string;
+  icon: IconName;
+  title: string;
+  summary: string;
+  result?: Props['result'];
+  runStreaming: boolean;
+  runSucceeded: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const hasOutput = !!result?.content.trim();
+  const head = (
+    <>
+      <ResultBadge icon={icon} result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
+      <span className="op-title">{title}</span>
+      {summary ? <span className="op-meta">{summary}</span> : null}
+      {hasOutput ? (
+        <span className="op-expand-chev" aria-hidden>
+          <Icon name={open ? 'chevron-down' : 'chevron-right'} size={11} />
+        </span>
+      ) : null}
+    </>
+  );
+  return (
+    <div className={`op-card ${className}`}>
+      {hasOutput ? (
+        <button
+          type="button"
+          className="op-card-head"
+          aria-expanded={open}
+          onClick={() => setOpen((value) => !value)}
+        >
+          {head}
+        </button>
+      ) : (
+        <div className="op-card-head op-card-head--static">{head}</div>
+      )}
+      {hasOutput ? (
+        <div className={`accordion-collapsible${open ? ' open' : ''}`}>
+          <div className="accordion-collapsible-inner">
+            <div className="op-card-detail">
+              <pre className="op-output">{truncate(result?.content ?? '', 4000)}</pre>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

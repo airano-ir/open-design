@@ -137,7 +137,8 @@ describe('AssistantMessage tool status', () => {
     fireEvent.click(activity);
     expect(activity.getAttribute('aria-expanded')).toBe('true');
     expect(container.querySelectorAll('.op-card.op-file')).toHaveLength(1);
-    expect(container.querySelector('[data-testid="file-ops-toggle"]')?.textContent).toContain('Write 1');
+    expect(screen.getByTestId('file-ops-row-index.html')).toBeTruthy();
+    expect(container.querySelector('[data-testid="file-ops-toggle"]')).toBeNull();
     expect(container.textContent).not.toContain('×2');
   });
 

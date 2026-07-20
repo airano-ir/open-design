@@ -2,9 +2,10 @@
  * "Files this turn" disclosure pinned to the top of an assistant message.
  *
  * The first four files stay visible so artifacts are presented as results,
- * not hidden inside execution history. In larger batches only the remaining
- * files start collapsed. Each visible file row owns its own Open action so the
- * header remains a pure disclosure target without a second, ambiguous button.
+ * not hidden inside execution history. A single artifact is rendered as one
+ * direct row without a redundant group header; larger batches collapse only
+ * the rows after the fourth. Openable artifacts use the whole row as the
+ * target instead of repeating an Open button on every line.
  *
  * The component is read-only over `events` — derivation lives in
  * `runtime/file-ops.ts` so the same logic is reachable from tests and
@@ -63,6 +64,7 @@ export function FileOpsSummary({
   // files, only rows after the fourth start hidden; expanding reveals the
   // remainder without making the entire result set disappear by default.
   const isCollapsible = entries.length > COLLAPSE_AFTER_ENTRY_COUNT;
+  const hiddenEntryCount = Math.max(0, entries.length - COLLAPSE_AFTER_ENTRY_COUNT);
   const visibleEntries = isCollapsible && !expanded
     ? entries.slice(0, COLLAPSE_AFTER_ENTRY_COUNT)
     : entries;
@@ -81,14 +83,39 @@ export function FileOpsSummary({
       </span>
       <span className="file-ops-label">{t('assistant.producedFiles')}</span>
       <span className="file-ops-summary-line">{summaryParts.join(' · ')}</span>
-      <span className="file-ops-count">{entries.length}</span>
       {isCollapsible ? (
-        <span className={`file-ops-chev${expanded ? ' is-expanded' : ''}`} aria-hidden>
-          <Icon name="chevron-down" size={11} />
-        </span>
+        <>
+          <span className="file-ops-more">
+            {expanded
+              ? entries.length
+              : t('assistant.unfinishedMore', { n: hiddenEntryCount })}
+          </span>
+          <span className={`file-ops-chev${expanded ? ' is-expanded' : ''}`} aria-hidden>
+            <Icon name="chevron-down" size={11} />
+          </span>
+        </>
       ) : null}
     </>
   );
+
+  if (entries.length === 1) {
+    const onlyEntry = entries[0];
+    if (!onlyEntry) return null;
+    return (
+      <div
+        className={`file-ops file-ops--single${streaming ? ' is-streaming' : ''}`}
+        data-testid="file-ops-summary"
+      >
+        <ul className="file-ops-list file-ops-list--single" role="list">
+          <FileOpRow
+            entry={onlyEntry}
+            projectFileNames={projectFileNames}
+            onRequestOpenFile={onRequestOpenFile}
+          />
+        </ul>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -143,11 +170,8 @@ function FileOpRow({
     !!onRequestOpenFile &&
     !entry.ops.includes('delete') &&
     (projectFileNames ? projectFileNames.has(entry.path) : true);
-  return (
-    <li
-      className={`file-ops-row file-ops-row--${entry.status}`}
-      data-testid={`file-ops-row-${entry.path}`}
-    >
+  const content = (
+    <>
       <div className="file-ops-row-badges" aria-hidden>
         {entry.ops.map((op) => {
           const count = entry.opCounts[op];
@@ -182,16 +206,31 @@ function FileOpRow({
         </span>
       ) : null}
       {canOpen ? (
+        <span className="file-ops-row-open-icon" aria-hidden>
+          <Icon name="chevron-right" size={12} />
+        </span>
+      ) : null}
+    </>
+  );
+
+  return (
+    <li
+      className={`file-ops-row file-ops-row--${entry.status}`}
+      data-testid={`file-ops-row-${entry.path}`}
+    >
+      {canOpen ? (
         <button
           type="button"
-          className="file-ops-row-open"
+          className="file-ops-row-main file-ops-row-main--action"
           onClick={() => onRequestOpenFile?.(entry.path)}
           title={t('tool.openInTab', { name: entry.path })}
           data-testid={`file-ops-row-open-${entry.path}`}
         >
-          {t('assistant.openFile')}
+          {content}
         </button>
-      ) : null}
+      ) : (
+        <div className="file-ops-row-main">{content}</div>
+      )}
     </li>
   );
 }

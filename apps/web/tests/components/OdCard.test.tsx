@@ -3,7 +3,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { OdCardRuleProposal, OdCardBrandBrowserAssist } from '@open-design/contracts';
+import type { OdCardRuleProposal, OdCardBrandBrowserAssist, OdCardVerifyScorecard } from '@open-design/contracts';
 import { OdCardView } from '../../src/components/OdCard';
 import { I18nProvider } from '../../src/i18n';
 
@@ -40,6 +40,14 @@ function renderRuleCard(card: OdCardRuleProposal = RULE_CARD, instanceScope = 's
   return render(
     <I18nProvider initial="en">
       <OdCardView card={card} instanceScope={instanceScope} />
+    </I18nProvider>,
+  );
+}
+
+function renderScorecard(card: OdCardVerifyScorecard) {
+  return render(
+    <I18nProvider initial="en">
+      <OdCardView card={card} />
     </I18nProvider>,
   );
 }
@@ -83,6 +91,52 @@ afterEach(() => {
   cleanup();
   window.localStorage.clear();
   vi.restoreAllMocks();
+});
+
+describe('OdCard verification scorecard disclosure', () => {
+  it('keeps a passing scorecard collapsed to one summary line', () => {
+    const { container } = renderScorecard({
+      kind: 'verify-scorecard',
+      status: 'pass',
+      summary: '3 checks passed',
+      rows: [
+        { rule: 'Uses brand colors', status: 'pass' },
+        { rule: 'Has accessible labels', status: 'pass' },
+        { rule: 'Fits the viewport', status: 'pass' },
+      ],
+    });
+
+    const head = container.querySelector<HTMLButtonElement>('[data-od-card="verify-scorecard"] > button');
+    const disclosure = container.querySelector('[data-od-card="verify-scorecard"] .accordion-collapsible');
+    expect(head?.getAttribute('aria-expanded')).toBe('false');
+    expect(disclosure?.classList.contains('open')).toBe(false);
+
+    fireEvent.click(head as HTMLButtonElement);
+    expect(head?.getAttribute('aria-expanded')).toBe('true');
+    expect(disclosure?.classList.contains('open')).toBe(true);
+  });
+
+  it('opens partial verification and promotes only failed checks', () => {
+    const { container } = renderScorecard({
+      kind: 'verify-scorecard',
+      status: 'partial',
+      summary: '2/3 checks passed',
+      rows: [
+        { rule: 'Uses brand colors', status: 'pass' },
+        { rule: 'Has accessible labels', status: 'fail', note: 'Missing the export label.' },
+        { rule: 'Fits the viewport', status: 'fixed', note: 'Reduced the card width.' },
+      ],
+    });
+
+    const head = container.querySelector<HTMLButtonElement>('[data-od-card="verify-scorecard"] > button');
+    const disclosure = container.querySelector('[data-od-card="verify-scorecard"] .accordion-collapsible');
+    expect(head?.getAttribute('aria-expanded')).toBe('true');
+    expect(disclosure?.classList.contains('open')).toBe(true);
+    expect(screen.getByText('Has accessible labels')).toBeTruthy();
+    expect(screen.getByText('Missing the export label.')).toBeTruthy();
+    expect(screen.queryByText('Uses brand colors')).toBeNull();
+    expect(screen.queryByText('Fits the viewport')).toBeNull();
+  });
 });
 
 describe('OdCard brand browser assist', () => {

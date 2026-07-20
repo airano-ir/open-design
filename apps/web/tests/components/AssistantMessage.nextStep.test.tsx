@@ -153,7 +153,6 @@ describe('AssistantMessage next-step affordance', () => {
       />,
     );
     expect(screen.getByTestId('file-ops-summary')).toBeTruthy();
-    fireEvent.click(screen.getByTestId('file-ops-toggle'));
     expect(screen.getByTestId('file-ops-row-notes.md')).toBeTruthy();
     expect(screen.getByTestId('next-step-actions')).toBeTruthy();
     expect(screen.getByText(en['nextStep.projectGenerateArtifactTitle'])).toBeTruthy();

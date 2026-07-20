@@ -27,6 +27,21 @@ describe('FileOpsSummary', () => {
     expect(container.firstChild).toBeNull();
   });
 
+  it('renders one produced file as a direct row without a redundant title card', () => {
+    render(
+      <FileOpsSummary
+        entries={[
+          entry({ path: 'result.html', ops: ['write'], opCounts: { read: 0, write: 1, edit: 0, delete: 0 } }),
+        ]}
+        streaming={false}
+      />,
+    );
+
+    expect(screen.getByTestId('file-ops-row-result.html')).toBeTruthy();
+    expect(screen.queryByTestId('file-ops-toggle')).toBeNull();
+    expect(screen.queryByText('Files from this turn')).toBeNull();
+  });
+
   it('shows up to four files directly, including while the run is streaming', () => {
     render(
       <FileOpsSummary
@@ -102,6 +117,7 @@ describe('FileOpsSummary', () => {
     expect(screen.getByTestId('file-ops-row-a.ts')).toBeTruthy();
     expect(screen.getByTestId('file-ops-row-d.ts')).toBeTruthy();
     expect(screen.queryByTestId('file-ops-row-e.ts')).toBeNull();
+    expect(screen.getByText('+1 more')).toBeTruthy();
 
     fireEvent.click(toggle);
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
