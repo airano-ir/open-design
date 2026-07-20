@@ -29,6 +29,28 @@ Use a multiplicative scale (1.2 or 1.25). Cap at 6–8 sizes per artifact.
 | Body (15–18 px) | `1.5`–`1.6` |
 | Small (≤14 px) | `1.5` |
 
+### CJK overrides — these are not optional
+
+The table above is Latin leading. Latin display type can go to `1.0`
+because the ascender/descender slack inside the em box keeps lines
+apart. **CJK glyphs fill the em box**, so the same value makes
+consecutive lines touch, and multi-line Chinese headlines visibly
+collide.
+
+| Text size | Latin | CJK |
+|---|---|---|
+| Display / H1 (≥32 px) | `1.0`–`1.2` | **`1.3`–`1.4`** |
+| Body (15–18 px) | `1.5`–`1.6` | `1.7`–`1.8` |
+
+Negative tracking is Latin-only for the same reason: CJK is already
+set on a fixed em grid, so `-0.02em` on a Chinese headline crowds the
+glyphs instead of tightening the word. Use `0` for CJK display text.
+
+When one artifact mixes both — an English kicker over a Chinese
+headline is the common case — set the tight Latin values on the Latin
+element only. Do not inherit them onto the CJK block from a shared
+parent rule.
+
 ## Letter-spacing — the rule that makes or breaks craft
 
 This is the single most-skipped rule in AI-generated design. **No
@@ -82,7 +104,9 @@ emphasis," it likely lacks weight discipline elsewhere.
 ## Common mistakes (lint these)
 
 - ALL CAPS without `letter-spacing` ≥ `0.06em`.
-- Display text (≥32 px) without negative tracking.
+- Display text (≥32 px) without negative tracking (Latin only — see the CJK overrides).
+- CJK display text at Latin leading (`≤1.2`), which makes the lines overlap.
+- Negative tracking applied to CJK text.
 - More than 3 type sizes visible above the fold.
 - Mixed serif and slab on the same screen without a clear role split.
 - Body copy in `text-align: justify` (creates rivers; never use on the web).
