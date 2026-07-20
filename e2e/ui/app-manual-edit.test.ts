@@ -357,6 +357,9 @@ test('[P1] HTML preview toolbar exposes screenshot, comments, mark, and edit wor
 
   await page.getByTestId('board-mode-toggle').click();
   await expect(page.getByTestId('board-mode-toggle')).toHaveAttribute('aria-pressed', 'true');
+  await expect(
+    artifactPreviewFrame(page).locator('html[data-od-comment-mode][data-od-comment-mode-kind="picker"]'),
+  ).toHaveCount(1);
   await artifactPreviewFrame(page).locator('[data-od-id="hero-title"]').click();
   await expect(page.getByTestId('comment-popover')).toBeVisible();
   await page.getByTestId('comment-popover-input').fill('Panel-level comment');
