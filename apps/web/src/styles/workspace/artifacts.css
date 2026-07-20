@@ -669,7 +669,9 @@
   flex-direction: column;
   gap: 18px;
   min-width: 0;
-  max-width: 760px;
+  /* Uniform 18px inset on all four sides; content fills the white card so the
+     left/right gaps stay equal (no max-width cap that would leave the content
+     left-flush with a wider right margin inside the card). */
   padding: 18px;
 }
 .media-provider-detail-head {
@@ -1024,8 +1026,9 @@
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  /* Section rhythm on the spacing scale (was an off-scale 34px). */
-  gap: var(--spacing-32);
+  /* 24px section rhythm — matches the 24px horizontal inset and the blocks'
+     24px bottom padding, so the spacing around each divider is a symmetric 24. */
+  gap: var(--spacing-24);
   overflow-x: hidden;
 }
 .settings-general-block {
@@ -1033,7 +1036,9 @@
   flex-direction: column;
   gap: var(--spacing-18);
   min-width: 0;
-  padding: 0 0 var(--spacing-32);
+  /* Section-to-section vertical rhythm = 24px, matching the 24px horizontal
+     inset (was 32px). */
+  padding: 0 0 var(--spacing-24);
   border-bottom: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
 }
 .settings-general-block:last-child {
@@ -2843,6 +2848,31 @@ button.agent-group-rescan-btn:hover:not(:disabled) {
   background: currentColor;
   opacity: 0.88;
   flex: 0 0 auto;
+}
+/* Composer inline model dropdown: the selected model shows a leading dot in
+   the same ink as its label; hovering an unselected row slides its label
+   forward as a "reach" affordance. */
+.inline-model-popover .model-select-searchable__option-label {
+  display: inline-flex;
+  align-items: center;
+  transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.inline-model-popover .model-select-searchable__option.is-active .model-select-searchable__option-label::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.inline-model-popover .model-select-searchable__option:not(.is-active):hover .model-select-searchable__option-label {
+  transform: translateX(6px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .inline-model-popover .model-select-searchable__option-label {
+    transition: none;
+  }
 }
 .model-select-searchable__option-meta {
   font-size: 12px;

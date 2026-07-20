@@ -2085,6 +2085,28 @@
   background: var(--bg-subtle);
   color: var(--text-strong);
 }
+/* Selected model gets a leading dot in the same ink as its label; the button
+   is inline-flex with an 8px gap, so the ::before dot sits before the name. */
+.inline-switcher--compact .inline-switcher__agent.is-active::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+/* Hovering an unselected model slides its label forward as a "reach". */
+.inline-switcher--compact .inline-switcher__agent-name {
+  transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.inline-switcher--compact .inline-switcher__agent:not(.is-active):hover .inline-switcher__agent-name {
+  transform: translateX(6px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .inline-switcher--compact .inline-switcher__agent-name {
+    transition: none;
+  }
+}
 .inline-switcher__amr-reminder-dot--agent {
   top: 6px;
   left: 26px;

@@ -1101,6 +1101,7 @@ export function InlineModelSwitcher({
                   </span>
                   <SearchableModelSelect
                     className="inline-switcher__select"
+                    popoverClassName="inline-model-popover"
                     data-testid="inline-model-switcher-agent-model"
                     searchInputTestId="inline-model-switcher-agent-model-search"
                     popoverTestId="inline-model-switcher-agent-model-popover"
@@ -1226,6 +1227,7 @@ export function InlineModelSwitcher({
                 {apiModelOptions.length > 0 ? (
                   <SearchableModelSelect
                     className="inline-switcher__select"
+                    popoverClassName="inline-model-popover"
                     data-testid="inline-model-switcher-api-model"
                     searchInputTestId="inline-model-switcher-api-model-search"
                     popoverTestId="inline-model-switcher-api-model-popover"

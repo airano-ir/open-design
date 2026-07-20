@@ -1484,6 +1484,13 @@ export function SettingsDialog({
   // never a role re-derivation (see `../collab/settings-access`).
   const { context: workspaceContext } = useWorkspaceContext();
   const showWorkspaceSettings = canShowWorkspaceSettings(workspaceContext);
+  const [settingsSearch, setSettingsSearch] = useState('');
+  // Case-insensitive match of the settings-nav search against a nav item's own
+  // title/subtitle only, so typing filters the settings list rather than
+  // reaching into unrelated content. Empty query shows everything.
+  const settingsSearchQuery = settingsSearch.trim().toLowerCase();
+  const settingsNavMatch = (...labels: string[]) =>
+    settingsSearchQuery === '' || labels.some((label) => label.toLowerCase().includes(settingsSearchQuery));
   const [settingsSidebarCollapsed, setSettingsSidebarCollapsed] = useState(false);
   const [settingsFullscreen, setSettingsFullscreen] = useState(true);
   // Scroll the right-hand content pane back to the top whenever the user
@@ -4019,17 +4026,22 @@ export function SettingsDialog({
                   <Icon name="arrow-left" size={15} />
                   <span>{t('settings.pageBackToHome')}</span>
                 </button>
-                <label className="settings-page-search">
+                <label className={`settings-page-search${settingsSearch.trim() ? ' has-text' : ''}`}>
                   <Icon name="search" size={14} />
-                  <input type="search" placeholder={t('settings.pageSearchPlaceholder')} readOnly />
+                  <input
+                    type="search"
+                    placeholder={t('settings.pageSearchPlaceholder')}
+                    value={settingsSearch}
+                    onChange={(e) => setSettingsSearch(e.target.value)}
+                  />
                 </label>
-                <span className="settings-page-nav-group">{t('settings.pageNavGroupPersonal')}</span>
               </div>
             ) : null}
             <button
               type="button"
               className={`settings-nav-item${activeSection === 'execution' ? ' active' : ''}`}
               onClick={() => setActiveSection('execution')}
+              hidden={!settingsNavMatch(t('settings.envConfigure'), t('settings.localCli'), t('settings.modeApiMeta'))}
               data-testid="settings-nav-execution"
             >
               <Icon name="sliders" size={18} />
@@ -4042,6 +4054,7 @@ export function SettingsDialog({
               type="button"
               className={`settings-nav-item${activeSection === 'general' ? ' active' : ''}`}
               onClick={() => setActiveSection('general')}
+              hidden={!settingsNavMatch(t('settings.general'), t('settings.generalHint'))}
             >
               <Icon name="settings" size={18} />
               <span>
@@ -4054,6 +4067,7 @@ export function SettingsDialog({
                 type="button"
                 className={`settings-nav-item${activeSection === 'workspace' ? ' active' : ''}`}
                 onClick={() => setActiveSection('workspace')}
+              hidden={!settingsNavMatch(t('settings.workspace'), t('settings.workspaceHint'))}
                 data-testid="settings-nav-workspace"
               >
                 <Icon name="users" size={18} />
@@ -4067,6 +4081,7 @@ export function SettingsDialog({
               type="button"
               className={`settings-nav-item${activeSection === 'instructions' ? ' active' : ''}`}
               onClick={() => setActiveSection('instructions')}
+              hidden={!settingsNavMatch(t('settings.instructionsTitle'), t('settings.instructionsNavSub'))}
             >
               <Icon name="edit" size={18} />
               <span>
@@ -4078,6 +4093,7 @@ export function SettingsDialog({
               type="button"
               className={`settings-nav-item${activeSection === 'memory' ? ' active' : ''}`}
               onClick={() => setActiveSection('memory')}
+              hidden={!settingsNavMatch(t('settings.memory'), t('settings.memoryHint'))}
             >
               <Icon name="brain" size={18} />
               <span>
@@ -4089,6 +4105,7 @@ export function SettingsDialog({
               type="button"
               className={`settings-nav-item${activeSection === 'media' ? ' active' : ''}`}
               onClick={() => setActiveSection('media')}
+              hidden={!settingsNavMatch(t('settings.mediaProviders'), 'Image / video / audio')}
             >
               <Icon name="image" size={18} />
               <span>
@@ -4100,6 +4117,7 @@ export function SettingsDialog({
               type="button"
               className={`settings-nav-item${activeSection === 'mcpClient' ? ' active' : ''}`}
               onClick={() => setActiveSection('mcpClient')}
+              hidden={!settingsNavMatch(t('settings.externalMcpTitle'), t('settings.externalMcpHint'))}
             >
               <Icon name="sparkles" size={18} />
               <span>
@@ -4111,6 +4129,7 @@ export function SettingsDialog({
               type="button"
               className={`settings-nav-item${activeSection === 'composio' ? ' active' : ''}`}
               onClick={() => setActiveSection('composio')}
+              hidden={!settingsNavMatch(t('connectors.title'), t('settings.connectorsNavHint'))}
               data-testid="settings-nav-connectors"
             >
               <Icon name="sliders" size={18} />
@@ -4123,6 +4142,7 @@ export function SettingsDialog({
               type="button"
               className={`settings-nav-item${activeSection === 'integrations' ? ' active' : ''}`}
               onClick={() => setActiveSection('integrations')}
+              hidden={!settingsNavMatch(t('settings.mcpServerTitle'), t('settings.mcpServerHint'))}
             >
               <Icon name="puzzle" size={18} />
               <span>
@@ -4134,6 +4154,7 @@ export function SettingsDialog({
               type="button"
               className={`settings-nav-item${activeSection === 'critiqueTheater' ? ' active' : ''}`}
               onClick={() => setActiveSection('critiqueTheater')}
+              hidden={!settingsNavMatch(t('critiqueTheater.settingsNav'), t('critiqueTheater.settingsNavHint'))}
             >
               <Icon name="comment" size={18} />
               <span>
@@ -4145,6 +4166,7 @@ export function SettingsDialog({
               type="button"
               className={`settings-nav-item${activeSection === 'pet' ? ' active' : ''}`}
               onClick={() => setActiveSection('pet')}
+              hidden={!settingsNavMatch(t('pet.navTitle'), t('pet.navHint'))}
             >
               <Icon name="sparkles" size={18} />
               <span>
@@ -4156,6 +4178,7 @@ export function SettingsDialog({
               type="button"
               className={`settings-nav-item${activeSection === 'designSystems' ? ' active' : ''}`}
               onClick={() => setActiveSection('designSystems')}
+              hidden={!settingsNavMatch(t('settings.designSystems'), t('settings.designSystemsHint'))}
             >
               <Icon name="draw" size={18} />
               <span>
@@ -4167,6 +4190,7 @@ export function SettingsDialog({
               type="button"
               className={`settings-nav-item${activeSection === 'privacy' ? ' active' : ''}`}
               onClick={() => setActiveSection('privacy')}
+              hidden={!settingsNavMatch(t('settings.privacy'), t('settings.privacyHint'))}
             >
               <Icon name="eye" size={18} />
               <span>
@@ -4178,6 +4202,7 @@ export function SettingsDialog({
               type="button"
               className={`settings-nav-item${activeSection === 'about' ? ' active' : ''}`}
               onClick={() => setActiveSection('about')}
+              hidden={!settingsNavMatch(t('settings.about'), t('settings.aboutHint'))}
             >
               <Icon name="settings" size={18} />
               <span>

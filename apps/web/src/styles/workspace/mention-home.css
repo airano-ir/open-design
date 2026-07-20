@@ -653,6 +653,11 @@
 }
 .settings-page-shell .modal-settings.settings-page-surface {
   width: 100%;
+  /* Fill the shell edge-to-edge. Without this, the base `.modal`
+     `max-width: calc(100vw - 32px)` leaks through and, because the surface is
+     left-aligned, dumps all 32px of slack on the right — inflating the panel's
+     right gutter to 56px while the left stays 24px. */
+  max-width: none;
   height: 100%;
   min-height: 0;
   display: grid;
@@ -1197,7 +1202,10 @@
   grid-column: 1;
   grid-row: 1;
   gap: 3px;
-  padding: 28px 10px 18px;
+  /* No right padding: nav items (and search) extend flush to the rail's right
+     edge, dropping the 10px gap on the content-facing side. Left keeps 10px so
+     the selected highlight doesn't touch the window edge. */
+  padding: 12px 0 18px 10px;
   /* Same treatment as the top tab strip: fully transparent, riding the
      shell's translucent ground so the wash/wallpaper shows identically —
      no extra white layer, no blur. */
@@ -1246,17 +1254,32 @@
   padding: 0 10px 0 32px;
   border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
   border-radius: var(--radius-large, 8px);
-  background: var(--bg);
+  /* No white fill — the field sits flat on the shell ground, just a hairline. */
+  background: transparent;
   color: var(--text-muted);
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--text) 4%, transparent);
 }
-.settings-page-search .od-icon {
+/* Once the user starts typing, the search glyph slides to the right edge and
+   the padding reserves the space on that side instead. */
+.settings-page-search.has-text {
+  padding: 0 32px 0 10px;
+}
+/* `> svg` alongside `.od-icon`: this app's `Icon` renders a bare <svg> with no
+   class, so the glyph would otherwise stay an unsized flex child instead of the
+   absolutely-positioned affordance. */
+.settings-page-search .od-icon,
+.settings-page-search > svg {
   position: absolute;
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
   color: var(--text-muted);
+  transition: left 140ms cubic-bezier(0.23, 1, 0.32, 1), right 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.settings-page-search.has-text .od-icon,
+.settings-page-search.has-text > svg {
+  left: auto;
+  right: 12px;
 }
 .settings-page-search input {
   appearance: none;
@@ -1272,7 +1295,6 @@
   font: inherit;
   font-size: 13px;
   line-height: 36px;
-  pointer-events: none;
 }
 .settings-page-search input::-webkit-search-decoration,
 .settings-page-search input::-webkit-search-cancel-button,
@@ -1362,6 +1384,11 @@
    that ships in the JSX is hidden — the label alone is the navigation
    handle; the section's own subtitle in the content area carries any
    intro copy. */
+/* display:grid below beats the UA `[hidden]{display:none}`, so search-filtered
+   items need this to actually hide. */
+.settings-nav-item[hidden] {
+  display: none;
+}
 .settings-nav-item {
   position: relative;
   width: 100%;
@@ -1389,12 +1416,33 @@
   /* Selected board breathes a uniform 10px on all four sides. */
   padding: 10px;
 }
-/* Selected item on the settings page reads as a solid white base card (the
-   transparent sidebar behind it makes a faint tint invisible), not the modal's
-   subtle wash. */
+/* Match the home nav rail (.entry-nav-rail__btn) exactly: unselected label +
+   icon use a muted 52% tone, hover adds a 5% wash, and the selected item is a
+   light-grey card (--bg-subtle) carrying the near-black --selected label/icon. */
+.settings-page-shell .settings-nav-item {
+  color: color-mix(in srgb, var(--text) 52%, transparent);
+}
+.settings-page-shell .settings-nav-item svg,
+.settings-page-shell .settings-nav-item .od-icon {
+  color: color-mix(in srgb, var(--text) 52%, transparent);
+  opacity: 1;
+}
+.settings-page-shell .settings-nav-item:not(.active):hover {
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+}
 .settings-page-shell .settings-nav-item.active,
 .settings-page-shell .settings-nav-item.active:hover {
-  background: var(--bg-panel);
+  background: var(--bg-subtle);
+  color: var(--selected);
+  border-color: transparent;
+}
+.settings-page-shell .settings-nav-item.active strong {
+  color: var(--selected);
+}
+.settings-page-shell .settings-nav-item.active svg,
+.settings-page-shell .settings-nav-item.active .od-icon {
+  color: var(--selected);
+  opacity: 1;
 }
 .settings-nav-item.active,
 .settings-nav-item.active:hover {
@@ -1463,13 +1511,19 @@
 .settings-page-shell .settings-content {
   grid-column: 2;
   grid-row: 1;
-  width: min(848px, calc(100% - 56px));
-  max-width: calc(100% - 56px);
+  /* Fixed 12px gutter on both sides that stays 12px at any window width —
+     no max-width cap, so stretching the window widens the card, not the gaps.
+     `justify-self: center` splits the 24px evenly into 12 + 12. */
+  width: calc(100% - 24px);
+  max-width: none;
   justify-self: center;
   align-self: start;
-  margin: 24px 0 28px;
-  height: calc(100% - 52px);
-  padding: 36px 44px 56px;
+  /* 12px top + 12px bottom outer margin; height leaves exactly that 24px
+     total so the card fills the shell without overflow. */
+  margin: 12px 0 12px;
+  height: calc(100% - 24px);
+  /* 32px top inset between the card edge and the first content row. */
+  padding: 32px 24px 24px;
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
@@ -1478,6 +1532,15 @@
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
+}
+/* Stretching the window widens only the card — the content column stays a
+   fixed, centered 992px (= the old 1040px card minus its 48px side padding,
+   so the default-width look is unchanged). Every section/tab row is a direct
+   flex child of the card, so one child rule aligns them all. */
+.settings-page-shell .settings-content > * {
+  width: 100%;
+  max-width: 992px;
+  margin-inline: auto;
 }
 .modal-settings.settings-sidebar-collapsed .settings-content {
   padding-left: calc(var(--modal-padding) + 16px);

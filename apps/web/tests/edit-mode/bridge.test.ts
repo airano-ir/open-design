@@ -811,6 +811,62 @@ describe('manual edit bridge target normalization', () => {
     dom.window.close();
   });
 
+  it('drag-repositions an element via pointer drag and posts od-edit-drag-commit', () => {
+    const posts: Array<{ type?: string; id?: string; transform?: string }> = [];
+    const dom = new JSDOM(
+      `<main data-od-source-path="path-0"><h1 data-od-source-path="path-0-0">Drag me</h1></main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+    const title = dom.window.document.querySelector('h1') as HTMLElement;
+    title.getBoundingClientRect = () => ({
+      x: 10, y: 20, width: 160, height: 36, top: 20, right: 170, bottom: 56, left: 10, toJSON: () => ({}),
+    } as DOMRect);
+    dom.window.parent.postMessage = ((message: unknown) => {
+      posts.push(message as { type?: string; id?: string; transform?: string });
+    }) as typeof dom.window.parent.postMessage;
+
+    const pointer = (type: string, x: number, y: number) =>
+      title.dispatchEvent(new dom.window.MouseEvent(type, { clientX: x, clientY: y, button: 0, bubbles: true }));
+    pointer('pointerdown', 100, 100);
+    pointer('pointermove', 130, 120); // dx=30, dy=20 — past the 4px threshold
+    pointer('pointerup', 130, 120);
+
+    // The element carries a live inline translate reflecting the drag delta…
+    expect(title.style.transform).toContain('translate(30px, 20px)');
+    // …and the host is told to persist that translate.
+    const commit = posts.find((message) => message.type === 'od-edit-drag-commit');
+    expect(commit).toMatchObject({ id: 'path-0-0' });
+    expect(commit?.transform).toContain('translate(30px, 20px)');
+
+    dom.window.close();
+  });
+
+  it('treats a sub-threshold press as a click, not a drag (no transform, no commit)', () => {
+    const posts: Array<{ type?: string }> = [];
+    const dom = new JSDOM(
+      `<main data-od-source-path="path-0"><h1 data-od-source-path="path-0-0">Tap me</h1></main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+    const title = dom.window.document.querySelector('h1') as HTMLElement;
+    title.getBoundingClientRect = () => ({
+      x: 10, y: 20, width: 160, height: 36, top: 20, right: 170, bottom: 56, left: 10, toJSON: () => ({}),
+    } as DOMRect);
+    dom.window.parent.postMessage = ((message: unknown) => {
+      posts.push(message as { type?: string });
+    }) as typeof dom.window.parent.postMessage;
+
+    const pointer = (type: string, x: number, y: number) =>
+      title.dispatchEvent(new dom.window.MouseEvent(type, { clientX: x, clientY: y, button: 0, bubbles: true }));
+    pointer('pointerdown', 100, 100);
+    pointer('pointermove', 102, 101); // 2px — under the threshold
+    pointer('pointerup', 102, 101);
+
+    expect(title.style.transform).toBe('');
+    expect(posts.some((message) => message.type === 'od-edit-drag-commit')).toBe(false);
+
+    dom.window.close();
+  });
+
   it('blocks clicks on unmapped elements while edit mode is enabled', () => {
     const dom = new JSDOM(
       `<main><button id="cta">Launch</button></main>${buildManualEditBridge(true)}`,
