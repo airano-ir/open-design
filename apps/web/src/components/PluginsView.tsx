@@ -1713,6 +1713,33 @@ export function ExtensionsMarketplace({
               </button>
             </div>
             <div className="plugin-marketplace__create-options">
+              {/* Authoring by describing what you want is the flow the home
+                  composer is built around, and it had no reachable entry: the
+                  button that called `onCreatePlugin` lives in a component
+                  nothing mounts, so this dialog was import/upload only. */}
+              {onCreatePlugin && createKind === 'plugin' ? (
+                <article>
+                  <span className="plugin-marketplace__create-option-icon" aria-hidden>
+                    <Icon name="sparkles" size={20} />
+                  </span>
+                  <div>
+                    <h3>{t('pluginsView.createWithAgent')}</h3>
+                    <p>{t('pluginsView.createWithAgentBody')}</p>
+                    <button
+                      type="button"
+                      className="plugin-marketplace__create-primary"
+                      disabled={createBusy !== null}
+                      data-testid="plugin-create-with-agent"
+                      onClick={() => {
+                        closeCreateDialog();
+                        onCreatePlugin();
+                      }}
+                    >
+                      {t('pluginsView.createWithAgentAction')}
+                    </button>
+                  </div>
+                </article>
+              ) : null}
               <article>
                 <span className="plugin-marketplace__create-option-icon" aria-hidden>
                   <Icon name="external-link" size={20} />

@@ -307,7 +307,8 @@ describe('RecentProjectsStrip', () => {
   // old test's actual concern satisfied: the iframes are lazy, and deck covers
   // resolve through a module-level cache so N cards on one src cost one fetch.
   it('renders HTML previews lazily rather than eagerly fetching every card', async () => {
-    const fetchMock = vi.fn(async () => new Response('<html><body>deck</body></html>', { status: 200 }));
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL) =>
+      new Response('<html><body>deck</body></html>', { status: 200 }));
     vi.stubGlobal('fetch', fetchMock);
 
     const { container } = render(
