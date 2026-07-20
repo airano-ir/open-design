@@ -2423,7 +2423,7 @@ export function ChatPane({
                   }
                   open={errorSourceOpen}
                   onOpenChange={setErrorSourceOpen}
-                  detailsLabel={t('chat.runError.sourceLabel')}
+                  detailsLabel={t('brand.viewDetails')}
                   details={
                     <div className="run-error__details">
                       <p className="run-error__description">{displayError}</p>
@@ -2446,7 +2446,7 @@ export function ChatPane({
                       ) : null}
                     </div>
                   }
-                  actions={showErrorActions ? (
+                  footerActions={showErrorActions ? (
                     <>
                       {showByokRecoveryCta ? (
                         <button

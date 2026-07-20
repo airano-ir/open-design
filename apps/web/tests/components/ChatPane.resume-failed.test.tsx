@@ -104,12 +104,18 @@ describe('ChatPane resume-on-failure', () => {
     const { container } = renderChat({ onResumeRun, onRetry, activeAgentId: 'claude' });
 
     expect(container.querySelector('[data-user-action-card="run-recovery"]')).toBeTruthy();
-    const continueBtn = screen.getByText('chat.resumeRunCta');
+    const continueBtn = screen.getByRole('button', { name: 'chat.resumeRunCta' });
     expect(continueBtn).toBeTruthy();
+    expect(continueBtn.textContent).toBe('chat.resumeRunCta');
     // The from-scratch Retry must not be the offered action for a resumable run.
-    expect(screen.queryByText('promptTemplates.retry')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'promptTemplates.retry' })).toBeNull();
 
-    const detailsToggle = screen.getByRole('button', { name: 'chat.runError.sourceLabel' });
+    const footer = container.querySelector(
+      '[data-user-action-card="run-recovery"] [data-user-action-footer="true"]',
+    );
+    expect(footer?.contains(continueBtn)).toBe(true);
+
+    const detailsToggle = screen.getByRole('button', { name: 'brand.viewDetails' });
     const disclosure = container.querySelector('[data-user-action-card="run-recovery"] .accordion-collapsible');
     expect(detailsToggle.getAttribute('aria-expanded')).toBe('false');
     expect(disclosure?.classList.contains('open')).toBe(false);
@@ -131,9 +137,9 @@ describe('ChatPane resume-on-failure', () => {
     const onSend = vi.fn();
     renderChat({ onRetry, onSend, activeAgentId: 'claude' });
 
-    const continueBtn = screen.getByText('chat.resumeRunCta');
+    const continueBtn = screen.getByRole('button', { name: 'chat.resumeRunCta' });
     expect(continueBtn).toBeTruthy();
-    expect(screen.queryByText('promptTemplates.retry')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'promptTemplates.retry' })).toBeNull();
 
     fireEvent.click(continueBtn);
     expect(onSend).toHaveBeenCalledTimes(1);
@@ -149,7 +155,7 @@ describe('ChatPane resume-on-failure', () => {
     const onRetry = vi.fn();
     renderChat({ onResumeRun, onRetry, activeAgentId: 'opencode' });
 
-    expect(screen.queryByText('chat.resumeRunCta')).toBeNull();
-    expect(screen.getByText('promptTemplates.retry')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'chat.resumeRunCta' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'promptTemplates.retry' })).toBeTruthy();
   });
 });

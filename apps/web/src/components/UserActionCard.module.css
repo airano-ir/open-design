@@ -64,13 +64,30 @@
   min-width: 0;
 }
 
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  margin-left: 33px;
+}
+
+.footerActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  min-width: 0;
+}
+
 .detailsToggle {
   appearance: none;
   align-self: flex-start;
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  margin-left: 33px;
   padding: 2px 0;
   border: 0;
   background: transparent;
@@ -135,6 +152,10 @@
   .actions {
     grid-column: 2;
     justify-content: flex-start;
+  }
+
+  .footerActions {
+    flex-wrap: nowrap;
   }
 }
 

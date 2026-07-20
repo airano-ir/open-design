@@ -9,6 +9,7 @@ interface UserActionCardProps {
   icon: IconName;
   title: ReactNode;
   actions?: ReactNode;
+  footerActions?: ReactNode;
   details?: ReactNode;
   detailsLabel?: ReactNode;
   status?: ReactNode;
@@ -32,6 +33,7 @@ export function UserActionCard({
   icon,
   title,
   actions,
+  footerActions,
   details,
   detailsLabel,
   status,
@@ -69,30 +71,39 @@ export function UserActionCard({
         {actions ? <div className={styles.actions}>{actions}</div> : null}
       </div>
 
-      {hasDetails ? (
+      {hasDetails || footerActions ? (
         <>
-          <button
-            type="button"
-            className={styles.detailsToggle}
-            aria-expanded={isOpen}
-            onClick={() => setOpen(!isOpen)}
-          >
-            <Icon
-              name="chevron-down"
-              size={14}
-              className={`${styles.chevron}${isOpen ? ` ${styles.chevronOpen}` : ''}`}
-            />
-            <span>{detailsLabel}</span>
-          </button>
-          <div className={`accordion-collapsible${isOpen ? ' open' : ''}`}>
-            <div
-              className="accordion-collapsible-inner"
-              aria-hidden={!isOpen}
-              inert={!isOpen ? true : undefined}
-            >
-              <div className={styles.details}>{details}</div>
-            </div>
+          <div className={styles.footer} data-user-action-footer="true">
+            {hasDetails ? (
+              <button
+                type="button"
+                className={styles.detailsToggle}
+                aria-expanded={isOpen}
+                onClick={() => setOpen(!isOpen)}
+              >
+                <span>{detailsLabel}</span>
+                <Icon
+                  name="chevron-down"
+                  size={14}
+                  className={`${styles.chevron}${isOpen ? ` ${styles.chevronOpen}` : ''}`}
+                />
+              </button>
+            ) : (
+              <span />
+            )}
+            {footerActions ? <div className={styles.footerActions}>{footerActions}</div> : null}
           </div>
+          {hasDetails ? (
+            <div className={`accordion-collapsible${isOpen ? ' open' : ''}`}>
+              <div
+                className="accordion-collapsible-inner"
+                aria-hidden={!isOpen}
+                inert={!isOpen ? true : undefined}
+              >
+                <div className={styles.details}>{details}</div>
+              </div>
+            </div>
+          ) : null}
         </>
       ) : null}
 

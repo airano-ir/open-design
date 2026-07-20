@@ -14,16 +14,19 @@ describe('UserActionCard', () => {
         dataKind="test-action"
         icon="info"
         title="Sign in required"
-        actions={<button type="button">Sign in</button>}
+        footerActions={<button type="button">Sign in</button>}
         detailsLabel="View details"
         details={<p>Authentication expired while the task was running.</p>}
       />,
     );
 
     expect(container.querySelector('[data-user-action-card="test-action"]')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Sign in' })).toBeTruthy();
+    const action = screen.getByRole('button', { name: 'Sign in' });
+    expect(action).toBeTruthy();
+    expect(container.querySelector('[data-user-action-footer="true"]')?.contains(action)).toBe(true);
 
     const toggle = screen.getByRole('button', { name: 'View details' });
+    expect(toggle.lastElementChild?.tagName.toLowerCase()).toBe('svg');
     const disclosure = container.querySelector('.accordion-collapsible');
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
     expect(disclosure?.classList.contains('open')).toBe(false);
