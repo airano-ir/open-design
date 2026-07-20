@@ -775,6 +775,10 @@
   display: flex;
   align-items: stretch;
   padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-panel);
+  overflow: hidden;
 }
 .op-todo .op-todo-toggle {
   display: flex;
