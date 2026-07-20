@@ -1371,8 +1371,9 @@ test('[P1] first-run home keeps community templates collapsed until the hint is 
   await expect(revealBody).toHaveAttribute('aria-hidden', 'false');
   await expect(home.getByTestId('plugins-home-section')).toBeVisible();
   await expect(home.getByTestId('plugins-home-browse-registry')).toBeVisible();
-  await expect(home.getByTestId('plugins-home-pill-category-all')).toHaveCount(0);
-  await expect(home.getByTestId('plugins-home-pill-category-live-artifact')).toHaveAttribute('aria-selected', 'true');
+  // The Community gallery defaults to the All slice (#5759).
+  await expect(home.getByTestId('plugins-home-pill-category-all')).toHaveAttribute('aria-selected', 'true');
+  await expect(home.getByTestId('plugins-home-pill-category-live-artifact')).toHaveAttribute('aria-selected', 'false');
   await expect(home.locator('article.plugins-home__card[data-plugin-id="example-live-artifact"]')).toBeVisible();
 });
 
