@@ -1463,9 +1463,47 @@ export function registerProjectRoutes(app: Express, ctx: RegisterProjectRoutesDe
       project,
     };
   }
+  /**
+   * Catalog identities this member has just moved back to "personal".
+   *
+   * A move to personal deletes the hub catalog row inside the same request,
+   * but the team catalog is read through a stale-while-revalidate cache, so
+   * the very next list can still carry the row that was just removed. The
+   * move also nulls `resourceHubResourceId`, which is the key
+   * `listRemoteTeamProjectSummaries` dedupes on — so without this gate the
+   * stale row is re-materialised as a `visibility: 'team'` card and the
+   * project silently un-unshares itself. Worse, a remote summary is never
+   * `canMoveToPersonal`, so the user cannot undo it.
+   *
+   * `cloudTombstonedAt` is the local truth for "this member unshared it", and
+   * a re-share clears it (see `workspaceProjectMovePatch`). Scoping by owner
+   * keeps a teammate's own share of the same project id visible.
+   */
+  function locallyTombstonedTeamProjects(localRows: any[], ctx: WorkspaceProjectContext) {
+    const projectIds = new Set<string>();
+    const resourceIds = new Set<string>();
+    for (const row of localRows) {
+      if (row.workspaceVisibility !== 'personal' || row.cloudTombstonedAt == null) continue;
+      projectIds.add(row.id);
+      resourceIds.add(projectResourceIdFor(row.id, workspaceProjectPrincipal(ctx)));
+    }
+    return { projectIds, resourceIds };
+  }
+  function remoteTeamProjectWasUnsharedLocally(
+    remote: VelaTeamProjectRecord,
+    tombstoned: { projectIds: Set<string>; resourceIds: Set<string> },
+    ctx: WorkspaceProjectContext,
+  ): boolean {
+    if (tombstoned.resourceIds.has(remote.resourceId)) return true;
+    // The resource id derivation depends on the principal that shared the
+    // project; fall back to owner-scoped project identity so an unshare
+    // performed under a different principal still suppresses its own row.
+    return remote.ownerMemberId === ctx.workspaceMemberId && tombstoned.projectIds.has(remote.projectId);
+  }
   async function listRemoteTeamProjectSummaries(localRows: any[], ctx: WorkspaceProjectContext) {
     if (!teamProjectCatalog) return [];
     const localResourceIds = new Set(localRows.map((row) => row.resourceHubResourceId).filter(Boolean));
+    const tombstoned = locallyTombstonedTeamProjects(localRows, ctx);
     let remoteProjects: VelaTeamProjectRecord[];
     try {
       remoteProjects = await teamProjectCatalog.list(workspaceProjectPrincipal(ctx));
@@ -1476,6 +1514,7 @@ export function registerProjectRoutes(app: Express, ctx: RegisterProjectRoutesDe
     return remoteProjects
       .filter((project) => project.access.canView)
       .filter((project) => !localResourceIds.has(project.resourceId))
+      .filter((project) => !remoteTeamProjectWasUnsharedLocally(project, tombstoned, ctx))
       .filter((project) => {
         if (seenResourceIds.has(project.resourceId)) return false;
         seenResourceIds.add(project.resourceId);

@@ -19,6 +19,7 @@ import os from 'node:os';
 import net from 'node:net';
 import { executionProfileFromStreamFormat, PLUGIN_SHARE_ACTION_PLUGIN_IDS } from '@open-design/contracts';
 import { isTodoWriteToolName, stopReasonIsTruncation, todoItemsFromTodoWriteInput } from '@open-design/contracts';
+import type { TeamProject } from '@open-design/contracts';
 import {
   composeSystemPrompt,
   detectDeckIntentSignal,
@@ -2810,8 +2811,46 @@ export async function startServer({
       return entry.inflight ?? refresh(key);
     };
   })();
+  /**
+   * Drop catalog rows this member has already moved back to "personal".
+   *
+   * A move to personal deletes the hub catalog row in the same request, but
+   * every display read above goes through a stale-while-revalidate cache, so
+   * for up to one TTL the list still carries the row that was just deleted.
+   * That is long enough to paint the "shared" badge back onto a project the
+   * user just made private — the unshare looks like it silently reverted. It
+   * would also let the publish watcher re-adopt the project as owned-and-
+   * shared and republish it.
+   *
+   * `cloudTombstonedAt` on the local workspace row is the truth for "this
+   * member unshared it"; a re-share clears it (see `workspaceProjectMovePatch`
+   * in routes/project). The filter runs on the cache OUTPUT, not inside it, so
+   * a value cached before the unshare is still gated. Owner scoping keeps a
+   * teammate's own share of the same project id visible.
+   */
+  const withoutLocallyUnsharedProjects = async (
+    projects: TeamProject[],
+  ): Promise<TeamProject[]> => {
+    const workspaceId = activeWorkspace.get();
+    if (!workspaceId || projects.length === 0) return projects;
+    const memberId = contextToResourceHubPrincipal(
+      await collab.workspaceContext.current({}),
+    )?.memberId;
+    if (!memberId) return projects;
+    const tombstoned = new Set(
+      listWorkspaceProjects(db, workspaceId)
+        .filter((row: any) => row.workspaceVisibility === 'personal' && row.cloudTombstonedAt != null)
+        .map((row: any) => row.id),
+    );
+    if (tombstoned.size === 0) return projects;
+    return projects.filter(
+      (entry) => !(entry.ownerMemberId === memberId && tombstoned.has(entry.projectId)),
+    );
+  };
+  const teamProjectsForDisplay = async (): Promise<TeamProject[]> =>
+    withoutLocallyUnsharedProjects(await teamProjectsDisplayCache());
   const resolveSharedProject = async (projectId: string) => {
-    const list = await teamProjectsLister();
+    const list = await withoutLocallyUnsharedProjects(await teamProjectsLister());
     return list.find((entry) => entry.projectId === projectId) ?? null;
   };
   // Owner lookup is a display concern (the "shared project" banner, comment
@@ -2821,7 +2860,7 @@ export async function startServer({
   // it is owned by the current member. Revocation stays on the uncached
   // resolveSharedProject (pull gate) so an unshare is still seen immediately.
   const resolveSharedProjectOwner = async (projectId: string): Promise<string | null> => {
-    const list = await teamProjectsDisplayCache();
+    const list = await teamProjectsForDisplay();
     return list.find((entry) => entry.projectId === projectId)?.ownerMemberId ?? null;
   };
   const isSharedTeamProject = async (projectId: string): Promise<boolean> => {
@@ -2963,7 +3002,7 @@ export async function startServer({
     // request and re-ran the one-off `vela team-projects --help` capability
     // probe — an extra CLI spawn (and, on the current CLI, a blocking analytics
     // POST) on every workspace projects load.
-    listTeamProjects: teamProjectsDisplayCache,
+    listTeamProjects: teamProjectsForDisplay,
     // Expose the collab-cloud member directory so the web client can resolve
     // comment authors + owner names to a name + role.
     ...(teamMembersCache ? { listMembers: teamMembersCache } : {}),
@@ -2978,7 +3017,7 @@ export async function startServer({
   // polls (poll-as-floor), so a client whose SSE never connects is unaffected.
   const workspaceInvalidationPoller = createWorkspaceInvalidationPoller({
     getWorkspaceContext: () => collab.workspaceContext.current({}),
-    listTeamProjects: teamProjectsDisplayCache,
+    listTeamProjects: teamProjectsForDisplay,
     listMembers: teamMembersCache ? () => teamMembersCache() : async () => [],
     emit: (payload) => emitWorkspaceEvent(payload),
     onError: (error) => console.warn('[od] workspace invalidation poll error:', error),

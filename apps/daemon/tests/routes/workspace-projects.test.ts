@@ -932,6 +932,125 @@ describe('workspace project routes', () => {
     }
   });
 
+  // RED LINE — "move back to 仅自己" must stick. The move route deletes the hub
+  // catalog row in the same request, but the team catalog is read through a
+  // stale-while-revalidate cache, so the next list can still carry the row that
+  // was just removed. The move also nulls `resourceHubResourceId` — the key the
+  // remote merge dedupes on — so before the fix that stale row came back as a
+  // `visibility: 'team'` card and the project re-shared itself a moment after
+  // the user unshared it, with no way to undo (a remote summary is never
+  // `canMoveToPersonal`). The local `cloudTombstonedAt` is the truth here.
+  it('does not resurrect a project the member just unshared from a stale team catalog', async () => {
+    const projectId = `workspace-unshare-tombstone-${Date.now()}`;
+    const memberId = 'member-unshare-tombstone';
+    const staleResourceId = projectResourceIdFor(projectId, workspacePrincipal(memberId, workspaceId, 'admin'));
+    // The catalog still reports the project as shared — exactly what the SWR
+    // cache serves for a few seconds after the hub row has been deleted.
+    const teamProjectCatalog = {
+      list: vi.fn(async () => [
+        {
+          id: `catalog-${projectId}`,
+          workspaceId,
+          projectId,
+          resourceId: staleResourceId,
+          ownerMemberId: memberId,
+          displayName: 'Just unshared',
+          syncState: 'synced',
+          lastSyncedVersionId: 'version-1',
+          createdAt: new Date(10).toISOString(),
+          updatedAt: new Date(20).toISOString(),
+          access: { canView: true, canComment: true, canEdit: true, frozen: false },
+        },
+      ]),
+      upsert: vi.fn(),
+    };
+    const app = express();
+    app.use(express.json());
+    registerProjectRoutes(app, workspaceProjectRouteDeps({
+      workspaceId,
+      projectId,
+      dbDeleteProject: vi.fn(),
+      removeProjectDir: vi.fn(),
+      teamProjectCatalog,
+      // The state the move route leaves behind after a successful unshare.
+      workspaceRowOverrides: {
+        workspaceVisibility: 'personal',
+        resourceHubResourceId: null,
+        cloudTombstonedAt: 1_700_000_000_000,
+        createdByWorkspaceMemberId: memberId,
+        updatedByWorkspaceMemberId: memberId,
+      },
+    }));
+    const routeServer = await listen(app);
+    try {
+      const resp = await fetch(`${routeServer.url}/api/workspaces/${workspaceId}/projects?view=all`, {
+        headers: headers(memberId, { 'x-od-workspace-type': 'team', 'x-od-workspace-role': 'admin' }),
+      });
+      expect(resp.status).toBe(200);
+      const body = await resp.json() as { projects: Array<any> };
+      const entries = body.projects.filter((item: any) => item.project?.id === projectId);
+      expect(entries).toHaveLength(1);
+      expect(entries[0].visibility).toBe('personal');
+      // The stale catalog row must not come back as a second, team-visible card.
+      expect(body.projects.some((item: any) => item.id === staleResourceId)).toBe(false);
+    } finally {
+      await close(routeServer.server);
+    }
+  });
+
+  // The tombstone gate must stay owner-scoped: unsharing my own copy cannot
+  // hide a teammate's share of the same project id.
+  it('still shows a teammate share of a project id the reader has tombstoned', async () => {
+    const projectId = `workspace-unshare-teammate-${Date.now()}`;
+    const memberId = 'member-unshare-teammate';
+    const teammateResourceId = `resource-teammate-${projectId}`;
+    const teamProjectCatalog = {
+      list: vi.fn(async () => [
+        {
+          id: `catalog-${projectId}`,
+          workspaceId,
+          projectId,
+          resourceId: teammateResourceId,
+          ownerMemberId: 'member-someone-else',
+          displayName: 'Teammate share',
+          syncState: 'synced',
+          lastSyncedVersionId: 'version-1',
+          createdAt: new Date(10).toISOString(),
+          updatedAt: new Date(20).toISOString(),
+          access: { canView: true, canComment: true, canEdit: true, frozen: false },
+        },
+      ]),
+      upsert: vi.fn(),
+    };
+    const app = express();
+    app.use(express.json());
+    registerProjectRoutes(app, workspaceProjectRouteDeps({
+      workspaceId,
+      projectId,
+      dbDeleteProject: vi.fn(),
+      removeProjectDir: vi.fn(),
+      teamProjectCatalog,
+      workspaceRowOverrides: {
+        workspaceVisibility: 'personal',
+        resourceHubResourceId: null,
+        cloudTombstonedAt: 1_700_000_000_000,
+        createdByWorkspaceMemberId: memberId,
+        updatedByWorkspaceMemberId: memberId,
+      },
+    }));
+    const routeServer = await listen(app);
+    try {
+      const resp = await fetch(`${routeServer.url}/api/workspaces/${workspaceId}/projects?view=all`, {
+        headers: headers(memberId, { 'x-od-workspace-type': 'team', 'x-od-workspace-role': 'admin' }),
+      });
+      expect(resp.status).toBe(200);
+      const body = await resp.json() as { projects: Array<any> };
+      expect(body.projects.some((item: any) => item.id === teammateResourceId)).toBe(true);
+    } finally {
+      await close(routeServer.server);
+    }
+  });
+
   it('includes remote team-project catalog entries in owner-scoped lists', async () => {
     const localProjectId = `workspace-local-owner-${Date.now()}`;
     const remoteProjectId = `workspace-remote-owner-${Date.now()}`;
@@ -1223,6 +1342,7 @@ function workspaceProjectRouteDeps({
   teamProjectCatalog,
   collabSync,
   updateWorkspaceProject,
+  workspaceRowOverrides,
 }: {
   workspaceId: string;
   projectId: string;
@@ -1234,6 +1354,7 @@ function workspaceProjectRouteDeps({
   teamProjectCatalog?: unknown;
   collabSync?: unknown;
   updateWorkspaceProject?: ReturnType<typeof vi.fn>;
+  workspaceRowOverrides?: Record<string, unknown>;
 }) {
   const now = 1;
   const project = {
@@ -1260,6 +1381,7 @@ function workspaceProjectRouteDeps({
     workspaceVersion: 1,
     workspaceCreatedAt: now,
     workspaceUpdatedAt: now,
+    ...workspaceRowOverrides,
   };
   const noop = vi.fn();
   return {
