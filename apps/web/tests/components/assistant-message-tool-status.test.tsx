@@ -211,7 +211,7 @@ describe('AssistantMessage tool status', () => {
     );
 
     const activity = screen.getByTestId('task-activity-toggle');
-    expect(activity.textContent).toContain('error');
+    expect(activity.textContent).toContain('Run failed');
     expect(activity.getAttribute('data-run-state')).toBe('error');
     expect(activity.querySelector('.task-activity-status')).toBeNull();
     expect(container.querySelector('[data-tool-category="run"][data-tool-state="error"]')).not.toBeNull();
@@ -239,7 +239,7 @@ describe('AssistantMessage tool status', () => {
       />,
     );
 
-    expect(screen.getByTestId('task-activity-toggle').textContent).toContain('error');
+    expect(screen.getByTestId('task-activity-toggle').textContent).toContain('Run failed');
     expect(container.querySelector('[data-tool-category="run"][data-tool-state="error"]')).not.toBeNull();
     expect(container.querySelector('.op-status-done')).toBeNull();
   });

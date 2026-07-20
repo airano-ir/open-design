@@ -1006,9 +1006,6 @@ function AssistantMessageImpl({
                 hasDesignSystemContext={hasDesignSystemContext}
                 footerProps={{
                   streaming,
-                  startedAt: message.startedAt,
-                  endedAt: message.endedAt,
-                  usage,
                   hasUnfinishedTodos: unfinishedTodos.length > 0,
                   hasEmptyResponse,
                   preparing,
@@ -1027,9 +1024,6 @@ function AssistantMessageImpl({
             ) : (
               <AssistantFooter
                 streaming={streaming}
-                startedAt={message.startedAt}
-                endedAt={message.endedAt}
-                usage={usage}
                 hasUnfinishedTodos={unfinishedTodos.length > 0}
                 hasEmptyResponse={hasEmptyResponse}
                 preparing={preparing}
@@ -1470,9 +1464,6 @@ function appendRoleModel(label: string, model: string | null): string {
 
 interface AssistantFooterProps {
   streaming: boolean;
-  startedAt: number | undefined;
-  endedAt: number | undefined;
-  usage: Extract<AgentEvent, { kind: "usage" }> | undefined;
   hasUnfinishedTodos: boolean;
   hasEmptyResponse: boolean;
   // Pre-output phase: streaming but nothing rendered yet. The label shimmers
@@ -1487,17 +1478,13 @@ interface AssistantFooterProps {
   // The most recent assistant reply keeps its footer permanently visible
   // (not hover-gated), matching Lobe Chat's persistent last-message footer.
   isLast?: boolean;
-  // When the turn has an execution disclosure, its run state and elapsed time
-  // live at the top of the answer. The footer keeps only secondary stats and
-  // actions so the same Done/Working state is not repeated at the bottom.
+  // When the turn has an execution disclosure, its run state lives at the top
+  // of the answer. The footer keeps only actions so run state is not repeated.
   hideRunStatus?: boolean;
 }
 
 function AssistantFooter({
   streaming,
-  startedAt,
-  endedAt,
-  usage,
   hasUnfinishedTodos,
   hasEmptyResponse,
   preparing = false,
@@ -1511,25 +1498,9 @@ function AssistantFooter({
   hideRunStatus = false,
 }: AssistantFooterProps) {
   const t = useT();
-  const elapsed = useLiveElapsed(streaming, startedAt, endedAt, usage?.durationMs);
-  const formattedCost =
-    typeof usage?.costUsd === "number" &&
-    Number.isFinite(usage.costUsd) &&
-    usage.costUsd > 0
-      ? usage.costUsd.toFixed(4)
-      : "";
-  const statParts = [
-    hideRunStatus ? "" : elapsed,
-    usage?.outputTokens != null
-      ? t("assistant.outTokens", { n: usage.outputTokens })
-      : "",
-    formattedCost && formattedCost !== "0.0000" ? `$${formattedCost}` : "",
-  ].filter(Boolean);
-  const statsLabel = statParts.join(" · ");
   if (
     !forceVisible &&
     !streaming &&
-    !statsLabel &&
     !hasUnfinishedTodos &&
     !hasEmptyResponse &&
     !copyMarkdown &&
@@ -1561,7 +1532,6 @@ function AssistantFooter({
           </span>
         </>
       ) : null}
-      {statsLabel ? <span className="assistant-stats">{statsLabel}</span> : null}
       {copyMarkdown || onFork || feedbackControls ? (
         <span className="assistant-footer-controls">
           {copyMarkdown ? <AssistantMarkdownCopyButton markdown={copyMarkdown} /> : null}
@@ -3138,7 +3108,7 @@ function TaskActivityCard({
   const stateLabel = running
     ? t("assistant.workingLabel")
     : hasError
-      ? t("tool.error")
+      ? t("critiqueTheater.failedHeading")
       : t("assistant.doneLabel");
   const runState = running ? "running" : hasError ? "error" : "completed";
   const elapsed = useLiveElapsed(runStreaming, startedAt, endedAt, durationMs);

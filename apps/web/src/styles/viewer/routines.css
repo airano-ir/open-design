@@ -1294,10 +1294,6 @@
   font-size: 11px;
   color: var(--text-faint);
 }
-.app .assistant-footer .assistant-stats {
-  font-size: 11.5px;
-  color: var(--text-muted);
-}
 .app .op-waiting {
   width: fit-content;
   padding: 7px 14px;

@@ -31,6 +31,7 @@ describe('TodoCard completion disclosure', () => {
     expect(container.querySelector('.op-todo')).toHaveClass('op-todo-collapsed');
     expect(container.querySelector('.accordion-collapsible')).not.toHaveClass('open');
     expect(container.querySelectorAll('.todo-item')).toHaveLength(3);
+    expect(container.querySelector('.op-todo-done')).toBeNull();
 
     fireEvent.click(toggle!);
     expect(toggle?.getAttribute('aria-expanded')).toBe('true');

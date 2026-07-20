@@ -712,14 +712,6 @@
 .chat-pinned-todo {
   position: relative;
   padding: 0 16px;
-  transition:
-    transform 220ms cubic-bezier(0.23, 1, 0.32, 1),
-    opacity 200ms cubic-bezier(0.23, 1, 0.32, 1);
-}
-.chat-pinned-todo-exit {
-  transform: translateY(24px);
-  opacity: 0;
-  pointer-events: none;
 }
 .chat-pinned-todo::before {
   content: '';
@@ -807,24 +799,6 @@
   color: var(--green);
   font-size: 11px;
   font-weight: 600;
-}
-.op-todo .op-todo-done {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  margin: 4px 8px 4px 0;
-  padding: 0;
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--text-faint);
-  cursor: pointer;
-}
-.op-todo .op-todo-done:hover {
-  background: var(--bg-subtle);
-  color: var(--text);
 }
 .op-todo .op-todo-continue {
   display: inline-flex;
@@ -2938,11 +2912,6 @@ body.entry-resizing { cursor: col-resize; user-select: none; }
 }
 .assistant-footer .assistant-label {
   font-weight: 400;
-  color: var(--text-faint);
-  font-size: 11px;
-}
-.assistant-footer .assistant-stats {
-  font-variant-numeric: tabular-nums;
   color: var(--text-faint);
   font-size: 11px;
 }

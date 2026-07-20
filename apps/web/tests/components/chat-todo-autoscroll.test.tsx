@@ -321,6 +321,7 @@ describe('composer-pinned Todo snapshot', () => {
 
     const toggle = document.querySelector<HTMLButtonElement>('.chat-pinned-todo .op-todo-toggle');
     expect(toggle?.getAttribute('aria-expanded')).toBe('false');
+    expect(document.querySelector('.chat-pinned-todo .op-todo-done')).toBeNull();
     fireEvent.click(toggle!);
     expect(toggle?.getAttribute('aria-expanded')).toBe('true');
     expect(screen.queryAllByText('Task 1 updated').length).toBeGreaterThan(0);

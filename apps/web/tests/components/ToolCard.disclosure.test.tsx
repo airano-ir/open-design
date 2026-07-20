@@ -98,6 +98,8 @@ describe('ToolCard secondary result disclosures', () => {
     expect(status?.getAttribute('data-tool-state')).toBe('error');
     expect(status?.classList.contains('op-status-category')).toBe(true);
     expect(status?.classList.contains('op-status-done')).toBe(false);
+    expect(status?.classList.contains('op-status-error')).toBe(false);
+    expect(container.textContent).not.toContain('File not found');
   });
 
   it('keeps read contents hidden until the read row opens', () => {

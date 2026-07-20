@@ -257,13 +257,11 @@ export function TodoCard({
   input,
   runStreaming,
   runSucceeded,
-  onDismiss,
   onContinue,
 }: {
   input: unknown;
   runStreaming: boolean;
   runSucceeded: boolean;
-  onDismiss?: () => void;
   onContinue?: () => void;
 }) {
   const t = useT();
@@ -285,16 +283,15 @@ export function TodoCard({
   const done = todos.filter(
     (todo) => todo.status === 'completed' || todo.status === 'in_progress',
   ).length;
-  // All-complete state surfaces the Done dismiss button (when wired) so the
-  // pinned task list can be cleared once the whole plan is finished. It also
-  // wins over an in-flight response: an agent may still be writing its final
-  // prose after marking every task complete, so the details start collapsed.
+  // All-complete state wins over an in-flight response: an agent may still be
+  // writing its final prose after marking every task complete, so the details
+  // start collapsed. The summary remains in the conversation as part of the
+  // task history and can always be expanded for review.
   const allComplete = todos.length > 0 && completed === todos.length;
   const defaultExpanded = !allComplete && runStreaming && (hasInProgress || hasPending);
   const [overrideExpanded, setOverrideExpanded] = useState<boolean | null>(null);
   const expanded = overrideExpanded ?? defaultExpanded;
   if (todos.length === 0) return <GenericCard name="TodoWrite" category="todo" input={input} runStreaming={runStreaming} runSucceeded={runSucceeded} />;
-  const showDismiss = !!onDismiss && allComplete;
   const showContinue = !!onContinue && !allComplete && !runStreaming;
   return (
     <div className={`op-card op-todo${expanded ? '' : ' op-todo-collapsed'}`}>
@@ -323,17 +320,6 @@ export function TodoCard({
             <Icon name="chevron-down" size={14} />
           </span>
         </button>
-        {showDismiss ? (
-          <button
-            type="button"
-            className="op-todo-done"
-            onClick={() => onDismiss?.()}
-            title={t('tool.todosDismiss')}
-            aria-label={t('tool.todosDismiss')}
-          >
-            <Icon name="close" size={12} />
-          </button>
-        ) : null}
         {showContinue ? (
           <button
             type="button"
@@ -408,7 +394,6 @@ function FileWriteCard({
           </div>
         </div>
       </div>
-      <FileErrorDetail result={result} />
     </div>
   );
 }
@@ -458,7 +443,6 @@ function FileEditCard({
           </div>
         </div>
       </div>
-      <FileErrorDetail result={result} />
     </div>
   );
 }
@@ -499,13 +483,12 @@ function FileReadCard({
               <code className="op-path">{file}</code>
               <OpenInTabButton filePath={file} ctx={ctx} />
             </div>
-            {result?.content ? (
+            {result?.content && !result.isError ? (
               <pre className="op-output">{truncate(result.content, 4000)}</pre>
             ) : null}
           </div>
         </div>
       </div>
-      <FileErrorDetail result={result} />
     </div>
   );
 }
@@ -531,7 +514,7 @@ function BashCard({ input, result, runStreaming, runSucceeded }: { input: unknow
         <div className="accordion-collapsible-inner">
           <div className="op-card-detail">
             <pre className="op-command">{truncate(command, 400)}</pre>
-            {result?.content ? (
+            {result?.content && !result.isError ? (
               <pre className="op-output">{truncate(result.content, 4000)}</pre>
             ) : null}
           </div>
@@ -593,7 +576,7 @@ function CompactResultCard({
   runSucceeded: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const hasOutput = !!result?.content.trim();
+  const hasOutput = !!result?.content.trim() && !result.isError;
   const head = (
     <>
       <ResultBadge category={category} result={result} runStreaming={runStreaming} runSucceeded={runSucceeded} />
@@ -690,11 +673,6 @@ function ResultBadge({
       <Icon name={TOOL_CATEGORY_ICON[category]} size={14} />
     </span>
   );
-}
-
-function FileErrorDetail({ result }: { result?: Props['result'] }) {
-  if (!result?.isError || !result.content.trim()) return null;
-  return <pre className="op-output">{truncate(result.content, 1200)}</pre>;
 }
 
 function describeInput(input: unknown): string {

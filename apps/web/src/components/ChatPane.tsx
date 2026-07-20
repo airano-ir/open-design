@@ -982,21 +982,6 @@ export function ChatPane({
   const tailSpacerRef = useRef<HTMLDivElement | null>(null);
   const prevStreamingRef = useRef(streaming);
   const prevLastUserIdRef = useRef<string | undefined>(undefined);
-  const dismissedStorageKey = `dismissedTodo:${activeConversationId ?? 'none'}`;
-  const [dismissedPinnedTodoKey, setDismissedPinnedTodoKey] = useState<string | null>(() => {
-    try {
-      return sessionStorage.getItem(dismissedStorageKey);
-    } catch {
-      return null;
-    }
-  });
-  useEffect(() => {
-    try {
-      setDismissedPinnedTodoKey(sessionStorage.getItem(dismissedStorageKey));
-    } catch {
-      setDismissedPinnedTodoKey(null);
-    }
-  }, [dismissedStorageKey]);
   // AssistantMessage's interaction callbacks are re-created per render and
   // excluded from its memo comparison (so streaming doesn't re-render every
   // message). Route them through this ref so a memoized message still calls the
@@ -2710,17 +2695,7 @@ export function ChatPane({
           <PinnedTodoSlot
             messages={displayMessages}
             streaming={streaming}
-            dismissedKey={dismissedPinnedTodoKey}
             onContinueRemainingTasks={onContinueRemainingTasks}
-            onDismiss={(key) => {
-              setDismissedPinnedTodoKey(key);
-              try {
-                if (key) sessionStorage.setItem(dismissedStorageKey, key);
-                else sessionStorage.removeItem(dismissedStorageKey);
-              } catch {
-                // sessionStorage may be unavailable in sandboxed contexts.
-              }
-            }}
             containerRef={pinnedTodoRef}
           />
           <QueuedSendStrip
@@ -3408,19 +3383,14 @@ function includeVirtualRowByKey<T extends { key: string }>(
 function PinnedTodoSlot({
   messages,
   streaming,
-  dismissedKey,
   onContinueRemainingTasks,
-  onDismiss,
   containerRef,
 }: {
   messages: ChatMessage[];
   streaming: boolean;
-  dismissedKey: string | null;
   onContinueRemainingTasks?: (assistantMessage: ChatMessage, todos: TodoItem[]) => void;
-  onDismiss: (key: string | null) => void;
   containerRef?: MutableRefObject<HTMLDivElement | null>;
 }) {
-  const [exiting, setExiting] = useState(false);
   const input = latestTodoWriteInputForPinnedCard(messages);
   if (input == null) return null;
 
@@ -3433,17 +3403,9 @@ function PinnedTodoSlot({
   );
   const unfinishedTodos = owner ? unfinishedTodosFromEvents(owner.events) : [];
 
-  let snapshotKey: string;
-  try {
-    snapshotKey = JSON.stringify(input);
-  } catch {
-    snapshotKey = String(input);
-  }
-  if (snapshotKey === dismissedKey) return null;
-
   return (
     <div
-      className={`chat-pinned-todo${exiting ? ' chat-pinned-todo-exit' : ''}`}
+      className="chat-pinned-todo"
       ref={containerRef}
     >
       <TodoCard
@@ -3455,11 +3417,6 @@ function PinnedTodoSlot({
             ? () => onContinueRemainingTasks(owner, unfinishedTodos)
             : undefined
         }
-        onDismiss={() => {
-          if (exiting) return;
-          setExiting(true);
-          window.setTimeout(() => onDismiss(snapshotKey), 220);
-        }}
       />
     </div>
   );
