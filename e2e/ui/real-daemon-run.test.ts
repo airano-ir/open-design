@@ -593,49 +593,39 @@ test('[P0] real daemon run previews an artifact from a fake OpenCode runtime', a
   await expectProjectFileToContain(page, projectId, fileName, heading);
 });
 
-test('[P1] BYOK OpenCode run fails clearly before spawn when provider config is missing', async ({ page }) => {
+test('[P1] BYOK OpenCode run is blocked before spawn when provider config is missing', async ({ page }) => {
   await createByokOpenCodeProject(page, 'BYOK OpenCode missing provider smoke');
   await expectWorkspaceReady(page);
 
-  // The composer's BYOK gate silently swallows submits until the incremental
-  // /api/agents stream has delivered byok-opencode's availability, so a fast
-  // submit races the stream (sendPrompt then reports the POST "was never
-  // issued"). Retry through that window; runErrorCard() reads the last card,
-  // so the swallowed attempts' unavailable-message cards cannot shadow the
-  // provider-validation oracle below.
-  let runResponse: Response | null = null;
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    try {
-      runResponse = await sendPrompt(page, 'Create a BYOK OpenCode missing provider smoke artifact');
-      break;
-    } catch (error) {
-      if (attempt === 2 || !String(error).includes('was never issued')) throw error;
-      await page.waitForTimeout(2_000);
-    }
-  }
-  if (!runResponse) throw new Error('create-run response missing after retries');
-  expectCreateRunAgentId(runResponse, 'byok-opencode');
-  const { runId } = (await runResponse.json()) as { runId: string };
+  // The client-side BYOK preflight (apps/web byok/preflight) catches a missing
+  // provider before any POST: it blocks the submit and opens the execution
+  // Settings section for the user to complete the config. So "fails clearly
+  // before spawn" now means no create-run request is issued and the preflight
+  // surfaces the fix, not a daemon-side failed run.
+  let createRunRequestSent = false;
+  page.on('request', (request) => {
+    if (isCreateRunRequest(request)) createRunRequestSent = true;
+  });
 
-  const expectedError = 'BYOK OpenCode requires a provider, API key, and model for this run.';
-  await expect(runErrorCard(page)).toContainText(expectedError, { timeout: 15_000 });
-  await expect.poll(async () => {
-    const response = await page.request.get(`/api/runs/${runId}`);
-    expect(response.ok()).toBeTruthy();
-    const body = (await response.json()) as { status?: string; error?: string };
-    return { status: body.status ?? null, error: body.error ?? null };
-  }, { timeout: 15_000 }).toEqual({ status: 'failed', error: expectedError });
+  const { projectId } = await currentProjectContext(page);
+  const input = page.getByTestId('chat-composer-input');
+  await input.click();
+  await input.fill('Create a BYOK OpenCode missing provider smoke artifact');
+  await expect(input).toHaveText('Create a BYOK OpenCode missing provider smoke artifact');
+  await page.getByTestId('chat-send').click();
 
-  const { projectId, conversationId } = await currentProjectContext(page);
-  await expect.poll(async () => {
-    const messages = await listConversationMessages(page, projectId, conversationId);
-    return messages.find((message) => message.role === 'assistant')?.runStatus ?? 'missing';
-  }, { timeout: 15_000 }).toBe('failed');
+  // The preflight opens the execution-mode Settings section.
+  await expect(
+    page.getByRole('dialog').filter({ hasText: 'Execution mode' }),
+  ).toBeVisible({ timeout: 15_000 });
+
+  // No run was created and no artifact was produced — the block is pre-spawn.
+  await page.waitForTimeout(1_000);
+  expect(createRunRequestSent).toBe(false);
   expect(await listProjectFiles(page, projectId)).toEqual([]);
 
   await page.reload({ waitUntil: 'domcontentloaded' });
   await expectWorkspaceReady(page);
-  await expect(runErrorCard(page)).toContainText(expectedError);
   expect(await listProjectFiles(page, projectId)).toEqual([]);
 });
 
