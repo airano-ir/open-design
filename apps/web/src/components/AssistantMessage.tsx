@@ -2682,6 +2682,22 @@ function FormBlock({
     () => (nextUserContent ? parseSubmittedAnswers(form, nextUserContent) : null),
     [form, nextUserContent],
   );
+  // The submitted turn embeds a `[uploaded design files]` block mapping each
+  // original upload name to its actual (possibly de-duplicated) project path.
+  // Recover it so the locked inspiration summary resolves images by their
+  // real served path instead of guessing the raw name.
+  const uploadPathByName = useMemo(() => {
+    const map: Record<string, string> = {};
+    if (!nextUserContent) return map;
+    const re = /^- Uploaded file \d+:\s*(.+?)\s*->\s*(.+?)(?:\s*\(for:.*)?$/gm;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(nextUserContent)) !== null) {
+      const name = m[1]?.trim();
+      const path = m[2]?.trim();
+      if (name && path) map[name] = path;
+    }
+    return map;
+  }, [nextUserContent]);
   const submittedSummary = useMemo(() => {
     const items: Array<{ label: string; value: string }> = [];
     const visualItems: Array<{
@@ -3061,6 +3077,8 @@ function FormBlock({
                   onChange={() => {}}
                   onFilesChange={() => {}}
                   t={t}
+                  projectId={projectId}
+                  uploadPathByName={uploadPathByName}
                 />
               ))}
               {submittedSummary.visualItems.map((item) => (

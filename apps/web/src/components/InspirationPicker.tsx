@@ -17,7 +17,11 @@ import {
   parseInspirationSelection,
   type InspirationSource,
 } from '../artifacts/question-form';
-import { fetchDesignSystems, fetchDesignTemplates } from '../providers/registry';
+import {
+  fetchDesignSystems,
+  fetchDesignTemplates,
+  projectRawUrl,
+} from '../providers/registry';
 import {
   commercialCategoryLabel,
   isCommercialCategoryId,
@@ -138,6 +142,18 @@ export interface InspirationPickerProps {
   /** Form-language-aware translator from the owning QuestionFormView. */
   t: ReturnType<typeof useT>;
   onGalleryOpen?: () => void;
+  /**
+   * Owning project — lets the locked (answered) summary resolve an uploaded
+   * image name back to its served file, since the live File objects are gone
+   * once the form is submitted.
+   */
+  projectId?: string | null;
+  /**
+   * Original-upload-name → actual project path, recovered from the submitted
+   * turn's `[uploaded design files]` block. Handles de-duplicated names; the
+   * picker falls back to the raw name when a mapping is missing.
+   */
+  uploadPathByName?: Record<string, string>;
 }
 
 /** Scaled live-document thumb shared by template and design-system cards. */
@@ -185,6 +201,8 @@ export function InspirationPicker({
   onFilesChange,
   t,
   onGalleryOpen,
+  projectId,
+  uploadPathByName,
 }: InspirationPickerProps) {
   const { locale } = useI18n();
   const enabled = useMemo(() => {
@@ -643,7 +661,15 @@ export function InspirationPicker({
 
   const renderPickedSection = () => {
     const uploads: Array<{ name: string; url?: string; remove?: () => void }> = disabled
-      ? uploadNames.map((name) => ({ name }))
+      ? // Locked summary: File objects are gone, but the image was uploaded
+        // into the project, so resolve its served URL by its real path
+        // (de-dup aware), falling back to the raw name.
+        uploadNames.map((name) => ({
+          name,
+          url: projectId
+            ? projectRawUrl(projectId, uploadPathByName?.[name] ?? name)
+            : undefined,
+        }))
       : files.map((file, index) => ({
           name: file.name,
           url: uploadUrls[index],
@@ -708,7 +734,20 @@ export function InspirationPicker({
               title={upload.name}
             >
               <span className="qf-insp-thumb qf-insp-thumb-img" aria-hidden>
-                {upload.url ? <img src={upload.url} alt="" /> : <Icon name="image" size={18} />}
+                {upload.url ? (
+                  <img
+                    src={upload.url}
+                    alt=""
+                    onError={(event) => {
+                      // De-dup rename or deleted file: fall back to the icon.
+                      const img = event.currentTarget;
+                      img.style.display = 'none';
+                      img.parentElement?.classList.add('qf-insp-thumb-img-broken');
+                    }}
+                  />
+                ) : (
+                  <Icon name="image" size={18} />
+                )}
               </span>
               {upload.url
                 ? previewButton({ kind: 'image', url: upload.url, title: upload.name })

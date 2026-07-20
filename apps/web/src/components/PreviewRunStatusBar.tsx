@@ -4,7 +4,6 @@ import { trackPreviewRunStatusSurfaceView } from '../analytics/events';
 import { useAnalytics } from '../analytics/provider';
 import { useI18n } from '../i18n';
 import {
-  formatPreviewRunElapsed,
   latestPreviewRunStatus,
   PREVIEW_RUN_SUCCESS_VISIBLE_MS,
   previewRunStatusCompletedAt,
@@ -127,10 +126,11 @@ export function PreviewRunStatusBar({
   const displayed = current ?? lastVisible;
   if (!displayed) return null;
 
-  const elapsed = formatPreviewRunElapsed(displayed.elapsedMs);
-  const isFailure = displayed.phase === 'failed';
   const label = t(statusLabelKey(displayed));
 
+  // Deliberately no elapsed timer here: the floating status pill reads
+  // cleaner as just the stage label, and the chat side already carries
+  // precise timing for anyone who needs it.
   return (
     <div
       className={`${styles.root}${leaving ? ` ${styles.leaving}` : ''}`}
@@ -146,11 +146,6 @@ export function PreviewRunStatusBar({
         >
           {label}
         </span>
-        {isFailure ? null : (
-          <span className={styles.elapsed} aria-hidden="true">
-            {t('previewRunStatus.elapsed', { time: elapsed })}
-          </span>
-        )}
       </div>
     </div>
   );
