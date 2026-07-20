@@ -344,6 +344,9 @@ interface Props {
   // `od-share-to-community` trigger prompt.
   onShareToOpenDesign?: () => void;
   shareToOpenDesignBusy?: boolean;
+  // Consecutive messages from the same assistant share one identity header.
+  // ChatPane sets this false after the first item in a contiguous run.
+  showRole?: boolean;
   // True only for the most recent assistant message.
   isLast?: boolean;
   // Assistant message id whose run-failure error is rendered as ChatPane's
@@ -416,6 +419,7 @@ const ASSISTANT_MESSAGE_COMPARED_PROPS: Array<keyof Props> = [
   'onRequestPluginFolderAgentAction',
   'activePluginActionPaths',
   'hiddenPluginActionPaths',
+  'showRole',
   'isLast',
   'errorCardOwnerId',
   'nextUserContent',
@@ -482,6 +486,7 @@ function AssistantMessageImpl({
   hiddenPluginActionPaths = new Set(),
   onShareToOpenDesign,
   shareToOpenDesignBusy = false,
+  showRole = true,
   isLast,
   errorCardOwnerId = null,
   nextUserContent,
@@ -818,11 +823,13 @@ function AssistantMessageImpl({
   }
 
   return (
-    <div className="msg assistant">
-      <div className="role">
-        <AgentIcon id={roleIconId} size={20} className="role-agent-icon" />
-        <span className="role-name">{roleName}</span>
-      </div>
+    <div className={`msg assistant${showRole ? '' : ' assistant-continuation'}`}>
+      {showRole ? (
+        <div className="role">
+          <AgentIcon id={roleIconId} size={20} className="role-agent-icon" />
+          <span className="role-name">{roleName}</span>
+        </div>
+      ) : null}
       <div className="assistant-flow">
         {taskActivity ? (
           <TaskActivityCard
@@ -3205,16 +3212,6 @@ function TaskActivityCard({
                 />
               );
             })}
-            {!running && !hasError ? (
-              <div className="task-activity-terminal" data-testid="task-activity-terminal">
-                <div className="op-card-head">
-                  <span className="op-status op-status-category" aria-hidden>
-                    <Icon name="check" size={14} />
-                  </span>
-                  <span className="op-title">{t("tool.done")}</span>
-                </div>
-              </div>
-            ) : null}
           </div>
         </div>
       </div>

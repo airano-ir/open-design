@@ -77,6 +77,7 @@ vi.mock('../../src/components/AssistantMessage', () => ({
     shareToOpenDesignBusy,
     showConversationTodoCard,
     conversationTodoInput,
+    showRole,
   }: {
     streaming: boolean;
     message: ChatMessage;
@@ -88,8 +89,10 @@ vi.mock('../../src/components/AssistantMessage', () => ({
       todos?: Array<{ content: string; status?: string }>;
       plan?: Array<{ content?: string; step?: string; status?: string }>;
     } | null;
+    showRole?: boolean;
   }) => (
     <>
+      <output data-testid={`assistant-role-${message.id}`}>{showRole === false ? 'continued' : 'shown'}</output>
       <output data-testid={`assistant-streaming-${message.id}`}>{streaming ? 'streaming' : 'idle'}</output>
       <output data-testid={`assistant-last-${message.id}`}>{isLast ? 'last' : 'not-last'}</output>
       {showConversationTodoCard && conversationTodoInput ? (
@@ -635,6 +638,40 @@ describe('ChatPane streaming state', () => {
     // longer rendered in the bubble, even though the full snapshot still
     // rides the run for the agent.
     expect(screen.queryByText('template.json')).toBeNull();
+  });
+
+  it('shows one identity header for consecutive replies from the same assistant', () => {
+    const messages: ChatMessage[] = [
+      { id: 'assistant-1', role: 'assistant', content: 'First stage', createdAt: 1, agentId: 'claude' },
+      { id: 'assistant-2', role: 'assistant', content: 'Second stage', createdAt: 2, agentId: 'claude' },
+      { id: 'assistant-3', role: 'assistant', content: 'Different assistant', createdAt: 3, agentId: 'codex' },
+      { id: 'user-1', role: 'user', content: 'Continue', createdAt: 4 },
+      { id: 'assistant-4', role: 'assistant', content: 'After user turn', createdAt: 5, agentId: 'codex' },
+    ] as ChatMessage[];
+
+    render(
+      <ChatPane
+        projectKindForTracking="prototype"
+        messages={messages}
+        streaming={false}
+        error={null}
+        projectId="project-1"
+        projectFiles={[]}
+        onEnsureProject={async () => 'project-1'}
+        onSend={vi.fn()}
+        onStop={vi.fn()}
+        conversations={conversations}
+        activeConversationId="conv-1"
+        onSelectConversation={vi.fn()}
+        onDeleteConversation={vi.fn()}
+        projectMetadata={projectMetadata}
+      />,
+    );
+
+    expect(screen.getByTestId('assistant-role-assistant-1').textContent).toBe('shown');
+    expect(screen.getByTestId('assistant-role-assistant-2').textContent).toBe('continued');
+    expect(screen.getByTestId('assistant-role-assistant-3').textContent).toBe('shown');
+    expect(screen.getByTestId('assistant-role-assistant-4').textContent).toBe('shown');
   });
 
   it('shows applied context again only when the configuration changes', () => {

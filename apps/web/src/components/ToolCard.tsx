@@ -264,8 +264,8 @@ export function TodoCard({
           onClick={() => setOverrideExpanded(!expanded)}
           title={expanded ? t('tool.todosCollapse') : t('tool.todosExpand')}
         >
-          <span className={`op-todo-icon${allComplete ? ' is-complete' : ''}`} aria-hidden>
-            <Icon name={allComplete ? 'check' : 'kanban'} size={14} strokeWidth={2} />
+          <span className="op-todo-icon" aria-hidden>
+            <Icon name="kanban" size={14} strokeWidth={2} />
           </span>
           <span className="op-title">{t('tool.todos')}</span>
           <span className="op-meta">
@@ -287,8 +287,9 @@ export function TodoCard({
             className="op-todo-done"
             onClick={() => onDismiss?.()}
             title={t('tool.todosDismiss')}
+            aria-label={t('tool.todosDismiss')}
           >
-            {t('tool.todosDone')}
+            <Icon name="close" size={12} />
           </button>
         ) : null}
         {showContinue ? (
@@ -657,13 +658,20 @@ function ResultBadge({
   runSucceeded: boolean;
 }) {
   const t = useT();
-  if (!result && !runStreaming && !runSucceeded) return <span className="op-status op-status-error" title={t('tool.error')}><Icon name="close" size={14} /></span>;
-  if (result?.isError) return <span className="op-status op-status-error" title={result.content || t('tool.error')}><Icon name="close" size={14} /></span>;
+  const failed = result?.isError || (!result && !runStreaming && !runSucceeded);
+  const completed = !failed && (!!result || (!runStreaming && runSucceeded));
+  const state = failed ? 'error' : completed ? 'completed' : 'running';
+  const title = failed
+    ? result?.content || t('tool.error')
+    : completed
+      ? t('tool.done')
+      : t('tool.running');
   return (
     <span
-      className={`op-status op-status-category${runStreaming && !result ? ' op-status-running' : ''}`}
+      className={`op-status op-status-category${completed ? ' op-status-done' : ''}`}
       data-tool-category={icon}
-      title={runStreaming && !result ? t('tool.running') : t('tool.done')}
+      data-tool-state={state}
+      title={title}
     >
       <Icon name={icon} size={14} />
     </span>

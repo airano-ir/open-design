@@ -29,13 +29,28 @@ describe('ToolCard secondary result disclosures', () => {
 
     const head = container.querySelector<HTMLButtonElement>('.op-search .op-card-head');
     const disclosure = container.querySelector('.op-search .accordion-collapsible');
+    const status = container.querySelector('[data-tool-category="search"]');
     expect(head?.getAttribute('aria-expanded')).toBe('false');
     expect(disclosure?.classList.contains('open')).toBe(false);
+    expect(status?.getAttribute('data-tool-state')).toBe('completed');
+    expect(status?.classList.contains('op-status-done')).toBe(true);
 
     fireEvent.click(head as HTMLButtonElement);
     expect(head?.getAttribute('aria-expanded')).toBe('true');
     expect(disclosure?.classList.contains('open')).toBe(true);
     expect(container.textContent).toContain('src/app.ts:12: TODO');
+  });
+
+  it('keeps a failed read identifiable as a read tool instead of replacing its icon with a status icon', () => {
+    const { container } = renderTool(
+      { kind: 'tool_use', id: 'read-error', name: 'Read', input: { file_path: '/repo/missing.ts' } },
+      { kind: 'tool_result', toolUseId: 'read-error', content: 'File not found', isError: true },
+    );
+
+    const status = container.querySelector('[data-tool-category="eye"]');
+    expect(status?.getAttribute('data-tool-state')).toBe('error');
+    expect(status?.classList.contains('op-status-category')).toBe(true);
+    expect(status?.classList.contains('op-status-done')).toBe(false);
   });
 
   it('keeps read contents hidden until the read row opens', () => {

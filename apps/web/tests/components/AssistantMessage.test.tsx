@@ -59,6 +59,21 @@ function producedFile(name: string): ProjectFile {
 }
 
 describe('AssistantMessage feedback gate', () => {
+  it('omits the repeated identity header for a consecutive assistant reply', () => {
+    const { container } = render(
+      <AssistantMessage
+        message={baseMessage()}
+        streaming={false}
+        projectId="proj-1"
+        showRole={false}
+      />,
+    );
+
+    expect(container.querySelector('.msg.assistant-continuation')).toBeTruthy();
+    expect(container.querySelector('.msg .role')).toBeNull();
+    expect(container.textContent).toContain('Done.');
+  });
+
   it('copies the raw assistant markdown from the completion footer', async () => {
     const originalClipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
     const writeText = vi.fn().mockResolvedValue(undefined);

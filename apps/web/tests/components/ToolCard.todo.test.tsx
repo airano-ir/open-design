@@ -26,6 +26,7 @@ describe('TodoCard completion disclosure', () => {
     const toggle = container.querySelector<HTMLButtonElement>('button.op-todo-toggle');
     expect(toggle?.textContent).toContain('3/3');
     expect(toggle?.textContent).toContain('Done');
+    expect(container.querySelector('.op-todo-icon')).not.toHaveClass('is-complete');
     expect(toggle?.getAttribute('aria-expanded')).toBe('false');
     expect(container.querySelector('.op-todo')).toHaveClass('op-todo-collapsed');
     expect(container.querySelector('.accordion-collapsible')).not.toHaveClass('open');

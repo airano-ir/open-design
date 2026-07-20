@@ -178,10 +178,10 @@
 
 .scorecard {
   padding: 0;
-  border: 1px solid var(--border-soft, var(--border));
-  border-radius: var(--radius-md, 8px);
-  background: var(--bg-panel);
-  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
 }
 
 .scorecardHead {
@@ -189,7 +189,7 @@
   align-items: center;
   gap: 8px;
   width: 100%;
-  padding: 9px 12px;
+  padding: 5px 0;
   border: 0;
   background: transparent;
   color: inherit;
@@ -200,12 +200,12 @@
 }
 
 .scorecardHead:hover {
-  background: var(--bg-subtle);
+  background: transparent;
 }
 
 .scorecardHead:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--accent) 38%, transparent);
-  outline-offset: -2px;
+  outline-offset: 2px;
 }
 
 .scorecardPill {
@@ -270,7 +270,7 @@
 
 .scoreRows {
   list-style: none;
-  margin: 0 12px 10px;
+  margin: 0 0 4px;
   padding: 10px 0 0;
   border-top: 1px solid var(--border-soft, var(--border));
   display: flex;

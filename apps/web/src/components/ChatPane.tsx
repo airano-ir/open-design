@@ -3005,6 +3005,21 @@ function ChatRows({
     }
     return byMessageId;
   }, [activeDesignSystem, activePluginSnapshot, messages, nextStepSkills]);
+  const assistantRoleByMessageId = useMemo(() => {
+    const byMessageId = new Map<string, boolean>();
+    let previousAssistantIdentity: string | null = null;
+
+    for (const message of messages) {
+      if (message.role !== 'assistant') {
+        previousAssistantIdentity = null;
+        continue;
+      }
+      const identity = message.agentId ?? message.agentName ?? 'assistant';
+      byMessageId.set(message.id, identity !== previousAssistantIdentity);
+      previousAssistantIdentity = identity;
+    }
+    return byMessageId;
+  }, [messages]);
   const virtualized = items.length > CHAT_MESSAGE_VIRTUALIZE_THRESHOLD;
   const virtualWindow = useMeasuredVirtualWindow(items, {
     enabled: virtualized,
@@ -3062,6 +3077,7 @@ function ChatRows({
             : undefined
         }
         shareToOpenDesignBusy={shareToOpenDesignBusyMessageId === m.id}
+        showRole={assistantRoleByMessageId.get(m.id) ?? true}
         isLast={m.id === lastAssistantId}
         errorCardOwnerId={errorCardOwnerId}
         nextUserContent={nextUserContentByAssistantId.get(m.id)}

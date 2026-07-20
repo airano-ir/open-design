@@ -214,8 +214,8 @@ describe('AssistantMessage tool status', () => {
     expect(activity.textContent).toContain('error');
     expect(activity.getAttribute('data-run-state')).toBe('error');
     expect(activity.querySelector('.task-activity-status')).toBeNull();
-    expect(container.querySelector('.op-status-error')).not.toBeNull();
-    expect(container.querySelector('.op-status-ok')).toBeNull();
+    expect(container.querySelector('[data-tool-category="terminal"][data-tool-state="error"]')).not.toBeNull();
+    expect(container.querySelector('.op-status-done')).toBeNull();
   });
 
   it('does not show Done when a canceled run is missing a tool result', () => {
@@ -240,8 +240,8 @@ describe('AssistantMessage tool status', () => {
     );
 
     expect(screen.getByTestId('task-activity-toggle').textContent).toContain('error');
-    expect(container.querySelector('.op-status-error')).not.toBeNull();
-    expect(container.querySelector('.op-status-ok')).toBeNull();
+    expect(container.querySelector('[data-tool-category="terminal"][data-tool-state="error"]')).not.toBeNull();
+    expect(container.querySelector('.op-status-done')).toBeNull();
   });
 
   it('keeps Running for a streaming tool use that has no tool result', () => {
@@ -272,8 +272,8 @@ describe('AssistantMessage tool status', () => {
     expect(activity.getAttribute('data-run-state')).toBe('running');
     expect(screen.queryByTestId('task-activity-toggle')).toBeNull();
     expect(activity.querySelector('.task-activity-complete-icon')).toBeNull();
-    expect(container.querySelector('[data-tool-category="terminal"].op-status-running')).not.toBeNull();
-    expect(container.querySelector('.op-status-ok')).toBeNull();
+    expect(container.querySelector('[data-tool-category="terminal"][data-tool-state="running"]')).not.toBeNull();
+    expect(container.querySelector('.op-status-done')).toBeNull();
   });
 
   it('replaces the single live progress row and collapses the history when prose starts', () => {
@@ -367,10 +367,7 @@ describe('AssistantMessage tool status', () => {
     const activityCard = activity.closest('.task-activity');
     expect(activityCard?.querySelector('.thinking-block')).not.toBeNull();
     expect(activityCard?.querySelector('[data-tool-category="eye"]')).not.toBeNull();
-    const terminal = screen.getByTestId('task-activity-terminal');
-    expect(terminal.textContent).toContain('done');
-    expect(terminal.querySelector('.op-status.op-status-category')).not.toBeNull();
-    expect(terminal.querySelector('.op-title')).not.toBeNull();
+    expect(screen.queryByTestId('task-activity-terminal')).toBeNull();
   });
 
   it('renders URLs in JSON-like status details without trailing structural characters', () => {

@@ -686,11 +686,13 @@
 
 /* op-todo card variant (the .op-todo .todo-list rule already exists above) */
 .op-todo {
-  border-color: var(--accent-soft);
-  background: linear-gradient(180deg, var(--accent-tint) 0%, var(--bg-panel) 60%);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 .op-todo .op-card-head {
-  border-bottom: 1px solid color-mix(in srgb, var(--accent-soft) 70%, transparent);
+  border-bottom: 0;
   background: transparent;
 }
 .op-todo .op-title {
@@ -730,10 +732,10 @@
   pointer-events: none;
 }
 .chat-pinned-todo .op-card.op-todo {
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-  border-bottom: 0;
+  box-shadow: none;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 /*
@@ -795,13 +797,7 @@
   flex: 0 0 18px;
   width: 18px;
   height: 18px;
-  color: var(--accent);
-}
-.op-todo .op-todo-icon.is-complete {
-  border: 1px solid var(--green-border);
-  border-radius: 50%;
-  background: var(--green-bg);
-  color: var(--green);
+  color: var(--text-muted);
 }
 .op-todo .op-todo-complete {
   color: var(--green);
@@ -811,18 +807,20 @@
 .op-todo .op-todo-done {
   display: inline-flex;
   align-items: center;
-  margin: 6px 10px 6px 0;
-  padding: 2px 12px;
-  font-size: 11px;
-  font-weight: 500;
-  border: 1px solid var(--green-border);
-  border-radius: var(--radius-pill);
-  background: var(--green-bg);
-  color: var(--green);
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin: 4px 8px 4px 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-faint);
   cursor: pointer;
 }
 .op-todo .op-todo-done:hover {
-  filter: brightness(1.05);
+  background: var(--bg-subtle);
+  color: var(--text);
 }
 .op-todo .op-todo-continue {
   display: inline-flex;
@@ -841,9 +839,6 @@
 }
 .op-todo .op-todo-continue:hover {
   background: var(--bg-subtle);
-}
-.op-todo-collapsed .op-card-head {
-  border-bottom-color: transparent;
 }
 .op-todo-current {
   margin-left: 8px;
