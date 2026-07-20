@@ -1297,16 +1297,21 @@
 }
 /* Frosted top edge: content scrolling up toward the (transparent) tab strip
    melts into a progressive blur instead of hard-clipping at the row
-   boundary. Sticky first-child band + gradient mask; the material token
-   degrades it away under reduced transparency / no backdrop-filter. */
+   boundary. The material token degrades it away under reduced transparency /
+   no backdrop-filter.
+   Absolute, not a sticky band with a negative margin: that pulled the first
+   32px of content above the scroll port, which only looked right while the
+   entry topbar still sat above it. With the topbar gone (#5517) it clipped
+   every section's title and toolbar row. */
 .entry-main--scroll::before {
   content: '';
-  position: sticky;
+  position: absolute;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 20;
   display: block;
   height: 32px;
-  margin-bottom: -32px;
   pointer-events: none;
   -webkit-backdrop-filter: var(--material-ultrathin-backdrop, none);
   backdrop-filter: var(--material-ultrathin-backdrop, none);
