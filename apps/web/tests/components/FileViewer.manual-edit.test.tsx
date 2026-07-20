@@ -349,6 +349,92 @@ describe('FileViewer manual edit regressions', () => {
     });
   });
 
+  it('flushes a pending toolbar style before switching to another target', async () => {
+    const source = '<!doctype html><html><body><main data-od-id="hero">Hero</main><footer data-od-id="footer">Footer</footer></body></html>';
+    const { fetchMock, savedBodies } = manualEditWriteMock(source);
+    vi.stubGlobal('fetch', fetchMock);
+    render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={htmlPreviewFile()}
+        liveHtml={source}
+      />,
+    );
+
+    clickManualTool('manual-edit-mode-toggle');
+    const frame = await previewFrame();
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-select', target: heroTarget() },
+        source: frame.contentWindow,
+      }));
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-text-selection', id: 'hero', hasRange: true },
+        source: frame.contentWindow,
+      }));
+    });
+    fireEvent.click(await screen.findByRole('button', { name: 'Font size' }));
+    fireEvent.click(screen.getByRole('button', { name: '32px' }));
+
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: {
+          type: 'od-edit-select',
+          target: {
+            ...heroTarget(),
+            id: 'footer',
+            label: 'Footer',
+            text: 'Footer',
+            outerHtml: '<footer data-od-id="footer">Footer</footer>',
+          },
+        },
+        source: frame.contentWindow,
+      }));
+    });
+
+    await waitFor(() => expect(savedBodies).toHaveLength(1));
+    expect(savedBodies[0]!.content).toContain('data-od-id="hero" style="font-size: 32px;"');
+  });
+
+  it('flushes a pending toolbar style before duplicating against the latest source', async () => {
+    const source = '<!doctype html><html><body><main data-od-id="hero">Hero</main><footer data-od-id="footer">Footer</footer></body></html>';
+    const { fetchMock, savedBodies } = manualEditWriteMock(source);
+    vi.stubGlobal('fetch', fetchMock);
+    render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={htmlPreviewFile()}
+        liveHtml={source}
+      />,
+    );
+
+    clickManualTool('manual-edit-mode-toggle');
+    const frame = await previewFrame();
+    const postSpy = vi.spyOn(frame.contentWindow!, 'postMessage');
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-select', target: heroTarget() },
+        source: frame.contentWindow,
+      }));
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-text-selection', id: 'hero', hasRange: true },
+        source: frame.contentWindow,
+      }));
+    });
+    fireEvent.click(await screen.findByRole('button', { name: 'Font size' }));
+    fireEvent.click(screen.getByRole('button', { name: '32px' }));
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-text-selection', id: 'hero', hasRange: false },
+        source: frame.contentWindow,
+      }));
+    });
+    fireEvent.click(await screen.findByTestId('manual-edit-duplicate'));
+    await ackApplyDom(frame, postSpy);
+
+    await waitFor(() => expect(savedBodies).toHaveLength(2));
+    expect(savedBodies[0]!.content).toContain('data-od-id="hero" style="font-size: 32px;"');
+    expect(savedBodies[0]!.content.match(/<main/g)).toHaveLength(1);
+    expect(savedBodies[1]!.content).toContain('data-od-id="hero" style="font-size: 32px;"');
+    expect(savedBodies[1]!.content.match(/<main/g)).toHaveLength(2);
+  });
+
   it('does not let a pending manual edit style save survive a file switch', async () => {
     const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
       const url = typeof input === 'string' ? input : input instanceof Request ? input.url : String(input);

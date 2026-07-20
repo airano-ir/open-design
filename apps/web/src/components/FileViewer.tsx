@@ -8456,7 +8456,7 @@ function HtmlViewer({
         return;
       }
       if (data.type === 'od-edit-delete-request') {
-        void applyManualEdit({ id: String(data.id), kind: 'remove-element' }, t('manualEdit.deleteElement'));
+        void removeManualEditTarget(String(data.id));
         return;
       }
       if (data.type === 'od-edit-duplicate-request') {
@@ -8464,7 +8464,7 @@ function HtmlViewer({
         return;
       }
       if (data.type === 'od-edit-copy-request') {
-        copyManualEditElement(String(data.id || ''));
+        void copyManualEditElement(String(data.id || ''));
         return;
       }
       if (data.type === 'od-edit-paste-request') {
@@ -8631,6 +8631,7 @@ function HtmlViewer({
     const pending = manualEditPendingStyleRef.current;
     if (!pending) return true;
     if (manualEditSavingRef.current) return false;
+    clearManualEditStyleTimer();
     manualEditPendingStyleRef.current = null;
     return applyManualEdit({ id: pending.id, kind: 'set-style', styles: pending.styles }, pending.label);
   }
@@ -8748,8 +8749,12 @@ function HtmlViewer({
     target: ManualEditTarget,
     options?: { openInspector?: boolean },
   ) {
+    const changingTarget = selectedManualEditTargetIdRef.current !== target.id;
+    const pendingStyleBelongsElsewhere = Boolean(
+      manualEditPendingStyleRef.current && manualEditPendingStyleRef.current.id !== target.id,
+    );
+    if ((changingTarget || pendingStyleBelongsElsewhere) && !(await settleManualEditHistoryBoundary())) return;
     setManualEditPageStylesOpen(false);
-    if (manualEditPendingStyleRef.current?.id !== target.id) cancelManualEditStyleDraft();
     const base = sourceRef.current ?? '';
     const nextDraft = manualEditDraftForTarget(target, base);
     selectedManualEditTargetIdRef.current = target.id;
@@ -8781,10 +8786,9 @@ function HtmlViewer({
     // If an inline edit is still live (e.g. clearing the selection from the
     // panel mid-edit), commit it first so it is not lost. Keep the selection
     // and the error if that commit fails.
-    if (!(await settlePendingManualEditCommit())) {
+    if (!(await settleManualEditHistoryBoundary())) {
       return;
     }
-    cancelManualEditStyleDraft();
     selectedManualEditTargetIdRef.current = null;
     manualEditSelectionDraftRef.current = null;
     manualEditTextSessionIdRef.current = null;
@@ -8905,6 +8909,9 @@ function HtmlViewer({
   async function cancelManualEditPanel() {
     if (manualEditTextSessionIdRef.current) await finishManualEditTextSession(false);
     if (selectedManualEditTarget) {
+      // Cancel is the explicit discard path. Other selection-clearing gestures
+      // (background click / target switch) flush the toolbar's autosave first.
+      cancelManualEditStyleDraft();
       void clearManualEditTargetSelection();
     } else {
       cancelManualEditStyleDraft();
@@ -9405,7 +9412,7 @@ function HtmlViewer({
   }
 
   async function duplicateManualEditTarget(id: string) {
-    if (!(await settlePendingManualEditCommit())) return;
+    if (!(await settleManualEditHistoryBoundary())) return;
     // Selection hand-off to the clone is armed inside the in-place apply
     // layer, which reads the clone's real id back from the saved source (so
     // it also works for authored data-od-id anchors, and after a fallback
@@ -9420,8 +9427,9 @@ function HtmlViewer({
   // Element-level clipboard (Cmd/Ctrl+C): stores the selected element's
   // SOURCE outerHTML — not the runtime DOM — so paste round-trips through the
   // same sanitized insert path regardless of what page scripts did live.
-  function copyManualEditElement(id: string) {
+  async function copyManualEditElement(id: string) {
     if (!id || id === '__body__') return;
+    if (!(await settleManualEditHistoryBoundary())) return;
     const html = readManualEditOuterHtml(sourceRef.current ?? '', id);
     if (!html) return;
     manualEditClipboardRef.current = { html, fromId: id };
@@ -9481,11 +9489,16 @@ function HtmlViewer({
   // derivation duplicate-element uses; '__body__' appends, no hand-off).
   async function insertManualEditHtml(anchorId: string, html: string, label: string): Promise<boolean> {
     if (!anchorId) return false;
-    if (!(await settlePendingManualEditCommit())) return false;
+    if (!(await settleManualEditHistoryBoundary())) return false;
     // Selection hand-off to the inserted element is armed inside the in-place
     // apply layer from the saved source (correct for both positional-path and
     // authored data-od-id anchors, and across the reload fallback).
     return applyManualEdit({ id: anchorId, kind: 'insert-html', html }, label);
+  }
+
+  async function removeManualEditTarget(id: string) {
+    if (!(await settleManualEditHistoryBoundary())) return;
+    await applyManualEdit({ id, kind: 'remove-element' }, t('manualEdit.deleteElement'));
   }
 
   // Persist a completed drag gesture (move / edge resize) through the same
@@ -11862,10 +11875,7 @@ function HtmlViewer({
             }
           : undefined}
         onDelete={() => {
-          void applyManualEdit(
-            { id: selectedManualEditTarget.id, kind: 'remove-element' },
-            t('manualEdit.deleteElement'),
-          );
+          void removeManualEditTarget(selectedManualEditTarget.id);
         }}
         onReplaceImage={selectedManualEditTarget.kind === 'image'
           ? (pickedFile) => {
