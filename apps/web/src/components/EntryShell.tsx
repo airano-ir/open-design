@@ -743,6 +743,22 @@ export function EntryShell({
     return () => window.cancelAnimationFrame(frame);
   }, [homePromptHandoff?.id, view]);
 
+  // The frosted top edge exists to melt content that scrolls UP under the tab
+  // strip. At rest nothing is under it, but it blurred anyway — and because
+  // `.entry-main__inner` starts its content at 12px, every page's h2 sat inside
+  // that 32px band and read as a smudged dark block behind the title
+  // (acceptance #28). Gate the blur on actually being scrolled.
+  useEffect(() => {
+    const scrollContainer = entryMainScrollRef.current;
+    if (!scrollContainer) return;
+    const sync = () => {
+      scrollContainer.classList.toggle('is-scrolled', scrollContainer.scrollTop > 0);
+    };
+    sync();
+    scrollContainer.addEventListener('scroll', sync, { passive: true });
+    return () => scrollContainer.removeEventListener('scroll', sync);
+  }, [view]);
+
   useEffect(() => {
     setIntegrationTab(integrationInitialTab);
   }, [integrationInitialTab]);
