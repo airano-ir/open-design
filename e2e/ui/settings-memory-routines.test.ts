@@ -1,11 +1,9 @@
 import { expect, test } from '@/playwright/suite';
-import { ensureRailOpen } from '@/playwright/rail';
 import { routeAgents } from '@/playwright/mock-factory';
 import type { Page } from '@playwright/test';
-import { openSettingsDialog } from '../lib/playwright/amr.js';
+import { openSettingsDialog, settingsSurface } from '../lib/playwright/amr.js';
 
 const STORAGE_KEY = 'open-design:config';
-const OPEN_SETTINGS_LABEL = /Open settings|打开设置|開啟設定/i;
 
 test.describe.configure({ timeout: 30_000 });
 
@@ -96,7 +94,9 @@ async function gotoEntryHome(page: Page) {
   if (await privacyDialog.isVisible()) {
     await privacyDialog.getByRole('button', { name: /I get it|not now|got it|don't share/i }).click();
   }
-  await expect(page.getByRole('button', { name: OPEN_SETTINGS_LABEL })).toBeVisible();
+  // #5517 moved the settings entry into the collapsed-by-default nav rail, so it
+  // is not in the accessibility tree on load; the hero is the ready signal now.
+  await expect(page.getByTestId('home-hero')).toBeVisible();
 }
 
 async function openSettings(page: Page) {
@@ -537,7 +537,7 @@ test.describe('Settings Memory and Automations flows', () => {
     await expect(dialog.locator('.memory-flash-pill')).toContainText('Memory created');
 
     await dialog.getByRole('button', { name: 'Close', exact: true }).click();
-    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(settingsSurface(page)).toHaveCount(0);
 
     const reopened = await openMemorySettings(page);
     await expect(reopened.getByText('UI preferences')).toBeVisible();
@@ -2224,8 +2224,9 @@ test.describe('Settings Memory and Automations flows', () => {
     });
 
     await gotoEntryHome(page);
-    await ensureRailOpen(page);
-    await page.getByTestId('entry-nav-tasks').click();
+    // #5517's rail dropped the Automations destination; /automations is still
+    // the route the view lives on.
+    await page.goto('/automations', { waitUntil: 'domcontentloaded' });
     const view = page.getByTestId('tasks-view');
     await expect(view.getByRole('heading', { name: 'Automations', exact: true })).toBeVisible();
 
@@ -2295,8 +2296,9 @@ test.describe('Settings Memory and Automations flows', () => {
     });
 
     await gotoEntryHome(page);
-    await ensureRailOpen(page);
-    await page.getByTestId('entry-nav-tasks').click();
+    // #5517's rail dropped the Automations destination; /automations is still
+    // the route the view lives on.
+    await page.goto('/automations', { waitUntil: 'domcontentloaded' });
     const view = page.getByTestId('tasks-view');
 
     await view.getByRole('button', { name: 'New automation' }).click();

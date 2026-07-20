@@ -187,7 +187,13 @@ async function openVisualPluginsCatalog(page: import('@playwright/test').Page) {
   await page.getByTestId('entry-nav-plugins').click();
   await expect(page).toHaveURL(/\/plugins$/);
   const plugins = page.getByTestId('entry-view-plugins');
-  await expect(plugins.getByRole('heading', { name: 'Plugins', exact: true })).toBeVisible();
+  // #5517 renamed the surface: the view renders `entry.navExtensions`.
+  await expect(plugins.getByRole('heading', { name: 'Extensions', exact: true })).toBeVisible();
+  // The marketplace opens on the 官方 scope, which is fed by `/api/marketplaces`
+  // — empty in this harness. The visual fixture plugins are user-installed, so
+  // switch to 个人; it is also the only scope whose cards carry the per-card
+  // overflow menu (share / unshare / uninstall) the menu captures need.
+  await plugins.getByTestId('plugins-tab-installed').click();
   return plugins;
 }
 

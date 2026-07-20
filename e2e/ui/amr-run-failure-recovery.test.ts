@@ -18,6 +18,7 @@ import {
   putAppConfig,
   seedBrowserConfig,
   sendPrompt,
+  settingsSurface,
   STORAGE_KEY,
 } from '@/playwright/amr';
 
@@ -216,7 +217,7 @@ test('[P0] @critical AMR auth failures offer inline Authorize & retry sign-in an
   // POSTs /login directly) instead of bouncing the user out to the Settings
   // dialog. The run then auto-retries once /status reports signed in.
   await expect.poll(() => loginRequested, { timeout: T.medium }).toBe(true);
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(settingsSurface(page)).toHaveCount(0);
   await expect(page.getByText('AMR auth auto retry recovered.').first()).toBeVisible({ timeout: T.long });
 });
 
@@ -315,7 +316,7 @@ test('[P0] @critical AMR model catalog invalid-key failures authorize and auto-r
 
   await authorizeAndRetry.click();
   await expect.poll(() => loginRequested, { timeout: T.medium }).toBe(true);
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(settingsSurface(page)).toHaveCount(0);
   await expect(page.getByText('AMR model catalog auth retry recovered.').first()).toBeVisible({ timeout: T.long });
 });
 
@@ -417,7 +418,7 @@ test('[P0] @critical non-AMR model failures promote Open Design AMR and auto-ret
   await expect(switchAndRetry).toBeVisible({ timeout: T.long });
   await switchAndRetry.click();
 
-  const settings = page.getByRole('dialog');
+  const settings = settingsSurface(page);
   await expect(settings).toBeVisible({ timeout: T.long });
   await expect
     .poll(async () => {
@@ -483,7 +484,7 @@ test('[P0] @critical Settings reopens AMR with the configured profile, account b
   await expect(modelPopover.getByRole('option', { name: /glm-5/i })).toBeVisible();
   await settings.getByRole('heading', { name: /Execution/i }).click();
   await settings.getByRole('button', { name: 'Close', exact: true }).click();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(settingsSurface(page)).toHaveCount(0);
 
   const reopened = await openExecutionSettingsDialog(page);
   await expect(reopened.getByTestId('settings-agent-select-amr')).toHaveAttribute('aria-pressed', 'true');

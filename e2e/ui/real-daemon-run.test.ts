@@ -591,7 +591,18 @@ test('[P1] BYOK OpenCode run fails clearly before spawn when provider config is 
   expect(await listProjectFiles(page, projectId)).toEqual([]);
 });
 
-test('[P1] plugin authoring produces a generated-plugin scaffold with action cards', async ({ page }) => {
+// BLOCKED — no UI entry point left for agent-driven plugin authoring.
+//
+// This spec used to start from the Home rail's More-shortcuts menu ("Create a
+// plugin", `home-hero-rail-create-plugin`), which #5517 deleted along with the
+// rest of the rail. The daemon-side capability is intact and
+// `EntryShell.startPluginAuthoring` / `createPluginAuthoringHandoff` are still
+// wired, but nothing calls them any more: `EntryShell` hands
+// `onCreatePlugin={startPluginAuthoring}` to `ExtensionsMarketplace`, which
+// only uses the prop as a boolean gate for a Create button that opens the
+// import/upload dialog instead. Restore an entry point (or re-point this spec
+// at it) before un-fixme-ing — do not weaken the assertions to make it pass.
+test.fixme('[P1] plugin authoring produces a generated-plugin scaffold with action cards', async ({ page }) => {
   await configureFakeAgent(page, 'codex');
   await installBrowserAgentConfig(page, 'codex');
   await gotoEntryHome(page);

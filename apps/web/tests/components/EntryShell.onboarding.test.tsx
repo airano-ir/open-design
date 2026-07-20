@@ -5,7 +5,6 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { EntryShell } from '../../src/components/EntryShell';
-import { ENTRY_RAIL_TOGGLE_EVENT } from '../../src/components/entryRailBridge';
 import { AMR_LOGIN_TIMEOUT_MS } from '../../src/components/amrLoginPolling';
 import { I18nProvider } from '../../src/i18n';
 import type { AgentInfo, AppConfig } from '../../src/types';
@@ -337,72 +336,13 @@ describe('EntryShell design systems view', () => {
 });
 
 describe('EntryShell new project rail', () => {
-  it('creates a blank project directly from the rail plus', async () => {
-    window.localStorage.setItem('od.entry.railOpen', 'false');
-    const fetchMock = vi.fn(
-      async (input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) => {
-        const url = typeof input === 'string' ? input : input instanceof Request ? input.url : String(input);
-        if (url.endsWith('/api/projects') && init?.method === 'POST') {
-          return jsonResponse({
-            project: {
-              id: 'blank-project-1',
-              name: 'Untitled',
-              createdAt: Date.now(),
-              updatedAt: Date.now(),
-            },
-            conversationId: 'conversation-1',
-          });
-        }
-        if (url.endsWith('/api/community/discord')) {
-          return jsonResponse({
-            inviteCode: 'mHAjSMV6gz',
-            inviteUrl: 'https://discord.gg/mHAjSMV6gz',
-            onlineCount: 0,
-            memberCount: 0,
-            fetchedAt: Date.now(),
-            stale: false,
-          });
-        }
-        if (url.endsWith('/api/github/open-design')) {
-          return jsonResponse({
-            repo: 'nexu-io/open-design',
-            stargazers_count: 0,
-            fetchedAt: Date.now(),
-            stale: false,
-          });
-        }
-        return jsonResponse({});
-      });
-    globalThis.fetch = fetchMock as typeof fetch;
-    const props = renderHome();
-
-    // The rail toggle lives in the workspace tabs bar (a sibling tree), which
-    // this render doesn't mount — expand through the bridge event instead.
-    act(() => {
-      window.dispatchEvent(new CustomEvent(ENTRY_RAIL_TOGGLE_EVENT));
-    });
-    fireEvent.click(screen.getByTestId('entry-nav-new-project'));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('new-project-modal')).toBeTruthy();
-    });
-    expect(screen.getByTestId('new-project-panel')).toBeTruthy();
-    expect(props.onOpenProject).not.toHaveBeenCalled();
-    expect(props.onCreateProject).not.toHaveBeenCalled();
-    const createCall = fetchMock.mock.calls.find(
-      ([input, init]) => input === '/api/projects' && init?.method === 'POST',
-    );
-    expect(createCall).toBeUndefined();
-    expect(analyticsMocks.track).toHaveBeenCalledWith(
-      'ui_click',
-      expect.objectContaining({
-        page_name: 'home',
-        area: 'nav',
-        element: 'new_project_plus',
-      }),
-      undefined,
-    );
-  });
+  // The rail's "+ New project" button (`entry-nav-new-project`) is gone in
+  // #5517's rail: `EntryShell` still passes `onNewProject` — with its
+  // `new_project_plus` ui_click — to `EntryNavRail`, but the rail never renders
+  // a control that calls it, so the button and that analytics event are both
+  // unreachable. The spec that drove it is therefore removed; opening the
+  // new-project modal is still covered by the Projects-view CTA below, which is
+  // the surviving entry point.
 
   it('opens the new project modal from the Projects view new-project button', async () => {
     const fetchMock = vi.fn(

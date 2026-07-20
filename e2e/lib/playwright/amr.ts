@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
+import { ensureRailOpen } from './rail.js';
 import { T } from '@/timeouts';
 
 export const STORAGE_KEY = 'open-design:config';
@@ -91,9 +92,35 @@ export async function expectWorkspaceReady(page: Page) {
   await expect(page.getByTestId('chat-composer-input')).toBeVisible();
 }
 
+/**
+ * #5517 moved the entry settings chip into the nav rail footer. The rail is
+ * collapsed by default and carries `inert` while collapsed, so the chip is
+ * present but neither focusable nor clickable — even a programmatic
+ * `element.click()` is a no-op — and `getByRole` cannot see it at all because
+ * the collapsed rail is `aria-hidden`. Expand the rail first whenever we are on
+ * an entry view; inside a project workspace there is no rail to expand.
+ */
+async function ensureEntryRailOpenIfPresent(page: Page) {
+  if ((await page.locator('.entry').count()) === 0) return;
+  await ensureRailOpen(page).catch(() => {});
+}
+
+/**
+ * The settings surface. Opened over a project it is still a modal
+ * (`role="dialog"`), but from the entry #5517 routes to `/settings` and
+ * `SettingsDialog` renders in `presentation="page"` mode — same markup, but
+ * `role="region"` and no `aria-modal`. `.modal-settings` is the class both
+ * presentations share, so match on it and keep the dialog role as a fallback.
+ */
+export function settingsSurface(page: Page) {
+  return page.locator('.modal-settings').or(page.getByRole('dialog')).first();
+}
+
 export async function openSettingsDialog(page: Page) {
   await waitForLoadingToClear(page);
-  const dialog = page.getByRole('dialog');
+  await dismissPrivacyDialog(page);
+  await ensureEntryRailOpenIfPresent(page);
+  const dialog = settingsSurface(page);
   const settingsTrigger = page
     .getByTestId('entry-settings-button')
     .or(page.getByTestId('entry-settings-menu-trigger'))

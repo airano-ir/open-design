@@ -104,14 +104,22 @@ async function openNewProjectFromEmptyProjects(page: Page): Promise<void> {
   await expect(page.getByTestId('new-project-panel')).toBeVisible();
 }
 
-async function openNewProjectFromLeftRail(page: Page): Promise<void> {
+// #5517's rail has no "+ New project" button any more, so the Projects view's
+// own CTA is the entry this flow starts from.
+async function openNewProjectFromProjectsView(page: Page): Promise<void> {
   await page.addInitScript(() => {
     window.localStorage.setItem('od.entry.railOpen', 'true');
   });
   await page.goto('/projects', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('.entry')).toHaveClass(/entry--rail-open/);
-  await expect(page.getByTestId('entry-nav-new-project')).toBeVisible();
-  await page.getByTestId('entry-nav-new-project').click();
+  const projectsView = page.getByTestId('entry-view-projects');
+  await expect(projectsView).toBeVisible();
+  const createButton = projectsView
+    .getByTestId('designs-new-project')
+    .or(projectsView.getByTestId('designs-empty-new-project'))
+    .first();
+  await expect(createButton).toBeVisible();
+  await createButton.click();
 
   await expect(page.getByTestId('new-project-modal')).toBeVisible();
   await expect(page.getByTestId('new-project-panel')).toBeVisible();
@@ -215,7 +223,7 @@ test.describe('new project modal from left rail', () => {
 
   test('[P1] new project tabs switch visible form sections and preserve drafts', async ({ page }) => {
     await stubEmptyProjectsNewProjectData(page);
-    await openNewProjectFromLeftRail(page);
+    await openNewProjectFromProjectsView(page);
     await expect(page.getByTestId('new-project-tab-prototype')).toHaveAttribute('aria-selected', 'true');
     await expect(page.locator('.newproj-title')).toContainText('New prototype');
     await expect(page.getByTestId('design-system-trigger')).toBeVisible();
@@ -245,7 +253,7 @@ test.describe('new project modal from left rail', () => {
 
   test('[P1] new project media tab switches inner media surfaces', async ({ page }) => {
     await stubEmptyProjectsNewProjectData(page);
-    await openNewProjectFromLeftRail(page);
+    await openNewProjectFromProjectsView(page);
 
     // Playwright auto-scrolls the tab into view; the consolidated media flow
     // keeps image/video/audio as inner segmented surfaces.
@@ -297,7 +305,7 @@ test('[P0] projects empty state create action opens the new project flow', async
 
 test('[P1] design system multi-select stores primary and inspiration metadata', async ({ page }) => {
   await stubEmptyProjectsNewProjectData(page);
-  await openNewProjectFromLeftRail(page);
+  await openNewProjectFromProjectsView(page);
   await page.getByTestId('new-project-tab-prototype').click();
   await page.getByTestId('new-project-name').fill('Design system multi select metadata');
   await expect(page.getByTestId('design-system-trigger')).toContainText('Nexu Soft Tech');
@@ -332,7 +340,7 @@ test('[P1] design system multi-select stores primary and inspiration metadata', 
 
 test('[P1] design system picker searches and switches the single selected system', async ({ page }) => {
   await stubEmptyProjectsNewProjectData(page);
-  await openNewProjectFromLeftRail(page);
+  await openNewProjectFromProjectsView(page);
   await page.getByTestId('new-project-tab-prototype').click();
   await page.getByTestId('new-project-name').fill('Design system single switch flow');
   await expect(page.getByTestId('design-system-trigger')).toBeVisible();
@@ -361,7 +369,7 @@ test('[P1] design system picker searches and switches the single selected system
 
 test('[P1] design system picker can clear the default system before creating a project', async ({ page }) => {
   await stubEmptyProjectsNewProjectData(page);
-  await openNewProjectFromLeftRail(page);
+  await openNewProjectFromProjectsView(page);
   await page.getByTestId('new-project-tab-prototype').click();
   await page.getByTestId('new-project-name').fill('Design system clear create flow');
   await expect(page.getByTestId('design-system-trigger')).toContainText('Nexu Soft Tech');
@@ -423,7 +431,7 @@ test('[P1] stale daemon default design system is not posted when creating a proj
     });
   });
   await stubEmptyProjectsNewProjectData(page);
-  await openNewProjectFromLeftRail(page);
+  await openNewProjectFromProjectsView(page);
   await page.getByTestId('new-project-tab-prototype').click();
   await page.getByTestId('new-project-name').fill('Stale design system default flow');
 
@@ -3103,8 +3111,9 @@ async function openNewProjectPanel(page: Page) {
 
 async function expectDesignsView(page: Page) {
   if (!/\/projects$/.test(new URL(page.url()).pathname)) {
-    await ensureRailOpen(page);
-    await page.getByTestId('entry-nav-projects').click();
+    // The rail's Projects destination went away in #5517; /projects is still a
+    // real route (Home's recent-projects "view all" is the in-product entry).
+    await page.goto('/projects', { waitUntil: 'domcontentloaded' });
   }
   await expect(page).toHaveURL(/\/projects$/);
   await expect(page.locator('.design-grid, .design-kanban-board')).toBeVisible();
