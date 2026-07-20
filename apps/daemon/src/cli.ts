@@ -8312,7 +8312,37 @@ async function runLibraryList(name, args) {
   }
 }
 
-async function runSkills(args)        { return runLibraryList('skills', args); }
+// `od skills` lists; `od skills uninstall <id>` removes a user-installed skill.
+// The uninstall arm exists because the Extensions page grew a 卸载 action, and a
+// capability that only one surface can reach is not shippable (AGENTS.md,
+// "Capability exposure (UI/CLI dual-track)"). Bundled skills are refused by the
+// route, not here — the daemon owns that judgement.
+async function runSkills(args) {
+  if (args[0] === 'uninstall' || args[0] === 'remove') return runSkillUninstall(args.slice(1));
+  return runLibraryList('skills', args);
+}
+
+async function runSkillUninstall(rest) {
+  const flags = parseFlags(rest, { string: LIBRARY_STRING_FLAGS, boolean: LIBRARY_BOOLEAN_FLAGS });
+  const id = positionalArgs(rest, LIBRARY_STRING_FLAGS)[0];
+  if (!id) {
+    console.error('Usage: od skills uninstall <id> [--json] [--daemon-url <url>]');
+    process.exit(2);
+  }
+  const base = (await libraryDaemonUrl(flags)).replace(/\/$/, '');
+  const resp = await fetch(`${base}/api/skills/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  const body = await resp.json().catch(() => ({}));
+  if (!resp.ok) {
+    if (flags.json) {
+      console.log(JSON.stringify({ ok: false, id, status: resp.status, error: body?.error ?? null }));
+    } else {
+      console.error(`DELETE /api/skills/${id} failed: ${resp.status} ${body?.error ?? ''}`.trim());
+    }
+    process.exit(1);
+  }
+  if (flags.json) console.log(JSON.stringify({ ok: true, id }));
+  else console.log(`[uninstall] ${id} removed`);
+}
 async function runCraft(args)         { return runLibraryList('craft', args); }
 
 async function runDesignSystems(args) {
