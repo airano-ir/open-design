@@ -930,6 +930,154 @@ describe('FileViewer manual edit regressions', () => {
     expect(savedBodies[1]!.content).toContain('>Hero<');
     expect(frame.srcdoc).toBe(srcdocBefore);
   });
+
+  it('folds a live text session into history so undo walks the whole chain in order', async () => {
+    const source = '<!doctype html><html><body><main data-od-id="hero">Hero</main></body></html>';
+    const { fetchMock, savedBodies } = manualEditWriteMock(source);
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={htmlPreviewFile()}
+        liveHtml={source}
+      />,
+    );
+    clickManualTool('manual-edit-mode-toggle');
+    const frame = await previewFrame();
+    const postSpy = vi.spyOn(frame.contentWindow!, 'postMessage');
+    await selectManualEditTarget();
+
+    // Chain step 1: a committed text edit.
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-text-commit', id: 'hero', value: 'Updated hero' },
+        source: frame.contentWindow,
+      }));
+    });
+    await ackApplyDom(frame, postSpy);
+    await waitFor(() => expect(savedBodies).toHaveLength(1));
+
+    // Chain step 2: a live, still-uncommitted inline session.
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-text-session', id: 'hero', active: true },
+        source: frame.contentWindow,
+      }));
+    });
+
+    fireEvent.keyDown(window, { key: 'z', metaKey: true });
+
+    // The host must close the session FIRST — undoing beneath a live session
+    // would skip the newest edit and re-apply it right after the rollback.
+    await waitFor(() => {
+      const asked = postSpy.mock.calls.some(([message]) =>
+        (message as { type?: string } | undefined)?.type === 'od-edit-text-finish');
+      if (!asked) throw new Error('od-edit-text-finish not posted yet');
+    });
+    // Play the bridge's part: the session commits its current text, then ends.
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-text-commit', id: 'hero', value: 'Second pass' },
+        source: frame.contentWindow,
+      }));
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-text-session', id: 'hero', active: false },
+        source: frame.contentWindow,
+      }));
+    });
+
+    // The session lands as its own history entry…
+    const sessionApply = await waitFor(() => {
+      const found = lastApplyDomMessage(postSpy);
+      if (!found || !found.html.includes('Second pass')) throw new Error('session commit apply-dom not posted yet');
+      return found;
+    });
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-apply-dom-result', version: sessionApply.version, ok: true },
+        source: frame.contentWindow,
+      }));
+    });
+    await waitFor(() => expect(savedBodies).toHaveLength(2));
+    expect(savedBodies[1]!.content).toContain('Second pass');
+
+    // …and the undo then reverts exactly that entry, not an older one.
+    const undoApply = await waitFor(() => {
+      const found = lastApplyDomMessage(postSpy);
+      if (!found || !found.html.includes('Updated hero')) throw new Error('undo apply-dom not posted yet');
+      return found;
+    });
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-apply-dom-result', version: undoApply.version, ok: true },
+        source: frame.contentWindow,
+      }));
+    });
+    await waitFor(() => expect(savedBodies).toHaveLength(3));
+    expect(savedBodies[2]!.versionLabel).toMatch(/^Undo /);
+    expect(savedBodies[2]!.content).toContain('Updated hero');
+    expect(savedBodies[2]!.content).not.toContain('Second pass');
+  });
+
+  it('surfaces the server rejection detail when the undo write fails', async () => {
+    const source = '<!doctype html><html><body><main data-od-id="hero">Hero</main></body></html>';
+    const savedBodies: Array<{ content: string; versionLabel?: string }> = [];
+    let rejectNextWrite = false;
+    const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : input instanceof Request ? input.url : String(input);
+      if (url.includes('/api/projects/project-1/files') && init?.method === 'POST') {
+        if (rejectNextWrite) {
+          rejectNextWrite = false;
+          return new Response(
+            JSON.stringify({ error: { code: 'ARTIFACT_REGRESSION', message: 'stub body regression' } }),
+            { status: 422, headers: { 'Content-Type': 'application/json' } },
+          );
+        }
+        savedBodies.push(JSON.parse(String(init.body)) as (typeof savedBodies)[number]);
+        return new Response(JSON.stringify({ file: htmlPreviewFile() }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      if (url.includes('/api/projects/project-1/raw/preview.html')) {
+        const latest = savedBodies[savedBodies.length - 1]?.content ?? source;
+        return new Response(latest, { status: 200, headers: { 'Content-Type': 'text/html' } });
+      }
+      return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={htmlPreviewFile()}
+        liveHtml={source}
+      />,
+    );
+    clickManualTool('manual-edit-mode-toggle');
+    const frame = await previewFrame();
+    const postSpy = vi.spyOn(frame.contentWindow!, 'postMessage');
+    await selectManualEditTarget();
+
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-text-commit', id: 'hero', value: 'Updated hero' },
+        source: frame.contentWindow,
+      }));
+    });
+    await ackApplyDom(frame, postSpy);
+    await waitFor(() => expect(savedBodies).toHaveLength(1));
+
+    rejectNextWrite = true;
+    fireEvent.keyDown(window, { key: 'z', metaKey: true });
+
+    // The opaque "Could not save the undo result." gave no way to diagnose the
+    // rejection; the banner must now carry the server's status/code/message.
+    // (It renders inside the inspector panel when that is open, or as the
+    // floating canvas toast otherwise — match the shared class, not the role.)
+    await waitFor(() => {
+      const banner = document.querySelector('.manual-edit-error');
+      if (!banner) throw new Error('error banner not shown yet');
+      expect(banner.textContent).toContain('Could not save the undo result (422 ARTIFACT_REGRESSION): stub body regression');
+    });
+  });
 });
 
 function heroTarget(): ManualEditTarget {

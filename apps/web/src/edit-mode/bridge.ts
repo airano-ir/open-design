@@ -670,6 +670,24 @@ export function buildManualEditBridge(enabled: boolean): string {
           }
         } catch (e) {}
       }
+      if ((ev.metaKey || ev.ctrlKey) && !ev.altKey && ev.key && ev.key.toLowerCase() === 'z') {
+        // In-session Cmd+Z: the browser's native contenteditable undo consumes
+        // the typing steps first. Once the content is back to the session's
+        // original markup there is nothing left to undo locally, so escalate
+        // to the host's GLOBAL history — one shortcut walks the entire
+        // operation chain (text commits, style changes, moves) instead of
+        // dead-ending inside a single text element. Redo stays native while
+        // the session lives; escalation closes the session, so the next
+        // Cmd+Shift+Z reaches the host's global history through the normal
+        // non-session path.
+        if (!ev.shiftKey && el.innerHTML === originalHtml) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          finishActiveTextEdit(true);
+          window.parent.postMessage({ type: 'od-edit-history', op: 'undo' }, '*');
+        }
+        return;
+      }
       if ((ev.metaKey || ev.ctrlKey) && !ev.shiftKey && !ev.altKey) {
         var key = ev.key ? ev.key.toLowerCase() : '';
         if (key === 'b' || key === 'i' || key === 'u') {
@@ -913,9 +931,24 @@ export function buildManualEditBridge(enabled: boolean): string {
       postTargets();
     }, 120);
   }, true);
-  document.addEventListener('click', function(ev){
+  // Interaction listeners sit on WINDOW capture: the window node is visited
+  // before document, so stopping propagation here beats page handlers
+  // registered at document or element level in any phase. In edit mode the
+  // page must be inert — a click selects the element instead of running the
+  // page's own lightbox/menu handlers — while native defaults (caret
+  // placement, text selection, scrolling) keep working.
+  window.addEventListener('click', function(ev){
     if (!enabled) return;
-    if (ev.target && ev.target.closest && ev.target.closest('[data-od-editing="true"]')) return;
+    if (ev.target && ev.target.closest && ev.target.closest('[data-od-editing="true"]')) {
+      // Clicks inside the active inline-edit element keep the native caret
+      // behavior (that's mousedown's default, untouched), but must not reach
+      // the page's own delegated handlers or the sandbox shim's anchor
+      // interception — an editing element inside <a href="#"> otherwise
+      // opens the page's lightbox AND scrolls the canvas to the top.
+      ev.preventDefault();
+      ev.stopPropagation();
+      return;
+    }
     ev.preventDefault();
     ev.stopPropagation();
     var el = closestTarget(ev);
@@ -938,7 +971,7 @@ export function buildManualEditBridge(enabled: boolean): string {
       return;
     }
   }, true);
-  document.addEventListener('pointerover', function(ev){
+  window.addEventListener('pointerover', function(ev){
     if (!enabled) return;
     // While editing, hovering must not retarget the inspector or surface a new
     // affordance — that's the other half of the #3646 instability.
@@ -947,6 +980,25 @@ export function buildManualEditBridge(enabled: boolean): string {
     var el = closestTarget(ev);
     if (!el) return;
     postHoverTarget(el);
+  }, true);
+  // Page-inertness guard. Blocking propagation at the window capture node
+  // keeps every page-owned pointer/hover handler from firing in edit mode
+  // (element-level, delegated, and document-capture alike) while native
+  // defaults — caret placement, drag selection, scrolling — stay intact.
+  // The bridge's own listeners also live on window, so they are unaffected;
+  // 'click' is excluded because the click handler above owns that decision.
+  ['pointerdown','pointerup','pointerover','pointerout','pointerenter','pointerleave','pointermove','mousedown','mouseup','mouseover','mouseout','mouseenter','mouseleave','mousemove','dblclick','auxclick','contextmenu','touchstart','touchend','touchmove'].forEach(function(type){
+    window.addEventListener(type, function(ev){
+      if (!enabled) return;
+      ev.stopPropagation();
+    }, true);
+  });
+  // Form submission would navigate the sandboxed document; in edit mode it is
+  // always a page-owned "operation" and never a bridge gesture.
+  window.addEventListener('submit', function(ev){
+    if (!enabled) return;
+    ev.preventDefault();
+    ev.stopPropagation();
   }, true);
   function firstImageFile(transfer){
     if (!transfer || !transfer.files) return null;

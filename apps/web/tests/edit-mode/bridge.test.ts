@@ -1432,7 +1432,30 @@ describe('manual edit keyboard forwarding', () => {
     dom.window.close();
   });
 
-  it('does not forward history keys while an inline edit session is live', () => {
+  it('keeps Cmd+Z native while the session still holds unsaved typing', () => {
+    const dom = loadDom();
+    const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
+    const title = dom.window.document.querySelector('[data-od-id="title"]') as HTMLElement;
+
+    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8 }));
+    title.textContent = 'Changed';
+    postMessage.mockClear();
+
+    const undoKey = new dom.window.KeyboardEvent('keydown', {
+      key: 'z', metaKey: true, bubbles: true, cancelable: true,
+    });
+    title.dispatchEvent(undoKey);
+
+    // The browser's own contenteditable undo owns the in-session steps; the
+    // bridge must neither consume the key nor escalate to global history yet.
+    expect(undoKey.defaultPrevented).toBe(false);
+    expect(postMessage).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'od-edit-history' }), '*');
+    expect(title.getAttribute('data-od-editing')).toBe('true');
+
+    dom.window.close();
+  });
+
+  it('escalates Cmd+Z to the host global history once the session has no local changes left', () => {
     const dom = loadDom();
     const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
     const title = dom.window.document.querySelector('[data-od-id="title"]') as HTMLElement;
@@ -1440,10 +1463,21 @@ describe('manual edit keyboard forwarding', () => {
     title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8 }));
     postMessage.mockClear();
 
-    title.dispatchEvent(new dom.window.KeyboardEvent('keydown', {
+    const undoKey = new dom.window.KeyboardEvent('keydown', {
       key: 'z', metaKey: true, bubbles: true, cancelable: true,
-    }));
-    expect(postMessage).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'od-edit-history' }), '*');
+    });
+    title.dispatchEvent(undoKey);
+
+    // Content equals the session original — nothing left to undo locally, so
+    // the session closes (no commit: nothing changed) and the shortcut walks
+    // the host's global operation chain instead of dead-ending in this element.
+    expect(undoKey.defaultPrevented).toBe(true);
+    expect(postMessage).toHaveBeenCalledWith({ type: 'od-edit-history', op: 'undo' }, '*');
+    expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'od-edit-text-session', id: 'title', active: false,
+    }), '*');
+    expect(postMessage).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'od-edit-text-commit' }), '*');
+    expect(title.hasAttribute('contenteditable')).toBe(false);
 
     dom.window.close();
   });
@@ -1457,6 +1491,85 @@ describe('manual edit keyboard forwarding', () => {
     }));
 
     expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'od-edit-targets' }), '*');
+
+    dom.window.close();
+  });
+});
+
+// Edit mode must render the page inert: its own lightboxes, delegated click
+// handlers, hover scripts, and anchor defaults are page "operations" a click
+// in edit mode must never trigger — clicking selects/edits, nothing else.
+describe('manual edit page inertness', () => {
+  it('keeps page handlers and anchor defaults inert for clicks inside a live inline edit', () => {
+    const dom = new JSDOM(
+      `<main><a href="#" data-od-id="card"><h1 data-od-id="title">Original</h1></a></main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+    const title = dom.window.document.querySelector('[data-od-id="title"]') as HTMLElement;
+    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8 }));
+    expect(title.getAttribute('data-od-editing')).toBe('true');
+
+    // Page-style handlers: a delegated document listener (gallery lightbox /
+    // sandbox-shim anchor interception) and a direct anchor listener. A caret
+    // click inside the editing element must reach neither — the shim path is
+    // exactly what scrolled the canvas to the top mid-edit (href="#").
+    const delegated = vi.fn();
+    dom.window.document.addEventListener('click', delegated);
+    const anchorClick = vi.fn();
+    dom.window.document.querySelector('a')!.addEventListener('click', anchorClick);
+
+    const caretClick = new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 12, clientY: 8 });
+    title.dispatchEvent(caretClick);
+
+    expect(delegated).not.toHaveBeenCalled();
+    expect(anchorClick).not.toHaveBeenCalled();
+    expect(caretClick.defaultPrevented).toBe(true);
+    // The session survives — the click only repositions the caret natively.
+    expect(title.getAttribute('data-od-editing')).toBe('true');
+
+    dom.window.close();
+  });
+
+  it('blocks page pointer and hover handlers while edit mode is enabled, restores them on exit', () => {
+    const dom = new JSDOM(
+      `<main><button id="cta" data-od-source-path="path-0-0">Launch</button></main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+    const button = dom.window.document.getElementById('cta') as HTMLButtonElement;
+    const pressed = vi.fn();
+    const hovered = vi.fn();
+    button.addEventListener('mousedown', pressed);
+    button.addEventListener('mouseover', hovered);
+
+    button.dispatchEvent(new dom.window.MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+    button.dispatchEvent(new dom.window.MouseEvent('mouseover', { bubbles: true, cancelable: true }));
+    expect(pressed).not.toHaveBeenCalled();
+    expect(hovered).not.toHaveBeenCalled();
+
+    // Leaving edit mode hands the page back its own interactions.
+    dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
+      data: { type: 'od-edit-mode', enabled: false },
+    }));
+    button.dispatchEvent(new dom.window.MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+    expect(pressed).toHaveBeenCalledTimes(1);
+
+    dom.window.close();
+  });
+
+  it('blocks form submission while edit mode is enabled', () => {
+    const dom = new JSDOM(
+      `<main><form id="signup"><button type="submit">Go</button></form></main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+    const form = dom.window.document.getElementById('signup') as HTMLFormElement;
+    const submitted = vi.fn();
+    form.addEventListener('submit', submitted);
+
+    const submit = new dom.window.Event('submit', { bubbles: true, cancelable: true });
+    form.dispatchEvent(submit);
+
+    expect(submitted).not.toHaveBeenCalled();
+    expect(submit.defaultPrevented).toBe(true);
 
     dom.window.close();
   });

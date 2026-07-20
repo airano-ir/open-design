@@ -6480,6 +6480,14 @@ function HtmlViewer({
   const manualEditPendingSelectIdRef = useRef<string | null>(null);
   const [manualEditHistory, setManualEditHistory] = useState<ManualEditHistoryEntry[]>([]);
   const [manualEditUndone, setManualEditUndone] = useState<ManualEditHistoryEntry[]>([]);
+  // Ref mirrors of the undo/redo stacks. Undo/redo first settle any pending
+  // text/style commit (awaits that may PUSH a new entry); the state values
+  // captured by the calling closure would be stale by then and would pop the
+  // wrong entry — or drop the entry the settle itself just recorded. Every
+  // stack write goes through updateManualEditHistoryStack /
+  // updateManualEditUndoneStack so ref and state never diverge.
+  const manualEditHistoryRef = useRef<ManualEditHistoryEntry[]>([]);
+  const manualEditUndoneRef = useRef<ManualEditHistoryEntry[]>([]);
   const [manualEditError, setManualEditError] = useState<string | null>(null);
   const [manualEditSaving, setManualEditSaving] = useState(false);
   const manualEditSavingRef = useRef(false);
@@ -7927,8 +7935,8 @@ function HtmlViewer({
     selectedManualEditTargetIdRef.current = null;
     setManualEditDraft(emptyManualEditDraft());
     setManualEditDraftDirty(false);
-    setManualEditHistory([]);
-    setManualEditUndone([]);
+    updateManualEditHistoryStack(() => []);
+    updateManualEditUndoneStack(() => []);
     setManualEditError(null);
     manualEditPendingStyleRef.current = null;
     clearManualEditStyleTimer();
@@ -8871,7 +8879,7 @@ function HtmlViewer({
         return false;
       }
       const entry: ManualEditHistoryEntry = {
-        id: `${Date.now()}-${manualEditHistory.length}`,
+        id: `${Date.now()}-${manualEditHistoryRef.current.length}`,
         label,
         patch,
         beforeSource: baseSource,
@@ -8893,8 +8901,8 @@ function HtmlViewer({
           setManualEditFrozenSource(result.source);
         }
       }
-      setManualEditHistory((current) => [entry, ...current]);
-      setManualEditUndone([]);
+      updateManualEditHistoryStack((current) => [entry, ...current]);
+      updateManualEditUndoneStack(() => []);
       setManualEditDraft((current) => ({ ...current, fullSource: result.source }));
       if (patch.kind === 'set-text') {
         setSelectedManualEditTarget((current) => current?.id === patch.id
@@ -8947,6 +8955,23 @@ function HtmlViewer({
     }
   }
 
+  // Single write path for the undo/redo stacks: keeps the ref mirror (read by
+  // undo/redo after their settle awaits) and the state (read by the toolbar
+  // enablement + history panel) in lockstep.
+  function updateManualEditHistoryStack(
+    updater: (current: ManualEditHistoryEntry[]) => ManualEditHistoryEntry[],
+  ) {
+    manualEditHistoryRef.current = updater(manualEditHistoryRef.current);
+    setManualEditHistory(manualEditHistoryRef.current);
+  }
+
+  function updateManualEditUndoneStack(
+    updater: (current: ManualEditHistoryEntry[]) => ManualEditHistoryEntry[],
+  ) {
+    manualEditUndoneRef.current = updater(manualEditUndoneRef.current);
+    setManualEditUndone(manualEditUndoneRef.current);
+  }
+
   async function confirmManualEditHistorySource(expectedSource: string, message: string): Promise<boolean> {
     const persisted = await fetchProjectFileText(projectId, file.name, {
       cache: 'no-store',
@@ -8956,8 +8981,8 @@ function HtmlViewer({
     setSource(persisted);
     sourceRef.current = persisted;
     setInlinedSource(null);
-    setManualEditHistory([]);
-    setManualEditUndone([]);
+    updateManualEditHistoryStack(() => []);
+    updateManualEditUndoneStack(() => []);
     manualEditPendingStyleRef.current = null;
     setManualEditDraft((current) => ({ ...current, fullSource: persisted }));
     setManualEditError(message);
@@ -9048,9 +9073,32 @@ function HtmlViewer({
     return false;
   }
 
+  /**
+   * Folds whatever edit is still in flight into the history stack before an
+   * undo/redo walks it: a live inline text session (or its pending commit)
+   * and any debounced style save each become their own entry first. This is
+   * what makes the timeline GLOBAL — one Cmd+Z chain walks text edits, style
+   * tweaks, and gesture moves in the exact order they happened, instead of
+   * skipping an uncommitted newest edit or re-applying it after the undo.
+   */
+  async function settleManualEditHistoryBoundary(): Promise<boolean> {
+    if (!(await settlePendingManualEditCommit())) return false;
+    if (!(await flushManualEditStyleSave())) return false;
+    return !manualEditSavingRef.current;
+  }
+
+  function describeManualEditSaveFailure(
+    prefix: string,
+    saved: Exclude<Awaited<ReturnType<typeof writeProjectTextFileDetailed>>, { ok: true }>,
+  ): string {
+    const status = saved.status ? ` (${saved.status}${saved.code ? ` ${saved.code}` : ''})` : '';
+    return `${prefix}${status}: ${saved.message}`;
+  }
+
   async function undoManualEdit() {
     if (manualEditSavingRef.current) return;
-    const [latest, ...rest] = manualEditHistory;
+    if (!(await settleManualEditHistoryBoundary())) return;
+    const [latest, ...rest] = manualEditHistoryRef.current;
     if (!latest) return;
     manualEditSavingRef.current = true;
     setManualEditSaving(true);
@@ -9059,13 +9107,13 @@ function HtmlViewer({
         latest.afterSource,
         'The file changed outside manual edit mode. History was cleared to avoid overwriting newer content.',
       ))) return;
-      const saved = await writeProjectTextFile(projectId, file.name, latest.beforeSource, {
+      const saved = await writeProjectTextFileDetailed(projectId, file.name, latest.beforeSource, {
         artifactManifest: file.artifactManifest,
         versionSource: 'manual',
         versionLabel: `Undo ${latest.label}`,
       });
-      if (!saved) {
-        setManualEditError('Could not save the undo result.');
+      if (!saved.ok) {
+        setManualEditError(describeManualEditSaveFailure('Could not save the undo result', saved));
         return;
       }
       setSource(latest.beforeSource);
@@ -9078,8 +9126,8 @@ function HtmlViewer({
         capturePreviewScrollPosition();
         setManualEditFrozenSource(latest.beforeSource);
       }
-      setManualEditHistory(rest);
-      setManualEditUndone((current) => [latest, ...current]);
+      updateManualEditHistoryStack(() => rest);
+      updateManualEditUndoneStack((current) => [latest, ...current]);
       setManualEditDraft((current) => ({ ...current, fullSource: latest.beforeSource }));
       await onFileSaved?.();
     } finally {
@@ -9090,7 +9138,8 @@ function HtmlViewer({
 
   async function redoManualEdit() {
     if (manualEditSavingRef.current) return;
-    const [latest, ...rest] = manualEditUndone;
+    if (!(await settleManualEditHistoryBoundary())) return;
+    const [latest, ...rest] = manualEditUndoneRef.current;
     if (!latest) return;
     manualEditSavingRef.current = true;
     setManualEditSaving(true);
@@ -9099,13 +9148,13 @@ function HtmlViewer({
         latest.beforeSource,
         'The file changed outside manual edit mode. History was cleared to avoid overwriting newer content.',
       ))) return;
-      const saved = await writeProjectTextFile(projectId, file.name, latest.afterSource, {
+      const saved = await writeProjectTextFileDetailed(projectId, file.name, latest.afterSource, {
         artifactManifest: file.artifactManifest,
         versionSource: 'manual',
         versionLabel: `Redo ${latest.label}`,
       });
-      if (!saved) {
-        setManualEditError('Could not save the redo result.');
+      if (!saved.ok) {
+        setManualEditError(describeManualEditSaveFailure('Could not save the redo result', saved));
         return;
       }
       setSource(latest.afterSource);
@@ -9118,8 +9167,8 @@ function HtmlViewer({
         capturePreviewScrollPosition();
         setManualEditFrozenSource(latest.afterSource);
       }
-      setManualEditUndone(rest);
-      setManualEditHistory((current) => [latest, ...current]);
+      updateManualEditUndoneStack(() => rest);
+      updateManualEditHistoryStack((current) => [latest, ...current]);
       setManualEditDraft((current) => ({ ...current, fullSource: latest.afterSource }));
       await onFileSaved?.();
     } finally {
