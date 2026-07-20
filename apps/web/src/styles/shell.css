@@ -621,6 +621,11 @@ html.od-radial-open .workspace-shell {
   color: var(--text);
   display: flex;
   align-items: center;
+  /* The global `button` primitive centers its content. Each row's content is a
+     different width (a short "主页" vs a long project title), so centering gave
+     every row a different left offset and the list read as a random staircase
+     (acceptance #46). Label-led list entries have to opt back out. */
+  justify-content: flex-start;
   gap: 9px;
   text-align: left;
 }

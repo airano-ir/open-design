@@ -3528,6 +3528,8 @@ export interface Dict {
   'workspace.newTab': string;
   'workspace.searchFilesPlaceholder': string;
   'workspace.openTabs': string;
+  'workspace.searchTabs': string;
+  'workspace.noTabsFound': string;
   'workspace.openFile': string;
   'workspace.noFilesMatch': string;
   'workspace.allFiles': string;
@@ -3550,6 +3552,8 @@ export interface Dict {
   'designFiles.upload': string;
   'designFiles.pasteText': string;
   'designFiles.newSketch': string;
+  'designFiles.newDocument': string;
+  'designFiles.newDocumentTitle': string;
   'designFiles.empty': string;
   'designFiles.refresh': string;
   'designFiles.delete': string;

@@ -1251,21 +1251,40 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
             </div>
           );
         })}
-        {/* #5517 drops the top-right "+" and the tab-search button. New tab
-            stays reachable through ⌘/Ctrl+T. Note what else goes with them:
-            "+" was the ONLY caller of openRadialMenu, and the search button
-            the only thing that set tabsMenuOpen true — so the radial template
-            menu and the search popover below are now unreachable. Their state
-            and markup are kept (as the reference keeps them) so restoring an
-            entry point is a one-line change, but nothing here opens them. */}
+        {/* #5517 drops the top-right "+"; new tab stays reachable through
+            ⌘/Ctrl+T. That "+" was the ONLY caller of openRadialMenu, so the
+            radial template menu below is now unreachable — its state and
+            markup stay, as the reference keeps them.
+
+            The tab-search button is NOT dropped. The reference annotates its
+            own removal as "Tab search removed for the demo.", i.e. a demo
+            expedient, where it annotates the "+" as "removed per request" —
+            a real decision. Following the first would have left the whole
+            search popover unreachable (acceptance #46 was filed against it). */}
       </div>
       <div className="workspace-tabs-actions" ref={menuRef}>
+        {onboardingActive ? null : (
+          <button
+            type="button"
+            className={`workspace-tabs-icon-btn od-tooltip${tabsMenuOpen ? ' is-active' : ''}`}
+            onClick={() => setTabsMenuOpen((open) => !open)}
+            title={t('workspace.searchTabs')}
+            data-tooltip={t('workspace.searchTabs')}
+            data-tooltip-placement="bottom"
+            aria-label={t('workspace.searchTabs')}
+            aria-haspopup="dialog"
+            aria-expanded={tabsMenuOpen}
+            data-testid="workspace-tabs-search"
+          >
+            <Icon name="search" size={14} />
+          </button>
+        )}
         {tabsMenuOpen && !onboardingActive && typeof document !== 'undefined'
           ? createPortal(
               <div
                 className="workspace-tabs-popover"
                 role="dialog"
-                aria-label="Search tabs"
+                aria-label={t('workspace.searchTabs')}
                 ref={popoverRef}
               >
                 <div className="workspace-tabs-search">
@@ -1274,15 +1293,15 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
                     ref={searchInputRef}
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Search tabs"
-                    aria-label="Search tabs"
+                    placeholder={t('workspace.searchFilesPlaceholder')}
+                    aria-label={t('workspace.searchTabs')}
                   />
                 </div>
                 <div className="workspace-tabs-popover__section">
-                  <span>Open tabs</span>
+                  <span>{t('workspace.openTabs')}</span>
                   <span>{state.tabs.length}</span>
                 </div>
-                <div className="workspace-tabs-list" role="listbox" aria-label="Open tabs">
+                <div className="workspace-tabs-list" role="listbox" aria-label={t('workspace.openTabs')}>
                   {filteredTabs.length > 0 ? (
                     filteredTabs.map((display) => {
                       const active = display.id === state.activeTabId;
@@ -1326,7 +1345,7 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
                       );
                     })
                   ) : (
-                    <div className="workspace-tabs-empty">No tabs found</div>
+                    <div className="workspace-tabs-empty">{t('workspace.noTabsFound')}</div>
                   )}
                 </div>
               </div>,
