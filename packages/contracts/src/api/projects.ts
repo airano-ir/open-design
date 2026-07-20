@@ -312,6 +312,46 @@ export interface ProjectResponse {
   project: Project;
 }
 
+export type ProjectDesignTokenSuggestionProp =
+  | 'color'
+  | 'backgroundColor'
+  | 'borderColor'
+  | 'fontFamily'
+  | 'fontSize'
+  | 'fontWeight'
+  | 'lineHeight'
+  | 'letterSpacing'
+  | 'width'
+  | 'height'
+  | 'gap'
+  | 'padding'
+  | 'margin'
+  | 'borderRadius'
+  | 'borderWidth';
+
+export interface ProjectDesignTokenSuggestionQuery {
+  file?: string;
+  targetId?: string;
+  props?: ProjectDesignTokenSuggestionProp[];
+  values?: Partial<Record<ProjectDesignTokenSuggestionProp, string>>;
+}
+
+export interface ProjectDesignTokenSuggestion {
+  prop: ProjectDesignTokenSuggestionProp;
+  token: string;
+  value: string;
+  sourceFile: string;
+  line: number;
+  matchReason: string;
+  score: number;
+}
+
+export interface ProjectDesignTokenSuggestionsResponse {
+  projectId: string;
+  query: ProjectDesignTokenSuggestionQuery;
+  suggestions: ProjectDesignTokenSuggestion[];
+}
+
 // Response body for `GET /api/projects/:id`. Carries the same `project`
 // payload as `ProjectResponse` plus a derived `resolvedDir` so the web
 // client can address the on-disk working directory directly (e.g. for
