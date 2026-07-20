@@ -2802,6 +2802,8 @@ export const en: Dict = {
   'manualEdit.opacity': 'Opacity',
   'manualEdit.uploadImage': 'Upload image',
   'manualEdit.uploadingImage': 'Uploading image…',
+  'manualEdit.processingImage': 'Processing image…',
+  'manualEdit.imageAdded': 'Image added',
   'manualEdit.uploadImageFailed': 'Could not upload image.',
   'manualEdit.focusSlides': 'Focus slides',
   'manualEdit.showPanels': 'Show panels',

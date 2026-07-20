@@ -2788,6 +2788,8 @@ export const hu: Dict = {
   'manualEdit.opacity': 'Átlátszatlanság',
   'manualEdit.uploadImage': 'Kép feltöltése',
   'manualEdit.uploadingImage': 'Kép feltöltése…',
+  'manualEdit.processingImage': 'Kép feldolgozása…',
+  'manualEdit.imageAdded': 'Kép hozzáadva',
   'manualEdit.uploadImageFailed': 'A kép feltöltése nem sikerült.',
   'manualEdit.focusSlides': 'Diákra fókuszálás',
   'manualEdit.showPanels': 'Panelek megjelenítése',

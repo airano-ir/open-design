@@ -3012,6 +3012,8 @@ export const zhTW: Dict = {
   "manualEdit.opacity": "不透明度",
   "manualEdit.uploadImage": "上傳圖片",
   "manualEdit.uploadingImage": "上傳圖片中…",
+  "manualEdit.processingImage": "正在處理圖片…",
+  "manualEdit.imageAdded": "圖片已新增",
   "manualEdit.uploadImageFailed": "無法上傳圖片。",
   "manualEdit.focusSlides": "聚焦投影片",
   "manualEdit.showPanels": "顯示面板",

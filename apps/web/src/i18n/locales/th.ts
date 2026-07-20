@@ -2788,6 +2788,8 @@ export const th: Dict = {
   'manualEdit.opacity': 'ความทึบ',
   'manualEdit.uploadImage': 'อัปโหลดรูปภาพ',
   'manualEdit.uploadingImage': 'กำลังอัปโหลดรูปภาพ…',
+  'manualEdit.processingImage': 'กำลังประมวลผลรูปภาพ…',
+  'manualEdit.imageAdded': 'เพิ่มรูปภาพแล้ว',
   'manualEdit.uploadImageFailed': 'ไม่สามารถอัปโหลดรูปภาพได้',
   'manualEdit.focusSlides': 'โฟกัสสไลด์',
   'manualEdit.showPanels': 'แสดงแผง',

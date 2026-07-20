@@ -2788,6 +2788,8 @@ export const fa: Dict = {
   'manualEdit.opacity': 'کدری',
   'manualEdit.uploadImage': 'بارگذاری تصویر',
   'manualEdit.uploadingImage': 'در حال بارگذاری تصویر…',
+  'manualEdit.processingImage': 'در حال پردازش تصویر…',
+  'manualEdit.imageAdded': 'تصویر اضافه شد',
   'manualEdit.uploadImageFailed': 'بارگذاری تصویر ممکن نشد.',
   'manualEdit.focusSlides': 'تمرکز روی اسلایدها',
   'manualEdit.showPanels': 'نمایش پنل‌ها',

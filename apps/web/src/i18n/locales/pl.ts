@@ -2788,6 +2788,8 @@ export const pl: Dict = {
   'manualEdit.opacity': 'Krycie',
   'manualEdit.uploadImage': 'Prześlij obraz',
   'manualEdit.uploadingImage': 'Przesyłanie obrazu…',
+  'manualEdit.processingImage': 'Przetwarzanie obrazu…',
+  'manualEdit.imageAdded': 'Obraz dodano',
   'manualEdit.uploadImageFailed': 'Nie udało się przesłać obrazu.',
   'manualEdit.focusSlides': 'Skup się na slajdach',
   'manualEdit.showPanels': 'Pokaż panele',

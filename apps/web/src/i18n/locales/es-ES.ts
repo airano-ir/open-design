@@ -2788,6 +2788,8 @@ export const esES: Dict = {
   'manualEdit.opacity': 'Opacidad',
   'manualEdit.uploadImage': 'Subir imagen',
   'manualEdit.uploadingImage': 'Subiendo imagen…',
+  'manualEdit.processingImage': 'Procesando imagen…',
+  'manualEdit.imageAdded': 'Imagen añadida',
   'manualEdit.uploadImageFailed': 'No se pudo subir la imagen.',
   'manualEdit.focusSlides': 'Enfocar diapositivas',
   'manualEdit.showPanels': 'Mostrar paneles',

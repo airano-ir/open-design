@@ -3002,6 +3002,8 @@ export const zhCN: Dict = {
   "manualEdit.opacity": "不透明度",
   "manualEdit.uploadImage": "上传图片",
   "manualEdit.uploadingImage": "正在上传图片…",
+  "manualEdit.processingImage": "正在处理图片…",
+  "manualEdit.imageAdded": "图片已添加",
   "manualEdit.uploadImageFailed": "无法上传图片。",
   "manualEdit.focusSlides": "聚焦幻灯片",
   "manualEdit.showPanels": "显示面板",

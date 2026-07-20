@@ -2788,6 +2788,8 @@ export const id: Dict = {
   'manualEdit.opacity': 'Opasitas',
   'manualEdit.uploadImage': 'Unggah gambar',
   'manualEdit.uploadingImage': 'Mengunggah gambar…',
+  'manualEdit.processingImage': 'Memproses gambar…',
+  'manualEdit.imageAdded': 'Gambar ditambahkan',
   'manualEdit.uploadImageFailed': 'Tidak dapat mengunggah gambar.',
   'manualEdit.focusSlides': 'Fokus slide',
   'manualEdit.showPanels': 'Tampilkan panel',

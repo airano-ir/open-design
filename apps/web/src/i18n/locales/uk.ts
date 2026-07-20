@@ -2788,6 +2788,8 @@ export const uk: Dict = {
   'manualEdit.opacity': 'Непрозорість',
   'manualEdit.uploadImage': 'Завантажити зображення',
   'manualEdit.uploadingImage': 'Завантаження зображення…',
+  'manualEdit.processingImage': 'Обробка зображення…',
+  'manualEdit.imageAdded': 'Зображення додано',
   'manualEdit.uploadImageFailed': 'Не вдалося завантажити зображення.',
   'manualEdit.focusSlides': 'Зосередитися на слайдах',
   'manualEdit.showPanels': 'Показати панелі',

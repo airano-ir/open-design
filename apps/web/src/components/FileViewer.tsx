@@ -6680,6 +6680,10 @@ function HtmlViewer({
   const screenshotInFlightRef = useRef(false);
   const imageExportInFlightRef = useRef(false);
   const [exportToast, setExportToast] = useState<ExportToastState | null>(null);
+  const [manualEditImageToast, setManualEditImageToast] = useState<
+    (ExportToastState & { id: number }) | null
+  >(null);
+  const manualEditImageToastIdRef = useRef(0);
   const [shareLinkFeedback, setShareLinkFeedback] = useState<'copied' | 'failed' | null>(null);
   const [shareGuideToast, setShareGuideToast] = useState<string | null>(null);
   const [selectedSideCommentIds, setSelectedSideCommentIds] = useState<Set<string>>(() => new Set());
@@ -7967,6 +7971,8 @@ function HtmlViewer({
     setManualEditDraftDirty(false);
     resetManualEditHistory();
     setManualEditError(null);
+    manualEditImageToastIdRef.current += 1;
+    setManualEditImageToast(null);
   }, [file.name]);
 
   // Selecting a new file or turning inspect/comment-inspect off resets the panel target.
@@ -9304,23 +9310,43 @@ function HtmlViewer({
   // pipeline as image replace, then insert a fresh <img> after the anchor.
   // The new element is a regular manual-edit target (move/resize/delete/copy).
   async function insertManualEditImage(anchorIdRaw: string, imageFile: File) {
-    const src = await uploadManualEditImageFile(imageFile);
-    if (!src) return;
-    const anchorId = anchorIdRaw || selectedManualEditTargetIdRef.current || '__body__';
-    const html = `<img src="${escapeManualEditAttr(src)}" alt="" style="max-width: 100%;">`;
-    await insertManualEditHtml(anchorId, html, t('manualEdit.pasteImage'));
+    const toastId = (manualEditImageToastIdRef.current += 1);
+    const showToast = (message: string, tone: ExportToastState['tone']) => {
+      if (manualEditImageToastIdRef.current !== toastId) return;
+      setManualEditImageToast({ id: toastId, message, tone });
+    };
+    showToast(t('manualEdit.uploadingImage'), 'loading');
+    try {
+      const src = await uploadManualEditImageFile(imageFile);
+      if (!src) {
+        showToast(t('manualEdit.uploadImageFailed'), 'error');
+        return;
+      }
+      showToast(t('manualEdit.processingImage'), 'loading');
+      const anchorId = anchorIdRaw || selectedManualEditTargetIdRef.current || '__body__';
+      const html = `<img src="${escapeManualEditAttr(src)}" alt="" style="max-width: 100%;">`;
+      const inserted = await insertManualEditHtml(anchorId, html, t('manualEdit.pasteImage'));
+      showToast(
+        inserted ? t('manualEdit.imageAdded') : t('manualEdit.uploadImageFailed'),
+        inserted ? 'success' : 'error',
+      );
+    } catch {
+      const message = t('manualEdit.uploadImageFailed');
+      setManualEditError(message);
+      showToast(message, 'error');
+    }
   }
 
   // Shared insert path: one undoable history entry, then hand selection to
   // the inserted element (its path id is the anchor's next sibling — the same
   // derivation duplicate-element uses; '__body__' appends, no hand-off).
-  async function insertManualEditHtml(anchorId: string, html: string, label: string) {
-    if (!anchorId) return;
-    if (!(await settlePendingManualEditCommit())) return;
+  async function insertManualEditHtml(anchorId: string, html: string, label: string): Promise<boolean> {
+    if (!anchorId) return false;
+    if (!(await settlePendingManualEditCommit())) return false;
     // Selection hand-off to the inserted element is armed inside the in-place
     // apply layer from the saved source (correct for both positional-path and
     // authored data-od-id anchors, and across the reload fallback).
-    await applyManualEdit({ id: anchorId, kind: 'insert-html', html }, label);
+    return applyManualEdit({ id: anchorId, kind: 'insert-html', html }, label);
   }
 
   // Persist a completed drag gesture (move / edge resize) through the same
@@ -13011,7 +13037,24 @@ function HtmlViewer({
               ) : null}
               {/* Portaled to <body> so the screenshot/export toast escapes the
                   preview pane's transform + overflow:hidden. */}
-              {exportToast && !versionModalOpen
+              {manualEditImageToast && !versionModalOpen
+                ? createPortal(
+                    <Toast
+                      key={manualEditImageToast.id}
+                      className="manual-edit-image-toast"
+                      message={manualEditImageToast.message}
+                      tone={manualEditImageToast.tone}
+                      role={manualEditImageToast.tone === 'error' ? 'alert' : 'status'}
+                      ttlMs={manualEditImageToast.tone === 'loading' ? 60000 : 2200}
+                      placement="top"
+                      onDismiss={manualEditImageToast.tone === 'loading'
+                        ? undefined
+                        : () => setManualEditImageToast(null)}
+                    />,
+                    document.body,
+                  )
+                : null}
+              {exportToast && !manualEditImageToast && !versionModalOpen
                 ? createPortal(
                     <Toast
                       message={exportToast.message}

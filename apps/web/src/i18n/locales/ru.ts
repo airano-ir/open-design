@@ -2788,6 +2788,8 @@ export const ru: Dict = {
   'manualEdit.opacity': 'Непрозрачность',
   'manualEdit.uploadImage': 'Загрузить изображение',
   'manualEdit.uploadingImage': 'Загрузка изображения…',
+  'manualEdit.processingImage': 'Обработка изображения…',
+  'manualEdit.imageAdded': 'Изображение добавлено',
   'manualEdit.uploadImageFailed': 'Не удалось загрузить изображение.',
   'manualEdit.focusSlides': 'Фокус на слайдах',
   'manualEdit.showPanels': 'Показать панели',

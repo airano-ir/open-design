@@ -2788,6 +2788,8 @@ export const ptBR: Dict = {
   'manualEdit.opacity': 'Opacidade',
   'manualEdit.uploadImage': 'Enviar imagem',
   'manualEdit.uploadingImage': 'Enviando imagem…',
+  'manualEdit.processingImage': 'Processando imagem…',
+  'manualEdit.imageAdded': 'Imagem adicionada',
   'manualEdit.uploadImageFailed': 'Não foi possível enviar a imagem.',
   'manualEdit.focusSlides': 'Focar nos slides',
   'manualEdit.showPanels': 'Mostrar painéis',

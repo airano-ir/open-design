@@ -2788,6 +2788,8 @@ export const de: Dict = {
   'manualEdit.opacity': 'Deckkraft',
   'manualEdit.uploadImage': 'Bild hochladen',
   'manualEdit.uploadingImage': 'Bild wird hochgeladen…',
+  'manualEdit.processingImage': 'Bild wird verarbeitet…',
+  'manualEdit.imageAdded': 'Bild hinzugefügt',
   'manualEdit.uploadImageFailed': 'Bild konnte nicht hochgeladen werden.',
   'manualEdit.focusSlides': 'Folien fokussieren',
   'manualEdit.showPanels': 'Bereiche anzeigen',

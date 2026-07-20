@@ -2788,6 +2788,8 @@ export const tr: Dict = {
   'manualEdit.opacity': 'Opaklık',
   'manualEdit.uploadImage': 'Görsel yükle',
   'manualEdit.uploadingImage': 'Görsel yükleniyor…',
+  'manualEdit.processingImage': 'Görsel işleniyor…',
+  'manualEdit.imageAdded': 'Görsel eklendi',
   'manualEdit.uploadImageFailed': 'Görsel yüklenemedi.',
   'manualEdit.focusSlides': 'Slaytlara odaklan',
   'manualEdit.showPanels': 'Panelleri göster',

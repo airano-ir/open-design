@@ -2788,6 +2788,8 @@ export const ar: Dict = {
   'manualEdit.opacity': 'العتامة',
   'manualEdit.uploadImage': 'رفع صورة',
   'manualEdit.uploadingImage': 'جارٍ رفع الصورة…',
+  'manualEdit.processingImage': 'جارٍ معالجة الصورة…',
+  'manualEdit.imageAdded': 'تمت إضافة الصورة',
   'manualEdit.uploadImageFailed': 'تعذّر رفع الصورة.',
   'manualEdit.focusSlides': 'التركيز على الشرائح',
   'manualEdit.showPanels': 'إظهار اللوحات',

@@ -902,6 +902,62 @@ describe('FileViewer manual edit regressions', () => {
     });
   });
 
+  it('shows localized upload, processing, and success toasts for pasted or dropped images', async () => {
+    const source = '<!doctype html><html><body><main data-od-id="hero">Hero</main></body></html>';
+    const { fetchMock: baseFetchMock } = manualEditWriteMock(source);
+    let resolveUpload!: (response: Response) => void;
+    const uploadResponse = new Promise<Response>((resolve) => {
+      resolveUpload = resolve;
+    });
+    const fetchMock = vi.fn((input: string | URL | Request, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : input instanceof Request ? input.url : String(input);
+      if (url.includes('/api/projects/project-1/upload') && init?.method === 'POST') {
+        return uploadResponse;
+      }
+      return baseFetchMock(input, init);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={htmlPreviewFile()}
+        liveHtml={source}
+      />,
+    );
+    clickManualTool('manual-edit-mode-toggle');
+    const frame = await previewFrame();
+    const postSpy = vi.spyOn(frame.contentWindow!, 'postMessage');
+    await selectManualEditTarget();
+
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: {
+          type: 'od-edit-paste-image',
+          id: 'hero',
+          name: 'pasted-image.png',
+          mime: 'image/png',
+          buffer: new Uint8Array([137, 80, 78, 71]).buffer,
+        },
+        source: frame.contentWindow,
+      }));
+    });
+
+    expect(await screen.findByText('Uploading image…')).toBeTruthy();
+
+    await act(async () => {
+      resolveUpload(new Response(JSON.stringify({
+        files: [{ name: 'pasted-image.png', path: 'pasted-image.png' }],
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }));
+      await uploadResponse;
+    });
+
+    expect(await screen.findByText('Processing image…')).toBeTruthy();
+    await ackApplyDom(frame, postSpy);
+    expect(await screen.findByText('Image added')).toBeTruthy();
+  });
+
   it('applies brand-kit text commits in place instead of reloading (runtime-annotated ids)', async () => {
     // Brand-kit targets get their data-od-id from the bridge at runtime — the
     // saved source has no markup for them; edits persist into the payload.

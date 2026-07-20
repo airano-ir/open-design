@@ -2788,6 +2788,8 @@ export const ko: Dict = {
   'manualEdit.opacity': '불투명도',
   'manualEdit.uploadImage': '이미지 업로드',
   'manualEdit.uploadingImage': '이미지 업로드 중…',
+  'manualEdit.processingImage': '이미지 처리 중…',
+  'manualEdit.imageAdded': '이미지가 추가되었습니다',
   'manualEdit.uploadImageFailed': '이미지를 업로드할 수 없습니다.',
   'manualEdit.focusSlides': '슬라이드에 집중',
   'manualEdit.showPanels': '패널 표시',

@@ -2788,6 +2788,8 @@ export const ja: Dict = {
   'manualEdit.opacity': '不透明度',
   'manualEdit.uploadImage': '画像をアップロード',
   'manualEdit.uploadingImage': '画像をアップロード中…',
+  'manualEdit.processingImage': '画像を処理中…',
+  'manualEdit.imageAdded': '画像を追加しました',
   'manualEdit.uploadImageFailed': '画像をアップロードできませんでした。',
   'manualEdit.focusSlides': 'スライドにフォーカス',
   'manualEdit.showPanels': 'パネルを表示',

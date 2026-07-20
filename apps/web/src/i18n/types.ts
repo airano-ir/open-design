@@ -3566,6 +3566,8 @@ export interface Dict {
   'manualEdit.opacity': string;
   'manualEdit.uploadImage': string;
   'manualEdit.uploadingImage': string;
+  'manualEdit.processingImage': string;
+  'manualEdit.imageAdded': string;
   'manualEdit.uploadImageFailed': string;
   'manualEdit.focusSlides': string;
   'manualEdit.showPanels': string;
