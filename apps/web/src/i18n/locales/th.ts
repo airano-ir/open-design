@@ -3165,6 +3165,8 @@ export const th: Dict = {
   'qf.inspSearchTpl': 'ค้นหาเทมเพลต',
   'qf.inspSources': 'หาแรงบันดาลใจจาก',
   'qf.inspSourceTip': 'เปิด {site} แล้ว — คัดลอกรูปที่ชอบแล้วกลับมาวางที่นี่ (⌘V)',
+  'qf.inspPicked': 'ข้อมูลอ้างอิงที่เลือก',
+  'qf.inspPreview': 'ดูตัวอย่าง',
   'questions.tabLabel': 'คำถาม',
   'questions.banner': 'ขออนุญาตถามคำถามสั้น ๆ สองสามข้อได้ไหม',
   'questions.bannerAnswered': 'ตอบคำถามแล้ว',

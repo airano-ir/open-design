@@ -394,7 +394,14 @@ export function renderDesignSystemCard(id: string, raw: string): string {
       text-overflow: ellipsis;
     }
     .ramp { display: flex; gap: 1vw; }
-    .ramp i { flex: 1; height: 5.5vh; border-radius: 1vw; border: 1px solid ${border}; }
+    .ramp i {
+      flex: 1;
+      height: 8vh;
+      border-radius: 1.2vw;
+      /* Faint inset keyline instead of a hard border: reads as one clean
+         color band without top/bottom divider lines between chips. */
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+    }
     .row { display: flex; gap: 2.6vw; flex: 1; min-height: 0; }
     .spec {
       flex: 1.35;

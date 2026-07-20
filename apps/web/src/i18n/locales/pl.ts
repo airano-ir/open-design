@@ -3165,6 +3165,8 @@ export const pl: Dict = {
   'qf.inspSearchTpl': 'Szukaj szablonów',
   'qf.inspSources': 'Znajdź inspirację na',
   'qf.inspSourceTip': 'Otwarto {site} – skopiuj tam obraz i wklej go tutaj (⌘V).',
+  'qf.inspPicked': 'Wybrane referencje',
+  'qf.inspPreview': 'Podgląd',
   'questions.tabLabel': 'Pytania',
   'questions.banner': 'Czy mogę zadać kilka krótkich pytań?',
   'questions.bannerAnswered': 'Pytania uzupełnione',

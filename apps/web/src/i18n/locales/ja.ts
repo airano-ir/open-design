@@ -3165,6 +3165,8 @@ export const ja: Dict = {
   'qf.inspSearchTpl': 'テンプレートを検索',
   'qf.inspSources': 'インスピレーションを探す',
   'qf.inspSourceTip': '{site} を開きました。気に入った画像をコピーして、ここに貼り付けてください（⌘V）。',
+  'qf.inspPicked': '選択したリファレンス',
+  'qf.inspPreview': 'プレビュー',
   'questions.tabLabel': '質問',
   'questions.banner': 'いくつか簡単な質問をしてもよろしいですか？',
   'questions.bannerAnswered': '質問に回答済み',

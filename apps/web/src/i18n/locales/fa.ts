@@ -3165,6 +3165,8 @@ export const fa: Dict = {
   'qf.inspSearchTpl': 'جستجوی قالب‌ها',
   'qf.inspSources': 'الهام گرفتن از',
   'qf.inspSourceTip': '{site} باز شد — تصویری را کپی کنید و اینجا جای‌گذاری کنید (⌘V).',
+  'qf.inspPicked': 'مراجع انتخاب‌شده',
+  'qf.inspPreview': 'پیش‌نمایش',
   'questions.tabLabel': 'پرسش‌ها',
   'questions.banner': 'اشکالی ندارد چند پرسش کوتاه بپرسم؟',
   'questions.bannerAnswered': 'به پرسش‌ها پاسخ داده شد',

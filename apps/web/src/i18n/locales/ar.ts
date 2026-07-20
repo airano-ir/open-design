@@ -3165,6 +3165,8 @@ export const ar: Dict = {
   'qf.inspSearchTpl': 'البحث في القوالب',
   'qf.inspSources': 'استلهم من',
   'qf.inspSourceTip': 'تم فتح {site} — انسخ أي صورة هناك ثم عد والصقها هنا (⌘V).',
+  'qf.inspPicked': 'المراجع المحددة',
+  'qf.inspPreview': 'معاينة',
   'questions.tabLabel': 'أسئلة',
   'questions.banner': 'هل تمانع أن أطرح عليك بضعة أسئلة سريعة؟',
   'questions.bannerAnswered': 'تمت الإجابة عن الأسئلة',

@@ -3165,6 +3165,8 @@ export const ko: Dict = {
   'qf.inspSearchTpl': '템플릿 검색',
   'qf.inspSources': '영감 얻기',
   'qf.inspSourceTip': '{site}을(를) 열었습니다. 이미지를 복사한 뒤 여기로 돌아와 붙여넣기(⌘V) 하세요.',
+  'qf.inspPicked': '선택한 레퍼런스',
+  'qf.inspPreview': '미리보기',
   'questions.tabLabel': '질문',
   'questions.banner': '간단한 질문 몇 가지 드려도 될까요?',
   'questions.bannerAnswered': '질문에 답변함',

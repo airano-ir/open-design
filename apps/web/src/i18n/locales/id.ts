@@ -3165,6 +3165,8 @@ export const id: Dict = {
   'qf.inspSearchTpl': 'Cari templat',
   'qf.inspSources': 'Cari inspirasi di',
   'qf.inspSourceTip': '{site} dibuka — salin gambar di sana, lalu tempel di sini (⌘V).',
+  'qf.inspPicked': 'Referensi terpilih',
+  'qf.inspPreview': 'Pratinjau',
   'questions.tabLabel': 'Questions',
   'questions.banner': 'Mind if I ask a couple of quick questions?',
   'questions.bannerAnswered': 'Questions answered',

@@ -4085,3 +4085,100 @@ body.entry-resizing { cursor: col-resize; user-select: none; }
   font-size: 11.5px;
   line-height: 1.4;
 }
+
+/* "Selected" section at the bottom of the picker: picks render with the
+   same card treatment as the catalog (cover / title / category) plus a
+   remove button, so gallery picks stay fully visible. */
+.qf-insp-picked-section {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border-subtle, rgba(0, 0, 0, 0.12));
+}
+.qf-insp-picked-label {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted, #8a8f84);
+  margin-bottom: 8px;
+}
+.qf-insp-card-picked {
+  position: relative;
+  cursor: default;
+}
+.qf-insp-card-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--text, #20231f) 72%, transparent);
+  color: #fff;
+  cursor: pointer;
+  padding: 0;
+}
+.qf-insp-card-remove:hover {
+  background: var(--text, #20231f);
+}
+.qf-insp-thumb-img {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted, #9da39a);
+  padding: 0;
+}
+.qf-insp-thumb-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Detail preview: an eye button on every card opens the full document. */
+.qf-insp-card-eye {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--text, #20231f) 60%, transparent);
+  color: #fff;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+.qf-insp-card:hover .qf-insp-card-eye,
+.qf-insp-card-eye:focus-visible {
+  opacity: 1;
+}
+.qf-insp-detail-dialog {
+  width: min(1040px, 94vw);
+}
+.qf-insp-detail-body {
+  display: flex;
+  min-height: 0;
+}
+.qf-insp-detail-frame {
+  width: 100%;
+  height: min(72vh, 760px);
+  border: 0;
+  border-radius: 8px;
+  background: #fff;
+}
+.qf-insp-detail-image {
+  max-width: 100%;
+  max-height: min(72vh, 760px);
+  margin: 0 auto;
+  border-radius: 8px;
+  object-fit: contain;
+}

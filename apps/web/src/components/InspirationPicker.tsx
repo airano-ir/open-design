@@ -202,6 +202,11 @@ export function InspirationPicker({
   const [dsPreviewId, setDsPreviewId] = useState<string | null>(null);
   const [previewReady, setPreviewReady] = useState<Record<string, boolean>>({});
   const [browseTipSite, setBrowseTipSite] = useState<string | null>(null);
+  const [detail, setDetail] = useState<
+    | { kind: 'template' | 'ds'; id: string; title: string }
+    | { kind: 'image'; url: string; title: string }
+    | null
+  >(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
@@ -496,6 +501,7 @@ export function InspirationPicker({
             <Icon name="check" size={12} />
           </span>
         ) : null}
+        {previewButton({ kind: 'template', id: skill.id, title: name })}
         <span className="qf-insp-card-name">{name}</span>
         {skill.category ? (
           <span className="qf-insp-card-meta">{categoryLabel(skill.category)}</span>
@@ -545,53 +551,174 @@ export function InspirationPicker({
             <Icon name="check" size={12} />
           </span>
         ) : null}
+        {previewButton({ kind: 'ds', id: system.id, title: system.title })}
         <span className="qf-insp-card-name">{system.title}</span>
       </label>
     );
   };
 
   // Selections made in the gallery may not be among the four inline cards,
-  // so the picker always lists what is currently picked as removable chips —
-  // across all three families — right under the tab bar.
-  const renderSelectionChips = () => {
-    const uploads: Array<{ name: string; remove?: () => void }> = disabled
+  // so the picker always shows what is currently picked in a "Selected"
+  // section at the bottom — rendered with the SAME card treatment as the
+  // catalog (cover, title, category), plus a remove affordance.
+  // Every card offers a detail preview — a dialog with the full document
+  // (template seed / design-system showcase / image) so picking isn't blind.
+  const previewButton = (
+    target:
+      | { kind: 'template' | 'ds'; id: string; title: string }
+      | { kind: 'image'; url: string; title: string },
+  ) => (
+    <button
+      type="button"
+      className="qf-insp-card-eye"
+      aria-label={`${t('qf.inspPreview')}: ${target.title}`}
+      title={t('qf.inspPreview')}
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setDetail(target);
+      }}
+    >
+      <Icon name="search" size={11} />
+    </button>
+  );
+
+  const renderDetailDialog = () =>
+    detail
+      ? createPortal(
+          <Dialog
+            className="qf-visual-dialog qf-insp-detail-dialog"
+            backdropClassName="qf-visual-dialog-backdrop"
+            layout="sectioned"
+            ariaLabel={detail.title}
+            onClose={() => setDetail(null)}
+            closeOnEscape
+          >
+            <DialogHeader className="qf-visual-dialog-head">
+              <DialogTitle className="qf-visual-dialog-title">{detail.title}</DialogTitle>
+              <Button
+                type="button"
+                variant="ghost"
+                className="qf-visual-dialog-close"
+                aria-label={t('common.close')}
+                title={t('common.close')}
+                onClick={() => setDetail(null)}
+              >
+                <Icon name="close" size={16} />
+              </Button>
+            </DialogHeader>
+            <DialogBody className="qf-visual-dialog-body qf-insp-detail-body">
+              {detail.kind === 'image' ? (
+                <img className="qf-insp-detail-image" src={detail.url} alt={detail.title} />
+              ) : (
+                <iframe
+                  className="qf-insp-detail-frame"
+                  src={
+                    detail.kind === 'template'
+                      ? templatePreviewUrl(detail.id)
+                      : `/api/design-systems/${encodeURIComponent(detail.id)}/showcase`
+                  }
+                  sandbox="allow-scripts"
+                  title={detail.title}
+                />
+              )}
+            </DialogBody>
+          </Dialog>,
+          document.body,
+        )
+      : null;
+
+  const removeButton = (label: string, onRemove: () => void) =>
+    !disabled ? (
+      <button
+        type="button"
+        className="qf-insp-card-remove"
+        aria-label={`${t('qf.inspRemove')}: ${label}`}
+        title={t('qf.inspRemove')}
+        onClick={onRemove}
+      >
+        <Icon name="close" size={11} />
+      </button>
+    ) : null;
+
+  const renderPickedSection = () => {
+    const uploads: Array<{ name: string; url?: string; remove?: () => void }> = disabled
       ? uploadNames.map((name) => ({ name }))
-      : files.map((file, index) => ({ name: file.name, remove: () => removeFile(index) }));
+      : files.map((file, index) => ({
+          name: file.name,
+          url: uploadUrls[index],
+          remove: () => removeFile(index),
+        }));
     const total = selection.templates.length + selection.designSystems.length + uploads.length;
     if (total === 0) return null;
-    const chip = (
-      key: string,
-      icon: Parameters<typeof Icon>[0]['name'],
-      label: string,
-      onRemove: () => void,
-    ) => (
-      <span key={key} className="qf-insp-pick" title={label}>
-        <Icon name={icon} size={11} />
-        <span className="qf-insp-pick-label">{label}</span>
-        {!disabled ? (
-          <button
-            type="button"
-            className="qf-insp-pick-remove"
-            aria-label={`${t('qf.inspRemove')}: ${label}`}
-            title={t('qf.inspRemove')}
-            onClick={onRemove}
-          >
-            <Icon name="close" size={9} />
-          </button>
-        ) : null}
-      </span>
-    );
     return (
-      <div className="qf-insp-picked" data-testid="inspiration-picked">
-        {selection.templates.map((entry) =>
-          chip(`tpl-${entry.id}`, 'slides', entry.label, () => removePick('template', entry.id)),
-        )}
-        {selection.designSystems.map((entry) =>
-          chip(`ds-${entry.id}`, 'grid', entry.label, () => removePick('ds', entry.id)),
-        )}
-        {uploads.map((upload, index) =>
-          chip(`img-${upload.name}-${index}`, 'image', upload.name, upload.remove ?? (() => {})),
-        )}
+      <div className="qf-insp-picked-section" data-testid="inspiration-picked">
+        <div className="qf-insp-picked-label">{t('qf.inspPicked')}</div>
+        <div className="qf-insp-grid qf-insp-picked-grid">
+          {selection.templates.map((entry) => {
+            const skill = (templates ?? []).find((item) => item.id === entry.id) ?? null;
+            const label = skill ? localizeSkillName(locale, skill) : entry.label;
+            return (
+              <div key={`tpl-${entry.id}`} className="qf-insp-card qf-insp-card-picked" title={label}>
+                <LiveDocThumb
+                  src={templatePreviewUrl(entry.id)}
+                  available={previewReady[entry.id] === true}
+                  fallback={wireframeThumb(skill?.mode ?? 'prototype')}
+                  className="qf-insp-thumb"
+                />
+                {previewButton({ kind: 'template', id: entry.id, title: label })}
+                {removeButton(label, () => removePick('template', entry.id))}
+                <span className="qf-insp-card-name">{label}</span>
+                {skill?.category ? (
+                  <span className="qf-insp-card-meta">{categoryLabel(skill.category)}</span>
+                ) : null}
+              </div>
+            );
+          })}
+          {selection.designSystems.map((entry) => {
+            const system = (designSystems ?? []).find((item) => item.id === entry.id) ?? null;
+            const label = system?.title ?? entry.label;
+            return (
+              <div key={`ds-${entry.id}`} className="qf-insp-card qf-insp-card-picked" title={label}>
+                <LiveDocThumb
+                  src={designSystemCardUrl(entry.id)}
+                  available
+                  fallback={
+                    system ? (
+                      dsSwatchFallback(system)
+                    ) : (
+                      <span className="qf-dsx-fallback" aria-hidden>
+                        <span className="qf-card-swatch" />
+                      </span>
+                    )
+                  }
+                  className="qf-insp-thumb qf-dsx-thumb"
+                />
+                {previewButton({ kind: 'ds', id: entry.id, title: label })}
+                {removeButton(label, () => removePick('ds', entry.id))}
+                <span className="qf-insp-card-name">{label}</span>
+                <span className="qf-insp-card-meta">{t('qf.inspTabDesignSystems')}</span>
+              </div>
+            );
+          })}
+          {uploads.map((upload, index) => (
+            <div
+              key={`img-${upload.name}-${index}`}
+              className="qf-insp-card qf-insp-card-picked"
+              title={upload.name}
+            >
+              <span className="qf-insp-thumb qf-insp-thumb-img" aria-hidden>
+                {upload.url ? <img src={upload.url} alt="" /> : <Icon name="image" size={18} />}
+              </span>
+              {upload.url
+                ? previewButton({ kind: 'image', url: upload.url, title: upload.name })
+                : null}
+              {upload.remove ? removeButton(upload.name, upload.remove) : null}
+              <span className="qf-insp-card-name">{upload.name}</span>
+              <span className="qf-insp-card-meta">{t('qf.inspTabUpload')}</span>
+            </div>
+          ))}
+        </div>
       </div>
     );
   };
@@ -864,7 +991,8 @@ export function InspirationPicker({
     return (
       <div className="qf-insp qf-insp-summary" data-testid="inspiration-picker">
         {query ? <div className="qf-insp-query">{query}</div> : null}
-        {renderSelectionChips()}
+        {renderPickedSection()}
+        {renderDetailDialog()}
       </div>
     );
   }
@@ -906,7 +1034,6 @@ export function InspirationPicker({
           })}
         </div>
       ) : null}
-      {renderSelectionChips()}
       {tab === 'templates' && enabled.includes('templates') ? (
         <>
           {renderCategoryTabs('inline')}
@@ -921,6 +1048,7 @@ export function InspirationPicker({
         <Icon name="image" size={12} />
         <span>{t('qf.inspUploadHint')}</span>
       </div>
+      {renderPickedSection()}
       {galleryOpen
         ? createPortal(
             <Dialog
@@ -981,6 +1109,7 @@ export function InspirationPicker({
             document.body,
           )
         : null}
+      {renderDetailDialog()}
     </div>
   );
 }

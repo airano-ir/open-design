@@ -61,6 +61,7 @@ import {
   type QuestionFormInspirationSubmission,
   type QuestionFormInteraction,
 } from "./QuestionForm";
+import { InspirationPicker } from "./InspirationPicker";
 import {
   visualStyleCardsForContext,
   type VisualStyleContext,
@@ -2687,10 +2688,24 @@ function FormBlock({
       label: string;
       cards: Array<{ title: string; src: string }>;
     }> = [];
-    if (!submittedFromHistory) return { items, visualItems };
+    // Inspiration answers carry machine tokens ("Label [template:id]") —
+    // instead of echoing them as text, the summary re-renders the picker in
+    // its locked state so the picks show as full cards (cover / title /
+    // category), identical to how they looked when chosen.
+    const inspirationItems: Array<{ id: string; query?: string; values: string[] }> = [];
+    if (!submittedFromHistory) return { items, visualItems, inspirationItems };
     for (const question of form.questions) {
       const raw = submittedFromHistory[question.id];
       const values = Array.isArray(raw) ? raw : typeof raw === "string" ? [raw] : [];
+      if (question.type === "inspiration") {
+        const picks = values.filter(
+          (value) => value.trim().length > 0 && value.trim() !== "(skipped)",
+        );
+        if (picks.length > 0) {
+          inspirationItems.push({ id: question.id, query: question.query, values: picks });
+        }
+        continue;
+      }
       const labels = values
         .filter((value) => value.trim().length > 0)
         .map((value) => formOptionLabelForValue(question, value));
@@ -2735,7 +2750,7 @@ function FormBlock({
       }
       items.push({ label: question.label, value: labels.join(", ") });
     }
-    return { items, visualItems };
+    return { items, visualItems, inspirationItems };
   }, [form, submittedFromHistory, visualStyleContext]);
   useEffect(() => {
     setDraftAnswers(readInlineQuestionFormDraft(formKey));
@@ -3030,8 +3045,24 @@ function FormBlock({
         </span>
         <div className="question-form-summary-body">
           <div className="question-form-summary-title">{t("questions.bannerAnswered")}</div>
-          {submittedSummary.items.length > 0 || submittedSummary.visualItems.length > 0 ? (
+          {submittedSummary.items.length > 0 ||
+          submittedSummary.visualItems.length > 0 ||
+          submittedSummary.inspirationItems.length > 0 ? (
             <>
+              {submittedSummary.inspirationItems.map((item) => (
+                <InspirationPicker
+                  key={`insp-${item.id}`}
+                  formId={form.id}
+                  questionId={item.id}
+                  query={item.query}
+                  value={item.values}
+                  files={[]}
+                  disabled
+                  onChange={() => {}}
+                  onFilesChange={() => {}}
+                  t={t}
+                />
+              ))}
               {submittedSummary.visualItems.map((item) => (
                 <div key={item.label} className="question-form-summary-visuals">
                   <span className="question-form-summary-visual-label">{item.label}</span>

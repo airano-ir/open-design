@@ -3165,6 +3165,8 @@ export const ptBR: Dict = {
   'qf.inspSearchTpl': 'Buscar templates',
   'qf.inspSources': 'Inspire-se em',
   'qf.inspSourceTip': '{site} aberto — copie uma imagem lá e cole aqui (⌘V).',
+  'qf.inspPicked': 'Referências selecionadas',
+  'qf.inspPreview': 'Pré-visualizar',
   'questions.tabLabel': 'Perguntas',
   'questions.banner': 'Posso fazer algumas perguntas rápidas?',
   'questions.bannerAnswered': 'Perguntas respondidas',

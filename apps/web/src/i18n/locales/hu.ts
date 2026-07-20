@@ -3165,6 +3165,8 @@ export const hu: Dict = {
   'qf.inspSearchTpl': 'Sablonok keresése',
   'qf.inspSources': 'Inspirálódj innen',
   'qf.inspSourceTip': '{site} megnyitva – másolj ott egy képet, majd illeszd be ide (⌘V).',
+  'qf.inspPicked': 'Kiválasztott referenciák',
+  'qf.inspPreview': 'Előnézet',
   'questions.tabLabel': 'Kérdések',
   'questions.banner': 'Megengeded, hogy feltegyek néhány gyors kérdést?',
   'questions.bannerAnswered': 'Kérdések megválaszolva',

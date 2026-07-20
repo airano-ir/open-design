@@ -3165,6 +3165,8 @@ export const ru: Dict = {
   'qf.inspSearchTpl': 'Поиск шаблонов',
   'qf.inspSources': 'Вдохновение на',
   'qf.inspSourceTip': 'Открыт {site} — скопируйте там изображение и вставьте его сюда (⌘V).',
+  'qf.inspPicked': 'Выбранные референсы',
+  'qf.inspPreview': 'Предпросмотр',
   'questions.tabLabel': 'Вопросы',
   'questions.banner': 'Не против, если я задам пару коротких вопросов?',
   'questions.bannerAnswered': 'На вопросы дан ответ',

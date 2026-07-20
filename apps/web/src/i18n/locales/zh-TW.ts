@@ -3404,6 +3404,8 @@ export const zhTW: Dict = {
   "qf.inspSearchTpl": "搜尋範本",
   "qf.inspSources": "靈感來源",
   "qf.inspSourceTip": "已開啟 {site}——複製喜歡的圖片後回到這裡貼上（⌘V）即可。",
+  "qf.inspPicked": "已選參考",
+  "qf.inspPreview": "預覽",
   "questions.tabLabel": "問題",
   "questions.banner": "方便問你幾個簡短的問題嗎？",
   "questions.bannerAnswered": "已回答這些問題",

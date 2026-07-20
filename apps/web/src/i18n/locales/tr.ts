@@ -3165,6 +3165,8 @@ export const tr: Dict = {
   'qf.inspSearchTpl': 'Şablon ara',
   'qf.inspSources': 'İlham al',
   'qf.inspSourceTip': '{site} açıldı — oradan bir görsel kopyalayıp buraya yapıştırın (⌘V).',
+  'qf.inspPicked': 'Seçilen referanslar',
+  'qf.inspPreview': 'Önizleme',
   'questions.tabLabel': 'Sorular',
   'questions.banner': 'Birkaç kısa soru sormamın sakıncası var mı?',
   'questions.bannerAnswered': 'Sorular yanıtlandı',

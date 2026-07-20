@@ -3165,6 +3165,8 @@ export const esES: Dict = {
   'qf.inspSearchTpl': 'Buscar plantillas',
   'qf.inspSources': 'Inspírate en',
   'qf.inspSourceTip': '{site} abierto: copia cualquier imagen allí y pégala aquí (⌘V).',
+  'qf.inspPicked': 'Referencias seleccionadas',
+  'qf.inspPreview': 'Vista previa',
   'questions.tabLabel': 'Preguntas',
   'questions.banner': '¿Te importa si te hago un par de preguntas rápidas?',
   'questions.bannerAnswered': 'Preguntas respondidas',

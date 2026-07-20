@@ -3165,6 +3165,8 @@ export const uk: Dict = {
   'qf.inspSearchTpl': 'Пошук шаблонів',
   'qf.inspSources': 'Натхнення на',
   'qf.inspSourceTip': 'Відкрито {site} — скопіюйте зображення та вставте його сюди (⌘V).',
+  'qf.inspPicked': 'Вибрані референси',
+  'qf.inspPreview': 'Попередній перегляд',
   'questions.tabLabel': 'Запитання',
   'questions.banner': 'Не проти, якщо я поставлю кілька швидких запитань?',
   'questions.bannerAnswered': 'На запитання дано відповідь',

@@ -3393,6 +3393,8 @@ export const zhCN: Dict = {
   "qf.inspSearchTpl": "搜索模板",
   "qf.inspSources": "灵感来源",
   "qf.inspSourceTip": "已打开 {site}——复制喜欢的图片后回到这里粘贴（⌘V）即可。",
+  "qf.inspPicked": "已选参考",
+  "qf.inspPreview": "预览",
   "questions.tabLabel": "问题",
   "questions.banner": "想先跟你确认几个小问题～",
   "questions.bannerAnswered": "已回答这些问题",

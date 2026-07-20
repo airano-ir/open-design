@@ -3165,6 +3165,8 @@ export const de: Dict = {
   'qf.inspSearchTpl': 'Vorlagen durchsuchen',
   'qf.inspSources': 'Inspiration finden auf',
   'qf.inspSourceTip': '{site} geöffnet – kopieren Sie dort ein Bild und fügen Sie es hier ein (⌘V).',
+  'qf.inspPicked': 'Ausgewählte Referenzen',
+  'qf.inspPreview': 'Vorschau',
   'questions.tabLabel': 'Fragen',
   'questions.banner': 'Darf ich dir ein paar kurze Fragen stellen?',
   'questions.bannerAnswered': 'Fragen beantwortet',

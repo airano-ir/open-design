@@ -3180,6 +3180,8 @@ export const en: Dict = {
   'qf.inspSearchTpl': 'Search templates',
   'qf.inspSources': 'Get inspiration from',
   'qf.inspSourceTip': 'Opened {site} — copy any image there, then come back and paste it here (⌘V).',
+  'qf.inspPicked': 'Selected references',
+  'qf.inspPreview': 'Preview',
   'questions.tabLabel': 'Questions',
   'questions.banner': 'Mind if I ask a couple of quick questions?',
   'questions.bannerAnswered': 'Questions answered',
