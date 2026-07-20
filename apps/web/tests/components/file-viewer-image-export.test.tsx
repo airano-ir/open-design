@@ -369,7 +369,11 @@ describe('FileViewer image export', () => {
       />,
     );
 
-    fireEvent.click(await screen.findByTestId('screenshot-copy-button'));
+    // Clipboard capture now lives in the export menu; the toolbar's first
+    // action is screenshot-to-chat.
+    fireEvent.click(screen.getByRole('button', { name: /share/i }));
+    fireEvent.click(await screen.findByRole('tab', { name: /export/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /^screenshot$/i }));
 
     await waitFor(() => {
       expect(captureHostIframeSnapshotMock).toHaveBeenCalled();
