@@ -616,6 +616,7 @@ describe('manual edit bridge target normalization', () => {
       cancelable: true,
       clientX: 8,
       clientY: 8,
+      detail: 2,
     }));
     expect(title.getAttribute('contenteditable')).toBe('plaintext-only');
     expect(title.getAttribute('data-od-editing')).toBe('true');
@@ -651,6 +652,59 @@ describe('manual edit bridge target normalization', () => {
     dom.window.close();
   });
 
+  it('selects a text target on the first click without entering inline edit', () => {
+    // Regression: making a text box contenteditable on the SELECTING click
+    // reflows deck text (releases its line-clamp/height cap) so the element
+    // visibly grows the instant it is selected. The first click must only
+    // select — no contenteditable, no reflow.
+    const dom = new JSDOM(
+      `<main><h1 data-od-id="title">Original title</h1></main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+    const title = dom.window.document.querySelector('[data-od-id="title"]') as HTMLElement;
+    const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
+
+    title.dispatchEvent(new dom.window.MouseEvent('click', {
+      bubbles: true, cancelable: true, clientX: 8, clientY: 8,
+    }));
+
+    expect(postMessage).toHaveBeenCalledWith({
+      type: 'od-edit-select',
+      target: expect.objectContaining({ id: 'title', kind: 'text' }),
+    }, '*');
+    expect(title.hasAttribute('contenteditable')).toBe(false);
+    expect(title.hasAttribute('data-od-editing')).toBe(false);
+
+    dom.window.close();
+  });
+
+  it('enters inline edit on a second click of the already-selected text target', () => {
+    const dom = new JSDOM(
+      `<main><h1 data-od-id="title">Original title</h1></main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+    const title = dom.window.document.querySelector('[data-od-id="title"]') as HTMLElement;
+
+    // First click selects only.
+    title.dispatchEvent(new dom.window.MouseEvent('click', {
+      bubbles: true, cancelable: true, clientX: 8, clientY: 8,
+    }));
+    expect(title.hasAttribute('contenteditable')).toBe(false);
+
+    // The host echoes the selection back, marking the element selected; a
+    // second click on the now-selected element begins editing.
+    dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
+      data: { type: 'od-edit-selected-target', id: 'title' },
+    }));
+    title.dispatchEvent(new dom.window.MouseEvent('click', {
+      bubbles: true, cancelable: true, clientX: 8, clientY: 8,
+    }));
+    expect(title.getAttribute('contenteditable')).toBe('plaintext-only');
+    expect(title.getAttribute('data-od-editing')).toBe('true');
+
+    dom.window.close();
+  });
+
   // #3646 focus-loss half: once editing, blurring the iframe (e.g. moving the
   // pointer to the host's floating inspector) must NOT end the session or
   // commit. Only an explicit finish (Enter/Escape/od-edit-text-finish) commits.
@@ -667,6 +721,7 @@ describe('manual edit bridge target normalization', () => {
       cancelable: true,
       clientX: 8,
       clientY: 8,
+      detail: 2,
     }));
     title.textContent = 'Edited title';
     title.dispatchEvent(new dom.window.FocusEvent('blur', { bubbles: false }));
@@ -703,7 +758,7 @@ describe('manual edit bridge target normalization', () => {
     const title = dom.window.document.querySelector('[data-od-id="title"]') as HTMLElement;
     const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
 
-    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, detail: 2 }));
     title.textContent = 'Edited';
     dom.window.document.body.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
 
@@ -731,7 +786,7 @@ describe('manual edit bridge target normalization', () => {
     const body = dom.window.document.querySelector('[data-od-id="body"]') as HTMLElement;
     const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
 
-    body.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    body.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, detail: 2 }));
     body.textContent = 'Draft body';
     body.dispatchEvent(new dom.window.KeyboardEvent('keydown', {
       bubbles: true,
@@ -964,7 +1019,7 @@ describe('manual edit rich text sessions', () => {
     );
     const title = dom.window.document.querySelector('[data-od-id="title"]') as HTMLElement;
 
-    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8 }));
+    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8, detail: 2 }));
     expect(title.getAttribute('contenteditable')).toBe('plaintext-only');
 
     dom.window.close();
@@ -978,7 +1033,7 @@ describe('manual edit rich text sessions', () => {
     const title = dom.window.document.querySelector('[data-od-id="title"]') as HTMLElement;
     const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
 
-    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8 }));
+    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8, detail: 2 }));
     // Simulate what a formatting execCommand does to the live element.
     title.innerHTML = 'Original <span style="font-weight:700">title</span>';
 
@@ -1003,7 +1058,7 @@ describe('manual edit rich text sessions', () => {
     );
     const title = dom.window.document.querySelector('[data-od-id="title"]') as HTMLElement;
 
-    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8 }));
+    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8, detail: 2 }));
     title.innerHTML = 'Trashed';
 
     dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
@@ -1022,7 +1077,7 @@ describe('manual edit rich text sessions', () => {
     );
     const title = dom.window.document.querySelector('[data-od-id="title"]') as HTMLElement;
 
-    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8 }));
+    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8, detail: 2 }));
     expect(title.getAttribute('contenteditable')).toBe('plaintext-only');
 
     dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
@@ -1045,7 +1100,7 @@ describe('manual edit rich text sessions', () => {
       { runScripts: 'dangerously', url: 'http://localhost' },
     );
     const title = dom.window.document.querySelector('[data-od-id="title"]') as HTMLElement;
-    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8 }));
+    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8, detail: 2 }));
     expect(title.getAttribute('contenteditable')).toBe('plaintext-only');
 
     const endEvent = new dom.window.KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true });
@@ -1073,8 +1128,8 @@ describe('manual edit rich text sessions', () => {
       { runScripts: 'dangerously', url: 'http://localhost' },
     );
     const title = dom.window.document.querySelector('[data-od-id="title"]') as HTMLElement;
-    // First click starts the session.
-    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8 }));
+    // Double-click starts the session (a single click only selects).
+    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8, detail: 2 }));
     expect(title.getAttribute('contenteditable')).toBe('plaintext-only');
 
     // Simulate the browser's native dblclick word selection…
@@ -1098,7 +1153,7 @@ describe('manual edit rich text sessions', () => {
       { runScripts: 'dangerously', url: 'http://localhost' },
     );
     const title = dom.window.document.querySelector('[data-od-id="title"]') as HTMLElement;
-    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8 }));
+    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8, detail: 2 }));
     const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
 
     // Select the whole text run and announce it — the toolbar reads `format`
@@ -1439,6 +1494,29 @@ describe('manual edit keyboard forwarding', () => {
     dom.window.close();
   });
 
+  it('forwards Cmd/Ctrl+V as an element paste for a selected non-editable target', () => {
+    const dom = loadDom();
+    const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
+
+    // Nothing selected → keydown paste is inert (no anchor to paste against).
+    dom.window.document.body.dispatchEvent(new dom.window.KeyboardEvent('keydown', {
+      key: 'v', metaKey: true, bubbles: true, cancelable: true,
+    }));
+    expect(postMessage).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'od-edit-paste-request' }), '*');
+
+    // A selected non-editable target (image/container never gets a caret, so
+    // the native paste event never fires) must still paste via the shortcut.
+    dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
+      data: { type: 'od-edit-selected-target', id: 'title' },
+    }));
+    dom.window.document.body.dispatchEvent(new dom.window.KeyboardEvent('keydown', {
+      key: 'v', metaKey: true, bubbles: true, cancelable: true,
+    }));
+    expect(postMessage).toHaveBeenCalledWith({ type: 'od-edit-paste-request', id: 'title' }, '*');
+
+    dom.window.close();
+  });
+
   it('routes paste to element paste or image insert by clipboard payload', async () => {
     const dom = loadDom();
     const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
@@ -1494,7 +1572,7 @@ describe('manual edit keyboard forwarding', () => {
     const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
     const title = dom.window.document.querySelector('[data-od-id="title"]') as HTMLElement;
 
-    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8 }));
+    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8, detail: 2 }));
     title.textContent = 'Changed';
     postMessage.mockClear();
 
@@ -1517,7 +1595,7 @@ describe('manual edit keyboard forwarding', () => {
     const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
     const title = dom.window.document.querySelector('[data-od-id="title"]') as HTMLElement;
 
-    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8 }));
+    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8, detail: 2 }));
     postMessage.mockClear();
 
     const undoKey = new dom.window.KeyboardEvent('keydown', {
@@ -1563,7 +1641,7 @@ describe('manual edit page inertness', () => {
       { runScripts: 'dangerously', url: 'http://localhost' },
     );
     const title = dom.window.document.querySelector('[data-od-id="title"]') as HTMLElement;
-    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8 }));
+    title.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, clientX: 8, clientY: 8, detail: 2 }));
     expect(title.getAttribute('data-od-editing')).toBe('true');
 
     // Page-style handlers: a delegated document listener (gallery lightbox /

@@ -166,3 +166,15 @@
 2. **选中框跟随元素实测盒(修错位)**。根因:resize 手势里选中框画的是**手势意图矩形**的 x/width,只吸收 iframe 回报的 y/height;而目标元素在拉伸时可能重新居中(`margin:auto`/flex 居中的图,变宽时固定边内滑)、`max-width` 截断、按内在比例缩放或在父容器里回流——真实渲染盒在**两个轴**上都偏离意图,框只在纵向被纠正,横向永久飘移。修复:`DragState.measuredY/measuredHeight` 合并为单个 `measured: ManualEditRect | null`,`adoptMeasuredExtent` 吸收**完整**实测盒(x/y/width/height),`displayRect = state.measured ?? state.rect`。手势仍以 `state.rect`(意图)落盘 `set-style`,只有用户所见的选中框跟随实测——首帧(尚无测量)与整个 move(纯合成器 transform,不测量)回退到意图矩形。提交时 `outcome = displayRect(state)` 也即实测盒,乐观写入 `target.rect` 与 `heldRect` 与刷新后的真实 rect 对齐,松手零闪跳。
 
 新增测试:`ManualEditSelectionOverlay`「整图 body 拖拽提交 move / 非图片无 body 面」「resize 吸收实测盒纠正横向错位」。
+
+### v2.6 修订(选中框动作条避让 + 选中不再入编辑抖动 + 非文本键盘粘贴,2026-07-20)
+
+用户实测(deck/landing)提三点:小元素或贴近上下左右边界时,**动作条(参数/复制/删除)盖住选中框与手柄**,拉伸/移动的触点点不到;**文本元素一选中就突然变大**,选中态与未选中态尺寸不一致;画布里**图片选中后无法用快捷键复制粘贴**。
+
+1. **动作条边界避让**。新增纯函数 `manualEditActionBarTop(frameTop, frameHeight, barHeight, gap, canvasHeight)`(`edit-mode/gestures.ts`,可单测):默认置于选中框**上方**并留 `gap` 间距(让开顶部 move pill);上方空间不足(贴近上边缘)则**翻到下方**;元素高到两侧都放不下时夹在画布内偏上。横向仍用既有 `manualEditClampedCenter`(贴右边缘左移、贴左边缘右移),因此四边都不再遮挡手柄。`ManualEditSelectionOverlay` 用它替换旧的 `Math.max(4, frame.top - H - 8)` 硬夹,并给动作条加 `data-placement=above|below`。
+
+2. **选中与入编辑解耦(修「选中变大」抖动)**。根因:桥的 click 处理把「选中」和「进入行内编辑」合成一次手势——单击文本/链接立即 `makeEditable` 置 `contenteditable`,而给 deck 里被 line-clamp / 定高截断的文本框加 contenteditable 会**释放截断**,元素瞬间变高。修复:`bridge.ts` 的 click 里**首击只选中**(仅发 `od-edit-select`,不改 DOM,零回流);进入编辑改为**显式二段手势**——点击**已选中**元素(`data-od-edit-selected` 已在)或**双击**(`ev.detail >= 2`)。这也让文本与图片/容器的选中语义一致(首击都只选中)。
+
+3. **非文本元素键盘粘贴**。根因:原生 `paste` 事件只在有可编辑元素持有 caret 时触发,而图片/容器选中后从不 contenteditable,故 Cmd/Ctrl+V 无反应(文本因入编辑有 caret 才生效)。修复:桥 keydown 增 Cmd/Ctrl+V 分支,对选中的非可编辑元素转发 `od-edit-paste-request`(元素缓冲区粘贴);该分支只在非编辑态到达(编辑态由前置 guard 提前 return,原生 paste 仍处理文本/图片文件),preventDefault 兼防重复粘贴。配套 Cmd/Ctrl+C 早已在 keydown 转发 `od-edit-copy-request`,故图片「选中→Cmd+C→Cmd+V」闭环打通。
+
+新增/更新测试:gestures「动作条上方/贴顶翻下方/过高夹内/未知画布高度」;bridge「首击只选中不入编辑」「二击已选中元素入编辑」「Cmd/Ctrl+V 对非可编辑选中转发 paste」,并把 14 个行内编辑用例的入编辑手势改为双击(`detail:2`);ManualEditSelectionOverlay「动作条 above/贴顶 below」。
