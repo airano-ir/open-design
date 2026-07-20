@@ -3682,51 +3682,9 @@ body.od-quick-switcher-open .chat-composer-fixed-layer .composer-send:disabled {
 }
 
 
-/* design-files preview split grid — restored from feat/workspace-team (functional rules the demo redesign dropped) */
-.app .df-panel:not(.no-preview) {
-  /* Keep a usable minimum for the file list (toolbar + names stay
-     clickable) but let the preview pane YIELD instead of forcing a rigid
-     320px track. A rigid min on both columns overflowed the panel on
-     narrow splits (list 460 + preview 320 = 780px), pushing the toolbar
-     buttons and the preview off-screen. With `minmax(0, …)` the preview
-     shrinks first so the panel never exceeds its container width. */
-  grid-template-columns: minmax(280px, 1fr) minmax(0, 360px);
-}
+/* The design-files preview pane is gone (#5517: a click opens the file in a
+   workspace tab), so the split-grid block that used to live here — a second
+   360px track plus the row-density overrides that came with it — was
+   removed. Leaving the grid rule behind reserved an empty 360px column and
+   the panel content stopped short of the panel edge. */
 
-.app .df-panel:not(.no-preview) .df-th-kind,
-.app .df-panel:not(.no-preview) .df-cell-kind,
-.app .df-panel:not(.no-preview) .df-th-time,
-.app .df-panel:not(.no-preview) .df-cell-time {
-  display: none;
-}
-
-.app .df-panel:not(.no-preview) .df-table {
-  table-layout: auto;
-}
-
-.app .df-panel:not(.no-preview) .df-th-name,
-.app .df-panel:not(.no-preview) .df-cell-name {
-  width: auto;
-}
-
-.app .df-panel:not(.no-preview) .df-cell-name {
-  min-width: 0;
-  max-width: none;
-}
-
-.app .df-panel:not(.no-preview) .df-row-name-btn,
-.app .df-panel:not(.no-preview) .df-row-name-wrap,
-.app .df-panel:not(.no-preview) .df-row-name {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-}
-
-.app .df-panel:not(.no-preview) .df-row-sub-kind,
-.app .df-panel:not(.no-preview) .df-row-sub-time {
-  display: inline;
-}
-
-.app .df-panel:not(.no-preview) .df-row-name {
-  display: block;
-}
