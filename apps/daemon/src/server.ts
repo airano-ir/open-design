@@ -2793,7 +2793,15 @@ export async function startServer({
       );
       return value;
     };
-    return () => {
+    // Explicit drop for the moments we KNOW the catalog changed (a local
+    // share/unshare, or the hub telling us someone else's did). Without it the
+    // refetch those moments trigger is served the pre-change list straight out
+    // of this cache, and the new row only appears on some later poll — up to
+    // 60s later once SSE lowers the client's cadence (acceptance #53).
+    const invalidate = () => {
+      entry = null;
+    };
+    const read = () => {
       const key = activeWorkspace.get() ?? '';
       if (!entry || entry.key !== key) return refresh(key);
       if (entry.value !== null) {
@@ -2810,6 +2818,7 @@ export async function startServer({
       // fetch, otherwise start one.
       return entry.inflight ?? refresh(key);
     };
+    return Object.assign(read, { invalidate });
   })();
   /**
    * Drop catalog rows this member has already moved back to "personal".
@@ -3042,7 +3051,8 @@ export async function startServer({
     const now = Date.now();
     if (now - lastTeamProjectsSignalAt < 250) return;
     lastTeamProjectsSignalAt = now;
-    void teamProjectsDisplayCache?.().catch(() => undefined);
+    teamProjectsDisplayCache.invalidate();
+    void teamProjectsDisplayCache().catch(() => undefined);
     emitWorkspaceEvent({ type: 'team-projects-changed', at: now });
   };
   const hubEventsSubscriber = startHubEventsSubscriber({
@@ -4005,6 +4015,7 @@ export async function startServer({
       requestTeamShare: (projectId, ownerMemberId) => collab.requestTeamShare(projectId, ownerMemberId),
       requestTeamUnshare: (projectId, ownerMemberId) => collab.requestTeamUnshare(projectId, ownerMemberId),
       refreshTeamProjectMetadata: (projectId) => collab.refreshTeamProjectMetadata(projectId),
+      invalidateTeamProjectCatalog: () => teamProjectsDisplayCache.invalidate(),
     },
     ...(workspaceTeamProjectCatalog ? { teamProjectCatalog: workspaceTeamProjectCatalog } : {}),
     // Collab-cloud comment seams (no-op off-team / when unconfigured): stamp the

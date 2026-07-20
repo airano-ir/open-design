@@ -162,6 +162,14 @@ export interface ServerContext {
      * not shared from this daemon.
      */
     refreshTeamProjectMetadata(projectId: string): void;
+    /**
+     * Drop the cached team-project catalog because this daemon just changed it.
+     * The share/unshare response is what makes the client refetch, and without
+     * this that refetch is served the pre-change list out of the display cache
+     * — so a project the user just shared did not appear in 全部项目 until some
+     * later poll (acceptance #53). Fire-and-forget.
+     */
+    invalidateTeamProjectCatalog?(): void;
   };
   lifecycle: {
     isDaemonShuttingDown: () => boolean;

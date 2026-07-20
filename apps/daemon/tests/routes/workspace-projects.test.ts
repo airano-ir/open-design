@@ -1155,6 +1155,79 @@ describe('workspace project routes', () => {
     }
   });
 
+  // Acceptance #53: a project the user had just shared did not show up in
+  // 全部项目 for ~17s. The client refetches as soon as the move responds, but
+  // that read was served the pre-move list out of the daemon's SWR cache, so
+  // the new row waited for a later poll — up to 60s once SSE lowers the
+  // client's cadence. The move has to drop the cache it just invalidated.
+  it('drops the cached team-project catalog after a visibility change', async () => {
+    const projectId = `workspace-share-invalidate-${Date.now()}`;
+    const invalidateTeamProjectCatalog = vi.fn();
+    const app = express();
+    app.use(express.json());
+    registerProjectRoutes(app, workspaceProjectRouteDeps({
+      workspaceId,
+      projectId,
+      dbDeleteProject: vi.fn(),
+      removeProjectDir: vi.fn(),
+      collabSync: {
+        requestTeamShare: vi.fn(async () => ({ version: 1 })),
+        requestTeamUnshare: vi.fn(async () => {}),
+        invalidateTeamProjectCatalog,
+      },
+    }));
+    const routeServer = await listen(app);
+    try {
+      const moveResp = await fetch(`${routeServer.url}/api/workspaces/${workspaceId}/projects/${projectId}/move`, {
+        method: 'POST',
+        headers: headers('member-share-principal', {
+          'x-od-workspace-role': 'admin',
+          'x-od-workspace-lifecycle-state': 'active',
+        }),
+        body: JSON.stringify({ visibility: 'team' }),
+      });
+      expect(moveResp.status).toBe(200);
+      expect(invalidateTeamProjectCatalog).toHaveBeenCalled();
+    } finally {
+      await close(routeServer.server);
+    }
+  });
+
+  // The invalidation is an optimization layered on top of a write that already
+  // landed. A seam that throws must not turn a successful share into a failure.
+  it('still reports the move as succeeded when catalog invalidation throws', async () => {
+    const projectId = `workspace-share-invalidate-throws-${Date.now()}`;
+    const app = express();
+    app.use(express.json());
+    registerProjectRoutes(app, workspaceProjectRouteDeps({
+      workspaceId,
+      projectId,
+      dbDeleteProject: vi.fn(),
+      removeProjectDir: vi.fn(),
+      collabSync: {
+        requestTeamShare: vi.fn(async () => ({ version: 1 })),
+        requestTeamUnshare: vi.fn(async () => {}),
+        invalidateTeamProjectCatalog: vi.fn(() => {
+          throw new Error('cache seam exploded');
+        }),
+      },
+    }));
+    const routeServer = await listen(app);
+    try {
+      const moveResp = await fetch(`${routeServer.url}/api/workspaces/${workspaceId}/projects/${projectId}/move`, {
+        method: 'POST',
+        headers: headers('member-share-principal', {
+          'x-od-workspace-role': 'admin',
+          'x-od-workspace-lifecycle-state': 'active',
+        }),
+        body: JSON.stringify({ visibility: 'team' }),
+      });
+      expect(moveResp.status).toBe(200);
+    } finally {
+      await close(routeServer.server);
+    }
+  });
+
   it('passes the authorized workspace principal into the team-share sync seam', async () => {
     const projectId = `workspace-share-principal-${Date.now()}`;
     const requestTeamShare = vi.fn(async () => ({ version: 1 }));

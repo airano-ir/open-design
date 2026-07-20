@@ -1962,6 +1962,15 @@ export function registerProjectRoutes(app: Express, ctx: RegisterProjectRoutesDe
         await collabSync.requestTeamUnshare(projectId, workspaceProjectPrincipal(ctx));
       }
     }
+    // The catalog this daemon serves is now stale by construction — drop it so
+    // the refetch the client fires on this response reads the new list instead
+    // of the one from before the move. Best-effort: the move itself already
+    // succeeded, and a cold cache is a slow list, not a failed share.
+    try {
+      collabSync.invalidateTeamProjectCatalog?.();
+    } catch {
+      // ignore
+    }
   }
   function ownerForTeamShare(summary: any, ctx: WorkspaceProjectContext, visibility: 'personal' | 'team') {
     if (visibility !== 'team') return summary?.createdByWorkspaceMemberId ?? null;
