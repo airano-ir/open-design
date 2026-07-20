@@ -5327,10 +5327,20 @@ export async function startServer({
         attemptCount > 0
           ? { ...decision, retryAttemptIndex: attemptCount }
           : decision;
+      // A successful retry has no current failure classification or error code.
+      // Fall back to the failure that caused attempt 0 to be retried so success
+      // recovery can still be attributed by root cause. Failed/suppressed retry
+      // events retain their existing current-attempt semantics.
+      const eventFailure = retryResult === 'success'
+        ? run.retryOriginFailure ?? failure
+        : failure;
+      const eventErrorCode = retryResult === 'success'
+        ? run.retryOriginErrorCode ?? errorCode
+        : errorCode;
       run.retryFinalResult = retryResult;
       run.retrySuppressedReason = retrySuppressedReason;
       design.runs.emit(run, 'run_retry_finished', {
-        ...retryAnalyticsBase(eventDecision, failure, errorCode),
+        ...retryAnalyticsBase(eventDecision, eventFailure, eventErrorCode),
         retry_result: retryResult,
         ...(retrySuppressedReason
           ? { retry_suppressed_reason: retrySuppressedReason }
@@ -5396,6 +5406,10 @@ export async function startServer({
         sideEffects,
       });
       if (decision.shouldRetry && !design.runs.isTerminal(run.status)) {
+        if ((run.retryAttemptCount ?? 0) === 0) {
+          run.retryOriginFailure = failure ? { ...failure } : null;
+          run.retryOriginErrorCode = errorCode ?? null;
+        }
         run.retryAttemptCount = decision.retryAttemptIndex;
         run.retryFinalResult = undefined;
         run.retrySuppressedReason = undefined;
