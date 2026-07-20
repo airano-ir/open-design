@@ -1909,6 +1909,10 @@
   right: 0;
   width: 320px;
   max-width: calc(100vw - 24px);
+  /* Fallback cap for contexts without the measured clamp; the component's
+     inline style overrides this with the real available space (#99). */
+  max-height: min(560px, calc(100vh - 96px));
+  overflow-y: auto;
   padding: 12px;
   border: 1px solid var(--material-separator);
   border-radius: var(--radius);
@@ -1921,6 +1925,12 @@
   flex-direction: column;
   gap: 12px;
   z-index: 20;
+}
+/* Measured flip (#99): when the anchor sits low on screen, the popover
+   opens upward instead of running past the viewport bottom. */
+.inline-switcher__popover--up {
+  top: auto;
+  bottom: calc(100% + 8px);
 }
 .inline-switcher__row {
   display: flex;
@@ -5877,6 +5887,12 @@
   font-size: 12px;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+  /* Long values (e.g. "Bahasa Indonesia") must not push the row past the
+     menu edge — shrink and ellipsize instead. */
+  min-width: 0;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 /* Text glyph standing in for the X (Twitter) icon; sized like the 19px icon
    slot so the label column stays aligned with icon rows. */
@@ -8000,7 +8016,12 @@ button.entry-nav-rail__menu-credits-row:active:not(:disabled) {
   position: absolute;
   z-index: 42;
   left: calc(100% + 8px);
-  top: 0;
+  /* The account menu hugs the bottom of the rail, so a top-anchored submenu
+     grows past the screen bottom and the tail locales become unreachable.
+     Anchor the submenu's bottom to the row instead — it grows UPWARD, and
+     the max-height keeps it inside the viewport. */
+  top: auto;
+  bottom: 0;
   width: 224px;
   margin: 0;
   padding: 4px;

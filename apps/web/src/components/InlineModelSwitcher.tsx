@@ -11,6 +11,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -172,6 +173,41 @@ export function InlineModelSwitcher({
   const analytics = useAnalytics();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
+  // Viewport clamp for the popover (issue #99): the anchor chip can sit
+  // anywhere on screen (home hero mid-page, chat composer at the bottom), so
+  // a fixed downward placement runs past the screen edge once the model list
+  // is long. Measured on open: cap the height to the space on the chosen
+  // side and flip upward when below is tight.
+  const [popoverPlacement, setPopoverPlacement] = useState<{
+    up: boolean;
+    maxHeight: number;
+  } | null>(null);
+  useLayoutEffect(() => {
+    if (!open) {
+      setPopoverPlacement(null);
+      return;
+    }
+    const update = () => {
+      const anchor = wrapRef.current?.getBoundingClientRect();
+      if (!anchor) return;
+      const viewportHeight = window.innerHeight;
+      const below = viewportHeight - anchor.bottom - 16;
+      const above = anchor.top - 16;
+      const up = below < 280 && above > below;
+      setPopoverPlacement({
+        up,
+        maxHeight: Math.max(160, Math.min(560, up ? above : below)),
+      });
+    };
+    update();
+    window.addEventListener('resize', update);
+    window.addEventListener('scroll', update, true);
+    return () => {
+      window.removeEventListener('resize', update);
+      window.removeEventListener('scroll', update, true);
+    };
+  }, [open]);
   const providerModelsFetchingRef = useRef<Set<string>>(new Set());
   const [amrStatus, setAmrStatus] = useState<VelaLoginStatus | null>(null);
   const [amrWalletSnapshot, setAmrWalletSnapshot] =
@@ -749,9 +785,11 @@ export function InlineModelSwitcher({
 
       {open ? (
         <div
-          className="inline-switcher__popover"
+          ref={popoverRef}
+          className={`inline-switcher__popover${popoverPlacement?.up ? ' inline-switcher__popover--up' : ''}`}
           role="menu"
           data-testid="inline-model-switcher-popover"
+          style={popoverPlacement ? { maxHeight: `${popoverPlacement.maxHeight}px`, overflowY: 'auto' } : undefined}
         >
           {compact ? null : (
           <div className="inline-switcher__row">
