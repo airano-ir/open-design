@@ -1,5 +1,7 @@
 import { Icon } from './Icon';
 import { useState, type CSSProperties } from 'react';
+import { useT } from '../i18n';
+import type { Dict } from '../i18n/types';
 
 type TemplateDemo = {
   id: string;
@@ -76,6 +78,19 @@ const TEMPLATE_TYPE_ORDER: TemplateDemo['type'][] = ['Slides', 'Prototype', 'Liv
  *  grid will not render. The badge and the cards must resolve from the same
  *  array: any tab showing `n` renders exactly `n` cards once its subtype filter
  *  is "All". Do not replace this with a hand-maintained lookup table. */
+// The type tabs are rendered from the demo catalogue's `type` field, which is
+// a data value rather than copy. Map it onto a translated label so the tab row
+// is not the one English strip on an otherwise localized page.
+const TEMPLATE_TYPE_LABEL_KEY: Record<TemplateDemo['type'], keyof Dict> = {
+  'Prototype': 'community.typePrototype',
+  'Live Artifact': 'community.typeLiveArtifact',
+  'Slides': 'community.typeSlides',
+  'Image': 'community.typeImage',
+  'Video': 'community.typeVideo',
+  'HyperFrames': 'community.typeHyperFrames',
+  'Audio': 'community.typeAudio',
+};
+
 function countTemplatesByType(templates: TemplateDemo[]): Record<TemplateDemo['type'], number> {
   const counts = Object.fromEntries(
     TEMPLATE_TYPE_ORDER.map((type) => [type, 0]),
@@ -126,6 +141,7 @@ function buildRemixPrompt(template: TemplateDemo): string {
 }
 
 export function CommunityView({ onRemixTemplate }: CommunityViewProps) {
+  const t = useT();
   const [previewTemplate, setPreviewTemplate] = useState<TemplateDemo | null>(null);
   const [activeType, setActiveType] = useState<TemplateDemo['type']>('Slides');
   const [activeSubtype, setActiveSubtype] = useState('All');
@@ -155,15 +171,15 @@ export function CommunityView({ onRemixTemplate }: CommunityViewProps) {
     <section className="community-template-view" aria-labelledby="community-template-title">
       <header className="community-template-view__hero">
         <div>
-          <h1 id="community-template-title" className="entry-section__title">Community</h1>
+          <h1 id="community-template-title" className="entry-section__title">{t('community.title')}</h1>
         </div>
         <div className="community-template-view__search" role="search">
           <Icon name="search" size={16} />
-          <input type="search" placeholder="Search plugins..." aria-label="Search templates" readOnly />
+          <input type="search" placeholder={t('community.searchPlaceholder')} aria-label={t('community.searchAria')} readOnly />
         </div>
       </header>
 
-      <div className="community-template-view__filters" aria-label="Template filters">
+      <div className="community-template-view__filters" aria-label={t('community.filtersAria')}>
         <div className="community-template-view__filter-main">
           <div className="community-template-view__type-tabs">
             {typeOptions.map((type) => (
@@ -176,7 +192,7 @@ export function CommunityView({ onRemixTemplate }: CommunityViewProps) {
                   setActiveSubtype('All');
                 }}
               >
-                <span>{type}</span>
+                <span>{t(TEMPLATE_TYPE_LABEL_KEY[type])}</span>
                 <small>{typeCount(type)}</small>
               </button>
             ))}
@@ -188,7 +204,7 @@ export function CommunityView({ onRemixTemplate }: CommunityViewProps) {
             className={activeSubtype === 'All' ? 'is-active' : ''}
             onClick={() => setActiveSubtype('All')}
           >
-            All
+            {t('common.all')}
           </button>
           {subtypeOptions.map((subtype) => (
             <button
@@ -252,6 +268,7 @@ function TemplatePreviewModal({
   onClose: () => void;
   onUse: () => void;
 }) {
+  const t = useT();
   return (
     <div className="community-template-preview" role="presentation" onMouseDown={onClose}>
       <section
@@ -266,7 +283,7 @@ function TemplatePreviewModal({
             <h2 id="community-template-preview-title">{template.title}</h2>
             <p>{template.meta}</p>
           </div>
-          <button type="button" aria-label="Close preview" onClick={onClose}>
+          <button type="button" aria-label={t('community.closePreview')} onClick={onClose}>
             <Icon name="close" size={17} />
           </button>
         </header>
