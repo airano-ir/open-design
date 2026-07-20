@@ -1212,6 +1212,15 @@ export function buildManualEditBridge(enabled: boolean): string {
     postImagePayload(dropAnchor ? stableId(dropAnchor) : '', droppedImage);
   }, true);
   window.addEventListener('resize', postTargets);
+  // A freshly pasted/dropped image can be 0x0 during the immediate target
+  // pass after insertion and is intentionally filtered out by allTargets().
+  // Image load does not mutate the DOM, so MutationObserver cannot announce
+  // the now-measurable target; re-post explicitly when its dimensions settle.
+  document.addEventListener('load', function(ev){
+    var loaded = ev.target;
+    if (!enabled || !loaded || !loaded.tagName || loaded.tagName.toLowerCase() !== 'img') return;
+    postTargets();
+  }, true);
   function bootEditBridge(){
     annotateBrandKitRuntimeTargets();
     postTargets();

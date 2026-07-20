@@ -6571,8 +6571,9 @@ function HtmlViewer({
   const manualEditToolbarBurstRef = useRef<{ styles: Partial<ManualEditStyles>; label: string } | null>(null);
   // Resolver for the pending od-edit-apply-dom ack (in-place undo/redo).
   const manualEditApplyDomAckRef = useRef<{ version: number; resolve: (ok: boolean) => void } | null>(null);
-  // Best-effort re-selection of a freshly duplicated element once the reloaded
-  // iframe re-announces its targets.
+  // Selection hand-off for a freshly inserted/duplicated element. Kept until
+  // that exact id is announced because images may be filtered from the first
+  // target pass while their asset is still 0x0.
   const manualEditPendingSelectIdRef = useRef<string | null>(null);
   const [manualEditHistory, setManualEditHistory] = useState<ManualEditHistoryEntry[]>([]);
   const [manualEditUndone, setManualEditUndone] = useState<ManualEditHistoryEntry[]>([]);
@@ -6587,6 +6588,11 @@ function HtmlViewer({
   const [manualEditError, setManualEditError] = useState<string | null>(null);
   const [manualEditSaving, setManualEditSaving] = useState(false);
   const manualEditSavingRef = useRef(false);
+  // Serializes forward manual-edit writes. Inline text commits arrive from
+  // the iframe independently of toolbar autosaves, so a commit that lands
+  // during a slow style write must wait and apply against that saved source
+  // instead of being dropped by the generic saving guard.
+  const manualEditSaveInFlightRef = useRef<Promise<boolean> | null>(null);
   const manualEditPendingStyleRef = useRef<ManualEditPendingStyleSave | null>(null);
   // The last source written by THIS manual-edit session (style/text patches,
   // undo/redo). Distinguishes our own file writes — whose live effect already
@@ -8078,6 +8084,7 @@ function HtmlViewer({
     setSelectedManualEditTarget(null);
     setManualEditPanelPosition(null);
     selectedManualEditTargetIdRef.current = null;
+    manualEditPendingSelectIdRef.current = null;
     setManualEditDraft(emptyManualEditDraft());
     setManualEditDraftDirty(false);
     resetManualEditHistory();
@@ -8376,7 +8383,6 @@ function HtmlViewer({
             void selectManualEditTarget(pending);
             return;
           }
-          if (data.targets.length > 0) manualEditPendingSelectIdRef.current = null;
         }
         // Target broadcasts can be briefly empty while the iframe/save path is
         // settling; keep the user's inspector selection unless a fresh copy is
@@ -8631,7 +8637,10 @@ function HtmlViewer({
   async function flushManualEditStyleSave(): Promise<boolean> {
     const pending = manualEditPendingStyleRef.current;
     if (!pending) return true;
-    if (manualEditSavingRef.current) return false;
+    // Forward writes can safely queue behind one another. Keep the pending
+    // snapshot intact only when an undo/redo write (which does not use the
+    // forward-save queue) owns the saving lock.
+    if (manualEditSavingRef.current && !manualEditSaveInFlightRef.current) return false;
     clearManualEditStyleTimer();
     manualEditPendingStyleRef.current = null;
     return applyManualEdit({ id: pending.id, kind: 'set-style', styles: pending.styles }, pending.label);
@@ -9029,7 +9038,29 @@ function HtmlViewer({
   }
 
   async function applyManualEdit(patch: ManualEditPatch, label: string): Promise<boolean> {
+    const sourceKey = sourceFileKeyRef.current;
+    // More than one iframe/toolbar event can observe the same active save.
+    // Loop (rather than await once) so every waiter re-checks the ref and only
+    // one continuation acquires the slot for the next write.
+    while (manualEditSaveInFlightRef.current) {
+      try { await manualEditSaveInFlightRef.current; } catch { /* the next write may still be retried */ }
+    }
+    // Never let a queued write from the previous artifact cross a file switch.
+    if (sourceFileKeyRef.current !== sourceKey) return false;
+    // Undo/redo still owns its separate history write lock.
     if (manualEditSavingRef.current) return false;
+    const save = performManualEdit(patch, label);
+    manualEditSaveInFlightRef.current = save;
+    try {
+      return await save;
+    } finally {
+      if (manualEditSaveInFlightRef.current === save) {
+        manualEditSaveInFlightRef.current = null;
+      }
+    }
+  }
+
+  async function performManualEdit(patch: ManualEditPatch, label: string): Promise<boolean> {
     if (sourceRef.current == null) return false;
     if (
       (patch.kind === 'insert-html' || patch.kind === 'duplicate-element')

@@ -1149,6 +1149,34 @@ describe('manual edit rich text sessions', () => {
     dom.window.close();
   });
 
+  it('re-broadcasts targets when an inserted image becomes measurable after load', () => {
+    const dom = new JSDOM(
+      `<main data-od-id="wrap"><p data-od-id="anchor">One</p></main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+    const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
+
+    dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
+      data: { type: 'od-edit-apply-dom', id: 'anchor', op: 'insert-after', html: '<img src="slow.png" alt="">', version: 18 },
+    }));
+    const image = dom.window.document.querySelector('img')!;
+    image.getBoundingClientRect = () => ({
+      x: 0, y: 24, width: 160, height: 90,
+      top: 24, right: 160, bottom: 114, left: 0,
+      toJSON: () => ({}),
+    } as DOMRect);
+    postMessage.mockClear();
+
+    image.dispatchEvent(new dom.window.Event('load'));
+
+    expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'od-edit-targets',
+      targets: expect.arrayContaining([expect.objectContaining({ id: 'path-0-1', kind: 'image' })]),
+    }), '*');
+
+    dom.window.close();
+  });
+
   it('preserves iframe scroll while an in-place image insert changes layout', () => {
     const dom = new JSDOM(
       `<main data-od-id="wrap"><p data-od-id="anchor">One</p></main>${buildManualEditBridge(true)}`,

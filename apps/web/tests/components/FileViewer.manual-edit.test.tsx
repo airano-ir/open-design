@@ -435,6 +435,94 @@ describe('FileViewer manual edit regressions', () => {
     expect(savedBodies[1]!.content.match(/<main/g)).toHaveLength(2);
   });
 
+  it('queues an inline text commit behind a slow toolbar style save', async () => {
+    const source = '<!doctype html><html><body><main data-od-id="hero">Hero</main><footer data-od-id="footer">Footer</footer></body></html>';
+    const savedBodies: Array<{ content: string; versionLabel?: string; versionSource?: string }> = [];
+    let resolveFirstWrite!: (response: Response) => void;
+    const firstWriteResponse = new Promise<Response>((resolve) => {
+      resolveFirstWrite = resolve;
+    });
+    const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : input instanceof Request ? input.url : String(input);
+      if (url.includes('/api/projects/project-1/files') && init?.method === 'POST') {
+        savedBodies.push(JSON.parse(String(init.body)) as (typeof savedBodies)[number]);
+        if (savedBodies.length === 1) return firstWriteResponse;
+        return new Response(JSON.stringify({ file: htmlPreviewFile() }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      if (url.includes('/api/projects/project-1/raw/preview.html')) {
+        const latest = savedBodies[savedBodies.length - 1]?.content ?? source;
+        return new Response(latest, { status: 200, headers: { 'Content-Type': 'text/html' } });
+      }
+      return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={htmlPreviewFile()}
+        liveHtml={source}
+      />,
+    );
+
+    clickManualTool('manual-edit-mode-toggle');
+    const frame = await previewFrame();
+    const postSpy = vi.spyOn(frame.contentWindow!, 'postMessage');
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-select', target: heroTarget() },
+        source: frame.contentWindow,
+      }));
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-text-selection', id: 'hero', hasRange: true },
+        source: frame.contentWindow,
+      }));
+    });
+    fireEvent.click(await screen.findByRole('button', { name: 'Font size' }));
+    fireEvent.click(screen.getByRole('button', { name: '32px' }));
+
+    // Switching targets flushes the debounced style save. Hold that request
+    // open, then finish the inline text session while the save is in flight.
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: {
+          type: 'od-edit-select',
+          target: {
+            ...heroTarget(),
+            id: 'footer',
+            label: 'Footer',
+            text: 'Footer',
+            outerHtml: '<footer data-od-id="footer">Footer</footer>',
+          },
+        },
+        source: frame.contentWindow,
+      }));
+    });
+    await waitFor(() => expect(savedBodies).toHaveLength(1));
+
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-text-commit', id: 'hero', value: 'Updated hero' },
+        source: frame.contentWindow,
+      }));
+    });
+    expect(savedBodies).toHaveLength(1);
+
+    await act(async () => {
+      resolveFirstWrite(new Response(JSON.stringify({ file: htmlPreviewFile() }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }));
+      await firstWriteResponse;
+    });
+
+    const applied = await ackApplyDom(frame, postSpy);
+    expect(applied.html).toContain('Updated hero');
+    await waitFor(() => expect(savedBodies).toHaveLength(2));
+    expect(savedBodies[0]!.content).toContain('data-od-id="hero" style="font-size: 32px;"');
+    expect(savedBodies[1]!.content).toContain('data-od-id="hero" style="font-size: 32px;">Updated hero</main>');
+  });
+
   it('does not let a pending manual edit style save survive a file switch', async () => {
     const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
       const url = typeof input === 'string' ? input : input instanceof Request ? input.url : String(input);
@@ -983,6 +1071,15 @@ describe('FileViewer manual edit regressions', () => {
       attributes: {},
       outerHtml: '<img src="pasted-image.png" alt="" style="max-width: 100%;">',
     };
+    // A newly inserted image may still be 0x0 before its asset load, so the
+    // bridge's first non-empty target pass can legitimately omit it. Keep the
+    // pending hand-off alive until that exact target is announced later.
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-targets', targets: [heroTarget()] },
+        source: frame.contentWindow,
+      }));
+    });
     act(() => {
       window.dispatchEvent(new MessageEvent('message', {
         data: { type: 'od-edit-targets', targets: [heroTarget(), imageTarget] },
