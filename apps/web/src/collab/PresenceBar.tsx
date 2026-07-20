@@ -108,7 +108,12 @@ export function PresenceBar({
     };
   }, [open]);
 
-  if (ordered.length === 0) return null;
+  // Presence answers "who ELSE is in here". A roster of one, where that one is
+  // you, answers nothing — it rendered your own avatar over your own project
+  // and captioned it "你正在查看此项目" (acceptance #19). Self still leads the
+  // stack the moment anybody else shows up.
+  const selfIsAlone = ordered.length === 1 && resolvedSelf?.memberId === ordered[0]?.memberId;
+  if (ordered.length === 0 || selfIsAlone) return null;
 
   return (
     <div

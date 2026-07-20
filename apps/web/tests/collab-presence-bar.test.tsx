@@ -51,16 +51,31 @@ describe('PresenceBar', () => {
     expect(screen.getByText('+2')).toBeTruthy();
   });
 
-  it('renders self when no teammates are present yet', () => {
-    render(
+  // Acceptance #19: alone in your own project, the bar showed your own avatar
+  // and captioned it "you are viewing this project" — a roster of just you says
+  // nothing. It has to come back the moment a teammate joins.
+  it('renders nothing when the only member present is the viewer', () => {
+    const { container } = render(
       <PresenceBar
         selfMemberId="me"
         selfMember={{ memberId: 'me', name: 'Me' }}
         members={[]}
       />,
     );
+    expect(container.firstChild).toBeNull();
+  });
+
+  it('reappears with self first as soon as a teammate joins', () => {
+    render(
+      <PresenceBar
+        selfMemberId="me"
+        selfMember={{ memberId: 'me', name: 'Me' }}
+        members={[{ memberId: 'other', name: 'Amy' }]}
+      />,
+    );
     expect(screen.getByText('ME')).toBeTruthy();
-    expect(screen.getByRole('group').getAttribute('aria-label')).toContain('1 collaborator online, including you');
+    expect(screen.getByText('AM')).toBeTruthy();
+    expect(screen.getByRole('group').getAttribute('aria-label')).toContain('including you');
   });
 
   it('falls back to the member id when there is no name', () => {
