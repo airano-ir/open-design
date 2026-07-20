@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CollabMemberRole, CollabPresenceMember, WorkspaceCollabContext } from '@open-design/contracts';
 import { resolveCollabSession } from './collab-session';
+import { lastResolvedWorkspaceContext as cachedWorkspaceContext } from './useWorkspaceContext';
 import { useCollab } from './useCollab';
 
 export interface UseProjectCollabOptions {
@@ -19,9 +20,23 @@ interface WorkspaceContextState {
 }
 
 function useWorkspaceContextState(options: UseProjectCollabOptions = {}): WorkspaceContextState {
-  const [state, setState] = useState<WorkspaceContextState>({ context: null, loading: true });
   const baseUrl = options.baseUrl ?? '';
   const fetchImpl = options.fetch;
+  // Opening a project used to start this read cold every time, and `viewerOnly`
+  // fails closed while it is in flight — so a member's OWN private project
+  // opened as a read-only shell: personal avatar in place of the collab roster,
+  // disabled 历史版本 / 分享, no composer (acceptance #54, #59). The nav shell has
+  // already resolved this exact context and parks it at module scope; seeding
+  // from that cache means the window only exists on the very first read of a
+  // session, while the request below still revalidates.
+  //
+  // Only the production path seeds. A test that injects `fetch`/`baseUrl` is
+  // pointing at its own daemon, so it must not inherit another suite's context.
+  const canSeedFromShell = !fetchImpl && !options.baseUrl;
+  const [state, setState] = useState<WorkspaceContextState>(() => {
+    const seed = canSeedFromShell ? cachedWorkspaceContext() : null;
+    return { context: seed, loading: seed === null };
+  });
 
   useEffect(() => {
     let cancelled = false;

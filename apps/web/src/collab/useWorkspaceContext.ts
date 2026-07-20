@@ -35,6 +35,15 @@ export function resetWorkspaceContextCache(): void {
   cachedWorkspaceContext = null;
 }
 
+/**
+ * The last context the shell resolved, for consumers that mount later and would
+ * otherwise start their own read from `null`. Read-only: this cache is owned by
+ * `useWorkspaceContext` and only a successful read redefines it.
+ */
+export function lastResolvedWorkspaceContext(): WorkspaceContextState['context'] {
+  return cachedWorkspaceContext;
+}
+
 export function useWorkspaceContext(): WorkspaceContextState {
   const [state, setState] = useState<WorkspaceContextState>(() => ({
     context: cachedWorkspaceContext,
