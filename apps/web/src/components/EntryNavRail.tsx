@@ -216,7 +216,11 @@ export function EntryNavRail({
   // mount, so shells without an open menu spend zero requests on it.
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
   useEffect(() => {
-    if (!accountOpen || accountEmail !== null) return;
+    if (!accountOpen) return;
+    // Refetch on EVERY open (the previous value stays visible while the read
+    // is in flight, so there is no flicker). A fetch-once cache here went
+    // stale the moment the user switched vela accounts mid-session — the menu
+    // kept showing the first account's email (#102).
     let cancelled = false;
     void fetchVelaLoginStatus().then((status) => {
       if (!cancelled) setAccountEmail(status?.user?.email?.trim() || '');
@@ -224,7 +228,6 @@ export function EntryNavRail({
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountOpen]);
   // Hover-open for the account menu (#5517 interaction). The popover floats
   // above the trigger, so closing is delayed just long enough for the pointer
