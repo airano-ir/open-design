@@ -99,6 +99,12 @@ function storedEntryTabView(): string | null {
 }
 
 function mockTabRect(element: HTMLElement, left: number, width = 100) {
+  // Drop hit-testing measures tabs in LAYOUT space (offsetLeft/offsetWidth) so
+  // the FLIP reorder slide and the drag transform can't shift the rects it
+  // reads. jsdom reports 0 for both, so stub them alongside the visual rect —
+  // the strip itself sits at x=0 with scrollLeft 0, so the two coincide here.
+  Object.defineProperty(element, 'offsetLeft', { configurable: true, value: left });
+  Object.defineProperty(element, 'offsetWidth', { configurable: true, value: width });
   Object.defineProperty(element, 'getBoundingClientRect', {
     configurable: true,
     value: () =>
@@ -697,96 +703,6 @@ describe('WorkspaceTabsBar navigation semantics', () => {
     await waitFor(() => {
       expect(screen.queryByRole('dialog', { name: 'Search tabs' })).toBeNull();
     });
-  });
-
-  it('clamps the hover preview to 220px for narrow tabs', async () => {
-    window.localStorage.setItem(
-      'open-design:workspace-tabs:v1',
-      JSON.stringify({
-        activeTabId: 'entry:home:seed',
-        tabs: [
-          {
-            id: 'entry:home:seed',
-            kind: 'entry',
-            view: 'home',
-            createdAt: 1,
-            lastActiveAt: 2,
-          },
-          {
-            id: 'project:project-alpha',
-            kind: 'project',
-            projectId: 'project-alpha',
-            conversationId: null,
-            fileName: null,
-            createdAt: 2,
-            lastActiveAt: 1,
-          },
-        ],
-      }),
-    );
-
-    render(<WorkspaceTabsBar route={{ kind: 'home', view: 'home' }} projects={[project]} />);
-
-    await waitFor(() => {
-      expect(screen.getAllByRole('tab')).toHaveLength(2);
-    });
-
-    const projectTab = screen.getAllByRole('tab').find((tab) =>
-      (tab.textContent ?? '').includes('Project Alpha'),
-    ) as HTMLElement;
-    mockTabRect(projectTab, 32, 148);
-    fireEvent.mouseEnter(projectTab);
-
-    await new Promise((resolve) => window.setTimeout(resolve, 430));
-
-    const tooltip = await screen.findByRole('tooltip');
-    expect(tooltip.style.width).toBe('220px');
-    expect(tooltip.style.left).toBe('32px');
-  });
-
-  it('matches anchor width for tabs wider than the 220px floor', async () => {
-    window.localStorage.setItem(
-      'open-design:workspace-tabs:v1',
-      JSON.stringify({
-        activeTabId: 'entry:home:seed',
-        tabs: [
-          {
-            id: 'entry:home:seed',
-            kind: 'entry',
-            view: 'home',
-            createdAt: 1,
-            lastActiveAt: 2,
-          },
-          {
-            id: 'project:project-alpha',
-            kind: 'project',
-            projectId: 'project-alpha',
-            conversationId: null,
-            fileName: null,
-            createdAt: 2,
-            lastActiveAt: 1,
-          },
-        ],
-      }),
-    );
-
-    render(<WorkspaceTabsBar route={{ kind: 'home', view: 'home' }} projects={[project]} />);
-
-    await waitFor(() => {
-      expect(screen.getAllByRole('tab')).toHaveLength(2);
-    });
-
-    const projectTab = screen.getAllByRole('tab').find((tab) =>
-      (tab.textContent ?? '').includes('Project Alpha'),
-    ) as HTMLElement;
-    mockTabRect(projectTab, 50, 300);
-    fireEvent.mouseEnter(projectTab);
-
-    await new Promise((resolve) => window.setTimeout(resolve, 430));
-
-    const tooltip = await screen.findByRole('tooltip');
-    expect(tooltip.style.width).toBe('300px');
-    expect(tooltip.style.left).toBe('50px');
   });
 
   it('keeps the Home tab pinned leftmost when a tab is dropped onto its left edge', async () => {

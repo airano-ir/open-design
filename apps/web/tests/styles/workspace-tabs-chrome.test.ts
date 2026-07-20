@@ -284,7 +284,6 @@ describe('workspace tabs chrome styles', () => {
     const tabSeparator = cssDeclarations(routinesCss, '.workspace-shell .workspace-tab + .workspace-tab::before');
     const main = cssDeclarations(routinesCss, '.workspace-shell .workspace-tab__main');
     const popover = cssDeclarations(shellCss, '.workspace-tabs-popover');
-    const preview = cssDeclarations(shellCss, '.workspace-tab-preview');
     const presentOverlay = cssDeclarations(composioCss, '.present-overlay');
     const projectChrome = cssDeclarations(
       routinesCss,
@@ -315,7 +314,9 @@ describe('workspace tabs chrome styles', () => {
     expect(Number(ruleValue(popover, 'z-index'))).toBeGreaterThan(
       Number(ruleValue(presentOverlay, 'z-index')),
     );
-    expect(ruleValue(preview, 'box-sizing')).toBe('border-box');
+    // #5517 drops the 380ms tab hover-preview card entirely — no component, no
+    // stylesheet block. Guard the removal so it cannot creep back in.
+    expect(shellCss).not.toContain('.workspace-tab-preview');
     expect(routinesCss).not.toContain('.workspace-shell .workspace-tab.is-active::before');
     expect(routinesCss).not.toContain('.workspace-shell .workspace-tab.is-active::after');
   });

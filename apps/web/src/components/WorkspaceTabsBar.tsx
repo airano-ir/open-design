@@ -1,4 +1,12 @@
-import { type DragEvent, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  type DragEvent,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { useT } from '../i18n';
 import { navigate, type EntryHomeView, type Route } from '../router';
@@ -15,6 +23,8 @@ import {
   readStoredRailOpen,
 } from './entryRailBridge';
 import { homeHeroChipLabel } from './home-hero/chip-labels';
+import { useGlideIndicator } from '../hooks/useGlideIndicator';
+import { useLiquidGlass } from '../hooks/useLiquidGlass';
 
 type WorkspaceChromeTab =
   | {
@@ -280,9 +290,30 @@ function tabDragTargetKey(target: TabDragTarget): string {
   return `${target.tabId}:${target.edge}`;
 }
 
-function tabDropEdgeFromElement(event: DragEvent<HTMLElement>, element: HTMLElement): TabDropEdge {
-  const rect = element.getBoundingClientRect();
-  return event.clientX > rect.left + rect.width / 2 ? 'after' : 'before';
+/**
+ * A tab's horizontal span in viewport X, measured from layout geometry
+ * (offsetLeft/offsetWidth) instead of getBoundingClientRect. Layout geometry
+ * excludes transforms, so the FLIP slide animation and drag styling never
+ * shift the rects the drop hit-testing reads — a transformed hovered tab used
+ * to move its own midpoint, flip the before/after edge, transform back, and
+ * oscillate (visible jitter while dragging).
+ */
+function tabLayoutSpan(
+  strip: HTMLElement,
+  element: HTMLElement,
+): { left: number; right: number; mid: number } {
+  const stripLeft = strip.getBoundingClientRect().left - strip.scrollLeft;
+  const left = stripLeft + element.offsetLeft;
+  const width = element.offsetWidth;
+  return { left, right: left + width, mid: left + width / 2 };
+}
+
+function tabDropEdgeFromElement(
+  event: DragEvent<HTMLElement>,
+  strip: HTMLElement,
+  element: HTMLElement,
+): TabDropEdge {
+  return event.clientX > tabLayoutSpan(strip, element).mid ? 'after' : 'before';
 }
 
 function pulseTabDragHaptic(durationMs = TAB_DRAG_HAPTIC_MS) {
@@ -407,16 +438,6 @@ function normalizeSearch(value: string): string {
   return value.trim().toLocaleLowerCase();
 }
 
-interface HoverPreviewState {
-  tabId: string;
-  anchorLeft: number;
-  anchorRight: number;
-  anchorBottom: number;
-  anchorWidth: number;
-}
-
-const HOVER_PREVIEW_DELAY_MS = 380;
-
 export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false }: Props) {
   const t = useT();
   const [state, setState] = useState<WorkspaceTabsState>(() => initialTabsState(route));
@@ -443,13 +464,11 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
     };
   }, [radialMenu]);
   const [query, setQuery] = useState('');
-  const [hoverPreview, setHoverPreview] = useState<HoverPreviewState | null>(null);
   const [tabsOverflowing, setTabsOverflowing] = useState(false);
   const stripRef = useRef<HTMLDivElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
-  const hoverTimerRef = useRef<number | null>(null);
   const previousOnboardingCompletedRef = useRef(onboardingCompleted);
   const resetEntryToHomeAfterOnboardingRef = useRef(false);
   const dragSuppressClickRef = useRef(false);
@@ -457,6 +476,84 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
   const dragHapticTargetRef = useRef<string | null>(null);
   const [draggingTabId, setDraggingTabId] = useState<string | null>(null);
   const [dragOverTarget, setDragOverTarget] = useState<TabDragTarget | null>(null);
+
+  // Liquid-glass glide indicator: one persistent pill that slides to the
+  // active tab (see useGlideIndicator + .workspace-tabs-glide in routines.css).
+  const glideRef = useRef<HTMLDivElement | null>(null);
+  const glidePillRef = useRef<HTMLDivElement | null>(null);
+  const glideGlassRef = useLiquidGlass<HTMLDivElement>({ strength: 0.2 });
+  const setGlidePillRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      glidePillRef.current = node;
+      glideGlassRef(node);
+    },
+    [glideGlassRef],
+  );
+
+  // FLIP slide for live drag-reordering: when the tab order changes mid-drag,
+  // each displaced tab starts at its previous slot (inverted transform) and
+  // transitions to its new one instead of teleporting. Positions come from
+  // offsetLeft (layout space, transform-free), so the in-flight slides never
+  // feed back into the drop hit-testing in findTabDropTarget.
+  const tabFlipLeftsRef = useRef(new Map<string, number>());
+  useLayoutEffect(() => {
+    const strip = stripRef.current;
+    if (!strip) return;
+    const previousLefts = tabFlipLeftsRef.current;
+    const nextLefts = new Map<string, number>();
+    for (const element of strip.querySelectorAll<HTMLElement>('[data-workspace-tab-id]')) {
+      const id = element.dataset.workspaceTabId;
+      if (!id) continue;
+      nextLefts.set(id, element.offsetLeft);
+      const before = previousLefts.get(id);
+      if (before === undefined) continue;
+      const delta = before - element.offsetLeft;
+      if (!delta) continue;
+      // The dragged tab itself snaps — its native drag ghost is what tracks
+      // the pointer; animating the in-row placeholder would lag behind it.
+      if (id === draggingTabIdRef.current) continue;
+      element.style.transition = 'none';
+      element.style.transform = `translateX(${delta}px)`;
+      // Commit the inverted start position before re-enabling transitions.
+      void element.offsetWidth;
+      element.style.transition = '';
+      element.style.transform = '';
+    }
+    tabFlipLeftsRef.current = nextLefts;
+  });
+
+  // Layout epoch for the glide indicator: any change in tab identity/order or
+  // the overflow state can shift the active tab without changing which tab is
+  // active — those reposition instantly (no fake slide).
+  const tabsLayoutKey = useMemo(
+    () => `${state.tabs.map((tab) => tab.id).join('|')}:${tabsOverflowing ? 1 : 0}`,
+    [state.tabs, tabsOverflowing],
+  );
+  const activeChromeTab = state.tabs.find((tab) => tab.id === state.activeTabId);
+  // The pinned entry tab renders only a flat rail-toggle whenever it's active —
+  // the sidebar toggle on Home, the Home button in every other entry section
+  // (settings / all-projects / community / design-systems). In ALL of these the
+  // glide pill must not park its filled "active tab" surface over it, so key off
+  // `kind === 'entry'` rather than the Home view alone (which left the pill
+  // filling the button in the other sections).
+  const activeIsEntryRailToggle = activeChromeTab?.kind === 'entry';
+  useGlideIndicator({
+    containerRef: stripRef,
+    indicatorRef: glideRef,
+    pillRef: glidePillRef,
+    // On an entry section, target a never-matching selector so the glide pill
+    // fades out over the toggle instead of filling it. (jsdom-safe — no `:has()`
+    // in querySelector.)
+    activeSelector: activeIsEntryRailToggle
+      ? '.workspace-tab.is-active.__no-glide__'
+      : '.workspace-tab.is-active',
+    activeKey: state.activeTabId,
+    layoutKey: tabsLayoutKey,
+    frozen: draggingTabId !== null,
+    // The pinned entry tab is position: sticky — its visual position diverges
+    // from layout coords while the strip is scrolled, so chase it on scroll.
+    trackScroll: activeChromeTab?.kind === 'entry',
+  });
 
   // While the app is on the onboarding (Welcome) route, opening a new tab
   // would navigate away from onboarding and bypass the Connect gate. Key off
@@ -481,34 +578,6 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
     window.addEventListener(ENTRY_RAIL_STATE_EVENT, onRailState);
     return () => window.removeEventListener(ENTRY_RAIL_STATE_EVENT, onRailState);
   }, []);
-
-  function clearHoverTimer() {
-    if (hoverTimerRef.current !== null) {
-      window.clearTimeout(hoverTimerRef.current);
-      hoverTimerRef.current = null;
-    }
-  }
-
-  function scheduleHoverPreview(tabId: string, element: HTMLElement) {
-    clearHoverTimer();
-    hoverTimerRef.current = window.setTimeout(() => {
-      const rect = element.getBoundingClientRect();
-      setHoverPreview({
-        tabId,
-        anchorLeft: rect.left,
-        anchorRight: rect.right,
-        anchorBottom: rect.bottom,
-        anchorWidth: rect.width,
-      });
-    }, HOVER_PREVIEW_DELAY_MS);
-  }
-
-  function dismissHoverPreview() {
-    clearHoverTimer();
-    setHoverPreview(null);
-  }
-
-  useEffect(() => () => clearHoverTimer(), []);
 
   const projectById = useMemo(
     () => new Map(projects.map((project) => [project.id, project])),
@@ -635,7 +704,11 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
       typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(requestMeasure);
     if (resizeObserver) {
       resizeObserver.observe(stripElement);
-      Array.from(stripElement.children).forEach((child) => resizeObserver.observe(child));
+      // Skip the glide indicator: its width transitions with every tab
+      // switch and would feed a resize event into overflow measurement.
+      Array.from(stripElement.children)
+        .filter((child) => !child.classList.contains('workspace-tabs-glide'))
+        .forEach((child) => resizeObserver.observe(child));
     }
     window.addEventListener('resize', requestMeasure);
     return () => {
@@ -771,7 +844,6 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
       activeTabId: tab.id,
     }));
     setTabsMenuOpen(false);
-    dismissHoverPreview();
     navigate(routeForTab(tab));
   }
 
@@ -918,7 +990,6 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
   }
 
   function closeTab(tabId: string) {
-    dismissHoverPreview();
     const normalized = normalizeTabsState(state);
     const closingIndex = normalized.tabs.findIndex((tab) => tab.id === tabId);
     if (closingIndex < 0) return;
@@ -945,7 +1016,6 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
   }
 
   function reorderTab(sourceId: string, targetId: string, edge: TabDropEdge) {
-    dismissHoverPreview();
     setTabsMenuOpen(false);
     setState((current) => {
       const normalized = normalizeTabsState(current);
@@ -977,7 +1047,7 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
       if (tabElement && strip.contains(tabElement)) {
         const tabId = tabElement.dataset.workspaceTabId;
         if (tabId && tabId !== sourceId) {
-          return resolveTarget({ tabId, edge: tabDropEdgeFromElement(event, tabElement) });
+          return resolveTarget({ tabId, edge: tabDropEdgeFromElement(event, strip, tabElement) });
         }
       }
     }
@@ -986,9 +1056,9 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
     for (const tabElement of strip.querySelectorAll<HTMLElement>('[data-workspace-tab-id]')) {
       const tabId = tabElement.dataset.workspaceTabId;
       if (!tabId || tabId === sourceId) continue;
-      const rect = tabElement.getBoundingClientRect();
-      if (event.clientX <= rect.left + rect.width / 2) return resolveTarget({ tabId, edge: 'before' });
-      if (event.clientX <= rect.right) return resolveTarget({ tabId, edge: 'after' });
+      const span = tabLayoutSpan(strip, tabElement);
+      if (event.clientX <= span.mid) return resolveTarget({ tabId, edge: 'before' });
+      if (event.clientX <= span.right) return resolveTarget({ tabId, edge: 'after' });
       lastTarget = { tabId, edge: 'after' };
     }
     return lastTarget;
@@ -1000,7 +1070,6 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
       event.preventDefault();
       return;
     }
-    dismissHoverPreview();
     dragSuppressClickRef.current = true;
     draggingTabIdRef.current = tabId;
     dragHapticTargetRef.current = `${tabId}:self`;
@@ -1083,6 +1152,17 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
             chrome horizontally. The search-tabs popover still acts as
             a keyboard surface for finding a tab that's scrolled out of
             view. */}
+        {/* Liquid-glass active-tab pill: positioned by useGlideIndicator in
+            the strip's content coordinates, painted by the __pill (frosted
+            everywhere, SDF refraction on Chromium via useLiquidGlass). First
+            child so `.workspace-tab + .workspace-tab` sibling selectors and
+            [data-workspace-tab-id] queries stay untouched. */}
+        <div className="workspace-tabs-glide" ref={glideRef} aria-hidden="true">
+          <div
+            className="workspace-tabs-glide__pill od-glass-refract"
+            ref={setGlidePillRef}
+          />
+        </div>
         {state.tabs.map((tab) => {
           const display = displayTabById.get(tab.id) ?? displayTabFor(tab, projectById, t);
           const active = tab.id === state.activeTabId;
@@ -1100,12 +1180,9 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
               data-workspace-tab-id={tab.id}
               role="tab"
               aria-selected={active}
-              aria-describedby={hoverPreview?.tabId === tab.id ? 'workspace-tab-preview' : undefined}
               draggable={!isPinned && state.tabs.length > 1}
               onDragStart={(event) => handleTabDragStart(tab.id, event)}
               onDragEnd={handleTabDragEnd}
-              onMouseEnter={(event) => scheduleHoverPreview(tab.id, event.currentTarget)}
-              onMouseLeave={dismissHoverPreview}
             >
               {isPinned && active && tab.view === 'home' ? (
                 /* Home view only: the pinned tab is the sidebar toggle — a Home
@@ -1150,8 +1227,6 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
                     type="button"
                     className="workspace-tab__main"
                     onClick={() => openTab(tab)}
-                    onFocus={(event) => scheduleHoverPreview(tab.id, event.currentTarget.parentElement ?? event.currentTarget)}
-                    onBlur={dismissHoverPreview}
                   >
                     <span className="workspace-tab__icon" aria-hidden>
                       <Icon name={display.icon} size={14} />
@@ -1168,7 +1243,7 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
                       data-tooltip-placement="bottom"
                       onClick={() => closeTab(tab.id)}
                     >
-                      <Icon name="close" size={10} />
+                      <Icon name="close" size={14} />
                     </button>
                   )}
                 </>
@@ -1244,7 +1319,7 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
                               data-tooltip-placement="left"
                               aria-label={t('common.close')}
                             >
-                              <Icon name="close" size={11} />
+                              <Icon name="close" size={14} />
                             </button>
                           )}
                         </div>
@@ -1321,64 +1396,8 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
         </div>,
         document.body,
       ) : null}
-      {hoverPreview && typeof document !== 'undefined' && !tabsMenuOpen
-        ? createPortal(
-            (() => {
-              const previewTab = state.tabs.find((tab) => tab.id === hoverPreview.tabId);
-              if (!previewTab) return null;
-              const previewDisplay = displayTabById.get(previewTab.id)
-                ?? displayTabFor(previewTab, projectById, t);
-              const previewDetail = describePreviewDetail(previewTab, projectById);
-              const previewWidth = Math.max(220, Math.round(hoverPreview.anchorWidth));
-              const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1024;
-              const left = Math.max(
-                0,
-                Math.min(viewportWidth - previewWidth, hoverPreview.anchorLeft),
-              );
-              return (
-                <div
-                  id="workspace-tab-preview"
-                  className="workspace-tab-preview"
-                  role="tooltip"
-                  style={{ left, top: hoverPreview.anchorBottom + 6, width: previewWidth }}
-                >
-                  <div className="workspace-tab-preview__icon" aria-hidden>
-                    <Icon name={previewDisplay.icon} size={16} />
-                  </div>
-                  <div className="workspace-tab-preview__text">
-                    <div className="workspace-tab-preview__title">{previewDisplay.title}</div>
-                    <div className="workspace-tab-preview__meta">{previewDisplay.meta}</div>
-                    {previewDetail ? (
-                      <div className="workspace-tab-preview__detail">{previewDetail}</div>
-                    ) : null}
-                  </div>
-                </div>
-              );
-            })(),
-            document.body,
-          )
-        : null}
     </header>
   );
-}
-
-function describePreviewDetail(
-  tab: WorkspaceChromeTab,
-  projectById: Map<string, Project>,
-): string | null {
-  if (tab.kind === 'project') {
-    if (tab.fileName) return tab.fileName;
-    const project = projectById.get(tab.projectId);
-    const brief = project?.pendingPrompt?.trim() || project?.customInstructions?.trim();
-    if (brief) {
-      return brief.length > 120 ? `${brief.slice(0, 117)}…` : brief;
-    }
-    return null;
-  }
-  if (tab.kind === 'marketplace') {
-    return tab.pluginId ? tab.pluginId : null;
-  }
-  return null;
 }
 
 function displayTabFor(
