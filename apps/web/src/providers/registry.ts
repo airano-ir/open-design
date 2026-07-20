@@ -1548,6 +1548,37 @@ export async function fetchProjectFiles(projectId: string): Promise<ProjectFile[
   });
 }
 
+export type ProjectDesignTokenSuggestion = import('@open-design/contracts').ProjectDesignTokenSuggestion;
+export type ProjectDesignTokenSuggestionProp = import('@open-design/contracts').ProjectDesignTokenSuggestionProp;
+
+export async function fetchProjectDesignTokenSuggestions(
+  projectId: string,
+  input: {
+    file?: string;
+    targetId?: string;
+    props?: ProjectDesignTokenSuggestionProp[];
+    values?: Partial<Record<ProjectDesignTokenSuggestionProp, string>>;
+  },
+): Promise<ProjectDesignTokenSuggestion[]> {
+  const params = new URLSearchParams();
+  if (input.file) params.set('file', input.file);
+  if (input.targetId) params.set('targetId', input.targetId);
+  if (input.props?.length) params.set('props', input.props.join(','));
+  for (const [prop, value] of Object.entries(input.values ?? {})) {
+    if (value) params.set(`value_${prop}`, value);
+  }
+  try {
+    const resp = await fetch(`/api/projects/${encodeURIComponent(projectId)}/design-token-suggestions?${params.toString()}`, {
+      cache: 'no-store',
+    });
+    if (!resp.ok) return [];
+    const json = (await resp.json()) as { suggestions?: ProjectDesignTokenSuggestion[] };
+    return json.suggestions ?? [];
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchProjectFolders(projectId: string): Promise<ProjectFolder[]> {
   try {
     const resp = await fetch(`/api/projects/${encodeURIComponent(projectId)}/folders`);

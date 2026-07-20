@@ -7,6 +7,36 @@ export interface ManualEditRect {
   height: number;
 }
 
+export interface ManualEditComputedSummary {
+  display: string;
+  position: string;
+  fontFamily: string;
+  fontSize: string;
+  fontWeight: string;
+  lineHeight: string;
+  letterSpacing: string;
+  color: string;
+  backgroundColor: string;
+  borderColor: string;
+  borderRadius: string;
+  padding: string;
+  margin: string;
+}
+
+export interface ManualEditMeasurement {
+  label: string;
+  value: number;
+  orientation: 'horizontal' | 'vertical';
+  from: ManualEditRect;
+  to: ManualEditRect;
+}
+
+export interface ManualEditAlignmentGuide {
+  orientation: 'horizontal' | 'vertical';
+  position: number;
+  label: string;
+}
+
 export interface ManualEditFields {
   text?: string;
   href?: string;
@@ -65,6 +95,11 @@ export interface ManualEditTarget {
   fields: ManualEditFields;
   attributes: Record<string, string>;
   styles: ManualEditStyles;
+  computedSummary?: ManualEditComputedSummary;
+  parentRect?: ManualEditRect;
+  siblingRects?: ManualEditRect[];
+  measurements?: ManualEditMeasurement[];
+  alignmentGuides?: ManualEditAlignmentGuide[];
   isLayoutContainer: boolean;
   isHidden?: boolean;
   outerHtml: string;
@@ -102,6 +137,16 @@ export interface ManualEditSelectMessage {
 
 export interface ManualEditHoverMessage {
   type: 'od-edit-hover';
+  target: ManualEditTarget;
+}
+
+export interface ManualEditInspectHoverMessage {
+  type: 'od-edit-inspect-hover';
+  target: ManualEditTarget;
+}
+
+export interface ManualEditInspectSelectMessage {
+  type: 'od-edit-inspect-select';
   target: ManualEditTarget;
 }
 
@@ -143,6 +188,8 @@ export type ManualEditBridgeMessage =
   | ManualEditTargetMessage
   | ManualEditSelectMessage
   | ManualEditHoverMessage
+  | ManualEditInspectHoverMessage
+  | ManualEditInspectSelectMessage
   | ManualEditBackgroundMessage
   | ManualEditPreviewAppliedMessage
   | ManualEditTextCommitMessage

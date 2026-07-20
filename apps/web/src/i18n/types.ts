@@ -3848,6 +3848,17 @@ export interface Dict {
   'manualEdit.padding': string;
   'manualEdit.margin': string;
   'manualEdit.radius': string;
+  'manualEdit.referenceValues': string;
+  'manualEdit.referenceValuesEmpty': string;
+  'manualEdit.referenceValuesLoading': string;
+  'manualEdit.lineHeight': string;
+  'manualEdit.letterSpacing': string;
+  'manualEdit.borderStyle': string;
+  'manualEdit.borderStyleSolid': string;
+  'manualEdit.borderStyleDashed': string;
+  'manualEdit.borderStyleDotted': string;
+  'manualEdit.borderStyleDouble': string;
+  'manualEdit.borderStyleNone': string;
   'manualEdit.border': string;
   'manualEdit.width': string;
   'manualEdit.minHeight': string;

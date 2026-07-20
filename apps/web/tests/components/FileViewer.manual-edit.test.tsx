@@ -72,13 +72,31 @@ describe('FileViewer manual edit regressions', () => {
     });
   }
 
+  // Parameter rows are addressed by their localized `.cc-label`, matching the
+  // rewritten panel's single "Parameters" list (the old hardcoded TYPOGRAPHY /
+  // SIZE / LAYOUT / BOX group headers are gone).
   async function findStyleInput(label: string) {
     return waitFor(() => {
       const input = Array.from(document.querySelectorAll('.cc-row'))
-        .find((row) => row.textContent?.includes(label))
+        .find((row) => row.querySelector('.cc-label')?.textContent === label)
         ?.querySelector('input') as HTMLInputElement | null;
       if (!input) throw new Error(`${label} input not found`);
       return input;
+    });
+  }
+
+  const FONT_SIZE_ROW = 'Font size';
+
+  // The bridge posts this once a free drag-to-reposition passes the 4px
+  // threshold and the pointer is released; the transform it carries is the
+  // element's new translate().
+  async function dropManualEditDrag(id: string, transform: string) {
+    const frame = await previewFrame();
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-drag-commit', id, transform },
+        source: frame.contentWindow,
+      }));
     });
   }
 
@@ -173,8 +191,8 @@ describe('FileViewer manual edit regressions', () => {
 
     fireEvent.click(screen.getByTestId('manual-edit-hover-open'));
 
-    // Selected target inspector exposes the typography "Size" control.
-    await findStyleInput('Size');
+    // Selected target inspector exposes the localized font-size control.
+    await findStyleInput(FONT_SIZE_ROW);
     expect(screen.queryByText('PAGE')).toBeNull();
     // Affordance hides once its element is the pinned selection.
     expect(screen.queryByTestId('manual-edit-hover-open')).toBeNull();
@@ -202,7 +220,7 @@ describe('FileViewer manual edit regressions', () => {
 
     fireEvent.click(screen.getByTestId('manual-edit-mode-toggle'));
     await selectManualEditTarget();
-    const baseSizeInput = await findStyleInput('Size');
+    const baseSizeInput = await findStyleInput(FONT_SIZE_ROW);
     fireEvent.change(baseSizeInput, { target: { value: '18' } });
 
     rerender(
@@ -247,7 +265,7 @@ describe('FileViewer manual edit regressions', () => {
       ));
       fireEvent.click(screen.getByTestId('manual-edit-mode-toggle'));
       await selectManualEditTarget();
-      const baseSizeInput = await findStyleInput('Size');
+      const baseSizeInput = await findStyleInput(FONT_SIZE_ROW);
       fireEvent.change(baseSizeInput, { target: { value: '18' } });
 
       rerender(<FileViewer projectId="project-1" projectKind="prototype" file={second} />);
@@ -298,7 +316,7 @@ describe('FileViewer manual edit regressions', () => {
 
     clickManualTool('manual-edit-mode-toggle');
     await selectManualEditTarget();
-    const baseSizeInput = await findStyleInput('Size');
+    const baseSizeInput = await findStyleInput(FONT_SIZE_ROW);
 
     fireEvent.change(baseSizeInput, { target: { value: '18' } });
     fireEvent.click(screen.getByText('Save'));
@@ -328,7 +346,7 @@ describe('FileViewer manual edit regressions', () => {
 
     clickManualTool('manual-edit-mode-toggle');
     await selectManualEditTarget();
-    const baseSizeInput = await findStyleInput('Size');
+    const baseSizeInput = await findStyleInput(FONT_SIZE_ROW);
 
     fireEvent.change(baseSizeInput, { target: { value: '18' } });
     fireEvent.click(screen.getByText('Cancel'));
@@ -365,7 +383,7 @@ describe('FileViewer manual edit regressions', () => {
 
     clickManualTool('manual-edit-mode-toggle');
     await selectManualEditTarget();
-    const baseSizeInput = await findStyleInput('Size');
+    const baseSizeInput = await findStyleInput(FONT_SIZE_ROW);
 
     fireEvent.change(baseSizeInput, { target: { value: '18' } });
     fireEvent.click(screen.getByText('Save'));
@@ -378,6 +396,84 @@ describe('FileViewer manual edit regressions', () => {
       expect(document.querySelector('.manual-edit-right')).toBeNull();
     });
     expect(document.querySelector('.manual-edit-workspace')).not.toBeNull();
+  });
+
+  it('holds a dropped drag as a pending style and only persists it on save', async () => {
+    const source = '<!doctype html><html><body><main data-od-id="hero">Hero</main></body></html>';
+    const savedBodies: string[] = [];
+    const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : input instanceof Request ? input.url : String(input);
+      if (url.includes('/api/projects/project-1/files') && init?.method === 'POST') {
+        savedBodies.push(String(init.body));
+        return new Response(JSON.stringify({ file: htmlPreviewFile() }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      return new Response(source, { status: 200, headers: { 'Content-Type': 'text/html' } });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={htmlPreviewFile()}
+        liveHtml={source}
+      />,
+    );
+
+    clickManualTool('manual-edit-mode-toggle');
+    await selectManualEditTarget();
+    await findStyleInput(FONT_SIZE_ROW);
+    // Nothing is dirty before the drag, so no Reset is offered.
+    expect(screen.queryByText('Reset')).toBeNull();
+
+    await dropManualEditDrag('hero', 'translate(12px, 8px)');
+
+    // The drop is a pending edit like any inspector change: nothing on disk yet,
+    // but the panel is dirty so Reset/Save act on it.
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      '/api/projects/project-1/files',
+      expect.objectContaining({ method: 'POST' }),
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Reset')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByText('Save'));
+
+    await waitFor(() => {
+      expect(savedBodies.length).toBe(1);
+    });
+    const payload = JSON.parse(savedBodies[0]!) as { content: string };
+    expect(payload.content).toContain('translate(12px, 8px)');
+  });
+
+  it('keeps a drag on an unselected element out of the open panel draft', async () => {
+    const source = '<!doctype html><html><body><main data-od-id="hero">Hero</main><aside data-od-id="side">Side</aside></body></html>';
+    const fetchMock = vi.fn(async () =>
+      new Response(source, { status: 200, headers: { 'Content-Type': 'text/html' } }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={htmlPreviewFile()}
+        liveHtml={source}
+      />,
+    );
+
+    clickManualTool('manual-edit-mode-toggle');
+    await selectManualEditTarget();
+    await findStyleInput(FONT_SIZE_ROW);
+
+    // A drag commit for a different element must not dirty the panel that is
+    // showing `hero` — otherwise Save would write someone else's transform
+    // into this element's draft.
+    await dropManualEditDrag('side', 'translate(40px, 0px)');
+
+    expect(screen.queryByText('Reset')).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      '/api/projects/project-1/files',
+      expect.objectContaining({ method: 'POST' }),
+    );
   });
 
   it('saves text typed in the inspector while an inline text session is active', async () => {
