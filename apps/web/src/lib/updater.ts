@@ -217,3 +217,18 @@ export function restartSafetyFromUpdaterStatus(
   }
   return { activeRunCount: null, state: 'unknown' };
 }
+
+export function restartSafetyFromActionResult(result: OpenDesignHostActionResult): UpdaterRestartSafety | null {
+  if (result.ok || (result.reason !== 'active-runs-blocked' && result.reason !== 'active-runs-unknown')) {
+    return null;
+  }
+  const details = result.details;
+  const activeRunCount =
+    typeof details === 'object' && details != null && 'activeRunCount' in details
+      ? (details as { activeRunCount?: unknown }).activeRunCount
+      : null;
+  if (result.reason === 'active-runs-blocked' && typeof activeRunCount === 'number' && activeRunCount > 0) {
+    return { activeRunCount, state: 'blocked' };
+  }
+  return { activeRunCount: null, state: 'unknown' };
+}

@@ -41,6 +41,15 @@ export function parseDesktopUpdateMenuLabels(input: unknown): DesktopUpdateMenuL
   return labels;
 }
 
+/**
+ * Stable identity of a derived update menu item. Updater status ticks that do
+ * not change this key (e.g. download progress percent) must not trigger an
+ * application-menu rebuild.
+ */
+export function desktopUpdateMenuItemKey(item: DesktopUpdateMenuItem): string {
+  return `${item.visible}|${item.enabled}|${item.action ?? "none"}|${item.label}`;
+}
+
 export function deriveDesktopUpdateMenuItem(input: {
   labels: DesktopUpdateMenuLabels;
   platform: NodeJS.Platform;

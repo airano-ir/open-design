@@ -144,9 +144,12 @@ import {
   openUpdaterInstaller,
   quitAfterUpdaterInstallerOpen,
   readUpdaterStatus,
+  restartSafetyFromActionResult,
+  restartSafetyFromUpdaterStatus,
   subscribeToUpdaterStatus,
   type UpdaterActionResult,
   type UpdaterModel,
+  type UpdaterRestartSafety,
 } from '../lib/updater';
 import { PetSettings } from './pet/PetSettings';
 import { McpClientSection } from './McpClientSection';
@@ -1827,6 +1830,19 @@ export function SettingsDialog({
     };
   }, [aboutUpdateQuitFailed, aboutUpdaterModel, appVersionInfo]);
 
+  // Restart-safety preflight denials stay hard-blocked in Settings → About
+  // (the force path lives in the app-menu UpdateDialog), but the toast must
+  // explain the active-run situation instead of a generic failure.
+  const aboutUpdaterToastText = useCallback(
+    (safety: UpdaterRestartSafety | null, fallback: string): string => {
+      if (safety == null) return fallback;
+      return safety.state === 'blocked'
+        ? t('updater.activeRunsBody', { count: safety.activeRunCount })
+        : t('updater.activeRunsUnknownBody');
+    },
+    [t],
+  );
+
   const applyAboutUpdaterResult = useCallback((result: UpdaterActionResult): boolean => {
     if (!result.ok) {
       setAboutToast(t('settings.updateActionFailed'));
@@ -1834,11 +1850,12 @@ export function SettingsDialog({
     }
     setAboutUpdaterModel(result.model);
     if (result.model.errorMessage != null) {
-      setAboutToast(t('settings.updateActionFailed'));
+      const safety = restartSafetyFromUpdaterStatus(result.status);
+      setAboutToast(aboutUpdaterToastText(safety, t('settings.updateActionFailed')));
       return false;
     }
     return true;
-  }, [t]);
+  }, [aboutUpdaterToastText, t]);
 
   const handleAboutUpdateAction = useCallback(async () => {
     if (aboutUpdateActionBusy || aboutUpdaterModel.busy || aboutUpdateControl.primaryAction == null) return;
@@ -1856,7 +1873,7 @@ export function SettingsDialog({
         const quitResult = await quitAfterUpdaterInstallerOpen(options);
         if (!quitResult.ok) {
           setAboutUpdateQuitFailed(true);
-          setAboutToast(t('updater.quitFailedTitle'));
+          setAboutToast(aboutUpdaterToastText(restartSafetyFromActionResult(quitResult), t('updater.quitFailedTitle')));
         }
       } else {
         const installed = applyAboutUpdaterResult(await openUpdaterInstaller(options));
@@ -1865,7 +1882,7 @@ export function SettingsDialog({
           const quitResult = await quitAfterUpdaterInstallerOpen(options);
           if (!quitResult.ok) {
             setAboutUpdateQuitFailed(true);
-            setAboutToast(t('updater.quitFailedTitle'));
+            setAboutToast(aboutUpdaterToastText(restartSafetyFromActionResult(quitResult), t('updater.quitFailedTitle')));
           }
         }
       }
@@ -1879,6 +1896,7 @@ export function SettingsDialog({
     aboutUpdateActionBusy,
     aboutUpdateControl.primaryAction,
     aboutUpdaterModel.busy,
+    aboutUpdaterToastText,
     applyAboutUpdaterResult,
     t,
   ]);

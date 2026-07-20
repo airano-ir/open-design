@@ -50,6 +50,7 @@ import { attachDesktopProcessErrorFilter } from "./uncaught-exception.js";
 import {
   DEFAULT_DESKTOP_UPDATE_MENU_LABELS,
   deriveDesktopUpdateMenuItem,
+  desktopUpdateMenuItemKey,
   type DesktopUpdateMenuLabels,
 } from "./update-menu.js";
 import {
@@ -426,12 +427,14 @@ function installDesktopMenu(
       console.error("desktop diagnostics export from menu failed", error);
     });
   };
+  let lastUpdateMenuItemKey: string | null = null;
   const rebuild = () => {
     const updateMenuItem = deriveDesktopUpdateMenuItem({
       labels: updateMenuLabels,
       platform: process.platform,
       status: updateStatus,
     });
+    lastUpdateMenuItemKey = desktopUpdateMenuItemKey(updateMenuItem);
     const template: MenuItemConstructorOptions[] = [
       ...(process.platform === "darwin"
         ? [
@@ -556,6 +559,15 @@ function installDesktopMenu(
   rebuild();
   const unsubscribeUpdater = options.updater.subscribe(() => {
     updateStatus = options.updater.snapshot();
+    // Updater status ticks frequently during downloads (progress updates),
+    // but Menu.setApplicationMenu drops open menus and burns main-process
+    // work. Rebuild only when the derived update item actually changes.
+    const nextKey = desktopUpdateMenuItemKey(deriveDesktopUpdateMenuItem({
+      labels: updateMenuLabels,
+      platform: process.platform,
+      status: updateStatus,
+    }));
+    if (nextKey === lastUpdateMenuItemKey) return;
     rebuild();
   });
   const registered = globalShortcut.register(developMenuAccelerator, toggleDevelopMenu);

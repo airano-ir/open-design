@@ -4,6 +4,7 @@ import type { DesktopUpdateStatusSnapshot } from "@open-design/sidecar-proto";
 import {
   DEFAULT_DESKTOP_UPDATE_MENU_LABELS,
   deriveDesktopUpdateMenuItem,
+  desktopUpdateMenuItemKey,
   parseDesktopUpdateMenuLabels,
 } from "../../src/main/update-menu.js";
 
@@ -107,6 +108,22 @@ describe("macOS update menu", () => {
       label: "重新启动以更新 Open Design…",
       visible: true,
     });
+  });
+
+  it("keeps a stable item key across progress-only ticks and changes it on real transitions", () => {
+    const derive = (snapshot: DesktopUpdateStatusSnapshot) => desktopUpdateMenuItemKey(deriveDesktopUpdateMenuItem({
+      labels: DEFAULT_DESKTOP_UPDATE_MENU_LABELS,
+      platform: "darwin",
+      status: snapshot,
+    }));
+    const downloadingAt = (receivedBytes: number) => status("downloading", {
+      progress: { receivedBytes, totalBytes: 400_000_000 },
+    });
+    expect(derive(downloadingAt(10_000_000))).toBe(derive(downloadingAt(390_000_000)));
+    expect(derive(downloadingAt(390_000_000))).not.toBe(derive(status("downloaded", {
+      artifact: { type: "payload", url: "https://example.test/payload.zip" },
+    })));
+    expect(derive(status("idle"))).not.toBe(derive(status("checking")));
   });
 
   it("rejects malformed renderer label payloads at the privileged boundary", () => {

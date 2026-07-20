@@ -2381,7 +2381,10 @@ export async function createDesktopRuntime(options: DesktopRuntimeOptions): Prom
     requireMainWindowSender(event);
     const blocked = await guardedUpdaterStatus(updaterOptions);
     if (blocked != null) {
-      sendUpdaterStatus(blocked);
+      // Preflight denials travel only on the IPC response. The updater store
+      // itself is still healthy, so broadcasting the synthetic error through
+      // the shared status channel would make unrelated subscribers observe a
+      // failure that never happened.
       return blocked;
     }
     const status = await (options.updater?.installUpdate() ?? unavailableUpdaterStatus());

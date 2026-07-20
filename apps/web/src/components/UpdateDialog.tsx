@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { OpenDesignHostActionResult, OpenDesignHostUpdaterStatusSnapshot } from '@open-design/host';
+import type { OpenDesignHostUpdaterStatusSnapshot } from '@open-design/host';
 
 import { Icon } from './Icon';
 import { useAnalytics } from '../analytics/provider';
@@ -18,6 +18,7 @@ import {
   openUpdaterInstaller,
   quitAfterUpdaterInstallerOpen,
   readUpdaterStatus,
+  restartSafetyFromActionResult,
   restartSafetyFromUpdaterStatus,
   subscribeToUpdaterOpenDialog,
   subscribeToUpdaterStatus,
@@ -31,21 +32,6 @@ const MENU_SOURCE = 'mac-app-menu';
 
 function withEllipsis(value: string): string {
   return `${value.replace(/[.\u2026]+$/u, '')}…`;
-}
-
-function restartSafetyFromActionResult(result: OpenDesignHostActionResult): UpdaterRestartSafety | null {
-  if (result.ok || (result.reason !== 'active-runs-blocked' && result.reason !== 'active-runs-unknown')) {
-    return null;
-  }
-  const details = result.details;
-  const activeRunCount =
-    typeof details === 'object' && details != null && 'activeRunCount' in details
-      ? (details as { activeRunCount?: unknown }).activeRunCount
-      : null;
-  if (result.reason === 'active-runs-blocked' && typeof activeRunCount === 'number' && activeRunCount > 0) {
-    return { activeRunCount, state: 'blocked' };
-  }
-  return { activeRunCount: null, state: 'unknown' };
 }
 
 function shouldRunManualCheck(status: OpenDesignHostUpdaterStatusSnapshot): boolean {
