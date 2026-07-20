@@ -142,7 +142,6 @@ describe('AssistantMessage unfinished todo state', () => {
     );
 
     expect(screen.getByText(/32s/)).toBeTruthy();
-    expect(screen.getByText(/1439 out/)).toBeTruthy();
   });
 
   it('hides zero cost because it is not reliable billing data', () => {
@@ -162,7 +161,7 @@ describe('AssistantMessage unfinished todo state', () => {
       />,
     );
 
-    expect(screen.getByText(/1439 out/)).toBeTruthy();
+    expect(screen.getByText(/32s/)).toBeTruthy();
     expect(screen.queryByText(/\$0\.0000/)).toBeNull();
   });
 
@@ -183,7 +182,7 @@ describe('AssistantMessage unfinished todo state', () => {
       />,
     );
 
-    expect(screen.getByText(/1439 out/)).toBeTruthy();
+    expect(screen.getByText(/32s/)).toBeTruthy();
     expect(screen.queryByText(/\$0\.0000/)).toBeNull();
   });
 
@@ -224,7 +223,6 @@ describe('AssistantMessage unfinished todo state', () => {
       />,
     );
 
-    expect(screen.getByText(/1439 out/)).toBeTruthy();
     expect(screen.queryByText(/\d+m \d{2}s/)).toBeNull();
   });
 

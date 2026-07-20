@@ -75,6 +75,8 @@ import {
 import type { PluginFolderAgentAction } from "./design-files/pluginFolderActions";
 import { Icon } from "./Icon";
 import { NextStepActions, type NextStepActionsVariant } from "./NextStepActions";
+import { TaskDeliverableCard } from "./TaskDeliverableCard";
+import { DESIGN_FILES_TAB } from "./FileWorkspace";
 import type { DesignToolboxActionId } from "../runtime/design-toolbox";
 import { copyToClipboard } from "../lib/copy-to-clipboard";
 import { useT } from "../i18n";
@@ -624,7 +626,10 @@ function AssistantMessageImpl({
               fileOps,
               streaming,
             });
-      return mergeProjectFiles(baseFiles, linkedFiles);
+      return refreshProjectFileSnapshots(
+        mergeProjectFiles(baseFiles, linkedFiles),
+        projectFiles,
+      );
     },
     [blocks, fileOps, message, produced, projectFiles, projectId, streaming],
   );
@@ -636,6 +641,14 @@ function AssistantMessageImpl({
   // produced by THIS turn; if the final turn emitted none (a summary / continue
   // message) fall back to the most recently modified HTML in the project so
   // Share / Download still target the deliverable the user just made.
+  // Deliverable card: the headline artifact of THIS terminal turn plus any
+  // additional outputs it produced. Prefer an HTML/deck artifact (what
+  // Share/Download target); otherwise fall back to the best-ranked produced
+  // file so a report (.md/.pdf) or media deliverable still gets the hero card.
+  const deliverable = useMemo(
+    () => pickTaskDeliverable(displayedProduced),
+    [displayedProduced],
+  );
   const nextStepArtifactName = useMemo(
     () => pickPreviewableArtifact(displayedProduced) ?? pickLatestPreviewableArtifact(projectFiles),
     [displayedProduced, projectFiles],
@@ -756,6 +769,20 @@ function AssistantMessageImpl({
       (!message.runStatus && !!message.endedAt) ||
       isBrandBrowserAssistMessage
     );
+  // Deliverable card: shows on the latest completed turn that either produced
+  // a headline artifact (artifact mode) or changed files (changes mode). The
+  // card headlines the completion; the detailed ledger stays below.
+  const changedFileCount = turnFileOps.length > 0 ? turnFileOps.length : displayedProduced.length;
+  const showDeliverableCard = Boolean(
+    !streaming &&
+      isLast &&
+      runTerminal &&
+      projectId &&
+      (deliverable || changedFileCount > 0),
+  );
+  const deliverableElapsedMs =
+    usage?.durationMs ??
+    (message.startedAt && message.endedAt ? message.endedAt - message.startedAt : undefined);
   const canContinueTodos =
     !streaming &&
     !!isLast &&
@@ -956,6 +983,29 @@ function AssistantMessageImpl({
             ].join(":")}
           />
         ) : null}
+        {/* Task deliverable card, pinned above the file ledger on a completed
+            turn. Artifact mode mirrors a finished-result card: title, real
+            preview, compact overflow actions, and a two-choice file footer.
+            Changes mode remains a compact completion summary. */}
+        {showDeliverableCard ? (
+          <TaskDeliverableCard
+            projectId={projectId!}
+            primary={deliverable?.primary ?? null}
+            secondary={deliverable?.secondary ?? []}
+            changedCount={changedFileCount}
+            statusLabel={t("assistant.doneLabel")}
+            elapsedMs={deliverableElapsedMs}
+            onOpen={(name) => onRequestOpenFile?.(name)}
+            onShare={
+              onArtifactShare && deliverable && isPreviewableHtml(deliverable.primary)
+                ? onArtifactShare
+                : undefined
+            }
+            onDownload={onArtifactDownload}
+            onOpenAllFiles={() => onRequestOpenFile?.(DESIGN_FILES_TAB)}
+            t={t}
+          />
+        ) : null}
         {turnFileOps.length > 0 ? (
           <FileOpsSummary
             entries={turnFileOps}
@@ -964,7 +1014,13 @@ function AssistantMessageImpl({
             onRequestOpenFile={onRequestOpenFile}
           />
         ) : null}
-        {!streaming && turnFileOps.length === 0 && displayedProduced.length > 0 && projectId ? (
+        {/* Plain chip list only when the deliverable card is absent (older /
+            non-terminal turns) and nothing else already lists the files. */}
+        {!showDeliverableCard &&
+        !streaming &&
+        turnFileOps.length === 0 &&
+        displayedProduced.length > 0 &&
+        projectId ? (
           <ProducedFiles
             files={displayedProduced}
             projectId={projectId}
@@ -1116,6 +1172,93 @@ function pickLatestPreviewableArtifact(files: ProjectFile[]): string | null {
     if (!latest || (f.mtime ?? 0) > (latest.mtime ?? 0)) latest = f;
   }
   return latest ? latest.name : null;
+}
+
+// Rank produced files so the deliverable card headlines the artifact a user
+// thinks of as "the result": a runnable HTML/deck first, then a written
+// document/report, then media, then loose code/text. Hidden/system files and
+// bare directories never headline.
+const DELIVERABLE_KIND_RANK: Record<string, number> = {
+  html: 0,
+  presentation: 0,
+  pdf: 1,
+  document: 1,
+  spreadsheet: 2,
+  image: 3,
+  video: 3,
+  audio: 3,
+  sketch: 4,
+  code: 5,
+  text: 6,
+  binary: 7,
+};
+
+function deliverableRank(f: ProjectFile): number {
+  if (f.kind === 'html' || /\.html?$/i.test(f.name)) return 0;
+  if (/\.mdx?$/i.test(f.name)) return 1;
+  return DELIVERABLE_KIND_RANK[f.kind] ?? 8;
+}
+
+function isDeliverableCandidate(f: ProjectFile): boolean {
+  if (f.type === 'dir') return false;
+  const base = f.name.split('/').pop() ?? f.name;
+  if (!base || base.startsWith('.')) return false;
+  if (f.name.includes('/.')) return false;
+  // brand-spec / DESIGN system scaffolding is supporting material, not the
+  // headline deliverable.
+  if (/^(design|brand-system|brand-spec)\.mdx?$/i.test(base)) return false;
+  return true;
+}
+
+// A "product" artifact is something the user opens and looks at as the result
+// (a page, deck, doc, image, media, sketch, or a written report). Source-code
+// / plain-text edits are NOT products — those turns are summarized in changes
+// mode + the file ledger, not headlined with a fake preview.
+const PRODUCT_KINDS = new Set<ProjectFile['kind']>([
+  'html',
+  'presentation',
+  'pdf',
+  'document',
+  'spreadsheet',
+  'image',
+  'video',
+  'audio',
+  'sketch',
+]);
+
+function isProductArtifact(f: ProjectFile): boolean {
+  if (!isDeliverableCandidate(f)) return false;
+  if (f.kind === 'html' || /\.html?$/i.test(f.name)) return true;
+  if (PRODUCT_KINDS.has(f.kind)) return true;
+  // A written report (markdown) headlines; source .md under a code tree does
+  // not, but a top-level report does — extension is a good-enough signal here
+  // since scaffolding (DESIGN.md etc.) is already excluded above.
+  if (/\.mdx?$/i.test(f.name)) return true;
+  return false;
+}
+
+/**
+ * The primary product deliverable + its secondary outputs for this turn, or
+ * null when the turn produced no headline-worthy product (→ changes mode).
+ * Primary = lowest rank, tie broken by most-recently modified; secondaries =
+ * the remaining candidate outputs (any kind), newest first.
+ */
+function pickTaskDeliverable(
+  files: ProjectFile[],
+): { primary: ProjectFile; secondary: ProjectFile[] } | null {
+  const products = files.filter(isProductArtifact);
+  if (products.length === 0) return null;
+  const sorted = [...products].sort((a, b) => {
+    const ra = deliverableRank(a);
+    const rb = deliverableRank(b);
+    if (ra !== rb) return ra - rb;
+    return (b.mtime ?? 0) - (a.mtime ?? 0);
+  });
+  const primary = sorted[0]!;
+  const secondary = files
+    .filter((f) => isDeliverableCandidate(f) && f.name !== primary.name)
+    .sort((a, b) => (b.mtime ?? 0) - (a.mtime ?? 0));
+  return { primary, secondary };
 }
 
 const PLAN_DOCUMENT_EXCLUDES = new Set(['design.md', 'brand-system.md']);
@@ -1385,6 +1528,34 @@ function mergeProjectFiles(
   return merged;
 }
 
+/**
+ * `message.producedFiles` is a run-time snapshot. A file can be edited again
+ * before the settled conversation re-renders, so its old mtime would keep the
+ * browser on a stale thumbnail URL. Replace matching entries with the current
+ * project-file record while preserving the turn's file selection and order.
+ */
+function refreshProjectFileSnapshots(
+  files: ProjectFile[],
+  projectFiles: ProjectFile[],
+): ProjectFile[] {
+  if (files.length === 0 || projectFiles.length === 0) return files;
+  const currentByPath = new Map<string, ProjectFile>();
+  for (const file of projectFiles) {
+    if (file.type === 'dir') continue;
+    for (const value of [file.name, file.path, file.localPath]) {
+      if (value) currentByPath.set(normalizeTouchedPath(value), file);
+    }
+  }
+  return files.map((file) => {
+    for (const value of [file.name, file.path, file.localPath]) {
+      if (!value) continue;
+      const current = currentByPath.get(normalizeTouchedPath(value));
+      if (current) return current;
+    }
+    return file;
+  });
+}
+
 // A run that reached a terminal state — succeeded, failed, or canceled — has a
 // settled assistant turn worth rating. Only queued/running turns are still in
 // flight, so they have no outcome to give feedback on yet. Feedback used to be
@@ -1561,9 +1732,6 @@ function AssistantFooter({
       </span>
       <span className="assistant-stats">
         {elapsed}
-        {usage?.outputTokens != null
-          ? ` · ${t("assistant.outTokens", { n: usage.outputTokens })}`
-          : ""}
         {costLabel}
       </span>
       {copyMarkdown || onFork || feedbackControls ? (

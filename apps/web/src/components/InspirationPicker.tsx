@@ -10,7 +10,17 @@ import {
 } from '@open-design/components';
 import type { DesignSystemSummary, SkillSummary } from '@open-design/contracts';
 import { useI18n, useT } from '../i18n';
-import { localizeSkillName } from '../i18n/content';
+import { localizeSkillDescription, localizeSkillName } from '../i18n/content';
+import {
+  buildTemplateMatchDoc,
+  filterBySearch,
+  rankByRelevance,
+  scoreTemplateDoc,
+  swatchVividness,
+  tokenizeQuery,
+  tokenizeSearch,
+  type TemplateMatchDoc,
+} from './inspiration-match';
 import {
   inspirationEntryForDesignSystem,
   inspirationEntryForTemplate,
@@ -213,9 +223,17 @@ export function InspirationPicker({
   const [templates, setTemplates] = useState<SkillSummary[] | null>(null);
   const [designSystems, setDesignSystems] = useState<DesignSystemSummary[] | null>(null);
   const [category, setCategory] = useState<string>('all');
+  const [dsCategory, setDsCategory] = useState<string>('all');
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [templateSearch, setTemplateSearch] = useState('');
   const [dsSearch, setDsSearch] = useState('');
+  // The gallery's search is a header icon that expands into a field; it
+  // collapses again on blur once emptied, so the chrome stays quiet by
+  // default. Kept as state (not CSS :focus-within) because clearing must
+  // keep the field open and focused. One control serves both gallery tabs,
+  // writing to whichever catalogue is on screen.
+  const [gallerySearchOpen, setGallerySearchOpen] = useState(false);
+  const gallerySearchRef = useRef<HTMLInputElement | null>(null);
   const [dsMulti, setDsMulti] = useState(false);
   const [dsPreviewId, setDsPreviewId] = useState<string | null>(null);
   const [previewReady, setPreviewReady] = useState<Record<string, boolean>>({});
@@ -280,39 +298,168 @@ export function InspirationPicker({
       ),
     [templates],
   );
+
+  // Every searchable attribute of a template, pre-lowercased once: localized
+  // name and description, the `triggers` keyword list, category slug + label,
+  // and scenario. Both relevance ranking and gallery search read these.
+  const templateDocs = useMemo(() => {
+    const docs = new Map<string, TemplateMatchDoc>();
+    for (const skill of visualTemplates) {
+      docs.set(
+        skill.id,
+        buildTemplateMatchDoc({
+          id: skill.id,
+          name: localizeSkillName(locale, skill),
+          // Only ~half the catalog is translated, so keep every other locale's
+          // name searchable too — otherwise a Chinese-UI user cannot reach an
+          // English-only template by typing its English name.
+          nameAliases: [skill.name, ...Object.values(skill.displayName ?? {})],
+          triggers: skill.triggers,
+          category: skill.category,
+          categoryLabel: skill.category ? categoryLabel(skill.category) : '',
+          scenario: skill.scenario,
+          description: localizeSkillDescription(locale, skill),
+          featured: skill.featured,
+        }),
+      );
+    }
+    return docs;
+  }, [visualTemplates, locale, t]);
+
+  // The question's task summary, tokenized. This is what turns the picker
+  // from "the first four templates in the catalog" into "the four templates
+  // that actually fit this request".
+  const queryTokens = useMemo(() => tokenizeQuery(query ?? ''), [query]);
+
+  // Visual appeal, secondary to relevance. A template with a real preview
+  // document renders as an actual colourful thumbnail; one without falls back
+  // to the grey wireframe, so "has a preview" IS the good-looking signal here
+  // (`fidelity` and `featured` are unpopulated across nearly the whole
+  // catalogue and cannot carry it).
+  const templateAppeal = useMemo(
+    () => (skill: SkillSummary) => (previewReady[skill.id] === true ? 1 : 0),
+    [previewReady],
+  );
+
+  const rankedTemplates = useMemo(
+    () =>
+      rankByRelevance(
+        visualTemplates,
+        queryTokens,
+        (skill) => templateDocs.get(skill.id),
+        templateAppeal,
+      ),
+    [visualTemplates, queryTokens, templateDocs, templateAppeal],
+  );
+
+  // Categories are ordered by how relevant they are to the request (summed
+  // template score), so the chip the user most likely wants sits right after
+  // "All"; ties and query-less forms fall back to catalogue size.
   const categories = useMemo(() => {
     const counts = new Map<string, number>();
+    const scores = new Map<string, number>();
     for (const skill of visualTemplates) {
       const id = skill.category?.trim();
       if (!id) continue;
       counts.set(id, (counts.get(id) ?? 0) + 1);
+      const doc = templateDocs.get(skill.id);
+      const score = doc ? scoreTemplateDoc(doc, queryTokens) : 0;
+      scores.set(id, (scores.get(id) ?? 0) + score);
     }
     return Array.from(counts.entries())
-      .sort((a, b) => b[1] - a[1])
+      .sort(
+        (a, b) =>
+          (scores.get(b[0]) ?? 0) - (scores.get(a[0]) ?? 0) || b[1] - a[1],
+      )
       .map(([id]) => id);
-  }, [visualTemplates]);
+  }, [visualTemplates, templateDocs, queryTokens]);
+
   const filteredTemplates = useMemo(
     () =>
       category === 'all'
-        ? visualTemplates
-        : visualTemplates.filter((skill) => skill.category === category),
-    [category, visualTemplates],
+        ? rankedTemplates
+        : rankedTemplates.filter((skill) => skill.category === category),
+    [category, rankedTemplates],
   );
-  // Gallery-only text filter over the category-filtered list: localized
-  // name, id, and category label all match.
-  const tplQuery = templateSearch.trim().toLowerCase();
-  const searchedTemplates = useMemo(() => {
-    if (tplQuery.length === 0) return filteredTemplates;
-    return filteredTemplates.filter((skill) => {
-      const name = localizeSkillName(locale, skill).toLowerCase();
-      const cat = (skill.category ?? '').toLowerCase();
-      return (
-        name.includes(tplQuery) ||
-        skill.id.toLowerCase().includes(tplQuery) ||
-        cat.includes(tplQuery)
+
+  // Gallery text filter. Filtering uses plain per-word substring AND
+  // (`tokenizeSearch`); ordering reuses the looser ranking tokenizer so the
+  // best hit still floats up.
+  const searchTokens = useMemo(() => tokenizeSearch(templateSearch), [templateSearch]);
+  const searchRankTokens = useMemo(() => tokenizeQuery(templateSearch), [templateSearch]);
+  const searchedTemplates = useMemo(
+    () =>
+      filterBySearch(
+        filteredTemplates,
+        searchTokens,
+        searchRankTokens,
+        (skill) => templateDocs.get(skill.id),
+        templateAppeal,
+      ),
+    [filteredTemplates, searchTokens, searchRankTokens, templateDocs, templateAppeal],
+  );
+
+  // --- Design systems: the same pipeline, so both tabs behave identically ---
+
+  // Design systems carry title / category / summary rather than triggers and
+  // scenarios, but they feed the exact same doc shape and matcher.
+  const designSystemDocs = useMemo(() => {
+    const docs = new Map<string, TemplateMatchDoc>();
+    for (const system of designSystems ?? []) {
+      docs.set(
+        system.id,
+        buildTemplateMatchDoc({
+          id: system.id,
+          name: system.title,
+          category: system.category,
+          categoryLabel: system.category,
+          description: system.summary,
+        }),
       );
-    });
-  }, [filteredTemplates, tplQuery, locale]);
+    }
+    return docs;
+  }, [designSystems]);
+
+  // Every system ships four swatches, so vividness — not swatch count — is
+  // what separates a striking palette from a beige one.
+  const designSystemAppeal = useMemo(
+    () => (system: DesignSystemSummary) => swatchVividness(system.swatches),
+    [],
+  );
+
+  const rankedDesignSystems = useMemo(
+    () =>
+      rankByRelevance(
+        designSystems ?? [],
+        queryTokens,
+        (system) => designSystemDocs.get(system.id),
+        designSystemAppeal,
+      ),
+    [designSystems, queryTokens, designSystemDocs, designSystemAppeal],
+  );
+
+  const designSystemCategories = useMemo(() => {
+    const counts = new Map<string, number>();
+    const scores = new Map<string, number>();
+    for (const system of designSystems ?? []) {
+      const id = system.category?.trim();
+      if (!id) continue;
+      counts.set(id, (counts.get(id) ?? 0) + 1);
+      const doc = designSystemDocs.get(system.id);
+      scores.set(id, (scores.get(id) ?? 0) + (doc ? scoreTemplateDoc(doc, queryTokens) : 0));
+    }
+    return Array.from(counts.entries())
+      .sort((a, b) => (scores.get(b[0]) ?? 0) - (scores.get(a[0]) ?? 0) || b[1] - a[1])
+      .map(([id]) => id);
+  }, [designSystems, designSystemDocs, queryTokens]);
+
+  const filteredDesignSystems = useMemo(
+    () =>
+      dsCategory === 'all'
+        ? rankedDesignSystems
+        : rankedDesignSystems.filter((system) => system.category === dsCategory),
+    [dsCategory, rankedDesignSystems],
+  );
 
   // Probe preview availability for the templates currently on screen; the
   // module-level cache makes repeat mounts free.
@@ -328,6 +475,55 @@ export function InspirationPicker({
       alive = false;
     };
   }, [visualTemplates]);
+
+  /**
+   * Seed the top-ranked template and design system as the default answer,
+   * ONCE, the first time the catalogues are on screen with nothing picked.
+   *
+   * The guard is the whole point: `seededRef` latches on the first decision
+   * either way, so re-ranking (a category chip, a search term) never moves
+   * the user's selection, and clearing a pick is never undone on the next
+   * render. Answered/locked forms and forms that arrive with a restored
+   * value are latched without seeding, so history is never rewritten.
+   */
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (seededRef.current) return;
+    if (disabled) return;
+    if (value.length > 0 || files.length > 0) {
+      seededRef.current = true;
+      return;
+    }
+    const wantsTemplate = enabled.includes('templates');
+    const wantsDesignSystem = enabled.includes('design-systems');
+    // Wait for every catalogue this form offers, so the seed reflects the
+    // full ranking rather than whichever fetch resolved first.
+    if (wantsTemplate && templates === null) return;
+    if (wantsDesignSystem && designSystems === null) return;
+    const topTemplate = wantsTemplate ? rankedTemplates[0] : undefined;
+    const topDesignSystem = wantsDesignSystem ? rankedDesignSystems[0] : undefined;
+    if (!topTemplate && !topDesignSystem) return;
+    seededRef.current = true;
+    onChange([
+      ...(topTemplate
+        ? [inspirationEntryForTemplate(topTemplate.id, localizeSkillName(locale, topTemplate))]
+        : []),
+      ...(topDesignSystem
+        ? [inspirationEntryForDesignSystem(topDesignSystem.id, topDesignSystem.title)]
+        : []),
+    ]);
+  }, [
+    disabled,
+    enabled,
+    templates,
+    designSystems,
+    rankedTemplates,
+    rankedDesignSystems,
+    value,
+    files,
+    locale,
+    onChange,
+  ]);
 
   const uploadUrls = useMemo(() => files.map((file) => URL.createObjectURL(file)), [files]);
   useEffect(
@@ -445,16 +641,42 @@ export function InspirationPicker({
     source === 'templates' ? 'slides' : source === 'design-systems' ? 'grid' : 'image';
 
   const inlineTemplates = filteredTemplates.slice(0, INLINE_GRID_SIZE);
-  const inlineDesignSystems = (designSystems ?? []).slice(0, INLINE_GRID_SIZE);
+  const inlineDesignSystems = filteredDesignSystems.slice(0, INLINE_GRID_SIZE);
   const remainingTemplates = Math.max(0, filteredTemplates.length - inlineTemplates.length);
   const remainingDesignSystems = Math.max(
     0,
-    (designSystems ?? []).length - inlineDesignSystems.length,
+    filteredDesignSystems.length - inlineDesignSystems.length,
   );
+
+  // One search control, two catalogues: it reads and writes whichever tab
+  // the gallery is currently showing.
+  const galleryIsDs = tab === 'design-systems';
+  const gallerySearch = galleryIsDs ? dsSearch : templateSearch;
+  const setGallerySearch = galleryIsDs ? setDsSearch : setTemplateSearch;
+  const gallerySearchLabel = galleryIsDs ? t('qf.inspSearchDs') : t('qf.inspSearchTpl');
 
   function openGallery() {
     setGalleryOpen(true);
     onGalleryOpen?.();
+  }
+
+  function closeGallery() {
+    setGalleryOpen(false);
+    setTemplateSearch('');
+    setDsSearch('');
+    setGallerySearchOpen(false);
+  }
+
+  // Expanding focuses the field; collapsing an already-empty field is the
+  // "put it away" gesture. A field with text stays open on toggle so the
+  // click cannot silently discard the query.
+  function toggleGallerySearch() {
+    if (gallerySearchOpen && gallerySearch.length === 0) {
+      setGallerySearchOpen(false);
+      return;
+    }
+    setGallerySearchOpen(true);
+    window.setTimeout(() => gallerySearchRef.current?.focus(), 0);
   }
 
   function createDesignSystem() {
@@ -634,7 +856,7 @@ export function InspirationPicker({
                   src={
                     detail.kind === 'template'
                       ? templatePreviewUrl(detail.id)
-                      : `/api/design-systems/${encodeURIComponent(detail.id)}/showcase`
+                      : designSystemCardUrl(detail.id)
                   }
                   sandbox="allow-scripts"
                   title={detail.title}
@@ -762,38 +984,41 @@ export function InspirationPicker({
     );
   };
 
-  const renderCategoryTabs = (idPrefix: string) =>
-    categories.length > 0 ? (
-      <div className="qf-insp-cats" role="tablist" aria-label={t('qf.inspTabTemplates')}>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={category === 'all'}
-          className={`qf-chip qf-insp-cat${category === 'all' ? ' qf-chip-on' : ''}`}
-          disabled={disabled}
-          onClick={() => setCategory('all')}
-        >
-          <span className="qf-chip-copy">
-            <span>{t('qf.inspAll')}</span>
-          </span>
-        </button>
-        {categories.map((id) => (
+  // One chip row serving both catalogues: templates use the commercial
+  // category slugs (localized through `categoryLabel`), design systems use
+  // their own already-human-readable category strings. Both are ordered by
+  // relevance to the request upstream.
+  const renderCategoryTabs = (idPrefix: string, kind: 'templates' | 'design-systems') => {
+    const isDs = kind === 'design-systems';
+    const ids = isDs ? designSystemCategories : categories;
+    if (ids.length === 0) return null;
+    const active = isDs ? dsCategory : category;
+    const setActive = isDs ? setDsCategory : setCategory;
+    const labelFor = (id: string) => (isDs ? id : categoryLabel(id));
+    return (
+      <div
+        className="qf-insp-cats"
+        role="tablist"
+        aria-label={isDs ? t('qf.inspTabDesignSystems') : t('qf.inspTabTemplates')}
+      >
+        {['all', ...ids].map((id) => (
           <button
             key={`${idPrefix}-${id}`}
             type="button"
             role="tab"
-            aria-selected={category === id}
-            className={`qf-chip qf-insp-cat${category === id ? ' qf-chip-on' : ''}`}
+            aria-selected={active === id}
+            className={`qf-chip qf-insp-cat${active === id ? ' qf-chip-on' : ''}`}
             disabled={disabled}
-            onClick={() => setCategory(id)}
+            onClick={() => setActive(id)}
           >
             <span className="qf-chip-copy">
-              <span>{categoryLabel(id)}</span>
+              <span>{id === 'all' ? t('qf.inspAll') : labelFor(id)}</span>
             </span>
           </button>
         ))}
       </div>
-    ) : null;
+    );
+  };
 
   const renderUploadSection = () => (
     <div className="qf-insp-upload">
@@ -921,14 +1146,22 @@ export function InspirationPicker({
   };
 
   // --- Design-system gallery (the "+N" dialog) -----------------------------
-  const dsQuery = dsSearch.trim().toLowerCase();
-  const matchesDsQuery = (system: DesignSystemSummary) =>
-    dsQuery.length === 0 || system.title.toLowerCase().includes(dsQuery);
-  const userSystems = (designSystems ?? []).filter(
-    (system) => isUserDesignSystem(system) && matchesDsQuery(system),
+  // Same search contract as the template gallery: multi-keyword AND across
+  // title / category / summary, an OR fallback instead of an empty result,
+  // and relevance + palette-vividness ordering. Run over the category-filtered
+  // list so the chips and the search compose.
+  const dsSearchTokens = tokenizeSearch(dsSearch);
+  const dsSearchRankTokens = tokenizeQuery(dsSearch);
+  const searchedDesignSystems = filterBySearch(
+    filteredDesignSystems,
+    dsSearchTokens,
+    dsSearchRankTokens,
+    (system) => designSystemDocs.get(system.id),
+    designSystemAppeal,
   );
-  const includedSystems = (designSystems ?? []).filter(
-    (system) => !isUserDesignSystem(system) && matchesDsQuery(system),
+  const userSystems = searchedDesignSystems.filter(isUserDesignSystem);
+  const includedSystems = searchedDesignSystems.filter(
+    (system) => !isUserDesignSystem(system),
   );
   const previewSystem =
     (designSystems ?? []).find((system) => system.id === dsPreviewId)
@@ -938,17 +1171,8 @@ export function InspirationPicker({
 
   const renderDesignSystemGallery = () => (
     <>
+      {/* Search moved to the dialog header, shared with the template tab. */}
       <div className="qf-dsx-toolbar">
-        <div className="qf-dsx-search">
-          <Icon name="search" size={13} />
-          <input
-            type="search"
-            value={dsSearch}
-            placeholder={t('qf.inspSearchDs')}
-            aria-label={t('qf.inspSearchDs')}
-            onChange={(event) => setDsSearch(event.target.value)}
-          />
-        </div>
         <button
           type="button"
           className={`qf-dsx-tool${dsMulti ? ' qf-dsx-tool-on' : ''}`}
@@ -971,7 +1195,7 @@ export function InspirationPicker({
         <Button type="button" variant="ghost" onClick={createDesignSystem}>
           {t('qf.inspCreateDs')}
         </Button>
-        <Button type="button" variant="primary" onClick={() => setGalleryOpen(false)}>
+        <Button type="button" variant="primary" onClick={closeGallery}>
           {t('tool.done')}
         </Button>
       </div>
@@ -1075,12 +1299,20 @@ export function InspirationPicker({
       ) : null}
       {tab === 'templates' && enabled.includes('templates') ? (
         <>
-          {renderCategoryTabs('inline')}
+          {renderCategoryTabs('inline', 'templates')}
           {renderCatalogGrid(inlineTemplates, 'templates', 'inline', remainingTemplates)}
         </>
       ) : null}
       {tab === 'design-systems' && enabled.includes('design-systems') ? (
-        renderCatalogGrid(inlineDesignSystems, 'design-systems', 'inline', remainingDesignSystems)
+        <>
+          {renderCategoryTabs('inline-ds', 'design-systems')}
+          {renderCatalogGrid(
+            inlineDesignSystems,
+            'design-systems',
+            'inline',
+            remainingDesignSystems,
+          )}
+        </>
       ) : null}
       {tab === 'upload' && enabled.includes('upload') ? renderUploadSection() : null}
       <div className="qf-insp-hint">
@@ -1091,11 +1323,11 @@ export function InspirationPicker({
       {galleryOpen
         ? createPortal(
             <Dialog
-              className={`qf-visual-dialog${tab === 'design-systems' ? ' qf-dsx-dialog' : ''}`}
+              className={`qf-visual-dialog qf-gal-dialog${tab === 'design-systems' ? ' qf-dsx-dialog' : ' qf-tplx-dialog'}`}
               backdropClassName="qf-visual-dialog-backdrop"
               layout="sectioned"
               ariaLabel={t('qf.inspBrowseAll')}
-              onClose={() => setGalleryOpen(false)}
+              onClose={closeGallery}
               closeOnEscape
             >
               <DialogHeader className="qf-visual-dialog-head">
@@ -1104,42 +1336,89 @@ export function InspirationPicker({
                     ? t('qf.inspTabDesignSystems')
                     : t('qf.inspTabTemplates')}
                 </DialogTitle>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="qf-visual-dialog-close"
-                  aria-label={t('common.close')}
-                  title={t('common.close')}
-                  onClick={() => setGalleryOpen(false)}
-                >
-                  <Icon name="close" size={16} />
-                </Button>
-              </DialogHeader>
-              <DialogBody className="qf-visual-dialog-body">
-                {tab === 'design-systems' ? (
-                  renderDesignSystemGallery()
-                ) : (
-                  <>
-                    <div className="qf-tplx-head">
-                      <div className="qf-dsx-search">
-                        <Icon name="search" size={13} />
-                        <input
-                          type="search"
-                          value={templateSearch}
-                          placeholder={t('qf.inspSearchTpl')}
-                          aria-label={t('qf.inspSearchTpl')}
-                          onChange={(event) => setTemplateSearch(event.target.value)}
-                        />
-                      </div>
-                      {renderCategoryTabs('gallery')}
+                <div className="qf-visual-dialog-head-tools">
+                  <div
+                    className={`qf-tplx-search${gallerySearchOpen ? ' is-open' : ''}`}
+                    data-testid="inspiration-gallery-search"
+                  >
+                    <button
+                      type="button"
+                      className="qf-tplx-search-toggle"
+                      aria-label={gallerySearchLabel}
+                      title={gallerySearchLabel}
+                      aria-expanded={gallerySearchOpen}
+                      onClick={toggleGallerySearch}
+                    >
+                      <Icon name="search" size={14} />
+                    </button>
+                    <div className="qf-tplx-search-field">
+                      <input
+                        ref={gallerySearchRef}
+                        type="text"
+                        value={gallerySearch}
+                        placeholder={gallerySearchLabel}
+                        aria-label={gallerySearchLabel}
+                        aria-hidden={!gallerySearchOpen}
+                        tabIndex={gallerySearchOpen ? 0 : -1}
+                        onChange={(event) => setGallerySearch(event.target.value)}
+                        onBlur={() => {
+                          if (gallerySearch.length === 0) setGallerySearchOpen(false);
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key !== 'Escape') return;
+                          // Escape empties the field before it closes the
+                          // dialog, so a stray keypress never discards the
+                          // whole browse session.
+                          event.stopPropagation();
+                          if (gallerySearch.length > 0) {
+                            setGallerySearch('');
+                            return;
+                          }
+                          setGallerySearchOpen(false);
+                        }}
+                      />
                     </div>
-                    {renderCatalogGrid(searchedTemplates, 'templates', 'gallery', 0)}
-                  </>
-                )}
+                    {gallerySearch.length > 0 ? (
+                      <button
+                        type="button"
+                        className="qf-tplx-search-clear"
+                        aria-label={t('common.clear')}
+                        title={t('common.clear')}
+                        // Clearing must not blur first, or the field would
+                        // collapse before the user can type again.
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => {
+                          setGallerySearch('');
+                          gallerySearchRef.current?.focus();
+                        }}
+                      >
+                        <Icon name="close" size={11} strokeWidth={2.2} />
+                      </button>
+                    ) : null}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="qf-visual-dialog-close"
+                    aria-label={t('common.close')}
+                    title={t('common.close')}
+                    onClick={closeGallery}
+                  >
+                    <Icon name="close" size={15} />
+                  </Button>
+                </div>
+              </DialogHeader>
+              <div className="qf-tplx-bar">
+                {renderCategoryTabs('gallery', galleryIsDs ? 'design-systems' : 'templates')}
+              </div>
+              <DialogBody className="qf-visual-dialog-body">
+                {galleryIsDs
+                  ? renderDesignSystemGallery()
+                  : renderCatalogGrid(searchedTemplates, 'templates', 'gallery', 0)}
               </DialogBody>
               {tab === 'design-systems' ? null : (
                 <DialogFooter className="qf-visual-dialog-foot">
-                  <Button type="button" variant="primary" onClick={() => setGalleryOpen(false)}>
+                  <Button type="button" variant="primary" onClick={closeGallery}>
                     {t('tool.done')}
                   </Button>
                 </DialogFooter>

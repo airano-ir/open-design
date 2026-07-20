@@ -57,6 +57,11 @@ vi.mock('../../src/providers/registry', () => ({
         }) as DesignSystemSummary,
     ),
   ]),
+  projectRawUrl: (projectId: string, filePath: string) =>
+    `/api/projects/${projectId}/raw/${filePath
+      .split('/')
+      .map((seg) => encodeURIComponent(seg))
+      .join('/')}`,
 }));
 
 // The gallery's right-hand pane mounts the shared kit preview, which fetches
@@ -104,7 +109,58 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+/**
+ * The picker seeds the top-ranked template + design system as a default
+ * answer the first time the catalogues render. Tests that exercise manual
+ * picking clear that seed first, so their assertions stay about the
+ * interaction under test rather than the default.
+ */
+async function clearSeededPicks() {
+  await screen.findByTestId('inspiration-picked');
+  for (let guard = 0; guard < 10; guard += 1) {
+    const remove = screen.queryAllByRole('button', { name: /^Remove: / });
+    if (remove.length === 0) return;
+    fireEvent.click(remove[0]!);
+  }
+  throw new Error('seeded picks did not clear');
+}
+
 describe('InspirationPicker inside QuestionFormView', () => {
+  it('seeds the top-ranked template and design system as the default answer', async () => {
+    const onSubmit = vi.fn();
+    render(<QuestionFormView form={inspirationForm} interactive onSubmit={onSubmit} />);
+
+    // Nothing clicked: the default answer is already populated. The template
+    // is the catalogue leader, and Editorial wins among design systems on
+    // palette vividness (terracotta accent vs. the greyscale bundles).
+    const chips = await screen.findByTestId('inspiration-picked');
+    expect(chips.textContent).toContain('Fundraising Pitch');
+    expect(chips.textContent).toContain('Editorial');
+
+    fireEvent.click(screen.getByText('Send answers'));
+    const [, , , , inspiration] = onSubmit.mock.calls[0]!;
+    expect(inspiration).toEqual({
+      templates: [{ id: 'deck-fundraising', label: 'Fundraising Pitch' }],
+      designSystems: [{ id: 'user:editorial', label: 'Editorial' }],
+    });
+  });
+
+  it('never re-seeds after the user clears the default picks', async () => {
+    const onSubmit = vi.fn();
+    render(<QuestionFormView form={inspirationForm} interactive onSubmit={onSubmit} />);
+
+    await clearSeededPicks();
+    // The seed latches on first decision, so re-rendering the catalogue (here
+    // via a tab switch) must not quietly restore what the user removed.
+    fireEvent.click(screen.getByRole('tab', { name: /Design systems/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /Templates/ }));
+
+    expect(screen.queryByTestId('inspiration-picked')).toBeNull();
+    fireEvent.click(screen.getByText('Send answers'));
+    const [, , , , inspiration] = onSubmit.mock.calls[0]!;
+    expect(inspiration).toBeUndefined();
+  });
+
   it('reports a template pick through the structured inspiration payload', async () => {
     const onSubmit = vi.fn();
     render(<QuestionFormView form={inspirationForm} interactive onSubmit={onSubmit} />);
@@ -112,6 +168,7 @@ describe('InspirationPicker inside QuestionFormView', () => {
     expect(screen.getByTestId('inspiration-picker')).toBeTruthy();
     expect(screen.getByText('product landing page')).toBeTruthy();
 
+    await clearSeededPicks();
     fireEvent.click(await screen.findByLabelText('Fundraising Pitch'));
     fireEvent.click(screen.getByText('Send answers'));
 
@@ -131,6 +188,7 @@ describe('InspirationPicker inside QuestionFormView', () => {
     const onSubmit = vi.fn();
     render(<QuestionFormView form={inspirationForm} interactive onSubmit={onSubmit} />);
 
+    await clearSeededPicks();
     fireEvent.click(screen.getByRole('tab', { name: /Design systems/ }));
     fireEvent.click(await screen.findByLabelText('Editorial'));
     fireEvent.click(screen.getByText('Send answers'));
@@ -147,6 +205,7 @@ describe('InspirationPicker inside QuestionFormView', () => {
     const onSubmit = vi.fn();
     render(<QuestionFormView form={inspirationForm} interactive onSubmit={onSubmit} />);
 
+    await clearSeededPicks();
     fireEvent.click(screen.getByRole('tab', { name: /Design systems/ }));
     fireEvent.click(await screen.findByLabelText('Editorial'));
     fireEvent.click(screen.getByLabelText('Bento'));
@@ -161,6 +220,7 @@ describe('InspirationPicker inside QuestionFormView', () => {
     const onSubmit = vi.fn();
     render(<QuestionFormView form={inspirationForm} interactive onSubmit={onSubmit} />);
 
+    await clearSeededPicks();
     fireEvent.click(screen.getByRole('tab', { name: /Design systems/ }));
     // 6 systems, inline grid shows 4 → the "+2" more tile opens the gallery.
     fireEvent.click(await screen.findByRole('button', { name: 'Browse all' }));
@@ -187,6 +247,7 @@ describe('InspirationPicker inside QuestionFormView', () => {
     const onSubmit = vi.fn();
     render(<QuestionFormView form={inspirationForm} interactive onSubmit={onSubmit} />);
 
+    await clearSeededPicks();
     const picker = await screen.findByTestId('inspiration-picker');
     const file = new File(['png-bytes'], 'pasted-shot.png', { type: 'image/png' });
     fireEvent.paste(picker, { clipboardData: { files: [file] } });
@@ -203,6 +264,7 @@ describe('InspirationPicker inside QuestionFormView', () => {
     const onSubmit = vi.fn();
     render(<QuestionFormView form={inspirationForm} interactive onSubmit={onSubmit} />);
 
+    await clearSeededPicks();
     fireEvent.click(await screen.findByLabelText('Fundraising Pitch'));
     fireEvent.click(screen.getByLabelText('Analytics Dashboard'));
     fireEvent.click(screen.getByText('Send answers'));
@@ -258,6 +320,7 @@ describe('InspirationPicker inside QuestionFormView', () => {
     const onSubmit = vi.fn();
     render(<QuestionFormView form={inspirationForm} interactive onSubmit={onSubmit} />);
 
+    await clearSeededPicks();
     fireEvent.click(await screen.findByLabelText('Fundraising Pitch'));
     fireEvent.click(screen.getByRole('tab', { name: /Design systems/ }));
     fireEvent.click(screen.getByLabelText('Editorial'));
@@ -299,6 +362,31 @@ describe('InspirationPicker inside QuestionFormView', () => {
     expect(chips.textContent).toContain('reference-shot.png');
     // No catalog UI in the locked record.
     expect(screen.queryByRole('tab', { name: /Design systems/ })).toBeNull();
+  });
+
+  it('locked summary resolves an uploaded image to its real project path', () => {
+    function Harness() {
+      const t = useT();
+      return (
+        <InspirationPicker
+          formId="inspiration"
+          questionId="inspiration"
+          value={['image.png']}
+          files={[]}
+          disabled
+          onChange={() => {}}
+          onFilesChange={() => {}}
+          t={t}
+          projectId="proj-1"
+          uploadPathByName={{ 'image.png': 'uploads/image-2.png' }}
+        />
+      );
+    }
+    render(<Harness />);
+    const img = screen.getByTestId('inspiration-picked').querySelector('img');
+    expect(img).not.toBeNull();
+    // De-dup path wins over the raw name, encoded per segment.
+    expect(img!.getAttribute('src')).toBe('/api/projects/proj-1/raw/uploads/image-2.png');
   });
 
   it('locks the picker when the form is not interactive', async () => {

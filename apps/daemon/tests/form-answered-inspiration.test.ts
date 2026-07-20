@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   FORM_ANSWERED_GENERIC_OVERRIDE,
+  FORM_ANSWERED_INSPIRATION_OVERRIDE,
   FORM_ANSWERED_SYSTEM_OVERRIDE,
   composeChatUserRequestForAgent,
   resolveFormAnsweredOverride,
@@ -120,6 +121,16 @@ describe('pendingPromptFlowStep', () => {
 });
 
 describe('resolveFormAnsweredOverride', () => {
+  it('uses the visual-source priority after inspiration is answered', () => {
+    expect(resolveFormAnsweredOverride({ formId: 'inspiration', pendingFlowStep: null })).toBe(
+      FORM_ANSWERED_INSPIRATION_OVERRIDE,
+    );
+    expect(FORM_ANSWERED_INSPIRATION_OVERRIDE).toContain('uploaded references');
+    expect(FORM_ANSWERED_INSPIRATION_OVERRIDE).toContain('selected Design');
+    expect(FORM_ANSWERED_INSPIRATION_OVERRIDE).toContain('selected Style');
+    expect(FORM_ANSWERED_INSPIRATION_OVERRIDE).toContain('never override');
+  });
+
   it('routes brief answers to the pending flow step override', () => {
     expect(
       resolveFormAnsweredOverride({ formId: 'discovery', pendingFlowStep: INSPIRATION_FLOW_STEP }),
