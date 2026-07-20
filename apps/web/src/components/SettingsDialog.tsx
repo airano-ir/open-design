@@ -1191,6 +1191,13 @@ export function SettingsDialog({
   }, []);
   const [showApiKey, setShowApiKey] = useState(false);
   const [activeSection, setActiveSection] = useState<SettingsSection>(() => normalizeSettingsSection(initialSection));
+  const [settingsSearch, setSettingsSearch] = useState('');
+  // Case-insensitive match of the settings-nav search against a nav item's own
+  // title/subtitle only, so typing filters the settings list rather than
+  // reaching into unrelated content. Empty query shows everything.
+  const settingsSearchQuery = settingsSearch.trim().toLowerCase();
+  const settingsNavMatch = (...labels: string[]) =>
+    settingsSearchQuery === '' || labels.some((label) => label.toLowerCase().includes(settingsSearchQuery));
   const [settingsSidebarCollapsed, setSettingsSidebarCollapsed] = useState(false);
   const [settingsFullscreen, setSettingsFullscreen] = useState(false);
   // Scroll the right-hand content pane back to the top whenever the user
@@ -3369,17 +3376,22 @@ export function SettingsDialog({
                   <Icon name="arrow-left" size={15} />
                   <span>{t('demo.SettingsDialog.tsx.backToHome')}</span>
                 </button>
-                <label className="settings-page-search">
+                <label className={`settings-page-search${settingsSearch.trim() ? ' has-text' : ''}`}>
                   <Icon name="search" size={14} />
-                  <input type="search" placeholder={t('demo.SettingsDialog.tsx.searchSettingsPlaceholder')} readOnly />
+                  <input
+                    type="search"
+                    placeholder={t('demo.SettingsDialog.tsx.searchSettingsPlaceholder')}
+                    value={settingsSearch}
+                    onChange={(e) => setSettingsSearch(e.target.value)}
+                  />
                 </label>
-                <span className="settings-page-nav-group">{t('demo.SettingsDialog.tsx.navGroupPersonal')}</span>
               </div>
             ) : null}
             <button
               type="button"
               className={`settings-nav-item${activeSection === 'execution' ? ' active' : ''}`}
               onClick={() => setActiveSection('execution')}
+              hidden={!settingsNavMatch(t('settings.envConfigure'), t('settings.localCli'), t('settings.modeApiMeta'))}
             >
               <Icon name="sliders" size={18} />
               <span>
@@ -3391,6 +3403,7 @@ export function SettingsDialog({
               type="button"
               className={`settings-nav-item${activeSection === 'general' ? ' active' : ''}`}
               onClick={() => setActiveSection('general')}
+              hidden={!settingsNavMatch(t('demo.SettingsDialog.tsx.navGeneralTitle'), t('demo.SettingsDialog.tsx.navGeneralSub'))}
             >
               <Icon name="settings" size={18} />
               <span>
@@ -3402,6 +3415,7 @@ export function SettingsDialog({
               type="button"
               className={`settings-nav-item${activeSection === 'instructions' ? ' active' : ''}`}
               onClick={() => setActiveSection('instructions')}
+              hidden={!settingsNavMatch(t('settings.instructionsTitle'), t('settings.instructionsNavSub'))}
             >
               <Icon name="edit" size={18} />
               <span>
@@ -3413,6 +3427,7 @@ export function SettingsDialog({
               type="button"
               className={`settings-nav-item${activeSection === 'memory' ? ' active' : ''}`}
               onClick={() => setActiveSection('memory')}
+              hidden={!settingsNavMatch(t('settings.memory'), t('settings.memoryHint'))}
             >
               <Icon name="brain" size={18} />
               <span>
@@ -3424,6 +3439,7 @@ export function SettingsDialog({
               type="button"
               className={`settings-nav-item${activeSection === 'media' ? ' active' : ''}`}
               onClick={() => setActiveSection('media')}
+              hidden={!settingsNavMatch(t('settings.mediaProviders'), 'Image / video / audio')}
             >
               <Icon name="image" size={18} />
               <span>
@@ -3435,6 +3451,7 @@ export function SettingsDialog({
               type="button"
               className={`settings-nav-item${activeSection === 'integrations' ? ' active' : ''}`}
               onClick={() => setActiveSection('integrations')}
+              hidden={!settingsNavMatch(t('settings.mcpServerTitle'), t('settings.mcpServerHint'))}
             >
               <Icon name="puzzle" size={18} />
               <span>
@@ -3446,6 +3463,7 @@ export function SettingsDialog({
               type="button"
               className={`settings-nav-item${activeSection === 'privacy' ? ' active' : ''}`}
               onClick={() => setActiveSection('privacy')}
+              hidden={!settingsNavMatch(t('settings.privacy'), t('settings.privacyHint'))}
             >
               <Icon name="eye" size={18} />
               <span>
@@ -3457,6 +3475,7 @@ export function SettingsDialog({
               type="button"
               className={`settings-nav-item${activeSection === 'about' ? ' active' : ''}`}
               onClick={() => setActiveSection('about')}
+              hidden={!settingsNavMatch(t('settings.about'), t('settings.aboutHint'))}
             >
               <Icon name="settings" size={18} />
               <span>

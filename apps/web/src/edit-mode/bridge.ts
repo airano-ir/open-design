@@ -170,7 +170,7 @@ export function buildManualEditBridge(enabled: boolean): string {
   var discoverySelector = ${JSON.stringify(MANUAL_EDIT_DISCOVERY_SELECTOR)};
   var hostNodeSelector = ${JSON.stringify(MANUAL_EDIT_HOST_NODE_SELECTOR)};
   var sourcePathAttr = ${JSON.stringify(MANUAL_EDIT_SOURCE_PATH_ATTR)};
-  var styleProps = ['fontFamily','fontSize','fontWeight','color','textAlign','lineHeight','letterSpacing','width','height','minHeight','gap','flexDirection','justifyContent','alignItems','backgroundColor','opacity','padding','paddingTop','paddingRight','paddingBottom','paddingLeft','margin','marginTop','marginRight','marginBottom','marginLeft','border','borderTopWidth','borderRightWidth','borderBottomWidth','borderLeftWidth','borderStyle','borderColor','borderRadius'];
+  var styleProps = ['fontFamily','fontSize','fontWeight','color','textAlign','lineHeight','letterSpacing','width','height','minHeight','gap','flexDirection','justifyContent','alignItems','backgroundColor','opacity','padding','paddingTop','paddingRight','paddingBottom','paddingLeft','margin','marginTop','marginRight','marginBottom','marginLeft','border','borderTopWidth','borderRightWidth','borderBottomWidth','borderLeftWidth','borderStyle','borderColor','borderRadius','transform'];
   function isHostNode(el){
     return !!(el && el.matches && el.matches(hostNodeSelector));
   }
@@ -503,6 +503,33 @@ export function buildManualEditBridge(enabled: boolean): string {
   var guidesMemoryClearedAt = 0;
   var guidesEnabled = true;
   var selectedTargetId = null;
+  // Free drag-to-reposition state. pointerdown records a pending drag; once the
+  // pointer moves past DRAG_THRESHOLD it becomes an active drag that writes an
+  // inline translate() the same way the inspector writes any style, so the
+  // panel's Save persists it. justDragged suppresses the click that follows a
+  // drag (so the drop doesn't also select / enter text-edit).
+  var DRAG_THRESHOLD = 4;
+  var dragPending = null;
+  var justDragged = false;
+  function readTranslateBase(el){
+    // Split the element's existing inline transform into a non-translate
+    // prefix (rotate/scale/etc. we preserve) and the translate() we manage.
+    var raw = (el.style && el.style.transform) || '';
+    var base = { prefix: '', tx: 0, ty: 0 };
+    var m = raw.match(/translate\\(\\s*(-?[\\d.]+)px\\s*,\\s*(-?[\\d.]+)px\\s*\\)/);
+    if (m) {
+      base.tx = parseFloat(m[1]) || 0;
+      base.ty = parseFloat(m[2]) || 0;
+      base.prefix = raw.replace(m[0], '').replace(/\\s+/g, ' ').trim();
+    } else if (raw && raw !== 'none') {
+      base.prefix = raw.trim();
+    }
+    return base;
+  }
+  function composeTransform(prefix, tx, ty){
+    var t = 'translate(' + Math.round(tx) + 'px, ' + Math.round(ty) + 'px)';
+    return prefix ? (prefix + ' ' + t) : t;
+  }
   function clearHoverTracking(){
     if (lastHoverEl) guidesMemoryClearedAt = Date.now();
     lastHoverId = null;
@@ -974,8 +1001,41 @@ export function buildManualEditBridge(enabled: boolean): string {
       return;
     }
   });
+  // pointerdown records a candidate drag; the actual move/commit happens in
+  // pointermove/pointerup. We don't preventDefault here so a plain press that
+  // never moves still behaves as a normal click (select / enter text-edit).
+  document.addEventListener('pointerdown', function(ev){
+    if (!enabled || activeTextEdit) return;
+    if (ev.button !== undefined && ev.button !== 0) return;
+    if (ev.target && ev.target.closest && ev.target.closest('[data-od-editing="true"]')) return;
+    var el = closestTarget(ev);
+    if (!el) { dragPending = null; return; }
+    var base = readTranslateBase(el);
+    dragPending = {
+      el: el,
+      id: stableId(el),
+      startX: ev.clientX,
+      startY: ev.clientY,
+      prefix: base.prefix,
+      baseTx: base.tx,
+      baseTy: base.ty,
+      started: false
+    };
+  }, true);
+  document.addEventListener('pointerup', function(ev){
+    if (!dragPending) return;
+    var drag = dragPending;
+    dragPending = null;
+    if (!drag.started) return; // never moved past threshold → let click select
+    justDragged = true;
+    ev.preventDefault();
+    ev.stopPropagation();
+    var transform = drag.el.style.transform || '';
+    window.parent.postMessage({ type: 'od-edit-drag-commit', id: drag.id, transform: transform }, '*');
+  }, true);
   document.addEventListener('click', function(ev){
     if (!enabled) return;
+    if (justDragged) { justDragged = false; ev.preventDefault(); ev.stopPropagation(); return; }
     if (ev.target && ev.target.closest && ev.target.closest('[data-od-editing="true"]')) return;
     ev.preventDefault();
     ev.stopPropagation();
@@ -1025,6 +1085,27 @@ export function buildManualEditBridge(enabled: boolean): string {
   }, true);
   document.addEventListener('pointermove', function(ev){
     if (!enabled) return;
+    // Active/candidate drag takes over pointermove: translate the element live
+    // and skip the hover-guides bookkeeping below.
+    if (dragPending) {
+      var dx = ev.clientX - dragPending.startX;
+      var dy = ev.clientY - dragPending.startY;
+      if (!dragPending.started && (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD)) {
+        dragPending.started = true;
+        // Grabbing an unselected element selects it first, so the panel + the
+        // selection chrome follow the element being moved.
+        if (selectedTargetId !== dragPending.id) {
+          setSelectedTarget(dragPending.id);
+          window.parent.postMessage({ type: 'od-edit-select', target: targetFrom(dragPending.el, true) }, '*');
+        }
+      }
+      if (dragPending.started) {
+        dragPending.el.style.transform = composeTransform(dragPending.prefix, dragPending.baseTx + dx, dragPending.baseTy + dy);
+        renderSelectedChromeForCurrent();
+        ev.preventDefault();
+      }
+      return;
+    }
     var hoveredEl = closestTarget(ev);
     if (activeTextEdit) {
       if (!hoveredEl || (activeTextEdit.el && stableId(activeTextEdit.el) === stableId(hoveredEl))) {

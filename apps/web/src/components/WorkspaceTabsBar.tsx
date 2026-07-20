@@ -519,18 +519,21 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
     [state.tabs, tabsOverflowing],
   );
   const activeChromeTab = state.tabs.find((tab) => tab.id === state.activeTabId);
-  // Home view: the active pinned entry tab renders only the sidebar toggle, so
-  // the glide pill must not park its filled "active tab" surface over it.
-  const activeIsHomeRailToggle =
-    activeChromeTab?.kind === 'entry' && activeChromeTab.view === 'home';
+  // The pinned entry tab renders only a flat rail-toggle whenever it's active —
+  // the sidebar toggle on Home, the Home button in every other entry section
+  // (settings / all-projects / community / design-systems). In ALL of these the
+  // glide pill must not park its filled "active tab" surface over it, so key off
+  // `kind === 'entry'` rather than the Home view alone (which left the pill
+  // filling the button in the other sections).
+  const activeIsEntryRailToggle = activeChromeTab?.kind === 'entry';
   useGlideIndicator({
     containerRef: stripRef,
     indicatorRef: glideRef,
     pillRef: glidePillRef,
-    // On Home, target a never-matching selector so the glide pill fades out
-    // over the toggle instead of filling it. (jsdom-safe — no `:has()` in
-    // querySelector.)
-    activeSelector: activeIsHomeRailToggle
+    // On an entry section, target a never-matching selector so the glide pill
+    // fades out over the toggle instead of filling it. (jsdom-safe — no `:has()`
+    // in querySelector.)
+    activeSelector: activeIsEntryRailToggle
       ? '.workspace-tab.is-active.__no-glide__'
       : '.workspace-tab.is-active',
     activeKey: state.activeTabId,

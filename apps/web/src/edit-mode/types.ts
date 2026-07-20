@@ -79,6 +79,9 @@ export interface ManualEditStyles {
   borderStyle: string;
   borderColor: string;
   borderRadius: string;
+  /* Free drag-to-reposition writes a translate() here (on top of the element's
+     own layout position), persisted like any other inline style. */
+  transform: string;
 }
 
 export interface ManualEditTarget {
@@ -173,6 +176,14 @@ export interface ManualEditTextSessionMessage {
   committed?: boolean;
 }
 
+/** Free drag-to-reposition finished: the element's new translate() value, to
+ *  be committed as a pending style so the panel's Save persists it. */
+export interface ManualEditDragCommitMessage {
+  type: 'od-edit-drag-commit';
+  id: string;
+  transform: string;
+}
+
 export type ManualEditBridgeMessage =
   | ManualEditTargetMessage
   | ManualEditSelectMessage
@@ -182,7 +193,8 @@ export type ManualEditBridgeMessage =
   | ManualEditBackgroundMessage
   | ManualEditPreviewAppliedMessage
   | ManualEditTextCommitMessage
-  | ManualEditTextSessionMessage;
+  | ManualEditTextSessionMessage
+  | ManualEditDragCommitMessage;
 
 export const MANUAL_EDIT_STYLE_PROPS: readonly (keyof ManualEditStyles)[] = [
   'fontFamily', 'fontSize', 'fontWeight', 'color', 'textAlign', 'lineHeight', 'letterSpacing',
@@ -193,6 +205,7 @@ export const MANUAL_EDIT_STYLE_PROPS: readonly (keyof ManualEditStyles)[] = [
   'margin', 'marginTop', 'marginRight', 'marginBottom', 'marginLeft',
   'border', 'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth',
   'borderStyle', 'borderColor', 'borderRadius',
+  'transform',
 ];
 
 export function emptyManualEditStyles(): ManualEditStyles {

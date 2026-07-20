@@ -844,7 +844,9 @@
 /* Home view: the pinned tab is just the sidebar toggle — keep it flat (no
    white "active pill" fill / border / shadow) so it sits like the other tabs
    on the bar rather than a filled button. Uses the opaque bar fill so scrolled
-   tabs can't bleed through; the toggle's own ghost hover is the affordance. */
+   tabs can't bleed through; the toggle's own ghost hover is the affordance.
+   (The glide pill that would otherwise mark the active tab is suppressed over
+   any active entry tab — see `activeIsEntryRailToggle` in WorkspaceTabsBar.) */
 .workspace-shell .workspace-tab.is-pinned.is-active:has(.workspace-tab__rail-toggle) {
   background: var(--workspace-tab-bar-bg);
   border-color: transparent;

@@ -1541,7 +1541,6 @@ export function LiveArtifactViewer({
             data-active={mode === 'preview' ? 'true' : 'false'}
             aria-hidden={mode === 'preview' ? undefined : true}
           >
-            <span className="viewer-divider" aria-hidden />
             <PreviewViewportControls
               viewport={previewViewport}
               onViewport={setPreviewViewport}
@@ -6587,6 +6586,20 @@ function HtmlViewer({
         // save is never silently torn down.
         return;
       }
+      if (data.type === 'od-edit-drag-commit') {
+        // Free drag-to-reposition dropped: route the new translate() through
+        // the same pending-style pipeline the inspector uses, so the panel's
+        // Save persists it alongside every other edit in this session.
+        const id = String(data.id || '');
+        if (!id) return;
+        const transform = String(data.transform || '');
+        void handleManualEditStyleChange(id, { transform }, 'Move element');
+        if (selectedManualEditTargetIdRef.current === id) {
+          setManualEditDraft((current) => ({ ...current, styles: { ...current.styles, transform } }));
+          setManualEditDraftDirty(true);
+        }
+        return;
+      }
     }
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
@@ -9346,14 +9359,11 @@ function HtmlViewer({
             ))}
           </div>
           {showPreviewToolbarControls ? (
-            <>
-              <span className="viewer-divider" aria-hidden />
-              <PreviewViewportControls
-                viewport={previewViewport}
-                onViewport={setPreviewViewport}
-                t={t}
-              />
-            </>
+            <PreviewViewportControls
+              viewport={previewViewport}
+              onViewport={setPreviewViewport}
+              t={t}
+            />
           ) : null}
           {showPreviewToolbarControls && showDeckNavigation ? (
             <span

@@ -1742,6 +1742,9 @@
 }
 /* Borderless privacy toggle cards: the panel fill alone separates each card;
    no border in any state. */
+/* Borderless AND fill-less: the two privacy toggle rows sit flat on the white
+   settings surface (no card slab), in every state. The switch alone carries
+   the on/off signal. */
 .settings-privacy-toggles .toggle-row,
 .settings-privacy-toggles .toggle-row:hover,
 .settings-privacy-toggles .toggle-row.on,
@@ -1750,13 +1753,11 @@
 .settings-privacy-toggles .toggle-row.disabled:hover,
 .settings-privacy-toggles .toggle-row:disabled:hover {
   border-color: transparent;
+  background: transparent;
 }
-/* Hold the panel fill when switched on. `.toggle-row.on` otherwise paints
-   --bg-subtle (#ededed), which reads as a grey slab on the white settings
-   surface — and both privacy toggles default to on, so the whole stack went
-   grey. The switch itself already carries the on/off state. */
-.settings-privacy-toggles .toggle-row.on {
-  background: var(--bg-panel);
+/* Switched-on track turns brand-success green (was the neutral --text). */
+.settings-privacy-toggles .toggle-row.on .toggle-row-switch {
+  background: var(--green);
 }
 /* Anonymous-ID field: borderless, resting on the panel fill like the cards.
    Scoped to the privacy section via :has() so other readonly fields keep
