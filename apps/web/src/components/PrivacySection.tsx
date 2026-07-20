@@ -74,12 +74,12 @@ export function PrivacySection({ cfg, setCfg }: Props): JSX.Element {
 
   return (
     <section className="settings-section">
-      <ConsentCard
-        onShare={shareUsage}
-        onDecline={declineUsage}
-        sharingEnabled={hasMadeConsentDecision ? sharingEnabled : undefined}
-      />
-      {hasMadeConsentDecision ? (
+      {/* The consent card asks the question; the toggles below ARE the answer.
+          Rendering both once a decision exists put two competing controls for
+          the same setting on screen (#5517 renders one or the other). */}
+      {!hasMadeConsentDecision ? (
+        <ConsentCard onShare={shareUsage} onDecline={declineUsage} />
+      ) : (
         <>
           <div className="settings-privacy-toggles">
             <ToggleRow
@@ -145,7 +145,7 @@ export function PrivacySection({ cfg, setCfg }: Props): JSX.Element {
             </button>
           </div>
         </>
-      ) : null}
+      )}
     </section>
   );
 }
