@@ -2590,6 +2590,12 @@
   flex: 0 0 248px;
   min-width: 0;
   display: flex;
+  /* One source for the preview row's height: the preview box below pins itself
+     to it, and the hover actions park against its bottom edge. They used to
+     carry `top: 108px`, a number that silently encoded this height minus the
+     button row. */
+  --preset-preview-h: 150px;
+  --preset-action-h: 32px;
 }
 /* Hover overlay actions (use / remix) on the example cards — OUR functional
    addition from #4861; these rules were orphaned when home-hero.css was
@@ -2599,7 +2605,7 @@
   position: absolute;
   left: 10px;
   right: 10px;
-  top: 108px;
+  top: calc(var(--preset-preview-h) - var(--preset-action-h) - 10px);
   z-index: 5;
   display: flex;
   gap: 6px;
@@ -2725,12 +2731,12 @@
 .home-hero__plugin-preset-preview {
   position: relative;
   min-width: 0;
-  /* Pinned to the tile's 150px preview row: whatever the inner surface
-     renders (oversized media, iframes) clips here instead of spilling over
-     the title below. */
-  height: 150px;
-  min-height: 150px;
-  max-height: 150px;
+  /* Pinned to the tile's preview row: whatever the inner surface renders
+     (oversized media, iframes) clips here instead of spilling over the title
+     below. The height comes from the cell so the hover actions track it. */
+  height: var(--preset-preview-h);
+  min-height: var(--preset-preview-h);
+  max-height: var(--preset-preview-h);
   overflow: hidden;
   background: var(--bg-subtle);
   border-bottom: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
