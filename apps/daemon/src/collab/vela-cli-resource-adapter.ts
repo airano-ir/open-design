@@ -1,4 +1,7 @@
-import type { WorkspaceCollabContext } from '@open-design/contracts';
+import {
+  workspaceContextHasTeamIdentity,
+  type WorkspaceCollabContext,
+} from '@open-design/contracts';
 import {
   runVelaCommand,
   velaWorkspaceCommandOptions,
@@ -248,9 +251,5 @@ export function shouldUseVelaCliResourceTransport(env: NodeJS.ProcessEnv = proce
 
 /** Derive the resource-identity gate from the one workspace context. */
 export function contextHasTeamIdentity(context: WorkspaceCollabContext | null): boolean {
-  return Boolean(
-    context?.workspaceType === 'team' &&
-    context.workspaceId &&
-    context.workspaceMemberId,
-  );
+  return workspaceContextHasTeamIdentity(context);
 }

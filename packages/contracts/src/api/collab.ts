@@ -272,6 +272,31 @@ export function isWorkspaceLifecycleReadable(state: WorkspaceLifecycleState): bo
   return state !== 'deleted';
 }
 
+/**
+ * Whether a context can address the workspace resource hub.
+ *
+ * The hub keys every resource by a TEAM workspace: `teamId` is populated only
+ * for `workspaceType === 'team'` (see the field's doc above), so a personal or
+ * signed-out session has no id to push, snapshot, or redact under. Everything
+ * built on the hub — team project sharing and public single-file links — is
+ * therefore team-only by construction, not by policy choice.
+ *
+ * This is the ONE predicate both sides must agree on: the daemon refuses hub
+ * writes when it is false, and the web UI must not render a hub-backed entry
+ * point when it is false. Deriving it twice is how a UI grows a button that can
+ * only ever fail.
+ */
+export function workspaceContextHasTeamIdentity(
+  context: WorkspaceCollabContext | null | undefined,
+): boolean {
+  return Boolean(
+    context &&
+    context.workspaceType === 'team' &&
+    context.workspaceId &&
+    context.workspaceMemberId,
+  );
+}
+
 export function isWorkspaceLifecycleWritable(state: WorkspaceLifecycleState): boolean {
   return state === 'active';
 }

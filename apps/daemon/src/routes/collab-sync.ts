@@ -235,6 +235,26 @@ function encodePublicFileUrlPath(filePath: string): string {
   return filePath.split('/').map((part) => encodeURIComponent(part)).join('/');
 }
 
+/**
+ * The 409 body for a public-file request that has no team workspace behind it.
+ *
+ * Public links are snapshots in the workspace resource hub, which only a team
+ * workspace can address (`workspaceContextHasTeamIdentity`). A personal or
+ * signed-out session — and a team session whose context read momentarily fails —
+ * lands here. Ship a sentence alongside the code so every surface that is not
+ * the web UI (the `od` CLI, embedding agents) states the reason instead of
+ * echoing `WORKSPACE_IDENTITY_REQUIRED` at a human. The web UI localizes the
+ * code itself; see `publicFilePublishFailureKey` in apps/web.
+ */
+function workspaceIdentityRequiredBody() {
+  return {
+    error: 'WORKSPACE_IDENTITY_REQUIRED',
+    message:
+      'Publishing a public link needs a team workspace. Switch to a team workspace, ' +
+      'or use Deploy to publish this file from a personal workspace.',
+  };
+}
+
 function publicResourceHubBaseUrl(): string | null {
   return readVelaControlApiContext()?.apiUrl?.trim() || process.env.OD_RESOURCE_HUB_URL?.trim() || null;
 }
@@ -421,7 +441,7 @@ export function registerCollabSyncRoutes(app: Express, deps: RegisterCollabSyncR
     }
     const principal = await principalForRequest(req);
     if (!principal) {
-      return res.status(409).json({ error: 'WORKSPACE_IDENTITY_REQUIRED' });
+      return res.status(409).json(workspaceIdentityRequiredBody());
     }
     if (!await canShareProjectsForRequest(req)) {
       return res.status(403).json({ error: 'WORKSPACE_PROJECT_SHARE_DENIED' });
@@ -515,7 +535,7 @@ export function registerCollabSyncRoutes(app: Express, deps: RegisterCollabSyncR
     }
     const principal = await principalForRequest(req);
     if (!principal) {
-      return res.status(409).json({ error: 'WORKSPACE_IDENTITY_REQUIRED' });
+      return res.status(409).json(workspaceIdentityRequiredBody());
     }
     if (!await canShareProjectsForRequest(req)) {
       return res.status(403).json({ error: 'WORKSPACE_PROJECT_SHARE_DENIED' });
@@ -553,7 +573,7 @@ export function registerCollabSyncRoutes(app: Express, deps: RegisterCollabSyncR
     }
     const principal = await principalForRequest(req);
     if (!principal) {
-      return res.status(409).json({ error: 'WORKSPACE_IDENTITY_REQUIRED' });
+      return res.status(409).json(workspaceIdentityRequiredBody());
     }
     if (!await canShareProjectsForRequest(req)) {
       return res.status(403).json({ error: 'WORKSPACE_PROJECT_SHARE_DENIED' });

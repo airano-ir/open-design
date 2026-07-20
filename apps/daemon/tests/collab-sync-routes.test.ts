@@ -61,6 +61,26 @@ function fakeProjectStore(): PulledProjectStore & {
   return store;
 }
 
+/** A personal (non-team) workspace context — the default a fresh account lands
+ *  on. Non-null and fully populated, but with no `teamId`, so it can never
+ *  address the team-scoped resource hub. */
+function personalContextProvider(): WorkspaceContextProvider {
+  const context: WorkspaceCollabContext = {
+    workspaceId: 'ws-personal-1',
+    workspaceType: 'personal',
+    workspaceMemberId: 'wm-personal-1',
+    role: 'owner',
+    memberStatus: 'active',
+    lifecycleState: 'active',
+    billingState: 'active',
+    planId: null,
+    providerMode: 'platform_credits',
+    seatSummary: buildWorkspaceSeatSummary({ seatLimit: 1, usedSeats: 1 }),
+    permissions: buildWorkspacePermissions({ role: 'owner', lifecycleState: 'active' }),
+  };
+  return { current: async () => context };
+}
+
 /** A fixed team context whose `canShareProjects` bit is forced to the tested
  *  value, served by a minimal provider (no `set` seam). */
 function fixedShareContextProvider(canShareProjects: boolean): WorkspaceContextProvider {
@@ -737,6 +757,42 @@ describe('collab sync routes', () => {
 
     expect(res.status).toBe(403);
     expect(res.body.error).toBe('WORKSPACE_PROJECT_UNSHARE_DENIED');
+  });
+
+  it('explains, rather than bare-codes, a public file publish from a personal workspace', async () => {
+    // Regression guard for the dogfood report "publish as public link fails with
+    // 409 WORKSPACE_IDENTITY_REQUIRED". Public links are team-scoped resource-hub
+    // snapshots, so refusing a personal workspace is correct — but the refusal
+    // reached the user as a raw error code with no explanation. Every one of the
+    // three handlers must answer with a sentence alongside the code, since the
+    // `od` CLI and embedding agents surface the body verbatim.
+    const resolveProjectDir = vi.fn(() => {
+      throw new Error('project dir should not be read');
+    });
+    const api = await startSyncServer(personalContextProvider(), {
+      resolveProjectDir,
+      resolveSharedProject: async () => null,
+    });
+
+    const publish = await api.json('/api/projects/p1/files/index.html/publish-public', {
+      method: 'POST',
+    });
+    const read = await api.json('/api/projects/p1/files/index.html/publish-public');
+    const unpublish = await api.json('/api/projects/p1/files/index.html/publish-public', {
+      method: 'DELETE',
+      body: { slug: 'public-slug' },
+    });
+
+    for (const res of [publish, read, unpublish]) {
+      expect(res.status).toBe(409);
+      expect(res.body.error).toBe('WORKSPACE_IDENTITY_REQUIRED');
+      // The load-bearing assertion: a human-readable reason ships with the code.
+      expect(typeof res.body.message).toBe('string');
+      expect(res.body.message).toMatch(/team workspace/i);
+    }
+    // The gate must short-circuit before any project read or hub call.
+    expect(resolveProjectDir).not.toHaveBeenCalled();
+    expect(runVelaResourceCommand).not.toHaveBeenCalled();
   });
 
   it('refuses public file publishing for a shared project owned by another member', async () => {

@@ -1,4 +1,7 @@
-import type { WorkspaceCollabContext } from '@open-design/contracts';
+import {
+  workspaceContextHasTeamIdentity,
+  type WorkspaceCollabContext,
+} from '@open-design/contracts';
 
 /**
  * Workspace identity used to scope collaboration state. Authentication is
@@ -17,11 +20,7 @@ export interface ResourceHubPrincipal {
 export function contextToResourceHubPrincipal(
   context: WorkspaceCollabContext | null,
 ): ResourceHubPrincipal | null {
-  if (
-    context?.workspaceType !== 'team' ||
-    !context.workspaceId ||
-    !context.workspaceMemberId
-  ) return null;
+  if (!context || !workspaceContextHasTeamIdentity(context)) return null;
   return {
     memberId: context.workspaceMemberId,
     teamId: context.teamId ?? context.workspaceId,

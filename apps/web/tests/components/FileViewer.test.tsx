@@ -80,12 +80,56 @@ import type { Dict } from '../../src/i18n/types';
 import { emptyManualEditStyles } from '../../src/edit-mode/types';
 import { __resetPreviewIsolationCache } from '../../src/runtime/powered-preview';
 import { readExpandedIndexCss } from '../helpers/read-expanded-css';
+import { resetWorkspaceContextCache } from '../../src/collab/useWorkspaceContext';
+import {
+  buildWorkspacePermissions,
+  buildWorkspaceSeatSummary,
+  type WorkspaceCollabContext,
+} from '@open-design/contracts';
+
+/** A team workspace context — the only state that can address the resource hub,
+ *  and therefore the only one where the public "Publish file" entry is offered. */
+function teamWorkspaceContext(): WorkspaceCollabContext {
+  return {
+    workspaceId: 'ws-1',
+    workspaceType: 'team',
+    teamId: 'team-1',
+    workspaceMemberId: 'wm-1',
+    role: 'member',
+    memberStatus: 'active',
+    lifecycleState: 'active',
+    billingState: 'active',
+    planId: null,
+    providerMode: 'platform_credits',
+    seatSummary: buildWorkspaceSeatSummary({ seatLimit: 5, usedSeats: 1 }),
+    permissions: buildWorkspacePermissions({ role: 'member', lifecycleState: 'active' }),
+  };
+}
+
+/** Fetch stub that answers the workspace-context read with `context`, and every
+ *  other route with the empty-deployments payload these viewer tests expect. */
+function stubFetchWithWorkspaceContext(context: WorkspaceCollabContext | null): void {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.includes('/api/workspace/context')) {
+        return new Response(JSON.stringify({ context }), { status: 200 });
+      }
+      return new Response(JSON.stringify({ deployments: [] }), { status: 200 });
+    }),
+  );
+}
 
 const TEST_SNAPSHOT_DATA_URL = 'data:image/png;base64,c25hcHNob3Q=';
 
 afterEach(() => {
   cleanup();
   __resetPreviewIsolationCache();
+  // `useWorkspaceContext` caches the last resolved context at module scope so a
+  // remount does not flash the signed-out state. Left alone, a test that signs
+  // into a team would silently sign the NEXT test in too.
+  resetWorkspaceContextCache();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   analyticsTrackMock.mockReset();
@@ -3132,7 +3176,7 @@ describe('FileViewer SVG artifacts', () => {
         exports: ['html'],
       },
     });
-    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ deployments: [] }), { status: 200 })));
+    stubFetchWithWorkspaceContext(teamWorkspaceContext());
 
     render(
       <FileViewer projectId="project-1" projectKind="prototype" file={file}
@@ -3144,7 +3188,7 @@ describe('FileViewer SVG artifacts', () => {
 
     expect(await screen.findByRole('tab', { name: /share/i })).toBeTruthy();
     expect(screen.getByText('Share project in workspace')).toBeTruthy();
-    expect(screen.getByText('Publish this file for everyone')).toBeTruthy();
+    expect(await screen.findByText('Publish this file for everyone')).toBeTruthy();
     expect(screen.getByRole('button', { name: /Publish file/i })).toBeTruthy();
     expect(screen.queryByRole('menuitem', { name: /Deploy to Vercel/i })).toBeNull();
     expect(screen.queryByRole('menuitem', { name: /Deploy to Cloudflare Pages/i })).toBeNull();
@@ -3172,6 +3216,61 @@ describe('FileViewer SVG artifacts', () => {
     expect(menuItems).not.toContain('Export as PPTX (images)');
     expect(menuItems).not.toContain('Export as PPTX (editable)');
     expect(menuItems).not.toContain('Export as Markdown');
+  });
+
+  // Regression guard for the dogfood report "publish as public link fails with
+  // 409 WORKSPACE_IDENTITY_REQUIRED". A public link is a snapshot in the
+  // team-scoped resource hub, so the daemon refuses every non-team caller before
+  // it reads anything. The card used to render regardless, and the refusal was
+  // swallowed — `publishLinkFeedback` only renders in the already-published
+  // branch — so the button just returned to idle with no explanation.
+  it('hides the public publish entry when the workspace is not a team', async () => {
+    const file = baseFile({
+      name: 'index.html',
+      path: 'index.html',
+      mime: 'text/html',
+      kind: 'html',
+      artifactManifest: {
+        version: 1,
+        kind: 'html',
+        title: 'Page',
+        entry: 'index.html',
+        renderer: 'html',
+        exports: ['html'],
+      },
+    });
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.includes('/api/workspace/context')) {
+        return new Response(
+          JSON.stringify({ context: { ...teamWorkspaceContext(), workspaceType: 'personal', teamId: undefined } }),
+          { status: 200 },
+        );
+      }
+      return new Response(JSON.stringify({ deployments: [] }), { status: 200 });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={file}
+        liveHtml="<html><body><h1>Hello</h1></body></html>"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /share/i }));
+    expect(await screen.findByRole('tab', { name: /share/i })).toBeTruthy();
+    // The workspace-share card still belongs to a personal workspace…
+    expect(screen.getByText('Share project in workspace')).toBeTruthy();
+    // …but the hub-backed public-link card must be gone, not merely disabled.
+    expect(screen.queryByText('Publish this file for everyone')).toBeNull();
+    expect(screen.queryByRole('button', { name: /Publish file/i })).toBeNull();
+
+    // And nothing may probe the team-only endpoint on behalf of a personal user.
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    const requested = fetchMock.mock.calls.map(([input]) =>
+      typeof input === 'string' ? input : String(input),
+    );
+    expect(requested.some((url) => url.includes('publish-public'))).toBe(false);
   });
 
   it('keeps plain .slide pages on page-mode export routing', async () => {
