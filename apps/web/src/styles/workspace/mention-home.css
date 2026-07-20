@@ -1305,6 +1305,16 @@
 .settings-page-search input::placeholder {
   color: color-mix(in srgb, var(--text-muted) 72%, transparent);
 }
+/* Shown in place of the nav list when a query matches no section, so an
+   empty rail always carries an explanation instead of reading as a dead
+   search box. */
+.settings-page-search-empty {
+  margin: 4px 0 0;
+  padding: 8px 10px;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
 .settings-page-nav-group {
   padding: 8px 8px 2px 38px;
   color: color-mix(in srgb, var(--text-muted) 82%, transparent);

@@ -20,6 +20,7 @@ import {
 import {
   fetchSkills,
   importSkill,
+  uninstallSkill,
   type SkillImportInput,
   type SkillImportError,
 } from '../providers/registry';
@@ -46,6 +47,7 @@ import {
   refreshPluginMarketplace,
   removePluginMarketplace,
   setPluginMarketplaceTrust,
+  uninstallPlugin,
   type PluginInstallOutcome,
   type PluginShareAction,
   type PluginShareProjectOutcome,
@@ -60,6 +62,8 @@ import { Icon } from './Icon';
 import { Toast } from './Toast';
 import { PluginDetailsModal } from './PluginDetailsModal';
 import { PluginsHomeSection } from './PluginsHomeSection';
+import { humanizeCategory } from './SkillsSection';
+import { buildCategoryCatalog, extractCategories } from './plugins-home/facets';
 import { TrustBadge } from './TrustBadge';
 import { useI18n } from '../i18n';
 import { localizePluginDescription, localizePluginTitle } from './plugins-home/localization';
@@ -742,10 +746,62 @@ function marketInitials(title: string): string {
   return first.slice(0, 2).toUpperCase() || '··';
 }
 
+// Slug → display label for the curated plugin artifact taxonomy that the
+// Community gallery already filters on (`plugins-home/facets.ts`). Built from
+// the empty catalog because we only need the labels; per-scope counts are not
+// shown on the extensions row.
+const PLUGIN_CATEGORY_LABELS = new Map(
+  buildCategoryCatalog([]).map((option) => [option.slug, option.label] as const),
+);
+
+/**
+ * A suite's real content counts, read straight off its installed manifest:
+ * `od.context.skills` is the skill list the suite bundles and
+ * `od.connectors.required|optional` are the accounts it links. A catalog entry
+ * that is not installed carries no manifest, so it gets no stats line at all —
+ * an invented `0 skills · 0 connectors` would read as fact.
+ */
+function pluginCardStats(record: InstalledPluginRecord): MarketCardStats {
+  const od = record.manifest?.od;
+  return {
+    skills: od?.context?.skills?.length ?? 0,
+    connectors:
+      (od?.connectors?.required?.length ?? 0) + (od?.connectors?.optional?.length ?? 0),
+  };
+}
+
+/**
+ * The one category a card belongs to, derived from real metadata: a plugin
+ * resolves through the shared artifact-kind taxonomy, a skill through its own
+ * `od.category` frontmatter slug. Anything we cannot classify stays
+ * uncategorised and simply never appears under a category chip.
+ */
+function pluginCardCategory(record: InstalledPluginRecord): MarketCardCategory | null {
+  const slug = extractCategories(record)[0];
+  if (!slug) return null;
+  return { slug, label: PLUGIN_CATEGORY_LABELS.get(slug) ?? humanizeCategory(slug) };
+}
+
+function skillCardCategory(skill: SkillSummary): MarketCardCategory | null {
+  const slug = skill.category?.trim();
+  if (!slug) return null;
+  return { slug, label: humanizeCategory(slug) };
+}
+
 type MarketCardAction =
   | { kind: 'try'; record: InstalledPluginRecord }
   | { kind: 'install'; plugin: AvailableMarketplacePlugin }
   | { kind: 'none' };
+
+interface MarketCardStats {
+  skills: number;
+  connectors: number;
+}
+
+interface MarketCardCategory {
+  slug: string;
+  label: string;
+}
 
 interface SharedResourceCardMeta {
   id: string;
@@ -771,6 +827,13 @@ interface MarketCard {
   share: { kind: MarketMode; id: string } | null;
   // present for a resource currently in the team index
   unshare: { kind: MarketMode; id: string } | null;
+  // present only for a resource the user actually owns on disk — a bundled
+  // official plugin and a built-in skill ship with the app and are not the
+  // user's to remove.
+  uninstall: { kind: MarketMode; id: string } | null;
+  // real content counts; null whenever no manifest backs the card
+  stats: MarketCardStats | null;
+  category: MarketCardCategory | null;
   isShared: boolean;
 }
 
@@ -807,7 +870,12 @@ export function ExtensionsMarketplace({
     if (scope === 'team' && !hasTeamWorkspace) setScope('official');
   }, [scope, hasTeamWorkspace]);
   const [query, setQuery] = useState('');
+  // Selected category chip (`null` = 全部). Slugs come from the cards in scope.
+  const [category, setCategory] = useState<string | null>(null);
   const [menuId, setMenuId] = useState<string | null>(null);
+  // Uninstall is destructive, so the menu item arms an inline confirmation
+  // first instead of firing on the opening click.
+  const [confirmUninstallId, setConfirmUninstallId] = useState<string | null>(null);
 
   const [plugins, setPlugins] = useState<InstalledPluginRecord[]>([]);
   const [allInstalledPlugins, setAllInstalledPlugins] = useState<InstalledPluginRecord[]>([]);
@@ -821,6 +889,7 @@ export function ExtensionsMarketplace({
   const [sharedSkillMeta, setSharedSkillMeta] = useState<ReadonlyMap<string, SharedResourceCardMeta>>(() => new Map());
   const [sharingId, setSharingId] = useState<string | null>(null);
   const [unsharingId, setUnsharingId] = useState<string | null>(null);
+  const [uninstallingId, setUninstallingId] = useState<string | null>(null);
   const [installingKey, setInstallingKey] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; tone: 'success' | 'error' } | null>(null);
 
@@ -1071,6 +1140,33 @@ export function ExtensionsMarketplace({
     }
   }
 
+  // Removes a resource the user owns on disk. Only reachable for records the
+  // card builder marked uninstallable (never a bundled plugin or a built-in
+  // skill), and only after the inline confirmation has been armed.
+  async function uninstallResource(kind: MarketMode, id: string, title: string) {
+    if (uninstallingId) return;
+    setUninstallingId(id);
+    try {
+      const ok =
+        kind === 'plugins'
+          ? await uninstallPlugin(id)
+          : 'ok' in (await uninstallSkill(id));
+      if (!ok) {
+        setToast({ message: t('pluginsView.uninstallFailed', { title }), tone: 'error' });
+        return;
+      }
+      await refresh();
+      await refreshSharedResources();
+      setMenuId(null);
+      setConfirmUninstallId(null);
+      setToast({ message: t('pluginsView.uninstallSuccess', { title }), tone: 'success' });
+    } catch {
+      setToast({ message: t('pluginsView.uninstallFailed', { title }), tone: 'error' });
+    } finally {
+      setUninstallingId(null);
+    }
+  }
+
   async function installAvailable(plugin: AvailableMarketplacePlugin, title: string) {
     if (installingKey) return;
     setInstallingKey(plugin.key);
@@ -1100,6 +1196,10 @@ export function ExtensionsMarketplace({
         action: { kind: 'try', record },
         share: personal && !shared ? { kind: 'plugins', id: record.id } : null,
         unshare: shared && canUnshare ? { kind: 'plugins', id: record.id } : null,
+        uninstall:
+          record.sourceKind === 'bundled' ? null : { kind: 'plugins', id: record.id },
+        stats: pluginCardStats(record),
+        category: pluginCardCategory(record),
         isShared: shared,
       };
     };
@@ -1115,6 +1215,9 @@ export function ExtensionsMarketplace({
         action: { kind: 'none' },
         share: personal && !shared ? { kind: 'skills', id: skill.id } : null,
         unshare: shared && canUnshare ? { kind: 'skills', id: skill.id } : null,
+        uninstall: skill.source === 'user' ? { kind: 'skills', id: skill.id } : null,
+        stats: null,
+        category: skillCardCategory(skill),
         isShared: shared,
       };
     };
@@ -1145,6 +1248,11 @@ export function ExtensionsMarketplace({
               : { kind: 'install', plugin },
             share: null,
             unshare: null,
+            // Official entries are bundled with the app — nothing for the user
+            // to uninstall from here.
+            uninstall: null,
+            stats: installed ? pluginCardStats(installed) : null,
+            category: installed ? pluginCardCategory(installed) : null,
             isShared: false,
           } satisfies MarketCard;
         });
@@ -1166,6 +1274,11 @@ export function ExtensionsMarketplace({
           action: record ? { kind: 'try', record } : { kind: 'none' },
           share: null,
           unshare: canUnshare ? { kind: 'plugins', id } : null,
+          // Removing a team resource from your own disk is not the team action;
+          // the Team tab only offers unshare.
+          uninstall: null,
+          stats: record ? pluginCardStats(record) : null,
+          category: record ? pluginCardCategory(record) : null,
           isShared: true,
         } satisfies MarketCard;
       });
@@ -1197,6 +1310,9 @@ export function ExtensionsMarketplace({
         action: { kind: 'none' },
         share: null,
         unshare: canUnshare ? { kind: 'skills', id } : null,
+        uninstall: null,
+        stats: null,
+        category: skill ? skillCardCategory(skill) : null,
         isShared: true,
       } satisfies MarketCard;
     });
@@ -1217,11 +1333,39 @@ export function ExtensionsMarketplace({
     myMemberId,
   ]);
 
+  // Category chips are built from the cards actually in this scope, so the row
+  // never advertises a filter that would come back empty and never invents a
+  // taxonomy the catalog does not carry.
+  const categoryOptions = useMemo<MarketCardCategory[]>(() => {
+    const seen = new Map<string, string>();
+    for (const card of cards) {
+      if (!card.category) continue;
+      if (!seen.has(card.category.slug)) seen.set(card.category.slug, card.category.label);
+    }
+    return [...seen].map(([slug, label]) => ({ slug, label }));
+  }, [cards]);
+
+  // An armed uninstall confirmation belongs to one open menu; closing that menu
+  // — by switching mode/scope or opening another card's — disarms it.
+  useEffect(() => {
+    if (confirmUninstallId && menuId !== confirmUninstallId) setConfirmUninstallId(null);
+  }, [confirmUninstallId, menuId]);
+
+  // Drop a selection the current scope/mode no longer offers.
+  useEffect(() => {
+    if (!category) return;
+    if (categoryOptions.some((option) => option.slug === category)) return;
+    setCategory(null);
+  }, [category, categoryOptions]);
+
   const visibleCards = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return cards;
-    return cards.filter((card) => `${card.title} ${card.description}`.toLowerCase().includes(q));
-  }, [cards, query]);
+    return cards.filter((card) => {
+      if (category && card.category?.slug !== category) return false;
+      if (!q) return true;
+      return `${card.title} ${card.description}`.toLowerCase().includes(q);
+    });
+  }, [cards, category, query]);
 
   return (
     <section className="plugin-marketplace" aria-labelledby="plugin-marketplace-title">
@@ -1254,6 +1398,7 @@ export function ExtensionsMarketplace({
             onClick={() => {
               setMode('plugins');
               setMenuId(null);
+              setConfirmUninstallId(null);
             }}
           >
             {t('pluginsView.kind.plugins')}
@@ -1299,6 +1444,31 @@ export function ExtensionsMarketplace({
             />
           </label>
         </div>
+        {categoryOptions.length > 0 ? (
+          <div
+            className="plugin-marketplace__category-tags"
+            aria-label={t('pluginsView.categoriesAria')}
+            data-testid="plugins-category-tags"
+          >
+            <button
+              type="button"
+              className={category === null ? 'is-active' : ''}
+              onClick={() => setCategory(null)}
+            >
+              {t('common.all')}
+            </button>
+            {categoryOptions.map((option) => (
+              <button
+                key={option.slug}
+                type="button"
+                className={category === option.slug ? 'is-active' : ''}
+                onClick={() => setCategory(option.slug)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <div className="plugin-marketplace__catalog">
@@ -1316,6 +1486,19 @@ export function ExtensionsMarketplace({
                 card.action.kind === 'install'
                   ? installingKey === card.action.plugin.key
                   : sharingId === card.id || unsharingId === card.id;
+              const uninstalling = uninstallingId === card.id;
+              // The row button carries the first available action; the overflow
+              // menu lists only what it did not take. Sharing falls back into
+              // the row slot when there is nothing to run or install, and must
+              // not then be repeated in the menu.
+              const rowHasRunOrInstall =
+                (card.action.kind === 'try' && Boolean(onUsePlugin)) ||
+                card.action.kind === 'install';
+              const menuActions = [
+                ...(rowHasRunOrInstall && card.share ? (['share'] as const) : []),
+                ...(rowHasRunOrInstall && card.unshare ? (['unshare'] as const) : []),
+                ...(card.uninstall ? (['uninstall'] as const) : []),
+              ];
               return (
                 <article
                   key={card.id}
@@ -1340,6 +1523,12 @@ export function ExtensionsMarketplace({
                         ) : null}
                       </span>
                       {card.description ? <small>{card.description}</small> : null}
+                      {card.stats ? (
+                        <span className="plugin-marketplace__row-stats">
+                          <span>{t('pluginsView.statSkills', { count: card.stats.skills })}</span>
+                          <span>{t('pluginsView.statConnectors', { count: card.stats.connectors })}</span>
+                        </span>
+                      ) : null}
                     </span>
 
                     {card.action.kind === 'try' && onUsePlugin ? (
@@ -1351,7 +1540,7 @@ export function ExtensionsMarketplace({
                           onUsePlugin(action.record, 'use');
                         }}
                       >
-                        Try it
+                        {t('pluginsView.tryIt')}
                       </button>
                     ) : card.action.kind === 'install' ? (
                       <button
@@ -1391,20 +1580,24 @@ export function ExtensionsMarketplace({
                       </button>
                     ) : null}
 
-                    {(card.share || card.unshare) && card.action.kind !== 'none' ? (
+                    {menuActions.length > 0 ? (
                       <span className="plugin-marketplace__menu-wrap">
                         <button
                           type="button"
                           className="plugin-marketplace__more"
-                          onClick={() => setMenuId(menuId === card.id ? null : card.id)}
+                          onClick={() => {
+                            setConfirmUninstallId(null);
+                            setMenuId(menuId === card.id ? null : card.id);
+                          }}
                           aria-expanded={menuId === card.id}
                           aria-label={t('pluginsView.moreActions', { title: card.title })}
+                          data-testid={`plugins-card-more-${card.id}`}
                         >
                           <Icon name="more-horizontal" size={16} />
                         </button>
                         {menuId === card.id ? (
                           <span className="plugin-marketplace__menu" role="menu">
-                            {card.share ? (
+                            {menuActions.includes('share') ? (
                               <button
                                 type="button"
                                 role="menuitem"
@@ -1418,7 +1611,7 @@ export function ExtensionsMarketplace({
                                 {t('pluginsView.shareToTeam')}
                               </button>
                             ) : null}
-                            {card.unshare ? (
+                            {menuActions.includes('unshare') ? (
                               <button
                                 type="button"
                                 role="menuitem"
@@ -1430,6 +1623,29 @@ export function ExtensionsMarketplace({
                               >
                                 <Icon name="close" size={14} />
                                 {t('pluginsView.unshareFromTeam')}
+                              </button>
+                            ) : null}
+                            {menuActions.includes('uninstall') ? (
+                              <button
+                                type="button"
+                                role="menuitem"
+                                disabled={uninstalling}
+                                onClick={() => {
+                                  if (confirmUninstallId !== card.id) {
+                                    setConfirmUninstallId(card.id);
+                                    return;
+                                  }
+                                  const target = card.uninstall!;
+                                  void uninstallResource(target.kind, target.id, card.title);
+                                }}
+                                data-testid={`plugins-card-uninstall-${card.id}`}
+                              >
+                                <Icon name="trash" size={14} />
+                                {uninstalling
+                                  ? t('pluginsView.uninstalling')
+                                  : confirmUninstallId === card.id
+                                    ? t('pluginsView.uninstallConfirm', { title: card.title })
+                                    : t('pluginsView.uninstall')}
                               </button>
                             ) : null}
                           </span>
@@ -1478,14 +1694,14 @@ export function ExtensionsMarketplace({
                 className={createKind === 'plugin' ? 'is-active' : ''}
                 onClick={() => switchCreateKind('plugin')}
               >
-                Plugin
+                {t('pluginsView.createKindPlugin')}
               </button>
               <button
                 type="button"
                 className={createKind === 'skill' ? 'is-active' : ''}
                 onClick={() => switchCreateKind('skill')}
               >
-                Skill
+                {t('pluginsView.createKindSkill')}
               </button>
             </div>
             <div className="plugin-marketplace__create-options">
@@ -1497,7 +1713,7 @@ export function ExtensionsMarketplace({
                   <h3>{t('pluginsView.importFromUrl')}</h3>
                   <p>{t('pluginsView.importUrlBody', { kind: pluginKindLabel(createKind, t) })}</p>
                   <label>
-                    <span>URL</span>
+                    <span>{t('pluginsView.importUrlLabel')}</span>
                     <input
                       value={createUrl}
                       onChange={(event) => setCreateUrl(event.target.value)}
@@ -1706,7 +1922,7 @@ function PluginShareConfirmModal({
   onClose: () => void;
   onConfirm: () => void;
 }) {
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
   const details = PLUGIN_SHARE_DETAILS[action];
   const actionTitle = actionRecord ? localizePluginTitle(locale, actionRecord) : details.fallbackTitle;
   const actionDescription =
@@ -1727,7 +1943,7 @@ function PluginShareConfirmModal({
           <div className="plugin-details-modal__head-titles">
             <div className="plugin-details-modal__head-row">
               <h2 className="plugin-details-modal__title">{actionTitle}</h2>
-              <TrustBadge trust="official" label="Action plugin" />
+              <TrustBadge trust="official" label={t('pluginsView.shareActionBadge')} />
             </div>
             <div className="plugin-details-modal__meta">
               <span>{details.eyebrow}</span>
@@ -1740,8 +1956,8 @@ function PluginShareConfirmModal({
             className="plugin-details-modal__close"
             onClick={onClose}
             disabled={pending}
-            aria-label="Close share confirmation"
-            title="Close"
+            aria-label={t('pluginsView.shareCloseAria')}
+            title={t('common.close')}
           >
             <Icon name="close" size={18} />
           </button>
@@ -1751,7 +1967,7 @@ function PluginShareConfirmModal({
           <section className="plugin-details-modal__section">
             <div className="plugin-details-modal__section-head">
               <h3 className="plugin-details-modal__section-title">
-                What this starts
+                {t('pluginsView.shareWhatStarts')}
               </h3>
             </div>
             <p className="plugin-details-modal__description">
@@ -1767,28 +1983,28 @@ function PluginShareConfirmModal({
           <section className="plugin-details-modal__section">
             <div className="plugin-details-modal__section-head">
               <h3 className="plugin-details-modal__section-title">
-                Source plugin
+                {t('pluginsView.shareSourcePlugin')}
               </h3>
             </div>
             <dl className="plugin-share-confirm__facts">
               <div>
-                <dt>Plugin</dt>
+                <dt>{t('pluginsView.shareFactPlugin')}</dt>
                 <dd>{sourceRecord.title}</dd>
               </div>
               <div>
-                <dt>ID</dt>
+                <dt>{t('pluginsView.shareFactId')}</dt>
                 <dd>
                   <code>{sourceRecord.id}</code>
                 </dd>
               </div>
               <div>
-                <dt>Copied to</dt>
+                <dt>{t('pluginsView.shareFactCopiedTo')}</dt>
                 <dd>
                   <code>{stagedPath}</code>
                 </dd>
               </div>
               <div>
-                <dt>Trust</dt>
+                <dt>{t('pluginsView.shareFactTrust')}</dt>
                 <dd>
                   <TrustBadge trust={sourceRecord.trust} />
                 </dd>
@@ -1800,7 +2016,7 @@ function PluginShareConfirmModal({
             <section className="plugin-details-modal__section">
               <div className="plugin-details-modal__section-head">
                 <h3 className="plugin-details-modal__section-title">
-                  Action prompt
+                  {t('pluginsView.shareActionPrompt')}
                 </h3>
               </div>
               <pre className="plugin-details-modal__query">{actionQuery}</pre>
@@ -1815,7 +2031,7 @@ function PluginShareConfirmModal({
             onClick={onClose}
             disabled={pending}
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             type="button"
@@ -1825,7 +2041,7 @@ function PluginShareConfirmModal({
             aria-busy={pending ? 'true' : undefined}
             data-testid="plugin-share-confirm-start"
           >
-            {pending ? 'Starting…' : details.confirmLabel}
+            {pending ? t('pluginsView.shareStarting') : details.confirmLabel}
           </button>
         </footer>
     </Dialog>
