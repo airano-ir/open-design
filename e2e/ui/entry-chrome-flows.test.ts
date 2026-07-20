@@ -371,8 +371,9 @@ test('[P1] home view exposes the redesigned hero, recent projects, and starters'
   await expect(page.getByTestId('recent-projects-view-all')).toBeVisible();
   await expect(home.getByTestId('plugins-home-section')).toBeVisible();
   await expect(home.getByTestId('plugins-home-browse-registry')).toBeVisible();
-  await expect(home.getByTestId('plugins-home-pill-category-all')).toHaveCount(0);
-  await expect(home.getByTestId('plugins-home-pill-category-deck')).toHaveAttribute('aria-selected', 'true');
+  // The Community gallery defaults to the All slice (#5759).
+  await expect(home.getByTestId('plugins-home-pill-category-all')).toHaveAttribute('aria-selected', 'true');
+  await expect(home.getByTestId('plugins-home-pill-category-deck')).toHaveAttribute('aria-selected', 'false');
   await expect(page.getByTestId('home-hero')).toBeVisible();
   await expect(page.getByTestId('home-templates-hint')).toHaveCount(0);
   await expect(page.getByTestId('entry-nav-home')).toHaveAttribute('aria-current', 'page');
@@ -985,6 +986,9 @@ test('[P2] home starters search and facet filters narrow the visible gallery', a
 
   const home = await revealHomeTemplates(page);
   const deckCategory = home.getByTestId('plugins-home-pill-category-deck');
+  // The gallery defaults to the All slice (#5759); pick Deck explicitly
+  // before asserting the deck-only visibility set.
+  await deckCategory.click();
   await expect(deckCategory).toHaveAttribute('aria-selected', 'true');
   await expect(home.locator('[data-plugin-id="deck-writer"]')).toBeVisible();
   await expect(home.locator('[data-plugin-id="figma-importer"]')).toHaveCount(0);
@@ -1012,10 +1016,12 @@ test('[P1] home starters category tabs and subcategory tabs switch the gallery s
   await gotoEntryHome(page);
   const home = await revealHomeTemplates(page);
 
-  await expect(home.getByTestId('plugins-home-pill-category-all')).toHaveCount(0);
-  await expect(home.getByTestId('plugins-home-pill-category-deck')).toHaveAttribute('aria-selected', 'true');
+  // The gallery defaults to the All slice (#5759): the All pill is selected
+  // and every facet is visible until a category is picked.
+  await expect(home.getByTestId('plugins-home-pill-category-all')).toHaveAttribute('aria-selected', 'true');
+  await expect(home.getByTestId('plugins-home-pill-category-deck')).toHaveAttribute('aria-selected', 'false');
   await expect(home.locator('[data-plugin-id="facet-deck"]')).toBeVisible();
-  await expect(home.locator('[data-plugin-id="facet-landing-prototype"]')).toHaveCount(0);
+  await expect(home.locator('[data-plugin-id="facet-landing-prototype"]')).toBeVisible();
 
   const categoryCases = [
     ['prototype', 'facet-landing-prototype', 'facet-deck'],
