@@ -259,7 +259,7 @@ export function ManualEditPanel({
 
           {targetForInspector?.kind === 'image' && onPickImage ? (
             <div className="cc-section">
-              <header className="cc-section-head">IMAGE</header>
+              <header className="cc-section-head">{t('manualEdit.sectionImage')}</header>
               <div className="cc-section-body">
                 <button
                   type="button"
@@ -372,7 +372,7 @@ function ContentInspector({
   if (target.kind === 'image') {
     return (
       <div className="cc-inspector manual-edit-content-inspector">
-        <Section title="CONTENT">
+        <Section title={t('manualEdit.sectionContent')}>
           <label className="manual-edit-field compact">
             <span>{t('manualEdit.imageUrl')}</span>
             <input value={draft.src} onChange={(event) => update({ src: event.currentTarget.value })} />
@@ -388,7 +388,7 @@ function ContentInspector({
   if (target.kind === 'link') {
     return (
       <div className="cc-inspector manual-edit-content-inspector">
-        <Section title="CONTENT">
+        <Section title={t('manualEdit.sectionContent')}>
           <label className="manual-edit-field">
             <span>{t('manualEdit.text')}</span>
             <textarea value={draft.text} rows={3} onChange={(event) => update({ text: event.currentTarget.value })} />
@@ -404,7 +404,7 @@ function ContentInspector({
   if (target.kind === 'text' || target.kind === 'token') {
     return (
       <div className="cc-inspector manual-edit-content-inspector">
-        <Section title="CONTENT">
+        <Section title={t('manualEdit.sectionContent')}>
           <label className="manual-edit-field">
             <span>{t('manualEdit.text')}</span>
             <textarea value={draft.text} rows={4} onChange={(event) => update({ text: event.currentTarget.value })} />
@@ -415,7 +415,7 @@ function ContentInspector({
   }
   return (
     <div className="cc-inspector manual-edit-content-inspector">
-      <Section title="CONTENT">
+      <Section title={t('manualEdit.sectionContent')}>
         <label className="manual-edit-field">
           <span>{t('manualEdit.selectedHtml')}</span>
           <textarea
@@ -551,15 +551,15 @@ function PageInspector({
 
   return (
     <div className="cc-inspector">
-      <Section title="PAGE">
+      <Section title={t('manualEdit.sectionPage')}>
         {enabled ? (
           <>
-            <ColorRow label="Background" value={bg} onChange={(value) => update({ bg: value })} />
+            <ColorRow label={t('manualEdit.pageBackground')} value={bg} onChange={(value) => update({ bg: value })} />
             <FontRow label={t('manualEdit.fontFamily')} value={font} onChange={(value) => update({ font: value })} />
-            <UnitRow label="Base size" value={size} onChange={(value) => update({ size: value })} unit="px" autoUnit />
+            <UnitRow label={t('manualEdit.pageBaseSize')} value={size} onChange={(value) => update({ size: value })} unit="px" autoUnit />
           </>
         ) : (
-          <p className="cc-section-hint">Page styles are available only for full HTML documents.</p>
+          <p className="cc-section-hint">{t('manualEdit.pageStylesHtmlOnly')}</p>
         )}
       </Section>
     </div>

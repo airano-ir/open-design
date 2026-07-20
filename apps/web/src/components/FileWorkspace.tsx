@@ -3629,130 +3629,16 @@ export function FileWorkspace({
           {fileActionsBefore ? (
             <div className="ws-tabs-file-actions-before">{fileActionsBefore}</div>
           ) : null}
+          {/* Pure portal host. Whatever file is open owns these actions and
+              portals them in; with no file open there is nothing to act on, so
+              the slot stays empty rather than rendering a permanently-disabled
+              "Version history" and a project-level Share that duplicates the
+              one on the project card. */}
           <div
             id={APP_CHROME_FILE_ACTIONS_ID}
             className="ws-tabs-file-actions"
             data-app-chrome-file-actions="true"
-          >
-            {!activeFile ? (
-              <>
-                {!viewerOnly ? (
-                  <button
-                    type="button"
-                    className="chrome-action chrome-action-secondary chrome-action-with-label chrome-action-text-only chrome-action-unified"
-                    disabled
-                    title={t('fileViewer.openFileForHistory')}
-                    aria-label={t('fileViewer.versions.entryFull')}
-                  >
-                    <Icon name="history" size={15} />
-                    <span>{t('fileViewer.versions.entryFull')}</span>
-                  </button>
-                ) : null}
-                <div
-                  ref={projectShareRef}
-                  className="share-menu chrome-share-menu chrome-share-menu--unified"
-                >
-                  <button
-                    type="button"
-                    className={
-                      'chrome-action chrome-action-secondary chrome-action-with-label chrome-action-text-only chrome-action-unified' +
-                      (projectShareMenuOpen ? ' is-active' : '')
-                    }
-                    aria-haspopup="menu"
-                    aria-expanded={projectShareMenuOpen}
-                    title={t('fileViewer.shareLabel')}
-                    aria-label={t('fileViewer.shareLabel')}
-                    onClick={() => setProjectShareMenuOpen((open) => !open)}
-                  >
-                    <Icon name="share" size={15} />
-                    <span>{t('fileViewer.shareLabel')}</span>
-                  </button>
-                  {projectShareMenuOpen ? (
-                    <div className="share-menu-popover chrome-unified-popover" role="menu">
-                      {/* The project-level popover only implements Share today.
-                          The Export / Send-to tabs were disabled placeholders
-                          (#5395) that read as broken buttons — hide them until
-                          the project-level flows exist; the FILE-level popover
-                          keeps its fully working three-tab set. */}
-                      <div className="chrome-unified-tabs">
-                        <button type="button" className="is-active">{t('fileViewer.unifiedShareTab')}</button>
-                      </div>
-                      <div className="chrome-unified-panel chrome-unified-panel--share">
-                        <div className="chrome-share-card">
-                          <div className="chrome-share-card__header">
-                            <span className="share-menu-icon">
-                              <Icon name="users" size={16} />
-                            </span>
-                            <span className="share-menu-text">
-                              <span>{t('fileViewer.workspaceShareTitle')}</span>
-                              <small>
-                                {projectShareAccess === 'private'
-                                  ? t('fileViewer.workspaceSharePrivateDescription')
-                                  : t('fileViewer.workspaceShareWorkspaceDescription')}
-                              </small>
-                            </span>
-                          </div>
-                          <button
-                            type="button"
-                            className="chrome-access-trigger"
-                            aria-haspopup="listbox"
-                            aria-expanded={projectShareAccessMenuOpen}
-                            disabled={projectShareBusy || viewerOnly}
-                            onClick={() => setProjectShareAccessMenuOpen((value) => !value)}
-                          >
-                            <span className="share-menu-icon">
-                              <Icon name={projectShareAccess === 'private' ? 'lock' : 'users'} size={16} />
-                            </span>
-                            <span>
-                              {projectShareBusy
-                                ? t('recentProjects.shareInProgress')
-                                : projectShareAccess === 'private'
-                                  ? t('fileViewer.workspaceAccessPrivate')
-                                  : t('fileViewer.workspaceAccessMembers')}
-                            </span>
-                            <Icon name="chevron-down" size={16} />
-                          </button>
-                          {projectShareAccessMenuOpen ? (
-                            <div className="chrome-access-options" role="listbox">
-                              {([
-                                ['private', 'lock', t('fileViewer.workspaceAccessPrivate')],
-                                ['workspace', 'users', t('fileViewer.workspaceAccessMembers')],
-                              ] as const).map(([value, icon, label]) => (
-                                <button
-                                  key={value}
-                                  type="button"
-                                  role="option"
-                                  aria-selected={projectShareAccess === value}
-                                  className={projectShareAccess === value ? 'is-active' : undefined}
-                                  disabled={projectShareBusy || viewerOnly}
-                                  onClick={() => void setProjectWorkspaceShareAccess(value)}
-                                >
-                                  <span className="share-menu-icon"><Icon name={icon} size={16} /></span>
-                                  <span>{label}</span>
-                                  {projectShareAccess === value ? <Icon name="check" size={15} /> : null}
-                                </button>
-                              ))}
-                            </div>
-                          ) : null}
-                        </div>
-                        <div className="chrome-share-card">
-                          <div className="chrome-share-card__header">
-                            <span className="share-menu-icon">
-                              <Icon name="globe" size={16} />
-                            </span>
-                            <span className="share-menu-text">
-                              <span>{t('fileViewer.publishSingleFileTitle')}</span>
-                              <small>{t('fileViewer.openFileRequired')}</small>
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              </>
-            ) : null}
-          </div>
+          />
           {headerActions ? (
             <div className="ws-tabs-project-actions">{headerActions}</div>
           ) : null}

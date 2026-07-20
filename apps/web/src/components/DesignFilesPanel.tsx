@@ -1054,9 +1054,11 @@ export function DesignFilesPanel({
         <Icon name="pencil" size={13} />
         <span>{t('designFiles.newSketch')}</span>
       </button>
-      <button type="button" onClick={onPaste} title={t('designFiles.paste.title')}>
+      {/* `onPaste` is a historical prop name — the action creates a new blank
+          Markdown document, so it is labelled for what it does. */}
+      <button type="button" onClick={onPaste} title={t('designFiles.newDocumentTitle')}>
         <Icon name="file" size={13} />
-        <span>{t('designFiles.paste.label')}</span>
+        <span>{t('designFiles.newDocument')}</span>
       </button>
       <button
         type="button"

@@ -317,10 +317,17 @@ describe('FileViewer preview scale', () => {
     const css = readExpandedIndexCss();
     const rules = Array.from(css.matchAll(/\.viewer-viewport-trigger\s*\{[^}]+\}/g), (match) => match[0]);
 
-    expect(rules.some((rule) => rule.includes('color: var(--text-muted);'))).toBe(true);
-    expect(rules.every((rule) => !rule.includes('color: var(--text);'))).toBe(true);
+    // Flat = no chip. Transparent fill + transparent border + no shadow; the
+    // resting state must not read as a raised control sitting on the bar.
+    expect(rules.some((rule) => rule.includes('background-color: transparent;'))).toBe(true);
+    expect(rules.some((rule) => rule.includes('border-color: transparent;'))).toBe(true);
     expect(rules.some((rule) => rule.includes('box-shadow: none;'))).toBe(true);
     expect(rules.every((rule) => !rule.includes('box-shadow: var(--shadow-xs);'))).toBe(true);
+    // …and it must hug its content so the label and chevron stay visible. A
+    // fixed square hid the label and left an empty chip behind (issue: the
+    // deck toolbar's "empty grey block").
+    expect(rules.some((rule) => rule.includes('width: auto;'))).toBe(true);
+    expect(rules.every((rule) => !rule.includes('width: 30px;'))).toBe(true);
   });
 
   it('clips deck thumbnail loading overlays to the thumbnail frame radius', () => {
@@ -1645,12 +1652,13 @@ describe('FileViewer SVG artifacts', () => {
       />,
     );
 
-    expect(screen.queryByRole('tab', { name: 'Code' })).toBeNull();
-    expect(screen.queryByRole('tab', { name: 'Preview' })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Code' }));
-    expect(screen.getByRole('button', { name: 'Preview' })).toBeTruthy();
+    // Both destinations stay on the bar as a two-segment tablist.
+    expect(screen.getByRole('tab', { name: 'Code' })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: 'Preview' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('tab', { name: 'Code' }));
+    expect(screen.getByRole('tab', { name: 'Code' }).getAttribute('aria-selected')).toBe('true');
     expect(container.querySelector('.viewer-source')?.textContent).toContain('data-od-id="hero"');
-    fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Preview' }));
     fireEvent.click(screen.getByTestId('manual-edit-mode-toggle'));
 
     await waitFor(() => {
@@ -2042,11 +2050,11 @@ describe('FileViewer SVG artifacts', () => {
       />,
     );
 
-    expect(screen.queryByRole('tab', { name: 'Preview' })).toBeNull();
-    expect(screen.queryByRole('tab', { name: 'Code' })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Code' }));
+    expect(screen.getByRole('tab', { name: 'Preview' })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: 'Code' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('tab', { name: 'Code' }));
     expect(container.querySelector('.viewer-source')?.textContent).toContain('section class="slide"');
-    fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Preview' }));
     expect(container.querySelector('.deck-nav')).toBeNull();
     expect(container.querySelector('.deck-thumbnail-toolbar-toggle')).toBeTruthy();
     expect(container.querySelector('.deck-thumbnail-rail .deck-thumbnail-toggle')).toBeNull();
@@ -4443,18 +4451,23 @@ describe('FileViewer tweaks toolbar', () => {
     expect(screen.queryByRole('menuitem', { name: 'Region' })).toBeNull();
     expect(screen.getByTestId('draw-overlay-toggle')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Mark' })).toBeTruthy();
-    // Screenshot-to-clipboard is a primary preview tool: present in preview mode.
-    expect(screen.getByTestId('screenshot-copy-button')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Screenshot' })).toBeTruthy();
+    // Screenshot-to-chat is the toolbar's primary capture tool in preview mode;
+    // clipboard capture moved into the export menu.
+    expect(screen.getByTestId('edit-screenshot-to-chat-button')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Screenshot to chat' })).toBeTruthy();
+    expect(screen.queryByTestId('screenshot-copy-button')).toBeNull();
     expect(screen.queryByPlaceholderText('Add a note for this mark')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Pods' })).toBeNull();
 
     fireEvent.click(screen.getByTestId('draw-overlay-toggle'));
     expect(screen.getByPlaceholderText('Add a note for this mark')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Box select' }));
-    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Pen' }));
-    expect(screen.queryByRole('button', { name: 'Box select' })).toBeNull();
+    // Every mark tool is its own always-visible segment; switching does not
+    // hide the others.
+    expect(screen.getByRole('button', { name: 'Box select' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Pen' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Pen' }));
+    expect(screen.getByRole('button', { name: 'Pen' }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('button', { name: 'Box select' }).getAttribute('aria-pressed')).toBe('false');
     expect(screen.queryByRole('button', { name: 'Click' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Undo' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Redo' })).toBeTruthy();
@@ -4514,9 +4527,8 @@ describe('FileViewer tweaks toolbar', () => {
     clickAgentTool('draw-overlay-toggle');
     const note = screen.getByPlaceholderText('Add a note for this mark');
     fireEvent.change(note, { target: { value: 'mark this' } });
-    // Queue is a choice in the submit dropdown.
-    fireEvent.click(screen.getByRole('button', { name: 'Submit options' }));
-    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Queue' }));
+    // Queue is its own button on the bar.
+    fireEvent.click(screen.getByRole('button', { name: 'Queue' }));
 
     expect(screen.getByPlaceholderText('Add a note for this mark')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Click' })).toBeNull();
@@ -4991,9 +5003,8 @@ describe('FileViewer tweaks toolbar', () => {
     // so the annotation is staged for the next turn rather than sent mid-run.
     const send = screen.getByRole('button', { name: 'Send' }) as HTMLButtonElement;
     expect(send.disabled).toBe(true);
-    // Queue now lives in the submit dropdown; open it to reach the fallback.
-    fireEvent.click(screen.getByRole('button', { name: 'Submit options' }));
-    const queue = screen.getByRole('menuitemradio', { name: 'Queue' }) as HTMLButtonElement;
+    // Queue is its own always-visible button next to Send.
+    const queue = screen.getByRole('button', { name: 'Queue' }) as HTMLButtonElement;
     expect(queue.disabled).toBe(false);
 
     fireEvent.click(send);

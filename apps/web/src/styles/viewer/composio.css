@@ -2853,12 +2853,22 @@ body.entry-resizing { cursor: col-resize; user-select: none; }
     transform 140ms cubic-bezier(0.23, 1, 0.32, 1),
     visibility 0s linear 140ms;
 }
-/* Top-to-bottom white wash fading to fully transparent — beats the SDF
-   surface's `background: transparent` (which is 0,2,0) so the pill reads
-   solid white up top and dissolves into the frosted glass at the bottom. */
+/* The pill sits directly over the scrolling transcript, so its surface has to
+   be opaque enough to read against arbitrary message text. The previous wash
+   faded to fully transparent at the bottom, which let chat copy show straight
+   through the label ("回到最新" appeared to have text baked into it) and made
+   the pill look half-erased. It also hardcoded a white fill, so in dark theme
+   a white pill carried light `var(--text)` copy and became unreadable.
+   Keep the top-to-bottom fade — it is what makes the pill feel like it belongs
+   to the composer below — but floor it at an opacity that still occludes, and
+   source the colour from the theme surface. */
 .chat-jump-btn.od-glass-refract,
 .chat-jump-btn.od-glass-refract[data-od-glass-sdf] {
-  background: linear-gradient(180deg, #fff 0%, rgba(255, 255, 255, 0) 100%);
+  background: linear-gradient(
+    180deg,
+    var(--bg-panel) 0%,
+    color-mix(in srgb, var(--bg-panel) 88%, transparent) 100%
+  );
 }
 .chat-jump-btn-active {
   opacity: 1;

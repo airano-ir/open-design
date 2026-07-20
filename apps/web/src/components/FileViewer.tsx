@@ -200,7 +200,12 @@ async function projectIsSharedWithWorkspace(projectId: string): Promise<boolean>
 import { HandoffButton } from './HandoffButton';
 import { SocialShareGrid } from './SocialShareGrid';
 import { Toast } from './Toast';
-import { PreviewDrawOverlay, type DrawToolbarElement } from './PreviewDrawOverlay';
+import {
+  PreviewDrawOverlay,
+  ANNOTATION_EVENT,
+  type AnnotationEventDetail,
+  type DrawToolbarElement,
+} from './PreviewDrawOverlay';
 import {
   buildBoardCommentAttachments,
   commentSnapshotEqual,
@@ -813,6 +818,7 @@ function PreviewViewportControls({
           className="viewer-viewport-icon"
         />
         <span>{t(activePreset.labelKey)}</span>
+        <RemixIcon name="arrow-down-s-line" size={14} />
       </button>
       {open ? (
         <div className="viewer-viewport-menu" id={listboxId} role="listbox" aria-label={t('fileViewer.viewportAria')}>
@@ -3384,6 +3390,16 @@ function FileVersionManagerModal({
                   }
                   setSelectedId(version.id);
                 };
+                // The daemon fills an absent label with a hardcoded English
+                // `Version N` (project-file-versions.ts). Rendering that as the
+                // card title put an untranslated "Version 2" directly above the
+                // localized "版本 2" meta line — the same fact, twice, in two
+                // languages. A card only earns a title when it has something the
+                // meta row does not already say.
+                const autoVersionLabel = /^v(?:ersion)?\s*\.?\s*\d+$/i.test(version.label?.trim() ?? '');
+                const versionTitle =
+                  version.prompt?.trim()
+                  || (autoVersionLabel ? '' : version.label?.trim() ?? '');
                 return (
                   <div
                     key={version.id}
@@ -3409,9 +3425,11 @@ function FileVersionManagerModal({
                           {formatVersionDateTime(version.createdAt, locale)}
                         </span>
                       </span>
-                      <span className="file-version-item-title">
-                        {version.prompt || version.label || t('fileViewer.versions.versionLabel', { version: version.version })}
-                      </span>
+                      {versionTitle ? (
+                        <span className="file-version-item-title" title={versionTitle}>
+                          {versionTitle}
+                        </span>
+                      ) : null}
                       <span className="file-version-item-meta">
                         {t('fileViewer.versions.versionLabel', { version: version.version })}
                         {itemRestoredFrom ? (
@@ -4474,6 +4492,7 @@ function InspectPanel({
   savedAt: number | null;
   error: string | null;
 }) {
+  const t = useT();
   // Local "draft" mirror of the most recent value the user picked, so
   // sliders/colors keep responding even before the iframe echoes back the
   // computed result. Reset whenever the selected element changes.
@@ -4529,7 +4548,7 @@ function InspectPanel({
           <strong title={target.label || target.elementId}>{target.label || target.elementId}</strong>
           <code title={target.selector}>{target.elementId}</code>
         </div>
-        <Button variant="ghost" onClick={onClose} aria-label="Close inspect">
+        <Button variant="ghost" onClick={onClose} aria-label={t('inspect.close')}>
           ×
         </Button>
       </header>
@@ -4551,9 +4570,9 @@ function InspectPanel({
       ) : null}
 
       <section className="inspect-section">
-        <div className="inspect-section-label">Colors</div>
+        <div className="inspect-section-label">{t('inspect.colors')}</div>
         <div className="inspect-row">
-          <label htmlFor="ip-color">Text</label>
+          <label htmlFor="ip-color">{t('inspect.text')}</label>
           <Input
             id="ip-color"
             data-testid="inspect-color"
@@ -4569,7 +4588,7 @@ function InspectPanel({
           />
         </div>
         <div className="inspect-row">
-          <label htmlFor="ip-bg">Background</label>
+          <label htmlFor="ip-bg">{t('inspect.background')}</label>
           <Input
             id="ip-bg"
             data-testid="inspect-bg"
@@ -4587,9 +4606,9 @@ function InspectPanel({
       </section>
 
       <section className="inspect-section">
-        <div className="inspect-section-label">Typography</div>
+        <div className="inspect-section-label">{t('inspect.typography')}</div>
         <div className="inspect-row">
-          <label htmlFor="ip-fs">Size</label>
+          <label htmlFor="ip-fs">{t('inspect.size')}</label>
           <input
             id="ip-fs"
             data-testid="inspect-font-size"
@@ -4603,7 +4622,7 @@ function InspectPanel({
           <span className="inspect-row-value">{Math.round(fontSizeNum)}px</span>
         </div>
         <div className="inspect-row">
-          <label htmlFor="ip-fw">Weight</label>
+          <label htmlFor="ip-fw">{t('inspect.weight')}</label>
           <Select
             id="ip-fw"
             value={fontWeight}
@@ -4615,7 +4634,7 @@ function InspectPanel({
           </Select>
         </div>
         <div className="inspect-row">
-          <label htmlFor="ip-ta">Align</label>
+          <label htmlFor="ip-ta">{t('inspect.align')}</label>
           <Select
             id="ip-ta"
             value={textAlign}
@@ -4631,7 +4650,7 @@ function InspectPanel({
       <section className="inspect-section">
         <div className="inspect-section-label">Spacing &amp; Shape</div>
         <div className="inspect-row">
-          <label htmlFor="ip-pad">Padding</label>
+          <label htmlFor="ip-pad">{t('inspect.padding')}</label>
           <input
             id="ip-pad"
             data-testid="inspect-padding"
@@ -4645,7 +4664,7 @@ function InspectPanel({
           <span className="inspect-row-value">{Math.round(paddingNum)}px</span>
         </div>
         <div className="inspect-row">
-          <label htmlFor="ip-rad">Radius</label>
+          <label htmlFor="ip-rad">{t('inspect.radius')}</label>
           <input
             id="ip-rad"
             data-testid="inspect-radius"
@@ -4668,7 +4687,7 @@ function InspectPanel({
             onResetElement(target.elementId);
           }}
         >
-          Reset element
+          {t('inspect.resetElement')}
         </Button>
         <Button
           variant="primary"
@@ -6672,6 +6691,7 @@ function HtmlViewer({
       | 'preview'
       | 'source'
       | 'screenshot'
+      | 'edit_screenshot'
       | 'tweaks'
       | 'mark'
       | 'comment'
@@ -6815,8 +6835,6 @@ function HtmlViewer({
   // False when closed; otherwise records which entry opened the modal so the
   // surface_view impression can carry entry_from.
   const [versionModalOpen, setVersionModalOpen] = useState<false | 'toolbar' | 'more_menu'>(false);
-  const [toolbarMoreOpen, setToolbarMoreOpen] = useState(false);
-  const toolbarMoreRef = useRef<HTMLDivElement | null>(null);
   const [exportReadyNudge, setExportReadyNudge] = useState(false);
   const exportReadyNudgeSeenRef = useRef<Set<string>>(new Set());
   // Template save UX. We surface a transient "Saved" pill in the share
@@ -9994,23 +10012,6 @@ function HtmlViewer({
   }, [zoomMenuOpen]);
 
   useEffect(() => {
-    if (!toolbarMoreOpen) return;
-    const onDocClick = (e: MouseEvent) => {
-      if (!toolbarMoreRef.current) return;
-      if (!toolbarMoreRef.current.contains(e.target as Node)) setToolbarMoreOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setToolbarMoreOpen(false);
-    };
-    document.addEventListener('mousedown', onDocClick);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDocClick);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [toolbarMoreOpen]);
-
-  useEffect(() => {
     if (!agentToolsOpen) return;
     const onDocClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
@@ -11222,6 +11223,46 @@ function HtmlViewer({
     }
   }, [captureExportImageSnapshot, t]);
 
+  // Screenshot → chat. Captures the current preview and stages it into the chat
+  // composer as a draft attachment; it never auto-sends, so the user still owns
+  // the prompt that goes with the shot. This is the toolbar's primary capture
+  // affordance because "put this on screen in front of the agent" is the job
+  // users actually come here to do — a clipboard copy leaves them to find a
+  // paste target themselves.
+  const handleScreenshotToChat = useCallback(async () => {
+    fireArtifactToolbarClick('edit_screenshot');
+    if (screenshotInFlightRef.current) return;
+    screenshotInFlightRef.current = true;
+    try {
+      const snap = await captureExportImageSnapshot();
+      if (!snap) {
+        setExportToast({ message: t('fileViewer.screenshotPreviewLoading'), tone: 'error' });
+        return;
+      }
+      const blob = await fetch(snap.dataUrl).then((response) => response.blob());
+      const ts = new Date().toISOString().replace(/[:.]/g, '-');
+      const shot = new File([blob], `screenshot-${ts}.png`, { type: 'image/png' });
+      const detail: AnnotationEventDetail = {
+        file: shot,
+        note: '',
+        action: 'draft',
+        filePath: file.name,
+        ack: (result) => {
+          if (!result.ok) {
+            setExportToast({ message: t('fileViewer.screenshotCaptureFailed'), tone: 'error' });
+          }
+        },
+      };
+      window.dispatchEvent(new CustomEvent(ANNOTATION_EVENT, { detail }));
+    } catch (err) {
+      console.warn('[handleScreenshotToChat] failed:', err);
+      const message = err instanceof Error && err.message ? err.message : t('fileViewer.screenshotCaptureFailed');
+      setExportToast({ message, tone: 'error' });
+    } finally {
+      screenshotInFlightRef.current = false;
+    }
+  }, [captureExportImageSnapshot, file.name, t]);
+
   const openImageExportModal = async (context?: HtmlVersionExportContext) => {
     // Don't reopen while an export is still running: reopening resets the shared
     // request/result bookkeeping refs, which would mis-attribute or drop the
@@ -12084,23 +12125,33 @@ function HtmlViewer({
           >
             <Icon name="reload" size={14} />
           </button>
-          <button
-            type="button"
-            className={`viewer-action${mode === 'source' ? ' active' : ''}`}
-            aria-pressed={mode === 'source'}
-            disabled={viewerOnly && mode !== 'source'}
-            title={viewerOnly && mode !== 'source' ? viewerOnlyDisabledTitle : undefined}
-            data-tooltip={viewerOnly && mode !== 'source' ? viewerOnlyDisabledTitle : undefined}
-            data-tooltip-placement="bottom"
-            onClick={() => {
-              const next = mode === 'source' ? 'preview' : 'source';
-              fireArtifactToolbarClick(next);
-              selectMode(next);
-            }}
-          >
-            <RemixIcon name="code-s-slash-line" size={14} />
-            <span>{mode === 'source' ? t('fileViewer.preview') : t('fileViewer.source')}</span>
-          </button>
+          {/* Two-segment pill tablist: both destinations stay visible and the
+              active one is legible at a glance. A single toggle that flips its
+              own label reads as "what am I looking at now?" and forces the user
+              to click to find out. */}
+          <div className="viewer-tabs viewer-mode-tabs" role="tablist" aria-label="View mode">
+            {([
+              ['preview', t('fileViewer.preview'), 'eye-line'],
+              ['source', t('fileViewer.source'), 'code-s-slash-line'],
+            ] as const).map(([id, label, icon]) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                className={`viewer-tab ${mode === id ? 'active' : ''}`}
+                aria-selected={mode === id}
+                disabled={viewerOnly && id === 'source'}
+                title={viewerOnly && id === 'source' ? viewerOnlyDisabledTitle : undefined}
+                onClick={() => {
+                  fireArtifactToolbarClick(id);
+                  selectMode(id);
+                }}
+              >
+                <RemixIcon name={icon} size={14} className="viewer-tab-icon" />
+                <span className="viewer-tab-label">{label}</span>
+              </button>
+            ))}
+          </div>
           {showPreviewToolbarControls ? (
             <span className="viewer-preview-toolbar-inline">
               <PreviewViewportControls
@@ -12153,20 +12204,20 @@ function HtmlViewer({
         </div>
         <div className="viewer-toolbar-actions">
           {showPreviewToolbarControls ? (
-            <div className="viewer-toolbar-inline-actions">
+            <>
               {mode === 'preview' ? (
                 <button
                   type="button"
                   className="viewer-action viewer-action-icon od-tooltip"
-                  data-testid="screenshot-copy-button"
-                  data-tooltip={t('fileViewer.screenshot')}
+                  data-testid="edit-screenshot-to-chat-button"
+                  data-tooltip={viewerOnly ? viewerOnlyDisabledTitle : t('fileViewer.editScreenshotToChat')}
                   data-tooltip-placement="bottom"
-                  title={viewerOnly ? viewerOnlyDisabledTitle : t('fileViewer.screenshot')}
-                  aria-label={t('fileViewer.screenshot')}
+                  title={viewerOnly ? viewerOnlyDisabledTitle : t('fileViewer.editScreenshotToChat')}
+                  aria-label={t('fileViewer.editScreenshotToChat')}
                   disabled={viewerOnly}
-                  onClick={handleCopyScreenshot}
+                  onClick={() => void handleScreenshotToChat()}
                 >
-                  <RemixIcon name="screenshot-2-line" size={15} />
+                  <RemixIcon name="camera-line" size={15} />
                 </button>
               ) : null}
               <div className="artifact-tool-menu-anchor">
@@ -12268,203 +12319,8 @@ function HtmlViewer({
                   ) : null}
                 </div>
               ) : null}
-            </div>
+            </>
           ) : null}
-          <div className="viewer-toolbar-more" ref={toolbarMoreRef}>
-            <button
-              type="button"
-              className="viewer-action viewer-action-icon od-tooltip"
-              aria-label={t('nextStep.more')}
-              aria-haspopup="menu"
-              aria-expanded={toolbarMoreOpen}
-              data-tooltip={t('nextStep.more')}
-              data-tooltip-placement="bottom"
-              title={t('nextStep.more')}
-              onClick={() => setToolbarMoreOpen((value) => !value)}
-            >
-              <RemixIcon name="more-2-line" size={16} />
-            </button>
-            {toolbarMoreOpen ? (
-              <div className="viewer-toolbar-more-menu" role="menu">
-                {([
-                  ['preview', t('fileViewer.preview'), 'eye-line'],
-                  ['source', t('fileViewer.source'), 'code-line'],
-                ] as const).map(([id, label, icon]) => (
-                  <button
-                    key={id}
-                    type="button"
-                    className={`viewer-toolbar-more-item${mode === id ? ' active' : ''}`}
-                    role="menuitem"
-                    onClick={() => {
-                      fireArtifactToolbarClick(id);
-                      selectMode(id);
-                      setToolbarMoreOpen(false);
-                    }}
-                  >
-                    <RemixIcon name={icon} size={15} />
-                    <span>{label}</span>
-                    {mode === id ? <Icon name="check" size={13} /> : null}
-                  </button>
-                ))}
-                {versioningAvailable && !viewerOnly ? (
-                  <button
-                    type="button"
-                    className="viewer-toolbar-more-item"
-                    role="menuitem"
-                    disabled={source === null}
-                    onClick={() => {
-                      fireArtifactToolbarClick('versions', 'more_menu');
-                      setVersionModalOpen('more_menu');
-                      setToolbarMoreOpen(false);
-                    }}
-                  >
-                    <RemixIcon name="history-line" size={15} />
-                    <span>{t('fileViewer.versions.entryFull')}</span>
-                  </button>
-                ) : null}
-                {showPreviewToolbarControls ? (
-                  <>
-                    <div className="viewer-toolbar-more-separator" role="separator" />
-                    {PREVIEW_VIEWPORT_PRESETS.map((preset) => {
-                      const selected = previewViewport === preset.id;
-                      return (
-                        <button
-                          key={preset.id}
-                          type="button"
-                          className={`viewer-toolbar-more-item${selected ? ' active' : ''}`}
-                          role="menuitem"
-                          title={t(preset.titleKey)}
-                          onClick={() => {
-                            setPreviewViewport(preset.id);
-                            setToolbarMoreOpen(false);
-                          }}
-                        >
-                          <RemixIcon name={previewViewportIcon(preset.id)} size={15} />
-                          <span>{t(preset.labelKey)}</span>
-                          {selected ? <Icon name="check" size={13} /> : null}
-                        </button>
-                      );
-                    })}
-                    {showDeckNavigation ? (
-                      <>
-                        <div className="viewer-toolbar-more-separator" role="separator" />
-                        <button
-                          type="button"
-                          className="viewer-toolbar-more-item"
-                          role="menuitem"
-                          disabled={slideState !== null && slideState.active <= 0}
-                          onClick={() => {
-                            postSlide('prev');
-                            setToolbarMoreOpen(false);
-                          }}
-                        >
-                          <Icon name="chevron-right" size={14} style={{ transform: 'rotate(180deg)' }} />
-                          <span>{t('fileViewer.previousSlide')}</span>
-                        </button>
-                        <button
-                          type="button"
-                          className="viewer-toolbar-more-item"
-                          role="menuitem"
-                          disabled={slideState !== null && slideState.active >= slideState.count - 1}
-                          onClick={() => {
-                            postSlide('next');
-                            setToolbarMoreOpen(false);
-                          }}
-                        >
-                          <Icon name="chevron-right" size={14} />
-                          <span>{t('fileViewer.nextSlide')}</span>
-                        </button>
-                      </>
-                    ) : null}
-                    <div className="viewer-toolbar-more-separator" role="separator" />
-                    {mode === 'preview' ? (
-                      <button
-                        type="button"
-                        className="viewer-toolbar-more-item"
-                        role="menuitem"
-                        onClick={() => {
-                          handleCopyScreenshot();
-                          setToolbarMoreOpen(false);
-                        }}
-                      >
-                        <RemixIcon name="screenshot-2-line" size={15} />
-                        <span>{t('fileViewer.screenshot')}</span>
-                      </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      className={`viewer-toolbar-more-item${boardMode && !commentCreateMode && boardTool === 'inspect' ? ' active' : ''}`}
-                      role="menuitem"
-                      onClick={() => {
-                        activateCommentTool();
-                        setToolbarMoreOpen(false);
-                      }}
-                    >
-                      <RemixIcon name="chat-new-line" size={15} />
-                      <span>{t('fileViewer.comment')}</span>
-                    </button>
-                    <button
-                      type="button"
-                      className={`viewer-toolbar-more-item${drawOverlayOpen ? ' active' : ''}`}
-                      role="menuitem"
-                      onClick={() => {
-                        activateDrawTool();
-                        setToolbarMoreOpen(false);
-                      }}
-                    >
-                      <RemixIcon name="mark-pen-line" size={15} />
-                      <span>{t('fileViewer.mark')}</span>
-                    </button>
-                    <button
-                      type="button"
-                      className={`viewer-toolbar-more-item${manualEditMode ? ' active' : ''}`}
-                      role="menuitem"
-                      onClick={() => {
-                        activateManualEditTool();
-                        setToolbarMoreOpen(false);
-                      }}
-                    >
-                      <RemixIcon name="edit-line" size={15} />
-                      <span>{t('fileViewer.edit')}</span>
-                    </button>
-                    <button
-                      type="button"
-                      className={`viewer-toolbar-more-item${boardMode && commentCreateMode ? ' active' : ''}`}
-                      role="menuitem"
-                      onClick={() => {
-                        activateCommentCreateTool();
-                        setToolbarMoreOpen(false);
-                      }}
-                    >
-                      <RemixIcon name="message-3-line" size={15} />
-                      <span>{t('chat.tabComments')} ({visibleSideComments.length})</span>
-                    </button>
-                    {source !== null && mode === 'preview' ? (
-                      <>
-                        <div className="viewer-toolbar-more-separator" role="separator" />
-                        {[50, 75, 100, 125, 150, 200].map((level) => (
-                          <button
-                            key={level}
-                            type="button"
-                            className={`viewer-toolbar-more-item${zoom === level ? ' active' : ''}`}
-                            role="menuitem"
-                            onClick={() => {
-                              setZoom(level);
-                              setToolbarMoreOpen(false);
-                            }}
-                          >
-                            <RemixIcon name="zoom-in-line" size={15} />
-                            <span style={{ fontVariantNumeric: 'tabular-nums' }}>{level}%</span>
-                            {zoom === level ? <Icon name="check" size={13} /> : null}
-                          </button>
-                        ))}
-                      </>
-                    ) : null}
-                  </>
-                ) : null}
-              </div>
-            ) : null}
-          </div>
         </div>
       </div>
       {((filePrimaryActions: ReactNode) => (
@@ -12511,9 +12367,11 @@ function HtmlViewer({
           {versioningAvailable && (rawCanShare || rawCanDownload) ? (
             <button
               type="button"
-              className="chrome-action chrome-action-secondary chrome-action-with-label chrome-action-text-only"
+              className="chrome-action chrome-action-secondary chrome-action-icon od-tooltip"
               disabled={source === null || viewerOnly}
               aria-label={t('fileViewer.versions.entry')}
+              data-tooltip={viewerOnly ? viewerOnlyDisabledTitle : t('fileViewer.versions.entryFull')}
+              data-tooltip-placement="bottom"
               title={viewerOnly ? viewerOnlyDisabledTitle : t('fileViewer.versions.entryFull')}
               onClick={() => {
                 fireArtifactToolbarClick('versions', 'toolbar');
@@ -12521,7 +12379,6 @@ function HtmlViewer({
               }}
             >
               <RemixIcon name="history-line" size={15} />
-              <span>{t('fileViewer.versions.entryFull')}</span>
             </button>
           ) : null}
           {rawCanShare || rawCanDownload ? (
@@ -12531,7 +12388,7 @@ function HtmlViewer({
                   <button
                     type="button"
                     className={
-                      'chrome-action chrome-action-secondary chrome-action-with-label chrome-action-text-only chrome-action-unified' +
+                      'chrome-action chrome-action-secondary chrome-action-with-label chrome-action-text-only chrome-action-unified chrome-action-share-dark' +
                       (exportReadyNudge ? ' export-ready-nudge' : '')
                     }
                     aria-haspopup="menu"
@@ -12779,6 +12636,27 @@ function HtmlViewer({
                       <span>{t('fileViewer.exportImage')}</span>
                     </button>
                   ) : null}
+                  {/* Copy-to-clipboard capture. It used to be the toolbar's first
+                      action, but the toolbar now leads with screenshot-to-chat —
+                      the job users actually come here for. Clipboard capture is
+                      still the right tool when the destination is somewhere else
+                      entirely (a ticket, a doc), so it lives with the other
+                      "get this artifact out of here" actions instead of being
+                      dropped. */}
+                  <button
+                    type="button"
+                    className="share-menu-item"
+                    role="menuitem"
+                    disabled={viewerOnly}
+                    title={viewerOnly ? viewerOnlyDisabledTitle : undefined}
+                    onClick={() => {
+                      setDeployMenuOpen(false);
+                      void handleCopyScreenshot();
+                    }}
+                  >
+                    <span className="share-menu-icon"><RemixIcon name="screenshot-2-line" size={15} /></span>
+                    <span>{t('fileViewer.screenshot')}</span>
+                  </button>
                   <button
                     type="button"
                     className="share-menu-item"

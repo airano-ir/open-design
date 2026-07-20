@@ -1055,6 +1055,11 @@ export interface ArtifactToolbarClickProps {
     // Copies a screenshot of the current preview to the clipboard (does not
     // start a run). Tracked so the preview-export tool's usage is measurable.
     | 'screenshot'
+    // Stages a screenshot of the current preview into the chat composer as a
+    // draft attachment; does not start a run. This is the toolbar's primary
+    // capture action — `screenshot` (clipboard copy) now lives in the export
+    // menu, so the two are separable in the funnel.
+    | 'edit_screenshot'
     | 'tweaks'
     // The Mark (mark-pen) annotation tool. Renamed from `draw` to match the
     // product label users see; the draw-overlay sub-toolbar keeps area

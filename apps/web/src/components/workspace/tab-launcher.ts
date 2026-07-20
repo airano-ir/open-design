@@ -133,8 +133,11 @@ export function buildLauncherActions(ctx: LauncherContext): LauncherAction[] {
     actions.push({
       id: 'create-document',
       iconName: 'file',
-      labelKey: 'designFiles.paste.label',
-      descriptionKey: 'designFiles.paste.title',
+      // This creates a blank Markdown document. It used to borrow the Paste
+      // action's strings, so the "New" menu offered a "Paste / Paste text as a
+      // file" entry that did no such thing (issue #60).
+      labelKey: 'designFiles.newDocument',
+      descriptionKey: 'designFiles.newDocumentTitle',
       run: (runCtx) => {
         runCtx.createDocument?.();
       },

@@ -2251,8 +2251,24 @@ function injectDeckBridge(
   const hasInlineKeydownListener = !!options.artifactHasKeydownNavigation;
   const isFrameworkDeck = /\bid\s*=\s*["']deck-stage["']/i.test(doc);
   const clickNavigation = !!options.clickNavigation && !isFrameworkDeck;
+  // Framework decks (`id="deck-stage"`) get the inverse fix. Their skeleton
+  // documents `.deck-shell` as plain block flow precisely so the 1920x1080
+  // stage's natural top-left is (0, 0) — `fit()` then does ALL the centering
+  // through `translate(tx, ty) scale(s)` with `transform-origin: top left`.
+  // Generated decks routinely violate that contract and re-declare the shell
+  // as a centering flex container. Two things break at once: the stage becomes
+  // a flex item, so its default `flex-shrink: 1` collapses `width: 1920px`
+  // down to the pane width (a ~770px preview yields a 770x1080 stage — the
+  // 16:9 canvas silently turns portrait, issue #47), and the flex centering
+  // offsets the stage away from (0, 0) so `fit()`'s translate stacks on top of
+  // a non-zero layout position. Restoring block flow + no shrink puts the
+  // stage back where `fit()` already assumes it is. Both declarations are
+  // no-ops on a deck that copied the skeleton verbatim.
   const styleFix = isFrameworkDeck
-    ? ''
+    ? `<style data-od-deck-fix>
+.deck-shell { display: block !important; }
+.deck-stage { flex-shrink: 0 !important; }
+</style>`
     : `<style data-od-deck-fix>
 .stage, .deck-stage, .deck-shell { place-content: center !important; }
 </style>`;
