@@ -60,14 +60,16 @@ afterEach(() => {
 });
 
 describe('HomeView media composer options', () => {
-  it('shows the Home composer session-mode switcher and still defaults to Design mode', async () => {
+  it('shows the Home composer mode picker and still defaults to Design mode', async () => {
     stubFetch();
     const onSubmit = vi.fn();
     renderHome({ onSubmit });
 
     await screen.findByTestId('home-hero-input');
 
-    expect(screen.getByTestId('session-mode-trigger').getAttribute('aria-label')).toBe('Design mode');
+    // Design is the app default, so the picker renders its neutral
+    // (unselected) trigger — and the submitted payload still carries design.
+    expect(screen.getByTestId('composer-mode-trigger').getAttribute('aria-label')).toBe('Choose a mode');
 
     await setHomePrompt('Create a clean loading animation');
     await submitHome();

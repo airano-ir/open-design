@@ -11,7 +11,7 @@
 //     (context === null).
 //   • Credits chip — real plan tier + balance when A's vela CLI billing summary
 //     is available, with upgrade linking out to Vela Web.
-//   • Search box (readonly, decorative).
+//   • Search box (opens the ⌘K project search palette via `onOpenSearch`).
 //   • 最近 (Recents) → home, Community → community.
 //   • Team block (only when `context.workspaceType === 'team'`): an inline team
 //     switcher + the team destinations. In-client views: drafts / all projects /
@@ -63,6 +63,8 @@ interface Props {
   view: EntryView;
   onViewChange: (view: EntryView) => void;
   onNewProject: () => void;
+  /** Opens the project search palette (blurred modal over all projects). */
+  onOpenSearch?: () => void;
   newProjectDisabled?: boolean;
   /** When false the rail is collapsed (hidden off-canvas) on the entry view. */
   open: boolean;
@@ -141,24 +143,44 @@ export function teamConsoleUrl(base: string, section: 'members' | 'dashboard' | 
   }
 }
 
-/** Map a raw vela membership tier to a display label for the credits chip. */
+/**
+ * Map a raw vela plan id to a display label for the credits card.
+ *
+ * B's ids are namespaced by workspace kind and tier (`team_plus`, `team_max`,
+ * `pro`, …). The card pairs this label with a PlanWordmark badge that already
+ * carries the tier, so the label names the PLAN FAMILY (团队版 / 免费版 / …)
+ * and never leaks a raw snake_case id — `team_plus` used to render verbatim
+ * because only three exact ids were mapped.
+ *
+ * NOTE (parked 2026-07-20): membership is per workspace, so one account can
+ * hold a personal 创作会员 tier AND a team tier at once. How the card should
+ * present that (one family label, both badges, which one wins in a team) is
+ * with the designer; see the ledger. Until then this keeps the pre-existing
+ * single-label behavior.
+ */
 function formatBillingTier(tier: string, t: ReturnType<typeof useI18n>['t']): string {
-  switch (tier) {
-    case 'team':
-      return t('entry.billingTierTeam');
-    case 'free':
-      return t('entry.billingTierFree');
-    case 'pro':
-      return t('entry.billingTierPro');
-    default:
-      return tier;
+  const normalized = tier.trim().toLowerCase();
+  if (!normalized) return t('entry.billingTierFree');
+  if (normalized === 'team' || normalized.startsWith('team_') || normalized.startsWith('team-')) {
+    return t('entry.billingTierTeam');
   }
+  if (normalized === 'free') return t('entry.billingTierFree');
+  if (normalized === 'pro' || normalized === 'plus' || normalized === 'max') {
+    return t('entry.billingTierPro');
+  }
+  // Unknown id: title-case the segments rather than showing `some_new_tier`.
+  return normalized
+    .split(/[_-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 }
 
 export function EntryNavRail({
   view,
   onViewChange,
   onNewProject,
+  onOpenSearch,
   newProjectDisabled,
   open,
   onClose,
@@ -172,8 +194,9 @@ export function EntryNavRail({
   const { t, locale, setLocale } = useI18n();
   const brandLabel = t('app.brand');
   const communityLabel = t('pluginsHome.title');
-  // #5517 reads the home view as "Recents" (the home IS the recent-projects
-  // grid), so the rail's first item says 最近, not 主页.
+  // #5517 renamed the rail's first item from 最近 (Recents) to 首页 (Home) —
+  // the key keeps its historical name, the VALUE now reads Home in every
+  // locale (polish round 2, ref 1db2d00c2).
   const homeLabel = t('entry.navRecents');
   const isHome = view === 'home';
 
@@ -196,17 +219,24 @@ export function EntryNavRail({
   // Credits chip: prefer the real billing summary (A-lane, via the vela CLI
   // 收口); fall back to the context plan-tier hint with no balance when billing
   // hasn't loaded / no session.
-  const tierLabel = billing?.membershipTier
-    ? formatBillingTier(billing.membershipTier, t)
-    : context?.planId?.trim() || (isTeam ? t('entry.billingTierTeam') : t('entry.billingTierFree'));
+  // The plan id from either source goes through the same formatter — the
+  // context hint is a raw id too (`team_plus`), and it used to reach the card
+  // unformatted whenever billing reported an empty tier (which it does today).
+  const rawTier = billing?.membershipTier?.trim() || context?.planId?.trim() || '';
+  const tierLabel = rawTier
+    ? formatBillingTier(rawTier, t)
+    : isTeam
+      ? t('entry.billingTierTeam')
+      : t('entry.billingTierFree');
   const creditsBalance = billing ? billing.totalAvailableCredits : null;
   // #5517: wordmark badge on the account row (replaces the chevron) and a
   // small twin inside the menu's billing card. Derive from the raw tier id
   // first so "team_plus" maps to the plus badge regardless of display label.
-  // `||` not `??`: the billing endpoint reports an EMPTY membershipTier while
-  // the plan hint lives on context.planId, and the empty string must fall
-  // through to the label.
-  const planTier = planBadgeTierForLabel(billing?.membershipTier || tierLabel);
+  // Feed the RAW id first: the display label is now a plan-family name
+  // (团队版), which carries no tier word, so deriving the badge from it would
+  // drop the PLUS/PRO/MAX distinction. `rawTier` already prefers billing over
+  // the context hint and is empty only when neither reported one.
+  const planTier = planBadgeTierForLabel(rawTier || tierLabel);
 
   const [accountOpen, setAccountOpen] = useState(false);
   const githubStars = useGithubStars();
@@ -689,10 +719,17 @@ export function EntryNavRail({
           </div>
         )}
 
-        <div className="entry-nav-rail__search" aria-hidden>
+        <button
+          type="button"
+          className="entry-nav-rail__search"
+          onClick={() => onOpenSearch?.()}
+          aria-label={t('common.search')}
+          data-testid="entry-nav-search"
+        >
           <Icon name="search" size={14} />
-          <input type="text" placeholder={t('common.search')} readOnly tabIndex={-1} />
-        </div>
+          <span className="entry-nav-rail__search-placeholder">{t('common.search')}</span>
+          <span className="entry-nav-rail__search-kbd" aria-hidden>⌘K</span>
+        </button>
 
         <NavButton
           active={isHome}
@@ -825,40 +862,12 @@ export function EntryNavRail({
             >
               <Icon name="puzzle" size={16} />
             </NavButton>
-            {/* Workspace management (成员 / 数据大盘 / Workspace 设置) lives in
-                B's vela/web console — link OUT, don't route to in-client views.
-                Gate by B permissions, not workspaceType: a personal workspace
-                owner can invite seats and manage the workspace too. */}
-            {canManageMembers && workspaceSettingsUrl ? (
-              <a
-                className="entry-nav-rail__btn"
-                href={teamConsoleUrl(workspaceSettingsUrl, 'members')}
-                {...externalLinkProps}
-                aria-label={t('entry.navMembers')}
-                data-tooltip={t('entry.navMembers')}
-                data-testid="entry-nav-members"
-              >
-                <span className="entry-nav-rail__btn-icon" aria-hidden>
-                  <Icon name="users" size={16} />
-                </span>
-                <span className="entry-nav-rail__btn-label">{t('entry.navMembers')}</span>
-              </a>
-            ) : null}
-            {canManageMembers && workspaceSettingsUrl ? (
-              <a
-                className="entry-nav-rail__btn"
-                href={teamConsoleUrl(workspaceSettingsUrl, 'dashboard')}
-                {...externalLinkProps}
-                aria-label={t('entry.navDashboard')}
-                data-tooltip={t('entry.navDashboard')}
-                data-testid="entry-nav-dashboard"
-              >
-                <span className="entry-nav-rail__btn-icon" aria-hidden>
-                  <Icon name="dashboard" size={16} />
-                </span>
-                <span className="entry-nav-rail__btn-label">{t('entry.navDashboard')}</span>
-              </a>
-            ) : null}
+            {/* Product decision (2026-07-20): 成员 and 数据大盘 leave the rail
+                entirely — both surfaces live in B's console and the rail should
+                not advertise them. Workspace 设置 stays, and still links OUT to
+                that console rather than routing to an in-client view. Gate by B
+                permissions, not workspaceType: a personal workspace owner can
+                manage their workspace too. */}
             {canViewWorkspaceSettings && workspaceSettingsUrl ? (
               <a
                 className="entry-nav-rail__btn"
@@ -877,7 +886,6 @@ export function EntryNavRail({
           </>
         ) : (
           <>
-            <div className="entry-nav-rail__section-divider" aria-hidden />
             <NavButton
               active={view === 'design-systems'}
               ariaLabel={t('entry.navDesignSystems')}
@@ -895,6 +903,18 @@ export function EntryNavRail({
               testId="entry-nav-plugins"
             >
               <Icon name="puzzle" size={16} />
+            </NavButton>
+            {/* Signed-out rail has no account menu, so surface user settings
+                here. Opens the settings module (modal) rather than a view, so
+                it carries no active state — same action as the account menu's
+                Settings item. */}
+            <NavButton
+              ariaLabel={t('entry.accountSettings')}
+              tooltip={t('entry.accountSettings')}
+              onClick={() => onOpenSettings?.()}
+              testId="entry-nav-settings"
+            >
+              <Icon name="settings" size={16} />
             </NavButton>
           </>
         )}

@@ -1957,7 +1957,7 @@ test('[P2] required home plugin prompt parameters gate submit and bind the proje
 test('[P0] @critical home composer routes free-form prompts through the design router by default', async ({ page }) => {
   await gotoEntryHome(page);
 
-  await expect(page.getByTestId('session-mode-trigger')).toHaveAttribute('aria-label', 'Design mode');
+  await expect(page.getByTestId('composer-mode-trigger')).toHaveAttribute('aria-label', 'Choose a mode');
 
   const input = page.getByTestId('home-hero-input');
   const prompt =

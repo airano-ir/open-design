@@ -67,7 +67,7 @@ import {
   type ProjectReferenceSelection,
 } from './ProjectReferenceModal';
 import { assetTitle, elementMetaOf } from './LibraryAssetMeta';
-import { SessionModeToggle } from './SessionModeToggle';
+import { ComposerModePicker } from './ComposerModePicker';
 import type { LibraryAsset, LibraryElementMeta } from '@open-design/contracts';
 import {
   DESIGN_TOOLBOX_ACTIONS,
@@ -3050,10 +3050,9 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
             ) : null}
             {leadingAccessory}
             <span className="composer-spacer" />
-            {footerAccessory}
-            <SessionModeToggle
+            <ComposerModePicker
               mode={sessionMode}
-              onChange={(next) => {
+              onModeChange={(next) => {
                 if (next !== sessionMode) {
                   trackComposerSessionModeClick(analytics.track, {
                     page_name: 'chat_panel',
@@ -3067,6 +3066,7 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
                 onSessionModeChange?.(next);
               }}
             />
+            {footerAccessory}
             {showStopButton ? (
               <button
                 type="button"

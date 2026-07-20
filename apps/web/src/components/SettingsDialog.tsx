@@ -8294,12 +8294,6 @@ function IntegrationsSection() {
   );
 }
 
-const THEMES: Array<{ value: AppTheme; labelKey: 'settings.themeSystem' | 'settings.themeLight' | 'settings.themeDark'; icon?: 'sun' | 'moon' }> = [
-  { value: 'system', labelKey: 'settings.themeSystem' },
-  { value: 'light', labelKey: 'settings.themeLight', icon: 'sun' },
-  { value: 'dark', labelKey: 'settings.themeDark', icon: 'moon' },
-];
-
 function AppearanceSection({
   cfg,
   setCfg,
@@ -8330,32 +8324,9 @@ function AppearanceSection({
 
   return (
     <section className="settings-section">
-      <div className="seg-control" role="group" aria-label={t('settings.appearance')} style={{ '--seg-cols': THEMES.length } as React.CSSProperties}>
-        {THEMES.map(({ value, labelKey, icon }) => (
-          <button
-            key={value}
-            type="button"
-            className={'seg-btn' + (current === value ? ' active' : '')}
-            aria-pressed={current === value}
-            onClick={() => {
-              // P1 ui_click area=appearance — `system|light|dark` only
-              // emits from the segmented control; accent swatch picks
-              // use `accent_color` with the swatch hex below.
-              if (value === 'system' || value === 'light' || value === 'dark') {
-                trackSettingsAppearanceClick(analytics.track, {
-                  page_name: 'settings',
-                  area: 'appearance',
-                  element: value,
-                });
-              }
-              setCfg((c) => ({ ...c, theme: value }));
-            }}
-          >
-            {icon ? <Icon name={icon} size={14} aria-hidden="true" /> : null}
-            <span className="seg-title">{t(labelKey)}</span>
-          </button>
-        ))}
-      </div>
+      {/* The 系统/浅色/深色 segmented control is removed per #5517 (product
+          confirmed 2026-07-20). Theme now changes only through the account
+          menu's 切换主题 row; the accent swatches stay here. */}
       <div className="field">
         <span className="field-label">{accentLabel}</span>
         <div className="pet-swatches" role="radiogroup" aria-label={accentLabel}>

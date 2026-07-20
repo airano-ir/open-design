@@ -94,7 +94,7 @@ import { workspaceContextDetailLine, workspaceContextKindLabel } from './workspa
 import { FigmaHelpModal } from './FigmaHelpModal';
 import { TemplatePicker } from './home-hero/TemplatePicker';
 import { LibraryPicker } from './LibraryPicker';
-import { SessionModeToggle } from './SessionModeToggle';
+import { ComposerModePicker } from './ComposerModePicker';
 import { assetTitle } from './LibraryAssetMeta';
 import { libraryAssetRawUrl } from '../providers/registry';
 import type { LibraryAsset } from '@open-design/contracts';
@@ -1974,23 +1974,21 @@ export const HomeHero = forwardRef<HomeHeroHandle, Props>(function HomeHero(
             ) : null}
           </div>
           <div className="home-hero__foot-right">
-            <div className="home-hero__mode-switcher">
-              <SessionModeToggle
-                mode={sessionMode}
-                onChange={(next) => {
-                  if (next !== sessionMode) {
-                    trackComposerSessionModeClick(analytics.track, {
-                      page_name: 'home',
-                      area: 'chat_composer',
-                      element: 'session_mode_toggle',
-                      mode_before: sessionModeToTracking(sessionMode),
-                      mode_after: sessionModeToTracking(next),
-                    });
-                  }
-                  onSessionModeChange?.(next);
-                }}
-              />
-            </div>
+            <ComposerModePicker
+              mode={sessionMode}
+              onModeChange={(next) => {
+                if (next !== sessionMode) {
+                  trackComposerSessionModeClick(analytics.track, {
+                    page_name: 'home',
+                    area: 'chat_composer',
+                    element: 'session_mode_toggle',
+                    mode_before: sessionModeToTracking(sessionMode),
+                    mode_after: sessionModeToTracking(next),
+                  });
+                }
+                onSessionModeChange?.(next);
+              }}
+            />
             {executionSwitcher ? (
               <div className="home-hero__execution-switcher">
                 {executionSwitcher}

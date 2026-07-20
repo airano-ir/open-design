@@ -476,8 +476,13 @@ test('[P0] onboarding gate cannot be bypassed by direct Home navigation or new-t
   await expect(connectLandingHeading(page)).toBeVisible();
   await expect(page).toHaveURL(/\/onboarding$/);
 
-  const newTabButton = page.getByTestId('workspace-tabs-new-tab');
-  await expect(newTabButton).toBeDisabled();
+  // #5517 removed the top-right "+" button, so it is no longer a bypass surface
+  // to gate — assert it is gone rather than asserting it renders disabled.
+  await expect(page.getByTestId('workspace-tabs-new-tab')).toHaveCount(0);
+
+  // The keyboard path survives and is now the only way to ask for a new tab, so
+  // it carries the whole P0 gate: createNewTab() must refuse while onboarding is
+  // active and leave the user on /onboarding.
   await page.keyboard.press(process.platform === 'darwin' ? 'Meta+T' : 'Control+T');
   await expect(page).toHaveURL(/\/onboarding$/);
   await expect(connectLandingHeading(page)).toBeVisible();

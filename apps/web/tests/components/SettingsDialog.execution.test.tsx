@@ -4254,15 +4254,34 @@ describe('SettingsDialog appearance interactions', () => {
     document.documentElement.style.removeProperty('--accent-hover');
   });
 
-  it('treats System as the selected appearance mode when theme is unset or system', () => {
-    renderSettingsDialog(
+  // #5517 (product confirmed 2026-07-20) removed the 系统/浅色/深色 segmented
+  // control from Appearance. The theme is now reachable ONLY through the
+  // account menu's 切换主题 row (a light⇄dark toggle) — Settings keeps the
+  // accent swatches and nothing else. The theme behaviors these tests used to
+  // drive through the segmented control (explicit theme writes `data-theme`,
+  // `system` removes it, accent variables survive either way) are unchanged
+  // product behavior, so they are asserted here through the paths that still
+  // exist: the section's live preview on open, and the close-time revert.
+  it('no longer offers a theme segmented control, and System leaves the document theme unset', () => {
+    const { container } = renderSettingsDialog(
       { theme: 'system' },
       { initialSection: 'appearance' },
     );
 
-    expect(screen.getByRole('button', { name: 'System' }).getAttribute('aria-pressed')).toBe('true');
-    expect(screen.getByRole('button', { name: 'Light' }).getAttribute('aria-pressed')).toBe('false');
-    expect(screen.getByRole('button', { name: 'Dark' }).getAttribute('aria-pressed')).toBe('false');
+    // Regression guard: the three theme buttons must not come back to Settings.
+    // Scoped to the appearance group specifically — the General section also
+    // mounts Notifications, whose own seg-controls are unrelated to #5517.
+    expect(screen.queryByRole('button', { name: 'System' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Light' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Dark' })).toBeNull();
+    expect(screen.queryByRole('group', { name: 'Appearance' })).toBeNull();
+    expect(container.querySelector('.seg-control[aria-label="Appearance"]')).toBeNull();
+    // …while the accent swatches, the section's surviving control, stay put.
+    expect(screen.getByRole('radiogroup', { name: 'Accent color' })).toBeTruthy();
+
+    // The mode itself still behaves: `system` means "no explicit document
+    // theme", so the OS media query keeps ownership.
+    expect(document.documentElement.hasAttribute('data-theme')).toBe(false);
   });
 
   it('applies the first accent color as the default appearance color', () => {
@@ -4275,53 +4294,77 @@ describe('SettingsDialog appearance interactions', () => {
     expect(document.documentElement.style.getPropertyValue('--accent')).toBe('#353535');
   });
 
-  it('live previews explicit themes and removes the explicit document theme when switching back to System', () => {
-    renderSettingsDialog(
-      { theme: 'dark' },
-      { initialSection: 'appearance' },
-    );
-
+  // The section still runs the live appearance preview on mount; it just reads
+  // the theme instead of letting the user set it. Opening Settings after the
+  // account menu flipped the theme must show that theme, and an explicit
+  // theme/`system` must keep producing/removing `data-theme` respectively.
+  // Each mount is one preview pass, so this drives the three modes by
+  // remounting rather than by clicking the removed segmented control.
+  it('live previews the configured theme on open, and System leaves no explicit document theme', () => {
+    renderSettingsDialog({ theme: 'dark' }, { initialSection: 'appearance' });
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+    cleanup();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Light' }));
+    renderSettingsDialog({ theme: 'light' }, { initialSection: 'appearance' });
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+    cleanup();
 
-    fireEvent.click(screen.getByRole('button', { name: 'System' }));
+    renderSettingsDialog({ theme: 'system' }, { initialSection: 'appearance' });
     expect(document.documentElement.hasAttribute('data-theme')).toBe(false);
   });
 
-  it('reverts an unsaved appearance preview back to the saved theme when the dialog closes', () => {
+  // The close-time revert is unchanged: SettingsDialog's cleanup re-applies the
+  // LAST SAVED appearance, so a preview the user never saved is rolled back.
+  // The theme half of this scenario is no longer reachable from the dialog
+  // (see the #5517 note above), so the divergence is driven through the accent
+  // swatches — the only appearance control the dialog still owns. The saved
+  // theme is asserted too, because cleanup re-applies theme AND accent together
+  // and must not drop the theme on the way back.
+  it('reverts an unsaved appearance preview back to the saved appearance when the dialog closes', () => {
     const first = renderSettingsDialog(
-      { theme: 'dark' },
+      { theme: 'dark', accentColor: '#2563eb' },
       { initialSection: 'appearance' },
     );
 
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(document.documentElement.style.getPropertyValue('--accent')).toBe('#2563eb');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Light' }));
-    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+    // Autosave is debounced (400ms), so closing immediately leaves this edit
+    // unsaved — exactly the case the revert exists for.
+    fireEvent.click(screen.getByRole('radio', { name: '#87ea5c' }));
+    expect(document.documentElement.style.getPropertyValue('--accent')).toBe('#87ea5c');
+
     fireEvent.click(first.container.querySelector('.settings-close') as HTMLElement);
     expect(first.onClose).toHaveBeenCalledTimes(1);
 
     first.unmount();
+    expect(document.documentElement.style.getPropertyValue('--accent')).toBe('#2563eb');
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
   });
 
   it('persists System mode explicitly and preserves accent variables without an explicit document theme', async () => {
     const { onPersist } = renderSettingsDialog(
-      { mode: 'daemon', agentId: 'codex', theme: 'dark', accentColor: '#2563eb' },
+      { mode: 'daemon', agentId: 'codex', theme: 'system', accentColor: '#2563eb' },
       { initialSection: 'appearance' },
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'System' }));
     expect(document.documentElement.hasAttribute('data-theme')).toBe(false);
     expect(document.documentElement.style.getPropertyValue('--accent')).toBe('#2563eb');
+
+    // An accent edit is the only autosave this section can now trigger; the
+    // point of the assertion is that the snapshot still carries `system`
+    // EXPLICITLY (it must not be dropped to undefined just because nothing in
+    // the dialog can set it any more), and that a `system` theme keeps the
+    // accent variables applied without an explicit document theme.
+    fireEvent.click(screen.getByRole('radio', { name: '#87ea5c' }));
+    expect(document.documentElement.hasAttribute('data-theme')).toBe(false);
+    expect(document.documentElement.style.getPropertyValue('--accent')).toBe('#87ea5c');
 
     await waitForPersist(
       onPersist,
       expect.objectContaining({
         theme: 'system',
-        accentColor: '#2563eb',
+        accentColor: '#87ea5c',
       }),
       {},
     );
@@ -4375,12 +4418,18 @@ describe('SettingsDialog appearance interactions', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Light' }));
+    // Any committed edit will do — this test is about what the draft carries
+    // when it autosaves, not about which control fired it. It used to click the
+    // Appearance theme segmented control, which #5517 removed; the accent
+    // swatch is the equivalent trigger in the same section, so `theme` is now
+    // asserted as pass-through (still 'dark') instead of as the edit.
+    fireEvent.click(screen.getByRole('radio', { name: '#87ea5c' }));
 
     await waitForPersist(
       view.onPersist,
       expect.objectContaining({
-        theme: 'light',
+        theme: 'dark',
+        accentColor: '#87ea5c',
         agentModels: {},
         agentCliEnv: {
           codex: { CODEX_BIN: '/tmp/codex-dev' },

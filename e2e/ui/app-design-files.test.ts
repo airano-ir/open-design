@@ -320,17 +320,20 @@ async function waitForSingleSketchFile(page: Page, projectId: string): Promise<s
 }
 
 async function selectComposerSessionMode(page: Page, modeTitle: 'Ask mode' | 'Plan mode' | 'Design mode') {
-  const trigger = page.getByTestId('chat-composer').getByTestId('session-mode-trigger');
+  // #5517 composer mode picker: Ask maps to the real `chat` session mode.
+  const modeId = modeTitle === 'Ask mode' ? 'chat' : modeTitle === 'Plan mode' ? 'plan' : 'design';
+  const modeName = modeTitle.replace(' mode', '');
+  const trigger = page.getByTestId('chat-composer').getByTestId('composer-mode-trigger');
   await expect(trigger).toBeVisible();
   await trigger.click();
 
-  const menu = page.locator('.session-mode-toggle__menu[role="menu"]');
+  const menu = page.getByTestId('composer-mode-menu');
   await expect(menu).toBeVisible();
-  await expect(menu.getByRole('menuitemradio', { name: 'Ask mode' })).toBeVisible();
-  await expect(menu.getByRole('menuitemradio', { name: 'Plan mode' })).toBeVisible();
-  await expect(menu.getByRole('menuitemradio', { name: 'Design mode' })).toBeVisible();
-  await menu.getByRole('menuitemradio', { name: modeTitle }).click();
-  await expect(trigger).toHaveAttribute('aria-label', modeTitle);
+  await expect(menu.getByTestId('composer-mode-menu-chat')).toBeVisible();
+  await expect(menu.getByTestId('composer-mode-menu-plan')).toBeVisible();
+  await expect(menu.getByTestId('composer-mode-menu-design')).toBeVisible();
+  await menu.getByTestId(`composer-mode-menu-${modeId}`).click();
+  await expect(trigger).toHaveAttribute('aria-label', `Mode: ${modeName}`);
 }
 
 async function clickDesignFilePreviewOpen(page: Page) {

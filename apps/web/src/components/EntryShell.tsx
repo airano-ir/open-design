@@ -94,6 +94,7 @@ import { DesignsTab } from './DesignsTab';
 import { DesignSystemsTab } from './DesignSystemsTab';
 import { BrandsTab } from './BrandsTab';
 import { EntryNavRail, type EntryView as EntryViewKind } from './EntryNavRail';
+import { ProjectSearchModal } from './ProjectSearchModal';
 import { CloudSignInTip } from './CloudSignInTip';
 import { LibrarySection } from './LibrarySection';
 import { UpdaterPopup } from './UpdaterPopup';
@@ -692,6 +693,20 @@ export function EntryShell({
   // home -> project -> home round trip (EntryShell unmounts on the project
   // route) and a reload, instead of snapping back to collapsed.
   const [railOpen, setRailOpen] = useState<boolean>(readStoredRailOpen);
+  const [projectSearchOpen, setProjectSearchOpen] = useState(false);
+
+  // ⌘K / Ctrl+K opens the project search palette — same as clicking the rail
+  // search box.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && (event.key === 'k' || event.key === 'K')) {
+        event.preventDefault();
+        setProjectSearchOpen(true);
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
   useEffect(() => {
     writeStoredRailOpen(railOpen);
     // Broadcast the state so chrome outside this tree (the pinned Home tab's
@@ -1114,6 +1129,7 @@ export function EntryShell({
             });
             openNewProject();
           }}
+          onOpenSearch={() => setProjectSearchOpen(true)}
           open={railOpen}
           onClose={() => setRailOpen(false)}
           context={workspaceContext}
@@ -1125,6 +1141,16 @@ export function EntryShell({
           footerExtra={railFooterActions}
           footerNotice={!workspaceContext && !workspaceLoading ? <CloudSignInTip /> : null}
         />
+        {projectSearchOpen ? (
+          <ProjectSearchModal
+            // The same merged catalog as the All Projects grid (own + team-
+            // shared cards), opened through the pull-first handler so a shared
+            // project the member has not pulled yet still opens.
+            projects={allProjectsList}
+            onOpenProject={handleOpenAllProjects}
+            onClose={() => setProjectSearchOpen(false)}
+          />
+        ) : null}
         <main className="entry-main entry-main--scroll" ref={entryMainScrollRef}>
           {/* #5517: no entry topbar. The rail toggle is the pinned Home tab in
               the workspace tabs bar (entryRailBridge), the updater popup host

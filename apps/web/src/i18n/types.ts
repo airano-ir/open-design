@@ -1124,6 +1124,7 @@ export interface Dict {
   'entry.billingTierTeam': string;
   'entry.billingTierFree': string;
   'entry.billingTierPro': string;
+  'entry.billingFamilyCreator': string;
   'entry.upgradeTitle': string;
   'entry.upgradeCreditsExhaustedTitle': string;
   'entry.upgradeAutoRechargeTitle': string;
@@ -2962,6 +2963,12 @@ export interface Dict {
   'chat.mode.plan.costNote': string;
   'chat.mode.design.cost': string;
   'chat.mode.design.costNote': string;
+  // Composer mode picker (#5517): trigger/clear aria copy. Mode names and
+  // descriptions reuse `chat.mode.*.label` / `chat.mode.*.summary`.
+  'chat.modePicker.choose': string;
+  'chat.modePicker.current': string;
+  'chat.modePicker.clear': string;
+  'chat.modePicker.mode': string;
   'chat.composerHint': string;
   'chat.cliSettingsTitle': string;
   'chat.cliSettingsAria': string;
@@ -3931,6 +3938,8 @@ export interface Dict {
   'fileViewer.openFileRequired': string;
   'fileViewer.publishFile': string;
   'fileViewer.unpublishFile': string;
+  'fileViewer.publishFileRequiresTeam': string;
+  'fileViewer.publishFileFailed': string;
   'fileViewer.workspaceShareSuccess': string;
   'fileViewer.workspaceShareFailed': string;
   'fileViewer.workspaceUnshareSuccess': string;

@@ -14,13 +14,11 @@ import {
   isFileSystemReadError,
 } from '../utils/fileSystemErrors';
 import { isVisualStabilityMode } from '../utils/visualStability';
-import { selectInitialDesignPreviewFile } from './design-files/designArtifacts';
 import type { PluginFolderAgentAction } from './design-files/pluginFolderActions';
 import { getPluginFolderCandidates } from './design-files/pluginFolders';
 import { Icon } from './Icon';
 import { LiveArtifactBadges } from './LiveArtifactBadges';
 import { RemixIcon } from './RemixIcon';
-import { isRenderableSketchJson, SketchPreview } from './SketchPreview';
 
 type TranslateFn = (key: keyof Dict, vars?: Record<string, string | number>) => string;
 
@@ -76,8 +74,6 @@ interface Props {
   onCurrentDirChange?: (dir: string) => void;
   uploadError?: string | null;
   onClearUploadError?: () => void;
-  preferredPreviewFile?: string | null;
-  autoPreviewDesignArtifacts?: boolean;
   onPluginFolderAgentAction?: (
     relativePath: string,
     action: PluginFolderAgentAction,
@@ -213,9 +209,12 @@ function prefersReducedMotion(): boolean {
  * Full-panel browser for a project's `.od/projects/<id>/` folder. Mirrors
  * Claude Design's "Design Files" surface: a single-line toolbar (up / refresh
  * / breadcrumbs + actions), semantic sections (Folders, Stylesheets, Scripts,
- * Documents, Images …), hover-revealed row checkbox + menu, a right-side
- * preview pane, and a static "useful info" footer. Triggered as a sticky
- * first tab in FileWorkspace.
+ * Documents, Images …), hover-revealed row checkbox + menu, and a static
+ * "useful info" footer. Triggered as a sticky first tab in FileWorkspace.
+ *
+ * There is no detail/preview pane: the card grid IS the preview surface, so
+ * every non-control click target (row name, card thumb, plugin-folder row)
+ * opens the file in a workspace tab through `onOpenFile`.
  */
 export function DesignFilesPanel({
   projectId,
@@ -244,8 +243,6 @@ export function DesignFilesPanel({
   onSelectFromLibrary,
   uploadError = null,
   onClearUploadError,
-  preferredPreviewFile = null,
-  autoPreviewDesignArtifacts = false,
   onCurrentDirChange,
   onPluginFolderAgentAction,
   activePluginActionPaths = new Set(),
@@ -262,10 +259,7 @@ export function DesignFilesPanel({
   const [menuPos, setMenuPos] = useState<{ name: string; top: number; left: number } | null>(null);
   const MENU_ESTIMATED_HEIGHT = 180;
   const MENU_SAFE_PADDING = 8;
-  const [preview, setPreview] = useState<string | null>(null);
-  const autoPreviewAppliedRef = useRef(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const lastKeyPress = useRef<Map<string, number>>(new Map());
   const [deleting, setDeleting] = useState(false);
   const [installingFolder, setInstallingFolder] = useState<string | null>(null);
   const [sharingFolder, setSharingFolder] = useState<string | null>(null);
@@ -440,32 +434,6 @@ export function DesignFilesPanel({
     });
   }, [files]);
 
-  const previewFile = useMemo(
-    () => files.find((f) => f.name === preview) ?? null,
-    [preview, files],
-  );
-
-  const initialPreviewFile = useMemo(
-    () =>
-      autoPreviewDesignArtifacts
-        ? selectInitialDesignPreviewFile(files, preferredPreviewFile)
-        : null,
-    [autoPreviewDesignArtifacts, files, preferredPreviewFile],
-  );
-
-  useEffect(() => {
-    if (autoPreviewAppliedRef.current) return;
-    if (!initialPreviewFile) return;
-    autoPreviewAppliedRef.current = true;
-    setPreview(initialPreviewFile.name);
-  }, [initialPreviewFile]);
-
-  useEffect(() => {
-    if (!preview) return;
-    if (files.some((f) => f.name === preview)) return;
-    setPreview(null);
-  }, [files, preview]);
-
   useEffect(() => {
     if (!menuPos) return;
     const close = () => setMenuPos(null);
@@ -566,7 +534,6 @@ export function DesignFilesPanel({
 
   function startRename(name: string) {
     setMenuPos(null);
-    setPreview(name);
     const draft = currentDir === '' ? name : name.slice(currentDir.length + 1);
     setRenaming({ name, draft, saving: false });
   }
@@ -586,7 +553,6 @@ export function DesignFilesPanel({
     try {
       const renamed = await onRenameFile(name, nextName);
       if (!renamed) throw new Error('Rename failed');
-      setPreview((curr) => (curr === name ? renamed.name : curr));
       setSelected((prev) => {
         if (!prev.has(name)) return prev;
         const next = new Set(prev);
@@ -618,7 +584,6 @@ export function DesignFilesPanel({
   }
 
   function renderFileRow(f: ProjectFile, category: FileCategory) {
-    const active = preview === f.name;
     const isSelected = selected.has(f.name);
     const isHovered = hover === f.name;
     const renameState = renaming?.name === f.name ? renaming : null;
@@ -626,7 +591,7 @@ export function DesignFilesPanel({
       <div
         key={f.name}
         data-testid={`design-file-row-${f.name}`}
-        className={`df-row df-file-row ${active ? 'active' : ''} ${isSelected ? 'selected' : ''}`}
+        className={`df-row df-file-row ${isSelected ? 'selected' : ''}`}
         onMouseEnter={() => setHover(f.name)}
         onMouseLeave={() => setHover((c) => (c === f.name ? null : c))}
       >
@@ -658,8 +623,7 @@ export function DesignFilesPanel({
           className="df-row-icon df-row-openable"
           data-kind={category}
           aria-hidden
-          onClick={() => setPreview(f.name)}
-          onDoubleClick={() => onOpenFile(f.name)}
+          onClick={() => onOpenFile(f.name)}
         >
           {categoryGlyph(category)}
         </span>
@@ -693,20 +657,11 @@ export function DesignFilesPanel({
             <button
               type="button"
               className="df-row-name-btn"
-              onClick={() => setPreview(f.name)}
-              onDoubleClick={() => onOpenFile(f.name)}
+              onClick={() => onOpenFile(f.name)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  const now = Date.now();
-                  const last = lastKeyPress.current.get(f.name) ?? 0;
-                  if (now - last < 300) {
-                    lastKeyPress.current.delete(f.name);
-                    onOpenFile(f.name);
-                  } else {
-                    lastKeyPress.current.set(f.name, now);
-                    setPreview(f.name);
-                  }
+                  onOpenFile(f.name);
                 }
               }}
             >
@@ -724,15 +679,13 @@ export function DesignFilesPanel({
         </div>
         <span
           className="df-row-size df-row-openable"
-          onClick={() => setPreview(f.name)}
-          onDoubleClick={() => onOpenFile(f.name)}
+          onClick={() => onOpenFile(f.name)}
         >
           {humanBytes(f.size)}
         </span>
         <span
           className="df-row-time df-row-openable"
-          onClick={() => setPreview(f.name)}
-          onDoubleClick={() => onOpenFile(f.name)}
+          onClick={() => onOpenFile(f.name)}
         >
           {relativeTime(f.mtime, t)}
         </span>
@@ -744,7 +697,7 @@ export function DesignFilesPanel({
           <span
             data-testid={`design-file-menu-${f.name}`}
             className="df-row-menu"
-            style={isHovered || active ? { opacity: 1 } : undefined}
+            style={isHovered ? { opacity: 1 } : undefined}
             role="button"
             tabIndex={0}
             aria-label={t('designFiles.rowMenu')}
@@ -768,12 +721,12 @@ export function DesignFilesPanel({
   }
 
   // HTML pages render as thumbnail cards (live page preview + meta strip)
-  // instead of compact list rows — the #5517 reference card grid. Only the
-  // visual shell changes: interactions keep this panel's contract (single
-  // click previews in the right-hand pane, double-click opens a workspace
-  // tab, the hover ⋯ menu carries rename / download / delete).
+  // instead of compact list rows — the #5517 reference card grid. The grid IS
+  // the preview surface, so a single click on the thumb opens the page in a
+  // workspace tab; the name button is the inline-rename entry point for
+  // editors (read-only viewers open instead), and the ⋯ menu carries
+  // open / rename / copy-path / download / delete.
   function renderPageCard(f: ProjectFile, category: FileCategory) {
-    const active = preview === f.name;
     const isSelected = selected.has(f.name);
     const renameState = renaming?.name === f.name ? renaming : null;
     const displayName = currentDir === '' ? f.name : f.name.slice(currentDir.length + 1);
@@ -782,7 +735,7 @@ export function DesignFilesPanel({
       <div
         key={f.name}
         data-testid={`design-file-row-${f.name}`}
-        className={`df-card ${active ? 'active' : ''} ${isSelected ? 'selected' : ''}`}
+        className={`df-card ${isSelected ? 'selected' : ''}`}
       >
         <span
           className="df-card-check"
@@ -811,8 +764,7 @@ export function DesignFilesPanel({
         <button
           type="button"
           className="df-card-thumb"
-          onClick={() => setPreview(f.name)}
-          onDoubleClick={() => onOpenFile(f.name)}
+          onClick={() => onOpenFile(f.name)}
           title={openLabel}
           aria-label={openLabel}
         >
@@ -848,22 +800,17 @@ export function DesignFilesPanel({
             ) : (
               <button
                 type="button"
-                className="df-card-name-btn"
-                onClick={() => setPreview(f.name)}
-                onDoubleClick={() => onOpenFile(f.name)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    const now = Date.now();
-                    const last = lastKeyPress.current.get(f.name) ?? 0;
-                    if (now - last < 300) {
-                      lastKeyPress.current.delete(f.name);
-                      onOpenFile(f.name);
-                    } else {
-                      lastKeyPress.current.set(f.name, now);
-                      setPreview(f.name);
-                    }
+                className={`df-card-name-btn ${viewerOnly ? '' : 'is-renamable'}`}
+                title={viewerOnly ? openLabel : t('common.rename')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Read-only viewers have no rename entry point, so the name
+                  // stays a plain open target for them.
+                  if (viewerOnly) {
+                    onOpenFile(f.name);
+                    return;
                   }
+                  startRename(f.name);
                 }}
               >
                 <span className="df-card-name" title={displayName}>{displayName}</span>
@@ -881,7 +828,6 @@ export function DesignFilesPanel({
             <span
               data-testid={`design-file-menu-${f.name}`}
               className="df-row-menu"
-              style={active ? { opacity: 1 } : undefined}
               role="button"
               tabIndex={0}
               aria-label={t('designFiles.rowMenu')}
@@ -907,17 +853,16 @@ export function DesignFilesPanel({
 
   // Images in the masonry waterfall: bare image cards — no name/meta strip,
   // the picture IS the card. Check chip floats top-left and the row menu
-  // (rename/delete live there) floats top-right, both hover-revealed. The
-  // click contract stays ours: single click previews, double click opens.
+  // (rename/delete live there) floats top-right, both hover-revealed. A single
+  // click on the picture opens the image in a workspace tab.
   function renderImageCard(f: ProjectFile, _category: FileCategory) {
-    const active = preview === f.name;
     const isSelected = selected.has(f.name);
     const openLabel = `${t('designFiles.previewOpen')} ${f.name}`;
     return (
       <div
         key={f.name}
         data-testid={`design-file-row-${f.name}`}
-        className={`df-card df-card--image ${active ? 'active' : ''} ${isSelected ? 'selected' : ''}`}
+        className={`df-card df-card--image ${isSelected ? 'selected' : ''}`}
       >
         <span
           className="df-card-check"
@@ -946,8 +891,7 @@ export function DesignFilesPanel({
         <button
           type="button"
           className="df-card-thumb"
-          onClick={() => setPreview(f.name)}
-          onDoubleClick={() => onOpenFile(f.name)}
+          onClick={() => onOpenFile(f.name)}
           title={openLabel}
           aria-label={openLabel}
         >
@@ -958,13 +902,12 @@ export function DesignFilesPanel({
           />
         </button>
         {/* Positioned overlay — rendered after the thumb so the card's first
-            button stays the primary preview/open target (mirrors list rows,
-            where controls never precede the openable name). */}
+            button stays the primary open target (mirrors list rows, where
+            controls never precede the openable name). */}
         {viewerOnly ? null : (
           <span
             data-testid={`design-file-menu-${f.name}`}
             className="df-row-menu df-card-menu-overlay"
-            style={active ? { opacity: 1 } : undefined}
             role="button"
             tabIndex={0}
             aria-label={t('designFiles.rowMenu')}
@@ -1226,7 +1169,7 @@ export function DesignFilesPanel({
   const hasSelection = selected.size > 0;
 
   return (
-    <div className={`df-panel ${previewFile ? '' : 'no-preview'} ${hasSelection ? 'has-selection' : ''}`}>
+    <div className={`df-panel ${hasSelection ? 'has-selection' : ''}`}>
       {reloading ? (
         <div className="df-reloading-overlay" data-testid="design-files-reloading">
           <span className="loading-spinner">
@@ -1263,7 +1206,7 @@ export function DesignFilesPanel({
           }}
           onDrop={handleDrop}
         >
-          {visibleUploadError && !preview ? (
+          {visibleUploadError ? (
             <div className="df-upload-banner" data-testid="upload-error-banner">
               <span>{visibleUploadError}</span>
               {onClearUploadError || dropReadError ? (
@@ -1440,7 +1383,7 @@ export function DesignFilesPanel({
                       <button
                         type="button"
                         className="df-row-folder-main"
-                        onClick={() => setPreview(folder.manifestPath)}
+                        onClick={() => onOpenFile(folder.manifestPath)}
                       >
                         <span className="df-row-icon" data-kind="folder" aria-hidden>
                           DIR
@@ -1535,21 +1478,6 @@ export function DesignFilesPanel({
           </div>
         ) : null}
       </div>
-      {preview && previewFile ? (
-        // Key on the file name so React unmounts the previous DfPreview
-        // (and its iframe / image element) when the user clicks a
-        // different file. Without this, React diffing reuses the same
-        // iframe DOM node and the browser keeps showing the first
-        // file's contents — only the `src` prop changes but the iframe
-        // never actually navigates.
-        <DfPreview
-          key={previewFile.name}
-          projectId={projectId}
-          file={previewFile}
-          onOpen={() => onOpenFile(previewFile.name)}
-          onClose={() => setPreview(null)}
-        />
-      ) : null}
       {menuPos ? (
         <div
           data-testid="design-file-menu-popover"
@@ -1627,137 +1555,6 @@ export function DesignFilesPanel({
   );
 }
 
-function DfPreview({
-  projectId,
-  file,
-  onOpen,
-  onClose,
-}: {
-  projectId: string;
-  file: ProjectFile;
-  onOpen: () => void;
-  onClose: () => void;
-}) {
-  const t = useT();
-  const url = projectFileUrl(projectId, file.name);
-  const rendersSketchJson = isRenderableSketchJson(file);
-  const openPreviewLabel = `${t('designFiles.previewOpen')} ${file.name}`;
-  const thumbCanOpen = file.kind !== 'audio' && file.kind !== 'video';
-  return (
-    <aside className="df-preview">
-      <button
-        type="button"
-        className="df-preview-close"
-        onClick={onClose}
-        title={t('designFiles.previewClose')}
-        aria-label={t('designFiles.previewClose')}
-      >
-        <Icon name="close" size={13} />
-      </button>
-      <div className={`df-preview-thumb${thumbCanOpen ? ' is-openable' : ''}`}>
-        {rendersSketchJson ? (
-          <SketchPreview projectId={projectId} file={file} />
-        ) : file.kind === 'image' || file.kind === 'sketch' ? (
-          <img
-            src={`${url}?v=${Math.round(file.mtime)}`}
-            alt={file.name}
-            loading="lazy"
-            decoding="async"
-          />
-        ) : file.kind === 'html' ? (
-          <HtmlPreviewThumbnail projectId={projectId} file={file} />
-        ) : file.kind === 'video' ? (
-          <video
-            src={`${url}?v=${Math.round(file.mtime)}`}
-            controls
-            playsInline
-            preload="metadata"
-          />
-        ) : file.kind === 'audio' ? (
-          <audio src={`${url}?v=${Math.round(file.mtime)}`} controls preload="metadata" />
-        ) : (
-          <FilePreviewPlaceholder file={file} />
-        )}
-        {thumbCanOpen ? (
-          <button
-            type="button"
-            className="df-preview-thumb-open"
-            onClick={onOpen}
-            title={openPreviewLabel}
-            aria-label={openPreviewLabel}
-          />
-        ) : null}
-      </div>
-      <div className="df-preview-meta" data-testid="design-file-preview">
-        <button type="button" className="df-preview-open-cta" onClick={onOpen}>
-          <Icon name="eye" size={14} />
-          <span>{t('designFiles.previewOpen')}</span>
-        </button>
-        <div className="df-preview-name">{file.name}</div>
-        <div className="df-preview-kind">{categoryLabel(fileCategory(file), t)}</div>
-        <div className="df-preview-stats">
-          {t('designFiles.modifiedExt', {
-            time: relativeTime(file.mtime, t),
-            size: humanBytes(file.size),
-            ext: fileExtensionLabel(file.name),
-          })}
-        </div>
-        <a className="df-preview-download" href={url} download={file.name}>
-          <Icon name="download" size={13} />
-          <span>{t('designFiles.download')}</span>
-        </a>
-      </div>
-    </aside>
-  );
-}
-
-function HtmlPreviewThumbnail({
-  projectId,
-  file,
-}: {
-  projectId: string;
-  file: ProjectFile;
-}) {
-  const t = useT();
-  const tooLargeForThumbnail = file.size > HTML_THUMBNAIL_INLINE_MAX_BYTES;
-  const url = projectFileUrl(projectId, file.name);
-  const [srcDoc, setSrcDoc] = useState<string | null>(null);
-  useEffect(() => {
-    setSrcDoc(null);
-    if (tooLargeForThumbnail) return;
-    const controller = new AbortController();
-    let cancelled = false;
-    void fetch(`${url}?v=${Math.round(file.mtime)}`, { signal: controller.signal })
-      .then((response) => (response.ok ? response.text() : null))
-      .then((html) => {
-        if (cancelled || html === null) return;
-        const nextSrcDoc = buildSrcdoc(html, { baseHref: projectRawUrl(projectId, baseDirForFile(file.name)) });
-        if (!cancelled) setSrcDoc(nextSrcDoc);
-      })
-      .catch((err) => {
-        if (err instanceof DOMException && err.name === 'AbortError') return;
-        if (!cancelled) setSrcDoc(null);
-      });
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, [file.mtime, file.name, projectId, tooLargeForThumbnail, url]);
-
-  if (tooLargeForThumbnail || srcDoc === null) {
-    return <FilePreviewPlaceholder file={file} title={t('designFiles.previewOpen')} />;
-  }
-
-  return (
-    <iframe
-      title={file.name}
-      srcDoc={srcDoc}
-      sandbox="allow-scripts allow-downloads"
-      loading="lazy"
-    />
-  );
-}
-
 // Pages are laid out at a desktop-ish width and scaled down to the card, so
 // the thumbnail reads as a zoomed-out page preview instead of the page's
 // narrow mobile layout cropped to the card's top-left corner.
@@ -1765,9 +1562,8 @@ const PAGE_THUMB_LAYOUT_WIDTH = 1200;
 // Matches the card thumb's 16/9 aspect-ratio box.
 const PAGE_THUMB_LAYOUT_HEIGHT = Math.round(PAGE_THUMB_LAYOUT_WIDTH * (9 / 16));
 
-// Card-grid variant of the HTML thumbnail. Same srcdoc pipeline as the
-// preview pane's HtmlPreviewThumbnail (fetch + buildSrcdoc, guarded by the
-// inline size cap), plus the #5517 reference's fixed-layout iframe scaled to
+// The HTML page thumbnail: fetch + buildSrcdoc (guarded by the inline size
+// cap), rendered through the #5517 reference's fixed-layout iframe scaled to
 // the card width. While no srcdoc is available (too large, still fetching, or
 // fetch failed) the glyph placeholder shows instead of URL-loading the iframe.
 function HtmlCardThumbnail({

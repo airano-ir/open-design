@@ -1112,14 +1112,14 @@ test('[P1] home session mode toggle switches Ask planning prompts away from desi
   await routeRunsAccepted(page);
   await gotoEntryHome(page);
 
-  const modeTrigger = page.getByTestId('session-mode-trigger');
-  await expect(modeTrigger).toContainText('Design');
+  const modeTrigger = page.getByTestId('composer-mode-trigger');
+  // Design is the app default, so the picker starts on its neutral trigger.
+  await expect(modeTrigger).toHaveAttribute('aria-label', 'Choose a mode');
   await modeTrigger.click();
-  await expect(page.getByRole('menuitemradio', { name: 'Design mode' })).toHaveAttribute('aria-checked', 'true');
-  await page.getByRole('menuitemradio', { name: 'Ask mode' }).hover();
+  // Every mode description is always visible in the open menu (no hover card).
   await expect(page.getByText(/planning, and discussion/i)).toBeVisible();
 
-  await page.getByRole('menuitemradio', { name: 'Ask mode' }).click();
+  await page.getByTestId('composer-mode-menu-chat').click();
   await expect(modeTrigger).toContainText('Ask');
   await page.getByTestId('home-hero-input').fill('Help me plan the IA before designing screens.');
 
@@ -1136,7 +1136,7 @@ test('[P1] home session mode toggle switches Ask planning prompts away from desi
   expect(askBody.pluginId ?? null).toBeNull();
 
   await gotoEntryHome(page);
-  await expect(page.getByTestId('session-mode-trigger')).toContainText('Design');
+  await expect(page.getByTestId('composer-mode-trigger')).toHaveAttribute('aria-label', 'Choose a mode');
   await page.getByTestId('home-hero-input').fill('Design the screens from this brief.');
 
   const designRequestPromise = page.waitForRequest((request) =>

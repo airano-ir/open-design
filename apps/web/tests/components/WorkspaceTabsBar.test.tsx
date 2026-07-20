@@ -146,9 +146,12 @@ describe('WorkspaceTabsBar navigation semantics', () => {
 
     expect(screen.getAllByRole('tab')).toHaveLength(1);
 
-    // Clicking 'New tab' when a Home tab already exists should activate the existing Home tab
-    fireEvent.click(screen.getByRole('button', { name: 'New tab' }));
-    fireEvent.click(screen.getByRole('button', { name: 'New tab' }));
+    // Asking for a new tab when a Home tab already exists should activate the
+    // existing Home tab. #5517 removed the top-right "+" button, so ⌘/Ctrl+T is
+    // now the only entry point — both used to funnel through createNewTab(), so
+    // the shortcut exercises the same singleton logic the "+" click did.
+    fireEvent.keyDown(document, { key: 't', metaKey: true });
+    fireEvent.keyDown(document, { key: 't', metaKey: true });
 
     await waitFor(() => {
       expect(screen.getAllByRole('tab')).toHaveLength(1);
@@ -259,21 +262,25 @@ describe('WorkspaceTabsBar navigation semantics', () => {
     });
   });
 
-  it('closes the Search tabs popover when the route flips to onboarding', async () => {
+  it('ships no tab-bar chrome buttons and no reachable Search tabs popover', async () => {
     const { rerender } = render(
       <WorkspaceTabsBar route={{ kind: 'home', view: 'home' }} projects={[project]} />,
     );
 
-    // Open the Search-tabs popover from the (non-onboarding) home view.
-    fireEvent.click(screen.getByRole('button', { name: 'Search tabs' }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { name: 'Search tabs' })).toBeTruthy();
-    });
+    // #5517 removed both top-right chrome buttons. The "+" was the radial
+    // template menu's only entry point and the magnifier was the Search-tabs
+    // popover's only entry point, so neither overlay can be opened any more.
+    // This is the regression guard for that removal: if a future change
+    // re-introduces either control it must be a deliberate decision that
+    // updates this test (and re-enables the popover-dismissal spec below).
+    expect(screen.queryByRole('button', { name: 'New tab' })).toBeNull();
+    expect(screen.queryByTestId('workspace-tabs-new-tab')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Search tabs' })).toBeNull();
+    expect(screen.queryByRole('dialog', { name: 'Search tabs' })).toBeNull();
 
-    // Onboarding hides the trigger button; the already-open popover must not
-    // survive the route transition (e.g. browser back/forward into
-    // /onboarding), or it floats over the first-run flow with no visible
-    // control to dismiss it.
+    // The popover must also stay absent across a route flip into /onboarding
+    // (e.g. browser back/forward, which bypasses activateTab/createNewTab).
+    // Nothing may float over the first-run flow with no control to dismiss it.
     rerender(
       <WorkspaceTabsBar route={{ kind: 'home', view: 'onboarding' }} projects={[project]} />,
     );
@@ -661,7 +668,17 @@ describe('WorkspaceTabsBar navigation semantics', () => {
     });
   });
 
-  it('dismisses tab search when a blank page area handles the mouse down', async () => {
+  // Blocked on a missing entry point, not obsolete. The Search-tabs popover,
+  // its capture-phase outside-click dismissal, and the Escape handler are all
+  // still implemented in WorkspaceTabsBar, but #5517 removed the magnifier
+  // button that was their only trigger — `setTabsMenuOpen` is now only ever
+  // called with `false`, so no user gesture can open the popover and this spec
+  // has no honest way to reach the state it asserts on. The body is kept intact
+  // (rather than deleted) so the invariant it guards — a blank area that calls
+  // stopPropagation() on mousedown must still dismiss the popover, which is why
+  // the listener is registered in the capture phase — comes back for free if an
+  // entry point is ever restored. Re-enable it together with that entry point.
+  it.skip('dismisses tab search when a blank page area handles the mouse down', async () => {
     const outsideArea = document.createElement('div');
     outsideArea.setAttribute('data-testid', 'blank-workspace-area');
     outsideArea.addEventListener('mousedown', (event) => event.stopPropagation());

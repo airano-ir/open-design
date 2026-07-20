@@ -304,21 +304,15 @@ describe("DesignFilesPanel selection", () => {
     expect(onDeleteFiles).toHaveBeenCalledWith(["file-1.html", "file-2.png"]);
   });
 
-  it("does not preview or open files from card controls", () => {
+  it("does not open files from card controls", () => {
     const files = generateFiles(1);
     const { container, onOpenFile } = renderPanel(files);
     const card = container.querySelector(".df-card")!;
 
     fireEvent.click(card.querySelector(".df-card-check")!);
-    expect(
-      container.querySelector('[data-testid="design-file-preview"]'),
-    ).toBeNull();
     expect(onOpenFile).not.toHaveBeenCalled();
 
     fireEvent.click(card.querySelector(".df-row-menu")!);
-    expect(
-      container.querySelector('[data-testid="design-file-preview"]'),
-    ).toBeNull();
     expect(onOpenFile).not.toHaveBeenCalled();
   });
 
@@ -350,9 +344,8 @@ describe("DesignFilesPanel selection", () => {
           "/tmp/open-design/projects/test-project/alpha.html",
         );
       });
-      expect(
-        container.querySelector('[data-testid="design-file-preview"]'),
-      ).toBeNull();
+      // The panel has no detail pane — copying a path never opens one.
+      expect(container.querySelector(".df-preview")).toBeNull();
     } finally {
       if (originalClipboard) {
         Object.defineProperty(navigator, "clipboard", originalClipboard);
@@ -362,39 +355,63 @@ describe("DesignFilesPanel selection", () => {
     }
   });
 
-  it("uses non-control card targets to preview and open", () => {
+  // #5517 contract: the card grid IS the preview surface, so one click on the
+  // thumb opens the page in a workspace tab. There is no detail pane and no
+  // double-click step.
+  it("opens the file from a single click on the card thumb", () => {
     const files = generateFiles(1);
     const { container, onOpenFile } = renderPanel(files);
     const card = container.querySelector(".df-card")!;
 
     fireEvent.click(card.querySelector(".df-card-thumb")!);
-    expect(
-      container.querySelector('[data-testid="design-file-preview"]')
-        ?.textContent,
-    ).toContain("file-1.html");
-
-    fireEvent.doubleClick(card.querySelector(".df-card-name-btn")!);
     expect(onOpenFile).toHaveBeenCalledWith("file-1.html");
-    onOpenFile.mockClear();
+    expect(container.querySelector(".df-preview")).toBeNull();
+  });
 
-    fireEvent.doubleClick(card.querySelector(".df-card-thumb")!);
+  it("opens the image from a single click on its masonry card", () => {
+    const { container, onOpenFile } = renderPanel([
+      file({ name: "shot.png", kind: "image", mime: "image/png" }),
+    ]);
+    clickTab("cat:image");
+
+    fireEvent.click(container.querySelector(".df-card--image .df-card-thumb")!);
+    expect(onOpenFile).toHaveBeenCalledWith("shot.png");
+    expect(container.querySelector(".df-preview")).toBeNull();
+  });
+
+  it("opens the file from a single click on a list row's name", () => {
+    const { container, onOpenFile } = renderPanel([
+      file({ name: "notes.txt", kind: "text", mime: "text/plain" }),
+    ]);
+
+    fireEvent.click(container.querySelector(".df-file-row .df-row-name-btn")!);
+    expect(onOpenFile).toHaveBeenCalledWith("notes.txt");
+    expect(container.querySelector(".df-preview")).toBeNull();
+  });
+
+  // The card's name button is the inline-rename entry point for editors, and
+  // stays a plain open target for read-only viewers (who have no rename path).
+  it("starts an inline rename from the card name for editors", () => {
+    const files = generateFiles(1);
+    const { container, onOpenFile } = renderPanel(files);
+
+    fireEvent.click(container.querySelector(".df-card-name-btn")!);
+    expect(container.querySelector(".df-rename-input")).toBeTruthy();
+    expect(onOpenFile).not.toHaveBeenCalled();
+  });
+
+  it("opens instead of renaming from the card name for read-only viewers", () => {
+    const files = generateFiles(1);
+    const { container, onOpenFile } = renderPanel(files, { viewerOnly: true });
+
+    fireEvent.click(container.querySelector(".df-card-name-btn")!);
+    expect(container.querySelector(".df-rename-input")).toBeNull();
     expect(onOpenFile).toHaveBeenCalledWith("file-1.html");
   });
 });
 
-describe("DesignFilesPanel preview", () => {
+describe("DesignFilesPanel page thumbnails", () => {
   afterEach(() => cleanup());
-
-  it("shows the file extension in the preview stats", () => {
-    const { container } = renderPanel([
-      file({ name: "chart.png", kind: "image", size: 4096 }),
-    ]);
-    fireEvent.click(container.querySelector(".df-card .df-card-thumb")!);
-
-    const stats =
-      container.querySelector(".df-preview-stats")?.textContent ?? "";
-    expect(stats).toContain("PNG");
-  });
 
   it("does not fetch or iframe large HTML files for the Design Files thumbnail", () => {
     const fetchMock = vi.fn();
@@ -408,12 +425,9 @@ describe("DesignFilesPanel preview", () => {
       }),
     ]);
 
-    fireEvent.click(container.querySelector(".df-card .df-card-name-btn")!);
-
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(container.querySelector(".df-preview-thumb iframe")).toBeNull();
-    // Neither the page card thumb nor the preview pane iframes the file; both
-    // fall back to the glyph placeholder.
+    // Over the inline cap the card thumb never URL-loads the iframe; it falls
+    // back to the glyph placeholder.
     expect(container.querySelector(".df-card-thumb iframe")).toBeNull();
     expect(container.querySelector(".df-preview-placeholder")?.textContent).toContain("⟨⟩");
   });
@@ -437,11 +451,8 @@ describe("DesignFilesPanel preview", () => {
       }),
     ]);
 
-    fireEvent.click(container.querySelector(".df-card .df-card-name-btn")!);
-
-    expect(container.querySelector(".df-preview-thumb iframe")).toBeNull();
     await waitFor(() => {
-      const iframe = container.querySelector<HTMLIFrameElement>(".df-preview-thumb iframe");
+      const iframe = container.querySelector<HTMLIFrameElement>(".df-card-thumb iframe");
       expect(iframe).toBeTruthy();
       expect(iframe?.getAttribute("src")).toBeNull();
       expect(iframe?.getAttribute("srcdoc") ?? iframe?.srcdoc ?? "").toContain("Small");
@@ -449,54 +460,6 @@ describe("DesignFilesPanel preview", () => {
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/projects/test-project/raw/small.html?v=1700000000000",
       expect.any(Object),
-    );
-  });
-
-  it("renders sketch files with the static sketch preview instead of a broken image", async () => {
-    const fetchMock = vi.fn(
-      async () =>
-        new Response(
-          JSON.stringify({
-            version: 1,
-            items: [
-              {
-                kind: "rect",
-                x: 20,
-                y: 16,
-                w: 120,
-                h: 72,
-                color: "#1c1b1a",
-                size: 2,
-              },
-            ],
-          }),
-          {
-            status: 200,
-            headers: { "Content-Type": "application/json; charset=utf-8" },
-          },
-        ),
-    );
-    vi.stubGlobal("fetch", fetchMock);
-
-    const sketchFile = file({
-      name: "board.sketch.json",
-      path: "board.sketch.json",
-      kind: "sketch",
-      mime: "application/json; charset=utf-8",
-    });
-    const { container } = renderPanel([sketchFile]);
-
-    fireEvent.click(container.querySelector(".df-file-row .df-row-name-btn")!);
-
-    await waitFor(() => {
-      expect(
-        container.querySelector('[data-testid="sketch-preview-svg"]'),
-      ).toBeTruthy();
-    });
-    expect(container.querySelector(".df-preview-thumb img")).toBeNull();
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/projects/test-project/raw/board.sketch.json",
-      { cache: "no-store" },
     );
   });
 });

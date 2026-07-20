@@ -1176,36 +1176,15 @@ export function WorkspaceTabsBar({ route, projects, onboardingCompleted = false 
             </div>
           );
         })}
-        <button
-          type="button"
-          className="workspace-tabs-new-btn od-tooltip"
-          onClick={openRadialMenu}
-          title="New tab"
-          data-tooltip="New tab"
-          data-tooltip-placement="bottom"
-          aria-label="New tab"
-          data-testid="workspace-tabs-new-tab"
-          disabled={onboardingActive}
-        >
-          <Icon name="plus" size={14} />
-        </button>
+        {/* #5517 drops the top-right "+" and the tab-search button. New tab
+            stays reachable through ⌘/Ctrl+T. Note what else goes with them:
+            "+" was the ONLY caller of openRadialMenu, and the search button
+            the only thing that set tabsMenuOpen true — so the radial template
+            menu and the search popover below are now unreachable. Their state
+            and markup are kept (as the reference keeps them) so restoring an
+            entry point is a one-line change, but nothing here opens them. */}
       </div>
       <div className="workspace-tabs-actions" ref={menuRef}>
-        {onboardingActive ? null : (
-        <button
-          type="button"
-          className={`workspace-tabs-icon-btn od-tooltip${tabsMenuOpen ? ' is-active' : ''}`}
-          onClick={() => setTabsMenuOpen((open) => !open)}
-          title="Search tabs"
-          data-tooltip="Search tabs"
-          data-tooltip-placement="bottom"
-          aria-label="Search tabs"
-          aria-haspopup="dialog"
-          aria-expanded={tabsMenuOpen}
-        >
-          <Icon name="search" size={15} />
-        </button>
-        )}
         {tabsMenuOpen && !onboardingActive && typeof document !== 'undefined'
           ? createPortal(
               <div

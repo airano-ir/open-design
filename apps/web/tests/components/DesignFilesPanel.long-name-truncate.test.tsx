@@ -13,8 +13,7 @@ import type { ProjectFile } from '../../src/types';
 // table truncates the name with the existing `text-overflow: ellipsis`
 // instead of growing the cell. The JSX fix adds `title={f.name}` so the
 // browser surfaces the full filename on hover even when the visible
-// text is truncated. (`<DfPreview>` already renders the full name with
-// `word-break: break-word` for users who open the preview pane.)
+// text is truncated — the panel has no detail pane to fall back on.
 //
 // jsdom does not measure layout, so the truncation itself can't be
 // asserted directly. These specs encode the contract: the rendered DOM

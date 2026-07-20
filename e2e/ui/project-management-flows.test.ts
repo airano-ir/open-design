@@ -1369,9 +1369,9 @@ test('[P1] project detail composer keeps the selected mode across consecutive tu
   await sendTurn('Plan the second pass without changing mode.');
 
   expect(runRequestBodies.map((body) => body.sessionMode)).toEqual(['plan', 'plan']);
-  await expect(page.getByTestId('chat-composer').getByTestId('session-mode-trigger')).toHaveAttribute(
+  await expect(page.getByTestId('chat-composer').getByTestId('composer-mode-trigger')).toHaveAttribute(
     'aria-label',
-    'Plan mode',
+    'Mode: Plan',
   );
 });
 
@@ -1763,13 +1763,13 @@ test('[P1] project detail session mode switch carries Ask and Plan semantics int
   await createProject(page, 'Project session mode contract');
   await expectWorkspaceReady(page);
 
-  const modeTrigger = page.getByTestId('session-mode-trigger');
-  await expect(modeTrigger).toHaveAttribute('aria-label', 'Design mode');
-  await expect(modeTrigger).toContainText('Design');
+  const modeTrigger = page.getByTestId('composer-mode-trigger');
+  // Design is the app default, so the picker starts on its neutral trigger.
+  await expect(modeTrigger).toHaveAttribute('aria-label', 'Choose a mode');
 
   await modeTrigger.click();
-  await page.getByRole('menuitemradio', { name: 'Plan mode' }).click();
-  await expect(modeTrigger).toHaveAttribute('aria-label', 'Plan mode');
+  await page.getByTestId('composer-mode-menu-plan').click();
+  await expect(modeTrigger).toHaveAttribute('aria-label', 'Mode: Plan');
   await expect(modeTrigger).toContainText('Plan');
 
   await page.getByTestId('chat-composer-input').fill('Draft the plan before generating files.');
@@ -1782,8 +1782,8 @@ test('[P1] project detail session mode switch carries Ask and Plan semantics int
   await expect(page.getByTestId('msg-session-mode-chip').last()).toContainText('Plan');
 
   await modeTrigger.click();
-  await page.getByRole('menuitemradio', { name: 'Ask mode' }).click();
-  await expect(modeTrigger).toHaveAttribute('aria-label', 'Ask mode');
+  await page.getByTestId('composer-mode-menu-chat').click();
+  await expect(modeTrigger).toHaveAttribute('aria-label', 'Mode: Ask');
   await expect(modeTrigger).toContainText('Ask');
 
   await page.getByTestId('chat-composer-input').fill('Just answer this without creating files.');
@@ -1840,10 +1840,10 @@ test('[P1] project detail session mode and active file context survive reload in
   );
   await expect(tabBySuffix(page, uploadedName)).toHaveAttribute('aria-selected', 'true');
 
-  const modeTrigger = page.getByTestId('session-mode-trigger');
+  const modeTrigger = page.getByTestId('composer-mode-trigger');
   await modeTrigger.click();
-  await page.getByRole('menuitemradio', { name: 'Plan mode' }).click();
-  await expect(modeTrigger).toHaveAttribute('aria-label', 'Plan mode');
+  await page.getByTestId('composer-mode-menu-plan').click();
+  await expect(modeTrigger).toHaveAttribute('aria-label', 'Mode: Plan');
 
   await page.getByTestId('chat-composer-input').fill('Persist this file context through reload.');
   await Promise.all([
@@ -3166,17 +3166,20 @@ async function openComposerAgentMenu(page: Page): Promise<{
 }
 
 async function selectComposerSessionMode(page: Page, modeTitle: 'Ask mode' | 'Plan mode' | 'Design mode') {
-  const trigger = page.getByTestId('chat-composer').getByTestId('session-mode-trigger');
+  // #5517 composer mode picker: Ask maps to the real `chat` session mode.
+  const modeId = modeTitle === 'Ask mode' ? 'chat' : modeTitle === 'Plan mode' ? 'plan' : 'design';
+  const modeName = modeTitle.replace(' mode', '');
+  const trigger = page.getByTestId('chat-composer').getByTestId('composer-mode-trigger');
   await expect(trigger).toBeVisible();
   await trigger.click();
 
-  const menu = page.locator('.session-mode-toggle__menu[role="menu"]');
+  const menu = page.getByTestId('composer-mode-menu');
   await expect(menu).toBeVisible();
-  await expect(menu.getByRole('menuitemradio', { name: 'Ask mode' })).toBeVisible();
-  await expect(menu.getByRole('menuitemradio', { name: 'Plan mode' })).toBeVisible();
-  await expect(menu.getByRole('menuitemradio', { name: 'Design mode' })).toBeVisible();
-  await menu.getByRole('menuitemradio', { name: modeTitle }).click();
-  await expect(trigger).toHaveAttribute('aria-label', modeTitle);
+  await expect(menu.getByTestId('composer-mode-menu-chat')).toBeVisible();
+  await expect(menu.getByTestId('composer-mode-menu-plan')).toBeVisible();
+  await expect(menu.getByTestId('composer-mode-menu-design')).toBeVisible();
+  await menu.getByTestId(`composer-mode-menu-${modeId}`).click();
+  await expect(trigger).toHaveAttribute('aria-label', `Mode: ${modeName}`);
 }
 
 async function routeComposerPlusFixtures(page: Page) {

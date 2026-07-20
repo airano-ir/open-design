@@ -740,8 +740,8 @@ describe('FileWorkspace upload input', () => {
       />,
     );
 
-    fireEvent.click(screen.getByTestId('workspace-pages-menu-trigger'));
-    fireEvent.click(screen.getByRole('menuitem', { name: /New blank page/i }));
+    fireEvent.click(screen.getByTestId('workspace-add-tab'));
+    fireEvent.click(screen.getByRole('button', { name: /New blank page/i }));
     const title = await screen.findByText('Clean Deck');
     const card = title.closest('article');
     expect(card).not.toBeNull();
@@ -826,8 +826,8 @@ describe('FileWorkspace upload input', () => {
       </I18nProvider>,
     );
 
-    fireEvent.click(screen.getByTestId('workspace-pages-menu-trigger'));
-    fireEvent.click(screen.getByRole('menuitem', { name: /新建空白页面/ }));
+    fireEvent.click(screen.getByTestId('workspace-add-tab'));
+    fireEvent.click(screen.getByRole('button', { name: /新建空白页面/ }));
 
     const dialog = await screen.findByRole('dialog', { name: '新建页面' });
     const dialogScope = within(dialog);
@@ -875,8 +875,8 @@ describe('FileWorkspace upload input', () => {
       />,
     );
 
-    fireEvent.click(screen.getByTestId('workspace-pages-menu-trigger'));
-    fireEvent.click(screen.getByRole('menuitem', { name: /New blank page/i }));
+    fireEvent.click(screen.getByTestId('workspace-add-tab'));
+    fireEvent.click(screen.getByRole('button', { name: /New blank page/i }));
 
     const dialog = await screen.findByRole('dialog', { name: 'Create page' });
     const dialogScope = within(dialog);
@@ -886,8 +886,9 @@ describe('FileWorkspace upload input', () => {
     expect(dialogScope.queryByRole('button', { name: /^Audio\b/i })).toBeNull();
   });
 
-  it('hides upload failure details during in-panel preview and restores them after closing preview', async () => {
+  it('reports an upload failure until dismissed, and opens a file on a single card click', async () => {
     mockedUploadProjectFiles.mockRejectedValueOnce(new Error('storage offline'));
+    const onTabsStateChange = vi.fn();
 
     render(
       <FileWorkspace
@@ -898,7 +899,7 @@ describe('FileWorkspace upload input', () => {
         onRefreshFiles={vi.fn()}
         isDeck={false}
         tabsState={{ tabs: [], active: null }}
-        onTabsStateChange={vi.fn()}
+        onTabsStateChange={onTabsStateChange}
       />,
     );
 
@@ -912,26 +913,21 @@ describe('FileWorkspace upload input', () => {
       );
     });
 
-    // Images render as masonry cards; the thumb is the single-click preview target.
+    fireEvent.click(screen.getByTestId('upload-error-dismiss'));
+    expect(screen.queryByTestId('upload-error-banner')).toBeNull();
+
+    // Images render as masonry cards; a single click on the thumb opens the
+    // file in a workspace tab (there is no in-panel preview pane to land in).
     const row = screen.getByTestId('design-file-row-mock.png');
     const thumbButton = row.querySelector<HTMLButtonElement>('.df-card-thumb');
     if (!thumbButton) throw new Error('Could not find file thumb button');
     fireEvent.click(thumbButton);
 
-    expect(screen.getByTestId('design-file-preview')).toBeTruthy();
-    expect(screen.queryByTestId('upload-error-banner')).toBeNull();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Close preview' }));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('upload-error-banner').textContent).toContain(
-        'storage offline',
-      );
-    });
-
-    fireEvent.click(screen.getByTestId('upload-error-dismiss'));
-
-    expect(screen.queryByTestId('upload-error-banner')).toBeNull();
+    await waitFor(() =>
+      expect(onTabsStateChange).toHaveBeenCalledWith(
+        expect.objectContaining({ active: 'mock.png' }),
+      ),
+    );
   });
 
   it('keeps partial upload failures visible after a successful file opens', async () => {
@@ -1255,7 +1251,7 @@ describe('FileWorkspace upload input', () => {
 
     expect(markup).toContain('class="ws-tabs-bar"');
     expect(markup).toMatch(
-      /role="tablist"[\s\S]*data-testid="workspace-pages-menu-trigger"[\s\S]*artifact\.html/,
+      /role="tablist"[\s\S]*data-testid="design-files-tab"[\s\S]*artifact\.html/,
     );
   });
 
@@ -1391,8 +1387,15 @@ describe('FileWorkspace launcher tab creation', () => {
       />,
     );
 
-    expect(screen.getByTestId('workspace-pages-menu-trigger').textContent).toContain('Pages');
-    expect(renderedTabLabels()).toEqual(['Browser', 'New Terminal', 'Side chat']);
+    expect(screen.getByTestId('design-files-tab').textContent).toContain('Design Files');
+    // Design Files is a plain tab in the strip (role="tab"), so it is part of
+    // the rendered tab list rather than a dropdown trigger sitting outside it.
+    expect(renderedTabLabels()).toEqual([
+      'Design Files',
+      'Browser',
+      'New Terminal',
+      'Side chat',
+    ]);
   });
 
   it('opens Design Files from the browser snapshot toast action instead of the manifest file', async () => {

@@ -1044,7 +1044,7 @@ function relativeTime(ts: number, t: ReturnType<typeof useT>): string {
   return new Date(ts).toLocaleDateString();
 }
 
-function projectCover(
+export function projectCover(
   project: Project,
   override: { kind: 'html' | 'image' | 'video' | 'logo'; name: string } | null,
 ): {
@@ -1091,9 +1091,9 @@ function filterKindForProject(project: Project): ProjectKindFilter {
   return 'other';
 }
 
-type ProjectCategory = 'prototype' | 'live-artifact' | 'slide' | 'media' | 'brand';
+export type ProjectCategory = 'prototype' | 'live-artifact' | 'slide' | 'media' | 'brand';
 
-function projectCategory(project: Project): ProjectCategory {
+export function projectCategory(project: Project): ProjectCategory {
   const meta = project.metadata;
   if (meta?.intent === 'live-artifact' || project.skillId === 'live-artifact') {
     return 'live-artifact';
@@ -1106,7 +1106,7 @@ function projectCategory(project: Project): ProjectCategory {
   return 'prototype';
 }
 
-function ProjectTag({ category }: { category: ProjectCategory }) {
+export function ProjectTag({ category }: { category: ProjectCategory }) {
   const t = useT();
   const label =
     category === 'live-artifact'

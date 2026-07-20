@@ -41,6 +41,13 @@ export interface LauncherContext {
    * round-trip — so it returns void and creates/focuses the tab itself.
    */
   createBrowser?: () => void;
+  /**
+   * Open the page creator (`PageCreatorDialog`), which is where a blank page is
+   * actually written. The "+" launcher is the single entry point for creating a
+   * page: the tab strip's Design Files entry is a plain tab with no dropdown of
+   * its own.
+   */
+  createPage?: () => void;
   /** Create a new sketch in the current Design Files directory. */
   createSketch?: () => void;
   /** Create a new Markdown document in the current Design Files directory. */
@@ -74,6 +81,17 @@ const ENABLE_TERMINAL_WORKSPACE_ENTRYPOINT = false;
  */
 export function buildLauncherActions(ctx: LauncherContext): LauncherAction[] {
   const actions: LauncherAction[] = [];
+  if (ctx.createPage) {
+    actions.push({
+      id: 'new-page',
+      iconName: 'file-text',
+      labelKey: 'workspace.newBlankPage',
+      // The dialog does the creating; this action only opens it.
+      run: (runCtx) => {
+        runCtx.createPage?.();
+      },
+    });
+  }
   if (ENABLE_TERMINAL_WORKSPACE_ENTRYPOINT && ctx.createTerminal) {
     actions.push({
       id: 'new-terminal',

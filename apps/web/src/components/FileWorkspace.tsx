@@ -242,8 +242,6 @@ interface Props {
   ) => Promise<{ message?: string; url?: string } | void> | { message?: string; url?: string } | void;
   activePluginActionPaths?: Set<string>;
   hiddenPluginActionPaths?: Set<string>;
-  preferredPreviewFile?: string | null;
-  autoPreviewDesignArtifacts?: boolean;
   focusMode?: boolean;
   onFocusModeChange?: (next: boolean) => void;
   designSystemProject?: DesignSystemSummary | null;
@@ -1026,9 +1024,6 @@ const PROJECT_PAGE_PRESETS: ProjectPagePreset[] = [
   ...BLANK_PAGE_PRESETS,
   ...COMMUNITY_PAGE_PRESETS,
 ];
-const PROJECT_PAGE_PRESET_FILE_BASE_NAMES = new Set(
-  PROJECT_PAGE_PRESETS.map((preset) => preset.fileBaseName.toLowerCase()),
-);
 const PROJECT_PAGE_CATEGORY_ORDER: ProjectPageCategoryId[] = [
   'prototype',
   'liveArtifact',
@@ -1287,8 +1282,6 @@ export function FileWorkspace({
   onPluginFolderAgentAction,
   activePluginActionPaths,
   hiddenPluginActionPaths,
-  preferredPreviewFile = null,
-  autoPreviewDesignArtifacts = false,
   focusMode = false,
   onFocusModeChange,
   designSystemProject = null,
@@ -1429,7 +1422,6 @@ export function FileWorkspace({
   const [projectShareAccess, setProjectShareAccess] = useState<'private' | 'workspace'>('private');
   const [projectShareAccessMenuOpen, setProjectShareAccessMenuOpen] = useState(false);
   const [projectShareBusy, setProjectShareBusy] = useState(false);
-  const [pagesMenuOpen, setPagesMenuOpen] = useState(false);
   const [pageCreatorOpen, setPageCreatorOpen] = useState(false);
   const [pageCreatorQuery, setPageCreatorQuery] = useState('');
   const [pageCreatorCategory, setPageCreatorCategory] =
@@ -1438,11 +1430,6 @@ export function FileWorkspace({
     useState<ProjectPagePresetId>(() => defaultPagePresetId(projectKind));
   const [pageCreating, setPageCreating] = useState(false);
   const [communityPluginPresets, setCommunityPluginPresets] = useState<ProjectPagePreset[]>([]);
-  const [pagesMenuPosition, setPagesMenuPosition] = useState<{
-    top: number;
-    left: number;
-    width: number;
-  } | null>(null);
   // Transient feedback when a launcher "create" action (e.g. New Terminal)
   // fails on the daemon side, so the click is never a silent no-op.
   const [launcherToast, setLauncherToast] = useState<string | null>(null);
@@ -1456,9 +1443,6 @@ export function FileWorkspace({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const launcherBtnRef = useRef<HTMLButtonElement | null>(null);
   const projectShareRef = useRef<HTMLDivElement | null>(null);
-  const pagesMenuRef = useRef<HTMLDivElement | null>(null);
-  const pagesMenuButtonRef = useRef<HTMLButtonElement | null>(null);
-  const pagesMenuFloatingRef = useRef<HTMLDivElement | null>(null);
   const tabsBarRef = useRef<HTMLDivElement | null>(null);
   const draggedTabNameRef = useRef<string | null>(null);
   const browserTabSequenceRef = useRef(0);
@@ -1522,35 +1506,6 @@ export function FileWorkspace({
     ],
     [communityPluginPresets],
   );
-  const pagePresetBaseNames = useMemo(
-    () => pagePresetFileBaseNameSet(projectPagePresets, t, locale),
-    [locale, projectPagePresets, t],
-  );
-  const pageFileNames = useMemo(() => new Set(persistedTabs), [persistedTabs]);
-  const pageFiles = useMemo(
-    () => visibleFiles
-      .filter((file) => isProjectPageFile(file, pageFileNames, pagePresetBaseNames))
-      .sort((a, b) => b.mtime - a.mtime || a.name.localeCompare(b.name)),
-    [pageFileNames, pagePresetBaseNames, visibleFiles],
-  );
-
-  const updatePagesMenuPosition = useCallback(() => {
-    const button = pagesMenuButtonRef.current;
-    if (!button || typeof window === 'undefined') return;
-    const rect = button.getBoundingClientRect();
-    const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 1024;
-    const menuWidth = Math.min(280, Math.max(180, viewportWidth - 36));
-    const left = Math.min(
-      Math.max(18, rect.left),
-      Math.max(18, viewportWidth - menuWidth - 18),
-    );
-    setPagesMenuPosition({
-      top: rect.bottom + 7,
-      left,
-      width: menuWidth,
-    });
-  }, []);
-
   const sketchFiles = useMemo(
     () => visibleFiles.filter((file) => isSketchName(file.name)),
     [visibleFiles],
@@ -1957,30 +1912,6 @@ export function FileWorkspace({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [browserOpenRequest]);
 
-  useEffect(() => {
-    if (!pagesMenuOpen) return;
-    updatePagesMenuPosition();
-    function handlePointerDown(event: PointerEvent) {
-      const target = event.target;
-      if (target instanceof Node && pagesMenuRef.current?.contains(target)) return;
-      if (target instanceof Node && pagesMenuFloatingRef.current?.contains(target)) return;
-      setPagesMenuOpen(false);
-    }
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') setPagesMenuOpen(false);
-    }
-    document.addEventListener('pointerdown', handlePointerDown);
-    document.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('resize', updatePagesMenuPosition);
-    window.addEventListener('scroll', updatePagesMenuPosition, true);
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown);
-      document.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('resize', updatePagesMenuPosition);
-      window.removeEventListener('scroll', updatePagesMenuPosition, true);
-    };
-  }, [pagesMenuOpen, updatePagesMenuPosition]);
-
   // Share request: ensure the target file is open + active so the FileViewer
   // below receives the matching `shareRequest` and opens its Share menu.
   useEffect(() => {
@@ -2381,15 +2312,15 @@ export function FileWorkspace({
     if (!tabBar) return;
     const el = tabBar.querySelector<HTMLElement>('.ws-tab.active');
     if (!el) return;
-    // The Pages switcher is sticky-pinned to the scrollport's left
+    // The Design Files tab is sticky-pinned to the scrollport's left
     // edge, so a naive scrollIntoView
     // with inline: 'nearest' would slide a leftward-jumped active tab
     // flush with that edge and leave it hidden underneath the sticky
-    // panel. Compute scrollLeft manually instead, treating the sticky
-    // switcher's right edge as the effective visible-left boundary.
+    // tab. Compute scrollLeft manually instead, treating the sticky
+    // tab's right edge as the effective visible-left boundary.
     const tabRect = el.getBoundingClientRect();
     const barRect = tabBar.getBoundingClientRect();
-    const stickyEl = tabBar.querySelector<HTMLElement>('.ws-pages-menu-anchor');
+    const stickyEl = tabBar.querySelector<HTMLElement>('.ws-tab.design-files-tab');
     const stickyWidth = stickyEl ? stickyEl.getBoundingClientRect().width : 0;
     const visibleLeft = barRect.left + stickyWidth;
     const visibleRight = barRect.right;
@@ -2665,7 +2596,6 @@ export function FileWorkspace({
         return;
       }
       setPageCreatorOpen(false);
-      setPagesMenuOpen(false);
       setPageCreatorQuery('');
       setPageCreatorCategory('slides');
       await onRefreshFiles();
@@ -3446,6 +3376,10 @@ export function FileWorkspace({
     // Browser is owned by this branch's DesignBrowserPanel: spin up a browser
     // tab synchronously (no daemon round-trip) and let the launcher close.
     createBrowser: () => openBrowserTab(),
+    // "New blank page" lives in the "+" launcher: the tab strip's Design Files
+    // entry is a plain tab, so this is the only entry point to the page
+    // creator. The dialog itself still owns the actual write (createBlankPage).
+    createPage: () => setPageCreatorOpen(true),
     createSketch: () => void startNewSketch(),
     createDocument: () => void createMarkdownDocument(),
     uploadDesignFiles: () => fileInputRef.current?.click(),
@@ -3464,77 +3398,6 @@ export function FileWorkspace({
   };
   // A read-only viewer gets no launcher edit actions (new file, import, etc.).
   const launcherActions = viewerOnly ? [] : buildLauncherActions(launcherContext);
-  const activePageFile = activeFile && isProjectPageFile(activeFile, pageFileNames, pagePresetBaseNames) ? activeFile : null;
-  const pagesButtonLabel = activePageFile
-    ? pageDisplayName(activePageFile.name)
-    : activeTab === DESIGN_FILES_TAB
-      ? t('workspace.designFiles')
-    : t('workspace.pages');
-  const pagesMenuNode =
-    pagesMenuOpen && pagesMenuPosition && typeof document !== 'undefined'
-      ? createPortal(
-          <div
-            ref={pagesMenuFloatingRef}
-            className="ws-pages-menu"
-            role="menu"
-            data-testid="workspace-pages-menu"
-            style={{
-              top: pagesMenuPosition.top,
-              left: pagesMenuPosition.left,
-              width: pagesMenuPosition.width,
-            }}
-          >
-            <button
-              type="button"
-              role="menuitem"
-              className="ws-pages-menu-new"
-              onClick={() => {
-                setPagesMenuOpen(false);
-                setPageCreatorOpen(true);
-              }}
-            >
-              <Icon name="plus" size={13} />
-              <span>{t('workspace.newBlankPage')}</span>
-            </button>
-            <div className="ws-pages-menu-section" aria-label={t('workspace.pages')}>
-              {pageFiles.length === 0 ? (
-                <div className="ws-pages-menu-empty">{t('workspace.noPagesYet')}</div>
-              ) : (
-                pageFiles.map((file) => (
-                  <button
-                    key={file.name}
-                    type="button"
-                    role="menuitem"
-                    className={activeTab === file.name ? 'active' : ''}
-                    onClick={() => {
-                      openFile(file.name);
-                      setPagesMenuOpen(false);
-                    }}
-                    title={file.name}
-                  >
-                    <Icon name={pageIconName(file.name)} size={13} />
-                    <span className="ws-pages-menu-name">{pageDisplayName(file.name)}</span>
-                  </button>
-                ))
-              )}
-            </div>
-            <button
-              type="button"
-              role="menuitem"
-              className="ws-pages-menu-files"
-              onClick={() => {
-                setPersistedActive(DESIGN_FILES_TAB);
-                setPagesMenuOpen(false);
-              }}
-            >
-              <Icon name="folder" size={13} />
-              <span>{t('workspace.designFiles')}</span>
-            </button>
-          </div>,
-          document.body,
-        )
-      : null;
-
   async function setProjectWorkspaceShareAccess(nextAccess: 'private' | 'workspace') {
     setProjectShareAccessMenuOpen(false);
     if (nextAccess === projectShareAccess || projectShareBusy || viewerOnly) return;
@@ -3632,27 +3495,21 @@ export function FileWorkspace({
               <span className="ws-tab-label">{t('dsManager.tabDesignSystem')}</span>
             </button>
           ) : null}
-          <div className="ws-pages-menu-anchor" ref={pagesMenuRef} role="presentation">
-            <button
-              ref={pagesMenuButtonRef}
-              type="button"
-              className={`ws-tab pages-tab ${activePageFile || activeTab === DESIGN_FILES_TAB ? 'active' : ''}`}
-              aria-haspopup="menu"
-              aria-expanded={pagesMenuOpen}
-              data-testid="workspace-pages-menu-trigger"
-              onClick={() => {
-                if (!pagesMenuOpen) updatePagesMenuPosition();
-                setPagesMenuOpen((open) => !open);
-              }}
-              title={t('workspace.pages')}
-            >
-              <span className="tab-icon" aria-hidden>
-                <Icon name="file-text" size={13} />
-              </span>
-              <span className="ws-tab-label">{pagesButtonLabel}</span>
-              <Icon name="chevron-down" size={12} />
-            </button>
-          </div>
+          <button
+            type="button"
+            className={`ws-tab design-files-tab ${activeTab === DESIGN_FILES_TAB ? 'active' : ''}`}
+            role="tab"
+            aria-selected={activeTab === DESIGN_FILES_TAB}
+            tabIndex={0}
+            data-testid="design-files-tab"
+            onClick={() => setPersistedActive(DESIGN_FILES_TAB)}
+            title={t('workspace.designFiles')}
+          >
+            <span className="tab-icon" aria-hidden>
+              <Icon name="grid" size={14} />
+            </span>
+            <span className="ws-tab-label">{t('workspace.designFiles')}</span>
+          </button>
           {showQuestionsTab ? (
             <button
               type="button"
@@ -3749,7 +3606,6 @@ export function FileWorkspace({
             );
           })}
         </div>
-        {pagesMenuNode}
         <div className="ws-add-tab">
           <button
             ref={launcherBtnRef}
@@ -4144,8 +4000,6 @@ export function FileWorkspace({
             }}
             uploadError={uploadError}
             onClearUploadError={() => setUploadError(null)}
-            preferredPreviewFile={preferredPreviewFile}
-            autoPreviewDesignArtifacts={autoPreviewDesignArtifacts}
             onPluginFolderAgentAction={onPluginFolderAgentAction}
             activePluginActionPaths={activePluginActionPaths}
             hiddenPluginActionPaths={hiddenPluginActionPaths}
@@ -6510,19 +6364,6 @@ function pagePresetVersionPrompt(
   return fallbackPrompt || null;
 }
 
-function pagePresetFileBaseNameSet(
-  presets: ProjectPagePreset[],
-  t: TranslateFn,
-  locale: Locale,
-): Set<string> {
-  return new Set(
-    presets.flatMap((preset) => [
-      preset.fileBaseName.toLowerCase(),
-      pagePresetFileBaseName(preset, t, locale).toLowerCase(),
-    ]),
-  );
-}
-
 async function contentForPagePreset(
   target: string,
   preset: ProjectPagePreset,
@@ -6540,35 +6381,6 @@ async function contentForPagePreset(
     }
   }
   return removeSpeakerNotesFromHtml(html ?? initialHtmlPage(target, preset, t, locale));
-}
-
-function isProjectPageFile(
-  file: ProjectFile,
-  pageFileNames: Set<string>,
-  pagePresetBaseNames: Set<string> = PROJECT_PAGE_PRESET_FILE_BASE_NAMES,
-): boolean {
-  return (
-    file.kind === 'html'
-    && !isLiveArtifactImplementationPath(file.name)
-    && (
-      pageFileNames.has(file.name)
-      || isLikelyPrimaryPageFileName(file.name, pagePresetBaseNames)
-    )
-  );
-}
-
-function isLikelyPrimaryPageFileName(
-  name: string,
-  pagePresetBaseNames: Set<string> = PROJECT_PAGE_PRESET_FILE_BASE_NAMES,
-): boolean {
-  const normalized = normalizeProjectFilePath(name).toLowerCase();
-  const basename = normalized.split('/').filter(Boolean).pop() ?? normalized;
-  if (!/\.html?$/i.test(basename)) return false;
-  if (basename === 'index.html') return true;
-  const stem = basename.replace(/\.html?$/i, '');
-  const baseStem = stem.replace(/-\d+$/i, '');
-  if (pagePresetBaseNames.has(baseStem)) return true;
-  return /^(page|prototype|wireframe|mobile-app|mobile|slides?|deck|presentation|document|resume|image-board|video-storyboard|hyperframes|audio-brief|live-artifact)(-\d+)?$/i.test(stem);
 }
 
 function isPrimaryWorkspaceTab(
@@ -6598,10 +6410,6 @@ function isPrimaryWorkspaceTab(
 function pageDisplayName(name: string): string {
   const basename = normalizeProjectFilePath(name).split('/').filter(Boolean).pop() ?? name;
   return basename.replace(/\.html?$/i, '').replace(/[-_]+/g, ' ').trim() || basename;
-}
-
-function pageIconName(name: string): IconName {
-  return /\b(deck|slide|slides|pitch|presentation)\b/i.test(name) ? 'present' : 'file-text';
 }
 
 function nextHtmlPagePath(files: ProjectFile[], baseName: string): string {
