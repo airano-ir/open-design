@@ -308,6 +308,7 @@ async function suggestConnectorMemories(
 
 function describeConnectorReadIssue(
   result: ConnectorMemorySuggestionResponse,
+  t: Translate,
 ): string | null {
   const failed = result.connectors.filter((connector) => connector.status === 'failed');
   const skipped = result.connectors.filter((connector) => connector.status === 'skipped');
@@ -322,9 +323,9 @@ function describeConnectorReadIssue(
   const suffix = reason ? ` ${reason}` : '';
 
   if (failed.length > 0) {
-    return `Couldn't read ${connectorName}.${suffix}`;
+    return `${t('memory.connectorReadFailed', { name: connectorName })}${suffix}`;
   }
-  return `No readable content from ${connectorName}.${suffix}`;
+  return `${t('memory.connectorNoReadableContent', { name: connectorName })}${suffix}`;
 }
 
 interface FriendlyExtractionFailure {
@@ -333,10 +334,13 @@ interface FriendlyExtractionFailure {
   action?: string;
 }
 
-function providerDisplayName(provider: MemoryExtractionRecord['provider'] | undefined): string {
+function providerDisplayName(
+  provider: MemoryExtractionRecord['provider'] | undefined,
+  t: Translate,
+): string {
   if (provider?.credentialSource === 'chat-cli') {
     if (provider.kind === 'anthropic') return 'Claude Code';
-    return 'Local CLI';
+    return t('memory.providerLocalCli');
   }
   switch (provider?.kind) {
     case 'anthropic':
@@ -350,7 +354,7 @@ function providerDisplayName(provider: MemoryExtractionRecord['provider'] | unde
     case 'openai':
       return 'OpenAI';
     default:
-      return 'Memory model';
+      return t('memory.providerFallbackName');
   }
 }
 
@@ -385,59 +389,62 @@ function parseProviderError(raw: string): { message: string; code: string; statu
   };
 }
 
-function describeExtractionFailure(record: MemoryExtractionRecord): FriendlyExtractionFailure | null {
+function describeExtractionFailure(
+  record: MemoryExtractionRecord,
+  t: Translate,
+): FriendlyExtractionFailure | null {
   if (record.phase !== 'failed' || !record.error) return null;
-  const providerName = providerDisplayName(record.provider);
+  const providerName = providerDisplayName(record.provider, t);
   const usesChatCli = record.provider?.credentialSource === 'chat-cli';
   const parsed = parseProviderError(record.error);
   const haystack = `${parsed.message} ${parsed.code} ${record.error}`.toLowerCase();
   const source =
     record.kind === 'connector'
-      ? 'Connected apps were read, but OpenDesign could not turn that context into memory.'
-      : 'OpenDesign could not run memory extraction for this chat.';
+      ? t('memory.extractionSourceConnector')
+      : t('memory.extractionSourceChat');
 
   if (
     parsed.status === 401
     || /token[_ -]?expired|authentication token has expired|invalid[_ -]?api[_ -]?key|unauthorized/.test(haystack)
   ) {
     return {
-      title: `${providerName} authentication expired`,
+      title: t('memory.failureAuthExpiredTitle', { provider: providerName }),
       detail: source,
       action: usesChatCli
-        ? 'Sign in to the selected Local CLI or choose a different Memory model.'
-        : 'Update the Memory extraction model key or sign in again.',
+        ? t('memory.failureAuthActionCli')
+        : t('memory.failureAuthActionKey'),
     };
   }
 
   if (parsed.status === 429 || /rate limit|quota|too many requests|insufficient_quota/.test(haystack)) {
     return {
-      title: `${providerName} quota or rate limit hit`,
+      title: t('memory.failureQuotaTitle', { provider: providerName }),
       detail: source,
-      action: 'Try again later or switch the Memory extraction model.',
+      action: t('memory.failureQuotaAction'),
     };
   }
 
   if (/network|fetch failed|timeout|timed out|econnreset|enotfound/.test(haystack)) {
     return {
-      title: `${providerName} request failed`,
+      title: t('memory.failureRequestTitle', { provider: providerName }),
       detail: source,
       action: usesChatCli
-        ? 'Check the selected Local CLI and try again.'
-        : 'Check the model provider connection and try again.',
+        ? t('memory.failureRequestActionCli')
+        : t('memory.failureRequestActionProvider'),
     };
   }
 
   return {
-    title: 'Memory extraction failed',
+    title: t('memory.failureGenericTitle'),
     detail: parsed.message || source,
     action: usesChatCli
-      ? 'Try again after checking the selected Local CLI.'
-      : 'Try again after checking the Memory extraction model settings.',
+      ? t('memory.failureGenericActionCli')
+      : t('memory.failureGenericActionSettings'),
   };
 }
 
-function formatConnectorContextBytes(bytes: number): string {
-  if (!Number.isFinite(bytes) || bytes <= 0) return 'No data';
+function formatConnectorContextBytes(bytes: number, t: Translate): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) return t('memory.noData');
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(bytes < 10 * 1024 ? 1 : 0)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -449,11 +456,11 @@ function connectorAttemptName(attempt: ConnectorMemoryAttempt): string {
     || attempt.connectorId;
 }
 
-function connectorAttemptTitle(attempt: ConnectorMemoryAttempt): string {
+function connectorAttemptTitle(attempt: ConnectorMemoryAttempt, t: Translate): string {
   const connectorName = connectorAttemptName(attempt);
-  if (attempt.status === 'succeeded') return `Read ${connectorName}`;
-  if (attempt.status === 'failed') return `Could not read ${connectorName}`;
-  return `Skipped ${connectorName}`;
+  if (attempt.status === 'succeeded') return t('memory.attemptReadTitle', { name: connectorName });
+  if (attempt.status === 'failed') return t('memory.attemptFailedTitle', { name: connectorName });
+  return t('memory.attemptSkippedTitle', { name: connectorName });
 }
 
 function connectorAttemptDetail(attempt: ConnectorMemoryAttempt): string {
@@ -579,7 +586,7 @@ function describeRecord(
     const reason: MemoryExtractionSkipReason | undefined = record.reason;
     if (reason === 'no-provider') return t('settings.memoryExtractionSkipNoProvider');
     if (reason === 'memory-disabled') return t('settings.memoryExtractionSkipDisabled');
-    if (reason === 'chat-disabled') return 'Chat conversation learning is off.';
+    if (reason === 'chat-disabled') return t('memory.skipChatDisabled');
     if (reason === 'empty-message') return t('settings.memoryExtractionSkipEmpty');
     if (reason === 'no-match') return t('settings.memoryExtractionSkipNoMatch');
     return null;
@@ -592,7 +599,7 @@ function describeRecord(
     kind === 'heuristic'
       ? t('settings.memoryExtractionKindHeuristic')
       : kind === 'connector'
-        ? 'Connected apps'
+        ? t('memory.kindConnectedApps')
       : t('settings.memoryExtractionKindLlm');
   return { phaseLabel, reasonLabel, kindLabel, tone };
 }
@@ -640,13 +647,9 @@ function formatDuration(record: MemoryExtractionRecord): string | null {
   return `${Math.round(ms / 1000)}s`;
 }
 
-function formatRelativeTimeAgo(at: number, now: number): string {
+function formatRelativeTimeAgo(at: number, now: number, t: Translate): string {
   const relative = formatRelativeTime(at, now);
-  return relative === '0s' ? 'just now' : `${relative} ago`;
-}
-
-function memoryCountLabel(count: number): string {
-  return count === 1 ? 'memory' : 'memories';
+  return relative === '0s' ? t('common.justNow') : t('memory.timeAgo', { time: relative });
 }
 
 function extractionCardTitle(record: MemoryExtractionRecord, t: Translate): string {
@@ -655,20 +658,22 @@ function extractionCardTitle(record: MemoryExtractionRecord, t: Translate): stri
     return record.userMessagePreview || t('settings.memoryExtractions');
   }
 
-  if (record.phase === 'running') return 'Scanning connected apps';
-  if (record.phase === 'failed') return 'Connected app scan failed';
-  if (record.phase === 'skipped') return 'Connected app scan skipped';
+  if (record.phase === 'running') return t('memory.scanRunningTitle');
+  if (record.phase === 'failed') return t('memory.scanFailedTitle');
+  if (record.phase === 'skipped') return t('memory.scanSkippedTitle');
 
   if (record.phase === 'success') {
     const writtenCount =
       typeof record.writtenCount === 'number' ? record.writtenCount : null;
     if (writtenCount && writtenCount > 0) {
-      return `Saved ${writtenCount} ${memoryCountLabel(writtenCount)}`;
+      return writtenCount === 1
+        ? t('memory.scanSavedOne', { count: writtenCount })
+        : t('memory.scanSavedOther', { count: writtenCount });
     }
-    return 'No new memories found';
+    return t('memory.scanNoNewMemories');
   }
 
-  return 'Connected app scan';
+  return t('memory.scanTitle');
 }
 
 function extractionCardMeta(
@@ -677,21 +682,21 @@ function extractionCardMeta(
   t: Translate,
 ): string {
   const kind = record.kind ?? 'llm';
-  const age = formatRelativeTimeAgo(record.startedAt, now);
+  const age = formatRelativeTimeAgo(record.startedAt, now, t);
   if (kind === 'connector') {
-    if (record.phase === 'running') return 'Checking selected apps';
-    if (record.phase === 'failed') return `Needs attention · ${age}`;
-    if (record.phase === 'skipped') return `Skipped · ${age}`;
+    if (record.phase === 'running') return t('memory.scanMetaChecking');
+    if (record.phase === 'failed') return `${t('memory.scanMetaNeedsAttention')} · ${age}`;
+    if (record.phase === 'skipped') return `${t('settings.memoryExtractionPhaseSkipped')} · ${age}`;
     if (record.phase === 'success') {
       const writtenCount =
         typeof record.writtenCount === 'number' ? record.writtenCount : null;
       const result =
         writtenCount && writtenCount > 0
-          ? 'From connected apps'
-          : 'Checked selected apps';
+          ? t('memory.scanMetaFromConnectedApps')
+          : t('memory.scanMetaCheckedApps');
       return `${result} · ${age}`;
     }
-    return `Connected apps · ${age}`;
+    return `${t('memory.kindConnectedApps')} · ${age}`;
   }
 
   const duration = formatDuration(record);
@@ -1037,10 +1042,10 @@ export function MemorySection({
 	  );
 	  const connectedCount = connectedMemoryConnectors.length;
 	  const connectorScanLabel = connectorExtracting
-	    ? 'Scanning apps'
+	    ? t('memory.scanBusyLabel')
 	    : selectedConnectedConnectorIds.length === 0
-	      ? 'Select apps to scan'
-	      : 'Scan selected apps';
+	      ? t('memory.scanSelectPrompt')
+	      : t('memory.scanSelectedApps');
 	  const selectedConnectorSuggestions = useMemo(
 	    () => connectorSuggestions.filter((suggestion) => selectedSuggestionIds.has(suggestion.id)),
 	    [connectorSuggestions, selectedSuggestionIds],
@@ -1258,7 +1263,7 @@ export function MemorySection({
         chatModel,
       });
       if (!result) {
-        setConnectorError('Could not read connected apps. Try again from the Connectors tab.');
+        setConnectorError(t('memory.connectorReadFailedRetry'));
         return;
       }
       const latestExtractions = await reloadExtractions();
@@ -1269,7 +1274,7 @@ export function MemorySection({
           && record.startedAt >= startedAt - 5_000,
       );
       const friendlyFailure = latestFailure
-        ? describeExtractionFailure(latestFailure)
+        ? describeExtractionFailure(latestFailure, t)
         : null;
       setConnectorAttempts(result.connectors);
       setConnectorContextBytes(result.contextBytes);
@@ -1285,17 +1290,31 @@ export function MemorySection({
       } else if (result.suggestions.length > 0) {
         setConnectorSuggestions(result.suggestions);
         setSelectedSuggestionIds(new Set(result.suggestions.map((suggestion) => suggestion.id)));
+        const appsLabel =
+          succeeded === 1
+            ? t('memory.appCountOne', { count: succeeded })
+            : t('memory.appCountOther', { count: succeeded });
         setConnectorStatus(
-          `Found ${result.suggestions.length} suggested memor${result.suggestions.length === 1 ? 'y' : 'ies'} from ${succeeded} app${succeeded === 1 ? '' : 's'}. Review before saving.`,
+          result.suggestions.length === 1
+            ? t('memory.foundSuggestionsOne', {
+              count: result.suggestions.length,
+              apps: appsLabel,
+            })
+            : t('memory.foundSuggestionsOther', {
+              count: result.suggestions.length,
+              apps: appsLabel,
+            }),
         );
       } else if (!result.attemptedLLM) {
         setConnectorError(
-          describeConnectorReadIssue(result)
-          ?? 'No memory suggestions found. OpenDesign could not read useful content from the selected app yet.',
+          describeConnectorReadIssue(result, t)
+          ?? t('memory.noSuggestionsFound'),
         );
       } else {
         setConnectorStatus(
-          `Checked ${succeeded} selected app${succeeded === 1 ? '' : 's'}, but found no new memory suggestions.`,
+          succeeded === 1
+            ? t('memory.checkedNoSuggestionsOne', { count: succeeded })
+            : t('memory.checkedNoSuggestionsOther', { count: succeeded }),
         );
       }
     } catch (err) {
@@ -1303,7 +1322,7 @@ export function MemorySection({
     } finally {
       setConnectorExtracting(false);
     }
-  }, [chatAgentId, chatModel, reloadExtractions, selectedConnectedConnectorIds]);
+  }, [chatAgentId, chatModel, reloadExtractions, selectedConnectedConnectorIds, t]);
 
   const onDiscardConnectorSuggestions = useCallback(() => {
     setConnectorSuggestions([]);
@@ -1346,11 +1365,16 @@ export function MemorySection({
         ),
       );
       setConnectorStatus(
-        `Saved ${savedEntriesById.size} memor${savedEntriesById.size === 1 ? 'y' : 'ies'} from connected apps.`,
+        savedEntriesById.size === 1
+          ? t('memory.savedFromConnectedAppsOne', { count: savedEntriesById.size })
+          : t('memory.savedFromConnectedAppsOther', { count: savedEntriesById.size }),
       );
       if (savedEntriesById.size !== selectedConnectorSuggestions.length) {
         setConnectorError(
-          `Saved ${savedEntriesById.size} of ${selectedConnectorSuggestions.length} selected memories. Please try the remaining items again.`,
+          t('memory.savedPartial', {
+            saved: savedEntriesById.size,
+            total: selectedConnectorSuggestions.length,
+          }),
         );
       }
     } catch (err) {
@@ -1358,7 +1382,7 @@ export function MemorySection({
     } finally {
       setConnectorSaving(false);
     }
-  }, [reload, selectedConnectorSuggestions]);
+  }, [reload, selectedConnectorSuggestions, t]);
 
   const onSave = useCallback(async () => {
     if (!editing) return;
@@ -1475,14 +1499,14 @@ export function MemorySection({
 	    },
 	    {
 	      id: 'manual',
-	      label: 'Add manually',
-	      caption: 'Write a fact or preference',
+	      label: t('memory.tabManual'),
+	      caption: t('memory.tabManualCaption'),
 	      icon: 'edit',
 	    },
 	    {
 	      id: 'connected',
-	      label: 'Import from apps',
-	      caption: 'Scan connected tools',
+	      label: t('memory.tabConnected'),
+	      caption: t('memory.tabConnectedCaption'),
 	      icon: 'link',
 	    },
 	  ];
@@ -1574,7 +1598,7 @@ export function MemorySection({
           {record.phase === 'failed' && record.error ? (
             <div className="memory-extraction-failure">
               {(() => {
-                const failure = describeExtractionFailure(record);
+                const failure = describeExtractionFailure(record, t);
                 if (!failure) return null;
                 return (
                   <>
@@ -1652,7 +1676,7 @@ export function MemorySection({
                   className="memory-info-btn"
                   onClick={() => void onCopyPath()}
                   title={rootDir}
-                  aria-label="Memory storage path — click to copy"
+                  aria-label={t('memory.storagePathAria')}
                 >
                   <Icon name="info" size={14} />
                 </button>
@@ -1710,8 +1734,8 @@ export function MemorySection({
               setTopTab('memories');
               setAdvancedModalOpen(true);
             }}
-            title="Advanced"
-            aria-label="Advanced"
+            title={t('settings.advanced')}
+            aria-label={t('settings.advanced')}
           >
             <Icon name="settings" size={15} />
           </button>
@@ -1747,19 +1771,16 @@ export function MemorySection({
       {topTab === 'how' ? (
         <div className="memory-how-panel">
           <div className="memory-auto-flow">
-            <span>Onboarding</span>
+            <span>{t('memory.flowOnboarding')}</span>
             <Icon name="chevron-right" size={14} />
-            <span>Brand context</span>
+            <span>{t('memory.flowBrandContext')}</span>
             <Icon name="chevron-right" size={14} />
-            <span>Chat signals</span>
+            <span>{t('memory.flowChatSignals')}</span>
             <Icon name="chevron-right" size={14} />
-            <strong>Saved memory</strong>
+            <strong>{t('memory.flowSavedMemory')}</strong>
           </div>
           <p className="memory-how-copy">
-            Memory is gathered automatically from profile setup, project and
-            brand extraction, connected apps, and useful facts learned during
-            chats. The saved list below is the review surface; everything else
-            stays quiet unless you open Add or Advanced.
+            {t('memory.howCopy')}
           </p>
           <MemoryHooksPanel
             enabled={enabled}
@@ -1807,7 +1828,7 @@ export function MemorySection({
       <div
         className="memory-source-tabs"
         role="tablist"
-        aria-label="Memory areas"
+        aria-label={t('memory.areasAria')}
       >
         {memoryTabs.map((tab) => (
           <button
@@ -1844,10 +1865,9 @@ export function MemorySection({
               <Icon name="edit" size={15} />
             </span>
             <div>
-              <h4>Add manually</h4>
+              <h4>{t('memory.tabManual')}</h4>
               <p className="hint">
-                Add facts, preferences, or project context yourself. Fixed assistant
-                behavior lives in Instructions / Rules.
+                {t('memory.manualPanelHint')}
               </p>
             </div>
             <button
@@ -2057,14 +2077,15 @@ export function MemorySection({
               <Icon name="link" size={15} />
             </span>
             <div>
-              <h4>Import from apps</h4>
+              <h4>{t('memory.tabConnected')}</h4>
               <p className="hint">
-                Choose apps to scan for design preferences, project context,
-                and visual references. Nothing is scanned until you select an app.
+                {t('memory.connectedPanelHint')}
               </p>
             </div>
             <span className="memory-source-badge">
-              {connectorsLoading ? 'Loading' : `${connectedCount} connected`}
+              {connectorsLoading
+                ? t('memory.loading')
+                : t('memory.connectedCount', { count: connectedCount })}
             </span>
             <button
               type="button"
@@ -2072,22 +2093,22 @@ export function MemorySection({
               onClick={onOpenConnectors}
               disabled={!onOpenConnectors}
             >
-              Manage
+              {t('memory.manage')}
             </button>
           </div>
           <div className="memory-connector-workbench">
             <div className="memory-connector-picker-head">
               <div>
-                <h4>Choose sources</h4>
+                <h4>{t('memory.chooseSources')}</h4>
                 <p className="hint">
-                  Select connected apps first. OpenDesign only scans the apps you choose.
+                  {t('memory.chooseSourcesHint')}
                 </p>
               </div>
               <span className="memory-source-badge">
-                {selectedConnectedConnectorIds.length} selected
+                {t('memory.selectedCount', { count: selectedConnectedConnectorIds.length })}
               </span>
             </div>
-            <div className="memory-connector-list" aria-label="Connected memory apps">
+            <div className="memory-connector-list" aria-label={t('memory.connectorListAria')}>
               {memoryConnectors.map((connector) => {
                 const connected = connector.status === 'connected';
                 const selected = selectedConnectorIds.has(connector.id) && connected;
@@ -2107,12 +2128,13 @@ export function MemorySection({
                 const connectorLastError = connector.lastError?.trim();
                 const reconnecting = connector.status === 'error';
                 const connectorHint = connected
-                  ? connector.accountLabel || `${connector.tools.length} read tools`
+                  ? connector.accountLabel
+                    || t('memory.readToolsCount', { count: connector.tools.length })
                   : checkingStatus
-                    ? 'Checking connection status…'
+                    ? t('memory.checkingConnectionStatus')
                     : authorizationPending
-                    ? 'Finish authorization in your browser, then return here'
-                    : connectorLastError || connectError || 'Connect this app before extraction';
+                    ? t('memory.finishAuthorization')
+                    : connectorLastError || connectError || t('memory.connectBeforeExtraction');
                 return (
                   <label
                     key={connector.id}
@@ -2124,7 +2146,7 @@ export function MemorySection({
                       type="checkbox"
                       checked={selected}
                       disabled={!connected}
-                      aria-label={`Use ${connector.name} for memory extraction`}
+                      aria-label={t('memory.useConnectorAria', { name: connector.name })}
                       onChange={() => toggleConnectorSelection(connector.id)}
                     />
                     <span className={`memory-connector-brand${selected ? ' is-selected' : ''}`}>
@@ -2142,7 +2164,7 @@ export function MemorySection({
                         <span className="memory-connector-picker-box" aria-hidden="true">
                           {selected ? <Icon name="check" size={14} /> : null}
                         </span>
-                        <span>{selected ? 'Selected' : 'Select'}</span>
+                        <span>{selected ? t('memory.selected') : t('memory.select')}</span>
                       </span>
                     ) : (
                       <button
@@ -2150,7 +2172,11 @@ export function MemorySection({
                         className={`memory-connector-connect-button${connecting || authorizationPending || checkingStatus ? ' is-loading' : ''}`}
                         disabled={connecting || authorizationPending || checkingStatus}
                         aria-busy={connecting || authorizationPending || checkingStatus || undefined}
-                        aria-label={`${reconnecting ? 'Reconnect' : 'Connect'} ${connector.name}`}
+                        aria-label={
+                          reconnecting
+                            ? t('memory.reconnectConnectorAria', { name: connector.name })
+                            : t('memory.connectConnectorAria', { name: connector.name })
+                        }
                         onClick={(event) => {
                           event.preventDefault();
                           event.stopPropagation();
@@ -2163,7 +2189,15 @@ export function MemorySection({
                           className={connecting || authorizationPending || checkingStatus ? 'icon-spin' : ''}
                         />
                         <span>
-                          {checkingStatus ? 'Checking' : authorizationPending ? 'Waiting' : connecting ? 'Connecting' : reconnecting ? 'Reconnect' : 'Connect'}
+                          {checkingStatus
+                            ? t('memory.connectStateChecking')
+                            : authorizationPending
+                              ? t('memory.connectStateWaiting')
+                              : connecting
+                                ? t('memory.connectStateConnecting')
+                                : reconnecting
+                                  ? t('memory.reconnect')
+                                  : t('connectors.connect')}
                         </span>
                       </button>
                     )}
@@ -2173,7 +2207,15 @@ export function MemorySection({
             </div>
             <div className="memory-connector-actions memory-connector-runbar">
               <span className="hint">
-                Selected {selectedConnectedConnectorIds.length} of {connectedCount} connected app{connectedCount === 1 ? '' : 's'}.
+                {connectedCount === 1
+                  ? t('memory.selectedOfConnectedOne', {
+                    count: selectedConnectedConnectorIds.length,
+                    total: connectedCount,
+                  })
+                  : t('memory.selectedOfConnectedOther', {
+                    count: selectedConnectedConnectorIds.length,
+                    total: connectedCount,
+                  })}
               </span>
               <button
                 type="button"
@@ -2199,13 +2241,13 @@ export function MemorySection({
             <div className="memory-suggestion-panel">
               <div className="memory-subsection-head">
                 <div>
-                  <h4>Suggested memories</h4>
+                  <h4>{t('memory.suggestedMemories')}</h4>
                   <p className="hint">
-                    Review design-related memories before saving them.
+                    {t('memory.suggestedMemoriesHint')}
                   </p>
                 </div>
                 <span className="memory-source-badge">
-                  {selectedConnectorSuggestions.length} selected
+                  {t('memory.selectedCount', { count: selectedConnectorSuggestions.length })}
                 </span>
               </div>
               <div className="memory-suggestion-list">
@@ -2214,7 +2256,7 @@ export function MemorySection({
                   const sourceLabel =
                     suggestion.source?.connectorName
                     || suggestion.source?.toolTitle
-                    || 'Connected apps';
+                    || t('memory.kindConnectedApps');
                   return (
                     <label
                       key={suggestion.id}
@@ -2261,7 +2303,7 @@ export function MemorySection({
                     size={14}
                     className={connectorSaving ? 'icon-spin' : ''}
                   />
-                  <span>{connectorSaving ? 'Saving' : 'Save selected'}</span>
+                  <span>{connectorSaving ? t('memory.saving') : t('memory.saveSelected')}</span>
                 </button>
                 <button
                   type="button"
@@ -2269,7 +2311,7 @@ export function MemorySection({
                   onClick={onDiscardConnectorSuggestions}
                   disabled={connectorSaving}
                 >
-                  Discard
+                  {t('memory.discard')}
                 </button>
               </div>
             </div>
@@ -2285,10 +2327,14 @@ export function MemorySection({
             </div>
           ) : null}
           {connectorAttempts.length > 0 ? (
-            <div className="memory-connector-diagnostics" aria-label="Connected app read status">
+            <div className="memory-connector-diagnostics" aria-label={t('memory.diagnosticsAria')}>
               <div className="memory-connector-diagnostics-head">
-                <strong>Last scan</strong>
-                <span>{formatConnectorContextBytes(connectorContextBytes)} read</span>
+                <strong>{t('memory.lastScan')}</strong>
+                <span>
+                  {t('memory.bytesRead', {
+                    bytes: formatConnectorContextBytes(connectorContextBytes, t),
+                  })}
+                </span>
               </div>
               <div className="memory-connector-diagnostics-list">
                 {connectorAttempts.map((attempt) => (
@@ -2298,7 +2344,7 @@ export function MemorySection({
                   >
                     <span className="memory-connector-diagnostic-dot" aria-hidden="true" />
                     <span className="memory-connector-diagnostic-copy">
-                      <strong>{connectorAttemptTitle(attempt)}</strong>
+                      <strong>{connectorAttemptTitle(attempt, t)}</strong>
                       <small>{connectorAttemptDetail(attempt)}</small>
                     </span>
                   </div>
@@ -2309,12 +2355,12 @@ export function MemorySection({
           {connectorExtractions.length > 0 ? (
             <details className="memory-scan-history">
               <summary>
-                <span>Recent scans</span>
+                <span>{t('memory.recentScans')}</span>
                 <span>{connectorExtractions.length}</span>
               </summary>
               <div
                 className="memory-connector-run-history"
-                aria-label="Connected app memory run status"
+                aria-label={t('memory.runHistoryAria')}
               >
                 {connectorExtractions.slice(0, 4).map(renderExtractionCard)}
               </div>
@@ -2338,18 +2384,20 @@ export function MemorySection({
         <div className="memory-management-panel">
           <div className="memory-subsection-head">
             <div>
-              <h4>Saved memory</h4>
+              <h4>{t('memory.flowSavedMemory')}</h4>
               <p className="hint">
-                Saved facts, preferences, and project context available to future chats.
+                {t('memory.savedMemoryHint')}
               </p>
             </div>
             <div className="memory-management-counts">
               <span className="memory-source-badge">
-                {entries.length} saved
+                {t('memory.savedCount', { count: entries.length })}
               </span>
               {visibleExtractions.length > 0 ? (
                 <span className="memory-source-badge">
-                  {visibleExtractions.length} extraction{visibleExtractions.length === 1 ? '' : 's'}
+                  {visibleExtractions.length === 1
+                    ? t('memory.extractionCountOne', { count: visibleExtractions.length })
+                    : t('memory.extractionCountOther', { count: visibleExtractions.length })}
                 </span>
               ) : null}
             </div>
@@ -2435,9 +2483,9 @@ export function MemorySection({
                   {t('settings.memoryEmpty')}
                 </p>
                 <p className="library-empty-hint">
-                  Tell the assistant a fact in chat — e.g.{' '}
-                  <code>I prefer dark mode</code> — and it will be saved
-                  here automatically.
+                  {t('memory.emptyHintBefore')}{' '}
+                  <code>{t('settings.memoryEmptyHintEn')}</code>{' '}
+                  {t('memory.emptyHintAfter')}
                 </p>
               </div>
 	            ) : (
@@ -2469,8 +2517,8 @@ export function MemorySection({
         >
           <div className="memory-action-modal-head">
             <div>
-              <h3 id="memory-advanced-modal-title">Advanced</h3>
-              <p>Inspect or edit the underlying memory index.</p>
+              <h3 id="memory-advanced-modal-title">{t('settings.advanced')}</h3>
+              <p>{t('memory.advancedHint')}</p>
             </div>
             <button
               type="button"
@@ -2484,7 +2532,7 @@ export function MemorySection({
           </div>
           <div className="memory-action-modal-body memory-advanced-modal-body">
           <p className="memory-advanced-hint">
-            Inspect or edit the underlying memory index.
+            {t('memory.advancedHint')}
           </p>
           <div className="memory-advanced-stack">
             <details className="library-group memory-advanced-card">
@@ -2552,12 +2600,11 @@ export function MemorySection({
             {treeFolders.length > 0 ? (
               <details className="library-group memory-advanced-card">
                 <summary className="memory-details-summary">
-                  <span className="memory-details-title">Memory tree</span>
+                  <span className="memory-details-title">{t('memory.memoryTree')}</span>
                   <span className="filter-pill-count">{memoryTree.length}</span>
                 </summary>
                 <p className="memory-advanced-hint">
-                  Technical view of the same saved memories. Most users only
-                  need the saved-memory list above.
+                  {t('memory.memoryTreeHint')}
                 </p>
                 <div className="memory-tree-advanced">
                   {treeFolders.map((folder) => {
@@ -2574,7 +2621,9 @@ export function MemorySection({
                             <span className="library-card-badge">{folder.path}</span>
                           </div>
                           <div className="library-card-desc">
-                            {children.length} {children.length === 1 ? 'node' : 'nodes'}
+                            {children.length === 1
+                              ? t('memory.nodeCountOne', { count: children.length })
+                              : t('memory.nodeCountOther', { count: children.length })}
                           </div>
                           {children.length > 0 ? (
                             <ul

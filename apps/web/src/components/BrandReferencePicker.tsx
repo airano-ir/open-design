@@ -8,6 +8,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { useT } from '../i18n';
+import type { Dict } from '../i18n/types';
 import {
   BRAND_CATEGORIES,
   BRAND_REFERENCES,
@@ -52,6 +53,30 @@ export interface BrandReferencePickerProps {
 const ALL = 'all';
 const PAGE_FULL = 40;
 const PAGE_COMPACT = 24;
+
+// The industry buckets in brand-references.json are DATA VALUES ('software',
+// 'activewear', …), not display copy — rendering them raw is what put English
+// category chips and English per-card captions inside an otherwise localized
+// modal. Map each known bucket to a translation key (same shape as
+// CommunityView's TEMPLATE_TYPE_LABEL_KEY) and keep the capitalize helper only
+// as the fallback for a bucket the catalogue adds before this map catches up.
+// Brand *names* stay untranslated — they are proper nouns.
+const BRAND_CATEGORY_LABEL_KEY: Record<string, keyof Dict> = {
+  software: 'brandPicker.categorySoftware',
+  finance: 'brandPicker.categoryFinance',
+  fashion: 'brandPicker.categoryFashion',
+  activewear: 'brandPicker.categoryActivewear',
+  beauty: 'brandPicker.categoryBeauty',
+  wellness: 'brandPicker.categoryWellness',
+  food: 'brandPicker.categoryFood',
+  beverage: 'brandPicker.categoryBeverage',
+  media: 'brandPicker.categoryMedia',
+  education: 'brandPicker.categoryEducation',
+  electronics: 'brandPicker.categoryElectronics',
+  automotive: 'brandPicker.categoryAutomotive',
+  healthcare: 'brandPicker.categoryHealthcare',
+  travel: 'brandPicker.categoryTravel',
+};
 
 function categoryLabel(category: string): string {
   return category.charAt(0).toUpperCase() + category.slice(1);
@@ -129,6 +154,13 @@ export function BrandReferencePicker({
   const compact = variant === 'compact';
   const resolvedActionLabel = actionLabel ?? t('brandPicker.extractAction');
   const resolvedQuickPicksLabel = quickPicksLabel ?? t('brandPicker.quickPicksLabel');
+  const labelForCategory = useCallback(
+    (value: string) => {
+      const key = BRAND_CATEGORY_LABEL_KEY[value];
+      return key ? t(key) : categoryLabel(value);
+    },
+    [t],
+  );
   const pageSize = compact ? PAGE_COMPACT : PAGE_FULL;
   const [category, setCategory] = useState(ALL);
   const [query, setQuery] = useState('');
@@ -147,10 +179,13 @@ export function BrandReferencePicker({
       return (
         b.name.toLowerCase().includes(q) ||
         b.domain.toLowerCase().includes(q) ||
-        b.category.toLowerCase().includes(q)
+        // Match the raw bucket AND its localized label, so a reader who sees
+        // "汽车" on the chips can actually type "汽车" and get Porsche.
+        b.category.toLowerCase().includes(q) ||
+        labelForCategory(b.category).toLowerCase().includes(q)
       );
     });
-  }, [category, query]);
+  }, [category, query, labelForCategory]);
 
   // Narrowing the wall (new filter / search) starts over from the top.
   useEffect(() => {
@@ -270,7 +305,7 @@ export function BrandReferencePicker({
               aria-pressed={category === c}
               onClick={() => setCategory(c)}
             >
-              {c === ALL ? t('brandPicker.allCategories') : categoryLabel(c)}
+              {c === ALL ? t('brandPicker.allCategories') : labelForCategory(c)}
             </button>
           ))}
         </div>
@@ -309,8 +344,10 @@ export function BrandReferencePicker({
                   )}
                 </span>
                 <span className={styles.cardBody}>
-                  <span className={styles.cardName}>{brand.name}</span>
-                  <span className={styles.cardCategory}>{categoryLabel(brand.category)}</span>
+                  <span className={styles.cardName} title={brand.name}>
+                    {brand.name}
+                  </span>
+                  <span className={styles.cardCategory}>{labelForCategory(brand.category)}</span>
                 </span>
                 <span className={styles.extractPill} aria-hidden>
                   {resolvedActionLabel}

@@ -194,6 +194,11 @@ interface DetailProps {
   onInitialRevisionJobConsumed?: (jobId: string) => void;
 }
 
+// Translator handle for the plain (non-component) helpers in this file that
+// still produce user-visible copy. Hooks stay in components; helpers receive
+// `t` as a parameter.
+type Translate = ReturnType<typeof useI18n>['t'];
+
 type SetupStep = 'setup' | 'confirm';
 type ReviewTab = 'system' | 'files';
 type DesignMdMode = 'edit' | 'preview';
@@ -517,13 +522,13 @@ export function DesignSystemCreationFlow({
       }
       if (timedOut) {
         setGithubConnectorError(
-          'Could not finish checking GitHub connector. You can still add repository URLs or connect GitHub manually.',
+          t('dsCreate.githubConnectorCheckTimeout'),
         );
       }
     } catch (err) {
       if (githubConnectorRefreshId.current !== refreshId) return;
       setGithubConnector(null);
-      setGithubConnectorError(err instanceof Error ? err.message : 'Could not check the GitHub connector.');
+      setGithubConnectorError(err instanceof Error ? err.message : t('dsCreate.githubConnectorCheckFailed'));
     } finally {
       if (githubConnectorRefreshId.current === refreshId) {
         githubConnectorRequestInFlight.current = false;
@@ -532,7 +537,7 @@ export function DesignSystemCreationFlow({
         setGithubConnectorLoading(false);
       }
     }
-  }, [composioConfigured]);
+  }, [composioConfigured, t]);
 
   useEffect(() => {
     void refreshGithubConnector();
@@ -605,7 +610,7 @@ export function DesignSystemCreationFlow({
         setGithubAuthorizationUrl(null);
       }
     } catch (err) {
-      setGithubConnectorError(err instanceof Error ? err.message : 'Could not start GitHub authorization.');
+      setGithubConnectorError(err instanceof Error ? err.message : t('dsCreate.githubAuthorizeFailed'));
     } finally {
       setGithubConnectorAction(null);
     }
@@ -625,7 +630,7 @@ export function DesignSystemCreationFlow({
       setGithubAuthorizationPending(false);
       setGithubAuthorizationUrl(null);
     } catch (err) {
-      setGithubConnectorError(err instanceof Error ? err.message : 'Could not disconnect GitHub.');
+      setGithubConnectorError(err instanceof Error ? err.message : t('dsCreate.githubDisconnectFailed'));
     } finally {
       setGithubConnectorAction(null);
     }
@@ -711,7 +716,7 @@ export function DesignSystemCreationFlow({
   function handleAddFigmaUrl() {
     const nextUrl = normalizeFigmaUrl(state.figmaUrl);
     if (!nextUrl) {
-      setVisibleError('Enter a Figma file URL (https://figma.com/file/… or /design/…).');
+      setVisibleError(t('dsCreate.figmaUrlInvalid'));
       return;
     }
     setVisibleError(null);
@@ -833,7 +838,7 @@ export function DesignSystemCreationFlow({
       const files = fetched.filter((file): file is File => file !== null);
       mergeAssetFiles(files);
       if (files.length < assets.length) {
-        setVisibleError(`Added ${files.length} of ${assets.length} item(s) from the library.`);
+        setVisibleError(t('dsCreate.libraryPartiallyAdded', { added: files.length, total: assets.length }));
       }
     } finally {
       finish();
@@ -932,7 +937,7 @@ export function DesignSystemCreationFlow({
         throwOnError: true,
       });
       if (!result) {
-        setVisibleError('Extraction is already starting. Please wait for the current request to finish.');
+        setVisibleError(t('dsCreate.extractionAlreadyStarting'));
         setStep('setup');
         emitCreateResult('failed', undefined, 'DS_EXTRACT_START_FAILED', undefined);
         onGenerateSettled?.(snapshot, { result: 'failed', errorCode: 'DS_EXTRACT_START_FAILED' });
@@ -985,7 +990,7 @@ export function DesignSystemCreationFlow({
       emitCreateResult('success', result.designSystemId, undefined, result.projectId);
       onGenerateSettled?.(snapshot, { result: 'success' });
     } catch (err) {
-      setVisibleError(err instanceof Error ? err.message : 'Could not prepare the design system project.');
+      setVisibleError(err instanceof Error ? err.message : t('dsCreate.prepareProjectFailed'));
       setStep('setup');
       const errorCode = err instanceof Error
         ? `DS_GENERATE_THREW:${err.message.slice(0, 80)}`
@@ -1001,12 +1006,12 @@ export function DesignSystemCreationFlow({
     return (
       <div className="ds-setup-shell ds-setup-shell--center">
         <div className="ds-setup-center-card">
-          <h1>Open Design will extract your design system.</h1>
-          <p>You'll land in a project that fills in live — logo, palette, typography, imagery — as it measures your brand. Keep the tab open.</p>
+          <h1>{t('dsCreate.confirmTitle')}</h1>
+          <p>{t('dsCreate.confirmBody')}</p>
           <div className="ds-setup-actions">
             <Button variant="ghost" onClick={() => setStep('setup')}>
               <Icon name="arrow-left" />
-              Back
+              {t('dsCreate.back')}
             </Button>
             <Button
               variant="primary"
@@ -1014,7 +1019,7 @@ export function DesignSystemCreationFlow({
               onClick={() => void generate()}
             >
               <Icon name="sparkles" />
-              {generationStarting ? 'Starting extraction...' : 'Extract design system'}
+              {generationStarting ? t('dsCreate.startingExtraction') : t('dsCreate.extractDesignSystem')}
             </Button>
           </div>
         </div>
@@ -1046,7 +1051,7 @@ export function DesignSystemCreationFlow({
         >
           <div className="ds-source-upload-loading__card">
             <Spinner size={18} />
-            <span>Adding source material...</span>
+            <span>{t('dsCreate.addingSourceMaterial')}</span>
           </div>
         </div>
       ) : null}
@@ -1061,7 +1066,7 @@ export function DesignSystemCreationFlow({
               }}
             >
               <Icon name="arrow-left" />
-              Back
+              {t('dsCreate.back')}
             </Button>
           </div>
           <span className="ds-setup-mark">
@@ -1318,7 +1323,7 @@ export function DesignSystemCreationFlow({
                     label={t('dsCreate.localCodeLabel')}
                     helper={t('dsCreate.localCodeHelper')}
                     prompt={t('dsCreate.localCodePrompt')}
-                    names={localCodeSourceLabels(state)}
+                    names={localCodeSourceLabels(state, t)}
                     directory
                     onZoneClick={() => emitCreateFormClick('browse_folder')}
                     onBrowseFolder={() => void handlePickCodeFolder()}
@@ -1383,18 +1388,18 @@ export function DesignSystemCreationFlow({
                               href={url}
                               target="_blank"
                               rel="noreferrer"
-                              aria-label={t('dsCreate.openSourceLabel', { label: figmaUrlLabel(url) })}
-                              title={t('dsCreate.openSourceLabel', { label: figmaUrlLabel(url) })}
+                              aria-label={t('dsCreate.openSourceLabel', { label: figmaUrlLabel(url, t) })}
+                              title={t('dsCreate.openSourceLabel', { label: figmaUrlLabel(url, t) })}
                             >
                               <span className="ds-source-link-favicon ds-source-link-favicon--glyph" aria-hidden>
                                 <Icon name="import" size={14} />
                               </span>
-                              <span className="ds-source-link-label">{figmaUrlLabel(url)}</span>
+                              <span className="ds-source-link-label">{figmaUrlLabel(url, t)}</span>
                             </a>
                             <button
                               type="button"
                               className="ds-source-link-remove"
-                              aria-label={t('dsCreate.removeSourceLabel', { label: figmaUrlLabel(url) })}
+                              aria-label={t('dsCreate.removeSourceLabel', { label: figmaUrlLabel(url, t) })}
                               onClick={() => handleRemoveFigmaUrl(url)}
                             >
                               x
@@ -1500,9 +1505,9 @@ function DesignMdComponentKitPreview({
   theme: DesignMdPreviewTheme;
   onThemeChange: (theme: DesignMdPreviewTheme) => void;
 }) {
-  const model = useMemo(() => buildDesignMdPreviewModel(markdown), [markdown]);
-  const themeTokens = theme === 'dark' ? model.dark : model.light;
   const { t } = useI18n();
+  const model = useMemo(() => buildDesignMdPreviewModel(markdown, t), [markdown, t]);
+  const themeTokens = theme === 'dark' ? model.dark : model.light;
   const style = {
     '--ds-md-bg': themeTokens.background,
     '--ds-md-surface': themeTokens.surface,
@@ -1627,7 +1632,7 @@ export function DesignSystemDetailView({
   initialRevisionJob,
   onInitialRevisionJobConsumed,
 }: DetailProps) {
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
   const [system, setSystem] = useState<DesignSystemDetail | null>(null);
   const [body, setBody] = useState('');
   const [tab, setTab] = useState<ReviewTab>('system');
@@ -1719,10 +1724,10 @@ export function DesignSystemDetailView({
       current?.id === initialRevisionJob.id ? current : initialRevisionJob,
     );
     if (initialRevisionJob.kind === 'token-contract-rebuild') {
-      setStatusLine('Token contract rebuild started');
+      setStatusLine(t('dsFlow.tokenRebuildStarted'));
     }
     onInitialRevisionJobConsumed?.(initialRevisionJob.id);
-  }, [initialRevisionJob, onInitialRevisionJobConsumed]);
+  }, [initialRevisionJob, onInitialRevisionJobConsumed, t]);
 
   useEffect(() => {
     if (!system) return undefined;
@@ -1733,7 +1738,7 @@ export function DesignSystemDetailView({
       const resolved = await resolveDesignSystemWorkspaceProject(currentSystem);
       if (cancelled) return;
       if (!resolved) {
-        setWorkspaceLoadError('Could not open the design system workspace.');
+        setWorkspaceLoadError(t('dsFlow.workspaceOpenFailed'));
         return;
       }
       const projectId = resolved.projectId;
@@ -1749,7 +1754,7 @@ export function DesignSystemDetailView({
     return () => {
       cancelled = true;
     };
-  }, [onOpenProject, onProjectsRefresh, system]);
+  }, [onOpenProject, onProjectsRefresh, system, t]);
 
   useEffect(() => {
     if (!workspaceProjectId) return undefined;
@@ -1845,11 +1850,15 @@ export function DesignSystemDetailView({
           setBody(detail.body);
         }
         await onSystemsRefresh?.();
-        if (!cancelled) setStatusLine('Generation completed');
+        if (!cancelled) setStatusLine(t('dsFlow.generationCompleted'));
         return;
       }
       if (next.status === 'failed') {
-        setStatusLine(next.error ? `Generation stopped: ${next.error}` : 'Generation stopped');
+        setStatusLine(
+          next.error
+            ? t('dsFlow.generationStoppedWithError', { error: next.error })
+            : t('dsFlow.generationStopped'),
+        );
         return;
       }
       timeoutId = window.setTimeout(() => void pollGenerationJob(), 700);
@@ -1860,7 +1869,7 @@ export function DesignSystemDetailView({
       cancelled = true;
       if (timeoutId !== undefined) window.clearTimeout(timeoutId);
     };
-  }, [id, onSystemsRefresh]);
+  }, [id, onSystemsRefresh, t]);
 
   useEffect(() => {
     if (
@@ -1878,7 +1887,7 @@ export function DesignSystemDetailView({
       const next = await fetchDesignSystemGenerationJob(jobId);
       if (cancelled) return;
       if (!next) {
-        setStatusLine('Could not read revision progress');
+        setStatusLine(t('dsFlow.revisionProgressUnavailable'));
         return;
       }
       setRevisionJob(next);
@@ -1887,11 +1896,15 @@ export function DesignSystemDetailView({
         if (cancelled) return;
         setRevisions(nextRevisions);
         await onSystemsRefresh?.();
-        if (!cancelled) setStatusLine('Revision ready for review');
+        if (!cancelled) setStatusLine(t('dsFlow.revisionReady'));
         return;
       }
       if (next.status === 'failed') {
-        setStatusLine(next.error ? `Revision stopped: ${next.error}` : 'Revision stopped');
+        setStatusLine(
+          next.error
+            ? t('dsFlow.revisionStoppedWithError', { error: next.error })
+            : t('dsFlow.revisionStopped'),
+        );
         return;
       }
       timeoutId = window.setTimeout(() => void pollRevisionJob(), 650);
@@ -1902,9 +1915,9 @@ export function DesignSystemDetailView({
       cancelled = true;
       if (timeoutId !== undefined) window.clearTimeout(timeoutId);
     };
-  }, [id, onSystemsRefresh, revisionJob?.id, revisionJob?.status]);
+  }, [id, onSystemsRefresh, revisionJob?.id, revisionJob?.status, t]);
 
-  const sections = useMemo(() => parseDesignSystemSections(body), [body]);
+  const sections = useMemo(() => parseDesignSystemSections(body, t), [body, t]);
   const published = system?.status === 'published';
   const editable = system?.isEditable !== false;
   const activeJob = revisionJob ?? generationJob;
@@ -1976,8 +1989,9 @@ export function DesignSystemDetailView({
       activeJob,
       revisions: recentRevisions,
       generationActive,
+      t,
     }),
-    [activeJob, generationActive, recentRevisions, system],
+    [activeJob, generationActive, recentRevisions, system, t],
   );
   const chatMessages = projectChatMessages.length > 0 ? projectChatMessages : introChatMessages;
   const workspaceActivityMessage = useMemo(
@@ -2009,7 +2023,7 @@ export function DesignSystemDetailView({
       await writeProjectTextFile(workspaceProjectId, 'DESIGN.md', nextBody);
       await refreshWorkspaceProjectFiles(workspaceProjectId);
     }
-    setStatusLine(updated ? 'Saved DESIGN.md' : 'Could not save changes');
+    setStatusLine(updated ? t('dsFlow.savedDesignMd') : t('dsFlow.saveChangesFailed'));
   }
 
   async function togglePublished(next: boolean) {
@@ -2023,7 +2037,11 @@ export function DesignSystemDetailView({
       const updated = await savePatch({ body, status: next ? 'published' : 'draft' });
       succeeded = Boolean(updated);
       if (!succeeded) errorCode = 'DS_STATUS_UPDATE_RETURNED_NULL';
-      setStatusLine(updated ? (next ? 'Published' : 'Moved back to draft') : 'Could not update status');
+      setStatusLine(
+        updated
+          ? (next ? t('ds.published') : t('dsFlow.movedBackToDraft'))
+          : t('dsFlow.statusUpdateFailed'),
+      );
     } catch (err) {
       errorCode = err instanceof Error
         ? `DS_STATUS_UPDATE_THREW:${err.message.slice(0, 80)}`
@@ -2168,14 +2186,14 @@ export function DesignSystemDetailView({
       const text = feedbackSection ? `${rawText}\n\nFocus section: ${feedbackSection}` : rawText;
       const projectId = workspaceProjectId ?? await ensureWorkspaceProject();
       if (!projectId) {
-        setChatError('Could not open the design system workspace.');
+        setChatError(t('dsFlow.workspaceOpenFailed'));
         return;
       }
       let conversationId = activeConversationId;
       if (!conversationId) {
         const fresh = await createConversation(projectId, 'Design system');
         if (!fresh) {
-          setChatError('Could not create a design system conversation.');
+          setChatError(t('dsFlow.conversationCreateFailed'));
           return;
         }
         setConversations([fresh]);
@@ -2183,7 +2201,7 @@ export function DesignSystemDetailView({
         conversationId = fresh.id;
       }
       if (config.mode !== 'daemon' || !config.agentId) {
-        setChatError('Pick a local agent first, then ask Open Design to update this design system.');
+        setChatError(t('dsFlow.pickLocalAgentFirst'));
         return;
       }
 
@@ -2384,14 +2402,14 @@ export function DesignSystemDetailView({
               if (auditSummary) {
                 setStatusLine(
                   repairPrompt
-                    ? `${auditSummary} Review the audit details before running a repair.`
-                    : `Workspace updated. ${auditSummary}`,
+                    ? t('dsFlow.auditNeedsRepair', { summary: auditSummary })
+                    : t('dsFlow.workspaceUpdatedWithAudit', { summary: auditSummary }),
                 );
               } else {
                 setStatusLine(
                   synced
-                    ? 'Workspace updated and DESIGN.md synced for review.'
-                    : 'Workspace updated. Review the files or ask for another change.',
+                    ? t('dsFlow.workspaceUpdatedSynced')
+                    : t('dsFlow.workspaceUpdatedReview'),
                 );
               }
               await onProjectsRefresh?.();
@@ -2453,6 +2471,7 @@ export function DesignSystemDetailView({
       requestWorkspaceFileOpen,
       syncDesignSystemBodyFromWorkspace,
       system,
+      t,
       workspaceProjectId,
     ],
   );
@@ -2472,12 +2491,12 @@ export function DesignSystemDetailView({
         suppressInitialConversation: true,
       });
       if (!projectId) {
-        setChatError('Could not open the design system workspace.');
+        setChatError(t('dsFlow.workspaceOpenFailed'));
         return;
       }
       const fresh = await createConversation(projectId, 'Design system');
       if (!fresh) {
-        setChatError('Could not create a design system conversation.');
+        setChatError(t('dsFlow.conversationCreateFailed'));
         return;
       }
       setConversations((current) => [fresh, ...current]);
@@ -2486,10 +2505,10 @@ export function DesignSystemDetailView({
       setChatError(null);
       setChatSeed({
         id: `general-${Date.now()}`,
-        text: 'Update this design system: ',
+        text: t('dsFlow.chatSeedUpdateSystem'),
       });
     })();
-  }, [ensureWorkspaceProject, workspaceProjectId]);
+  }, [ensureWorkspaceProject, t, workspaceProjectId]);
 
   async function resolveRevision(
     revision: DesignSystemRevision,
@@ -2505,7 +2524,11 @@ export function DesignSystemDetailView({
         status,
       );
       if (!updatedRevision) {
-        setStatusLine(status === 'accepted' ? 'Could not accept revision' : 'Could not reject revision');
+        setStatusLine(
+          status === 'accepted'
+            ? t('dsFlow.revisionAcceptFailed')
+            : t('dsFlow.revisionRejectFailed'),
+        );
         return;
       }
       const [detail, nextRevisions] = await Promise.all([
@@ -2518,7 +2541,7 @@ export function DesignSystemDetailView({
       }
       setRevisions(nextRevisions);
       await onSystemsRefresh?.();
-      setStatusLine(status === 'accepted' ? 'Revision accepted' : 'Revision rejected');
+      setStatusLine(status === 'accepted' ? t('dsFlow.revisionAccepted') : t('dsFlow.revisionRejected'));
     } finally {
       setSaving(false);
     }
@@ -2531,12 +2554,12 @@ export function DesignSystemDetailView({
     try {
       const result = await startDesignSystemTokenContractRebuildJob(system.id, { force });
       if (!result) {
-        setStatusLine('Could not start token contract rebuild');
+        setStatusLine(t('dsFlow.tokenRebuildStartFailed'));
         return;
       }
       if (result.job) {
         setRevisionJob(result.job);
-        setStatusLine('Token contract rebuild started');
+        setStatusLine(t('dsFlow.tokenRebuildStarted'));
         return;
       }
       setStatusLine(result.decision.reason);
@@ -2558,8 +2581,8 @@ export function DesignSystemDetailView({
       <div className="ds-setup-shell ds-setup-shell--center">
         <div className="ds-setup-center-card ds-setup-center-card--loading" role="status" aria-live="polite">
           <Spinner size={22} />
-          <h1>{system?.title ?? 'Loading design system...'}</h1>
-          <p>Opening the workspace...</p>
+          <h1>{system?.title ?? t('dsFlow.loadingDesignSystem')}</h1>
+          <p>{t('dsFlow.openingWorkspace')}</p>
         </div>
       </div>
     );
@@ -2569,11 +2592,11 @@ export function DesignSystemDetailView({
     <div className="ds-workspace">
       <aside className="ds-project-chat">
         <div className="ds-project-chat__bar">
-          <button type="button" className="icon-only" onClick={onBack} aria-label="Back">
+          <button type="button" className="icon-only" onClick={onBack} aria-label={t('dsCreate.back')}>
             <Icon name="arrow-left" />
           </button>
           <strong>{system.title}</strong>
-          <span>{published ? 'Published' : 'Draft'}</span>
+          <span>{published ? t('ds.published') : t('dsManager.statusDraft')}</span>
         </div>
         <div className="ds-project-chat__pane">
           <ChatPane
@@ -2593,7 +2616,7 @@ export function DesignSystemDetailView({
             }}
             onStop={stopProjectChat}
             initialDraft={chatSeed?.text}
-            composerPlaceholder="Follow-up action: use AI extraction to refine this system. Longer run; updates land here."
+            composerPlaceholder={t('dsFlow.composerPlaceholder')}
             conversations={conversations}
             activeConversationId={activeConversationId}
             // Intentionally omit `messagesConversationId`: the loader above does
@@ -2612,7 +2635,7 @@ export function DesignSystemDetailView({
         <header className="ds-review-tabs">
           <Button variant="ghost" onClick={onBack}>
             <Icon name="arrow-left" />
-            Back
+            {t('dsCreate.back')}
           </Button>
           <div className="segmented">
             <button
@@ -2620,35 +2643,35 @@ export function DesignSystemDetailView({
               className={tab === 'system' ? 'active' : ''}
               onClick={() => setTab('system')}
             >
-              Design System
+              {t('dsFlow.tabDesignSystem')}
             </button>
             <button
               type="button"
               className={tab === 'files' ? 'active' : ''}
               onClick={() => setTab('files')}
             >
-              Design Files
+              {t('dsFlow.tabDesignFiles')}
             </button>
           </div>
           <Button variant="ghost">
-            Share
+            {t('common.share')}
           </Button>
         </header>
 
         {tab === 'system' ? (
           <div className="ds-review-column">
-            <h1>Review draft design system</h1>
+            <h1>{t('dsFlow.reviewDraftTitle')}</h1>
             <div className="ds-review-rule" aria-hidden />
             {activeJob ? <GenerationStatusCard job={activeJob} /> : null}
             <div className="ds-publish-card">
               <p>
                 {generationActive
                   ? activeJob?.kind === 'token-contract-rebuild'
-                    ? 'Open Design is preparing a token contract rebuild for review. The active contract stays unchanged until you accept it.'
+                    ? t('dsFlow.publishCardTokenRebuild')
                     : activeJob?.kind === 'revision'
-                      ? 'Open Design is applying your feedback. You can keep reviewing while the updated draft is prepared.'
-                      : 'Open Design is still working, but you can start giving feedback on the work so far.'
-                  : 'Open Design is ready for review. Give feedback on the work so far, then publish when it is useful for future projects.'}
+                      ? t('dsFlow.publishCardRevision')
+                      : t('dsFlow.publishCardWorking')
+                  : t('dsFlow.publishCardReady')}
               </p>
               <label>
                 <input
@@ -2657,13 +2680,13 @@ export function DesignSystemDetailView({
                   disabled={!editable || saving}
                   onChange={(event) => void togglePublished(event.target.checked)}
                 />
-                Published
+                {t('ds.published')}
               </label>
               {selectedId !== system.id ? (
                 <Button
                   variant="ghost"
                   className="compact"
-                  title="Preselect this design system for new chats and new projects."
+                  title={t('dsFlow.setDefaultTitle')}
                   onClick={() => {
                     const statusBefore = mapDsStatusToTracking(system.status);
                     onSetDefault(system.id);
@@ -2682,7 +2705,7 @@ export function DesignSystemDetailView({
                     });
                   }}
                 >
-                  Default for new chats
+                  {t('dsFlow.setDefaultAction')}
                 </Button>
               ) : null}
             </div>
@@ -2695,12 +2718,12 @@ export function DesignSystemDetailView({
             <div className="ds-warning-card">
               <Icon name="help-circle" />
               <span>
-                <strong>Brand font files missing</strong>
-                Typography previews are using substitute web fonts until brand font files are added.
+                <strong>{t('dsFlow.brandFontsMissingTitle')}</strong>
+                {t('dsFlow.brandFontsMissingBody')}
               </span>
               <Button variant="ghost" className="compact">
                 <Icon name="upload" />
-                Add brand font files
+                {t('dsFlow.addBrandFonts')}
               </Button>
             </div>
             {statusLine ? <div className="ds-status-line">{statusLine}</div> : null}
@@ -2738,12 +2761,12 @@ export function DesignSystemDetailView({
                             className={`ghost success ${reviewDecisions[section.title] === 'good' ? 'active' : ''}`}
                             onClick={() => {
                               setReviewDecisions((curr) => ({ ...curr, [section.title]: 'good' }));
-                              setStatusLine(`${section.title} marked as looks good`);
+                              setStatusLine(t('dsFlow.sectionMarkedLooksGood', { title: section.title }));
                               emitReviewResult(section, index, 'looks_good');
                             }}
                           >
                             <Icon name="check" />
-                            Looks good
+                            {t('ds.reviewLooksGood')}
                           </button>
                           <button
                             type="button"
@@ -2753,13 +2776,13 @@ export function DesignSystemDetailView({
                               setFeedbackSection(section.title);
                               setChatSeed({
                                 id: `${section.title}-${Date.now()}`,
-                                text: `Needs work on ${section.title}: `,
+                                text: t('dsFlow.needsWorkSeed', { title: section.title }),
                               });
                               emitReviewResult(section, index, 'needs_work');
                             }}
                           >
                             <Icon name="comment" />
-                            Needs work...
+                            {t('ds.reviewNeedsWorkEllipsis')}
                           </button>
                         </div>
                         <pre>{section.body}</pre>
@@ -2779,7 +2802,7 @@ export function DesignSystemDetailView({
               />
             </label>
             <Button variant="primary" disabled={!editable || saving} onClick={() => void saveBody()}>
-              Save DESIGN.md
+              {t('ds.saveDesignMd')}
             </Button>
             {recentRevisions.length > 0 ? <RevisionHistoryList revisions={recentRevisions} /> : null}
           </div>
@@ -2803,7 +2826,7 @@ export function DesignSystemDetailView({
             ) : workspaceLoadError ? (
               <div className="viewer-empty">{workspaceLoadError}</div>
             ) : (
-              <div className="viewer-empty">Opening the design system workspace...</div>
+              <div className="viewer-empty">{t('dsFlow.openingDesignSystemWorkspace')}</div>
             )}
           </div>
         )}
@@ -2817,25 +2840,27 @@ function buildDesignSystemChatMessages({
   activeJob,
   revisions,
   generationActive,
+  t,
 }: {
   system: DesignSystemDetail | null;
   activeJob: DesignSystemGenerationJob | null;
   revisions: DesignSystemRevision[];
   generationActive: boolean;
+  t: Translate;
 }): ChatMessage[] {
   const createdAt = timestampFromIso(system?.createdAt) ?? Date.now();
   const messages: ChatMessage[] = [
     {
       id: 'design-system-create-request',
       role: 'user',
-      content: 'Create design system',
+      content: t('dsFlow.chatCreateRequest'),
       createdAt,
     },
     {
       id: activeJob ? `design-system-agent-${activeJob.id}` : 'design-system-agent-ready',
       role: 'assistant',
-      content: designSystemAssistantMessage(system, activeJob, generationActive),
-      events: [{ kind: 'text', text: designSystemAssistantMessage(system, activeJob, generationActive) }],
+      content: designSystemAssistantMessage(system, activeJob, generationActive, t),
+      events: [{ kind: 'text', text: designSystemAssistantMessage(system, activeJob, generationActive, t) }],
       createdAt: createdAt + 1,
       runId: activeJob?.id,
       runStatus: activeJob
@@ -2861,8 +2886,8 @@ function buildDesignSystemChatMessages({
     messages.push({
       id: `design-system-revision-assistant-${revision.id}`,
       role: 'assistant',
-      content: designSystemRevisionAssistantMessage(revision),
-      events: [{ kind: 'text', text: designSystemRevisionAssistantMessage(revision) }],
+      content: designSystemRevisionAssistantMessage(revision, t),
+      events: [{ kind: 'text', text: designSystemRevisionAssistantMessage(revision, t) }],
       createdAt: revisionTs + 1,
       runId: revision.jobId,
       runStatus: revision.status === 'pending' ? 'succeeded' : undefined,
@@ -2872,33 +2897,37 @@ function buildDesignSystemChatMessages({
   return messages;
 }
 
-function designSystemRevisionAssistantMessage(revision: DesignSystemRevision): string {
+function designSystemRevisionAssistantMessage(
+  revision: DesignSystemRevision,
+  t: Translate,
+): string {
   if (revision.status === 'pending') {
-    return 'I prepared a proposed update. Review the diff card on the right, then accept it or ask for another change.';
+    return t('dsFlow.revisionMsgPending');
   }
   if (revision.status === 'accepted') {
-    return 'Accepted. The design system draft now includes this update.';
+    return t('dsFlow.revisionMsgAccepted');
   }
-  return 'Rejected. I left the current design system unchanged.';
+  return t('dsFlow.revisionMsgRejected');
 }
 
 function designSystemAssistantMessage(
   system: DesignSystemDetail | null,
   activeJob: DesignSystemGenerationJob | null,
   generationActive: boolean,
+  t: Translate,
 ): string {
   const summary = system?.summary?.trim();
   if (generationActive) {
     if (activeJob?.kind === 'token-contract-rebuild') {
-      return 'I am preparing a token contract rebuild for review. The active contract will stay unchanged until the revision is accepted.';
+      return t('dsFlow.agentMsgTokenRebuild');
     }
     if (activeJob?.kind === 'revision') {
-      return 'I am applying your feedback to the design system. You can keep reviewing the current draft while the revision runs.';
+      return t('dsFlow.agentMsgRevision');
     }
-    return 'I am creating the design system workspace, preview cards, and supporting files from the context you provided.';
+    return t('dsFlow.agentMsgCreating');
   }
-  const base = 'Your design system draft is ready. Review the Design System tab, inspect generated files, publish it, or ask me for changes here.';
-  return summary ? `${base}\n\nCaptured direction: ${summary}` : base;
+  const base = t('dsFlow.agentMsgReady');
+  return summary ? `${base}\n\n${t('dsFlow.agentMsgCapturedDirection', { summary })}` : base;
 }
 
 function designSystemWorkspaceAgentPrompt(feedback: string): string {
@@ -2937,11 +2966,14 @@ function DesignSystemPackageCard({
   onRebuildTokenContract: () => void;
   onForceRebuildTokenContract: () => void;
 }) {
+  const { t } = useI18n();
   const info = system.packageInfo;
   const manifest = info?.manifest;
   const evidence = info?.sourceEvidence;
   const tokenContract = evidence?.tokenContract;
-  const sourceLabel = manifest?.source?.type ? sourceTypeLabel(manifest.source.type) : sourceTypeLabel(system.source);
+  const sourceLabel = manifest?.source?.type
+    ? sourceTypeLabel(manifest.source.type, t)
+    : sourceTypeLabel(system.source, t);
   const previewPages = manifest?.preview?.pages ?? [];
   const sourceFiles = manifest?.sourceFiles;
   const sourceFileCount = [sourceFiles?.scanned, sourceFiles?.evidence, sourceFiles?.tokens, sourceFiles?.report, sourceFiles?.snippets]
@@ -2957,11 +2989,11 @@ function DesignSystemPackageCard({
     manifest?.componentsManifest,
   ].filter((item): item is string => typeof item === 'string' && item.length > 0);
   const evidenceStats = [
-    evidence?.scannedFileCount !== undefined ? { label: 'Scanned files', value: String(evidence.scannedFileCount) } : null,
-    evidence?.tokenCount !== undefined ? { label: 'Source tokens', value: String(evidence.tokenCount) } : null,
-    evidence?.snippetCount !== undefined ? { label: 'Snippets', value: String(evidence.snippetCount) } : null,
-    tokenContract?.fallbackTokens !== undefined ? { label: 'Fallback tokens', value: String(tokenContract.fallbackTokens) } : null,
-    manifest?.fonts?.length ? { label: 'Fonts', value: String(manifest.fonts.length) } : null,
+    evidence?.scannedFileCount !== undefined ? { label: t('dsFlow.evidenceScannedFiles'), value: String(evidence.scannedFileCount) } : null,
+    evidence?.tokenCount !== undefined ? { label: t('dsFlow.evidenceSourceTokens'), value: String(evidence.tokenCount) } : null,
+    evidence?.snippetCount !== undefined ? { label: t('dsFlow.evidenceSnippets'), value: String(evidence.snippetCount) } : null,
+    tokenContract?.fallbackTokens !== undefined ? { label: t('dsFlow.evidenceFallbackTokens'), value: String(tokenContract.fallbackTokens) } : null,
+    manifest?.fonts?.length ? { label: t('dsFlow.evidenceFonts'), value: String(manifest.fonts.length) } : null,
   ].filter((item): item is { label: string; value: string } => item !== null);
   const confidence = evidence?.confidence ? Object.entries(evidence.confidence) : [];
 
@@ -2969,25 +3001,30 @@ function DesignSystemPackageCard({
     <section className="ds-package-card">
       <div className="ds-package-card__head">
         <span>
-          <strong>{manifest ? 'Structured import package' : 'Legacy design system'}</strong>
+          <strong>{manifest ? t('dsFlow.packageStructured') : t('dsFlow.packageLegacy')}</strong>
           <small>
             {manifest
-              ? `${sourceLabel} · ${manifest.importMode ?? 'normalized'} mode · manifest indexed`
-              : `${sourceLabel} · DESIGN.md-only fallback`}
+              ? t('dsFlow.packageManifestMeta', {
+                source: sourceLabel,
+                mode: manifest.importMode ?? 'normalized',
+              })
+              : t('dsFlow.packageFallbackMeta', { source: sourceLabel })}
           </small>
         </span>
         <span className={manifest ? 'ds-package-pill is-ready' : 'ds-package-pill'}>
-          {manifest ? 'Hybrid ready' : 'Fallback'}
+          {manifest ? t('dsFlow.packagePillReady') : t('dsFlow.packagePillFallback')}
         </span>
       </div>
       {manifest?.sourceFiles?.report ? (
         <div className="ds-token-contract-row">
           <span>
-            <strong>Token contract</strong>
+            <strong>{t('dsFlow.tokenContractLabel')}</strong>
             <small>
               {tokenContract?.grade ? `${tokenContract.grade} · ` : ''}
-              {tokenContract?.score !== undefined ? `score ${tokenContract.score}` : 'quality report available'}
-              {tokenContract?.recommendRebuild ? ' · rebuild recommended' : ''}
+              {tokenContract?.score !== undefined
+                ? t('dsFlow.tokenContractScore', { score: tokenContract.score })
+                : t('dsFlow.tokenContractReportAvailable')}
+              {tokenContract?.recommendRebuild ? ` · ${t('dsFlow.tokenContractRebuildRecommended')}` : ''}
             </small>
           </span>
           <div>
@@ -2998,7 +3035,7 @@ function DesignSystemPackageCard({
               onClick={onRebuildTokenContract}
             >
               <Icon name="sparkles" />
-              Rebuild token contract
+              {t('dsFlow.rebuildTokenContract')}
             </Button>
             {tokenContract?.recommendRebuild ? null : (
               <Button
@@ -3008,7 +3045,7 @@ function DesignSystemPackageCard({
                 onClick={onForceRebuildTokenContract}
               >
                 <Icon name="refresh" />
-                Force
+                {t('dsFlow.forceRebuild')}
               </Button>
             )}
           </div>
@@ -3017,7 +3054,7 @@ function DesignSystemPackageCard({
 
       <div className="ds-package-grid">
         <div>
-          <h2>Agent push layer</h2>
+          <h2>{t('dsFlow.agentPushLayer')}</h2>
           <div className="ds-package-chips">
             {protocolItems.map((item) => (
               <code key={item}>{item}</code>
@@ -3025,11 +3062,11 @@ function DesignSystemPackageCard({
           </div>
         </div>
         <div>
-          <h2>Pull layer</h2>
+          <h2>{t('dsFlow.pullLayer')}</h2>
           <div className="ds-package-metrics">
-            <span><strong>{previewPages.length}</strong><small>Preview pages</small></span>
-            <span><strong>{sourceFileCount}</strong><small>Evidence indexes</small></span>
-            <span><strong>{manifest?.assetsDir ? 'Yes' : 'No'}</strong><small>Assets</small></span>
+            <span><strong>{previewPages.length}</strong><small>{t('dsFlow.previewPages')}</small></span>
+            <span><strong>{sourceFileCount}</strong><small>{t('dsFlow.evidenceIndexes')}</small></span>
+            <span><strong>{manifest?.assetsDir ? t('dsFlow.yes') : t('dsFlow.no')}</strong><small>{t('dsFlow.assetsLabel')}</small></span>
           </div>
         </div>
       </div>
@@ -3057,20 +3094,20 @@ function DesignSystemPackageCard({
       {manifest ? (
         <div className="ds-package-files">
           <PackageFileGroup
-            title="Preview"
+            title={t('common.preview')}
             files={previewPages.map((page) => ({
               path: page.path ?? '',
               meta: [page.title, page.role].filter(Boolean).join(' · '),
             }))}
           />
           <PackageFileGroup
-            title="Source evidence"
+            title={t('dsFlow.sourceEvidence')}
             files={[
-              sourceFiles?.scanned ? { path: sourceFiles.scanned, meta: 'Scanned file inventory' } : null,
-              sourceFiles?.evidence ? { path: sourceFiles.evidence, meta: 'Evidence notes' } : null,
-              sourceFiles?.tokens ? { path: sourceFiles.tokens, meta: 'Token extraction evidence' } : null,
-              sourceFiles?.report ? { path: sourceFiles.report, meta: 'Token contract quality report' } : null,
-              sourceFiles?.snippets ? { path: sourceFiles.snippets, meta: 'Snippet index' } : null,
+              sourceFiles?.scanned ? { path: sourceFiles.scanned, meta: t('dsFlow.metaScannedInventory') } : null,
+              sourceFiles?.evidence ? { path: sourceFiles.evidence, meta: t('dsFlow.metaEvidenceNotes') } : null,
+              sourceFiles?.tokens ? { path: sourceFiles.tokens, meta: t('dsFlow.metaTokenExtraction') } : null,
+              sourceFiles?.report ? { path: sourceFiles.report, meta: t('dsFlow.metaTokenReport') } : null,
+              sourceFiles?.snippets ? { path: sourceFiles.snippets, meta: t('dsFlow.metaSnippetIndex') } : null,
             ].filter((item): item is { path: string; meta: string } => item !== null)}
           />
         </div>
@@ -3106,13 +3143,13 @@ function PackageFileGroup({
   );
 }
 
-function sourceTypeLabel(value: string | undefined): string {
-  if (value === 'github') return 'GitHub import';
-  if (value === 'local') return 'Local import';
-  if (value === 'bundled' || value === 'built-in') return 'Bundled';
-  if (value === 'user') return 'User workspace';
-  if (value === 'installed') return 'Installed';
-  return 'Design system';
+function sourceTypeLabel(value: string | undefined, t: Translate): string {
+  if (value === 'github') return t('dsFlow.sourceTypeGithub');
+  if (value === 'local') return t('dsFlow.sourceTypeLocal');
+  if (value === 'bundled' || value === 'built-in') return t('dsFlow.sourceTypeBundled');
+  if (value === 'user') return t('dsFlow.sourceTypeUser');
+  if (value === 'installed') return t('dsFlow.sourceTypeInstalled');
+  return t('dsFlow.sourceTypeDefault');
 }
 
 function WorkspaceActivityCard({
@@ -3122,6 +3159,7 @@ function WorkspaceActivityCard({
   message: ChatMessage | null;
   active: boolean;
 }) {
+  const { t } = useI18n();
   const events = message?.events ?? [];
   const todos = latestTodosFromEvents(events);
   const fileOps = deriveFileOps(events);
@@ -3144,18 +3182,18 @@ function WorkspaceActivityCard({
         <span>
           <strong>
             {status === 'running'
-              ? 'Open Design is updating this system'
+              ? t('dsFlow.activityRunningTitle')
               : status === 'failed'
-                ? 'Workspace update needs attention'
-                : 'Workspace update ready'}
+                ? t('dsFlow.activityFailedTitle')
+                : t('dsFlow.activityReadyTitle')}
           </strong>
-          <small>{statusDetail ?? workspaceActivityFallbackDetail(status)}</small>
+          <small>{statusDetail ?? workspaceActivityFallbackDetail(status, t)}</small>
         </span>
       </div>
       <div
         className="ds-generation-review-progress"
         role="progressbar"
-        aria-label={`Workspace update progress ${progress}%`}
+        aria-label={t('dsFlow.activityProgressAria', { progress })}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={progress}
@@ -3173,7 +3211,7 @@ function WorkspaceActivityCard({
         </div>
       ) : (
         <div className="ds-generation-review-steps">
-          {fallbackWorkspaceSteps(status, fileOps).map((step) => (
+          {fallbackWorkspaceSteps(status, fileOps, t).map((step) => (
             <span key={step.title} className={`is-${step.status}`}>
               {step.status === 'succeeded' ? <Icon name="check" /> : null}
               {step.title}
@@ -3183,7 +3221,7 @@ function WorkspaceActivityCard({
       )}
       {fileOps.length > 0 ? (
         <div className="ds-workspace-files-touched">
-          <span>Files touched</span>
+          <span>{t('dsFlow.filesTouched')}</span>
           <div>
             {fileOps.slice(0, 5).map((entry) => (
               <code key={entry.fullPath} className={`is-${entry.status}`}>
@@ -3216,10 +3254,13 @@ function latestStatusDetail(events: AgentEvent[]): string | null {
   return null;
 }
 
-function workspaceActivityFallbackDetail(status: 'running' | 'succeeded' | 'failed'): string {
-  if (status === 'running') return 'Watching project files and preparing the review draft.';
-  if (status === 'failed') return 'The chat message has the run details. You can adjust the request and try again.';
-  return 'Review the updated Design System and Design Files tabs.';
+function workspaceActivityFallbackDetail(
+  status: 'running' | 'succeeded' | 'failed',
+  t: Translate,
+): string {
+  if (status === 'running') return t('dsFlow.activityDetailRunning');
+  if (status === 'failed') return t('dsFlow.activityDetailFailed');
+  return t('dsFlow.activityDetailReady');
 }
 
 function workspaceActivityProgress(
@@ -3248,17 +3289,18 @@ function todoStatusClass(status: ReturnType<typeof latestTodosFromEvents>[number
 function fallbackWorkspaceSteps(
   status: 'running' | 'succeeded' | 'failed',
   fileOps: ReturnType<typeof deriveFileOps>,
+  t: Translate,
 ): Array<{ title: string; status: 'pending' | 'running' | 'succeeded' | 'failed' }> {
   const hasRead = fileOps.some((entry) => entry.ops.includes('read'));
   const hasMutation = fileOps.some((entry) => entry.ops.includes('write') || entry.ops.includes('edit'));
   const hasError = status === 'failed' || fileOps.some((entry) => entry.status === 'error');
   return [
     {
-      title: 'Read current system',
+      title: t('dsFlow.stepReadCurrentSystem'),
       status: hasRead || hasMutation || status === 'succeeded' ? 'succeeded' : status === 'running' ? 'running' : 'pending',
     },
     {
-      title: 'Update design files',
+      title: t('dsFlow.stepUpdateDesignFiles'),
       status: hasError
         ? 'failed'
         : hasMutation
@@ -3268,7 +3310,7 @@ function fallbackWorkspaceSteps(
             : 'succeeded',
     },
     {
-      title: 'Refresh review',
+      title: t('dsFlow.stepRefreshReview'),
       status: status === 'succeeded' ? 'succeeded' : status === 'failed' ? 'failed' : 'pending',
     },
   ];
@@ -3354,12 +3396,13 @@ function SourceContextCard({ provenance }: { provenance?: DesignSystemProvenance
 }
 
 function GenerationStatusCard({ job }: { job: DesignSystemGenerationJob }) {
+  const { t } = useI18n();
   const active = job.status === 'queued' || job.status === 'running';
   const noun = job.kind === 'token-contract-rebuild'
-    ? 'Token rebuild'
+    ? t('dsFlow.jobNounTokenRebuild')
     : job.kind === 'revision'
-      ? 'Revision'
-      : 'Generation';
+      ? t('dsFlow.jobNounRevision')
+      : t('dsFlow.jobNounGeneration');
   return (
     <div className={`ds-generation-review-card is-${job.status}`}>
       <div>
@@ -3368,30 +3411,30 @@ function GenerationStatusCard({ job }: { job: DesignSystemGenerationJob }) {
           <strong>
             {active
               ? job.kind === 'token-contract-rebuild'
-                ? 'Open Design is rebuilding tokens'
+                ? t('dsFlow.jobRebuildingTokens')
                 : job.kind === 'revision'
-                  ? 'Open Design is revising'
-                  : 'Open Design is still working'
+                  ? t('dsFlow.jobRevising')
+                  : t('dsFlow.jobStillWorking')
               : job.status === 'failed'
-                ? `${noun} needs attention`
-                : `${noun} completed`}
+                ? t('dsFlow.jobNeedsAttention', { noun })
+                : t('dsFlow.jobCompleted', { noun })}
           </strong>
           <small>
             {job.message
               ?? (active
                 ? job.kind === 'token-contract-rebuild'
-                  ? 'Preparing a reviewable token contract draft.'
+                  ? t('dsFlow.jobDetailTokenRebuild')
                   : job.kind === 'revision'
-                    ? 'Applying your feedback.'
-                    : 'Preparing the remaining files.'
-                : 'Review workspace is ready.')}
+                    ? t('dsFlow.jobDetailRevision')
+                    : t('dsFlow.jobDetailGeneration')
+                : t('dsFlow.jobDetailReady'))}
           </small>
         </span>
       </div>
       <div
         className="ds-generation-review-progress"
         role="progressbar"
-        aria-label={`Generation progress ${job.progress}%`}
+        aria-label={t('dsFlow.generationProgressAria', { progress: job.progress })}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={job.progress}
@@ -3421,12 +3464,13 @@ function RevisionDiffCard({
   onAccept: () => void;
   onReject: () => void;
 }) {
+  const { t } = useI18n();
   const diff = revisionAddedText(revision);
   return (
     <section className="ds-revision-card">
       <div className="ds-revision-card__head">
         <span>
-          <strong>Pending revision</strong>
+          <strong>{t('dsFlow.pendingRevision')}</strong>
           <small>
             {revision.sectionTitle ? `${revision.sectionTitle} · ` : ''}
             {formatDateTime(revision.createdAt)}
@@ -3435,22 +3479,22 @@ function RevisionDiffCard({
         <div>
           <button type="button" className="ghost danger" disabled={saving} onClick={onReject}>
             <Icon name="close" />
-            Reject
+            {t('dsFlow.revisionReject')}
           </button>
           <button type="button" className="ghost success" disabled={saving} onClick={onAccept}>
             <Icon name="check" />
-            Accept
+            {t('dsFlow.revisionAccept')}
           </button>
         </div>
       </div>
       <p>{revision.feedback}</p>
       <div className="ds-revision-diff">
-        <span>Proposed changes</span>
+        <span>{t('dsFlow.proposedChanges')}</span>
         <pre>{diff || revision.proposedBody}</pre>
       </div>
       {revision.fileChanges?.length ? (
         <div className="ds-revision-diff">
-          <span>File draft preview</span>
+          <span>{t('dsFlow.fileDraftPreview')}</span>
           {revision.fileChanges.map((change) => (
             <pre key={change.path}>{`${change.path}\n\n${revisionFileAddedText(change) || change.proposedContent}`}</pre>
           ))}
@@ -3461,13 +3505,14 @@ function RevisionDiffCard({
 }
 
 function RevisionHistoryList({ revisions }: { revisions: DesignSystemRevision[] }) {
+  const { t } = useI18n();
   return (
     <section className="ds-revision-history">
-      <h2>Revision history</h2>
+      <h2>{t('dsFlow.revisionHistory')}</h2>
       {revisions.map((revision) => (
         <div key={revision.id}>
           <span className={`is-${revision.status}`}>{revision.status}</span>
-          <strong>{revision.sectionTitle ?? 'General revision'}</strong>
+          <strong>{revision.sectionTitle ?? t('dsFlow.generalRevision')}</strong>
           <small>{formatDateTime(revision.updatedAt)}</small>
         </div>
       ))}
@@ -3489,6 +3534,7 @@ function DropZone({
   onProcessingStart,
   onFiles,
 }: DropZoneProps) {
+  const { t } = useI18n();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const fileDialogPendingRef = useRef(false);
   const fileDialogCanShowLoadingRef = useRef(false);
@@ -3643,16 +3689,16 @@ function DropZone({
         </label>
         {onBrowseFolder ? (
           <Button variant="ghost" onClick={onBrowseFolder}>
-            Browse folder
+            {t('dsCreate.browseFolder')}
           </Button>
         ) : null}
       </div>
       {names.length > 0 && onRemoveName ? (
-        <div className="ds-local-code-list" aria-label={`${label} selections`}>
+        <div className="ds-local-code-list" aria-label={t('dsCreate.dropZoneSelections', { label })}>
           {names.map((name) => (
             <span key={name}>
               {name}
-              <button type="button" aria-label={`Remove ${name}`} onClick={() => onRemoveName(name)}>
+              <button type="button" aria-label={t('dsCreate.removeFile', { name })} onClick={() => onRemoveName(name)}>
                 x
               </button>
             </span>
@@ -3795,62 +3841,63 @@ function GitHubRepositoryAccessPanel({
   onOpenAuthorization: () => void;
   onDisconnect: () => void;
 }) {
+  const { t } = useI18n();
   const [methodsExpanded, setMethodsExpanded] = useState(false);
   const connected = isGithubConnectorConnected(connector);
   const account = getDisplayableGithubAccountLabel(connector);
   const busy = action !== null;
-  let composioBadge = 'Optional';
+  let composioBadge = t('dsCreate.githubBadgeOptional');
   let composioTone: AccessBadgeTone = 'muted';
-  let composioDescription = 'Composio GitHub connector access for agent tools; repo URLs still work with local git or GitHub CLI.';
+  let composioDescription = t('dsCreate.githubComposioDefaultDesc');
   let composioIcon: IconName = 'settings';
 
   if (!composioConfigured) {
-    composioBadge = 'Not configured';
-    composioDescription = 'Add a Composio API key only if this project needs connector-backed GitHub tools.';
+    composioBadge = t('dsCreate.githubBadgeNotConfigured');
+    composioDescription = t('dsCreate.githubComposioNotConfiguredDesc');
   } else if (connected) {
-    composioBadge = 'Connected';
+    composioBadge = t('dsCreate.githubBadgeConnected');
     composioTone = 'success';
     composioIcon = 'github';
     composioDescription = account
-      ? `Composio GitHub connector connected as ${account}; it is available as fallback when this device cannot read the repository.`
-      : 'Composio GitHub connector is available as fallback when this device cannot read the repository.';
+      ? t('dsCreate.githubComposioConnectedAsDesc', { account })
+      : t('dsCreate.githubComposioConnectedDesc');
   } else if (authorizationPending) {
-    composioBadge = 'Pending';
+    composioBadge = t('dsCreate.githubBadgePending');
     composioTone = 'warning';
     composioIcon = 'external-link';
-    composioDescription = 'Finish the Composio authorization window; local GitHub intake remains available.';
+    composioDescription = t('dsCreate.githubComposioPendingDesc');
   } else if (loading) {
-    composioBadge = 'Checking';
+    composioBadge = t('dsCreate.githubBadgeChecking');
     composioTone = 'loading';
     composioIcon = 'spinner';
-    composioDescription = 'Checking connector status in the background; URL intake is not blocked.';
+    composioDescription = t('dsCreate.githubComposioCheckingDesc');
   } else if (error) {
-    composioBadge = 'Needs attention';
+    composioBadge = t('dsCreate.githubBadgeNeedsAttention');
     composioTone = 'warning';
   } else if (connector?.status === 'error') {
-    composioBadge = 'Needs attention';
+    composioBadge = t('dsCreate.githubBadgeNeedsAttention');
     composioTone = 'danger';
-    composioDescription = 'Reconnect the Composio GitHub connector, or continue with local git/GitHub CLI.';
+    composioDescription = t('dsCreate.githubComposioErrorDesc');
   }
 
   const composioAction = !composioConfigured ? (
     <Button variant="ghost" onClick={onOpenConnectorsTab}>
-      Configure Composio
+      {t('dsCreate.githubConfigureComposio')}
     </Button>
   ) : connected || authorizationPending ? (
     <>
       {authorizationPending && authorizationUrl ? (
         <Button variant="ghost" disabled={busy} onClick={onOpenAuthorization}>
-          Open authorization
+          {t('dsCreate.githubOpenAuthorization')}
         </Button>
       ) : null}
       <Button variant="ghost" disabled={busy} onClick={onDisconnect}>
-        {action === 'disconnect' ? 'Disconnecting...' : 'Disconnect'}
+        {action === 'disconnect' ? t('dsCreate.githubDisconnecting') : t('dsCreate.githubDisconnect')}
       </Button>
     </>
   ) : (
     <Button variant="ghost" disabled={busy} onClick={onConnect}>
-      {action === 'connect' ? 'Connecting...' : 'Connect via Composio'}
+      {action === 'connect' ? t('dsCreate.githubConnecting') : t('dsCreate.githubConnectViaComposio')}
     </Button>
   );
 
@@ -3858,23 +3905,23 @@ function GitHubRepositoryAccessPanel({
     {
       id: 'local',
       icon: 'github',
-      title: 'This device',
-      badge: 'Automatic',
+      title: t('dsCreate.githubMethodThisDevice'),
+      badge: t('dsCreate.githubBadgeAutomatic'),
       tone: 'success',
-      description: 'Uses public git clone, local git credentials, or GitHub CLI auth available on this machine.',
+      description: t('dsCreate.githubMethodThisDeviceDesc'),
     },
     {
       id: 'native-oauth',
       icon: 'link',
-      title: 'Open Design account',
-      badge: 'Coming soon',
+      title: t('dsCreate.githubMethodOdAccount'),
+      badge: t('dsCreate.githubBadgeComingSoon'),
       tone: 'muted',
-      description: 'Native GitHub sign-in managed by Open Design; this build does not use an OD-managed GitHub token yet.',
+      description: t('dsCreate.githubMethodOdAccountDesc'),
     },
     {
       id: 'composio',
       icon: composioIcon,
-      title: 'Connector platform',
+      title: t('dsCreate.githubMethodConnectorPlatform'),
       badge: composioBadge,
       tone: composioTone,
       description: composioDescription,
@@ -3892,8 +3939,8 @@ function GitHubRepositoryAccessPanel({
     >
       <div className="ds-github-access-header">
         <span>
-          <strong>GitHub access: Auto</strong>
-          <p>GitHub repo links use the first working access method; other website links are saved as source references.</p>
+          <strong>{t('dsCreate.githubAccessAutoTitle')}</strong>
+          <p>{t('dsCreate.githubAccessAutoBody')}</p>
         </span>
         <button
           type="button"
@@ -3907,7 +3954,7 @@ function GitHubRepositoryAccessPanel({
           }}
         >
           <Icon name={methodsExpanded ? 'chevron-down' : 'chevron-right'} />
-          {methodsExpanded ? 'Hide access methods' : 'Show access methods'}
+          {methodsExpanded ? t('dsCreate.githubHideAccessMethods') : t('dsCreate.githubShowAccessMethods')}
         </button>
       </div>
       <div
@@ -3917,7 +3964,7 @@ function GitHubRepositoryAccessPanel({
         aria-hidden={!methodsExpanded}
       >
         <div className="accordion-collapsible-inner">
-          <div className="ds-github-access-methods" aria-label="GitHub repository access methods">
+          <div className="ds-github-access-methods" aria-label={t('dsCreate.githubAccessMethodsAria')}>
             {methods.map((method) => (
               <div key={method.id} className="ds-github-access-method">
                 <Icon name={method.icon} />
@@ -4403,13 +4450,13 @@ function normalizeFigmaUrl(value: string): string {
 }
 
 // "https://figma.com/design/<key>/My-File-Name" → "Figma · My File Name".
-function figmaUrlLabel(url: string): string {
+function figmaUrlLabel(url: string, t: Translate): string {
   try {
     const parts = new URL(url).pathname.split('/').filter(Boolean);
     const name = parts[2] ? decodeURIComponent(parts[2]).replace(/[-_]+/g, ' ').trim() : '';
-    return name ? `Figma · ${name}` : 'Figma file';
+    return name ? `Figma · ${name}` : t('dsCreate.figmaFileFallbackLabel');
   } catch {
-    return 'Figma file';
+    return t('dsCreate.figmaFileFallbackLabel');
   }
 }
 
@@ -4515,7 +4562,7 @@ function SourceLinkFavicon({ url }: { url: string }) {
   );
 }
 
-function buildDesignMdPreviewModel(markdown: string): DesignMdPreviewModel {
+function buildDesignMdPreviewModel(markdown: string, t: Translate): DesignMdPreviewModel {
   const parsed = parseDesignMd(markdown);
   const colors = parsed.colors
     .map((color) => ({
@@ -4558,7 +4605,7 @@ function buildDesignMdPreviewModel(markdown: string): DesignMdPreviewModel {
     ?? mixPreviewHex(lightBackground, '#ffffff', 0.92);
   const colorPrimaryBg = mixPreviewHex(colorPrimary, lightBackground, 0.14);
   return {
-    name: parsed.name || 'Design system',
+    name: parsed.name || t('dsCreate.designMdPreviewFallbackName'),
     description: parsed.description || parsed.tagline,
     displayFont: cssFontFamily(parsed.typography.display?.family ?? parsed.typography.body?.family ?? fontFromMarkdown(markdown) ?? 'Inter'),
     bodyFont: cssFontFamily(parsed.typography.body?.family ?? parsed.typography.display?.family ?? fontFromMarkdown(markdown) ?? 'Inter'),
@@ -4943,10 +4990,12 @@ function safeContextFileName(name: string, fallback: string): string {
   return `${slug || fallback}.md`;
 }
 
-function localCodeSourceLabels(state: SetupState): string[] {
+function localCodeSourceLabels(state: SetupState, t: Translate): string[] {
   return [
     ...state.codeFolders,
-    ...(state.codeFiles.length ? [`${state.codeFiles.length} local code files selected`] : []),
+    ...(state.codeFiles.length
+      ? [t('dsCreate.localCodeFilesSelected', { count: state.codeFiles.length })]
+      : []),
   ];
 }
 
@@ -5452,30 +5501,39 @@ function truncateContext(value: string): string {
   return value.length > 160 ? `${value.slice(0, 157)}...` : value;
 }
 
-function parseDesignSystemSections(body: string): Array<{ title: string; subtitle: string; body: string }> {
+function parseDesignSystemSections(
+  body: string,
+  t: Translate,
+): Array<{ title: string; subtitle: string; body: string }> {
   const matches = [...body.matchAll(/^##\s+(.+?)\s*$/gm)];
   if (matches.length === 0) {
-    return [{ title: 'Design System', subtitle: 'Draft body', body: body.trim() || 'No content yet.' }];
+    return [{
+      title: t('dsFlow.tabDesignSystem'),
+      subtitle: t('dsFlow.sectionDraftBody'),
+      body: body.trim() || t('dsFlow.sectionNoContent'),
+    }];
   }
   return matches.map((match, index) => {
     const start = (match.index ?? 0) + match[0].length;
     const end = matches[index + 1]?.index ?? body.length;
-    const title = match[1]?.replace(/^\d+\.\s*/, '').trim() || 'Section';
+    const title = match[1]?.replace(/^\d+\.\s*/, '').trim() || t('dsFlow.sectionFallbackTitle');
     const content = body.slice(start, end).trim();
     return {
       title,
-      subtitle: sectionSubtitle(title),
-      body: content || 'No details yet.',
+      subtitle: sectionSubtitle(title, t),
+      body: content || t('dsFlow.sectionNoDetails'),
     };
   });
 }
 
-function sectionSubtitle(title: string): string {
+// The keyword match runs against the DESIGN.md heading (authored in English by
+// the generator), so only the returned subtitles are localized.
+function sectionSubtitle(title: string, t: Translate): string {
   const normalized = title.toLowerCase();
-  if (normalized.includes('type')) return 'Text hierarchy and styles';
-  if (normalized.includes('color')) return 'Palette and semantic roles';
-  if (normalized.includes('spacing')) return 'Spacing scale and radius tokens';
-  if (normalized.includes('component')) return 'Reusable interface patterns';
-  if (normalized.includes('brand')) return 'Logo, voice and usage rules';
-  return 'Design guidance';
+  if (normalized.includes('type')) return t('dsFlow.subtitleTypography');
+  if (normalized.includes('color')) return t('dsFlow.subtitleColor');
+  if (normalized.includes('spacing')) return t('dsFlow.subtitleSpacing');
+  if (normalized.includes('component')) return t('dsFlow.subtitleComponents');
+  if (normalized.includes('brand')) return t('dsFlow.subtitleBrand');
+  return t('dsFlow.subtitleDefault');
 }

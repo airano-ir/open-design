@@ -143,6 +143,24 @@
   max-width: none;
 }
 
+/* In the host-scrolled compact layout (BrandPickerModal) the WHOLE picker
+   scrolls, so the search field and category filters used to slide out of view
+   after a couple of rows — leaving the modal's own "search hundreds of brands"
+   promise with no visible search box for the rest of the wall. Pin the controls
+   to the top of the scrollport so search stays reachable while the gallery
+   scrolls under it. fillHeight callers (NewBrandModal) already pin the controls
+   via flex and must keep their own layout, hence the :not(.fill). */
+.compact:not(.fill) .controls {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  /* Bleed over the scroll container's side padding so cards passing underneath
+     cannot peek through the gap. */
+  margin: 0 -6px;
+  padding: 10px 6px;
+  background: var(--bg-panel);
+}
+
 .searchIcon {
   position: absolute;
   left: 11px;
@@ -236,8 +254,12 @@
   gap: 10px;
 }
 
+/* 150px columns left ~80px for the text block once the 38px favicon tile and
+   padding were taken out, which clipped real catalogue names ("Charlotte
+   Tilbury", "Lucid Motors", "Codecademy") to an ellipsis. 190px trades the
+   5th column for names that actually fit. */
 .compact .grid {
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
 }
 
 .card {
