@@ -19,6 +19,8 @@ export type AnalyticsEventName =
   | 'langfuse_report_result'
   | 'run_retry_attempted'
   | 'run_retry_finished'
+  // Paid media provider request outcome and bounded response retry.
+  | 'media_generation_result'
   // Packaged updater lifecycle
   | 'update_install_result'
   | 'update_check_result'
@@ -50,6 +52,7 @@ export type AnalyticsEventName =
   | 'settings_cli_test_result'
   | 'settings_byok_test_result'
   | 'settings_byok_models_fetch_result'
+  | 'byok_preflight_blocked'
   | 'settings_connector_auth_result'
   // AMR (hosted model) account auth result.
   | 'amr_auth_result'
