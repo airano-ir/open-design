@@ -28,6 +28,7 @@ triggers:
   - "html deck"
   - "html slides"
 od:
+  category: product-management
   mode: deck
   preview:
     type: html

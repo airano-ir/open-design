@@ -67,7 +67,11 @@ vi.mock('../../src/components/DesignSystemKitPreview', () => ({
 }));
 
 import { QuestionFormView } from '../../src/components/QuestionForm';
-import { resetInspirationCatalogCacheForTests } from '../../src/components/InspirationPicker';
+import {
+  InspirationPicker,
+  resetInspirationCatalogCacheForTests,
+} from '../../src/components/InspirationPicker';
+import { useT } from '../../src/i18n';
 import type { QuestionForm } from '../../src/artifacts/question-form';
 
 const inspirationForm: QuestionForm = {
@@ -248,6 +252,53 @@ describe('InspirationPicker inside QuestionFormView', () => {
     ]);
     // Uploads alone carry no template/design-system payload.
     expect(inspiration).toBeUndefined();
+  });
+
+  it('selection chips list every pick and remove works across families', async () => {
+    const onSubmit = vi.fn();
+    render(<QuestionFormView form={inspirationForm} interactive onSubmit={onSubmit} />);
+
+    fireEvent.click(await screen.findByLabelText('Fundraising Pitch'));
+    fireEvent.click(screen.getByRole('tab', { name: /Design systems/ }));
+    fireEvent.click(screen.getByLabelText('Editorial'));
+
+    const chips = screen.getByTestId('inspiration-picked');
+    expect(chips.textContent).toContain('Fundraising Pitch');
+    expect(chips.textContent).toContain('Editorial');
+
+    // Removing via the chip clears that family's pick even when its card is
+    // not on the active tab.
+    fireEvent.click(screen.getByRole('button', { name: 'Remove: Fundraising Pitch' }));
+    fireEvent.click(screen.getByText('Send answers'));
+    const [, answers] = onSubmit.mock.calls[0]!;
+    expect(answers.inspiration).toEqual(['Editorial [ds:user:editorial]']);
+  });
+
+  it('locked with picks renders the compact read-only summary instead of the catalog', () => {
+    function Harness() {
+      const t = useT();
+      return (
+        <InspirationPicker
+          formId="inspiration"
+          questionId="inspiration"
+          query="product landing page"
+          value={['Fundraising Pitch [template:deck-fundraising]', 'reference-shot.png']}
+          files={[]}
+          disabled
+          onChange={() => {}}
+          onFilesChange={() => {}}
+          t={t}
+        />
+      );
+    }
+    render(<Harness />);
+    const picker = screen.getByTestId('inspiration-picker');
+    expect(picker.className).toContain('qf-insp-summary');
+    const chips = screen.getByTestId('inspiration-picked');
+    expect(chips.textContent).toContain('Fundraising Pitch');
+    expect(chips.textContent).toContain('reference-shot.png');
+    // No catalog UI in the locked record.
+    expect(screen.queryByRole('tab', { name: /Design systems/ })).toBeNull();
   });
 
   it('locks the picker when the form is not interactive', async () => {

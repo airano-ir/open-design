@@ -1,5 +1,7 @@
 ---
 name: clinical-case-report
+en_name: "Clinical Case Report"
+zh_name: "临床病例报告"
 description: |
   Structured medical case presentation for clinical rounds, conferences,
   and documentation. Generates SOAP-format or narrative case reports
@@ -19,6 +21,7 @@ od:
   mode: prototype
   platform: desktop
   scenario: healthcare
+  category: academic-research
   preview:
     type: html
     entry: index.html

@@ -1,5 +1,7 @@
 ---
 name: mobile-onboarding
+en_name: "Mobile Onboarding Flow Mockup"
+zh_name: "移动端引导页流程"
 description: |
   A multi-screen mobile onboarding flow rendered as three phone frames
   side by side — splash, value-prop, sign-in. Status bar, swipe dots,
@@ -13,6 +15,7 @@ triggers:
   - "app onboarding"
   - "移动端引导"
 od:
+  category: design-craft
   mode: prototype
   platform: mobile
   scenario: design

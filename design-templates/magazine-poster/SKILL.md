@@ -1,5 +1,7 @@
 ---
 name: magazine-poster
+en_name: "Editorial Magazine Poster"
+zh_name: "杂志编辑风海报"
 description: |
   An editorial-style poster — newsprint paper, dateline, oversized serif
   headline with a struck-through word and italic accent, a 2-column body
@@ -18,6 +20,7 @@ triggers:
   - "杂志海报"
   - "报纸版式"
 od:
+  category: design-craft
   featured: 0.02
   mode: prototype
   platform: desktop

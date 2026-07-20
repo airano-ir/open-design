@@ -23,6 +23,7 @@ import {
   isCommercialCategoryId,
 } from './plugins-home/categoryLabel';
 import { setPendingDesignSystemCreateEntry } from '../analytics/ds-create-entry';
+import { requestInspirationBrowse } from '../runtime/inspiration-browse-intent';
 import { navigate } from '../router';
 import { DesignSystemKitPreview } from './DesignSystemKitPreview';
 import { Icon } from './Icon';
@@ -111,6 +112,16 @@ function isUserDesignSystem(system: DesignSystemSummary): boolean {
   return system.source === 'user' || system.isEditable === true;
 }
 
+// Reference-site shortcuts under the upload dropzone: copy an image on the
+// site, come back, paste. Opened through the workspace's built-in Browser
+// when a host listens (ProjectView), else a regular new tab.
+const INSPIRATION_BROWSE_SITES: ReadonlyArray<{ id: string; label: string; url: string }> = [
+  { id: 'dribbble', label: 'Dribbble', url: 'https://dribbble.com/shots/popular' },
+  { id: 'mobbin', label: 'Mobbin', url: 'https://mobbin.com/discover/apps/web/latest' },
+  { id: 'behance', label: 'Behance', url: 'https://www.behance.net/search/projects?field=ui%2Fux' },
+  { id: 'awwwards', label: 'Awwwards', url: 'https://www.awwwards.com/websites/' },
+];
+
 export interface InspirationPickerProps {
   formId: string;
   questionId: string;
@@ -185,10 +196,12 @@ export function InspirationPicker({
   const [designSystems, setDesignSystems] = useState<DesignSystemSummary[] | null>(null);
   const [category, setCategory] = useState<string>('all');
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [templateSearch, setTemplateSearch] = useState('');
   const [dsSearch, setDsSearch] = useState('');
   const [dsMulti, setDsMulti] = useState(false);
   const [dsPreviewId, setDsPreviewId] = useState<string | null>(null);
   const [previewReady, setPreviewReady] = useState<Record<string, boolean>>({});
+  const [browseTipSite, setBrowseTipSite] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
@@ -214,6 +227,17 @@ export function InspirationPicker({
   }, [enabled]);
 
   const selection = useMemo(() => parseInspirationSelection(value), [value]);
+  // Upload entries in the answer are the non-token file names. In the live
+  // form they mirror `files`; in the locked (answered) state File objects are
+  // gone, so these names are the only record of what was attached.
+  const uploadNames = useMemo(
+    () =>
+      value.filter((entry) => {
+        const parsed = parseInspirationSelection([entry]);
+        return parsed.templates.length === 0 && parsed.designSystems.length === 0;
+      }),
+    [value],
+  );
   const selectedTemplateIds = useMemo(
     () => new Set(selection.templates.map((entry) => entry.id)),
     [selection],
@@ -251,6 +275,21 @@ export function InspirationPicker({
         : visualTemplates.filter((skill) => skill.category === category),
     [category, visualTemplates],
   );
+  // Gallery-only text filter over the category-filtered list: localized
+  // name, id, and category label all match.
+  const tplQuery = templateSearch.trim().toLowerCase();
+  const searchedTemplates = useMemo(() => {
+    if (tplQuery.length === 0) return filteredTemplates;
+    return filteredTemplates.filter((skill) => {
+      const name = localizeSkillName(locale, skill).toLowerCase();
+      const cat = (skill.category ?? '').toLowerCase();
+      return (
+        name.includes(tplQuery) ||
+        skill.id.toLowerCase().includes(tplQuery) ||
+        cat.includes(tplQuery)
+      );
+    });
+  }, [filteredTemplates, tplQuery, locale]);
 
   // Probe preview availability for the templates currently on screen; the
   // module-level cache makes repeat mounts free.
@@ -325,6 +364,17 @@ export function InspirationPicker({
   function clearDesignSystems() {
     if (disabled) return;
     onChange(entriesWithout('ds'));
+  }
+
+  function removePick(kind: 'template' | 'ds', id: string) {
+    if (disabled) return;
+    onChange(
+      value.filter((entry) => {
+        const parsed = parseInspirationSelection([entry]);
+        const match = kind === 'template' ? parsed.templates[0] : parsed.designSystems[0];
+        return match?.id !== id;
+      }),
+    );
   }
 
   function applyFiles(next: File[]) {
@@ -500,6 +550,52 @@ export function InspirationPicker({
     );
   };
 
+  // Selections made in the gallery may not be among the four inline cards,
+  // so the picker always lists what is currently picked as removable chips —
+  // across all three families — right under the tab bar.
+  const renderSelectionChips = () => {
+    const uploads: Array<{ name: string; remove?: () => void }> = disabled
+      ? uploadNames.map((name) => ({ name }))
+      : files.map((file, index) => ({ name: file.name, remove: () => removeFile(index) }));
+    const total = selection.templates.length + selection.designSystems.length + uploads.length;
+    if (total === 0) return null;
+    const chip = (
+      key: string,
+      icon: Parameters<typeof Icon>[0]['name'],
+      label: string,
+      onRemove: () => void,
+    ) => (
+      <span key={key} className="qf-insp-pick" title={label}>
+        <Icon name={icon} size={11} />
+        <span className="qf-insp-pick-label">{label}</span>
+        {!disabled ? (
+          <button
+            type="button"
+            className="qf-insp-pick-remove"
+            aria-label={`${t('qf.inspRemove')}: ${label}`}
+            title={t('qf.inspRemove')}
+            onClick={onRemove}
+          >
+            <Icon name="close" size={9} />
+          </button>
+        ) : null}
+      </span>
+    );
+    return (
+      <div className="qf-insp-picked" data-testid="inspiration-picked">
+        {selection.templates.map((entry) =>
+          chip(`tpl-${entry.id}`, 'slides', entry.label, () => removePick('template', entry.id)),
+        )}
+        {selection.designSystems.map((entry) =>
+          chip(`ds-${entry.id}`, 'grid', entry.label, () => removePick('ds', entry.id)),
+        )}
+        {uploads.map((upload, index) =>
+          chip(`img-${upload.name}-${index}`, 'image', upload.name, upload.remove ?? (() => {})),
+        )}
+      </div>
+    );
+  };
+
   const renderCategoryTabs = (idPrefix: string) =>
     categories.length > 0 ? (
       <div className="qf-insp-cats" role="tablist" aria-label={t('qf.inspTabTemplates')}>
@@ -589,6 +685,33 @@ export function InspirationPicker({
               <figcaption>{file.name}</figcaption>
             </figure>
           ))}
+        </div>
+      ) : null}
+      <div className="qf-insp-sources">
+        <span className="qf-insp-sources-label">{t('qf.inspSources')}</span>
+        {INSPIRATION_BROWSE_SITES.map((site) => (
+          <button
+            key={site.id}
+            type="button"
+            className="qf-insp-source"
+            disabled={disabled}
+            onClick={() => {
+              const handled = requestInspirationBrowse({ siteId: site.id, url: site.url });
+              if (!handled && typeof window !== 'undefined') {
+                window.open(site.url, '_blank', 'noopener');
+              }
+              setBrowseTipSite(site.label);
+            }}
+          >
+            <span>{site.label}</span>
+            <span aria-hidden>↗</span>
+          </button>
+        ))}
+      </div>
+      {browseTipSite ? (
+        <div className="qf-insp-source-tip" role="status">
+          <Icon name="image" size={12} />
+          <span>{t('qf.inspSourceTip', { site: browseTipSite })}</span>
         </div>
       ) : null}
     </div>
@@ -732,6 +855,20 @@ export function InspirationPicker({
     </>
   );
 
+  // Locked (answered) forms render as a compact read-only record of the
+  // picks — the full catalog would be noise once the choice is made, but the
+  // user must still see WHAT was chosen (template / systems / images).
+  const lockedPickTotal =
+    selection.templates.length + selection.designSystems.length + uploadNames.length;
+  if (disabled && lockedPickTotal > 0) {
+    return (
+      <div className="qf-insp qf-insp-summary" data-testid="inspiration-picker">
+        {query ? <div className="qf-insp-query">{query}</div> : null}
+        {renderSelectionChips()}
+      </div>
+    );
+  }
+
   return (
     <div
       className="qf-insp"
@@ -769,6 +906,7 @@ export function InspirationPicker({
           })}
         </div>
       ) : null}
+      {renderSelectionChips()}
       {tab === 'templates' && enabled.includes('templates') ? (
         <>
           {renderCategoryTabs('inline')}
@@ -815,8 +953,20 @@ export function InspirationPicker({
                   renderDesignSystemGallery()
                 ) : (
                   <>
-                    {renderCategoryTabs('gallery')}
-                    {renderCatalogGrid(filteredTemplates, 'templates', 'gallery', 0)}
+                    <div className="qf-tplx-head">
+                      <div className="qf-dsx-search">
+                        <Icon name="search" size={13} />
+                        <input
+                          type="search"
+                          value={templateSearch}
+                          placeholder={t('qf.inspSearchTpl')}
+                          aria-label={t('qf.inspSearchTpl')}
+                          onChange={(event) => setTemplateSearch(event.target.value)}
+                        />
+                      </div>
+                      {renderCategoryTabs('gallery')}
+                    </div>
+                    {renderCatalogGrid(searchedTemplates, 'templates', 'gallery', 0)}
                   </>
                 )}
               </DialogBody>

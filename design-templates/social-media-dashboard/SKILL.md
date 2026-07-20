@@ -1,5 +1,7 @@
 ---
 name: social-media-dashboard
+en_name: "Social Media Analytics Dashboard"
+zh_name: "社媒数据分析仪表盘"
 description: |
   Creator-facing social media analytics dashboard in a single HTML file.
   A platform switcher (X / LinkedIn / YouTube / Instagram), a row of KPI
@@ -19,6 +21,7 @@ triggers:
   - "创作者后台"
   - "社交媒体仪表盘"
 od:
+  category: data-finance
   mode: prototype
   platform: desktop
   scenario: creator

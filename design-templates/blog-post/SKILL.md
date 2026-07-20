@@ -1,5 +1,7 @@
 ---
 name: blog-post
+en_name: "Editorial Blog Post"
+zh_name: "博客长文页"
 description: |
   A long-form article / blog post — masthead, hero image placeholder,
   article body with figures and pull quotes, author byline, related posts.
@@ -18,6 +20,7 @@ od:
   mode: prototype
   platform: desktop
   scenario: marketing
+  category: marketing-gtm
   preview:
     type: html
     entry: index.html

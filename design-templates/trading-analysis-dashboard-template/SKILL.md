@@ -1,5 +1,7 @@
 ---
 name: trading-analysis-dashboard-template
+en_name: "Trading Analysis Dashboard"
+zh_name: "交易分析仪表盘"
 description: |
   Professional trading analysis dashboard template (single-file HTML) with
   light/dark theme switch, dense market panels, chart interactions, demo/live
@@ -15,6 +17,7 @@ triggers:
   - "华尔街风格看板"
   - "高科技金融 dashboard 模板"
 od:
+  category: data-finance
   mode: template
   platform: desktop
   scenario: live-artifacts

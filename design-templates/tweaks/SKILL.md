@@ -1,5 +1,7 @@
 ---
 name: tweaks
+en_name: "Live Tweak Panel"
+zh_name: "实时调参面板"
 description: |
   Wrap any HTML artifact with a side panel of live, parameterized
   controls — accent color, type scale, density, motion, theme — that
@@ -19,6 +21,7 @@ triggers:
   - "side panel"
   - "knobs"
 od:
+  category: design-craft
   mode: prototype
   platform: desktop
   scenario: design

@@ -1,5 +1,7 @@
 ---
 name: wireframe-sketch
+en_name: "Hand-Drawn Wireframe Sketch"
+zh_name: "手绘线框草图"
 description: |
   A hand-drawn wireframe exploration — graph-paper background, marker /
   pencil tone, multiple tab labels for variants, sticky-note annotations,
@@ -18,6 +20,7 @@ triggers:
   - "草图"
   - "线框图"
 od:
+  category: design-craft
   mode: prototype
   platform: desktop
   scenario: design

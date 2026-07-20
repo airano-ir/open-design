@@ -29,6 +29,7 @@ triggers:
   - "html deck"
   - "html slides"
 od:
+  category: marketing-gtm
   mode: deck
   default_for: deck
   upstream: "https://github.com/op7418/guizang-ppt-skill"

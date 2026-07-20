@@ -278,6 +278,7 @@ import {
   buildFinalizeCredentialsMissingToast,
   buildFinalizeRequest,
 } from '../lib/resolve-finalize-request';
+import { subscribeInspirationBrowse } from '../runtime/inspiration-browse-intent';
 
 type BrandBrowserSnapshot =
   | { status: 'ready'; html: string; css: string; baseUrl: string }
@@ -1741,6 +1742,21 @@ export function ProjectView({
   // tab still focuses it.
   const [openRequest, setOpenRequest] = useState<{ name: string; nonce: number } | null>(null);
   const [browserOpenRequest, setBrowserOpenRequest] = useState<BrowserOpenRequest | null>(null);
+  // The inspiration picker's reference-site shortcuts (Dribbble, Mobbin, …)
+  // open through the workspace's built-in Browser: one tab per site, reused
+  // on repeat clicks, so the user can copy an image there and paste it back
+  // into the picker.
+  useEffect(
+    () =>
+      subscribeInspirationBrowse(({ siteId, url }) => {
+        setBrowserOpenRequest({
+          tabId: `inspiration-${siteId}`,
+          url,
+          nonce: Date.now(),
+        });
+      }),
+    [],
+  );
   // Like `openRequest`, but additionally asks the preview workspace to open the
   // file's Share/Export menu. Drives the "Share" next-step action: it reuses the
   // existing export/deploy surface rather than introducing a new share backend.

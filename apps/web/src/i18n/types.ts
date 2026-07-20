@@ -3951,6 +3951,9 @@ export interface Dict {
   'qf.inspCreateDs': string;
   'qf.inspYourDs': string;
   'qf.inspIncludedDs': string;
+  'qf.inspSearchTpl': string;
+  'qf.inspSources': string;
+  'qf.inspSourceTip': string;
   'questions.tabLabel': string;
   'questions.banner': string;
   'questions.bannerAnswered': string;

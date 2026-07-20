@@ -2536,7 +2536,17 @@ function ProseBlock({
     | { key: string; kind: "suppressed-direction" };
   const renderable = segments.flatMap((seg, idx): Renderable[] => {
     if (seg.kind === "form") {
-      if (suppressDirectionForms && (isDirectionForm(seg.form) || isInspirationForm(seg.form))) {
+      // Suppress only UNANSWERED direction/inspiration forms — an answered
+      // one is the record of what the user picked, and must keep rendering
+      // (locked) so the choice stays visible after the design system applies.
+      const answered = Boolean(
+        nextUserContent && parseSubmittedAnswers(seg.form, nextUserContent),
+      );
+      if (
+        suppressDirectionForms &&
+        !answered &&
+        (isDirectionForm(seg.form) || isInspirationForm(seg.form))
+      ) {
         return [{ key: `f-${idx}`, kind: "suppressed-direction" }];
       }
       return [{ key: `f-${idx}`, kind: "form", form: seg.form }];
