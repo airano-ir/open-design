@@ -1138,6 +1138,44 @@ describe('FileViewer manual edit regressions', () => {
     expect(frame.srcdoc).toBe(srcdocBefore);
   });
 
+  it('keeps the semantic id when replacing runtime-only container HTML in place', async () => {
+    const source = '<!doctype html><html><head><script id="od-brand-payload" type="application/json">{"status":"ready","brand":{"name":"Acme"}}</script></head><body><div id="root"></div></body></html>';
+    const { fetchMock, savedBodies } = manualEditWriteMock(source);
+    vi.stubGlobal('fetch', fetchMock);
+    render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={htmlPreviewFile()}
+        liveHtml={source}
+      />,
+    );
+
+    clickManualTool('manual-edit-mode-toggle');
+    const frame = await previewFrame();
+    const postSpy = vi.spyOn(frame.contentWindow!, 'postMessage');
+    await selectManualEditTarget({
+      ...heroTarget(),
+      id: 'brand-system-section',
+      kind: 'container',
+      label: 'Brand system',
+      text: 'Brand system',
+      attributes: { 'data-od-id': 'brand-system-section' },
+      outerHtml: '<section data-od-id="brand-system-section">Brand system</section>',
+    });
+
+    const htmlEditor = document.querySelector('.manual-edit-code') as HTMLTextAreaElement;
+    fireEvent.change(htmlEditor, {
+      target: { value: '<section class="replacement">Updated brand system</section>' },
+    });
+    const modal = document.querySelector('.manual-edit-modal') as HTMLElement;
+    fireEvent.click(within(modal).getByRole('button', { name: /^Save$/ }));
+
+    const applied = await ackApplyDom(frame, postSpy);
+    expect(applied.op).toBe('replace');
+    expect(applied.id).toBe('brand-system-section');
+    expect(applied.html).toContain('data-od-id="brand-system-section"');
+    expect(applied.html).toContain('class="replacement"');
+    await waitFor(() => expect(savedBodies).toHaveLength(1));
+  });
+
   it('does not offer duplicate for runtime-only brand-kit targets', async () => {
     const source = '<!doctype html><html><head><script id="od-brand-payload" type="application/json">{"status":"ready","brand":{"name":"Acme"}}</script></head><body><div id="root"></div></body></html>';
     const { fetchMock } = manualEditWriteMock(source);

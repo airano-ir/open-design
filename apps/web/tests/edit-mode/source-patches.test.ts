@@ -8,6 +8,7 @@ import {
   readManualEditInsertedSibling,
   readManualEditOuterHtml,
   readManualEditRestoreDescriptor,
+  readManualEditRuntimeOuterHtml,
   readManualEditStyles,
 } from '../../src/edit-mode/source-patches';
 
@@ -162,6 +163,18 @@ describe('manual edit source patches', () => {
     const html = readManualEditOuterHtml(result.source, 'card');
     expect(html).toContain('data-od-id="card"');
     expect(html).toContain('class="replacement"');
+  });
+
+  it('synthesizes the semantic id for runtime-only outerHTML replacements', () => {
+    const result = applyManualEditPatch(brandKitSource, {
+      kind: 'set-outer-html',
+      id: 'brand-system-section',
+      html: '<section class="replacement">Updated brand system</section>',
+    });
+
+    expect(result.ok).toBe(true);
+    expect(readManualEditRuntimeOuterHtml(result.source, 'brand-system-section'))
+      .toBe('<section class="replacement" data-od-id="brand-system-section">Updated brand system</section>');
   });
 
   it('replaces full source for snapshot-based undo history', () => {

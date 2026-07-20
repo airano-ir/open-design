@@ -262,6 +262,24 @@ export function readManualEditRuntimeInnerHtml(source: string, id: string): stri
 }
 
 /**
+ * Read the exact element markup the reload-time runtime override applier will
+ * render. Runtime replacements retain their semantic id even when the user's
+ * edited outerHTML omits it, so the live fast path stays addressable too.
+ */
+export function readManualEditRuntimeOuterHtml(source: string, id: string): string | null {
+  const doc = parseSource(source);
+  if (!doc) return null;
+  const html = readRuntimeContentOverrides(doc).html?.[id];
+  if (html == null) return null;
+  const template = doc.createElement('template');
+  template.innerHTML = html;
+  if (template.content.children.length !== 1) return null;
+  const next = template.content.children[0]!;
+  if (!next.getAttribute('data-od-id')) next.setAttribute('data-od-id', id);
+  return next.outerHTML;
+}
+
+/**
  * Positional path id (`path-a-b-c`) of an element in a parsed SOURCE document
  * — mirror of `findElementByPath` in reverse, and of the srcDoc build-time
  * annotators. The source is clean (no injected host nodes), so plain

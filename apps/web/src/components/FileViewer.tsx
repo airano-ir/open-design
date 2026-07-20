@@ -210,6 +210,7 @@ import {
   readManualEditOuterHtml,
   readManualEditRestoreDescriptor,
   readManualEditRuntimeInnerHtml,
+  readManualEditRuntimeOuterHtml,
   readManualEditStyles,
 } from '../edit-mode/source-patches';
 import { MANUAL_EDIT_STYLE_PROPS, manualEditTargetsLightEqual, type ManualEditBridgeMessage, type ManualEditHistoryEntry, type ManualEditPatch, type ManualEditPreviewStyles, type ManualEditRect, type ManualEditStyles, type ManualEditTarget, type ManualEditTextSelectionFormat } from '../edit-mode/types';
@@ -9002,7 +9003,10 @@ function HtmlViewer({
       // overrides. Mirror the patch straight onto the live element instead of
       // reloading — a brand-page reload flashes AND re-renders async, so the
       // scroll restore window misses and the canvas jumps to the top.
-      if (patch.kind === 'set-outer-html') return applyManualEditDomOp(patch.id, patch.html, 'replace');
+      if (patch.kind === 'set-outer-html') {
+        const html = readManualEditRuntimeOuterHtml(destSource, patch.id);
+        return html ? applyManualEditDomOp(patch.id, html, 'replace') : false;
+      }
       const fields = manualEditPatchContentFields(patch, destSource);
       if (!fields) return false;
       return applyManualEditDomOp(patch.id, '', 'apply-content', fields);
