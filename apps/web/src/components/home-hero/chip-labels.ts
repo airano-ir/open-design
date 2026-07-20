@@ -1,8 +1,6 @@
 // Single source of truth for localizing a HOME_HERO_CHIPS chip id to its
-// display label. Shared by the Home hero rail (HomeHero/HomeView) and the
-// onboarding "build a design system" step (EntryShell), so the onboarding
-// artifact chips stay in lockstep with the real template picker instead of a
-// separate hand-maintained string that silently drifts out of sync.
+// display label. Shared by the Home hero rail and its dispatch/render helpers
+// so every Home surface stays in lockstep with the scenario catalogue.
 //
 // Kept out of `chips.ts` so that module stays a pure data table with no i18n
 // dependency; this file owns the chip-id → Dict-key mapping.

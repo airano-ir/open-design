@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EntryShell } from '../../src/components/EntryShell';
 import { AMR_LOGIN_TIMEOUT_MS } from '../../src/components/amrLoginPolling';
 import { I18nProvider } from '../../src/i18n';
+import type { BrandSummary } from '@open-design/contracts';
 import type { AgentInfo, AppConfig } from '../../src/types';
 import { setHomeHeroPrompt } from '../helpers/home-hero-lexical';
 
@@ -68,6 +69,38 @@ function cliAgent(overrides: Partial<AgentInfo> = {}): AgentInfo {
   };
 }
 
+function readyOnboardingBrand(): BrandSummary {
+  return {
+    meta: {
+      id: 'brand-onboarding',
+      sourceUrl: 'https://acme.example',
+      createdAt: 1,
+      updatedAt: 2,
+      status: 'ready',
+      designSystemId: 'user:brand-onboarding',
+      projectId: 'project-onboarding',
+      systemFiles: ['artifacts/landing.html'],
+    },
+    brand: {
+      name: 'Acme',
+      tagline: 'Move clearly.',
+      description: 'A real extracted brand.',
+      sourceUrl: 'https://acme.example',
+      logo: { primary: 'logos/acme.svg', alternates: [], notes: '' },
+      colors: [
+        { role: 'accent', hex: '#1463ff', oklch: '', name: 'Acme blue', usage: 'Actions' },
+      ],
+      typography: {
+        display: { family: 'Acme Sans', fallbacks: ['sans-serif'], weights: [600, 700] },
+        body: { family: 'Acme Sans', fallbacks: ['sans-serif'], weights: [400, 500] },
+      },
+      voice: { adjectives: [], tone: '', messagingPillars: [], vocabulary: { use: [], avoid: [] } },
+      imagery: { style: '', subjects: [], treatment: '', avoid: [], samples: [] },
+      layout: { radius: '8px', borderWeight: '1px', spacing: 'compact', postureRules: [] },
+    },
+  };
+}
+
 function baseConfig(overrides: Partial<AppConfig> = {}): AppConfig {
   return {
     mode: 'daemon',
@@ -110,7 +143,7 @@ function renderOnboarding(
     onCreateProject: vi.fn(),
     onCreatePluginShareProject: vi.fn(),
     onImportClaudeDesign: vi.fn(),
-    onOpenProject: vi.fn(),
+    onOpenProject: vi.fn().mockResolvedValue(true),
     onOpenLiveArtifact: vi.fn(),
     onDeleteProject: vi.fn(),
     onRenameProject: vi.fn(),
@@ -177,7 +210,7 @@ function renderHome(
     onCreateProject: vi.fn(),
     onCreatePluginShareProject: vi.fn(),
     onImportClaudeDesign: vi.fn(),
-    onOpenProject: vi.fn(),
+    onOpenProject: vi.fn().mockResolvedValue(true),
     onOpenLiveArtifact: vi.fn(),
     onDeleteProject: vi.fn(),
     onRenameProject: vi.fn(),
@@ -1015,19 +1048,36 @@ describe('EntryShell onboarding Open Design AMR runtime', () => {
       expect(screen.getByRole('heading', { name: 'Create once, build everywhere' })).toBeTruthy();
     });
     expect(screen.getByRole('button', { name: /^Back$/i })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Build a design system' })).toBeTruthy();
+    expect(screen.getByLabelText('Brand website')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Generate' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /Skip for now/i })).toBeNull();
   });
 
   it('tracks onboarding page views and about-you submission payload on completion', async () => {
-    globalThis.fetch = vi.fn(async () =>
-      jsonResponse({
-        loggedIn: true,
-        profile: 'prod',
-        configPath: '/x',
-        user: { id: 'u', email: 'user@example.com' },
-      }),
-    ) as typeof fetch;
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.endsWith('/api/integrations/vela/status')) {
+        return jsonResponse({
+          loggedIn: true,
+          profile: 'prod',
+          configPath: '/x',
+          user: { id: 'u', email: 'user@example.com' },
+        });
+      }
+      if (url === '/api/brands' && init?.method === 'POST') {
+        return jsonResponse({
+          id: 'brand-onboarding',
+          projectId: 'project-onboarding',
+          conversationId: 'conversation-onboarding',
+          status: 'extracting',
+          sourceUrl: 'https://acme.example',
+        });
+      }
+      if (url === '/api/brands' && !init?.method) {
+        return jsonResponse({ brands: [readyOnboardingBrand()] });
+      }
+      return jsonResponse({});
+    }) as typeof fetch;
     const props = renderOnboarding();
 
     await clickSignedInCloudContinue();
@@ -1047,7 +1097,12 @@ describe('EntryShell onboarding Open Design AMR runtime', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Create once, build everywhere' })).toBeTruthy();
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Build a design system' }));
+    fireEvent.change(screen.getByLabelText('Brand website'), {
+      target: { value: 'acme.example' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Generate' }));
+    expect(await screen.findByTestId('onboarding-brand-artifact-preview')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Finish setup' }));
 
     await waitFor(() => {
       expect(props.onCompleteOnboarding).toHaveBeenCalledTimes(1);
@@ -1101,17 +1156,102 @@ describe('EntryShell onboarding Open Design AMR runtime', () => {
       area: 'onboarding',
       result: 'completed',
       exit_step_name: 'design_system',
-      // This flow clicks "Build a design system" at the final step, so the
-      // completion records the with-DS fork (C2 — tracking spec §3.1).
+      // Completion happens only after the real extracted artifact opens.
       completion_type: 'completed_with_design_system',
       runtime_type: 'amr_cloud',
       has_about_you: true,
-      has_design_system_request: false,
+      has_design_system_request: true,
+      source_count: 1,
       role: 'engineer',
       organization_size: 'growth',
       use_cases: ['product'],
       discovery_source: 'search',
     });
+  });
+
+  it('restores runtime, survey, and newsletter context when a brand attempt remounts', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.endsWith('/api/integrations/vela/status')) {
+        return jsonResponse({
+          loggedIn: true,
+          profile: 'prod',
+          configPath: '/x',
+          user: { id: 'u', email: 'user@example.com' },
+        });
+      }
+      if (url === '/api/brands' && init?.method === 'POST') {
+        return jsonResponse({
+          id: 'brand-onboarding',
+          projectId: 'project-onboarding',
+          conversationId: 'conversation-onboarding',
+          status: 'extracting',
+          sourceUrl: 'https://acme.example',
+        });
+      }
+      if (url === '/api/brands' && !init?.method) {
+        return jsonResponse({ brands: [readyOnboardingBrand()] });
+      }
+      return jsonResponse({});
+    });
+    globalThis.fetch = fetchMock as typeof fetch;
+    renderOnboarding();
+
+    await clickSignedInCloudContinue();
+    chooseOnboardingOption('Your role', 'Engineer');
+    chooseOnboardingOption('Organization size', /Growth company/i);
+    chooseOnboardingOption('Use case', /Product design/i);
+    chooseOnboardingOption('Where did you hear about us?', /Search/i);
+    fireEvent.click(screen.getByRole('button', { name: /^Continue$/i }));
+    await screen.findByRole('heading', { name: 'Stay in the loop' });
+    fireEvent.change(document.querySelector('.onboarding-view__email-input')!, {
+      target: { value: 'onboarding@example.com' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /^Continue$/i }));
+    await screen.findByRole('heading', { name: 'Create once, build everywhere' });
+    fireEvent.change(screen.getByLabelText('Brand website'), {
+      target: { value: 'acme.example' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Generate' }));
+    expect(await screen.findByTestId('onboarding-brand-artifact-preview')).toBeTruthy();
+
+    const resumeContextKey = 'od:onboarding-resume-context:v1';
+    const resumeContext = JSON.parse(window.sessionStorage.getItem(resumeContextKey)!);
+    window.sessionStorage.setItem(resumeContextKey, JSON.stringify({
+      ...resumeContext,
+      startedAt: Date.now() - 10_000,
+    }));
+
+    cleanup();
+    const resumedProps = renderOnboarding();
+    expect(await screen.findByTestId('onboarding-brand-artifact-preview')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Finish setup' }));
+
+    await waitFor(() => {
+      expect(resumedProps.onCompleteOnboarding).toHaveBeenCalledTimes(1);
+    });
+    expect(latestTrackedEvent('onboarding_complete_result')).toMatchObject({
+      runtime_type: 'amr_cloud',
+      has_about_you: true,
+      role: 'engineer',
+      organization_size: 'growth',
+      use_cases: ['product'],
+      discovery_source: 'search',
+      duration_ms: expect.any(Number),
+    });
+    expect(latestTrackedEvent<{ duration_ms: number }>('onboarding_complete_result').duration_ms)
+      .toBeGreaterThanOrEqual(10_000);
+    expect(resumedProps.onOpenProject).toHaveBeenCalledWith(
+      'project-onboarding',
+      'system/artifacts/landing.html',
+    );
+    expect(fetchMock.mock.calls.some(([url]) => String(url).endsWith('/subscribe'))).toBe(true);
+    const newsletterCall = fetchMock.mock.calls.find(([url]) => String(url).endsWith('/subscribe'));
+    expect(JSON.parse(String(newsletterCall?.[1]?.body))).toMatchObject({
+      email: 'onboarding@example.com',
+    });
+    expect(window.sessionStorage.getItem(resumeContextKey)).toBeNull();
+    expect(window.sessionStorage.getItem('od:onboarding-brand-attempt:v1')).toBeNull();
   });
 
   it('never ships the "Other" free-text to analytics on either survey-snapshot carrier', async () => {
@@ -1146,7 +1286,10 @@ describe('EntryShell onboarding Open Design AMR runtime', () => {
         screen.getByRole('heading', { name: 'Create once, build everywhere' }),
       ).toBeTruthy();
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Build a design system' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Go to home' }));
+    await waitFor(() => {
+      expect(trackedEvents('onboarding_complete_result')).toHaveLength(1);
+    });
 
     // Both carriers of the survey snapshot — the about_you_submit click and
     // the onboarding_complete_result fallback — carry only the enumerated
@@ -1206,7 +1349,7 @@ describe('EntryShell onboarding Open Design AMR runtime', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Create once, build everywhere' })).toBeTruthy();
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Build a design system' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Go to home' }));
 
     const subscribeCall = fetchMock.mock.calls.find(([url]) => String(url).endsWith('/subscribe'));
     expect(subscribeCall).toBeTruthy();
@@ -1248,7 +1391,7 @@ describe('EntryShell onboarding Open Design AMR runtime', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Create once, build everywhere' })).toBeTruthy();
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Build a design system' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Go to home' }));
 
     expect(fetchMock.mock.calls.some(([url]) => String(url).endsWith('/subscribe'))).toBe(false);
   });
@@ -1452,7 +1595,7 @@ describe('EntryShell onboarding Open Design AMR runtime', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Create once, build everywhere' })).toBeTruthy();
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Build a design system' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Go to home' }));
 
     const aboutYouSubmits = trackedEvents('ui_click')
       .map(([, payload]) => payload as Record<string, unknown>)
@@ -1494,7 +1637,7 @@ describe('EntryShell onboarding Open Design AMR runtime', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Create once, build everywhere' })).toBeTruthy();
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Build a design system' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Go to home' }));
 
     // The detour crosses the About-you step twice, but the snapshot must
     // not double-fire.
@@ -1597,7 +1740,7 @@ describe('EntryShell onboarding Open Design AMR runtime', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Create once, build everywhere' })).toBeTruthy();
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Build a design system' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Go to home' }));
 
     expect(props.onModeChange).toHaveBeenCalledWith('api');
     expect(props.onApiModelChange).toHaveBeenCalledWith('claude-opus-4-8');

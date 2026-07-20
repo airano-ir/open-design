@@ -32,6 +32,10 @@ import {
 } from '@open-design/contracts';
 import type { OpenDesignHostProjectImportSuccess } from '@open-design/host';
 import type { DesignSystemGenerateSnapshot } from './DesignSystemFlow';
+import {
+  hasPendingOnboardingBrandAhaAttempt,
+  OnboardingBrandAhaFlow,
+} from './OnboardingBrandAhaFlow';
 import { useAnalytics } from '../analytics/provider';
 import {
   trackHomeNavClick,
@@ -71,7 +75,6 @@ import type {
 import { agentIdToTracking } from '@open-design/contracts/analytics';
 import { useT, useI18n } from '../i18n';
 import { navigate, useRoute } from '../router';
-import { setPendingDesignSystemCreateEntry } from '../analytics/ds-create-entry';
 import type {
   AgentInfo,
   ApiProtocol,
@@ -117,8 +120,6 @@ import {
   type Recommendation,
 } from '../onboarding/recommendation';
 import type { OnboardingEntry } from '../onboarding/onboarding-entry';
-import { ONBOARDING_ARTIFACT_CHIP_IDS } from './home-hero/chips';
-import { homeHeroChipLabel } from './home-hero/chip-labels';
 import type { PluginUseAction } from './plugins-home/useActions';
 import { Icon } from './Icon';
 import { defaultAgentModelId, effectiveAgentModelChoice } from './agentModelSelection';
@@ -255,6 +256,85 @@ type OnboardingProfileState = {
   sourceOther: string;
   email: string;
 };
+
+type OnboardingRuntimeSelection = 'amr' | 'local' | 'byok' | null;
+
+type OnboardingResumeContext = {
+  runtime: OnboardingRuntimeSelection;
+  profile: OnboardingProfileState;
+  startedAt: number;
+};
+
+const ONBOARDING_RESUME_CONTEXT_KEY = 'od:onboarding-resume-context:v1';
+
+function readOnboardingResumeContext(): OnboardingResumeContext | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.sessionStorage.getItem(ONBOARDING_RESUME_CONTEXT_KEY);
+    if (!raw) return null;
+    const value = JSON.parse(raw) as Partial<OnboardingResumeContext>;
+    const profile = value.profile as Partial<OnboardingProfileState> | undefined;
+    const validRuntime = value.runtime === null
+      || value.runtime === 'amr'
+      || value.runtime === 'local'
+      || value.runtime === 'byok';
+    if (
+      !validRuntime
+      || typeof value.startedAt !== 'number'
+      || !Number.isFinite(value.startedAt)
+      || !profile
+      || typeof profile.role !== 'string'
+      || typeof profile.orgSize !== 'string'
+      || !Array.isArray(profile.useCase)
+      || !profile.useCase.every((item) => typeof item === 'string')
+      || typeof profile.source !== 'string'
+      || typeof profile.sourceOther !== 'string'
+      || typeof profile.email !== 'string'
+    ) {
+      clearOnboardingResumeContext();
+      return null;
+    }
+    return {
+      runtime: value.runtime ?? null,
+      profile: {
+        role: profile.role,
+        orgSize: profile.orgSize,
+        useCase: [...profile.useCase],
+        source: profile.source,
+        sourceOther: profile.sourceOther,
+        email: profile.email,
+      },
+      startedAt: value.startedAt,
+    };
+  } catch {
+    clearOnboardingResumeContext();
+    return null;
+  }
+}
+
+function persistOnboardingResumeContext(context: OnboardingResumeContext): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.setItem(ONBOARDING_RESUME_CONTEXT_KEY, JSON.stringify({
+      ...context,
+      profile: {
+        ...context.profile,
+        useCase: [...context.profile.useCase],
+      },
+    }));
+  } catch {
+    // Best-effort only: the mounted onboarding view still owns this state.
+  }
+}
+
+function clearOnboardingResumeContext(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.removeItem(ONBOARDING_RESUME_CONTEXT_KEY);
+  } catch {
+    // Session storage is unavailable, so there is no persisted context to clear.
+  }
+}
 
 type EntryCreateProjectInput = Omit<CreateInput, 'metadata'> & {
   metadata?: CreateInput['metadata'];
@@ -414,7 +494,7 @@ interface Props {
   ) => Promise<ImportClaudeDesignOutcome | void> | ImportClaudeDesignOutcome | void;
   onImportFolder?: (baseDir: string) => Promise<void> | void;
   onImportFolderResponse?: (response: OpenDesignHostProjectImportSuccess) => Promise<void> | void;
-  onOpenProject: (id: string, fileName?: string) => Promise<boolean> | boolean | void;
+  onOpenProject: (id: string, fileName?: string) => Promise<boolean> | boolean;
   onOpenLiveArtifact: (projectId: string, artifactId: string) => void;
   onDeleteProject: (id: string) => Promise<boolean | void> | boolean | void;
   onDuplicateProject?: (id: string) => Promise<void> | void;
@@ -422,12 +502,9 @@ interface Props {
   onProjectsRefresh?: () => Promise<void> | void;
   onChangeDefaultDesignSystem: (id: string) => void;
   onCreateDesignSystem?: () => void;
-  // NOTE: first-run onboarding intentionally no longer hosts guided
-  // design-system creation. The previous step-3 design-system surface was
-  // replaced by the newsletter and brand-extraction steps, so EntryShell does
-  // not accept a `renderDesignSystemCreation` renderer. Guided creation stays
-  // reachable from the standalone `design-system-create` route and the
-  // Design Systems tab; do not re-thread an onboarding renderer here.
+  // First-run onboarding owns a focused website -> brand -> artifact path.
+  // The full multi-source design-system authoring flow remains on the
+  // standalone route and in the Design Systems tab.
   onOpenDesignSystem?: (id: string) => void;
   onDesignSystemsRefresh?: () => Promise<void> | void;
   onPersistComposioKey: (composio: AppConfig['composio']) => Promise<void> | void;
@@ -932,11 +1009,8 @@ export function EntryShell({
             onRefreshAgents={onRefreshAgents}
             onFinish={finishOnboarding}
             onThemeChange={onThemeChange}
-            onGoBuild={() => {
-              onCompleteOnboarding();
-              setPendingDesignSystemCreateEntry('onboarding');
-              navigate({ kind: 'design-system-create' });
-            }}
+            onOpenProject={onOpenProject}
+            onMarkComplete={onCompleteOnboarding}
           />
         </main>
       </div>
@@ -1298,7 +1372,8 @@ function OnboardingView({
   onRefreshAgents,
   onFinish,
   onThemeChange,
-  onGoBuild,
+  onOpenProject,
+  onMarkComplete,
 }: {
   config: AppConfig;
   providerModelsCache?: ProviderModelsCache;
@@ -1320,12 +1395,22 @@ function OnboardingView({
   // shell can build a personalized Home recommendation.
   onFinish: (survey?: { role: string; useCases: string[] }) => void;
   onThemeChange: (theme: AppTheme) => void;
-  onGoBuild: () => void;
+  onOpenProject: (id: string, fileName?: string) => Promise<boolean> | boolean;
+  onMarkComplete: () => void;
 }) {
   const t = useT();
   const analytics = useAnalytics();
-  const [step, setStep] = useState(0);
-  const [runtime, setRuntime] = useState<'amr' | 'local' | 'byok' | null>(null);
+  const [resumeState] = useState(() => {
+    const hasPendingAttempt = hasPendingOnboardingBrandAhaAttempt();
+    return {
+      hasPendingAttempt,
+      context: hasPendingAttempt ? readOnboardingResumeContext() : null,
+    };
+  });
+  const [step, setStep] = useState(() => (resumeState.hasPendingAttempt ? 3 : 0));
+  const [runtime, setRuntime] = useState<OnboardingRuntimeSelection>(
+    resumeState.context?.runtime ?? null,
+  );
   // Connect step (step 0) faces: the minimal cloud sign-in landing (null), or
   // a single dedicated setup page for the local CLI or BYOK that the landing's
   // two secondary links open directly. AMR has no card anymore — it signs in
@@ -1368,14 +1453,16 @@ function OnboardingView({
     hasSharedProviderModelsCache
       ? onProviderModelsCacheChange!
       : setLocalProviderModelsCache;
-  const [profile, setProfile] = useState<OnboardingProfileState>({
-    role: '',
-    orgSize: '',
-    useCase: [] as string[],
-    source: '',
-    sourceOther: '',
-    email: '',
-  });
+  const [profile, setProfile] = useState<OnboardingProfileState>(() => (
+    resumeState.context?.profile ?? {
+      role: '',
+      orgSize: '',
+      useCase: [] as string[],
+      source: '',
+      sourceOther: '',
+      email: '',
+    }
+  ));
   // Live mirror of `profile` so closures that fire faster than React
   // commits (rapid dropdown picks, the Finish-setup click after the
   // last onChange) read the latest selection instead of the value the
@@ -1606,9 +1693,9 @@ function OnboardingView({
     setAmrLoginCancelPending(false);
   }, [runtime]);
 
-  // Onboarding step exposure. Design-system intake used to live here
-  // as step 3, but it is temporarily removed from first-run
-  // onboarding and remains available from the app surfaces.
+  // Onboarding step exposure. Step 3 owns the focused website -> brand ->
+  // artifact aha path; the broader multi-source authoring form remains on the
+  // standalone Design Systems surface.
   //
   // We do NOT clear on unmount: route changes can remount the shell
   // during first-run setup. Skip / Back / last-step Continue clear
@@ -1638,12 +1725,19 @@ function OnboardingView({
   // completion event when the user fires both Skip and unmount in the
   // same tick (the unmount path also clears the session id; see the
   // PR #2453 follow-up).
-  const onboardingStartedAtRef = useRef<number>(Date.now());
+  const onboardingStartedAtRef = useRef<number>(resumeState.context?.startedAt ?? Date.now());
   const lifecycleReportedRef = useRef(false);
   // Guards `about_you_submit` to exactly one emit per onboarding session,
   // independent of how many times the user crosses the About-you step via
   // the clickable stepper or Back/Continue.
   const aboutYouReportedRef = useRef(false);
+  function saveOnboardingResumeContext(): void {
+    persistOnboardingResumeContext({
+      runtime,
+      profile: profileRef.current,
+      startedAt: onboardingStartedAtRef.current,
+    });
+  }
   function currentRuntimeType(): TrackingOnboardingRuntimeType {
     if (runtime === 'amr') return 'amr_cloud';
     if (runtime === 'local') return 'local_cli';
@@ -1687,8 +1781,8 @@ function OnboardingView({
     completionType: TrackingOnboardingCompletionType,
     extra: {
       errorCode?: string;
-      // Generate-path callers pass the embedded DS creation flow's
-      // snapshot so the wire row reflects the actual source-count
+      // Generate-path callers pass the focused brand flow's snapshot so the
+      // wire row reflects the actual source-count
       // and brand-description the user typed, not the (always-null)
       // `designSource` card-pick state. E2E (2026-05-21) showed the
       // user can click Generate without first clicking one of the
@@ -1704,9 +1798,8 @@ function OnboardingView({
     lifecycleReportedRef.current = true;
     const info = stepInfo(step);
     const snapshot = extra.sourceSnapshot;
-    // Onboarding no longer hosts a design-system step, so a completion
-    // never carries a DS request unless a caller passes an explicit
-    // snapshot (none do today).
+    // The brand-artifact completion passes its source snapshot; the Home exit
+    // intentionally has no design-system request.
     const hasRequest = snapshot
       ? snapshot.sourceCount > 0 || snapshot.hasBrandDescription
       : false;
@@ -2062,11 +2155,7 @@ function OnboardingView({
       return;
     }
     if (isLastStep) {
-      await runOnboardingCompletion('completed_without_design_system');
-      onFinish({
-        role: profileRef.current.role,
-        useCases: profileRef.current.useCase,
-      });
+      await handleFinishToHome();
       return;
     }
     emitOnboardingClick('continue', 'continue');
@@ -2103,47 +2192,61 @@ function OnboardingView({
     await handleAmrSignInToContinue(attribution);
   }
 
-  // Shared finish work for the final step, independent of where the user lands
-  // next. Emits the About-you snapshot + completion analytics exactly once
-  // (both are idempotent per session), submits the newsletter if an email was
-  // entered, then clears the session. Reading `profileRef` captures the user's
-  // final picks even on a fast click before React commits the latest state.
-  // Callers pick the destination: home (`onFinish`) or the design-system
-  // create flow (`onGoBuild`).
-  // `completionType` distinguishes the final-step fork (C2, tracking spec §3.1):
-  // 'completed_with_design_system' when the user chose "Build a design system",
-  // 'completed_without_design_system' when they went straight Home. Lets the
-  // funnel measure how many users skip DS creation at onboarding.
-  async function runOnboardingCompletion(
-    completionType: TrackingOnboardingCompletionType,
-  ): Promise<void> {
+  const newsletterSubmittedRef = useRef(false);
+
+  // Persist the profile and optional newsletter before leaving onboarding, but
+  // keep the lifecycle event/session open until the destination actually opens.
+  // This prevents a failed project handoff from being recorded as a completed
+  // brand flow while also making a retry idempotent for newsletter signup.
+  async function prepareOnboardingCompletion(): Promise<void> {
     emitAboutYouSubmit();
     void persistOnboardingProfileToMemory();
     const newsletterEmail = profileRef.current.email;
     const shouldSubmitNewsletter =
       NEWSLETTER_EMAIL_RE.test(newsletterEmail.trim().toLowerCase());
-    if (shouldSubmitNewsletter) {
+    if (shouldSubmitNewsletter && !newsletterSubmittedRef.current) {
       setNewsletterSubmitting(true);
-      await submitNewsletterEmail(newsletterEmail);
+      try {
+        await submitNewsletterEmail(newsletterEmail);
+        newsletterSubmittedRef.current = true;
+      } finally {
+        setNewsletterSubmitting(false);
+      }
     }
+  }
+
+  function commitOnboardingCompletion(
+    completionType: TrackingOnboardingCompletionType,
+    sourceSnapshot?: DesignSystemGenerateSnapshot,
+  ): void {
     emitOnboardingClick('continue', 'continue');
-    emitOnboardingComplete('completed', completionType);
+    emitOnboardingComplete('completed', completionType, { sourceSnapshot });
+    clearOnboardingResumeContext();
     clearOnboardingSessionId();
   }
 
   async function handleFinishToHome(): Promise<void> {
     if (newsletterSubmitting) return;
-    await runOnboardingCompletion('completed_without_design_system');
+    await prepareOnboardingCompletion();
+    commitOnboardingCompletion('completed_without_design_system');
     onFinish({
       role: profileRef.current.role,
       useCases: profileRef.current.useCase,
     });
   }
 
-  async function handleFinishToBuild(): Promise<void> {
-    if (newsletterSubmitting) return;
-    await runOnboardingCompletion('completed_with_design_system');
-    onGoBuild();
+  async function handleFinishWithBrandArtifact(
+    projectId: string,
+    fileName: string,
+    sourceSnapshot: DesignSystemGenerateSnapshot,
+  ): Promise<boolean> {
+    if (newsletterSubmitting) return false;
+    await prepareOnboardingCompletion();
+    const opened = await onOpenProject(projectId, fileName);
+    if (!opened) return false;
+    commitOnboardingCompletion('completed_with_design_system', sourceSnapshot);
+    onMarkComplete();
+    return true;
   }
 
   async function handleAmrSignInToContinue(
@@ -2942,100 +3045,23 @@ function OnboardingView({
           ) : null}
 
           {step === 3 ? (
-            <div className="onboarding-view__panel onboarding-view__build">
-              <span className="onboarding-view__build-badge">
-                <Icon name="sparkles" size={13} aria-hidden />
-                <span>{t('settings.onboardingDesignTitle')}</span>
-              </span>
-              <div className="onboarding-view__build-layout">
-                <div className="onboarding-view__build-copy">
-                  <div className="onboarding-view__build-head">
-                    <h2>{t('onboarding.buildTitle')}</h2>
-                    <p>{t('onboarding.buildBody')}</p>
-                  </div>
-                  <div className="onboarding-view__build-benefits">
-                    <div>
-                      <Icon name="file-text" size={15} aria-hidden />
-                      <strong>{t('onboarding.buildBenefitMemoryTitle')}</strong>
-                      <span>{t('onboarding.buildBenefitMemoryBody')}</span>
-                    </div>
-                    <div>
-                      <Icon name="swatchbook" size={15} aria-hidden />
-                      <strong>{t('onboarding.buildBenefitAlignedTitle')}</strong>
-                      <span>{t('onboarding.buildBenefitAlignedBody')}</span>
-                    </div>
-                    <div>
-                      <Icon name="github" size={15} aria-hidden />
-                      <strong>{t('onboarding.buildBenefitSourcesTitle')}</strong>
-                      <span>{t('onboarding.buildBenefitSourcesBody')}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="onboarding-view__build-preview" aria-hidden>
-                  <div className="onboarding-view__build-preview-head">
-                    <span />
-                    <span />
-                    <span />
-                    <strong>DESIGN.md</strong>
-                  </div>
-                  <div className="onboarding-view__build-preview-body">
-                    <small>{t('onboarding.buildPreviewLabel')}</small>
-                    <div className="onboarding-view__build-preview-swatches">
-                      <i />
-                      <i />
-                      <i />
-                      <i />
-                    </div>
-                    <div className="onboarding-view__build-preview-type">
-                      <strong>Aa</strong>
-                      <span>Aa</span>
-                      <em>Aa</em>
-                    </div>
-                    <div className="onboarding-view__build-preview-lines">
-                      <span />
-                      <span />
-                      <span />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <ul className="onboarding-view__build-chips">
-                {ONBOARDING_ARTIFACT_CHIP_IDS.map((chipId) => (
-                  <li key={chipId}>{homeHeroChipLabel(chipId, t)}</li>
-                ))}
-              </ul>
-              <div className="onboarding-view__build-actions">
-                <button
-                  type="button"
-                  className="onboarding-view__ghost onboarding-view__build-back"
-                  onClick={handleBackWithTracking}
-                  disabled={onboardingNavigationLocked}
-                >
-                  {t('settings.onboardingBack')}
-                </button>
-                <button
-                  type="button"
-                  className="onboarding-view__secondary"
-                  onClick={() => {
-                    void handleFinishToHome();
-                  }}
-                  disabled={newsletterSubmitting}
-                >
-                  {t('onboarding.buildHome')}
-                </button>
-                <button
-                  type="button"
-                  className="onboarding-view__primary"
-                  onClick={() => {
-                    void handleFinishToBuild();
-                  }}
-                  disabled={newsletterSubmitting}
-                  aria-busy={newsletterSubmitting ? true : undefined}
-                >
-                  <span>{t('onboarding.buildStart')}</span>
-                </button>
-              </div>
-            </div>
+            <OnboardingBrandAhaFlow
+              onBack={handleBackWithTracking}
+              onSkip={handleFinishToHome}
+              onGenerate={(sourceSnapshot) => {
+                // Persist the surrounding survey/runtime state before the
+                // extraction request starts. A route remount can then resume
+                // this exact onboarding session instead of silently reverting
+                // to an AMR/default-profile completion.
+                saveOnboardingResumeContext();
+                emitOnboardingClick('generate', 'generate', {
+                  has_brand_description: sourceSnapshot.hasBrandDescription,
+                  source_count: sourceSnapshot.sourceCount,
+                });
+              }}
+              onOpenProject={(projectId) => onOpenProject(projectId)}
+              onComplete={handleFinishWithBrandArtifact}
+            />
           ) : null}
 
           {step === 3 ? null : (

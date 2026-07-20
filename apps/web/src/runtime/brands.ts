@@ -182,12 +182,17 @@ export async function cancelBrandExtraction(
   }
 }
 
+export async function fetchBrandsOrThrow(): Promise<BrandSummary[]> {
+  const resp = await fetch('/api/brands', { cache: 'no-store' });
+  if (!resp.ok) throw new Error(`Could not load design systems (${resp.status})`);
+  const data = (await resp.json()) as { brands?: BrandSummary[] };
+  if (!Array.isArray(data?.brands)) throw new Error('Invalid design-system response');
+  return data.brands;
+}
+
 export async function fetchBrands(): Promise<BrandSummary[]> {
   try {
-    const resp = await fetch('/api/brands', { cache: 'no-store' });
-    if (!resp.ok) return [];
-    const data = (await resp.json()) as { brands?: BrandSummary[] };
-    return Array.isArray(data?.brands) ? data.brands : [];
+    return await fetchBrandsOrThrow();
   } catch {
     return [];
   }

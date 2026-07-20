@@ -4201,6 +4201,12 @@ export interface Dict {
   'brand.colorsCount': string;
   'brand.extracting': string;
   'brand.failed': string;
+  'brand.artifact.landing': string;
+  'brand.artifact.deck': string;
+  'brand.artifact.poster': string;
+  'brand.artifact.email': string;
+  'brand.artifact.newsletter': string;
+  'brand.artifact.form': string;
   'brand.needsInput': string;
   'brand.needsInputHint': string;
   'brand.appliedToChat': string;

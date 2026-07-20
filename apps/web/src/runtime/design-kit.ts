@@ -126,13 +126,24 @@ export interface DesignKit {
 }
 
 /** The six brand-system artifact tiles, mirroring BrandPreviewCard. */
-const ASSET_TILES: { kind: string; label: string; file: string }[] = [
-  { kind: 'landing', label: 'Landing page', file: 'system/artifacts/landing.html' },
-  { kind: 'deck', label: 'Pitch deck', file: 'system/artifacts/deck.html' },
-  { kind: 'poster', label: 'Poster', file: 'system/artifacts/poster.html' },
-  { kind: 'email', label: 'Email', file: 'system/artifacts/email.html' },
-  { kind: 'newsletter', label: 'Newsletter', file: 'system/artifacts/newsletter.html' },
-  { kind: 'form', label: 'Form page', file: 'system/artifacts/form.html' },
+export const BRAND_ARTIFACT_TILES: ReadonlyArray<{
+  kind: string;
+  label: string;
+  labelKey:
+    | 'brand.artifact.landing'
+    | 'brand.artifact.deck'
+    | 'brand.artifact.poster'
+    | 'brand.artifact.email'
+    | 'brand.artifact.newsletter'
+    | 'brand.artifact.form';
+  file: string;
+}> = [
+  { kind: 'landing', label: 'Landing page', labelKey: 'brand.artifact.landing', file: 'system/artifacts/landing.html' },
+  { kind: 'deck', label: 'Pitch deck', labelKey: 'brand.artifact.deck', file: 'system/artifacts/deck.html' },
+  { kind: 'poster', label: 'Poster', labelKey: 'brand.artifact.poster', file: 'system/artifacts/poster.html' },
+  { kind: 'email', label: 'Email', labelKey: 'brand.artifact.email', file: 'system/artifacts/email.html' },
+  { kind: 'newsletter', label: 'Newsletter', labelKey: 'brand.artifact.newsletter', file: 'system/artifacts/newsletter.html' },
+  { kind: 'form', label: 'Form page', labelKey: 'brand.artifact.form', file: 'system/artifacts/form.html' },
 ];
 
 function hasAvailablePackageFile(
@@ -181,7 +192,7 @@ function packageAssetTiles(
   staticUrl: (rel: string) => string,
 ): KitAsset[] | undefined {
   if (!packageInfo) return undefined;
-  const artifactTiles = ASSET_TILES
+  const artifactTiles = BRAND_ARTIFACT_TILES
     .filter((a) => hasAvailablePackageFile(packageInfo, a.file))
     .map((a) => ({
       kind: a.kind,
@@ -417,7 +428,7 @@ export function brandToKit(brand: Brand, opts: BrandKitOptions): DesignKit {
         }
       : undefined,
     assets: showSystem
-      ? ASSET_TILES.map((a) => ({ kind: a.kind, label: a.label, url: asset(a.file)! }))
+      ? BRAND_ARTIFACT_TILES.map((a) => ({ kind: a.kind, label: a.label, url: asset(a.file)! }))
       : undefined,
     showcaseHtml: opts.showcaseHtml ?? null,
   };
