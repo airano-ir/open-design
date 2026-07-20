@@ -462,6 +462,20 @@ describe('manual edit source patches', () => {
     expect(outer).toContain('<span');
   });
 
+  it('persists sanitized inline formatting for runtime-only brand-kit targets', () => {
+    const result = applyManualEditPatch(brandKitSource, {
+      kind: 'set-inner-html',
+      id: 'brand-name',
+      html: 'Acme <span style="font-weight: 700" onclick="alert(1)">Studios</span><script>steal()</script>',
+    });
+
+    expect(result.ok).toBe(true);
+    const overrides = readRuntimeOverrides(result.source);
+    expect(overrides.innerHtml?.['brand-name']).toContain('<span style="font-weight: 700">Studios</span>');
+    expect(overrides.innerHtml?.['brand-name']).not.toContain('onclick');
+    expect(overrides.innerHtml?.['brand-name']).not.toContain('<script');
+  });
+
   // ---------------------------------------------------------------------------
   // Saved-source readback for the in-place DOM pipeline: after an insert /
   // duplicate / remove the host reconciles the live iframe from the SAVED
@@ -531,8 +545,20 @@ describe('manual edit source patches', () => {
     const source = '<!doctype html><html><body><main data-od-id="only">Only</main><footer data-od-id="footer">F</footer></body></html>';
     const restore = readManualEditRestoreDescriptor(source, 'only');
     expect(restore).not.toBeNull();
-    expect(restore!.op).toBe('prepend-child');
+    expect(restore!.op).toBe('insert-at-index');
     expect(restore!.anchorId).toBe('__body__');
+    expect(restore).toMatchObject({ index: 0 });
+  });
+
+  it('preserves the exact body-child slot when non-renderable siblings precede a removed element', () => {
+    const source = '<!doctype html><html><body><script>boot()</script><main data-od-id="app">App</main><footer data-od-id="footer">F</footer></body></html>';
+    const restore = readManualEditRestoreDescriptor(source, 'app');
+
+    expect(restore).toMatchObject({
+      op: 'insert-at-index',
+      anchorId: '__body__',
+      index: 1,
+    });
   });
 
   it('returns null when the removed element cannot be located', () => {
@@ -554,6 +580,7 @@ function readBrandPayload(source: string): {
 
 function readRuntimeOverrides(source: string): {
   text?: Record<string, string>;
+  innerHtml?: Record<string, string>;
 } {
   const dom = new JSDOM(source);
   return JSON.parse(dom.window.document.getElementById('od-manual-edit-runtime-overrides')?.textContent || '{}');

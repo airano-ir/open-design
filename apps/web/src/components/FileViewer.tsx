@@ -209,6 +209,7 @@ import {
   readManualEditInsertedSibling,
   readManualEditOuterHtml,
   readManualEditRestoreDescriptor,
+  readManualEditRuntimeInnerHtml,
   readManualEditStyles,
 } from '../edit-mode/source-patches';
 import { MANUAL_EDIT_STYLE_PROPS, manualEditTargetsLightEqual, type ManualEditBridgeMessage, type ManualEditHistoryEntry, type ManualEditPatch, type ManualEditPreviewStyles, type ManualEditRect, type ManualEditStyles, type ManualEditTarget, type ManualEditTextSelectionFormat } from '../edit-mode/types';
@@ -8913,15 +8914,15 @@ function HtmlViewer({
 
   // Sends one in-place DOM mutation to the bridge and resolves with its ack.
   // 'replace' swaps an element's outerHTML for its saved-source version;
-  // 'insert-after'/'append-child'/'prepend-child' add a saved element in
-  // place; 'remove' deletes one; 'apply-content' mirrors patch fields onto a
-  // runtime-annotated element the saved source has no markup for (brand-kit
-  // targets). A detached/navigated iframe never acks — times out to false so
-  // the caller can fall back to a frozen-source reload.
+  // 'insert-after'/'append-child'/'prepend-child'/'insert-at-index' add a
+  // saved element in place; 'remove' deletes one; 'apply-content' mirrors
+  // patch fields onto a runtime-annotated element the saved source has no
+  // markup for (brand-kit targets). A detached/navigated iframe never acks —
+  // times out to false so the caller can fall back to a frozen-source reload.
   function applyManualEditDomOp(
     id: string,
     html: string,
-    op: 'replace' | 'insert-after' | 'append-child' | 'prepend-child' | 'remove' | 'apply-content',
+    op: 'replace' | 'insert-after' | 'append-child' | 'prepend-child' | 'insert-at-index' | 'remove' | 'apply-content',
     fields?: Record<string, unknown>,
   ): Promise<boolean> {
     const win = iframeRef.current?.contentWindow;
@@ -8943,11 +8944,17 @@ function HtmlViewer({
   // markup never appears in the saved source (brand-kit runtime ids persist
   // into the payload / runtime overrides instead). null = not expressible;
   // the caller falls back to the reload path.
-  function manualEditPatchContentFields(patch: ManualEditPatch): Record<string, unknown> | null {
+  function manualEditPatchContentFields(
+    patch: ManualEditPatch,
+    destSource: string,
+  ): Record<string, unknown> | null {
     if (patch.kind === 'set-text') return { text: patch.value };
     if (patch.kind === 'set-link') return { text: patch.text, href: patch.href };
     if (patch.kind === 'set-image') return { src: patch.src, alt: patch.alt };
-    if (patch.kind === 'set-inner-html') return { html: patch.html };
+    if (patch.kind === 'set-inner-html') {
+      const html = readManualEditRuntimeInnerHtml(destSource, patch.id);
+      return html == null ? null : { html };
+    }
     if (patch.kind === 'set-attributes') return { attributes: patch.attributes };
     return null;
   }
@@ -8989,7 +8996,7 @@ function HtmlViewer({
       // reloading — a brand-page reload flashes AND re-renders async, so the
       // scroll restore window misses and the canvas jumps to the top.
       if (patch.kind === 'set-outer-html') return applyManualEditDomOp(patch.id, patch.html, 'replace');
-      const fields = manualEditPatchContentFields(patch);
+      const fields = manualEditPatchContentFields(patch, destSource);
       if (!fields) return false;
       return applyManualEditDomOp(patch.id, '', 'apply-content', fields);
     }
@@ -9239,11 +9246,17 @@ function HtmlViewer({
     if (patch.kind === 'remove-element') {
       if (!isUndo) return applyManualEditDomOp(patch.id, '', 'remove');
       // Undo of a delete: put the element back where the BEFORE source says it
-      // was — after its previous sibling, or prepended to its parent.
+      // was — at its exact body index, after its previous sibling, or at the
+      // start of its parent.
       const restore = readManualEditRestoreDescriptor(entry.beforeSource, patch.id);
       if (!restore) return false;
       manualEditPendingSelectIdRef.current = patch.id;
-      return applyManualEditDomOp(restore.anchorId, restore.html, restore.op);
+      return applyManualEditDomOp(
+        restore.anchorId,
+        restore.html,
+        restore.op,
+        restore.op === 'insert-at-index' ? { index: restore.index } : undefined,
+      );
     }
     if (patch.kind === 'set-style') {
       const sourceStyles = readManualEditStyles(destSource, patch.id);

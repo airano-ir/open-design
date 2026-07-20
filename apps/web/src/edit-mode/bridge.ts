@@ -905,7 +905,8 @@ export function buildManualEditBridge(enabled: boolean): string {
       // scripts). Used by undo/redo AND by forward content commits.
       // 'op' selects the mutation: 'replace' (default) swaps one element's
       // markup for its saved-source version; 'insert-after' / 'append-child' /
-      // 'prepend-child' add a saved element in place; 'remove' deletes one.
+      // 'prepend-child' / 'insert-at-index' add a saved element in place;
+      // 'remove' deletes one.
       // ok:false tells the host to fall back to a frozen-source reload.
       var applyOk = false;
       var applyOp = ev.data.op || 'replace';
@@ -956,7 +957,7 @@ export function buildManualEditBridge(enabled: boolean): string {
             }
             applyOk = true;
           }
-        } else if (typeof ev.data.html === 'string' && (applyOp === 'insert-after' || applyOp === 'append-child' || applyOp === 'prepend-child')) {
+        } else if (typeof ev.data.html === 'string' && (applyOp === 'insert-after' || applyOp === 'append-child' || applyOp === 'prepend-child' || applyOp === 'insert-at-index')) {
           var template = document.createElement('template');
           template.innerHTML = ev.data.html;
           var insertNode = template.content.firstElementChild;
@@ -964,6 +965,13 @@ export function buildManualEditBridge(enabled: boolean): string {
             if (applyOp === 'append-child') {
               (document.body || document.documentElement).appendChild(insertNode);
               applyOk = true;
+            } else if (applyOp === 'insert-at-index') {
+              var bodyChildren = Array.prototype.slice.call(document.body.children).filter(function(child){ return !isHostNode(child); });
+              var bodyIndex = Number(ev.data.fields && ev.data.fields.index);
+              if (Number.isInteger(bodyIndex) && bodyIndex >= 0 && bodyIndex <= bodyChildren.length) {
+                document.body.insertBefore(insertNode, bodyChildren[bodyIndex] || null);
+                applyOk = true;
+              }
             } else if (applyOp === 'prepend-child') {
               var containerEl = ev.data.id === '__body__' ? document.body : findById(ev.data.id);
               if (containerEl) {

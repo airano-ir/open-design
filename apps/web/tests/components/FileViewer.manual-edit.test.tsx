@@ -713,7 +713,14 @@ describe('FileViewer manual edit regressions', () => {
   // ack it, then assert the canvas was NOT reloaded (srcdoc unchanged).
   // ---------------------------------------------------------------------------
 
-  type ApplyDomMessage = { type: string; id: string; html: string; op?: string; version: number };
+  type ApplyDomMessage = {
+    type: string;
+    id: string;
+    html: string;
+    op?: string;
+    fields?: Record<string, unknown>;
+    version: number;
+  };
 
   function lastApplyDomMessage(spy: { mock: { calls: unknown[][] } }): ApplyDomMessage | null {
     for (let i = spy.mock.calls.length - 1; i >= 0; i--) {
@@ -998,6 +1005,50 @@ describe('FileViewer manual edit regressions', () => {
     // The edit persisted into the brand payload…
     expect(savedBodies[0]!.content).toContain('Acme Studios');
     // …and the canvas was NOT reloaded.
+    expect(frame.srcdoc).toBe(srcdocBefore);
+  });
+
+  it('persists sanitized inline formatting for runtime-only brand-kit text', async () => {
+    const source = '<!doctype html><html><head><script id="od-brand-payload" type="application/json">{"status":"ready","brand":{"name":"Acme"}}</script></head><body><div id="root"></div></body></html>';
+    const { fetchMock, savedBodies } = manualEditWriteMock(source);
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={htmlPreviewFile()}
+        liveHtml={source}
+      />,
+    );
+    clickManualTool('manual-edit-mode-toggle');
+    const frame = await previewFrame();
+    const postSpy = vi.spyOn(frame.contentWindow!, 'postMessage');
+    await selectManualEditTarget({
+      ...heroTarget(),
+      id: 'brand-name',
+      label: 'Brand name',
+      text: 'Acme',
+      attributes: { 'data-od-id': 'brand-name' },
+      outerHtml: '<h1 data-od-id="brand-name">Acme</h1>',
+    });
+    const srcdocBefore = frame.srcdoc;
+
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: {
+          type: 'od-edit-html-commit',
+          id: 'brand-name',
+          value: 'Acme <span style="font-weight: 700" onclick="alert(1)">Studios</span><script>steal()</script>',
+        },
+        source: frame.contentWindow,
+      }));
+    });
+
+    const applied = await ackApplyDom(frame, postSpy);
+    expect(applied.op).toBe('apply-content');
+    expect(applied.fields?.html).toBe('Acme <span style="font-weight: 700">Studios</span>');
+    await waitFor(() => expect(savedBodies).toHaveLength(1));
+    expect(savedBodies[0]!.content).toContain('od-manual-edit-runtime-overrides');
+    expect(savedBodies[0]!.content).not.toContain('onclick');
+    expect(savedBodies[0]!.content).not.toContain('steal()');
     expect(frame.srcdoc).toBe(srcdocBefore);
   });
 

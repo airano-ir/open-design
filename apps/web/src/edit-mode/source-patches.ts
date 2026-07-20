@@ -64,6 +64,12 @@ const RUNTIME_OVERRIDE_APPLIER_SOURCE = `
         }
       });
     });
+    Object.keys(data.innerHtml || {}).forEach(function (id) {
+      var el = byId(id);
+      if (!el) return;
+      var value = textValue(data.innerHtml[id]);
+      if (el.innerHTML !== value) el.innerHTML = value;
+    });
     Object.keys(data.html || {}).forEach(function (id) {
       var el = byId(id);
       if (!el) return;
@@ -95,6 +101,7 @@ interface RuntimeContentOverrides {
   links?: Record<string, { text: string; href: string }>;
   images?: Record<string, { src: string; alt: string }>;
   attrs?: Record<string, Record<string, string>>;
+  innerHtml?: Record<string, string>;
   html?: Record<string, string>;
 }
 
@@ -248,6 +255,12 @@ export function readManualEditOuterHtml(source: string, id: string): string {
   return (doc ? findEditableElement(doc, id)?.outerHTML : '') ?? '';
 }
 
+/** Read the sanitized rich-text override persisted for a runtime-only target. */
+export function readManualEditRuntimeInnerHtml(source: string, id: string): string | null {
+  const doc = parseSource(source);
+  return doc ? readRuntimeContentOverrides(doc).innerHtml?.[id] ?? null : null;
+}
+
 /**
  * Positional path id (`path-a-b-c`) of an element in a parsed SOURCE document
  * — mirror of `findElementByPath` in reverse, and of the srcDoc build-time
@@ -297,27 +310,37 @@ export function readManualEditInsertedSibling(
 /**
  * How to put a removed element back without reloading the iframe (undo of
  * `remove-element`): read the element from the BEFORE source and describe the
- * insertion — after its previous sibling when one exists, else prepended to
- * its parent (`__body__` for direct body children). Returns null when the
- * element cannot be located, in which case the caller falls back to the
- * always-correct frozen-source reload.
+ * insertion. Direct body children retain their exact source child index, so
+ * leading non-renderable siblings such as scripts/styles stay ahead of the
+ * restored node. Nested nodes restore after their previous sibling when one
+ * exists, or at the start of their parent. Returns null when the element
+ * cannot be located, in which case the caller falls back to the always-correct
+ * frozen-source reload.
  */
 export function readManualEditRestoreDescriptor(
   source: string,
   removedId: string,
-): { op: 'insert-after' | 'prepend-child'; anchorId: string; html: string } | null {
+):
+  | { op: 'insert-after' | 'prepend-child'; anchorId: string; html: string }
+  | { op: 'insert-at-index'; anchorId: '__body__'; index: number; html: string }
+  | null {
   const doc = parseSource(source);
   const el = doc ? findEditableElement(doc, removedId) : null;
   if (!el || el === doc?.body) return null;
+  const parent = el.parentElement;
+  if (!parent) return null;
+  if (parent === doc?.body) {
+    const index = Array.prototype.indexOf.call(parent.children, el) as number;
+    if (index < 0) return null;
+    return { op: 'insert-at-index', anchorId: '__body__', index, html: el.outerHTML };
+  }
   const previous = el.previousElementSibling;
   if (previous) {
     const anchorId = manualEditElementId(previous);
     if (!anchorId) return null;
     return { op: 'insert-after', anchorId, html: el.outerHTML };
   }
-  const parent = el.parentElement;
-  if (!parent) return null;
-  const anchorId = parent === doc?.body ? '__body__' : manualEditElementId(parent);
+  const anchorId = manualEditElementId(parent);
   if (!anchorId) return null;
   return { op: 'prepend-child', anchorId, html: el.outerHTML };
 }
@@ -544,13 +567,21 @@ function splitBrandListValue(value: string): string[] {
 function setRuntimeContentOverride(doc: Document, patch: ManualEditPatch): { ok: boolean } {
   const overrides = readRuntimeContentOverrides(doc);
   if (patch.kind === 'set-text') {
+    delete overrides.innerHtml?.[patch.id];
     overrides.text = { ...(overrides.text ?? {}), [patch.id]: patch.value };
   } else if (patch.kind === 'set-link') {
+    delete overrides.innerHtml?.[patch.id];
     overrides.links = { ...(overrides.links ?? {}), [patch.id]: { text: patch.text, href: patch.href } };
   } else if (patch.kind === 'set-image') {
     overrides.images = { ...(overrides.images ?? {}), [patch.id]: { src: patch.src, alt: patch.alt } };
   } else if (patch.kind === 'set-attributes') {
     overrides.attrs = { ...(overrides.attrs ?? {}), [patch.id]: patch.attributes };
+  } else if (patch.kind === 'set-inner-html') {
+    delete overrides.text?.[patch.id];
+    overrides.innerHtml = {
+      ...(overrides.innerHtml ?? {}),
+      [patch.id]: sanitizeInnerHtml(doc, patch.html),
+    };
   } else if (patch.kind === 'set-outer-html') {
     overrides.html = { ...(overrides.html ?? {}), [patch.id]: patch.html };
   } else {
@@ -568,6 +599,7 @@ function clearRuntimeContentOverride(doc: Document, id: string): void {
   delete overrides.links?.[id];
   delete overrides.images?.[id];
   delete overrides.attrs?.[id];
+  delete overrides.innerHtml?.[id];
   delete overrides.html?.[id];
   writeRuntimeContentOverrides(doc, overrides);
 }
@@ -595,6 +627,7 @@ function pruneRuntimeContentOverrides(overrides: RuntimeContentOverrides): Runti
   if (overrides.links && Object.keys(overrides.links).length > 0) next.links = overrides.links;
   if (overrides.images && Object.keys(overrides.images).length > 0) next.images = overrides.images;
   if (overrides.attrs && Object.keys(overrides.attrs).length > 0) next.attrs = overrides.attrs;
+  if (overrides.innerHtml && Object.keys(overrides.innerHtml).length > 0) next.innerHtml = overrides.innerHtml;
   if (overrides.html && Object.keys(overrides.html).length > 0) next.html = overrides.html;
   return next;
 }

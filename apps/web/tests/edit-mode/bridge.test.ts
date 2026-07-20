@@ -1303,6 +1303,35 @@ describe('manual edit rich text sessions', () => {
     dom.window.close();
   });
 
+  it('restores a body child at its exact source index past leading scripts', () => {
+    const dom = new JSDOM(
+      `<!doctype html><html><body><script>window.booted = true;</script><footer data-od-id="footer">Footer</footer>${buildManualEditBridge(true)}</body></html>`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+    const postMessage = vi.spyOn(dom.window.parent, 'postMessage');
+
+    dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
+      data: {
+        type: 'od-edit-apply-dom',
+        id: '__body__',
+        op: 'insert-at-index',
+        fields: { index: 1 },
+        html: '<main data-od-id="app">App</main>',
+        version: 17,
+      },
+    }));
+
+    const sourceChildren = Array.from(dom.window.document.body.children)
+      .filter((child) => !child.matches('[data-od-edit-bridge]'));
+    expect(sourceChildren.map((child) => child.tagName.toLowerCase())).toEqual(['script', 'main', 'footer']);
+    expect(postMessage).toHaveBeenCalledWith(
+      { type: 'od-edit-apply-dom-result', version: 17, ok: true },
+      '*',
+    );
+
+    dom.window.close();
+  });
+
   it('mirrors runtime-target content in place via od-edit-apply-dom apply-content', () => {
     const dom = new JSDOM(
       `<main><h1 data-od-id="brand-name">Acme</h1><img data-od-id="brand-logo-img" src="old.png" alt="Old"></main>${buildManualEditBridge(true)}`,
@@ -1316,13 +1345,24 @@ describe('manual edit rich text sessions', () => {
     dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
       data: { type: 'od-edit-apply-dom', id: 'brand-logo-img', op: 'apply-content', fields: { src: 'new.png', alt: 'New' }, version: 22 },
     }));
+    dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
+      data: {
+        type: 'od-edit-apply-dom',
+        id: 'brand-name',
+        op: 'apply-content',
+        fields: { html: 'Acme <strong>Studios</strong>' },
+        version: 24,
+      },
+    }));
 
     expect(dom.window.document.querySelector('[data-od-id="brand-name"]')?.textContent).toBe('Acme Studios');
+    expect(dom.window.document.querySelector('[data-od-id="brand-name"] strong')?.textContent).toBe('Studios');
     const img = dom.window.document.querySelector('[data-od-id="brand-logo-img"]')!;
     expect(img.getAttribute('src')).toBe('new.png');
     expect(img.getAttribute('alt')).toBe('New');
     expect(postMessage).toHaveBeenCalledWith({ type: 'od-edit-apply-dom-result', version: 21, ok: true }, '*');
     expect(postMessage).toHaveBeenCalledWith({ type: 'od-edit-apply-dom-result', version: 22, ok: true }, '*');
+    expect(postMessage).toHaveBeenCalledWith({ type: 'od-edit-apply-dom-result', version: 24, ok: true }, '*');
 
     // Attribute maps skip unsafe names and remove empty values.
     dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
