@@ -125,6 +125,7 @@ import { AgentIcon } from './AgentIcon';
 import { CommunityView } from './CommunityView';
 import { TeamSlotPlaceholder } from './TeamSlotPlaceholder';
 import { useWorkspaceContext, useWorkspaceBilling, useTeamProjects } from '../collab/useWorkspaceContext';
+import { buildAllProjectsList } from '../collab/all-projects-list';
 import {
   getModelCapabilityTag,
   getModelCostTier,
@@ -541,63 +542,19 @@ export function EntryShell({
   // resource hub through the daemon. Empty off-team / when the hub is unconfigured.
   const teamProjects = useTeamProjects();
   const hasWorkspaceContext = Boolean(workspaceContext);
-  // The "全部项目" grid is the SAME project-card grid used everywhere: it merges
-  // the member's own local projects with the projects teammates shared to the
-  // team (from the resource hub), deduped by id. A shared project the member has
-  // not pulled yet is not in `projects`, so we synthesize a normal `Project` card
-  // for it — placeholder name until it is opened (the pull registers it under its
-  // real name), timestamps from when it was shared. No custom section: these flow
-  // through `RecentProjectsStrip` like any other card.
+  // The "全部项目" grid is the SAME project-card grid used everywhere; its
+  // membership rule lives in `buildAllProjectsList`. Rows flow through
+  // `RecentProjectsStrip` like any other card — no custom section.
   const localProjectIds = new Set(projects.map((project) => project.id));
   const teamSharedProjectIds = new Set(
     teamProjects.projects.map((teamProject) => teamProject.projectId),
   );
-  const sharedProjectCards: Project[] = teamProjects.projects
-    .filter((teamProject) => !localProjectIds.has(teamProject.projectId))
-    .map((teamProject) => {
-      const sharedAtMs = Date.parse(teamProject.sharedAt);
-      const fallbackTimestamp = Number.isFinite(sharedAtMs) ? sharedAtMs : Date.now();
-      const createdAt = typeof teamProject.createdAt === 'number'
-        ? teamProject.createdAt
-        : fallbackTimestamp;
-      const updatedAt = typeof teamProject.updatedAt === 'number'
-        ? teamProject.updatedAt
-        : fallbackTimestamp;
-      return {
-        id: teamProject.projectId,
-        name: teamProject.name?.trim() || t('recentProjects.sharedProjectFallbackName'),
-        skillId: teamProject.skillId ?? null,
-        designSystemId: teamProject.designSystemId ?? null,
-        createdAt,
-        updatedAt,
-        ...(teamProject.metadata ? { metadata: teamProject.metadata } : {}),
-      } satisfies Project;
-    });
-  // For rows the member has already pulled, the local record's name freezes at
-  // pull time — follow the hub catalog's display name instead so an owner
-  // rename converges here. The owner's own rows keep the local name as the
-  // authority (their fresh rename may not have round-tripped to the catalog
-  // yet, and being overwritten by the stale catalog name would look like the
-  // rename bounced).
-  const selfMemberId = workspaceContext?.workspaceMemberId ?? null;
-  const catalogNameOverride = new Map(
-    teamProjects.projects
-      .filter((teamProject) => teamProject.ownerMemberId !== selfMemberId)
-      .map((teamProject) => [teamProject.projectId, teamProject.name?.trim() || '']),
-  );
-  const allProjectsList: Project[] = workspaceContext?.workspaceType === 'personal'
-    ? projects
-    : [
-        ...projects
-          .filter((project) => teamSharedProjectIds.has(project.id))
-          .map((project) => {
-            const catalogName = catalogNameOverride.get(project.id);
-            return catalogName && catalogName !== project.name
-              ? { ...project, name: catalogName }
-              : project;
-          }),
-        ...sharedProjectCards,
-      ];
+  const allProjectsList: Project[] = buildAllProjectsList({
+    projects,
+    teamProjects: teamProjects.projects,
+    workspaceContext,
+    sharedFallbackName: t('recentProjects.sharedProjectFallbackName'),
+  });
   // Persistent set of project ids the team hub already lists as shared. Passed to
   // every project strip so a card that has been moved into the team space keeps
   // its "已在团队空间" badge after a refresh — the strip's own optimistic set only
