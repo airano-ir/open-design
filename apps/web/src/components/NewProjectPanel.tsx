@@ -2148,6 +2148,9 @@ function DesignSystemPicker({
     left: number;
     width: number;
     maxHeight: number;
+    // Fixed viewport x for the brand preview flyout, placed beside the
+    // portaled popover (right when there is room, else left).
+    flyoutLeft: number;
   } | null>(null);
 
   // Upgrade the popover's thin list to the rich Brand Kit card whenever the
@@ -2225,12 +2228,31 @@ function DesignSystemPicker({
       const openUp = spaceBelow < preferredMin + 80 && spaceAbove > spaceBelow;
       const maxHeight = Math.max(0, Math.min(preferredMax, openUp ? spaceAbove : spaceBelow));
 
+      // Place the brand preview flyout beside the (portaled) popover: to its
+      // right when the 320px card fits, otherwise flipped to its left, then
+      // clamped into the viewport. Without this the flyout kept its old
+      // inline `position: absolute` against the trigger wrapper and was
+      // re-clipped by the modal body once the popover itself moved to a body
+      // portal.
+      const flyoutWidth = 320;
+      const rightLeft = left + width + 8;
+      const leftLeft = left - flyoutWidth - 8;
+      let flyoutLeft: number;
+      if (rightLeft + flyoutWidth <= window.innerWidth - 8) {
+        flyoutLeft = rightLeft;
+      } else if (leftLeft >= 8) {
+        flyoutLeft = leftLeft;
+      } else {
+        flyoutLeft = Math.max(8, window.innerWidth - flyoutWidth - 8);
+      }
+
       if (openUp) {
         setAnchor({
           bottom: window.innerHeight - rect.top + gap,
           left,
           width,
           maxHeight,
+          flyoutLeft,
         });
       } else {
         setAnchor({
@@ -2238,6 +2260,7 @@ function DesignSystemPicker({
           left,
           width,
           maxHeight,
+          flyoutLeft,
         });
       }
     }
@@ -2469,15 +2492,24 @@ function DesignSystemPicker({
           document.body,
         )
         : null}
-      {open && previewBrand ? (
+      {open && previewBrand && anchor && typeof document !== 'undefined'
+        ? createPortal(
         <aside
-          className="ds-picker-brand-flyout"
+          className="ds-picker-brand-flyout ds-picker-brand-flyout-portal"
           data-testid="new-project-ds-brand-flyout"
           aria-label={t('brandDetail.identity')}
+          style={{
+            top: anchor.top ?? 'auto',
+            bottom: anchor.bottom ?? 'auto',
+            left: anchor.flyoutLeft,
+            maxHeight: anchor.maxHeight,
+          }}
         >
           <BrandPreviewCard variant="compact" summary={previewBrand} />
-        </aside>
-      ) : null}
+        </aside>,
+          document.body,
+        )
+        : null}
     </div>
   );
 }
