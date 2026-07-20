@@ -778,6 +778,42 @@ describe('FileViewer manual edit regressions', () => {
     expect(payload.content).not.toContain('<main data-od-id="hero">Hero</main>');
   });
 
+  it('saves escaped inspector text after an inline HTML commit adds nested formatting', async () => {
+    const source = '<!doctype html><html><body><main data-od-id="hero">Hello world</main></body></html>';
+    const { fetchMock, savedBodies } = manualEditWriteMock(source);
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={htmlPreviewFile()}
+        liveHtml={source}
+      />,
+    );
+    clickManualTool('manual-edit-mode-toggle');
+    const frame = await previewFrame();
+    const postSpy = vi.spyOn(frame.contentWindow!, 'postMessage');
+    await selectManualEditTarget();
+
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-html-commit', id: 'hero', value: 'Hello <strong>world</strong>' },
+        source: frame.contentWindow,
+      }));
+    });
+    await ackApplyDom(frame, postSpy);
+    await waitFor(() => expect(savedBodies).toHaveLength(1));
+    expect(savedBodies[0]!.content).toContain('Hello <strong>world</strong>');
+
+    postSpy.mockClear();
+    fireEvent.change(screen.getByLabelText('Text'), { target: { value: '<literal> & replacement' } });
+    fireEvent.click(screen.getByText('Save'));
+
+    const applied = await ackApplyDom(frame, postSpy);
+    expect(applied.html).toContain('&lt;literal&gt; &amp; replacement');
+    await waitFor(() => expect(savedBodies).toHaveLength(2));
+    expect(savedBodies[1]!.content).toContain('&lt;literal&gt; &amp; replacement');
+    expect(savedBodies[1]!.content).not.toContain('<strong>');
+  });
+
   it('undoes a style edit in place without reloading the preview iframe', async () => {
     const source = '<!doctype html><html><body><main data-od-id="hero">Hero</main></body></html>';
     let savedContent: string | null = null;

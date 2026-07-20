@@ -227,6 +227,12 @@ export function readManualEditFields(source: string, id: string): ManualEditFiel
   return { text: el.textContent?.trim() ?? '' };
 }
 
+export function manualEditTargetHasNestedMarkup(source: string, id: string): boolean {
+  const doc = parseSource(source);
+  const el = doc ? findEditableElement(doc, id) : null;
+  return Boolean(el && hasElementChildren(el));
+}
+
 export function readManualEditStyles(source: string, id: string): ManualEditStyles {
   const doc = parseSource(source);
   const el = doc ? findEditableElement(doc, id) : null;

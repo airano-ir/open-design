@@ -204,6 +204,7 @@ import { ManualEditTextToolbar } from './ManualEditTextToolbar';
 import {
   applyManualEditPatch,
   isManualEditFullHtmlDocument,
+  manualEditTargetHasNestedMarkup,
   readManualEditAttributes,
   readManualEditFields,
   readManualEditInsertedSibling,
@@ -725,6 +726,13 @@ function escapeHtmlAttribute(value: string): string {
   return value
     .replace(/&/g, '&amp;')
     .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function escapeHtmlTextContent(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 }
@@ -8835,7 +8843,14 @@ function HtmlViewer({
     if (target.kind === 'text' || target.kind === 'token') {
       const currentText = fields.text ?? target.fields.text ?? target.text;
       if (draft.text !== currentText) {
-        return { patch: { id: target.id, kind: 'set-text', value: draft.text }, label: t('manualEdit.applyContent') };
+        const hasNestedMarkup = manualEditTargetHasNestedMarkup(base, target.id)
+          || readManualEditRuntimeInnerHtml(base, target.id) !== null;
+        return {
+          patch: hasNestedMarkup
+            ? { id: target.id, kind: 'set-inner-html', html: escapeHtmlTextContent(draft.text) }
+            : { id: target.id, kind: 'set-text', value: draft.text },
+          label: t('manualEdit.applyContent'),
+        };
       }
       return null;
     }
