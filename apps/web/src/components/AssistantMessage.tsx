@@ -910,15 +910,20 @@ function AssistantMessageImpl({
             ].join(":")}
           />
         ) : null}
-        {turnFileOps.length > 0 ? (
+        {/* #5517 shape: the collapsible tool-op summary lists only the ops the
+            turn actually emitted, and the produced-files list stays its own
+            flat block below it (name / size / Open / Download). Folding the
+            produced files into the summary would hide Download behind a
+            disclosure, so `fileOps` — not `turnFileOps` — feeds this row. */}
+        {fileOps.length > 0 ? (
           <FileOpsSummary
-            entries={turnFileOps}
+            entries={fileOps}
             streaming={streaming}
             projectFileNames={projectFileNames}
             onRequestOpenFile={onRequestOpenFile}
           />
         ) : null}
-        {!streaming && turnFileOps.length === 0 && displayedProduced.length > 0 && projectId ? (
+        {!streaming && displayedProduced.length > 0 && projectId ? (
           <ProducedFiles
             files={displayedProduced}
             projectId={projectId}

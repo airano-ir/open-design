@@ -263,6 +263,14 @@ export function AvatarMenu({
   const currentModelLabel = currentAgent?.models?.find(
     (m) => m.id === currentModelId,
   )?.label;
+  // Selected-model readout shown inside the trigger (left of the Send button).
+  // Hidden by default in CSS; composer-row contexts opt it in.
+  const triggerModelLabel =
+    config.mode === 'api'
+      ? config.model?.trim() || null
+      : config.mode === 'daemon'
+        ? currentModelLabel ?? currentModelId
+        : null;
 
   const apiProtocol = config.apiProtocol ?? 'openai';
   const byokProvider =
@@ -338,6 +346,9 @@ export function AvatarMenu({
         ) : (
           <RemixIcon name="link" size={20} />
         )}
+        {triggerModelLabel ? (
+          <span className="avatar-agent-trigger__model">{triggerModelLabel}</span>
+        ) : null}
         <RemixIcon name="arrow-down-s-line" size={14} />
       </button>
       {open && popoverStyle ? createPortal(

@@ -2103,7 +2103,9 @@
    trigger reads as just the model name (icon-only mode, with no readout, keeps
    the mark). */
 .app .composer-row .avatar-agent-trigger:has(.avatar-agent-trigger__model) .avatar-agent-mark,
-.chat-composer-fixed-layer .composer-row .avatar-agent-trigger:has(.avatar-agent-trigger__model) .avatar-agent-mark {
+.app .composer-row .avatar-agent-trigger:has(.avatar-agent-trigger__model) .agent-icon,
+.chat-composer-fixed-layer .composer-row .avatar-agent-trigger:has(.avatar-agent-trigger__model) .avatar-agent-mark,
+.chat-composer-fixed-layer .composer-row .avatar-agent-trigger:has(.avatar-agent-trigger__model) .agent-icon {
   display: none;
 }
 /* Keep the project composer send action visually aligned with the Home

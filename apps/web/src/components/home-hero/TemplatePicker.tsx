@@ -137,6 +137,27 @@ export function TemplatePicker({
     };
   }, [open]);
 
+  // Invariant: `anchor` is a one-shot VIEWPORT point captured from the trigger
+  // at open time, so the open menu is only meaningful while that point still
+  // describes where the trigger is. Anything that moves the trigger under a
+  // fixed-position ring — scrolling any ancestor, resizing the window —
+  // invalidates it, and the ring would otherwise hang in mid-air detached from
+  // its own trigger. Dismiss instead of re-anchoring: chasing the trigger is
+  // exactly what the capture-once design avoids, because the composer around
+  // it reflows asynchronously and lives inside transformed ancestors.
+  useEffect(() => {
+    if (!open) return undefined;
+    const dismiss = () => setOpen(false);
+    // Capture phase: scroll does not bubble, and the trigger sits inside the
+    // entry shell's own scroll container, not the document scroller.
+    window.addEventListener('scroll', dismiss, { capture: true, passive: true });
+    window.addEventListener('resize', dismiss);
+    return () => {
+      window.removeEventListener('scroll', dismiss, { capture: true });
+      window.removeEventListener('resize', dismiss);
+    };
+  }, [open]);
+
   // Hover-preview wins over the committed value so pointing at a rail card
   // updates the pill; falls back to the committed template, then "None".
   const previewChip = previewChipId

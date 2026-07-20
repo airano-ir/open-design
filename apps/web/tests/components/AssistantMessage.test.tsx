@@ -550,9 +550,14 @@ describe('AssistantMessage recovered produced files', () => {
       />,
     );
 
-    expect(screen.getByTestId('file-ops-summary')).toBeTruthy();
-    expect(screen.getByTestId('file-ops-row-browser-war-deck-outline.md')).toBeTruthy();
-    expect(screen.getByText(/Write 1/)).toBeTruthy();
+    // #5517 shape: recovered files land in the flat produced-files block (name
+    // / size / Open / Download), not folded into the collapsible tool-op
+    // summary — that summary lists only ops the turn actually emitted.
+    const produced = document.querySelector('.produced-files');
+    expect(produced).toBeTruthy();
+    expect(produced?.textContent).toContain('browser-war-deck-outline.md');
+    expect(produced?.querySelector('a[download]')).toBeTruthy();
+    expect(screen.queryByTestId('file-ops-summary')).toBeNull();
   });
 
   it('shows project files mentioned as plain filenames in the assistant summary', () => {
@@ -579,8 +584,9 @@ describe('AssistantMessage recovered produced files', () => {
       />,
     );
 
-    expect(screen.getByTestId('file-ops-summary')).toBeTruthy();
-    expect(screen.getByTestId('file-ops-row-browser-war-deck-outline.md')).toBeTruthy();
+    const produced = document.querySelector('.produced-files');
+    expect(produced).toBeTruthy();
+    expect(produced?.textContent).toContain('browser-war-deck-outline.md');
   });
 
   it('does not recover old reference files as produced files', () => {

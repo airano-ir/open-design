@@ -476,6 +476,9 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
     // entries rather than ChatComposer remounts. See PR #2285 review
     // 2026-05-20 04:08 for the rationale.
     const [staged, setStaged] = useState<ChatAttachment[]>([]);
+    // Manual editor height set by dragging the shell's gray backdrop up/down.
+    // null = the default auto-grow min/max behavior.
+    const [manualEditorHeight, setManualEditorHeight] = useState<number | null>(null);
     const nextAttachmentOrderRef = useRef(0);
     const [libraryPickerOpen, setLibraryPickerOpen] = useState(false);
     const [figmaModalOpen, setFigmaModalOpen] = useState(false);
@@ -2077,6 +2080,36 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
       if (files.length > 0) void uploadFiles(files);
     }
 
+    // Dragging the shell's gray backdrop (not its children) vertically
+    // resizes the editor: up = taller. Dragging back at/below the default
+    // height clears the override and returns to auto-grow.
+    function handleShellResizeMouseDown(e: React.MouseEvent<HTMLDivElement>) {
+      if (e.target !== e.currentTarget) return;
+      if (e.button !== 0) return;
+      const editorEl = e.currentTarget.querySelector<HTMLElement>('.composer-input-editor');
+      if (!editorEl) return;
+      e.preventDefault();
+      const startY = e.clientY;
+      const startHeight = editorEl.getBoundingClientRect().height;
+      const DEFAULT_MIN = 72;
+      const onMove = (ev: MouseEvent) => {
+        const delta = startY - ev.clientY;
+        const max = Math.round(window.innerHeight * 0.6);
+        const next = Math.min(max, Math.max(DEFAULT_MIN, Math.round(startHeight + delta)));
+        setManualEditorHeight(next <= DEFAULT_MIN + 4 ? null : next);
+      };
+      const onUp = () => {
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+        document.body.style.removeProperty('cursor');
+        document.body.style.removeProperty('user-select');
+      };
+      document.body.style.cursor = 'ns-resize';
+      document.body.style.userSelect = 'none';
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+    }
+
     async function handleLinkFolder() {
       if (!projectId) return;
       const selected = await openFolderDialog();
@@ -2621,7 +2654,15 @@ export const ChatComposer = forwardRef<ChatComposerHandle, Props>(
         onDragLeave={() => setDragActive(false)}
         onDrop={inputDisabled ? undefined : handleDrop}
       >
-        <div className="composer-shell">
+        <div
+          className={`composer-shell${manualEditorHeight != null ? ' composer-shell--manual-height' : ''}`}
+          style={
+            manualEditorHeight != null
+              ? ({ '--composer-manual-h': `${manualEditorHeight}px` } as React.CSSProperties)
+              : undefined
+          }
+          onMouseDown={handleShellResizeMouseDown}
+        >
           {/*
             Spec §8.4 — context bar above the composer input. The
             section now behaves as a pure context bar: it renders the
