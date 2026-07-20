@@ -1,18 +1,18 @@
 ---
 title: "Open Design 0.15.1 — Sharper Vision, Longer Flow"
 date: 2026-07-17
-category: "Release"
+category: "Product"
 readingTime: 3
-summary: "0.15.1 upgrades the built-in OpenDesign Agent: multimodal models read finer image detail, long sessions stay coherent and recover more gracefully, clarifying questions stay in the chat, and more model runtimes plug in — on top of a wide sweep of HTML, deck-export, and desktop reliability fixes."
+summary: "0.15.1 sharpens the OpenDesign Agent: finer image detail, smoother long-session recovery, in-chat clarifying questions, and more model runtimes — plus HTML, deck-export, and desktop fixes."
 socialImage: "/blog/open-design-0-15-1-cover.jpg"
-ctaKind: download
+ctaKind: download-app
 ctaTitle: "Update to Open Design 0.15.1"
 ctaBody: "Free, open-source, local-first. macOS and Windows builds are live."
 ctaLabel: "Download 0.15.1"
 ctaHref: "https://releases.open-design.ai/?utm_source=blog&utm_medium=docs&utm_campaign=202607_0_15_1&utm_content=official"
 ---
 
-Open Design 0.15.1 is a runtime-focused release. We upgraded the built-in **OpenDesign Agent** so multimodal models see more of an image's detail, long working sessions hold together and recover better, and the everyday flow — clarifying questions, model choice, exports — stays out of your way.
+Open Design 0.15.1 is a runtime-focused release. We upgraded the built-in **OpenDesign Agent** so multimodal models see more of an image's detail, long working sessions hold together and recover better, and the everyday flow — clarifying questions, model choice, exports — stays out of your way. It keeps the [vibe-design](/blog/what-is-vibe-design/) loop — prompt, see, refine — moving without friction.
 
 [Download 0.15.1](https://releases.open-design.ai/?utm_source=blog&utm_medium=docs&utm_campaign=202607_0_15_1&utm_content=official) · [Full release notes](https://github.com/nexu-io/open-design/releases/tag/open-design-v0.15.1)
 
@@ -30,7 +30,7 @@ Deck and prototype direction questions now use visual choices you can compare, r
 
 ## More models, cleaner memory
 
-Bring the right model and research into a project: 0.15.1 adds **AtomCode** as an agent runtime, a **SiliconFlow Global BYOK** preset, and **parallel web search** for AMR. Memory also starts cleaner and stays under your control — "Learn from chats" now defaults off, while your existing memories, work profile, manual entries, and connector imports stay put.
+Bring the right model and research into a project: 0.15.1 adds **AtomCode** as an agent runtime, a **SiliconFlow Global BYOK** preset — more on that in our [BYOK design workflow](/blog/byok-design-workflow-claude-codex-qwen/) guide — and **parallel web search** for AMR. Memory also starts cleaner and stays under your control — "Learn from chats" now defaults off, while your existing memories, work profile, manual entries, and connector imports stay put.
 
 ## A wide sweep of fixes
 
