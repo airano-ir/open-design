@@ -190,6 +190,44 @@ describe('syncMediaProvidersToDaemon', () => {
 });
 
 describe('mergeDaemonConfig', () => {
+  it('never un-completes onboarding from a daemon copy that predates the completion', () => {
+    // The user finished onboarding: the local copy flipped to true immediately,
+    // and the daemon PUT is asynchronous (and can fail outright). A daemon read
+    // that still says `false` must not roll the local completion back — the
+    // merged config is written straight back to BOTH localStorage and the
+    // daemon, so one stale read would permanently re-arm the first-run flow and
+    // the user would meet onboarding on every launch.
+    const merged = mergeDaemonConfig(
+      { ...DEFAULT_CONFIG, onboardingCompleted: true },
+      { onboardingCompleted: false },
+    );
+
+    expect(merged.onboardingCompleted).toBe(true);
+  });
+
+  it('lets an explicit reset clear onboarding once the local copy is already false', () => {
+    // Settings → "run setup again" writes false to both stores at once, so by
+    // the time the next merge runs the local copy is false too. The ratchet
+    // must not resurrect completion in that state.
+    const merged = mergeDaemonConfig(
+      { ...DEFAULT_CONFIG, onboardingCompleted: false },
+      { onboardingCompleted: false },
+    );
+
+    expect(merged.onboardingCompleted).toBe(false);
+  });
+
+  it('adopts a daemon completion for a local copy that never had one', () => {
+    // Fresh browser profile / cleared localStorage against a daemon that
+    // already recorded the completion: the user must not be re-onboarded.
+    const merged = mergeDaemonConfig(
+      { ...DEFAULT_CONFIG, onboardingCompleted: false },
+      { onboardingCompleted: true },
+    );
+
+    expect(merged.onboardingCompleted).toBe(true);
+  });
+
   it('clears stale local CLI env prefs when the daemon has none', () => {
     const merged = mergeDaemonConfig(
       {

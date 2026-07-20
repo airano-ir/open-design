@@ -172,6 +172,28 @@ const AMR_AGENT_ID = 'amr';
 const AMR_PROFILE_ENV_KEY = 'OPEN_DESIGN_AMR_PROFILE';
 const AGENT_FOCUS_REFRESH_THROTTLE_MS = 10_000;
 
+/**
+ * Whether this launch should hand the user to the first-run onboarding flow.
+ *
+ * Two conditions, both about the *user*, neither about where they happen to be
+ * in the app: they have never completed onboarding (on either the local or the
+ * daemon copy — `mergeDaemonConfig` ratchets the two before this runs), and
+ * they did not arrive through an explicit deep link that onboarding must not
+ * hijack (the collab demo and the community gallery are shareable URLs).
+ *
+ * Deliberately a pure predicate over a resolved config: the redirect belongs to
+ * the one-shot boot pass, and expressing it as a function of "who the user is"
+ * rather than "what just happened" keeps it from being re-decided mid-session.
+ */
+export function shouldRouteToFirstRunOnboarding(
+  config: AppConfig,
+  pathname: string,
+): boolean {
+  if (config.onboardingCompleted === true) return false;
+  if (pathname.startsWith('/collab-demo') || pathname.startsWith('/community')) return false;
+  return true;
+}
+
 function workspaceProjectListViewForRoute(route: Route): WorkspaceProjectListView {
   if (route.kind === 'home' && route.view === 'all-projects') return 'all';
   if (route.kind === 'home' && route.view === 'drafts') return 'drafts';
@@ -581,6 +603,13 @@ function AppInner() {
   const [composioConfigLoading, setComposioConfigLoading] = useState(true);
   const route = useRoute();
   const workspaceProjectView = workspaceProjectListViewForRoute(route);
+  // Read-only mirror for the boot effect. The boot pass needs to know which
+  // project list to seed, but it must NOT restart when that answer changes:
+  // see the "boot is a one-shot" note on the bootstrap effect below. A
+  // dedicated effect already re-lists projects whenever the view or the
+  // workspace changes, so nothing is lost by the boot pass not reacting.
+  const workspaceProjectViewRef = useRef(workspaceProjectView);
+  workspaceProjectViewRef.current = workspaceProjectView;
   const analytics = useAnalytics();
 
   // Single-flight guard for `/api/agents?stream=1`: beginning a new request
@@ -945,6 +974,16 @@ function AppInner() {
   // was one Promise.all behind a global "Loading workspace…" placeholder,
   // which made the slowest endpoint (typically `/api/agents` on cold start)
   // gate every tab including the ones that don't need agents at all.
+  //
+  // Boot is a ONE-SHOT: every dependency below is a stable callback, so this
+  // runs once per app launch and never again. That is load-bearing, not
+  // incidental — this pass owns the first-run onboarding routing decision and
+  // rewrites the merged config back to localStorage + the daemon. Re-running it
+  // on navigation replays both: a user is re-judged against a config read that
+  // may lag their own completion, and gets bounced into the first-run flow they
+  // already finished. Anything route- or workspace-derived that boot needs must
+  // be read through a ref (see `workspaceProjectViewRef`), and anything that
+  // must react to those changes belongs in its own effect.
   useEffect(() => {
     let cancelled = false;
     let effectAgentStreamAbort: AbortController | null = null;
@@ -1036,7 +1075,9 @@ function AppInner() {
       });
 
       const request = beginProjectListRequest();
-      void listCurrentWorkspaceProjects({ workspaceView: workspaceProjectView }).then((list) => {
+      void listCurrentWorkspaceProjects({
+        workspaceView: workspaceProjectViewRef.current,
+      }).then((list) => {
         if (cancelled) return;
         reconcileFetchedProjects(list, request);
         setProjectsLoading(false);
@@ -1130,11 +1171,7 @@ function AppInner() {
         // banner keys off `privacyDecisionAt`. They may coexist on the
         // first launch; the banner sits above the modal layer so it
         // stays actionable regardless of the active view.
-        // Explicit deep-link entries (collab demo, community gallery) shouldn't be
-        // hijacked by the first-run onboarding redirect, so they stay reachable.
-        const path = window.location.pathname;
-        const exemptFromOnboarding = path.startsWith('/collab-demo') || path.startsWith('/community');
-        if (!next.onboardingCompleted && !exemptFromOnboarding) {
+        if (shouldRouteToFirstRunOnboarding(next, window.location.pathname)) {
           navigate({ kind: 'home', view: 'onboarding' }, { replace: true });
         }
         setDaemonConfigLoaded(true);
@@ -1150,12 +1187,15 @@ function AppInner() {
       cancelled = true;
       effectAgentStreamAbort?.abort();
     };
+    // `workspaceProjectView` is intentionally absent: it is route-derived, and
+    // depending on it would turn this one-shot boot pass into a per-navigation
+    // one. It is read through `workspaceProjectViewRef` instead.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     beginAgentStreamRequest,
     beginProjectListRequest,
     isCurrentAgentStreamRequest,
     listCurrentWorkspaceProjects,
-    workspaceProjectView,
     reconcileFetchedProjects,
   ]);
 

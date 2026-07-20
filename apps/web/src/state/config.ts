@@ -886,6 +886,36 @@ export function saveConfig(config: AppConfig): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
 }
 
+/**
+ * Onboarding completion is a one-way ratchet: once either side of the
+ * local/daemon pair has recorded it, the merge keeps it.
+ *
+ * `onboardingCompleted` is written from two places that settle at different
+ * times — localStorage flips the instant the user finishes the flow, while the
+ * daemon copy arrives through an asynchronous `PUT /api/app-config` that can
+ * lose a race or fail outright. So a daemon read may legitimately still say
+ * `false` for a user who is already done, and the reverse (daemon `true`,
+ * fresh/cleared localStorage) is equally normal.
+ *
+ * Letting the daemon's copy win unconditionally is not a cosmetic glitch: the
+ * merged config is written straight back to BOTH stores, so a single stale read
+ * permanently re-arms the first-run flow and the user meets onboarding on every
+ * launch from then on.
+ *
+ * The one legitimate way back to `false` is the explicit reset (Settings → run
+ * setup again), which writes `false` to both stores in the same gesture — so by
+ * the time the next merge runs neither side claims completion and the ratchet
+ * has nothing to hold. `buildPersistedConfig` applies the same rule on the
+ * save path; this is its read-path counterpart.
+ */
+function ratchetOnboardingCompleted(
+  local: AppConfig['onboardingCompleted'],
+  daemon: AppConfigPrefs['onboardingCompleted'],
+): AppConfig['onboardingCompleted'] {
+  if (local === true || daemon === true) return true;
+  return daemon != null ? daemon : local;
+}
+
 export function mergeDaemonConfig(
   localConfig: AppConfig,
   daemonConfig: AppConfigPrefs | null,
@@ -893,9 +923,10 @@ export function mergeDaemonConfig(
   const next = { ...localConfig };
   if (!daemonConfig) return next;
 
-  if (daemonConfig.onboardingCompleted != null) {
-    next.onboardingCompleted = daemonConfig.onboardingCompleted;
-  }
+  next.onboardingCompleted = ratchetOnboardingCompleted(
+    localConfig.onboardingCompleted,
+    daemonConfig.onboardingCompleted,
+  );
   if (daemonConfig.agentId !== undefined) {
     next.agentId = daemonConfig.agentId;
   }
