@@ -33,18 +33,16 @@ interface Props {
   onRequestOpenFile?: ((name: string) => void) | undefined;
 }
 
-const OP_LABEL_KEY: Record<FileOpKind, keyof Dict> = {
-  read: 'tool.read',
+type ArtifactOpKind = Extract<FileOpKind, 'write' | 'edit'>;
+
+const OP_LABEL_KEY: Record<ArtifactOpKind, keyof Dict> = {
   write: 'tool.write',
   edit: 'tool.edit',
-  delete: 'tool.delete',
 };
 
-const OP_BADGE_GLYPH: Record<FileOpKind, string> = {
-  read: 'R',
+const OP_BADGE_GLYPH: Record<ArtifactOpKind, string> = {
   write: 'W',
   edit: 'E',
-  delete: 'D',
 };
 
 const COLLAPSE_AFTER_ENTRY_COUNT = 4;
@@ -73,8 +71,6 @@ export function FileOpsSummary({
   const summaryParts: string[] = [];
   if (counts.write > 0) summaryParts.push(`${t('tool.write')} ${counts.write}`);
   if (counts.edit > 0) summaryParts.push(`${t('tool.edit')} ${counts.edit}`);
-  if (counts.delete > 0) summaryParts.push(`${t('tool.delete')} ${counts.delete}`);
-  if (counts.read > 0) summaryParts.push(`${t('tool.read')} ${counts.read}`);
 
   const header = (
     <>
@@ -170,41 +166,28 @@ function FileOpRow({
     !!onRequestOpenFile &&
     !entry.ops.includes('delete') &&
     (projectFileNames ? projectFileNames.has(entry.path) : true);
+  // Artifact rows describe the delivered file, not the execution history.
+  // A file that was read and then edited therefore gets one Edit category;
+  // read/run/error detail stays in the execution disclosure above.
+  const artifactOp: ArtifactOpKind | null = entry.ops.includes('edit')
+    ? 'edit'
+    : entry.ops.includes('write')
+      ? 'write'
+      : null;
   const content = (
     <>
-      <div className="file-ops-row-badges" aria-hidden>
-        {entry.ops.map((op) => {
-          const count = entry.opCounts[op];
-          return (
-            <span
-              key={op}
-              className={`file-ops-badge file-ops-badge--${op}`}
-              title={
-                count > 1
-                  ? `${t(OP_LABEL_KEY[op])} ×${count}`
-                  : t(OP_LABEL_KEY[op])
-              }
-            >
-              {OP_BADGE_GLYPH[op]}
-              {count > 1 ? (
-                <span className="file-ops-badge-count">×{count}</span>
-              ) : null}
-            </span>
-          );
-        })}
-      </div>
+      {artifactOp ? (
+        <span
+          className={`file-ops-badge file-ops-badge--${artifactOp}`}
+          title={t(OP_LABEL_KEY[artifactOp])}
+          aria-hidden
+        >
+          {OP_BADGE_GLYPH[artifactOp]}
+        </span>
+      ) : null}
       <code className="file-ops-row-path" title={entry.fullPath}>
         {entry.path}
       </code>
-      {entry.status === 'running' ? (
-        <span className="file-ops-row-status file-ops-row-status--running">
-          {t('tool.running')}
-        </span>
-      ) : entry.status === 'error' ? (
-        <span className="file-ops-row-status file-ops-row-status--error">
-          {t('tool.error')}
-        </span>
-      ) : null}
       {canOpen ? (
         <span className="file-ops-row-open-icon" aria-hidden>
           <Icon name="chevron-right" size={12} />
@@ -215,7 +198,7 @@ function FileOpRow({
 
   return (
     <li
-      className={`file-ops-row file-ops-row--${entry.status}`}
+      className="file-ops-row"
       data-testid={`file-ops-row-${entry.path}`}
     >
       {canOpen ? (

@@ -9,8 +9,8 @@ import type { FileOpEntry } from '../../src/runtime/file-ops';
 function entry(partial: Partial<FileOpEntry> & { path: string }): FileOpEntry {
   return {
     fullPath: `/repo/${partial.path}`,
-    ops: ['read'],
-    opCounts: { read: 1, write: 0, edit: 0, delete: 0 },
+    ops: ['write'],
+    opCounts: { read: 0, write: 1, edit: 0, delete: 0 },
     total: 1,
     status: 'done',
     ...partial,
@@ -46,19 +46,19 @@ describe('FileOpsSummary', () => {
     render(
       <FileOpsSummary
         entries={[
-          entry({ path: 'a.ts', ops: ['read'], opCounts: { read: 2, write: 0, edit: 0, delete: 0 }, total: 2 }),
+          entry({ path: 'a.ts', ops: ['read', 'edit'], opCounts: { read: 2, write: 0, edit: 1, delete: 0 }, total: 3 }),
           entry({ path: 'b.ts', ops: ['write'], opCounts: { read: 0, write: 1, edit: 0, delete: 0 } }),
           entry({ path: 'c.ts', ops: ['edit'], opCounts: { read: 0, write: 0, edit: 3, delete: 0 }, total: 3 }),
-          entry({ path: 'gone.ts', ops: ['delete'], opCounts: { read: 0, write: 0, edit: 0, delete: 1 } }),
+          entry({ path: 'd.ts', ops: ['write'], opCounts: { read: 0, write: 1, edit: 0, delete: 0 } }),
         ]}
         streaming
       />,
     );
 
-    expect(screen.getByText(/Write 1/)).toBeTruthy();
-    expect(screen.getByText(/Edit 3/)).toBeTruthy();
-    expect(screen.getByText(/Delete 1/)).toBeTruthy();
-    expect(screen.getByText(/Read 2/)).toBeTruthy();
+    expect(screen.getByText(/Write 2/)).toBeTruthy();
+    expect(screen.getByText(/Edit 4/)).toBeTruthy();
+    expect(screen.queryByText(/Delete/)).toBeNull();
+    expect(screen.queryByText(/Read/)).toBeNull();
     expect(screen.getByTestId('file-ops-row-a.ts')).toBeTruthy();
     expect(screen.getByTestId('file-ops-row-b.ts')).toBeTruthy();
     const toggle = screen.getByTestId('file-ops-toggle');
@@ -185,19 +185,27 @@ describe('FileOpsSummary', () => {
     expect(screen.queryByTestId('file-ops-row-open-gone.ts')).toBeNull();
   });
 
-  it('flags a row as running when its status is running and as error when isError', () => {
+  it('keeps execution history and run state out of artifact rows', () => {
     render(
       <FileOpsSummary
         entries={[
-          entry({ path: 'pending.ts', status: 'running' }),
-          entry({ path: 'broken.ts', status: 'error' }),
+          entry({
+            path: 'index.html',
+            ops: ['read', 'edit'],
+            opCounts: { read: 1, write: 0, edit: 1, delete: 0 },
+            total: 2,
+            status: 'running',
+          }),
         ]}
         streaming
       />,
     );
-    const pending = screen.getByTestId('file-ops-row-pending.ts');
-    const broken = screen.getByTestId('file-ops-row-broken.ts');
-    expect(pending.className).toContain('file-ops-row--running');
-    expect(broken.className).toContain('file-ops-row--error');
+    const row = screen.getByTestId('file-ops-row-index.html');
+    expect(row.className).not.toContain('file-ops-row--running');
+    expect(row.querySelector('.file-ops-badge--edit')).toBeTruthy();
+    expect(row.querySelector('.file-ops-badge--read')).toBeNull();
+    expect(row.querySelectorAll('.file-ops-badge')).toHaveLength(1);
+    expect(row.querySelector('.file-ops-row-status')).toBeNull();
+    expect(screen.queryByText('running…')).toBeNull();
   });
 });
