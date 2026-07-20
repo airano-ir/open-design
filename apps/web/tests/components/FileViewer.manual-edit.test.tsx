@@ -1001,6 +1001,68 @@ describe('FileViewer manual edit regressions', () => {
     expect(frame.srcdoc).toBe(srcdocBefore);
   });
 
+  it('does not offer duplicate for runtime-only brand-kit targets', async () => {
+    const source = '<!doctype html><html><head><script id="od-brand-payload" type="application/json">{"status":"ready","brand":{"name":"Acme"}}</script></head><body><div id="root"></div></body></html>';
+    const { fetchMock } = manualEditWriteMock(source);
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={htmlPreviewFile()}
+        liveHtml={source}
+      />,
+    );
+    clickManualTool('manual-edit-mode-toggle');
+    await previewFrame();
+    await selectManualEditTarget({
+      ...heroTarget(),
+      id: 'brand-name',
+      label: 'Brand name',
+      text: 'Acme',
+      attributes: { 'data-od-id': 'brand-name' },
+      outerHtml: '<h1 data-od-id="brand-name">Acme</h1>',
+    });
+
+    await waitFor(() => expect(screen.queryByTestId('manual-edit-duplicate')).toBeNull());
+  });
+
+  it('rejects image paste before upload for runtime-only brand-kit targets', async () => {
+    const source = '<!doctype html><html><head><script id="od-brand-payload" type="application/json">{"status":"ready","brand":{"name":"Acme"}}</script></head><body><div id="root"></div></body></html>';
+    const { fetchMock } = manualEditWriteMock(source);
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={htmlPreviewFile()}
+        liveHtml={source}
+      />,
+    );
+    clickManualTool('manual-edit-mode-toggle');
+    const frame = await previewFrame();
+    await selectManualEditTarget({
+      ...heroTarget(),
+      id: 'brand-name',
+      label: 'Brand name',
+      text: 'Acme',
+      attributes: { 'data-od-id': 'brand-name' },
+      outerHtml: '<h1 data-od-id="brand-name">Acme</h1>',
+    });
+
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: {
+          type: 'od-edit-paste-image',
+          id: 'brand-name',
+          name: 'runtime-paste.png',
+          mime: 'image/png',
+          buffer: new Uint8Array([137, 80, 78, 71]).buffer,
+        },
+        source: frame.contentWindow,
+      }));
+    });
+
+    expect(await screen.findAllByText('Runtime-rendered elements cannot be used as insertion points.')).not.toHaveLength(0);
+    expect(fetchMock.mock.calls.some(([input]) => String(input).includes('/upload'))).toBe(false);
+  });
+
   it('undoes a commit in place and records an Undo version label', async () => {
     const source = '<!doctype html><html><body><main data-od-id="hero">Hero</main></body></html>';
     const { fetchMock, savedBodies } = manualEditWriteMock(source);

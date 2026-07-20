@@ -121,6 +121,13 @@ export function applyManualEditPatch(source: string, patch: ManualEditPatch): Ma
 
   const el = findEditableElement(doc, patch.id);
   if (!el) {
+    if (patch.kind === 'insert-html' || patch.kind === 'duplicate-element') {
+      return {
+        ok: false,
+        source,
+        error: 'Structural edits are not supported for runtime-rendered targets.',
+      };
+    }
     const dynamic = applyDynamicBrandKitPatch(doc, patch);
     return dynamic.ok
       ? { ok: true, source: serializeSource(doc, source) }
@@ -717,15 +724,17 @@ const MANUAL_EDIT_IDENTITY_ATTRS = [
 ] as const;
 
 /**
- * Deep-clone an element for `duplicate-element`, stripping every manual-edit
- * identity attribute from the clone and its descendants. Two elements sharing
- * a `data-od-id` would make every later patch ambiguous; freshly stripped
- * clones get re-annotated with stable ids on the next preview build.
+ * Deep-clone an element for `duplicate-element`, stripping ordinary HTML ids
+ * and every manual-edit identity attribute from the clone and its descendants.
+ * Duplicate HTML ids can retarget CSS, scripts, and anchor links, while shared
+ * `data-od-id` values make every later patch ambiguous. Freshly stripped clones
+ * get re-annotated with stable manual-edit ids on the next preview build.
  */
 function cloneWithoutManualEditIdentity(el: Element): Element {
   const clone = el.cloneNode(true) as Element;
   const nodes = [clone, ...Array.from(clone.querySelectorAll('*'))];
   for (const node of nodes) {
+    node.removeAttribute('id');
     for (const attr of MANUAL_EDIT_IDENTITY_ATTRS) node.removeAttribute(attr);
   }
   return clone;

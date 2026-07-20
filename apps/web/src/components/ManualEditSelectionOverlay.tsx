@@ -149,7 +149,7 @@ export function ManualEditSelectionOverlay({
   onGestureCancel: (touchedKeys: Array<keyof ManualEditStyles>) => void;
   onGestureActiveChange?: (active: boolean) => void;
   onOpenInspector?: () => void;
-  onDuplicate: () => void;
+  onDuplicate?: () => void;
   onDelete: () => void;
   onReplaceImage?: (file: File) => void;
   onCropStart?: () => void;
@@ -685,18 +685,20 @@ export function ManualEditSelectionOverlay({
               <Icon name="sliders" size={15} />
             </button>
           ) : null}
-          <button
-            type="button"
-            className={`${styles.actionButton} od-tooltip`}
-            data-testid="manual-edit-duplicate"
-            data-tooltip={manualEditTooltip(t('manualEdit.duplicateElement'), 'duplicate')}
-            data-tooltip-placement="bottom"
-            aria-label={t('manualEdit.duplicateElement')}
-            disabled={busy}
-            onClick={onDuplicate}
-          >
-            <Icon name="copy" size={15} />
-          </button>
+          {onDuplicate ? (
+            <button
+              type="button"
+              className={`${styles.actionButton} od-tooltip`}
+              data-testid="manual-edit-duplicate"
+              data-tooltip={manualEditTooltip(t('manualEdit.duplicateElement'), 'duplicate')}
+              data-tooltip-placement="bottom"
+              aria-label={t('manualEdit.duplicateElement')}
+              disabled={busy}
+              onClick={onDuplicate}
+            >
+              <Icon name="copy" size={15} />
+            </button>
+          ) : null}
           <button
             type="button"
             className={`${styles.actionButton} ${styles.actionButtonDanger} od-tooltip`}

@@ -9013,6 +9013,13 @@ function HtmlViewer({
   async function applyManualEdit(patch: ManualEditPatch, label: string): Promise<boolean> {
     if (manualEditSavingRef.current) return false;
     if (sourceRef.current == null) return false;
+    if (
+      (patch.kind === 'insert-html' || patch.kind === 'duplicate-element')
+      && !manualEditSupportsStructuralAnchor(patch.id)
+    ) {
+      setManualEditError('Runtime-rendered elements cannot be duplicated or used as insertion points.');
+      return false;
+    }
     manualEditSavingRef.current = true;
     setManualEditSaving(true);
     setManualEditError(null);
@@ -9393,6 +9400,10 @@ function HtmlViewer({
     await applyManualEdit({ id, kind: 'duplicate-element' }, t('manualEdit.duplicateElement'));
   }
 
+  function manualEditSupportsStructuralAnchor(id: string): boolean {
+    return id === '__body__' || Boolean(readManualEditOuterHtml(sourceRef.current ?? '', id));
+  }
+
   // Element-level clipboard (Cmd/Ctrl+C): stores the selected element's
   // SOURCE outerHTML — not the runtime DOM — so paste round-trips through the
   // same sanitized insert path regardless of what page scripts did live.
@@ -9424,15 +9435,21 @@ function HtmlViewer({
       if (manualEditImageToastIdRef.current !== toastId) return;
       setManualEditImageToast({ id: toastId, message, tone });
     };
-    showToast(t('manualEdit.uploadingImage'), 'loading');
     try {
+      const anchorId = anchorIdRaw || selectedManualEditTargetIdRef.current || '__body__';
+      if (!manualEditSupportsStructuralAnchor(anchorId)) {
+        const message = 'Runtime-rendered elements cannot be used as insertion points.';
+        setManualEditError(message);
+        showToast(message, 'error');
+        return;
+      }
+      showToast(t('manualEdit.uploadingImage'), 'loading');
       const src = await uploadManualEditImageFile(imageFile);
       if (!src) {
         showToast(t('manualEdit.uploadImageFailed'), 'error');
         return;
       }
       showToast(t('manualEdit.processingImage'), 'loading');
-      const anchorId = anchorIdRaw || selectedManualEditTargetIdRef.current || '__body__';
       const html = `<img src="${escapeManualEditAttr(src)}" alt="" style="max-width: 100%;">`;
       const inserted = await insertManualEditHtml(anchorId, html, t('manualEdit.pasteImage'));
       showToast(
@@ -11797,6 +11814,11 @@ function HtmlViewer({
     !!selectedManualEditTarget &&
     manualEditTextSelection?.id === selectedManualEditTarget.id &&
     manualEditTextSelection.hasRange;
+  const selectedManualEditTargetSupportsStructure = useMemo(
+    () => !!selectedManualEditTarget
+      && Boolean(readManualEditOuterHtml(source ?? '', selectedManualEditTarget.id)),
+    [selectedManualEditTarget?.id, source],
+  );
   const manualEditSelectionChrome =
     manualEditMode && selectedManualEditTarget && selectedManualEditTarget.id !== '__body__' ? (
       <ManualEditSelectionOverlay
@@ -11821,9 +11843,11 @@ function HtmlViewer({
         onGestureCancel={(keys) => cancelManualEditGesturePreview(selectedManualEditTarget.id, keys)}
         onGestureActiveChange={setManualEditGestureActive}
         onOpenInspector={() => setManualEditInspectorOpen(true)}
-        onDuplicate={() => {
-          void duplicateManualEditTarget(selectedManualEditTarget.id);
-        }}
+        onDuplicate={selectedManualEditTargetSupportsStructure
+          ? () => {
+              void duplicateManualEditTarget(selectedManualEditTarget.id);
+            }
+          : undefined}
         onDelete={() => {
           void applyManualEdit(
             { id: selectedManualEditTarget.id, kind: 'remove-element' },

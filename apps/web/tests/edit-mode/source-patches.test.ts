@@ -312,6 +312,26 @@ describe('manual edit source patches', () => {
     expect(result.source).toContain('display: none !important');
   });
 
+  it('rejects structural edits anchored to runtime-only brand-kit targets', () => {
+    const duplicated = applyManualEditPatch(brandKitSource, { kind: 'duplicate-element', id: 'brand-name' });
+    const inserted = applyManualEditPatch(brandKitSource, {
+      kind: 'insert-html',
+      id: 'brand-name',
+      html: '<p>Pasted</p>',
+    });
+
+    expect(duplicated).toMatchObject({
+      ok: false,
+      source: brandKitSource,
+      error: expect.stringContaining('runtime-rendered'),
+    });
+    expect(inserted).toMatchObject({
+      ok: false,
+      source: brandKitSource,
+      error: expect.stringContaining('runtime-rendered'),
+    });
+  });
+
   it('duplicates an element right after the original and strips identity attrs from the clone', () => {
     const result = applyManualEditPatch(baseSource, { kind: 'duplicate-element', id: 'card' });
 
@@ -338,6 +358,30 @@ describe('manual edit source patches', () => {
     const dom = new JSDOM(result.source);
     expect(dom.window.document.querySelectorAll('[data-od-id="nested-cta"]')).toHaveLength(1);
     expect(dom.window.document.querySelectorAll('a[href="/nested"]')).toHaveLength(2);
+  });
+
+  it('strips authored html ids from duplicated and pasted roots and descendants', () => {
+    const authoredIdSource = '<main><section id="hero" data-od-id="hero"><a id="cta-link">Go</a></section></main>';
+    const duplicated = applyManualEditPatch(authoredIdSource, { kind: 'duplicate-element', id: 'hero' });
+    expect(duplicated.ok).toBe(true);
+    const duplicatedDom = new JSDOM(duplicated.source);
+    const duplicatedSections = duplicatedDom.window.document.querySelectorAll('section');
+    expect(duplicatedSections).toHaveLength(2);
+    expect(duplicatedSections[0]!.id).toBe('hero');
+    expect(duplicatedSections[0]!.querySelector('a')!.id).toBe('cta-link');
+    expect(duplicatedSections[1]!.hasAttribute('id')).toBe(false);
+    expect(duplicatedSections[1]!.querySelector('a')!.hasAttribute('id')).toBe(false);
+
+    const inserted = applyManualEditPatch(authoredIdSource, {
+      kind: 'insert-html',
+      id: 'hero',
+      html: '<section id="pasted"><a id="pasted-link">Pasted</a></section>',
+    });
+    expect(inserted.ok).toBe(true);
+    const insertedDom = new JSDOM(inserted.source);
+    const pasted = insertedDom.window.document.querySelectorAll('section')[1]!;
+    expect(pasted.hasAttribute('id')).toBe(false);
+    expect(pasted.querySelector('a')!.hasAttribute('id')).toBe(false);
   });
 
   it('inserts pasted HTML after the anchor, sanitized and identity-stripped', () => {
