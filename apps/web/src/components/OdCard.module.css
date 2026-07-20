@@ -320,35 +320,7 @@
   color: var(--text-muted);
 }
 
-/* ----- rule-proposal: name/assertion/check/rationale + actions ----------- */
-
-.ruleCard {
-  padding: 12px 14px;
-  border: 1px solid var(--border-soft, var(--border));
-  border-radius: var(--radius-md, 8px);
-  background: var(--bg-panel);
-  color: var(--text);
-}
-
-.ruleHead {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
-.ruleHeadIcon {
-  display: inline-flex;
-  color: var(--accent);
-}
-
-.ruleKicker {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
+/* ----- rule-proposal details ------------------------------------------- */
 
 .ruleSummary {
   display: flex;
@@ -446,11 +418,10 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
-  border: 1px solid var(--green-border);
-  border-radius: var(--radius-md, 8px);
-  background: var(--green-bg);
-  color: var(--green);
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
 }
 
 .ruleSavedIcon {

@@ -56,6 +56,7 @@ import {
 } from "./design-files/pluginFolders";
 import type { PluginFolderAgentAction } from "./design-files/pluginFolderActions";
 import { Icon, type IconName } from "./Icon";
+import { UserActionCard } from "./UserActionCard";
 import { NextStepActions, type NextStepActionsVariant } from "./NextStepActions";
 import type { DesignToolboxActionId } from "../runtime/design-toolbox";
 import { copyToClipboard } from "../lib/copy-to-clipboard";
@@ -265,26 +266,26 @@ function SkillPluginCandidateCard({
   }
 
   return (
-    <div className="plugin-action-panel" data-testid={`skill-plugin-candidate-${block.candidateId}`}>
-      <div className="plugin-action-card">
-        <div className="plugin-action-card__body">
-          <div className="plugin-action-card__title">
-            <Icon name="sparkles" size={14} />
-            <span>{block.title}</span>
-          </div>
-          <p className="plugin-action-card__description">
-            {description}
-          </p>
-          <div className="plugin-action-card__actions">
-            <button
-              type="button"
-              className="plugin-action-button plugin-action-button--primary"
-              disabled={disabled}
-              onClick={() => void share("contribute-open-design")}
-            >
-              <Icon name={busy === "contribute" ? "spinner" : "share"} size={13} />
-              <span>{busy === "contribute" ? "Starting..." : t("skillPluginCandidate.contributeToMain")}</span>
-            </button>
+    <div className="plugin-action-candidate" data-testid={`skill-plugin-candidate-${block.candidateId}`}>
+      <UserActionCard
+        dataKind="plugin-suggestion"
+        icon="puzzle"
+        title={block.title}
+        detailsLabel={t("brand.viewDetails")}
+        actions={
+          <button
+            type="button"
+            className="plugin-action-button plugin-action-button--primary"
+            disabled={disabled}
+            onClick={() => void share("contribute-open-design")}
+          >
+            <Icon name={busy === "contribute" ? "spinner" : "share"} size={13} />
+            <span>{busy === "contribute" ? "Starting..." : t("skillPluginCandidate.contributeToMain")}</span>
+          </button>
+        }
+        details={
+          <div className="plugin-action-candidate__details">
+            <p className="plugin-action-card__description">{description}</p>
             <button
               type="button"
               className="plugin-action-button"
@@ -295,13 +296,13 @@ function SkillPluginCandidateCard({
               <span>{busy === "draft" ? "Creating..." : t("skillPluginCandidate.createForMe")}</span>
             </button>
           </div>
-          {notice ? (
-            <div className="plugin-action-card__notice" role="status">
-              <ActionNoticeView notice={notice} />
-            </div>
-          ) : null}
-        </div>
-      </div>
+        }
+        status={notice ? (
+          <span role="status">
+            <ActionNoticeView notice={notice} />
+          </span>
+        ) : null}
+      />
     </div>
   );
 }
@@ -2553,6 +2554,7 @@ function QuestionsBanner({
       type="button"
       className={`questions-banner${answered ? " questions-banner-answered" : ""}`}
       data-testid="questions-banner"
+      data-user-action-card="questions"
       data-answered={answered ? "true" : undefined}
       disabled={answered}
       onClick={answered ? undefined : () => onOpen?.()}

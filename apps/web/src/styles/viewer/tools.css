@@ -274,6 +274,18 @@
   word-break: break-all;
 }
 
+.plugin-action-candidate__details {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+}
+
+.plugin-action-candidate__details p {
+  flex: 1 1 240px;
+  margin: 0;
+}
+
 /* "Files this turn" summary — derived from file operation tool_use events.
    Show up to four files as part of the answer; larger batches stay compact
    until the user opens the disclosure. */

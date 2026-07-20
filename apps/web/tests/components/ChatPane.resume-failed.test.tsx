@@ -101,12 +101,20 @@ describe('ChatPane resume-on-failure', () => {
   it('offers Continue (not from-scratch Retry) on a resumable failed run', () => {
     const onResumeRun = vi.fn();
     const onRetry = vi.fn();
-    renderChat({ onResumeRun, onRetry, activeAgentId: 'claude' });
+    const { container } = renderChat({ onResumeRun, onRetry, activeAgentId: 'claude' });
 
+    expect(container.querySelector('[data-user-action-card="run-recovery"]')).toBeTruthy();
     const continueBtn = screen.getByText('chat.resumeRunCta');
     expect(continueBtn).toBeTruthy();
     // The from-scratch Retry must not be the offered action for a resumable run.
     expect(screen.queryByText('promptTemplates.retry')).toBeNull();
+
+    const detailsToggle = screen.getByRole('button', { name: 'chat.runError.sourceLabel' });
+    const disclosure = container.querySelector('[data-user-action-card="run-recovery"] .accordion-collapsible');
+    expect(detailsToggle.getAttribute('aria-expanded')).toBe('false');
+    expect(disclosure?.classList.contains('open')).toBe(false);
+    fireEvent.click(detailsToggle);
+    expect(disclosure?.classList.contains('open')).toBe(true);
 
     fireEvent.click(continueBtn);
     expect(onResumeRun).toHaveBeenCalledTimes(1);

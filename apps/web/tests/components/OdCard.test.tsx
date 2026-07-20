@@ -140,6 +140,21 @@ describe('OdCard verification scorecard disclosure', () => {
 });
 
 describe('OdCard brand browser assist', () => {
+  it('shows one problem and its primary action before the details are opened', () => {
+    const { container } = renderAssistCard(vi.fn().mockResolvedValue({ ok: true }));
+
+    expect(container.querySelector('[data-user-action-card="browser-assist"]')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Open browser assist' })).toBeTruthy();
+    const toggle = screen.getByRole('button', { name: 'View details' });
+    const disclosure = container.querySelector('[data-od-card="brand-browser-assist"] .accordion-collapsible');
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(disclosure?.classList.contains('open')).toBe(false);
+
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(disclosure?.classList.contains('open')).toBe(true);
+  });
+
   it('marks browser assist done only when the confirm handler succeeds', async () => {
     const onConfirm = vi.fn().mockResolvedValue({ ok: true });
 
@@ -192,6 +207,23 @@ describe('OdCard brand browser assist', () => {
 });
 
 describe('OdCard rule proposal decisions', () => {
+  it('keeps rule rationale and secondary choices in details', () => {
+    const { container } = renderRuleCard();
+
+    expect(container.querySelector('[data-user-action-card="rule-proposal"]')).toBeTruthy();
+    expect(container.textContent).toContain('Proposed rule · Palette only');
+    expect(screen.getByRole('button', { name: 'Keep' })).toBeTruthy();
+    const toggle = screen.getByRole('button', { name: 'View details' });
+    const disclosure = container.querySelector('[data-od-card="rule-proposal"] .accordion-collapsible');
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(disclosure?.classList.contains('open')).toBe(false);
+
+    fireEvent.click(toggle);
+    expect(disclosure?.classList.contains('open')).toBe(true);
+    expect(screen.getByRole('button', { name: 'Edit' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Discard' })).toBeTruthy();
+  });
+
   it('keeps the saved state after the card remounts', async () => {
     vi.stubGlobal('fetch', vi.fn((url: string, init?: RequestInit) => {
       if (url === '/api/memory' && init?.method === 'POST') return Promise.resolve(savedRuleResponse());
@@ -276,6 +308,7 @@ describe('OdCard rule proposal decisions', () => {
     }));
 
     const first = renderRuleCard();
+    fireEvent.click(screen.getByRole('button', { name: 'View details' }));
     fireEvent.click(screen.getByRole('button', { name: 'Discard' }));
 
     expect(screen.queryByText('Palette only')).toBeNull();
@@ -292,6 +325,7 @@ describe('OdCard rule proposal decisions', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const first = renderRuleCard();
+    fireEvent.click(screen.getByRole('button', { name: 'View details' }));
     fireEvent.click(screen.getByRole('button', { name: 'Discard' }));
 
     expect(screen.queryByText('Palette only')).toBeNull();
@@ -309,6 +343,7 @@ describe('OdCard rule proposal decisions', () => {
 
   it('does not reuse discarded decisions across scoped card instances', () => {
     const first = renderRuleCard(RULE_CARD, 'project-a:conversation-a:message-a:card-a');
+    fireEvent.click(screen.getByRole('button', { name: 'View details' }));
     fireEvent.click(screen.getByRole('button', { name: 'Discard' }));
 
     expect(screen.queryByText('Palette only')).toBeNull();

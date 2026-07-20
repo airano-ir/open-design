@@ -59,6 +59,39 @@ function producedFile(name: string): ProjectFile {
 }
 
 describe('AssistantMessage feedback gate', () => {
+  it('renders plugin suggestions as compact user decisions with secondary actions in details', () => {
+    const message = baseMessage({
+      content: '',
+      events: [
+        {
+          kind: 'plugin_candidate',
+          candidateId: 'candidate-1',
+          title: 'Design review helper',
+          description: 'Turn this repository workflow into a reusable helper.',
+        } as ChatMessage['events'][number],
+      ],
+    });
+
+    const { container } = render(
+      <AssistantMessage
+        message={message}
+        streaming={false}
+        projectId="proj-1"
+      />,
+    );
+
+    expect(container.querySelector('[data-user-action-card="plugin-suggestion"]')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Contribute to open-design' })).toBeTruthy();
+    const toggle = screen.getByRole('button', { name: 'View details' });
+    const disclosure = container.querySelector('[data-user-action-card="plugin-suggestion"] .accordion-collapsible');
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(disclosure?.classList.contains('open')).toBe(false);
+
+    fireEvent.click(toggle);
+    expect(disclosure?.classList.contains('open')).toBe(true);
+    expect(screen.getByRole('button', { name: 'Create plugin/template' })).toBeTruthy();
+  });
+
   it('omits the repeated identity header for a consecutive assistant reply', () => {
     const { container } = render(
       <AssistantMessage
