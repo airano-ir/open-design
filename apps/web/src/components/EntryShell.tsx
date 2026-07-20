@@ -1057,9 +1057,9 @@ export function EntryShell({
     return ok;
   }
 
-  // #5517 removes the entry top-bar settings cog: settings + theme toggle both
-  // live in the nav-rail account menu (EntryNavRail onOpenSettings/onToggleTheme),
-  // so the top strip no longer carries a redundant settings entry.
+  // #5517 removes the entry top-bar settings cog: the nav-rail account menu owns
+  // the settings entry (EntryNavRail onOpenSettings), so the top strip no longer
+  // carries a redundant one. Theme switching lives in 设置·通用 alone.
 
 
   if (view === 'onboarding') {
@@ -1135,7 +1135,6 @@ export function EntryShell({
           context={workspaceContext}
           billing={workspaceBilling}
           onOpenSettings={onOpenSettings}
-          onToggleTheme={() => onThemeChange(resolvedDark ? 'light' : 'dark')}
           onInvite={() => changeView('members')}
           onSignInCloud={() => navigate({ kind: 'home', view: 'onboarding' })}
           footerExtra={railFooterActions}

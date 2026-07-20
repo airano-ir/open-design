@@ -6,7 +6,8 @@
 // demo's hardcoded 琼羽 / Refly / 800 placeholders:
 //
 //   • Account section (top) — real `context.displayName` + an account menu
-//     (theme / language / settings / GitHub help / feature request / sign out).
+//     (settings / GitHub help / feature request / socials / sign out — theme and
+//     language live in 设置·通用 only, matching #5517).
 //     Falls back to the brand logo when there is no cloud identity
 //     (context === null).
 //   • Credits chip — real plan tier + balance when A's vela CLI billing summary
@@ -39,7 +40,7 @@ import { PlanWordmark, planBadgeTierForLabel } from './PlanWordmark';
 import { RemixIcon } from './RemixIcon';
 import { InviteDialog } from './InviteDialog';
 import { CreditsPanel } from './CreditsPanel';
-import { LOCALE_LABEL, LOCALES, useI18n } from '../i18n';
+import { useI18n } from '../i18n';
 import {
   notifyTeamProjectsChanged,
   notifyWorkspaceBillingRefresh,
@@ -77,8 +78,6 @@ interface Props {
   billing?: WorkspaceBillingSummary | null;
   /** Open the app settings dialog. */
   onOpenSettings?: () => void;
-  /** Flip the effective theme (light ⇄ dark). Omitted → the theme item is hidden. */
-  onToggleTheme?: () => void;
   /** Open the members / invite slot (B's InviteDialog). */
   onInvite?: () => void;
   /** Start the cloud sign-in / team flow from the local-state callout. */
@@ -187,11 +186,10 @@ export function EntryNavRail({
   context,
   billing,
   onOpenSettings,
-  onToggleTheme,
   footerExtra,
   footerNotice,
 }: Props) {
-  const { t, locale, setLocale } = useI18n();
+  const { t } = useI18n();
   const brandLabel = t('app.brand');
   const communityLabel = t('pluginsHome.title');
   // #5517 renamed the rail's first item from 最近 (Recents) to 首页 (Home) —
@@ -296,7 +294,6 @@ export function EntryNavRail({
     return () => document.removeEventListener('pointerover', onDocPointerOver, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountOpen]);
-  const [languageOpen, setLanguageOpen] = useState(false);
   const [teamOpen, setTeamOpen] = useState(false);
   const [workspaceItems, setWorkspaceItems] = useState<WorkspaceDirectoryItem[]>([]);
   const [workspaceDirectoryLoading, setWorkspaceDirectoryLoading] = useState(false);
@@ -310,7 +307,6 @@ export function EntryNavRail({
   // client opens that billing surface, then refreshes billing + context when
   // focus returns so direct web upgrades sync plan, credits, seats and gates.
   const canUpgrade = Boolean(billingUpgradeUrl && permissions?.canManageBilling);
-  const currentLanguageLabel = LOCALE_LABEL[locale];
   const currentWorkspaceItem = context
     ? workspaceItems.find((item) => item.workspaceId === context.workspaceId) ?? null
     : null;
@@ -401,10 +397,6 @@ export function EntryNavRail({
       node.setAttribute('inert', '');
     }
   }, [open]);
-
-  useEffect(() => {
-    if (!accountOpen) setLanguageOpen(false);
-  }, [accountOpen]);
 
   useEffect(() => {
     if (!teamOpen) return;
@@ -532,73 +524,11 @@ export function EntryNavRail({
                   >
                     <Icon name="settings" size={15} /> {t('entry.accountSettings')}
                   </button>
-                  {onToggleTheme ? (
-                    <button
-                      type="button"
-                      className="entry-nav-rail__menu-item"
-                      role="menuitem"
-                      onClick={() => {
-                        setAccountOpen(false);
-                        onToggleTheme();
-                      }}
-                    >
-                      <Icon name="layout" size={15} /> {t('entry.accountToggleTheme')}
-                      <span className="entry-nav-rail__menu-chevron"><Icon name="chevron-right" size={13} /></span>
-                    </button>
-                  ) : null}
-                  <div
-                    className="entry-nav-rail__language-wrap"
-                    onMouseEnter={() => setLanguageOpen(true)}
-                    onMouseLeave={() => setLanguageOpen(false)}
-                  >
-                    <button
-                      type="button"
-                      className={`entry-nav-rail__menu-item${languageOpen ? ' is-open' : ''}`}
-                      role="menuitem"
-                      aria-haspopup="menu"
-                      aria-expanded={languageOpen}
-                      onClick={() => setLanguageOpen((value) => !value)}
-                      onFocus={() => setLanguageOpen(true)}
-                    >
-                      <Icon name="languages" size={15} />
-                      {t('entry.accountSwitchLanguage')}
-                      <span className="entry-nav-rail__menu-meta">{currentLanguageLabel}</span>
-                      <span className="entry-nav-rail__menu-chevron">
-                        <Icon name="chevron-right" size={13} />
-                      </span>
-                    </button>
-                    {languageOpen ? (
-                      <div
-                        className="entry-nav-rail__language-menu"
-                        role="menu"
-                        aria-label={t('entry.accountSwitchLanguage')}
-                      >
-                        {LOCALES.map((code) => {
-                          const active = locale === code;
-                          return (
-                            <button
-                              key={code}
-                              type="button"
-                              className={`entry-nav-rail__language-option${active ? ' is-active' : ''}`}
-                              role="menuitemradio"
-                              aria-checked={active}
-                              onClick={() => {
-                                setLocale(code);
-                                setLanguageOpen(false);
-                                setAccountOpen(false);
-                              }}
-                            >
-                              <span>{LOCALE_LABEL[code]}</span>
-                              <span className="entry-nav-rail__language-code">{code}</span>
-                              {active ? <Icon name="check" size={13} /> : null}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    ) : null}
-                  </div>
-                  
-                  <div className="entry-nav-rail__menu-divider" />
+                  {/* #5517's account menu goes 设置 → GitHub 帮助 → 功能建议 → 社交行,
+                      with no theme row, no language submenu, and no divider in
+                      between. Both controls still have a home in 设置·通用 (theme
+                      segmented control + language picker), so dropping the
+                      duplicates here costs no capability. */}
                   <a
                     className="entry-nav-rail__menu-item"
                     role="menuitem"
@@ -776,14 +706,21 @@ export function EntryNavRail({
                         type="button"
                         className={`entry-nav-rail__menu-item${active ? ' is-current' : ''}`}
                         role="menuitem"
-                        disabled={active || workspaceSwitchingId === item.workspaceId}
+                        aria-current={active ? 'true' : undefined}
+                        // Only the in-flight switch disables a row. Disabling the
+                        // CURRENT one made the UA grey it out, so the selected
+                        // workspace read as the inactive one and vice versa;
+                        // `.is-current` (bold + accent ✓) is the selected signal.
+                        disabled={workspaceSwitchingId === item.workspaceId}
                         onClick={() => {
                           void switchWorkspace(item.workspaceId);
                         }}
                       >
                         <span className="entry-nav-rail__team-avatar" aria-hidden>{initial}</span>
+                        {/* #5517's switcher rows are avatar + full name + ✓ only.
+                            The raw role word ate the name's width and truncated
+                            it; the role is already on 设置·工作区. */}
                         <span className="entry-nav-rail__workspace-menu-name">{item.workspaceName}</span>
-                        <span className="entry-nav-rail__workspace-menu-role">{item.role}</span>
                         {active ? <Icon name="check" size={14} /> : null}
                       </button>
                     );
@@ -807,17 +744,23 @@ export function EntryNavRail({
                       <Icon name="share" size={15} /> {t('workspaceSwitcher.invite')}
                     </button>
                   ) : null}
-                  <button
-                    type="button"
-                    className="entry-nav-rail__menu-item"
-                    role="menuitem"
-                    onClick={() => {
-                      // TODO(workspace): create-team is a B vela/web flow.
-                      setTeamOpen(false);
-                    }}
-                  >
-                    <Icon name="plus" size={15} /> {t('workspaceSwitcher.createTeam')}
-                  </button>
+                  {/* Creating a workspace is a B console flow (its sidebar owns the
+                      create dialog; there is no route or query param that opens it
+                      directly), so this entry links OUT instead of doing local work.
+                      With no console URL there is nowhere to send the user — render
+                      nothing rather than a control that silently does nothing. */}
+                  {workspaceSettingsUrl ? (
+                    <a
+                      className="entry-nav-rail__menu-item"
+                      role="menuitem"
+                      href={teamConsoleUrl(workspaceSettingsUrl, 'dashboard')}
+                      {...externalLinkProps}
+                      data-testid="entry-nav-create-team"
+                      onClick={() => setTeamOpen(false)}
+                    >
+                      <Icon name="plus" size={15} /> {t('workspaceSwitcher.createTeam')}
+                    </a>
+                  ) : null}
                 </div>
               </>
             ) : null}
