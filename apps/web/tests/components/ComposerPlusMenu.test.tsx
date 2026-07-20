@@ -79,7 +79,7 @@ describe('ComposerPlusMenu pick-row caret protection', () => {
     fireEvent.click(screen.getByRole('menuitem', { name: /Connectors/i }));
     expectPickRowPreventsMousedown(/Notion/i);
 
-    fireEvent.click(screen.getByRole('menuitem', { name: /Plugins/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /Extensions/i }));
     expectPickRowPreventsMousedown(/Deck Maker/i);
 
     fireEvent.click(screen.getByRole('menuitem', { name: /^MCP/i }));
@@ -96,13 +96,13 @@ describe('ComposerPlusMenu pick-row caret protection', () => {
         ],
       });
       fireEvent.click(screen.getByTestId('plus-trigger'));
-      fireEvent.click(screen.getByRole('menuitem', { name: /Plugins/i }));
+      fireEvent.click(screen.getByRole('menuitem', { name: /Extensions/i }));
 
       // The user clicks into the search box (focus enters the flyout) and types,
       // pruning the list. In a real browser the shrinking list reflows rows out
       // from under the stationary cursor, so Chromium synthesizes a `mouseleave`
       // on the flyout even though the pointer never moved.
-      const search = screen.getByPlaceholderText('Plugins') as HTMLInputElement;
+      const search = screen.getByPlaceholderText('Extensions') as HTMLInputElement;
       search.focus();
       fireEvent.change(search, { target: { value: 'deck' } });
       const flyout = document.querySelector('.plus-menu__flyout') as HTMLElement;
@@ -115,7 +115,7 @@ describe('ComposerPlusMenu pick-row caret protection', () => {
         vi.advanceTimersByTime(400);
       });
 
-      expect(screen.queryByPlaceholderText('Plugins')).not.toBeNull();
+      expect(screen.queryByPlaceholderText('Extensions')).not.toBeNull();
       expect(screen.getByRole('menuitem', { name: /Deck Maker/i })).toBeTruthy();
     } finally {
       vi.useRealTimers();
@@ -126,8 +126,8 @@ describe('ComposerPlusMenu pick-row caret protection', () => {
     renderMenu();
     fireEvent.click(screen.getByTestId('plus-trigger'));
 
-    fireEvent.click(screen.getByRole('menuitem', { name: /Plugins/i }));
-    const pluginSearch = screen.getByPlaceholderText('Plugins') as HTMLInputElement;
+    fireEvent.click(screen.getByRole('menuitem', { name: /Extensions/i }));
+    const pluginSearch = screen.getByPlaceholderText('Extensions') as HTMLInputElement;
     fireEvent.change(pluginSearch, { target: { value: 'deck' } });
     expect(pluginSearch.value).toBe('deck');
 
@@ -165,12 +165,12 @@ describe('ComposerPlusMenu pick-row caret protection', () => {
       const menu = screen.getByRole('menu');
       expect(menu.parentElement).toBe(document.body);
       expect(menu.style.left).toBe('12px');
-      expect(menu.style.width).toBe('208px');
+      expect(menu.style.width).toBe('190px');
       expect(menu.style.maxHeight).toBe('356px');
       expect(menu.style.top).toBe('auto');
       expect(menu.style.bottom).toBe('52px');
       expect(screen.getByRole('menuitem', { name: /Connectors/i })).toBeTruthy();
-      expect(screen.getByRole('menuitem', { name: /Plugins/i })).toBeTruthy();
+      expect(screen.getByRole('menuitem', { name: /Extensions/i })).toBeTruthy();
       expect(screen.getByRole('menuitem', { name: /^MCP/i })).toBeTruthy();
     } finally {
       Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalInnerWidth });
@@ -205,7 +205,7 @@ describe('ComposerPlusMenu pick-row caret protection', () => {
       const menu = screen.getByRole('menu');
       expect(menu.style.top).toBe('360px');
       expect(menu.style.bottom).toBe('auto');
-      expect(menu.style.width).toBe('208px');
+      expect(menu.style.width).toBe('190px');
     } finally {
       Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalInnerWidth });
       Object.defineProperty(window, 'innerHeight', { configurable: true, value: originalInnerHeight });
@@ -238,7 +238,7 @@ describe('ComposerPlusMenu pick-row caret protection', () => {
       const menu = screen.getByRole('menu');
       expect(menu.className).toContain('plus-menu__popup--flyout-left');
 
-      fireEvent.click(screen.getByRole('menuitem', { name: /Plugins/i }));
+      fireEvent.click(screen.getByRole('menuitem', { name: /Extensions/i }));
       expect(screen.getByRole('menuitem', { name: /Deck Maker/i })).toBeTruthy();
     } finally {
       Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalInnerWidth });
@@ -272,7 +272,7 @@ describe('ComposerPlusMenu pick-row caret protection', () => {
       const menu = screen.getByRole('menu');
       expect(menu.className).toContain('plus-menu__popup--flyout-contained');
 
-      fireEvent.click(screen.getByRole('menuitem', { name: /Plugins/i }));
+      fireEvent.click(screen.getByRole('menuitem', { name: /Extensions/i }));
       expect(screen.getByRole('menuitem', { name: /Deck Maker/i })).toBeTruthy();
     } finally {
       Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalInnerWidth });
@@ -306,7 +306,7 @@ describe('ComposerPlusMenu pick-row caret protection', () => {
       const menu = screen.getByRole('menu');
       expect(menu.className).toContain('plus-menu__popup--flyout-contained');
 
-      fireEvent.click(screen.getByRole('menuitem', { name: /Plugins/i }));
+      fireEvent.click(screen.getByRole('menuitem', { name: /Extensions/i }));
       expect(screen.getByRole('menuitem', { name: /Deck Maker/i })).toBeTruthy();
     } finally {
       Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalInnerWidth });
@@ -337,7 +337,7 @@ describe('ComposerPlusMenu pick-row caret protection', () => {
         }) as DOMRect;
 
       fireEvent.click(trigger);
-      const pluginParent = screen.getByRole('menuitem', { name: /Plugins/i });
+      const pluginParent = screen.getByRole('menuitem', { name: /Extensions/i });
       const pluginRow = pluginParent.closest('.plus-menu__submenu-row') as HTMLDivElement;
       pluginRow.getBoundingClientRect = () =>
         ({
@@ -419,25 +419,30 @@ describe('ComposerPlusMenu pick-row caret protection', () => {
     }
   });
 
-  it('keeps low MCP flyouts fixed and bounded while the main popup scrolls', () => {
+  // Acceptance #50, part 2: hovering a submenu row must open its flyout right
+  // next to that row. Writing viewport coordinates into the flyout's inline
+  // style is the bug — the stylesheet positions it `position: absolute;
+  // left: 100%` inside the row, so a viewport-space `left` is re-anchored to
+  // the row's own left edge and throws the panel across the screen.
+  it('leaves submenu flyout placement to the stylesheet instead of viewport-space inline coords', () => {
     const originalInnerWidth = window.innerWidth;
     const originalInnerHeight = window.innerHeight;
-    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1000 });
-    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 360 });
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1440 });
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 900 });
 
     try {
       renderMenu({ placementPreference: 'down', onAddMcp: vi.fn() });
       const trigger = screen.getByTestId('plus-trigger') as HTMLButtonElement;
       trigger.getBoundingClientRect = () =>
         ({
-          x: 240,
-          y: 100,
-          top: 100,
-          left: 240,
-          right: 268,
-          bottom: 128,
-          width: 28,
-          height: 28,
+          x: 369,
+          y: 548,
+          top: 548,
+          left: 369,
+          right: 405,
+          bottom: 584,
+          width: 36,
+          height: 36,
           toJSON: () => ({}),
         }) as DOMRect;
 
@@ -447,13 +452,13 @@ describe('ComposerPlusMenu pick-row caret protection', () => {
       const mcpRow = mcpParent.closest('.plus-menu__submenu-row') as HTMLDivElement;
       mcpRow.getBoundingClientRect = () =>
         ({
-          x: 244,
-          y: 300,
-          top: 300,
-          left: 244,
-          right: 444,
-          bottom: 328,
-          width: 200,
+          x: 375,
+          y: 800,
+          top: 800,
+          left: 375,
+          right: 571,
+          bottom: 828,
+          width: 196,
           height: 28,
           toJSON: () => ({}),
         }) as DOMRect;
@@ -461,21 +466,76 @@ describe('ComposerPlusMenu pick-row caret protection', () => {
       fireEvent.click(mcpParent);
 
       const menu = screen.getAllByRole('menu')[0];
-      expect(menu).toBeDefined();
-      expect(menu?.style.maxHeight).toBe('212px');
-      expect(menu?.className).toContain('plus-menu__popup--flyout-y-up');
+      expect(menu?.className).toContain('plus-menu__popup--flyout-right');
 
       const flyout = document.querySelector<HTMLElement>('.plus-menu__flyout');
       expect(flyout).not.toBeNull();
-      expect(flyout?.style.width).toBe('260px');
-      expect(flyout?.style.maxHeight).toBe('320px');
-      expect(flyout?.style.top).toBe('auto');
-      expect(flyout?.style.bottom).toBe('37px');
+      // No inline geometry at all: side, offset and width all come from
+      // plus-menu.css, which anchors the flyout to its parent row.
+      expect(flyout?.style.left).toBe('');
+      expect(flyout?.style.right).toBe('');
+      expect(flyout?.style.top).toBe('');
+      expect(flyout?.style.bottom).toBe('');
+      expect(flyout?.style.width).toBe('');
 
       const css = readFileSync(join(process.cwd(), 'src/styles/home/plus-menu.css'), 'utf8');
-      expect(css).toContain('overflow-y: auto;');
-      expect(css).toContain('position: fixed;');
+      expect(css).toContain('.plus-menu__submenu-row {\n  position: relative;\n}');
+      expect(css).toContain('.plus-menu__flyout {\n  position: absolute;\n  left: 100%;');
     } finally {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalInnerWidth });
+      Object.defineProperty(window, 'innerHeight', { configurable: true, value: originalInnerHeight });
+    }
+  });
+
+  // Acceptance #50, part 1: the popup uses `overflow: visible` so its side
+  // flyouts can escape, which means a stack taller than the room under the
+  // trigger spills off the viewport with no way to scroll it back. The
+  // surface's `down` preference must therefore yield to the measured height.
+  it('flips a down-preferred menu upward when the measured stack cannot fit below', () => {
+    const originalInnerWidth = window.innerWidth;
+    const originalInnerHeight = window.innerHeight;
+    const scrollHeightDescriptor = Object.getOwnPropertyDescriptor(
+      Element.prototype,
+      'scrollHeight',
+    );
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1440 });
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 900 });
+    // jsdom never lays out, so stand in for a real 9-row stack.
+    Object.defineProperty(Element.prototype, 'scrollHeight', {
+      configurable: true,
+      get() {
+        return (this as Element).classList.contains('plus-menu__popup') ? 418 : 0;
+      },
+    });
+
+    try {
+      renderMenu({ placementPreference: 'down' });
+      const trigger = screen.getByTestId('plus-trigger') as HTMLButtonElement;
+      // The real 1440x900 home composer: 296px below, 528px above.
+      trigger.getBoundingClientRect = () =>
+        ({
+          x: 369,
+          y: 548,
+          top: 548,
+          left: 369,
+          right: 405,
+          bottom: 584,
+          width: 36,
+          height: 36,
+          toJSON: () => ({}),
+        }) as DOMRect;
+
+      fireEvent.click(trigger);
+
+      const menu = screen.getAllByRole('menu')[0] as HTMLElement;
+      expect(menu.style.top).toBe('auto');
+      expect(menu.style.bottom).toBe('360px');
+      // 528px of headroom — the whole stack is reachable without scrolling.
+      expect(menu.style.maxHeight).toBe('528px');
+    } finally {
+      if (scrollHeightDescriptor) {
+        Object.defineProperty(Element.prototype, 'scrollHeight', scrollHeightDescriptor);
+      }
       Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalInnerWidth });
       Object.defineProperty(window, 'innerHeight', { configurable: true, value: originalInnerHeight });
     }
@@ -533,34 +593,16 @@ describe('ComposerPlusMenu pick-row caret protection', () => {
 // calls its handler (a refactor dropping the onClick, a mis-wired prop) turns
 // this red.
 describe('ComposerPlusMenu module wiring', () => {
-  const SKILL = {
-    id: 's1',
-    name: 'Wireframe Kit',
-    description: 'Skill fixture.',
-    triggers: [],
-    mode: 'prototype',
-    category: null,
-    source: 'built-in',
-    previewType: 'html',
-    designSystemRequired: false,
-    defaultFor: [],
-    upstream: null,
-    hasBody: true,
-    examplePrompt: '',
-    aggregatesExamples: false,
-  } as never;
-
   function openMenu() {
     fireEvent.click(screen.getByTestId('plus-trigger'));
   }
 
-  it('invokes each Files / Code / Designs row handler', () => {
+  it('invokes each direct row handler', () => {
     const { props } = renderMenu({
       onReferenceProject: vi.fn(),
       onLinkLocalCode: vi.fn(),
       onImportFigma: vi.fn(),
       onShowFigmaHelp: vi.fn(),
-      onOpenDesignSystems: vi.fn(),
     });
 
     // Each row closes the menu, so re-open before clicking the next one.
@@ -583,9 +625,21 @@ describe('ComposerPlusMenu module wiring', () => {
 
     clickRow('composer-plus-figma-help');
     expect(props.onShowFigmaHelp).toHaveBeenCalledTimes(1);
+  });
 
-    clickRow('composer-plus-design-system');
-    expect(props.onOpenDesignSystems).toHaveBeenCalledTimes(1);
+  // Skills and design systems are deliberately NOT "+" menu rows: skills are
+  // picked through the composer's `@` mention popover and the design system
+  // through the picker already sitting in the same composer footer. Both used
+  // to be duplicated here, which pushed the stack past the viewport (#50).
+  it('does not duplicate the skills or design-system surfaces as rows', () => {
+    renderMenu({
+      skills: [{ id: 's1', name: 'Wireframe Kit', description: 'Skill fixture.' } as never],
+      onPickSkill: vi.fn(),
+      onOpenDesignSystems: vi.fn(),
+    });
+    openMenu();
+    expect(screen.queryByTestId('composer-plus-skills')).toBeNull();
+    expect(screen.queryByTestId('composer-plus-design-system')).toBeNull();
   });
 
   it('invokes every submenu pick and "Add …" row handler', () => {
@@ -593,8 +647,6 @@ describe('ComposerPlusMenu module wiring', () => {
       onAddConnector: vi.fn(),
       onAddPlugin: vi.fn(),
       onAddMcp: vi.fn(),
-      skills: [SKILL],
-      onPickSkill: vi.fn(),
     });
 
     // A submenu flyout opens on click and stays open until a pick/add row
@@ -611,16 +663,12 @@ describe('ComposerPlusMenu module wiring', () => {
     fireEvent.click(screen.getByRole('menuitem', { name: 'Add connectors' }));
     expect(props.onAddConnector).toHaveBeenCalledTimes(1);
 
-    openSubmenu(/Plugins/i);
+    openSubmenu(/Extensions/i);
     fireEvent.click(screen.getByRole('menuitem', { name: /Deck Maker/i }));
     expect(props.onPickPlugin).toHaveBeenCalledWith(PLUGIN);
-    openSubmenu(/Plugins/i);
+    openSubmenu(/Extensions/i);
     fireEvent.click(screen.getByRole('menuitem', { name: 'Add plugin' }));
     expect(props.onAddPlugin).toHaveBeenCalledTimes(1);
-
-    openSubmenu(/^Skills/i);
-    fireEvent.click(screen.getByRole('menuitem', { name: /Wireframe Kit/i }));
-    expect(props.onPickSkill).toHaveBeenCalledWith(SKILL);
 
     openSubmenu(/^MCP/i);
     fireEvent.click(screen.getByRole('menuitem', { name: /Linear/i }));
