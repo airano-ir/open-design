@@ -79,6 +79,42 @@ function projects(count: number): Project[] {
 }
 
 describe('RecentProjectsStrip', () => {
+  // The blank-state CTA disappears the moment the user owns one project, and
+  // #5517's alignment removed both the rail "+" and the home template row — so
+  // without a header action the New Project modal has no reachable entry at
+  // all. Pin it: a list page must always be able to start a project.
+  it('offers a create action on the list pages', () => {
+    const onNewProject = vi.fn();
+    render(
+      <RecentProjectsStrip
+        projects={projects(3)}
+        heading="Drafts"
+        limit={1000}
+        onOpen={() => {}}
+        onViewAll={() => {}}
+        onNewProject={onNewProject}
+      />,
+    );
+
+    screen.getByTestId('recent-projects-new').click();
+    expect(onNewProject).toHaveBeenCalled();
+  });
+
+  // Home has no header action — there the composer IS the create surface.
+  it('omits the create action when no handler is supplied', () => {
+    render(
+      <RecentProjectsStrip
+        projects={projects(3)}
+        heading="Drafts"
+        limit={1000}
+        onOpen={() => {}}
+        onViewAll={() => {}}
+      />,
+    );
+
+    expect(screen.queryByTestId('recent-projects-new')).toBeNull();
+  });
+
   it('shows seven projects when the row has room for a seventh card', async () => {
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function getRect(this: HTMLElement) {
       return {
@@ -264,44 +300,34 @@ describe('RecentProjectsStrip', () => {
     });
   });
 
-  it('does not run HTML or deck previews inside recent project cards', async () => {
-    const fetchMock = vi.fn();
+  // This used to assert the opposite — that the grid never renders a preview,
+  // because doing so fetched every project's raw content on mount. #5517 shows
+  // real content in these cards and the placeholder grid was one of the visible
+  // gaps against it, so the previews are back, but only on terms that keep the
+  // old test's actual concern satisfied: the iframes are lazy, and deck covers
+  // resolve through a module-level cache so N cards on one src cost one fetch.
+  it('renders HTML previews lazily rather than eagerly fetching every card', async () => {
+    const fetchMock = vi.fn(async () => new Response('<html><body>deck</body></html>', { status: 200 }));
     vi.stubGlobal('fetch', fetchMock);
 
     const { container } = render(
       <RecentProjectsStrip
         projects={[
-          project({
-            id: 'project-deck',
-            name: 'Simple Deck',
-            updatedAt: 4,
-            metadata: { kind: 'deck' },
-          }),
-          project({
-            id: 'project-html',
-            name: 'Web Prototype',
-            updatedAt: 3,
-          }),
+          project({ id: 'project-html', name: 'Web Prototype', updatedAt: 3 }),
         ]}
         onOpen={() => {}}
         onViewAll={() => {}}
       />,
     );
 
-    const deckCard = container.querySelector('[data-project-id="project-deck"]');
     const htmlCard = container.querySelector('[data-project-id="project-html"]');
-
     await waitFor(() => {
-      expect(deckCard?.querySelector('iframe')).toBeNull();
-      expect(htmlCard?.querySelector('iframe')).toBeNull();
-      expect(deckCard?.querySelector('.recent-projects__card-glyph')).toBeTruthy();
-      expect(htmlCard?.querySelector('.recent-projects__card-glyph')).toBeTruthy();
+      expect(htmlCard?.querySelector('iframe')).toBeTruthy();
     });
-    // The card grid must never spin up a live HTML/deck preview — that would
-    // fetch the project's raw content under /api/projects/. The workspace
-    // nav/collab hooks (team members + workspace context) still fetch on mount,
-    // so guard the real intent (no preview fetch) rather than a blanket "never
-    // fetched".
+    // Lazy is the whole safety margin: an off-screen card costs nothing until
+    // the browser decides to load it.
+    expect(htmlCard?.querySelector('iframe')?.getAttribute('loading')).toBe('lazy');
+    // And the card itself must not pull project content imperatively.
     const previewFetches = fetchMock.mock.calls.filter(([input]) => {
       const url =
         typeof input === 'string'
