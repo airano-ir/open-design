@@ -2,10 +2,12 @@
  * "Files this turn" disclosure pinned to the top of an assistant message.
  *
  * The first four files stay visible so artifacts are presented as results,
- * not hidden inside execution history. A single artifact is rendered as one
- * direct row without a redundant group header; larger batches collapse only
- * the rows after the fourth. Openable artifacts use the whole row as the
- * target instead of repeating an Open button on every line.
+ * not hidden inside execution history. Every result set keeps the same framed
+ * surface so even a single artifact reads as a primary deliverable. A single
+ * artifact is still rendered as one direct row without a redundant group
+ * header; larger batches collapse only the rows after the fourth. Openable
+ * artifacts use the whole row as the target instead of repeating an Open
+ * button on every line.
  *
  * The component is read-only over `events` — derivation lives in
  * `runtime/file-ops.ts` so the same logic is reachable from tests and
@@ -24,8 +26,6 @@ import { Icon, type IconName } from './Icon';
 
 interface Props {
   entries: FileOpEntry[];
-  /** True while the parent run is still streaming. Drives live-pulse styling. */
-  streaming: boolean;
   /** Names that exist in the project folder. When set, the open button
    *  only shows for entries whose basename is in the set. Pass undefined
    *  to opt out of the existence check (button always shown). */
@@ -49,7 +49,6 @@ const COLLAPSE_AFTER_ENTRY_COUNT = 4;
 
 export function FileOpsSummary({
   entries,
-  streaming,
   projectFileNames,
   onRequestOpenFile,
 }: Props) {
@@ -99,7 +98,7 @@ export function FileOpsSummary({
     if (!onlyEntry) return null;
     return (
       <div
-        className={`file-ops file-ops--single${streaming ? ' is-streaming' : ''}`}
+        className="file-ops"
         data-testid="file-ops-summary"
       >
         <ul className="file-ops-list file-ops-list--single" role="list">
@@ -115,7 +114,7 @@ export function FileOpsSummary({
 
   return (
     <div
-      className={`file-ops${streaming ? ' is-streaming' : ''}`}
+      className="file-ops"
       data-testid="file-ops-summary"
     >
       <div className="file-ops-head">

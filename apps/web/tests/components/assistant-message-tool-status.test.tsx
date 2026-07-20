@@ -42,7 +42,7 @@ describe('AssistantMessage tool status', () => {
     expect(activity.textContent).toContain('Done');
     expect(activity.getAttribute('data-run-state')).toBe('completed');
     expect(activity.querySelector('.task-activity-complete-icon')).toBeNull();
-    expect(container.querySelector('[data-tool-category="terminal"]')).not.toBeNull();
+    expect(container.querySelector('[data-tool-category="run"]')).not.toBeNull();
     expect(container.querySelector('.op-status-error')).toBeNull();
   });
 
@@ -68,7 +68,7 @@ describe('AssistantMessage tool status', () => {
     );
 
     expect(screen.getByTestId('task-activity-toggle').textContent).toContain('Done');
-    expect(container.querySelector('[data-tool-category="terminal"]')).not.toBeNull();
+    expect(container.querySelector('[data-tool-category="run"]')).not.toBeNull();
     expect(container.querySelector('.op-status-error')).toBeNull();
   });
 
@@ -98,7 +98,7 @@ describe('AssistantMessage tool status', () => {
 
     expect(container.querySelector('.action-card-toggle.running')).toBeNull();
     expect(screen.getByTestId('task-activity-toggle').textContent).toContain('Done');
-    expect(container.querySelectorAll('[data-tool-category="terminal"]')).toHaveLength(2);
+    expect(container.querySelectorAll('[data-tool-category="run"]')).toHaveLength(2);
   });
 
   it('does not group duplicate tool_use records with the same id', () => {
@@ -184,9 +184,9 @@ describe('AssistantMessage tool status', () => {
     fireEvent.click(activity);
     expect(activity.getAttribute('aria-expanded')).toBe('true');
     expect(container.querySelectorAll('.op-card')).toHaveLength(3);
-    expect(container.querySelector('[data-tool-category="eye"]')).not.toBeNull();
-    expect(container.querySelector('[data-tool-category="file-code"]')).not.toBeNull();
-    expect(container.querySelector('[data-tool-category="terminal"]')).not.toBeNull();
+    expect(container.querySelector('[data-tool-category="read"]')).not.toBeNull();
+    expect(container.querySelector('[data-tool-category="write"]')).not.toBeNull();
+    expect(container.querySelector('[data-tool-category="run"]')).not.toBeNull();
   });
 
   it('does not show Done when a failed run is missing a tool result', () => {
@@ -214,7 +214,7 @@ describe('AssistantMessage tool status', () => {
     expect(activity.textContent).toContain('error');
     expect(activity.getAttribute('data-run-state')).toBe('error');
     expect(activity.querySelector('.task-activity-status')).toBeNull();
-    expect(container.querySelector('[data-tool-category="terminal"][data-tool-state="error"]')).not.toBeNull();
+    expect(container.querySelector('[data-tool-category="run"][data-tool-state="error"]')).not.toBeNull();
     expect(container.querySelector('.op-status-done')).toBeNull();
   });
 
@@ -240,7 +240,7 @@ describe('AssistantMessage tool status', () => {
     );
 
     expect(screen.getByTestId('task-activity-toggle').textContent).toContain('error');
-    expect(container.querySelector('[data-tool-category="terminal"][data-tool-state="error"]')).not.toBeNull();
+    expect(container.querySelector('[data-tool-category="run"][data-tool-state="error"]')).not.toBeNull();
     expect(container.querySelector('.op-status-done')).toBeNull();
   });
 
@@ -272,7 +272,7 @@ describe('AssistantMessage tool status', () => {
     expect(activity.getAttribute('data-run-state')).toBe('running');
     expect(screen.queryByTestId('task-activity-toggle')).toBeNull();
     expect(activity.querySelector('.task-activity-complete-icon')).toBeNull();
-    expect(container.querySelector('[data-tool-category="terminal"][data-tool-state="running"]')).not.toBeNull();
+    expect(container.querySelector('[data-tool-category="run"][data-tool-state="running"]')).not.toBeNull();
     expect(container.querySelector('.op-status-done')).toBeNull();
   });
 
@@ -366,7 +366,7 @@ describe('AssistantMessage tool status', () => {
     fireEvent.click(activity);
     const activityCard = activity.closest('.task-activity');
     expect(activityCard?.querySelector('.thinking-block')).not.toBeNull();
-    expect(activityCard?.querySelector('[data-tool-category="eye"]')).not.toBeNull();
+    expect(activityCard?.querySelector('[data-tool-category="read"]')).not.toBeNull();
     expect(screen.queryByTestId('task-activity-terminal')).toBeNull();
   });
 

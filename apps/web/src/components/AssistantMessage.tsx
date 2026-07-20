@@ -945,7 +945,6 @@ function AssistantMessageImpl({
         {turnArtifactOps.length > 0 ? (
           <FileOpsSummary
             entries={turnArtifactOps}
-            streaming={streaming}
             projectFileNames={projectFileNames}
             onRequestOpenFile={onRequestOpenFile}
           />

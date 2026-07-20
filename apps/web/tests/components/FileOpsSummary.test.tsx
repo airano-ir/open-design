@@ -22,28 +22,28 @@ describe('FileOpsSummary', () => {
 
   it('renders nothing when there are no entries', () => {
     const { container } = render(
-      <FileOpsSummary entries={[]} streaming={false} />,
+      <FileOpsSummary entries={[]} />,
     );
     expect(container.firstChild).toBeNull();
   });
 
-  it('renders one produced file as a direct row without a redundant title card', () => {
-    render(
+  it('renders one produced file as a framed direct row without a redundant title card', () => {
+    const { container } = render(
       <FileOpsSummary
         entries={[
           entry({ path: 'result.html', ops: ['write'], opCounts: { read: 0, write: 1, edit: 0, delete: 0 } }),
         ]}
-        streaming={false}
       />,
     );
 
     expect(screen.getByTestId('file-ops-row-result.html')).toBeTruthy();
+    expect(container.querySelector('.file-ops')).not.toHaveClass('file-ops--single');
     expect(screen.queryByTestId('file-ops-toggle')).toBeNull();
     expect(screen.queryByText('Files from this turn')).toBeNull();
   });
 
-  it('shows up to four files directly, including while the run is streaming', () => {
-    render(
+  it('shows up to four files directly without inheriting the run state', () => {
+    const { container } = render(
       <FileOpsSummary
         entries={[
           entry({ path: 'a.ts', ops: ['read', 'edit'], opCounts: { read: 2, write: 0, edit: 1, delete: 0 }, total: 3 }),
@@ -51,7 +51,6 @@ describe('FileOpsSummary', () => {
           entry({ path: 'c.ts', ops: ['edit'], opCounts: { read: 0, write: 0, edit: 3, delete: 0 }, total: 3 }),
           entry({ path: 'd.ts', ops: ['write'], opCounts: { read: 0, write: 1, edit: 0, delete: 0 } }),
         ]}
-        streaming
       />,
     );
 
@@ -61,6 +60,7 @@ describe('FileOpsSummary', () => {
     expect(screen.queryByText(/Read/)).toBeNull();
     expect(screen.getByTestId('file-ops-row-a.ts')).toBeTruthy();
     expect(screen.getByTestId('file-ops-row-b.ts')).toBeTruthy();
+    expect(container.querySelector('.file-ops')).not.toHaveClass('is-streaming');
     const toggle = screen.getByTestId('file-ops-toggle');
     expect(toggle.getAttribute('aria-expanded')).toBeNull();
   });
@@ -72,7 +72,6 @@ describe('FileOpsSummary', () => {
           entry({ path: 'a.ts', ops: ['read', 'edit'], opCounts: { read: 1, write: 0, edit: 1, delete: 0 }, total: 2 }),
           entry({ path: 'b.ts', ops: ['write'], opCounts: { read: 0, write: 1, edit: 0, delete: 0 } }),
         ]}
-        streaming={false}
       />,
     );
 
@@ -80,11 +79,10 @@ describe('FileOpsSummary', () => {
     expect(screen.getByTestId('file-ops-row-b.ts')).toBeTruthy();
   });
 
-  it('keeps a small result set visible when a streaming turn finishes', () => {
+  it('keeps a small result set visible across rerenders', () => {
     const { rerender } = render(
       <FileOpsSummary
         entries={[entry({ path: 'a.ts' })]}
-        streaming
       />,
     );
     expect(screen.getByTestId('file-ops-row-a.ts')).toBeTruthy();
@@ -92,7 +90,6 @@ describe('FileOpsSummary', () => {
     rerender(
       <FileOpsSummary
         entries={[entry({ path: 'a.ts' })]}
-        streaming={false}
       />,
     );
     expect(screen.getByTestId('file-ops-row-a.ts')).toBeTruthy();
@@ -108,7 +105,6 @@ describe('FileOpsSummary', () => {
           entry({ path: 'd.ts' }),
           entry({ path: 'e.ts' }),
         ]}
-        streaming={false}
       />,
     );
 
@@ -132,7 +128,6 @@ describe('FileOpsSummary', () => {
           entry({ path: 'a.ts' }),
           entry({ path: 'missing.ts' }),
         ]}
-        streaming={false}
         projectFileNames={new Set(['a.ts'])}
         onRequestOpenFile={onRequestOpenFile}
       />,
@@ -156,7 +151,6 @@ describe('FileOpsSummary', () => {
           entry({ path: 'fourth.ts' }),
           entry({ path: 'fifth.ts' }),
         ]}
-        streaming={false}
         projectFileNames={new Set(['input.ts', 'result.ts', 'third.ts', 'fourth.ts', 'fifth.ts'])}
         onRequestOpenFile={onRequestOpenFile}
       />,
@@ -175,7 +169,6 @@ describe('FileOpsSummary', () => {
         entries={[
           entry({ path: 'gone.ts', ops: ['delete'], opCounts: { read: 0, write: 0, edit: 0, delete: 1 } }),
         ]}
-        streaming={false}
         projectFileNames={new Set(['gone.ts'])}
         onRequestOpenFile={onRequestOpenFile}
       />,
@@ -197,7 +190,6 @@ describe('FileOpsSummary', () => {
             status: 'running',
           }),
         ]}
-        streaming
       />,
     );
     const row = screen.getByTestId('file-ops-row-index.html');
