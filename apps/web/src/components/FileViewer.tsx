@@ -57,6 +57,11 @@ import {
   TEAM_PROJECTS_CHANGED_EVENT,
   useWorkspaceContext,
 } from '../collab/useWorkspaceContext';
+import {
+  canPublishPublicFile,
+  publicFilePublishFailureKey,
+  type PublicFilePublishFailureKey,
+} from '../collab/public-file-publish';
 import { moveWorkspaceProject } from '../state/projects';
 import type { Dict, Locale } from '../i18n/types';
 import {
@@ -5766,7 +5771,13 @@ function ReactComponentViewer({
   const [publishedFileSlug, setPublishedFileSlug] = useState('');
   const [publishingPublicFile, setPublishingPublicFile] = useState(false);
   const [publishLinkFeedback, setPublishLinkFeedback] = useState<'copied' | 'failed' | null>(null);
+  // Why a publish/unpublish attempt failed, as a message key. `publishLinkFeedback`
+  // only renders inside the already-published branch, so a failed FIRST publish
+  // used to leave no trace on screen at all — the button simply returned to idle.
+  const [publishFailureKey, setPublishFailureKey] = useState<PublicFilePublishFailureKey | null>(null);
   const filePublished = publishedFileUrl.length > 0;
+  // Public links live in the team-scoped resource hub; see canPublishPublicFile.
+  const canPublishPublic = canPublishPublicFile(workspaceContext);
   const publicFileRequestSeqRef = useRef(0);
   const publicFileIdentityRef = useRef({ projectId, fileName: file.name });
   const shareRef = useRef<HTMLDivElement | null>(null);
@@ -5878,6 +5889,9 @@ function ReactComponentViewer({
     setPublishedFileSlug('');
     setPublishingPublicFile(false);
     setPublishLinkFeedback(null);
+    setPublishFailureKey(null);
+    // Off-team the read can only 409; don't spend a request per file open on it.
+    if (!canPublishPublic) return;
     void fetchProjectFilePublicPublication(projectId, file.name)
       .then((publication) => {
         const current = publicFileIdentityRef.current;
@@ -5896,7 +5910,11 @@ function ReactComponentViewer({
     return () => {
       cancelled = true;
     };
-  }, [projectId, file.name]);
+    // `canPublishPublic` is a dependency, not just a guard: the workspace context
+    // loads asynchronously, so a team member's first render looks off-team. Without
+    // it the hydrate would be skipped for good and an already-published file would
+    // render as unpublished.
+  }, [projectId, file.name, canPublishPublic]);
 
   async function publishCurrentFilePublic() {
     if (viewerOnly || publishingPublicFile) return;
@@ -5905,6 +5923,7 @@ function ReactComponentViewer({
     const requestSeq = ++publicFileRequestSeqRef.current;
     setPublishingPublicFile(true);
     setPublishLinkFeedback(null);
+    setPublishFailureKey(null);
     try {
       const response = await publishProjectFilePublic(requestProjectId, requestFileName);
       const current = publicFileIdentityRef.current;
@@ -5919,7 +5938,10 @@ function ReactComponentViewer({
       setPublishedFileSlug(response.slug);
     } catch (error) {
       console.warn('[FileViewer] failed to publish public file', error);
-      if (publicFileRequestSeqRef.current === requestSeq) setPublishLinkFeedback('failed');
+      if (publicFileRequestSeqRef.current === requestSeq) {
+        setPublishLinkFeedback('failed');
+        setPublishFailureKey(publicFilePublishFailureKey(error));
+      }
     } finally {
       if (publicFileRequestSeqRef.current === requestSeq) setPublishingPublicFile(false);
     }
@@ -5933,6 +5955,7 @@ function ReactComponentViewer({
     const requestSeq = ++publicFileRequestSeqRef.current;
     setPublishingPublicFile(true);
     setPublishLinkFeedback(null);
+    setPublishFailureKey(null);
     try {
       await unpublishProjectFilePublic(requestProjectId, requestFileName, requestSlug);
       const current = publicFileIdentityRef.current;
@@ -5947,7 +5970,10 @@ function ReactComponentViewer({
       setPublishedFileSlug('');
     } catch (error) {
       console.warn('[FileViewer] failed to unpublish public file', error);
-      if (publicFileRequestSeqRef.current === requestSeq) setPublishLinkFeedback('failed');
+      if (publicFileRequestSeqRef.current === requestSeq) {
+        setPublishLinkFeedback('failed');
+        setPublishFailureKey(publicFilePublishFailureKey(error));
+      }
     } finally {
       if (publicFileRequestSeqRef.current === requestSeq) setPublishingPublicFile(false);
     }
@@ -6161,6 +6187,7 @@ function ReactComponentViewer({
                             ) : null}
                           </div>
                         </div>
+                        {canPublishPublic ? (
                         <div className="chrome-share-card">
                           <div className="chrome-share-card__header">
                             <span className="share-menu-icon"><RemixIcon name="broadcast-line" size={16} /></span>
@@ -6169,6 +6196,11 @@ function ReactComponentViewer({
                               <small>{t('fileViewer.publishSingleFileDescription')}</small>
                             </span>
                           </div>
+                          {publishFailureKey ? (
+                            <p className="chrome-publish-error" role="status">
+                              {t(publishFailureKey)}
+                            </p>
+                          ) : null}
                           {filePublished ? (
                             <>
                               <div className="chrome-publish-url" title={publishedFileUrl}>
@@ -6216,6 +6248,7 @@ function ReactComponentViewer({
                             </button>
                           )}
                         </div>
+                        ) : null}
                       </div>
                     ) : null}
                     {unifiedActionTab === 'export' ? (
@@ -6771,7 +6804,13 @@ function HtmlViewer({
   const [publishedFileSlug, setPublishedFileSlug] = useState('');
   const [publishingPublicFile, setPublishingPublicFile] = useState(false);
   const [publishLinkFeedback, setPublishLinkFeedback] = useState<'copied' | 'failed' | null>(null);
+  // Why a publish/unpublish attempt failed, as a message key. `publishLinkFeedback`
+  // only renders inside the already-published branch, so a failed FIRST publish
+  // used to leave no trace on screen at all — the button simply returned to idle.
+  const [publishFailureKey, setPublishFailureKey] = useState<PublicFilePublishFailureKey | null>(null);
   const filePublished = publishedFileUrl.length > 0;
+  // Public links live in the team-scoped resource hub; see canPublishPublicFile.
+  const canPublishPublic = canPublishPublicFile(workspaceContext);
   const publicFileRequestSeqRef = useRef(0);
   const publicFileIdentityRef = useRef({ projectId, fileName: file.name });
   // False when closed; otherwise records which entry opened the modal so the
@@ -6868,6 +6907,9 @@ function HtmlViewer({
     setPublishedFileSlug('');
     setPublishingPublicFile(false);
     setPublishLinkFeedback(null);
+    setPublishFailureKey(null);
+    // Off-team the read can only 409; don't spend a request per file open on it.
+    if (!canPublishPublic) return;
     void fetchProjectFilePublicPublication(projectId, file.name)
       .then((publication) => {
         const current = publicFileIdentityRef.current;
@@ -6886,7 +6928,11 @@ function HtmlViewer({
     return () => {
       cancelled = true;
     };
-  }, [projectId, file.name]);
+    // `canPublishPublic` is a dependency, not just a guard: the workspace context
+    // loads asynchronously, so a team member's first render looks off-team. Without
+    // it the hydrate would be skipped for good and an already-published file would
+    // render as unpublished.
+  }, [projectId, file.name, canPublishPublic]);
 
   async function publishCurrentFilePublic() {
     if (viewerOnly || publishingPublicFile) return;
@@ -6895,6 +6941,7 @@ function HtmlViewer({
     const requestSeq = ++publicFileRequestSeqRef.current;
     setPublishingPublicFile(true);
     setPublishLinkFeedback(null);
+    setPublishFailureKey(null);
     try {
       const response = await publishProjectFilePublic(requestProjectId, requestFileName);
       const current = publicFileIdentityRef.current;
@@ -6909,7 +6956,10 @@ function HtmlViewer({
       setPublishedFileSlug(response.slug);
     } catch (error) {
       console.warn('[FileViewer] failed to publish public file', error);
-      if (publicFileRequestSeqRef.current === requestSeq) setPublishLinkFeedback('failed');
+      if (publicFileRequestSeqRef.current === requestSeq) {
+        setPublishLinkFeedback('failed');
+        setPublishFailureKey(publicFilePublishFailureKey(error));
+      }
     } finally {
       if (publicFileRequestSeqRef.current === requestSeq) setPublishingPublicFile(false);
     }
@@ -6923,6 +6973,7 @@ function HtmlViewer({
     const requestSeq = ++publicFileRequestSeqRef.current;
     setPublishingPublicFile(true);
     setPublishLinkFeedback(null);
+    setPublishFailureKey(null);
     try {
       await unpublishProjectFilePublic(requestProjectId, requestFileName, requestSlug);
       const current = publicFileIdentityRef.current;
@@ -6937,7 +6988,10 @@ function HtmlViewer({
       setPublishedFileSlug('');
     } catch (error) {
       console.warn('[FileViewer] failed to unpublish public file', error);
-      if (publicFileRequestSeqRef.current === requestSeq) setPublishLinkFeedback('failed');
+      if (publicFileRequestSeqRef.current === requestSeq) {
+        setPublishLinkFeedback('failed');
+        setPublishFailureKey(publicFilePublishFailureKey(error));
+      }
     } finally {
       if (publicFileRequestSeqRef.current === requestSeq) setPublishingPublicFile(false);
     }
@@ -12563,6 +12617,7 @@ function HtmlViewer({
                           ) : null}
                         </div>
                       </div>
+                      {canPublishPublic ? (
                       <div className="chrome-share-card">
                         <div className="chrome-share-card__header">
                           <span className="share-menu-icon"><RemixIcon name="broadcast-line" size={16} /></span>
@@ -12571,6 +12626,11 @@ function HtmlViewer({
                             <small>{t('fileViewer.publishSingleFileDescription')}</small>
                           </span>
                         </div>
+                        {publishFailureKey ? (
+                          <p className="chrome-publish-error" role="status">
+                            {t(publishFailureKey)}
+                          </p>
+                        ) : null}
                         {filePublished ? (
                           <>
                             <div className="chrome-publish-url" title={publishedFileUrl}>
@@ -12618,6 +12678,7 @@ function HtmlViewer({
                           </button>
                         )}
                       </div>
+                      ) : null}
                       </div>
                     ) : null}
                     {unifiedActionTab === 'export' && rawCanDownload ? (

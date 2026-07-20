@@ -26,3 +26,59 @@ describe('CommunityView remix', () => {
     expect(arg.prompt).toMatch(/^Remix the ".+" community template into a new Open Design project/);
   });
 });
+
+describe('CommunityView facet counts', () => {
+  /** Read every type tab as { label, badge } plus the cards currently gridded. */
+  function readFacets() {
+    const tabs = Array.from(
+      document.querySelectorAll('.community-template-view__type-tabs button'),
+    ) as HTMLButtonElement[];
+    return tabs.map((tab) => ({
+      tab,
+      label: tab.querySelector('span')?.textContent?.trim() ?? '',
+      badge: Number(tab.querySelector('small')?.textContent?.trim()),
+    }));
+  }
+
+  function renderedCardCount() {
+    return document.querySelectorAll(
+      '.community-template-grid .community-template-card',
+    ).length;
+  }
+
+  it('shows a badge equal to the number of cards each type actually renders', () => {
+    // Regression: the badges were a hand-written lookup table unrelated to the
+    // catalogue, so Slides advertised 80 while rendering 2 cards, and Live
+    // Artifact advertised 5 while rendering 8. The badge must be derived from
+    // the same array the grid maps over.
+    render(<CommunityView />);
+
+    const facets = readFacets();
+    expect(facets.length).toBeGreaterThan(0);
+
+    for (const { tab, label, badge } of facets) {
+      fireEvent.click(tab);
+      expect(
+        { type: label, badge, rendered: renderedCardCount() },
+      ).toEqual({ type: label, badge, rendered: badge });
+    }
+  });
+
+  it('never advertises a facet total larger than the whole catalogue', () => {
+    // The old table summed to 269 across 24 templates; the badges must sum to
+    // the catalogue size instead.
+    render(<CommunityView />);
+
+    const facets = readFacets();
+    const badgeTotal = facets.reduce((sum, facet) => sum + facet.badge, 0);
+
+    // Walk every tab to collect the true catalogue size from the grid itself.
+    let renderedTotal = 0;
+    for (const { tab } of facets) {
+      fireEvent.click(tab);
+      renderedTotal += renderedCardCount();
+    }
+
+    expect(badgeTotal).toBe(renderedTotal);
+  });
+});

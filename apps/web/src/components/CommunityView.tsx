@@ -71,15 +71,20 @@ const COMMUNITY_TEMPLATES: TemplateDemo[] = [
 ];
 
 const TEMPLATE_TYPE_ORDER: TemplateDemo['type'][] = ['Slides', 'Prototype', 'Live Artifact', 'Image', 'Video', 'HyperFrames', 'Audio'];
-const TEMPLATE_TYPE_COUNTS: Record<TemplateDemo['type'], number> = {
-  Prototype: 63,
-  'Live Artifact': 5,
-  Slides: 80,
-  Image: 46,
-  Video: 49,
-  HyperFrames: 25,
-  Audio: 1,
-};
+
+/** Count the catalogue by type so a facet tab can never advertise a number the
+ *  grid will not render. The badge and the cards must resolve from the same
+ *  array: any tab showing `n` renders exactly `n` cards once its subtype filter
+ *  is "All". Do not replace this with a hand-maintained lookup table. */
+function countTemplatesByType(templates: TemplateDemo[]): Record<TemplateDemo['type'], number> {
+  const counts = Object.fromEntries(
+    TEMPLATE_TYPE_ORDER.map((type) => [type, 0]),
+  ) as Record<TemplateDemo['type'], number>;
+  for (const template of templates) counts[template.type] += 1;
+  return counts;
+}
+
+const TEMPLATE_TYPE_COUNTS: Record<TemplateDemo['type'], number> = countTemplatesByType(COMMUNITY_TEMPLATES);
 
 const TEMPLATE_PREVIEW_SRC: Record<string, string> = {
   'electric-studio': '/community-templates/open-design-landing.webp',

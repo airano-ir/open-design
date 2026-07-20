@@ -9072,8 +9072,6 @@ export function ProjectView({
           onRequestBrowserUsePrompt={handleBrowserUsePrompt}
           onPluginFolderAgentAction={handlePluginFolderAgentAction}
           activePluginActionPaths={activePluginActionPaths}
-          preferredPreviewFile={currentProject.metadata?.entryFile ?? null}
-          autoPreviewDesignArtifacts={currentProject.metadata?.importedFrom === 'folder'}
           focusMode={workspaceFocused}
           onFocusModeChange={setWorkspaceFocused}
           designSystemProject={designSystemProject}
