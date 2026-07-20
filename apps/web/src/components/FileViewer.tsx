@@ -9466,8 +9466,16 @@ function HtmlViewer({
     if (!id || id === '__body__') return;
     if (!(await settleManualEditHistoryBoundary())) return;
     const html = readManualEditOuterHtml(sourceRef.current ?? '', id);
-    if (!html) return;
+    if (!html) {
+      // Runtime-only targets have no source markup that can safely round-trip
+      // through the structural insert path. Clear any older element first so
+      // the next paste cannot silently insert the wrong previously copied DOM.
+      manualEditClipboardRef.current = null;
+      setManualEditError('Runtime-rendered elements cannot be copied.');
+      return;
+    }
     manualEditClipboardRef.current = { html, fromId: id };
+    setManualEditError(null);
   }
 
   // Cmd/Ctrl+V: paste the copied element as a NEW block after the current

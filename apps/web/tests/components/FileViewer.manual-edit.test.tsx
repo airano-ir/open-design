@@ -1297,6 +1297,68 @@ describe('FileViewer manual edit regressions', () => {
     await waitFor(() => expect(screen.queryByTestId('manual-edit-duplicate')).toBeNull());
   });
 
+  it('clears an older element clipboard when copying a runtime-only target', async () => {
+    const source = '<!doctype html><html><head><script id="od-brand-payload" type="application/json">{"status":"ready","brand":{"name":"Acme"}}</script></head><body><main data-od-id="hero">Hero</main><footer data-od-id="footer">Footer</footer><div id="root"></div></body></html>';
+    const { fetchMock, savedBodies } = manualEditWriteMock(source);
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={htmlPreviewFile()}
+        liveHtml={source}
+      />,
+    );
+    clickManualTool('manual-edit-mode-toggle');
+    const frame = await previewFrame();
+    await selectManualEditTarget();
+
+    // Seed the internal element clipboard with a valid source-backed target.
+    await act(async () => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-copy-request', id: 'hero' },
+        source: frame.contentWindow,
+      }));
+      await Promise.resolve();
+    });
+
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: {
+          type: 'od-edit-select',
+          target: {
+            ...heroTarget(),
+            id: 'brand-name',
+            label: 'Brand name',
+            text: 'Acme',
+            fields: { text: 'Acme' },
+            attributes: { 'data-od-id': 'brand-name' },
+            outerHtml: '<h1 data-od-id="brand-name">Acme</h1>',
+          },
+        },
+        source: frame.contentWindow,
+      }));
+    });
+    await waitFor(() => {
+      expect((screen.getByLabelText('Text') as HTMLInputElement).value).toBe('Acme');
+    });
+
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-copy-request', id: 'brand-name' },
+        source: frame.contentWindow,
+      }));
+    });
+
+    expect(await screen.findAllByText('Runtime-rendered elements cannot be copied.')).not.toHaveLength(0);
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-paste-request', id: 'footer' },
+        source: frame.contentWindow,
+      }));
+    });
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(savedBodies).toHaveLength(0);
+  });
+
   it('rejects image paste before upload for runtime-only brand-kit targets', async () => {
     const source = '<!doctype html><html><head><script id="od-brand-payload" type="application/json">{"status":"ready","brand":{"name":"Acme"}}</script></head><body><div id="root"></div></body></html>';
     const { fetchMock } = manualEditWriteMock(source);
