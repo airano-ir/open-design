@@ -80,7 +80,7 @@ describe('ToolCard secondary result disclosures', () => {
     expect(head?.getAttribute('aria-expanded')).toBe('false');
     expect(disclosure?.classList.contains('open')).toBe(false);
     expect(status?.getAttribute('data-tool-state')).toBe('completed');
-    expect(status?.classList.contains('op-status-done')).toBe(true);
+    expect(status?.classList.contains('op-status-done')).toBe(false);
 
     fireEvent.click(head as HTMLButtonElement);
     expect(head?.getAttribute('aria-expanded')).toBe('true');

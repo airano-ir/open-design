@@ -665,7 +665,7 @@ function ResultBadge({
       : t('tool.running');
   return (
     <span
-      className={`op-status op-status-category${completed ? ' op-status-done' : ''}`}
+      className="op-status op-status-category"
       data-tool-category={category}
       data-tool-state={state}
       title={title}

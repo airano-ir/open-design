@@ -1351,7 +1351,7 @@
   background: transparent;
 }
 .app .task-activity .action-card-toggle.task-state-completed {
-  color: var(--green);
+  color: var(--text-muted);
 }
 .app .task-activity .action-card-toggle .summary {
   color: currentColor;

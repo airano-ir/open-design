@@ -44,6 +44,7 @@ describe('AssistantMessage tool status', () => {
     expect(activity.querySelector('.task-activity-complete-icon')).toBeNull();
     expect(container.querySelector('[data-tool-category="run"]')).not.toBeNull();
     expect(container.querySelector('.op-status-error')).toBeNull();
+    expect(container.querySelector('.op-status-done')).toBeNull();
   });
 
   it('keeps legacy completed messages without runStatus as Done', () => {
