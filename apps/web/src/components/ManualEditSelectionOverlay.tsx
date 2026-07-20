@@ -6,6 +6,7 @@ import {
   manualEditMovePreviewTransform,
   manualEditMoveStyles,
   manualEditResizeStyles,
+  manualEditSpaceScale,
   snapManualEditGestureRect,
   type ManualEditAlignmentGuide,
   type ManualEditGestureKind,
@@ -28,6 +29,23 @@ interface DragState {
   rect: ManualEditRect;
   guides: ManualEditAlignmentGuide[];
   moved: boolean;
+  /**
+   * Vertical extent last measured in the iframe. A resize gesture owns x and
+   * width; height is whatever the content reflowed to, which the gesture
+   * cannot predict — widening a text box pulls its text onto fewer lines and
+   * makes it shorter.
+   */
+  measuredY: number | null;
+  measuredHeight: number | null;
+}
+
+/** The rect the frame draws and the commit records: gesture x/width, measured y/height. */
+function displayRect(state: DragState): ManualEditRect {
+  return {
+    ...state.rect,
+    y: state.measuredY ?? state.rect.y,
+    height: state.measuredHeight ?? state.rect.height,
+  };
 }
 
 interface CropHandleState {
@@ -110,7 +128,15 @@ export function ManualEditSelectionOverlay({
   /** One toolbar layer at a time: hides the action bar while the text
    * toolbar owns the selection (an active text range inside the element). */
   actionBarHidden?: boolean;
-  onGesturePreview: (partial: ManualEditPreviewStyles) => void;
+  /**
+   * `onApplied` reports the element's rect once the iframe has laid the
+   * preview out — only for previews that change layout, so a resize can follow
+   * the height its reflowed content took.
+   */
+  onGesturePreview: (
+    partial: ManualEditPreviewStyles,
+    onApplied?: (rect: ManualEditRect | null) => void,
+  ) => void;
   onGestureCommit: (partial: Partial<ManualEditStyles>, nextRect: ManualEditRect, gesture: 'move' | 'resize') => void;
   onGestureCancel: (touchedKeys: Array<keyof ManualEditStyles>) => void;
   onGestureActiveChange?: (active: boolean) => void;
@@ -135,6 +161,11 @@ export function ManualEditSelectionOverlay({
   const previewFrameRef = useRef(0);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const effectiveScale = Number.isFinite(scale) && scale > 0 ? scale : 1;
+  // Host preview zoom converts screen pixels to iframe CSS pixels; this second
+  // factor converts those to the element's OWN pixels, which is what its
+  // left/top/width mean. They differ whenever something inside the page scales
+  // the element's space — a deck stage fitting a 1920x1080 slide.
+  const spaceScale = manualEditSpaceScale(target.scale);
 
   useEffect(() => {
     if (!cropActive) setCropRect(null);
@@ -161,7 +192,9 @@ export function ManualEditSelectionOverlay({
     && held.id === target.id
     && rectsEqual(held.baseline, target.rect);
   if (held && !holdActive && !dragRef.current) heldRectRef.current = null;
-  const liveRect = dragRef.current ? dragRef.current.rect : holdActive ? held.rect : target.rect;
+  const liveRect = dragRef.current
+    ? displayRect(dragRef.current)
+    : holdActive ? held.rect : target.rect;
   const frame = {
     left: liveRect.x * effectiveScale,
     top: liveRect.y * effectiveScale,
@@ -176,9 +209,10 @@ export function ManualEditSelectionOverlay({
         state.rect.x - state.startRect.x,
         state.rect.y - state.startRect.y,
         state.startRect.width,
+        spaceScale,
       );
     }
-    return manualEditResizeStyles(state.kind, target.styles, state.startRect, state.rect);
+    return manualEditResizeStyles(state.kind, target.styles, state.startRect, state.rect, spaceScale);
   };
 
   // Move previews are pure compositor work (translate) — the expensive
@@ -189,9 +223,9 @@ export function ManualEditSelectionOverlay({
     if (state.kind === 'move') {
       const dx = round1(state.rect.x - state.startRect.x);
       const dy = round1(state.rect.y - state.startRect.y);
-      return { transform: manualEditMovePreviewTransform(dx, dy, target.styles.transform) };
+      return { transform: manualEditMovePreviewTransform(dx, dy, target.styles.transform, spaceScale) };
     }
-    return manualEditResizeStyles(state.kind, target.styles, state.startRect, state.rect);
+    return manualEditResizeStyles(state.kind, target.styles, state.startRect, state.rect, spaceScale);
   };
 
   const applyFrameGeometry = (rect: ManualEditRect) => {
@@ -230,11 +264,41 @@ export function ManualEditSelectionOverlay({
         height: canvasSize.height / effectiveScale,
       });
     }
-    dragRef.current = { kind, startRect, rect: startRect, guides: [], moved: false };
+    dragRef.current = {
+      kind,
+      startRect,
+      rect: startRect,
+      guides: [],
+      moved: false,
+      measuredY: null,
+      measuredHeight: null,
+    };
     setDragKind(kind);
     onGestureActiveChange?.(true);
     const node = event.currentTarget;
-    node.setPointerCapture(event.pointerId);
+    const ownerDocument = node.ownerDocument;
+    const ownerWindow = ownerDocument.defaultView ?? window;
+    let finished = false;
+    try {
+      node.setPointerCapture(event.pointerId);
+    } catch {
+      // Some browser/automation paths cannot retain capture. Document-level
+      // listeners below still finish the gesture instead of leaving it stuck.
+    }
+
+    // Widening a text box pulls its text onto fewer lines, so the box gets
+    // SHORTER while the gesture only tracks width. Without adopting the height
+    // the iframe measured, the frame stays frozen at the pre-drag height for
+    // the whole drag and only snaps once the commit round-trips — which reads
+    // as "the text never reflowed".
+    const adoptMeasuredExtent = (measured: ManualEditRect | null) => {
+      const state = dragRef.current;
+      if (!state || !measured || state.kind === 'move') return;
+      if (state.measuredHeight === measured.height && state.measuredY === measured.y) return;
+      state.measuredY = measured.y;
+      state.measuredHeight = measured.height;
+      applyFrameGeometry(displayRect(state));
+    };
 
     const tick = () => {
       previewFrameRef.current = 0;
@@ -254,21 +318,43 @@ export function ManualEditSelectionOverlay({
       state.rect = snapped.rect;
       state.guides = snapped.guides;
       state.moved = true;
-      applyFrameGeometry(snapped.rect);
+      applyFrameGeometry(displayRect(state));
       syncGuides(snapped.guides);
-      onGesturePreview(previewStylesForGesture(state));
+      onGesturePreview(
+        previewStylesForGesture(state),
+        state.kind === 'move' ? undefined : adoptMeasuredExtent,
+      );
     };
     const schedule = () => {
       if (previewFrameRef.current) return;
       previewFrameRef.current = requestAnimationFrame(tick);
     };
+    const flushScheduledTick = () => {
+      if (!previewFrameRef.current) return;
+      cancelAnimationFrame(previewFrameRef.current);
+      previewFrameRef.current = 0;
+      tick();
+    };
 
     const finish = (commit: boolean) => {
-      node.releasePointerCapture(event.pointerId);
-      node.removeEventListener('pointermove', onMove);
-      node.removeEventListener('pointerup', onUp);
-      node.removeEventListener('pointercancel', onCancel);
-      window.removeEventListener('keydown', onKey, true);
+      if (finished) return;
+      // A short physical drag can release capture before the next rAF. Commit
+      // paths must consume the last pointermove synchronously or they will
+      // misclassify a real move as a click and snap the frame back.
+      if (commit) flushScheduledTick();
+      finished = true;
+      ownerDocument.removeEventListener('pointermove', onMove);
+      ownerDocument.removeEventListener('pointerup', onUp);
+      ownerDocument.removeEventListener('pointercancel', onCancel);
+      node.removeEventListener('lostpointercapture', onLostCapture);
+      ownerWindow.removeEventListener('keydown', onKey, true);
+      ownerWindow.removeEventListener('blur', onBlur);
+      try {
+        if (node.hasPointerCapture(event.pointerId)) node.releasePointerCapture(event.pointerId);
+      } catch {
+        // Capture may already have been released by the browser. Cleanup and
+        // commit/cancel are intentionally independent from that DOM detail.
+      }
       const state = dragRef.current;
       dragRef.current = null;
       setDragKind(null);
@@ -284,13 +370,14 @@ export function ManualEditSelectionOverlay({
       }
       // Hold the frame at the outcome position until the upstream rect
       // catches up (optimistic commit / refresh); cancel snaps straight back.
-      applyFrameGeometry(commit ? state.rect : state.startRect);
+      const outcome = displayRect(state);
+      applyFrameGeometry(commit ? outcome : state.startRect);
       heldRectRef.current = commit
-        ? { id: target.id, rect: state.rect, baseline: { ...target.rect } }
+        ? { id: target.id, rect: outcome, baseline: { ...target.rect } }
         : null;
       const partial = commitStylesForGesture(state);
       if (commit) {
-        onGestureCommit(partial, state.rect, state.kind === 'move' ? 'move' : 'resize');
+        onGestureCommit(partial, outcome, state.kind === 'move' ? 'move' : 'resize');
       } else {
         onGestureCancel(Object.keys(partial) as Array<keyof ManualEditStyles>);
       }
@@ -304,16 +391,31 @@ export function ManualEditSelectionOverlay({
     };
     const onUp = () => finish(true);
     const onCancel = () => finish(false);
+    // Some OS/browser automation paths end a physical drag by dropping
+    // capture without delivering pointerup back to the captured node. If a
+    // frame was already rendered, preserve exactly what the user saw instead
+    // of snapping it back; a loss before any movement remains a cancel.
+    const onLostCapture = () => {
+      flushScheduledTick();
+      finish(Boolean(dragRef.current?.moved));
+    };
+    const onBlur = () => finish(false);
     const onKey = (keyEvent: KeyboardEvent) => {
       if (keyEvent.key !== 'Escape') return;
       keyEvent.preventDefault();
       keyEvent.stopPropagation();
       finish(false);
     };
-    node.addEventListener('pointermove', onMove);
-    node.addEventListener('pointerup', onUp);
-    node.addEventListener('pointercancel', onCancel);
-    window.addEventListener('keydown', onKey, true);
+    // Pointer capture normally retargets these events to `node`, but real OS
+    // drags can lose that routing when the pointer crosses iframe/window
+    // boundaries. Listening on the owning document closes the gesture in
+    // either case; lost capture/blur are explicit cancel fallbacks.
+    ownerDocument.addEventListener('pointermove', onMove);
+    ownerDocument.addEventListener('pointerup', onUp);
+    ownerDocument.addEventListener('pointercancel', onCancel);
+    node.addEventListener('lostpointercapture', onLostCapture);
+    ownerWindow.addEventListener('keydown', onKey, true);
+    ownerWindow.addEventListener('blur', onBlur);
   };
 
   const startCropGesture = (handle: string) => (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -326,22 +428,39 @@ export function ManualEditSelectionOverlay({
       startPointer: { x: event.clientX, y: event.clientY },
     };
     const node = event.currentTarget;
-    node.setPointerCapture(event.pointerId);
+    const ownerDocument = node.ownerDocument;
+    const ownerWindow = ownerDocument.defaultView ?? window;
+    let finished = false;
+    try {
+      node.setPointerCapture(event.pointerId);
+    } catch {
+      // The document listeners below remain sufficient without capture.
+    }
     const bounds = target.rect;
     const onMove = (moveEvent: PointerEvent) => {
       const dx = (moveEvent.clientX - start.startPointer.x) / effectiveScale;
       const dy = (moveEvent.clientY - start.startPointer.y) / effectiveScale;
       setCropRect(applyCropHandleDelta(start.startRect, bounds, start.handle, dx, dy));
     };
-    const onUp = () => {
-      node.releasePointerCapture(event.pointerId);
-      node.removeEventListener('pointermove', onMove);
-      node.removeEventListener('pointerup', onUp);
-      node.removeEventListener('pointercancel', onUp);
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      ownerDocument.removeEventListener('pointermove', onMove);
+      ownerDocument.removeEventListener('pointerup', finish);
+      ownerDocument.removeEventListener('pointercancel', finish);
+      node.removeEventListener('lostpointercapture', finish);
+      ownerWindow.removeEventListener('blur', finish);
+      try {
+        if (node.hasPointerCapture(event.pointerId)) node.releasePointerCapture(event.pointerId);
+      } catch {
+        // Capture may already be gone; the crop state is still valid.
+      }
     };
-    node.addEventListener('pointermove', onMove);
-    node.addEventListener('pointerup', onUp);
-    node.addEventListener('pointercancel', onUp);
+    ownerDocument.addEventListener('pointermove', onMove);
+    ownerDocument.addEventListener('pointerup', finish);
+    ownerDocument.addEventListener('pointercancel', finish);
+    node.addEventListener('lostpointercapture', finish);
+    ownerWindow.addEventListener('blur', finish);
   };
 
   const isImage = target.kind === 'image';
@@ -361,7 +480,11 @@ export function ManualEditSelectionOverlay({
       height: cropRect.height * effectiveScale,
     };
     return (
-      <div className={styles.layer} data-testid="manual-edit-crop-overlay">
+      <div
+        className={`${styles.layer} ${styles.layerGestureActive}`}
+        data-testid="manual-edit-crop-overlay"
+        data-gesture-active="true"
+      >
         <div className={styles.cropMask} style={{ left: frame.left, top: frame.top, width: frame.width, height: crop.top - frame.top }} />
         <div className={styles.cropMask} style={{ left: frame.left, top: crop.top + crop.height, width: frame.width, height: Math.max(0, frame.top + frame.height - crop.top - crop.height) }} />
         <div className={styles.cropMask} style={{ left: frame.left, top: crop.top, width: crop.left - frame.left, height: crop.height }} />
@@ -417,7 +540,11 @@ export function ManualEditSelectionOverlay({
   }
 
   return (
-    <div className={styles.layer}>
+    <div
+      className={`${styles.layer}${dragKind ? ` ${styles.layerGestureActive}` : ''}`}
+      data-testid="manual-edit-overlay-layer"
+      data-gesture-active={dragKind ? 'true' : 'false'}
+    >
       {guides.map((guide, index) => (
         <div
           key={`${guide.orientation}-${index}`}
@@ -486,9 +613,27 @@ export function ManualEditSelectionOverlay({
                 accept="image/*"
                 style={{ display: 'none' }}
                 onChange={(event) => {
-                  const file = event.currentTarget.files?.[0];
-                  event.currentTarget.value = '';
-                  if (file) onReplaceImage(file);
+                  const input = event.currentTarget;
+                  const file = input.files?.[0];
+                  if (!file) return;
+                  // Native picker handles can become stale after the change
+                  // turn (and clearing the input makes that window wider).
+                  // Snapshot the bytes while the browser still owns the
+                  // handle, then upload a detached File just like paste/drop.
+                  void file.arrayBuffer()
+                    .then((buffer) => {
+                      input.value = '';
+                      onReplaceImage(new File([buffer], file.name, {
+                        type: file.type,
+                        lastModified: file.lastModified,
+                      }));
+                    })
+                    .catch(() => {
+                      // Preserve the existing upload path for unusual browser
+                      // File implementations that cannot expose ArrayBuffer.
+                      input.value = '';
+                      onReplaceImage(file);
+                    });
                 }}
               />
             </>

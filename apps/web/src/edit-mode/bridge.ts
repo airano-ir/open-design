@@ -384,6 +384,68 @@ export function buildManualEditBridge(enabled: boolean): string {
     styles.top = top;
     return styles;
   }
+  function transformScaleOf(value){
+    if (!value || value === 'none') return null;
+    var open = value.indexOf('(');
+    if (open < 0) return null;
+    var nums = value.slice(open + 1, value.lastIndexOf(')')).split(',');
+    var is3d = value.indexOf('matrix3d') === 0;
+    var a = parseFloat(nums[0]);
+    var b = parseFloat(nums[1]);
+    var c = parseFloat(is3d ? nums[4] : nums[2]);
+    var d = parseFloat(is3d ? nums[5] : nums[3]);
+    if (!isFinite(a) || !isFinite(b) || !isFinite(c) || !isFinite(d)) return null;
+    return { x: Math.sqrt(a * a + b * b), y: Math.sqrt(c * c + d * d) };
+  }
+  function saneScale(value, fallback){
+    return (isFinite(value) && value > 0.01 && value < 100) ? value : fallback;
+  }
+  // Parent probes are shared by every child in one broadcast; allTargets()
+  // arms this so a 400-element page measures each parent once.
+  var parentProbeCache = null;
+  function parentProbeScale(parent){
+    if (!parent) return null;
+    if (parentProbeCache && parentProbeCache.has(parent)) return parentProbeCache.get(parent);
+    var pw = parent.offsetWidth;
+    var ph = parent.offsetHeight;
+    var probe = null;
+    if (pw > 0 || ph > 0) {
+      var pRect = parent.getBoundingClientRect();
+      probe = { x: pw > 0 ? pRect.width / pw : NaN, y: ph > 0 ? pRect.height / ph : NaN };
+    }
+    if (parentProbeCache) parentProbeCache.set(parent, probe);
+    return probe;
+  }
+  /**
+   * Scale between the element's own CSS pixel space — what its inline
+   * left/top/width mean — and the viewport pixels getBoundingClientRect
+   * reports. A deck stage fits its 1920x1080 slides by scaling a wrapper, so
+   * without this every gesture writes screen-sized deltas into a shrunken
+   * coordinate space: the element trails the cursor on a drag and a widened
+   * text box never actually gets wide enough to pull its text onto one line.
+   *
+   * Measured, never walked: the scaling wrapper can sit in a shadow root that
+   * parentElement cannot reach (the deck stage slots slides into a scaled
+   * canvas). The parent is the more precise probe — offsetWidth rounds to an
+   * integer, which matters far less on a big box — but it reads as unscaled
+   * across a slot boundary, so it only wins when it agrees with the element's
+   * own measurement.
+   */
+  function spaceScaleFor(el, rect, computed){
+    var own = transformScaleOf(computed.transform) || { x: 1, y: 1 };
+    var selfW = el.offsetWidth;
+    var selfH = el.offsetHeight;
+    var x = saneScale(selfW > 0 ? rect.width / saneScale(own.x, 1) / selfW : NaN, 1);
+    var y = saneScale(selfH > 0 ? rect.height / saneScale(own.y, 1) / selfH : NaN, x);
+    var probe = parentProbeScale(el.parentElement);
+    if (probe) {
+      var px = saneScale(probe.x, x);
+      var py = saneScale(probe.y, y);
+      if (Math.abs(px - x) <= x * 0.05) x = px;
+      if (Math.abs(py - y) <= y * 0.05) y = py;
+    }
+    return { x: x, y: y };
+  }
   function isLayoutContainer(el){
     var display = window.getComputedStyle(el).display || '';
     if (display.indexOf('flex') >= 0 || display.indexOf('grid') >= 0) return true;
@@ -408,6 +470,7 @@ export function buildManualEditBridge(enabled: boolean): string {
   }
   function targetFrom(el, includeOuterHtml){
     var rect = el.getBoundingClientRect();
+    var scale = spaceScaleFor(el, rect, window.getComputedStyle(el));
     var kind = inferKind(el);
     var id = stableId(el);
     var hidden = isHiddenTarget(el, rect);
@@ -429,6 +492,7 @@ export function buildManualEditBridge(enabled: boolean): string {
       className: typeof el.className === 'string' ? el.className : '',
       text: (el.textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 180),
       rect: { x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height) },
+      scale: scale,
       fields: fields,
       attributes: attrsFor(el),
       styles: stylesFor(el),
@@ -441,11 +505,16 @@ export function buildManualEditBridge(enabled: boolean): string {
     annotateBrandKitRuntimeTargets();
     var nodes = document.body ? document.body.querySelectorAll(discoverySelector) : [];
     var targets = [];
-    for (var i = 0; i < nodes.length; i++) {
-      var rect = nodes[i].getBoundingClientRect();
-      if (!isSourceMappable(nodes[i])) continue;
-      if (!isHiddenTarget(nodes[i], rect) && (rect.width < 4 || rect.height < 4)) continue;
-      targets.push(targetFrom(nodes[i], false));
+    parentProbeCache = typeof Map === 'function' ? new Map() : null;
+    try {
+      for (var i = 0; i < nodes.length; i++) {
+        var rect = nodes[i].getBoundingClientRect();
+        if (!isSourceMappable(nodes[i])) continue;
+        if (!isHiddenTarget(nodes[i], rect) && (rect.width < 4 || rect.height < 4)) continue;
+        targets.push(targetFrom(nodes[i], false));
+      }
+    } finally {
+      parentProbeCache = null;
     }
     return targets;
   }
@@ -575,16 +644,49 @@ export function buildManualEditBridge(enabled: boolean): string {
     return true;
   }
   var formatCommands = { bold: 1, italic: 1, underline: 1, strikeThrough: 1, foreColor: 1 };
+  // Layout changes inside the sandbox can trigger Chromium scroll anchoring:
+  // shrinking a title above the anchor silently changes window.scrollY even
+  // though the iframe never reloaded. Keep edit operations visually pinned by
+  // restoring both the page scroller and deck-style nested canvas scroller in
+  // the same task, after layout has been invalidated.
+  function captureEditScroll(){
+    var root = document.scrollingElement || document.documentElement || document.body;
+    var canvas = document.querySelector('.design-canvas');
+    return {
+      root: root,
+      rootLeft: root ? root.scrollLeft : 0,
+      rootTop: root ? root.scrollTop : 0,
+      canvas: canvas,
+      canvasLeft: canvas ? canvas.scrollLeft : 0,
+      canvasTop: canvas ? canvas.scrollTop : 0
+    };
+  }
+  function restoreEditScroll(snapshot){
+    if (!snapshot) return;
+    if (snapshot.root) {
+      snapshot.root.scrollLeft = snapshot.rootLeft;
+      snapshot.root.scrollTop = snapshot.rootTop;
+    }
+    if (snapshot.canvas) {
+      snapshot.canvas.scrollLeft = snapshot.canvasLeft;
+      snapshot.canvas.scrollTop = snapshot.canvasTop;
+    }
+  }
   function applyTextFormat(command, value){
     if (!activeTextEdit || !formatCommands[command]) return;
     var el = activeTextEdit.el;
+    var scrollSnapshot = captureEditScroll();
     // Range formatting needs real rich editing; plaintext-only refuses the
     // formatting execCommands. The commit path already escalates to an
     // innerHTML commit whenever child elements appear.
-    if (el.getAttribute('contenteditable') !== 'true') el.setAttribute('contenteditable', 'true');
-    try { el.focus(); } catch (e) {}
-    try { document.execCommand('styleWithCSS', false, true); } catch (e) {}
-    try { document.execCommand(command, false, value == null ? null : value); } catch (e) {}
+    try {
+      if (el.getAttribute('contenteditable') !== 'true') el.setAttribute('contenteditable', 'true');
+      try { el.focus(); } catch (e) {}
+      try { document.execCommand('styleWithCSS', false, true); } catch (e) {}
+      try { document.execCommand(command, false, value == null ? null : value); } catch (e) {}
+    } finally {
+      restoreEditScroll(scrollSnapshot);
+    }
     // Applying a format changes B/I/U/S state without moving the caret, so
     // selectionchange never fires — re-announce so the toolbar highlights.
     postTextSelection(el);
@@ -723,13 +825,14 @@ export function buildManualEditBridge(enabled: boolean): string {
     }
     return null;
   }
-  function applyPreviewStyles(id, styles, version){
+  function applyPreviewStyles(id, styles, version, measureRect){
     var el = findById(id);
     if (!el) {
       window.parent.postMessage({ type: 'od-edit-preview-style-applied', id: id || '', version: Number(version) || 0, ok: false, error: 'Target not found' }, '*');
       return;
     }
     var keys = Object.keys(styles || {});
+    var scrollSnapshot = captureEditScroll();
     try {
       for (var i = 0; i < keys.length; i++) {
         var key = keys[i];
@@ -738,9 +841,20 @@ export function buildManualEditBridge(enabled: boolean): string {
         if (typeof value !== 'string' || value.trim() === '') el.style.removeProperty(cssName);
         else el.style.setProperty(cssName, value.trim());
       }
-      window.parent.postMessage({ type: 'od-edit-preview-style-applied', id: id, version: Number(version) || 0, ok: true }, '*');
+      restoreEditScroll(scrollSnapshot);
+      // Only layout-changing previews are measured: a resize needs the height
+      // the reflowed content actually took, while a move previews through
+      // transform alone and must not pay for a forced layout every frame.
+      var measured = null;
+      if (measureRect || keys.indexOf('width') >= 0 || keys.indexOf('height') >= 0) {
+        var box = el.getBoundingClientRect();
+        measured = { x: Math.round(box.x), y: Math.round(box.y), width: Math.round(box.width), height: Math.round(box.height) };
+      }
+      window.parent.postMessage({ type: 'od-edit-preview-style-applied', id: id, version: Number(version) || 0, ok: true, rect: measured }, '*');
     } catch (e) {
       window.parent.postMessage({ type: 'od-edit-preview-style-applied', id: id, version: Number(version) || 0, ok: false, error: e && e.message ? String(e.message) : 'Could not apply preview styles' }, '*');
+    } finally {
+      restoreEditScroll(scrollSnapshot);
     }
   }
   window.addEventListener('message', function(ev){
@@ -768,7 +882,7 @@ export function buildManualEditBridge(enabled: boolean): string {
       return;
     }
     if (ev.data.type === 'od-edit-preview-style') {
-      applyPreviewStyles(ev.data.id, ev.data.styles || {}, ev.data.version);
+      applyPreviewStyles(ev.data.id, ev.data.styles || {}, ev.data.version, !!ev.data.measureRect);
       return;
     }
     if (ev.data.type === 'od-edit-text-finish') {
@@ -795,6 +909,7 @@ export function buildManualEditBridge(enabled: boolean): string {
       // ok:false tells the host to fall back to a frozen-source reload.
       var applyOk = false;
       var applyOp = ev.data.op || 'replace';
+      var domScrollSnapshot = captureEditScroll();
       // A caret/selection left inside a node we are about to replace or
       // remove re-anchors unpredictably and makes the browser scroll to
       // reveal it — the exact "random jump" this channel exists to avoid.
@@ -873,6 +988,10 @@ export function buildManualEditBridge(enabled: boolean): string {
           }
         }
       } catch (applyError) { applyOk = false; }
+      // Structural/content mutations can invoke browser scroll anchoring or
+      // caret reveal even though the iframe stayed mounted. Put both scroll
+      // containers back before measuring/rebroadcasting the changed targets.
+      restoreEditScroll(domScrollSnapshot);
       // Positional identity (path-N source-path / auto-annotated data-od-id)
       // encodes DOM positions; any structural mutation shifts the following
       // siblings, so restamp before anyone reads a stale id. Also stamps the
@@ -1107,6 +1226,7 @@ export function buildManualEditBridgeStyle(): string {
   // in-iframe selected rule stays subtle instead of double-framing. Hover
   // excludes the selected element so its solid frame never flickers dashed.
   return `<style data-od-edit-bridge-style>
+html[data-od-edit-mode], html[data-od-edit-mode] body { overflow-anchor: none !important; }
 html[data-od-edit-mode] body * { cursor: pointer !important; }
 html[data-od-edit-mode] [data-od-id]:hover:not([data-od-edit-selected]),
 html[data-od-edit-mode] [data-od-runtime-id]:hover:not([data-od-edit-selected]),

@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   FileViewer,
   cancelManualEditPendingStyleSnapshot,
+  resolveManualEditCropUrl,
 } from '../../src/components/FileViewer';
 import { emptyManualEditStyles, type ManualEditTarget } from '../../src/edit-mode/types';
 import type { ProjectFile } from '../../src/types';
@@ -84,6 +85,12 @@ describe('FileViewer manual edit regressions', () => {
       return input;
     });
   }
+
+  it('keeps root-relative preview images on their same-origin URL for cropping', () => {
+    expect(resolveManualEditCropUrl('project-1', 'pages/index.html', '/app-icon.png')).toBe('/app-icon.png');
+    expect(resolveManualEditCropUrl('project-1', 'pages/index.html', 'assets/photo.png'))
+      .toBe('/api/projects/project-1/raw/pages/assets/photo.png');
+  });
 
   it('removes invalid fields from pending manual edit style saves without dropping unrelated fields', () => {
     expect(cancelManualEditPendingStyleSnapshot({
@@ -284,6 +291,61 @@ describe('FileViewer manual edit regressions', () => {
     await waitFor(() => {
       expect(screen.getByTestId('manual-edit-text-toolbar')).toBeTruthy();
       expect(screen.queryByTestId('manual-edit-action-bar')).toBeNull();
+    });
+  });
+
+  it('keeps the selection frame aligned when toolbar typography reflows text', async () => {
+    const source = '<!doctype html><html><body><main data-od-id="hero">A wrapping hero title</main></body></html>';
+    vi.stubGlobal('fetch', vi.fn(async () =>
+      new Response(source, { status: 200, headers: { 'Content-Type': 'text/html' } }),
+    ));
+    render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={htmlPreviewFile()}
+        liveHtml={source}
+      />,
+    );
+
+    clickManualTool('manual-edit-mode-toggle');
+    const frame = await previewFrame();
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-select', target: heroTarget() },
+        source: frame.contentWindow,
+      }));
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-text-selection', id: 'hero', hasRange: true },
+        source: frame.contentWindow,
+      }));
+    });
+    await waitFor(() => expect(screen.getByTestId('manual-edit-text-toolbar')).toBeTruthy());
+
+    const postSpy = vi.spyOn(frame.contentWindow!, 'postMessage');
+    fireEvent.click(screen.getByRole('button', { name: 'Font size' }));
+    fireEvent.click(screen.getByRole('button', { name: '32px' }));
+
+    const previewMessage = await waitFor(() => {
+      const message = postSpy.mock.calls
+        .map(([value]) => value as { type?: string; version?: number; measureRect?: boolean })
+        .find((value) => value.type === 'od-edit-preview-style');
+      if (!message) throw new Error('Typography preview was not posted');
+      return message;
+    });
+    expect(previewMessage.measureRect).toBe(true);
+
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: {
+          type: 'od-edit-preview-style-applied',
+          version: previewMessage.version,
+          ok: true,
+          rect: { x: 24, y: 24, width: 160, height: 96 },
+        },
+        source: frame.contentWindow,
+      }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('manual-edit-selection-frame').style.height).toBe('96px');
     });
   });
 
@@ -1016,6 +1078,256 @@ describe('FileViewer manual edit regressions', () => {
     expect(savedBodies[2]!.versionLabel).toMatch(/^Undo /);
     expect(savedBodies[2]!.content).toContain('Updated hero');
     expect(savedBodies[2]!.content).not.toContain('Second pass');
+  });
+
+  // Speaker notes write the same HTML file from a surface OUTSIDE the manual
+  // edit pipeline. Without a history record, the next undo's freshness check
+  // sees bytes it never wrote, reads that as an external rewrite, and clears
+  // the ENTIRE undo chain — the user loses every prior step.
+  it('keeps the undo chain continuous across a speaker-notes save', async () => {
+    const source = '<!doctype html><html><body><section class="slide"><main data-od-id="hero">Hero</main></section></body></html>';
+    const { fetchMock, savedBodies } = manualEditWriteMock(source);
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={htmlPreviewFile()}
+        liveHtml={source}
+      />,
+    );
+    clickManualTool('manual-edit-mode-toggle');
+    const frame = await previewFrame();
+    const postSpy = vi.spyOn(frame.contentWindow!, 'postMessage');
+    await selectManualEditTarget();
+
+    // Chain step 1: a manual text edit.
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-text-commit', id: 'hero', value: 'Updated hero' },
+        source: frame.contentWindow,
+      }));
+    });
+    await ackApplyDom(frame, postSpy);
+    await waitFor(() => expect(savedBodies).toHaveLength(1));
+
+    // Chain step 2: a speaker-notes edit, saved on blur.
+    const notesPreview = await waitFor(() => {
+      const node = document.querySelector('.speaker-notes-preview');
+      if (!node) throw new Error('speaker notes panel not rendered');
+      return node;
+    });
+    fireEvent.click(notesPreview);
+    const textarea = await waitFor(() => {
+      const node = document.querySelector('.speaker-notes-editor textarea') as HTMLTextAreaElement | null;
+      if (!node) throw new Error('speaker notes editor not open');
+      return node;
+    });
+    fireEvent.change(textarea, { target: { value: 'Open with the market slide.' } });
+    fireEvent.blur(textarea);
+    await waitFor(() => expect(savedBodies).toHaveLength(2));
+    expect(savedBodies[1]!.content).toContain('Open with the market slide.');
+
+    // Undo #1 reverts the notes edit — and must NOT report the file as
+    // externally changed, which is how the chain used to be wiped.
+    fireEvent.keyDown(window, { key: 'z', metaKey: true });
+    await waitFor(() => expect(savedBodies).toHaveLength(3));
+    expect(savedBodies[2]!.content).not.toContain('Open with the market slide.');
+    expect(savedBodies[2]!.content).toContain('Updated hero');
+    expect(document.querySelector('.manual-edit-error')).toBeNull();
+
+    // Undo #2 keeps walking back into the manual text edit — proof the chain
+    // survived rather than being cleared at the notes boundary.
+    fireEvent.keyDown(window, { key: 'z', metaKey: true });
+    const undoApply = await waitFor(() => {
+      const found = lastApplyDomMessage(postSpy);
+      if (!found || !found.html.includes('>Hero<')) throw new Error('second undo apply-dom not posted yet');
+      return found;
+    });
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-apply-dom-result', version: undoApply.version, ok: true },
+        source: frame.contentWindow,
+      }));
+    });
+    await waitFor(() => expect(savedBodies).toHaveLength(4));
+    expect(savedBodies[3]!.content).toContain('>Hero<');
+    expect(savedBodies[3]!.content).not.toContain('Updated hero');
+  });
+
+  // Notes live in a <script type="application/json"> the browser never
+  // renders, so reverting one changes nothing on screen. Reloading the canvas
+  // for it costs a white flash and a scroll-restore gamble for no visual gain.
+  it('undoes a speaker-notes edit without reloading the canvas', async () => {
+    const source = '<!doctype html><html><body><section class="slide"><main data-od-id="hero">Hero</main></section></body></html>';
+    const { fetchMock, savedBodies } = manualEditWriteMock(source);
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={htmlPreviewFile()}
+        liveHtml={source}
+      />,
+    );
+    clickManualTool('manual-edit-mode-toggle');
+    const frame = await previewFrame();
+    const postSpy = vi.spyOn(frame.contentWindow!, 'postMessage');
+    await selectManualEditTarget();
+
+    // A manual edit first, so the notes entry's before-source no longer
+    // matches the frozen canvas snapshot — otherwise the reload is a no-op
+    // and the reload path never actually runs.
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-text-commit', id: 'hero', value: 'Updated hero' },
+        source: frame.contentWindow,
+      }));
+    });
+    await ackApplyDom(frame, postSpy);
+    await waitFor(() => expect(savedBodies).toHaveLength(1));
+
+    const notesPreview = await waitFor(() => {
+      const node = document.querySelector('.speaker-notes-preview');
+      if (!node) throw new Error('speaker notes panel not rendered');
+      return node;
+    });
+    fireEvent.click(notesPreview);
+    const textarea = await waitFor(() => {
+      const node = document.querySelector('.speaker-notes-editor textarea') as HTMLTextAreaElement | null;
+      if (!node) throw new Error('speaker notes editor not open');
+      return node;
+    });
+    fireEvent.change(textarea, { target: { value: 'Slow down on the ask.' } });
+    fireEvent.blur(textarea);
+    await waitFor(() => expect(savedBodies).toHaveLength(2));
+    const srcdocBefore = frame.srcdoc;
+
+    fireEvent.keyDown(window, { key: 'z', metaKey: true });
+    await waitFor(() => expect(savedBodies).toHaveLength(3));
+    expect(savedBodies[2]!.content).not.toContain('Slow down on the ask.');
+
+    // The canvas kept its DOM — and therefore its scroll position.
+    expect(frame.srcdoc).toBe(srcdocBefore);
+    // The notes panel still followed the rollback.
+    await waitFor(() => {
+      expect(document.querySelector('.speaker-notes-panel')?.textContent)
+        .not.toContain('Slow down on the ask.');
+    });
+  });
+
+  it('versions a speaker-notes save like every other manual edit', async () => {
+    const source = '<!doctype html><html><body><section class="slide"><main data-od-id="hero">Hero</main></section></body></html>';
+    const { fetchMock, savedBodies } = manualEditWriteMock(source);
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={htmlPreviewFile()}
+        liveHtml={source}
+      />,
+    );
+
+    const notesPreview = await waitFor(() => {
+      const node = document.querySelector('.speaker-notes-preview');
+      if (!node) throw new Error('speaker notes panel not rendered');
+      return node;
+    });
+    fireEvent.click(notesPreview);
+    const textarea = await waitFor(() => {
+      const node = document.querySelector('.speaker-notes-editor textarea') as HTMLTextAreaElement | null;
+      if (!node) throw new Error('speaker notes editor not open');
+      return node;
+    });
+    fireEvent.change(textarea, { target: { value: 'Land the pricing story here.' } });
+    fireEvent.blur(textarea);
+
+    // Notes edits used to write the file with no version metadata at all, so
+    // they were invisible in the version list and unrecoverable.
+    await waitFor(() => expect(savedBodies).toHaveLength(1));
+    expect(savedBodies[0]!.versionSource).toBe('manual');
+    expect(savedBodies[0]!.versionLabel).toBeTruthy();
+  });
+
+  // Restoring a version is the user deliberately jumping the timeline. The
+  // undo chain belongs to the lineage being left, so it is dropped — but
+  // silently, not by letting the next undo blame an "external" rewrite.
+  it('drops the undo chain on an explicit version restore without blaming an external rewrite', async () => {
+    const source = '<!doctype html><html><body><main data-od-id="hero">Hero</main></body></html>';
+    const restored = '<!doctype html><html><body><main data-od-id="hero">Restored hero</main></body></html>';
+    const { fetchMock, savedBodies } = manualEditWriteMock(source);
+    const versionsFetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : input instanceof Request ? input.url : String(input);
+      const version = {
+        id: 'v1', fileName: 'preview.html', version: 1, label: 'First draft',
+        createdAt: 1710000000000, source: 'agent', prompt: null,
+        size: restored.length, mime: 'text/html', kind: 'html', current: false,
+      };
+      if (url.includes('/versions/v1/restore') && init?.method === 'POST') {
+        return new Response(JSON.stringify({ file: htmlPreviewFile(), version }), {
+          status: 200, headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      if (url.includes('/versions/v1')) {
+        return new Response(JSON.stringify({ version, content: restored }), {
+          status: 200, headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      if (url.includes('/versions')) {
+        return new Response(JSON.stringify({ file: htmlPreviewFile(), versions: [version] }), {
+          status: 200, headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      return fetchMock(input, init);
+    });
+    vi.stubGlobal('fetch', versionsFetch);
+
+    render(
+      <FileViewer projectId="project-1" projectKind="prototype" file={htmlPreviewFile()}
+        liveHtml={source}
+      />,
+    );
+    clickManualTool('manual-edit-mode-toggle');
+    const frame = await previewFrame();
+    const postSpy = vi.spyOn(frame.contentWindow!, 'postMessage');
+    await selectManualEditTarget();
+
+    act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'od-edit-text-commit', id: 'hero', value: 'Updated hero' },
+        source: frame.contentWindow,
+      }));
+    });
+    await ackApplyDom(frame, postSpy);
+    await waitFor(() => expect(savedBodies).toHaveLength(1));
+    expect((screen.getByTestId('manual-edit-undo') as HTMLButtonElement).disabled).toBe(false);
+
+    fireEvent.click(document.querySelector('.file-version-trigger')!);
+    const versionItem = await waitFor(() => {
+      const node = document.querySelector('.file-version-item-select');
+      if (!node) throw new Error('version list not loaded');
+      return node;
+    });
+    fireEvent.click(versionItem);
+    const restoreAction = await waitFor(() => {
+      const node = document.querySelector('.file-version-restore-action') as HTMLButtonElement | null;
+      if (!node || node.disabled) throw new Error('restore action not ready');
+      return node;
+    });
+    fireEvent.click(restoreAction);
+    fireEvent.click(await waitFor(() => {
+      const node = document.querySelector('.file-version-restore-confirm-actions .primary');
+      if (!node) throw new Error('restore confirm not open');
+      return node;
+    }));
+
+    // The chain is gone (nothing to undo into the abandoned lineage)…
+    await waitFor(() => {
+      expect((screen.getByTestId('manual-edit-undo') as HTMLButtonElement).disabled).toBe(true);
+    });
+    // …and no undo write was attempted against the restored file.
+    const writesAfterRestore = savedBodies.length;
+    fireEvent.keyDown(window, { key: 'z', metaKey: true });
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(savedBodies).toHaveLength(writesAfterRestore);
+    // The old failure mode: a banner telling the user the file "changed
+    // outside manual edit mode" — for a change they made themselves.
+    expect(document.querySelector('.manual-edit-error')).toBeNull();
   });
 
   it('surfaces the server rejection detail when the undo write fails', async () => {

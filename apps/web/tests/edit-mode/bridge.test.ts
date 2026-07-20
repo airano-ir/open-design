@@ -443,6 +443,35 @@ describe('manual edit bridge target normalization', () => {
     expect(bridge).toContain("ok: false, error: 'Target not found'");
   });
 
+  it('restores iframe scroll when a live style preview reflows content', () => {
+    const dom = new JSDOM(
+      `<main><h1 data-od-id="hero">A wrapping title</h1></main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+    const title = dom.window.document.querySelector('[data-od-id="hero"]') as HTMLElement;
+    const scroller = dom.window.document.documentElement;
+    Object.defineProperty(dom.window.document, 'scrollingElement', { configurable: true, value: scroller });
+    scroller.scrollLeft = 12;
+    scroller.scrollTop = 320;
+
+    const setProperty = title.style.setProperty.bind(title.style);
+    vi.spyOn(title.style, 'setProperty').mockImplementation((name, value, priority) => {
+      setProperty(name, value, priority);
+      // Model Chromium scroll anchoring when a style change above the viewport
+      // alters layout. The edit bridge must put the viewport back exactly.
+      scroller.scrollLeft = 0;
+      scroller.scrollTop = 244;
+    });
+
+    dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
+      data: { type: 'od-edit-preview-style', id: 'hero', styles: { fontSize: '32px' }, version: 9 },
+    }));
+
+    expect(scroller.scrollLeft).toBe(12);
+    expect(scroller.scrollTop).toBe(320);
+    dom.window.close();
+  });
+
   it('reports resolved layout values so gesture math never adds px deltas to % offsets', () => {
     const bridge = buildManualEditBridge(true);
 
@@ -1117,6 +1146,34 @@ describe('manual edit rich text sessions', () => {
       '*',
     );
 
+    dom.window.close();
+  });
+
+  it('preserves iframe scroll while an in-place image insert changes layout', () => {
+    const dom = new JSDOM(
+      `<main data-od-id="wrap"><p data-od-id="anchor">One</p></main>${buildManualEditBridge(true)}`,
+      { runScripts: 'dangerously', url: 'http://localhost' },
+    );
+    const scroller = dom.window.document.documentElement;
+    Object.defineProperty(dom.window.document, 'scrollingElement', { configurable: true, value: scroller });
+    scroller.scrollLeft = 8;
+    scroller.scrollTop = 640;
+    const anchor = dom.window.document.querySelector('[data-od-id="anchor"]') as HTMLElement;
+    const insertAdjacentElement = anchor.insertAdjacentElement.bind(anchor);
+    vi.spyOn(anchor, 'insertAdjacentElement').mockImplementation((position, element) => {
+      const inserted = insertAdjacentElement(position, element);
+      // Model browser scroll anchoring/autoscroll caused by inserted media.
+      scroller.scrollLeft = 0;
+      scroller.scrollTop = 724;
+      return inserted;
+    });
+
+    dom.window.dispatchEvent(new dom.window.MessageEvent('message', {
+      data: { type: 'od-edit-apply-dom', id: 'anchor', op: 'insert-after', html: '<img src="clipboard.png" alt="">', version: 21 },
+    }));
+
+    expect(scroller.scrollLeft).toBe(8);
+    expect(scroller.scrollTop).toBe(640);
     dom.window.close();
   });
 

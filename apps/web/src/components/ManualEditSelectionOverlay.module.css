@@ -9,6 +9,14 @@
   z-index: 29;
 }
 
+/* Once a gesture starts, keep every subsequent pointer event in the host
+   document. Without this shield, a side-resize can move its narrow handle out
+   from under the pointer and the next event lands inside the preview iframe,
+   which makes the drag feel frozen or commit after only a few pixels. */
+.layerGestureActive {
+  pointer-events: auto;
+}
+
 .frame {
   position: absolute;
   border: 1.5px solid #2563eb;

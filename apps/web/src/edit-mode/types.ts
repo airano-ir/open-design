@@ -69,6 +69,19 @@ export interface ManualEditStyles {
  */
 export type ManualEditPreviewStyles = Partial<ManualEditStyles> & { transform?: string };
 
+/**
+ * Ratio between the viewport pixels `rect` is measured in and the CSS pixels
+ * the element's own `left` / `top` / `width` are written in. Anything above
+ * the element can scale that space — a deck stage fits a 1920x1080 slide by
+ * scaling a wrapper — so gestures must divide screen deltas by this before
+ * persisting them, or the element moves/resizes by only `scale` of what the
+ * user dragged. `1` when nothing between the element and the viewport scales.
+ */
+export interface ManualEditSpaceScale {
+  x: number;
+  y: number;
+}
+
 export interface ManualEditTarget {
   id: string;
   kind: ManualEditKind;
@@ -77,6 +90,8 @@ export interface ManualEditTarget {
   className: string;
   text: string;
   rect: ManualEditRect;
+  /** Absent on targets from older bridges; treat as `{ x: 1, y: 1 }`. */
+  scale?: ManualEditSpaceScale;
   fields: ManualEditFields;
   attributes: Record<string, string>;
   styles: ManualEditStyles;
@@ -133,6 +148,13 @@ export interface ManualEditPreviewAppliedMessage {
   version: number;
   ok: boolean;
   error?: string;
+  /**
+   * The element's rect after the preview landed. Only measured for previews
+   * that change layout (`width` / `height`), so a resize gesture can track the
+   * height the reflowed content actually took instead of freezing the frame at
+   * the pre-drag height. `null` for compositor-only previews.
+   */
+  rect?: ManualEditRect | null;
 }
 
 export interface ManualEditTextCommitMessage {

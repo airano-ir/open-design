@@ -1,4 +1,4 @@
-import type { ManualEditRect, ManualEditStyles } from './types';
+import type { ManualEditRect, ManualEditSpaceScale, ManualEditStyles } from './types';
 
 /**
  * Pure geometry + style resolution for canvas drag gestures in manual edit
@@ -161,21 +161,51 @@ export function manualEditGestureRect(
   return { ...start, x, width: right - x };
 }
 
+export const MANUAL_EDIT_UNIT_SCALE: ManualEditSpaceScale = { x: 1, y: 1 };
+
+/**
+ * Normalize a target's reported space scale into safe divisors. A missing,
+ * zero, or absurd factor degrades to 1 rather than teleporting the element.
+ */
+export function manualEditSpaceScale(scale: ManualEditSpaceScale | undefined): ManualEditSpaceScale {
+  const usable = (value: number | undefined): number =>
+    typeof value === 'number' && Number.isFinite(value) && value > 0.01 && value < 100 ? value : 1;
+  return { x: usable(scale?.x), y: usable(scale?.y) };
+}
+
+/**
+ * Convert a distance the user dragged on screen into the element's own CSS
+ * pixel space. Everything a gesture persists — `left`, `top`, `width`, and the
+ * preview `translate` — is authored in that space, while the rects driving the
+ * gesture are measured in viewport pixels, so an ancestor that scales (a deck
+ * stage fitting a 1920x1080 slide) makes the two differ by `scale`.
+ */
+function toLocal(value: number, scale: number): number {
+  return scale > 0 && Number.isFinite(scale) ? value / scale : value;
+}
+
 /**
  * Compose the move-gesture preview transform. The drag offset must PREPEND
  * the element's own (computed) transform — an inline `translate(dx,dy)` alone
  * would override an authored transform such as `translate(-50%, -50%)`
  * centering, making the element jump at drag start and again on release when
  * the authored transform comes back.
+ *
+ * The offset is authored in the element's local space (the composed translate
+ * is itself scaled by every ancestor transform), so the preview tracks the
+ * cursor 1:1 and lands exactly where the committed `left`/`top` put it.
  */
 export function manualEditMovePreviewTransform(
   dx: number,
   dy: number,
   authoredTransform: string | undefined,
+  scale: ManualEditSpaceScale = MANUAL_EDIT_UNIT_SCALE,
 ): string {
   const authored = (authoredTransform ?? '').trim();
   const suffix = authored && authored !== 'none' ? ` ${authored}` : '';
-  return `translate(${dx}px, ${dy}px)${suffix}`;
+  const localX = Math.round(toLocal(dx, scale.x) * 10) / 10;
+  const localY = Math.round(toLocal(dy, scale.y) * 10) / 10;
+  return `translate(${localX}px, ${localY}px)${suffix}`;
 }
 
 function parseCssPx(value: string | undefined): number {
@@ -211,22 +241,26 @@ export function manualEditMoveStyles(
   dx: number,
   dy: number,
   startWidth?: number,
+  scale: ManualEditSpaceScale = MANUAL_EDIT_UNIT_SCALE,
 ): Partial<ManualEditStyles> {
+  const localX = toLocal(dx, scale.x);
+  const localY = toLocal(dy, scale.y);
   if (isOutOfFlow(styles.position)) {
+    const localWidth = startWidth != null ? toLocal(startWidth, scale.x) : null;
     return {
-      left: roundPx(parseCssPx(styles.left) + dx),
-      top: roundPx(parseCssPx(styles.top) + dy),
+      left: roundPx(parseCssPx(styles.left) + localX),
+      top: roundPx(parseCssPx(styles.top) + localY),
       right: 'auto',
       bottom: 'auto',
-      ...(startWidth != null && startWidth > 0 ? { width: roundPx(startWidth) } : {}),
+      ...(localWidth != null && localWidth > 0 ? { width: roundPx(localWidth) } : {}),
     };
   }
   const baseLeft = styles.position === 'relative' ? parseCssPx(styles.left) : 0;
   const baseTop = styles.position === 'relative' ? parseCssPx(styles.top) : 0;
   return {
     position: 'relative',
-    left: roundPx(baseLeft + dx),
-    top: roundPx(baseTop + dy),
+    left: roundPx(baseLeft + localX),
+    top: roundPx(baseTop + localY),
   };
 }
 
@@ -246,15 +280,16 @@ export function manualEditResizeStyles(
   styles: Pick<ManualEditStyles, 'position' | 'left' | 'top' | 'display'>,
   startRect: ManualEditRect,
   nextRect: ManualEditRect,
+  scale: ManualEditSpaceScale = MANUAL_EDIT_UNIT_SCALE,
 ): Partial<ManualEditStyles> {
   const width: Partial<ManualEditStyles> = {
-    width: roundPx(Math.max(MANUAL_EDIT_MIN_GESTURE_SIZE, nextRect.width)),
+    width: roundPx(toLocal(Math.max(MANUAL_EDIT_MIN_GESTURE_SIZE, nextRect.width), scale.x)),
   };
   if (styles.display === 'inline') width.display = 'inline-block';
   if (kind === 'resize-right') return width;
   const dx = nextRect.x - startRect.x;
   if (dx === 0) return width;
-  const move = manualEditMoveStyles(styles, dx, 0);
+  const move = manualEditMoveStyles(styles, dx, 0, undefined, scale);
   // A left-edge resize only shifts horizontally — never emit a vertical
   // offset, which would visibly jump flow elements that had no inline top.
   delete move.top;

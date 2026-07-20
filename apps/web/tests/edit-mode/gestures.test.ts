@@ -6,6 +6,7 @@ import {
   manualEditMovePreviewTransform,
   manualEditMoveStyles,
   manualEditResizeStyles,
+  manualEditSpaceScale,
   snapManualEditGestureRect,
 } from '../../src/edit-mode/gestures';
 import { emptyManualEditStyles } from '../../src/edit-mode/types';
@@ -185,6 +186,69 @@ describe('manual edit move preview transform', () => {
     expect(manualEditMovePreviewTransform(5, 5, 'none')).toBe('translate(5px, 5px)');
     expect(manualEditMovePreviewTransform(5, 5, '')).toBe('translate(5px, 5px)');
     expect(manualEditMovePreviewTransform(5, 5, undefined)).toBe('translate(5px, 5px)');
+  });
+});
+
+// A deck stage fits its 1920x1080 slides by scaling a wrapper, so a slide
+// element's rect is measured in screen pixels while its left/top/width are
+// authored in unscaled slide pixels. Writing the screen delta straight into
+// those styles moves the element by only `scale` of what the user dragged —
+// it trails the cursor and lands short of the drop point — and a widened text
+// box never gets wide enough to pull its text onto one line.
+describe('manual edit gestures in a scaled coordinate space', () => {
+  const half = { x: 0.5, y: 0.5 };
+
+  it('converts a move delta into the element own pixel space', () => {
+    expect(manualEditMoveStyles(positionStyles('absolute', '100px', '50px'), 200, 80, undefined, half))
+      .toEqual({ left: '500px', top: '210px', right: 'auto', bottom: 'auto' });
+    expect(manualEditMoveStyles(positionStyles('static'), 200, 80, undefined, half))
+      .toEqual({ position: 'relative', left: '400px', top: '160px' });
+  });
+
+  it('unscales the pinned width so an absolute element does not shrink on release', () => {
+    expect(manualEditMoveStyles(positionStyles('absolute', '0px', '0px'), 0, 0, 300, half).width)
+      .toBe('600px');
+  });
+
+  it('unscales a resize so the box reaches the width the handle was dragged to', () => {
+    // Handle dragged out to 880 screen px on a half-scale stage: the element
+    // needs 1760 of its own pixels, not 880, to reflow onto one line.
+    expect(manualEditResizeStyles(
+      'resize-right',
+      positionStyles('static'),
+      rect(0, 0, 400, 200),
+      rect(0, 0, 880, 200),
+      half,
+    )).toEqual({ width: '1760px' });
+  });
+
+  it('unscales the offset a left-edge resize commits alongside the width', () => {
+    expect(manualEditResizeStyles(
+      'resize-left',
+      positionStyles('absolute', '200px', '40px'),
+      rect(100, 0, 400, 200),
+      rect(40, 0, 460, 200),
+      half,
+    )).toEqual({ left: '80px', right: 'auto', width: '920px' });
+  });
+
+  it('previews the move with the same unscaled offset the commit will write', () => {
+    expect(manualEditMovePreviewTransform(200, 80, 'none', half))
+      .toBe('translate(400px, 160px)');
+    expect(manualEditMovePreviewTransform(200, 80, 'translate(-50%, -50%)', half))
+      .toBe('translate(400px, 160px) translate(-50%, -50%)');
+  });
+
+  it('leaves an unscaled space untouched', () => {
+    expect(manualEditMoveStyles(positionStyles('static'), 12, -6, undefined, { x: 1, y: 1 }))
+      .toEqual(manualEditMoveStyles(positionStyles('static'), 12, -6));
+  });
+
+  it('degrades a missing or nonsense scale to 1 instead of teleporting', () => {
+    expect(manualEditSpaceScale(undefined)).toEqual({ x: 1, y: 1 });
+    expect(manualEditSpaceScale({ x: 0, y: Number.NaN })).toEqual({ x: 1, y: 1 });
+    expect(manualEditSpaceScale({ x: 1e6, y: -3 })).toEqual({ x: 1, y: 1 });
+    expect(manualEditSpaceScale({ x: 0.625, y: 0.625 })).toEqual({ x: 0.625, y: 0.625 });
   });
 });
 

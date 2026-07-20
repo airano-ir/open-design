@@ -135,6 +135,7 @@ import {
   PRESENTER_WINDOW_MIN_HEIGHT,
   PRESENTER_WINDOW_MIN_WIDTH,
   removeSpeakerNotesFromHtml,
+  sourcesDifferOnlyInSpeakerNotes,
   upsertSpeakerNotesInHtml,
 } from '../runtime/speaker-notes';
 import {
@@ -471,6 +472,20 @@ function manualEditPersistedValueMatchesSavedSnapshot(
   savedValue: string,
 ): boolean {
   return canonicalManualEditStyleValue(key, persistedValue) === canonicalManualEditStyleValue(key, savedValue);
+}
+
+const MANUAL_EDIT_RECT_AFFECTING_STYLE_PROPS = new Set<keyof ManualEditStyles>([
+  'fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'lineHeight', 'letterSpacing',
+  'display', 'position', 'left', 'top', 'right', 'bottom', 'width', 'height', 'minHeight',
+  'gap', 'flexDirection', 'justifyContent', 'alignItems', 'transform',
+  'padding', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
+  'margin', 'marginTop', 'marginRight', 'marginBottom', 'marginLeft',
+  'border', 'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderStyle',
+]);
+
+function manualEditStylesMayAffectRect(styles: Partial<ManualEditStyles>): boolean {
+  return (Object.keys(styles) as Array<keyof ManualEditStyles>)
+    .some((key) => MANUAL_EDIT_RECT_AFFECTING_STYLE_PROPS.has(key));
 }
 
 function canonicalManualEditStyleValue(key: keyof ManualEditStyles, value: string): string {
@@ -6507,6 +6522,9 @@ function HtmlViewer({
   const manualEditClipboardRef = useRef<{ html: string; fromId: string } | null>(null);
   const manualEditStyleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const manualEditPreviewVersionRef = useRef(0);
+  const manualEditPreviewAckRef = useRef<
+    { version: number; onApplied: (rect: ManualEditRect | null) => void } | null
+  >(null);
   const sourceRef = useRef<string | null>(source);
   // Holds the last-good source snapshot taken just before reloadHtmlPreview
   // clears source to null on the srcDoc path.  The fetch effect restores this
@@ -7825,10 +7843,22 @@ function HtmlViewer({
     postSelectedManualEditTargetToIframe(manualEditMode ? selectedManualEditTarget?.id ?? null : null);
   }, [manualEditMode, selectedManualEditTarget?.id, srcDoc, useUrlLoadPreview]);
 
-  const previewStyleToIframe = useCallback((id: string, styles: ManualEditPreviewStyles, version: number) => {
+  // `onApplied` is resolved by the bridge's `od-edit-preview-style-applied`
+  // ack, carrying the rect the element settled at for layout-changing previews
+  // (a resize needs the height its reflowed content took). One pending entry
+  // per version; a superseded frame's callback is dropped, never queued.
+  const previewStyleToIframe = useCallback((
+    id: string,
+    styles: ManualEditPreviewStyles,
+    version: number,
+    onApplied?: (rect: ManualEditRect | null) => void,
+  ) => {
     const win = iframeRef.current?.contentWindow;
     if (!win) return false;
-    win.postMessage({ type: 'od-edit-preview-style', id, styles, version }, '*');
+    // Every newer preview supersedes the prior callback, including a
+    // compositor-only move that does not need a measurement of its own.
+    manualEditPreviewAckRef.current = onApplied ? { version, onApplied } : null;
+    win.postMessage({ type: 'od-edit-preview-style', id, styles, version, measureRect: Boolean(onApplied) }, '*');
     return true;
   }, []);
 
@@ -7935,11 +7965,8 @@ function HtmlViewer({
     selectedManualEditTargetIdRef.current = null;
     setManualEditDraft(emptyManualEditDraft());
     setManualEditDraftDirty(false);
-    updateManualEditHistoryStack(() => []);
-    updateManualEditUndoneStack(() => []);
+    resetManualEditHistory();
     setManualEditError(null);
-    manualEditPendingStyleRef.current = null;
-    clearManualEditStyleTimer();
   }, [file.name]);
 
   // Selecting a new file or turning inspect/comment-inspect off resets the panel target.
@@ -8204,6 +8231,7 @@ function HtmlViewer({
       manualEditApplyDomAckRef.current = null;
       setManualEditError(null);
       manualEditPendingStyleRef.current = null;
+      manualEditPreviewAckRef.current = null;
       if (manualEditStyleTimerRef.current) {
         clearTimeout(manualEditStyleTimerRef.current);
         manualEditStyleTimerRef.current = null;
@@ -8288,6 +8316,14 @@ function HtmlViewer({
           hasRange: Boolean(data.hasRange),
           format: data.format ?? null,
         });
+        return;
+      }
+      if (data.type === 'od-edit-preview-style-applied') {
+        const ack = manualEditPreviewAckRef.current;
+        if (ack && ack.version === data.version) {
+          manualEditPreviewAckRef.current = null;
+          if (data.ok) ack.onApplied(data.rect ?? null);
+        }
         return;
       }
       if (data.type === 'od-edit-apply-dom-result') {
@@ -8460,7 +8496,19 @@ function HtmlViewer({
     const pending: ManualEditPendingStyleSave = { id, styles: pendingStyles, label, version };
     manualEditPendingStyleRef.current = pending;
     setManualEditError(null);
-    previewStyleToIframe(id, previewExtras ? { ...styles, ...previewExtras } : styles, version);
+    const previewStyles = previewExtras ? { ...styles, ...previewExtras } : styles;
+    const onApplied = id !== '__body__' && manualEditStylesMayAffectRect(styles)
+      ? (rect: ManualEditRect | null) => {
+          if (!rect) return;
+          setManualEditTargets((current) => current.map((target) => target.id === id
+            ? { ...target, rect }
+            : target));
+          setSelectedManualEditTarget((current) => current?.id === id
+            ? { ...current, rect }
+            : current);
+        }
+      : undefined;
+    previewStyleToIframe(id, previewStyles, version, onApplied);
   }
 
   async function flushManualEditStyleSave(): Promise<boolean> {
@@ -8972,6 +9020,43 @@ function HtmlViewer({
     setManualEditUndone(manualEditUndoneRef.current);
   }
 
+  /** Drops the undo/redo chain and any edit still pending against it. */
+  function resetManualEditHistory() {
+    updateManualEditHistoryStack(() => []);
+    updateManualEditUndoneStack(() => []);
+    manualEditPendingStyleRef.current = null;
+    clearManualEditStyleTimer();
+  }
+
+  /**
+   * Folds a whole-file write that did NOT flow through applyManualEdit — today
+   * the speaker-notes editor — into the manual-edit history.
+   *
+   * Invariant: while edit mode is live, every write to this file must be
+   * represented in the history. Undo compares the persisted bytes against the
+   * entry it is about to revert; bytes it never recorded read as an external
+   * rewrite, and it defensively CLEARS the entire chain. Recording the write
+   * keeps one continuous undo chain across every surface that edits the file,
+   * and marks it as our own so the frozen canvas does not reload behind it.
+   */
+  function recordManualEditHostSourceWrite(beforeSource: string, afterSource: string, label: string) {
+    if (!manualEditMode) return;
+    if (beforeSource === afterSource) return;
+    manualEditOwnSourceWriteRef.current = afterSource;
+    updateManualEditHistoryStack((current) => [
+      {
+        id: `${Date.now()}-${current.length}`,
+        label,
+        patch: { kind: 'set-full-source', source: afterSource },
+        beforeSource,
+        afterSource,
+        createdAt: Date.now(),
+      },
+      ...current,
+    ]);
+    updateManualEditUndoneStack(() => []);
+  }
+
   async function confirmManualEditHistorySource(expectedSource: string, message: string): Promise<boolean> {
     const persisted = await fetchProjectFileText(projectId, file.name, {
       cache: 'no-store',
@@ -8981,9 +9066,7 @@ function HtmlViewer({
     setSource(persisted);
     sourceRef.current = persisted;
     setInlinedSource(null);
-    updateManualEditHistoryStack(() => []);
-    updateManualEditUndoneStack(() => []);
-    manualEditPendingStyleRef.current = null;
+    resetManualEditHistory();
     setManualEditDraft((current) => ({ ...current, fullSource: persisted }));
     setManualEditError(message);
     return false;
@@ -9005,6 +9088,15 @@ function HtmlViewer({
     destSource: string,
   ): Promise<boolean> {
     const patch = entry.patch;
+    // A whole-file write confined to the speaker-notes block changes nothing
+    // the browser renders (the notes live in a `<script type="application/json">`),
+    // so the canvas needs no update at all. Reporting it as applied keeps the
+    // reload path — a white flash plus a scroll-restore gamble — from running
+    // for an edit the user cannot see. The check requires the rest of the
+    // document to be byte-identical, so a real visual change still reloads.
+    if (patch.kind === 'set-full-source') {
+      return sourcesDifferOnlyInSpeakerNotes(entry.beforeSource, entry.afterSource);
+    }
     if (!('id' in patch) || !patch.id) return false;
     // Page-scoped ids stay on the reload path — except the body-append insert,
     // which is still one element-scoped mutation.
@@ -9344,9 +9436,7 @@ function HtmlViewer({
     const src = (fields.src ?? target.fields.src ?? '').trim();
     if (!src) return;
     try {
-      const url = /^(data:|blob:|https?:)/i.test(src)
-        ? src
-        : projectRawUrl(projectId, resolveOwnerRelativePath(file.name, src));
+      const url = resolveManualEditCropUrl(projectId, file.name, src);
       const image = await loadManualEditCropImage(url);
       const sx = Math.round(clamp01(region.x) * image.width);
       const sy = Math.round(clamp01(region.y) * image.height);
@@ -9486,8 +9576,13 @@ function HtmlViewer({
     try {
       const saved = await writeProjectTextFile(projectId, file.name, nextSource, {
         artifactManifest: file.artifactManifest,
+        // Notes edits are hand authoring like any other manual edit, so they
+        // earn a labeled version instead of writing the file untracked.
+        versionSource: 'manual',
+        versionLabel: t('fileViewer.speakerNotes'),
       });
       if (!saved) throw new Error('speaker_notes_save_failed');
+      recordManualEditHostSourceWrite(currentSource, nextSource, t('fileViewer.speakerNotes'));
       setSource(nextSource);
       sourceRef.current = nextSource;
       setInlinedSource(null);
@@ -10431,6 +10526,12 @@ function HtmlViewer({
   }
 
   async function handleVersionRestored(content: string) {
+    // Restoring a version is a deliberate jump to a different point in the
+    // file's timeline, so the in-session undo chain (anchored to the lineage
+    // being left) no longer applies. Drop it here rather than letting the
+    // next undo discover the mismatch and report it as an EXTERNAL rewrite —
+    // that error blamed an agent/other session for the user's own action.
+    resetManualEditHistory();
     setSource(content);
     sourceRef.current = content;
     setInlinedSource(null);
@@ -11565,8 +11666,13 @@ function HtmlViewer({
         busy={manualEditSaving}
         cropActive={manualEditCropActive && selectedManualEditTarget.kind === 'image'}
         actionBarHidden={manualEditTextRangeActive}
-        onGesturePreview={(partial) => {
-          previewStyleToIframe(selectedManualEditTarget.id, partial, nextManualEditPreviewVersion());
+        onGesturePreview={(partial, onApplied) => {
+          previewStyleToIframe(
+            selectedManualEditTarget.id,
+            partial,
+            nextManualEditPreviewVersion(),
+            onApplied,
+          );
         }}
         onGestureCommit={(partial, nextRect, gesture) => {
           void handleManualEditGestureCommit(selectedManualEditTarget.id, partial, nextRect, gesture);
@@ -13779,6 +13885,15 @@ function resolveOwnerRelativePath(ownerFileName: string, reference: string): str
     parts.push(part);
   }
   return parts.join('/');
+}
+
+/** Resolve the exact asset URL the preview used before drawing a crop. */
+export function resolveManualEditCropUrl(projectId: string, ownerFileName: string, src: string): string {
+  // Root-relative assets resolve against the web origin inside srcDoc. Turning
+  // `/app-icon.png` into a project raw path makes a visible image impossible
+  // to crop even though the browser already loaded it successfully.
+  if (/^(data:|blob:|https?:|\/)/i.test(src)) return src;
+  return projectRawUrl(projectId, resolveOwnerRelativePath(ownerFileName, src));
 }
 
 function clamp01(value: number): number {
