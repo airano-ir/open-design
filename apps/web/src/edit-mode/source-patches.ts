@@ -774,6 +774,15 @@ const MANUAL_EDIT_IDENTITY_ATTRS = [
   'data-od-editing',
 ] as const;
 
+function stripDomAndManualEditIdentity(root: Element | DocumentFragment): void {
+  const descendants = Array.from(root.querySelectorAll('*'));
+  const nodes = root.nodeType === 1 ? [root as Element, ...descendants] : descendants;
+  for (const node of nodes) {
+    node.removeAttribute('id');
+    for (const attr of MANUAL_EDIT_IDENTITY_ATTRS) node.removeAttribute(attr);
+  }
+}
+
 /**
  * Deep-clone an element for `duplicate-element`, stripping ordinary HTML ids
  * and every manual-edit identity attribute from the clone and its descendants.
@@ -783,11 +792,7 @@ const MANUAL_EDIT_IDENTITY_ATTRS = [
  */
 function cloneWithoutManualEditIdentity(el: Element): Element {
   const clone = el.cloneNode(true) as Element;
-  const nodes = [clone, ...Array.from(clone.querySelectorAll('*'))];
-  for (const node of nodes) {
-    node.removeAttribute('id');
-    for (const attr of MANUAL_EDIT_IDENTITY_ATTRS) node.removeAttribute(attr);
-  }
+  stripDomAndManualEditIdentity(clone);
   return clone;
 }
 
@@ -822,9 +827,9 @@ function sanitizeInnerHtml(doc: Document, html: string): string {
       const name = attr.name.toLowerCase();
       if (name.startsWith('on')) node.removeAttribute(attr.name);
       else if ((name === 'href' || name === 'src') && /^\s*javascript:/i.test(attr.value)) node.removeAttribute(attr.name);
-      else if (name === 'data-od-runtime-id' || name === 'data-od-editing' || name === 'data-od-source-path') node.removeAttribute(attr.name);
     }
   }
+  stripDomAndManualEditIdentity(template.content);
   return template.innerHTML;
 }
 

@@ -475,6 +475,24 @@ describe('manual edit source patches', () => {
     expect(outer).toContain('<span');
   });
 
+  it('strips DOM and manual-edit identities from set-inner-html commits', () => {
+    const result = applyManualEditPatch(baseSource, {
+      kind: 'set-inner-html',
+      id: 'hero-title',
+      html: '<span id="duplicate" data-od-id="hero-title" data-od-edit-selected="true">Safe <b id="nested" data-od-runtime-id="runtime-1">text</b></span>',
+    });
+
+    expect(result.ok).toBe(true);
+    const doc = new DOMParser().parseFromString(result.source, 'text/html');
+    const target = doc.querySelector('[data-od-id="hero-title"]');
+    expect(target !== null).toBe(true);
+    expect(target!.querySelector('[id]') === null).toBe(true);
+    expect(target!.querySelector('[data-od-id]') === null).toBe(true);
+    expect(target!.querySelector('[data-od-edit-selected]') === null).toBe(true);
+    expect(target!.querySelector('[data-od-runtime-id]') === null).toBe(true);
+    expect(target!.textContent).toBe('Safe text');
+  });
+
   it('persists sanitized inline formatting for runtime-only brand-kit targets', () => {
     const result = applyManualEditPatch(brandKitSource, {
       kind: 'set-inner-html',
