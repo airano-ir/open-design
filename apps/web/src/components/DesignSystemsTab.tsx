@@ -603,8 +603,9 @@ export function DesignSystemsTab({
     ...(hasTeamWorkspace
       ? [{ value: 'team' as const, label: t('pluginsView.tab.team'), count: teamSearched.length }]
       : []),
+    // #5517 ships three scopes only. The enterprise placeholder tab advertised a
+    // surface that does not exist yet, so it leaves the row.
     { value: 'official' as const, label: t('dsManager.officialPresets'), count: queryScoped.length },
-    { value: 'enterprise' as const, label: t('dsManager.enterprise'), comingSoon: true },
   ];
 
   const showPresetFilters = designSystemCollection === 'official';
@@ -711,12 +712,7 @@ export function DesignSystemsTab({
             onClick={() => setDesignSystemCollection(tab.value)}
           >
             <span>{tab.label}</span>
-            {'count' in tab ? (
-              <span className="ds-top-scope-count" aria-hidden>{tab.count}</span>
-            ) : null}
-            {tab.comingSoon ? (
-              <span className={styles.scopeComingSoon} aria-hidden>{t('dsManager.comingSoonBadge')}</span>
-            ) : null}
+            <span className="ds-top-scope-count" aria-hidden>{tab.count}</span>
           </button>
         ))}
         <div
@@ -839,6 +835,11 @@ export function DesignSystemsTab({
       );
     }
     if (activeSystems.length === 0) {
+      // One empty message per state, never two. A search that matched nothing is
+      // a fact about THIS list, so it is stated here beside the filter that
+      // caused it; an empty scope is a fact about the page, so it is left to the
+      // detail pane's empty card rather than repeated as bare text in both
+      // columns.
       if (designSystemCollection === 'official') {
         return (
           <div className={styles.sidebarEmpty} data-testid="design-systems-empty">
@@ -846,11 +847,7 @@ export function DesignSystemsTab({
           </div>
         );
       }
-      return (
-        <div className={styles.sidebarEmpty}>
-          <p className={styles.sidebarEmptyText}>{t('dsManager.emptyMine')}</p>
-        </div>
-      );
+      return null;
     }
     return activeSystems.map((system) => (
       <SystemRow
@@ -907,10 +904,10 @@ export function DesignSystemsTab({
       );
     }
 
-    // Empty scope — invite the relevant next action.
-    const emptyText = designSystemCollection === 'official'
-        ? t('ds.emptyNoMatch')
-        : t('dsManager.emptyMine');
+    // Empty scope — invite the relevant next action. The official scope only
+    // runs dry behind a search, and the list column already says so, so this
+    // pane stays a quiet placeholder instead of echoing that sentence.
+    const emptyText = designSystemCollection === 'official' ? null : t('dsManager.emptyMine');
     const emptyTitle = designSystemCollection === 'mine'
       ? t('dsManager.createTitle')
       : null;
@@ -920,7 +917,7 @@ export function DesignSystemsTab({
           <SparkGlyph />
         </span>
         {emptyTitle ? <p className={styles.previewEmptyTitle}>{emptyTitle}</p> : null}
-        <p className={styles.previewEmptyText}>{emptyText}</p>
+        {emptyText ? <p className={styles.previewEmptyText}>{emptyText}</p> : null}
       </div>
     );
   }

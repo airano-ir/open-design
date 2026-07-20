@@ -141,7 +141,8 @@ describe('DesignSystemsTab', () => {
     expect(screen.queryByRole('tab', { name: 'Template' })).toBeNull();
     expect(screen.getByRole('tab', { name: 'Your systems' }).textContent).toContain('1');
     expect(screen.getByRole('tab', { name: 'Official presets' }).textContent).toContain('1');
-    expect(screen.getByRole('tab', { name: 'Enterprise' }).textContent).toContain('Coming soon');
+    // #5517 ships three scopes; the Enterprise "coming soon" placeholder is gone.
+    expect(screen.queryByRole('tab', { name: 'Enterprise' })).toBeNull();
   });
 
   it('separates user-created design systems from the official preset library', () => {

@@ -1478,7 +1478,15 @@ export function ExtensionsMarketplace({
             <strong>{t('pluginsView.loading')}</strong>
           </div>
         ) : visibleCards.length === 0 ? (
-          <MarketEmptyState mode={mode} scope={scope} filtered={query.trim().length > 0} t={t} />
+          <MarketEmptyState
+            mode={mode}
+            scope={scope}
+            // A category chip narrows the list exactly like the search box, so
+            // an empty result behind either one reads as "no match", not as an
+            // empty scope.
+            filtered={query.trim().length > 0 || category !== null}
+            t={t}
+          />
         ) : (
           <div className="plugin-marketplace__rows">
             {visibleCards.map((card) => {

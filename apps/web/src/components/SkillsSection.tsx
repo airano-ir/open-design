@@ -981,7 +981,7 @@ function formatSize(bytes: number): string {
 // Frontmatter-style category slugs come in as kebab-case
 // ("image-generation"). Render them as Title Case in the filter pill so
 // the row reads as a category list rather than a raw enum dump.
-function humanizeCategory(slug: string): string {
+export function humanizeCategory(slug: string): string {
   if (!slug) return slug;
   return slug
     .split('-')
