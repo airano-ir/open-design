@@ -237,6 +237,30 @@ describe('run diagnostics', () => {
     expect(hung.tool_call_seen).toBe(true);
     expect(hung.tool_result_sent).toBe(false);
 
+    // Degraded provider events carry a null id on BOTH sides (pi-rpc,
+    // copilot-stream emit `toolCallId ?? null`). An unpaired id-less tool call
+    // must NOT fall through to "delivered".
+    const idlessHung = summarizeRunDiagnosticsForAnalytics({
+      events: [
+        { event: 'agent', data: { type: 'tool_use', name: 'Read', id: null } },
+      ],
+      exitCode: null,
+      signal: 'SIGKILL',
+    });
+    expect(idlessHung.tool_call_seen).toBe(true);
+    expect(idlessHung.tool_result_sent).toBe(false);
+
+    // ...but an id-less tool call that DID get its (also id-less) result counts.
+    const idlessResolved = summarizeRunDiagnosticsForAnalytics({
+      events: [
+        { event: 'agent', data: { type: 'tool_use', name: 'Read', id: null } },
+        { event: 'agent', data: { type: 'tool_result', toolUseId: null } },
+      ],
+      exitCode: 0,
+      signal: null,
+    });
+    expect(idlessResolved.tool_result_sent).toBe(true);
+
     // An ACP approval diagnostic flips approval_requested.
     const approved = summarizeRunDiagnosticsForAnalytics({
       events: [
