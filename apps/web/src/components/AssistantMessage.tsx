@@ -65,7 +65,6 @@ import { dedupeToolUsesById } from "../runtime/tool-events";
 import {
   isTodoWriteToolName,
   unfinishedTodosFromEvents,
-  type TodoItem,
 } from "../runtime/todos";
 import type { Dict } from "../i18n/types";
 import { agentDisplayName, agentIconId, exactAgentDisplayName } from "../utils/agentLabels";
@@ -315,11 +314,6 @@ interface Props {
   // in-flight Write/Edit's code in real time before the full `tool_use`
   // arrives. Never persisted.
   liveToolInput?: Record<string, { name: string; text: string; seq?: number }>;
-  // ChatPane renders the canonical conversation-level TodoWrite card as its
-  // own row, while this message strips TodoWrite tool groups to avoid a
-  // duplicate per-message card.
-  showConversationTodoCard?: boolean;
-  conversationTodoInput?: unknown | null;
   projectId?: string | null;
   // Analytics context for the assistant_feedback_* events. Defaults
   // applied at the call site keep AssistantMessage usable in tests
@@ -364,7 +358,6 @@ interface Props {
   // there (Claude-Design style) instead of inline; this assistant message
   // shows a banner that focuses the tab on click.
   onOpenQuestions?: (request?: QuestionFormOpenRequest) => void;
-  onContinueRemainingTasks?: (todos: TodoItem[]) => void;
   onForkFromMessage?: () => void;
   forking?: boolean;
   onFeedback?: (change: ChatMessageFeedbackChange) => void;
@@ -400,8 +393,8 @@ interface Props {
 }
 
 // Props compared by reference to decide whether a memoized AssistantMessage can
-// skip re-rendering. The interaction callbacks (onContinueRemainingTasks,
-// onForkFromMessage, onFeedback, and next-step actions) are DELIBERATELY
+// skip re-rendering. The interaction callbacks (onForkFromMessage, onFeedback,
+// and next-step actions) are DELIBERATELY
 // excluded: ChatPane re-creates them per render, but routes them through a ref
 // so their behavior is reference-stable — comparing them would defeat the memo
 // on every streamed frame. `isLast` is compared, which captures the only state
@@ -412,8 +405,6 @@ interface Props {
 const ASSISTANT_MESSAGE_COMPARED_PROPS: Array<keyof Props> = [
   'message',
   'streaming',
-  'showConversationTodoCard',
-  'conversationTodoInput',
   'projectId',
   'projectKind',
   'conversationId',
@@ -477,8 +468,6 @@ function AssistantMessageImpl({
   message,
   streaming,
   liveToolInput,
-  showConversationTodoCard = false,
-  conversationTodoInput = null,
   projectId = null,
   projectKind = null,
   conversationId = null,
@@ -497,7 +486,6 @@ function AssistantMessageImpl({
   errorCardOwnerId = null,
   nextUserContent,
   onOpenQuestions,
-  onContinueRemainingTasks,
   onForkFromMessage,
   forking = false,
   onFeedback,
@@ -536,9 +524,8 @@ function AssistantMessageImpl({
         ? ([{ kind: "text", text: message.content }] satisfies AgentEvent[])
         : [];
   const displayEvents = useMemo(() => dedupeToolUsesById(events), [events]);
-  // ChatPane renders the canonical TodoWrite card as a standalone chat row, so
-  // we strip TodoWrite tool-groups out of the per-message flow to avoid the
-  // same task list rendering twice.
+  // ChatPane renders the canonical TodoWrite card above the composer, so the
+  // per-message flow must not render the same task list again.
   const settledUseIds = useMemo(
     () => new Set(displayEvents.filter((e) => e.kind === "tool_use").map((e) => e.id)),
     [displayEvents],
@@ -554,23 +541,20 @@ function AssistantMessageImpl({
     }
     return out;
   }, [streaming, liveToolInput, settledUseIds]);
-  // Compose the block list, then run the strip/suppress pipeline once.
+  // ChatPane owns one canonical conversation-level Todo card above the
+  // composer. Strip TodoWrite snapshots from individual messages so plans do
+  // not appear twice or jump around as history is virtualized.
   const blocks = useMemo(() => {
     const rawBlocks = [...buildBlocks(displayEvents), ...liveCodeBlocks];
-    return placeConversationTodoCard(
+    return stripTodoToolGroups(
       stripEmptyThinkingBlocks(suppressDuplicateQuestionForms(rawBlocks)),
-      {
-        show: showConversationTodoCard,
-        input: conversationTodoInput,
-      },
     );
-  }, [displayEvents, liveCodeBlocks, showConversationTodoCard, conversationTodoInput]);
+  }, [displayEvents, liveCodeBlocks]);
   // A task gets one execution-record disclosure. This keeps answer prose
   // readable when an agent has alternated between many tools, while retaining
   // every command, file operation, and streaming code preview for review.
-  // TodoWrite is deliberately left in place: ChatPane owns its single
-  // conversation-level progress card, which is a different user-facing
-  // contract from the per-turn execution record.
+  // TodoWrite has already been removed because ChatPane owns the single
+  // conversation-level progress card outside message history.
   const { contentBlocks, taskActivity } = useMemo(
     () => splitTaskActivity(blocks),
     [blocks],
@@ -721,6 +705,9 @@ function AssistantMessageImpl({
     [message.content, nextStepVariant, projectMetadata, streaming],
   );
   const unfinishedTodos = streaming ? [] : unfinishedTodosFromEvents(events);
+  const hasTodoSnapshot = events.some(
+    (event) => event.kind === "tool_use" && isTodoWriteToolName(event.name),
+  );
   const runSucceeded =
     !streaming &&
     !hasResultDeliveryFailure &&
@@ -729,18 +716,6 @@ function AssistantMessageImpl({
       (!message.runStatus && !!message.endedAt) ||
       isBrandBrowserAssistMessage
     );
-  const runTerminal =
-    !streaming &&
-    (
-      (message.runStatus ? isTerminalRunStatus(message.runStatus) : false) ||
-      (!message.runStatus && !!message.endedAt) ||
-      isBrandBrowserAssistMessage
-    );
-  const canContinueTodos =
-    !streaming &&
-    !!isLast &&
-    unfinishedTodos.length > 0 &&
-    !!onContinueRemainingTasks;
   const canFork = !streaming && !!onForkFromMessage;
   const copyMarkdown = message.content.trim().length > 0 ? message.content : undefined;
   const showFeedback =
@@ -805,14 +780,18 @@ function AssistantMessageImpl({
         (!nextUserContent || !parseSubmittedAnswers(seg.form, nextUserContent)),
     );
   }, [message.content, nextUserContent, suppressDirectionForms]);
-  // Terminal turns should leave the user with an actionable path, including
-  // canceled/failed/no-artifact turns. Artifact-backed cards still wire Share
-  // and Download to the chosen file; incomplete cards fall back to composer
-  // prompts or toolbox actions. A turn still waiting on question-form answers
-  // is the exception: the next step IS answering the form.
+  // "Next step" is a delivery affordance, not a generic terminal-state card.
+  // Keep it out of pure Q&A, failures/cancellations and incomplete Todo turns;
+  // only a successful turn that actually produced something may surface it.
+  const hasTurnDeliverable =
+    turnArtifactOps.length > 0 ||
+    displayedProduced.length > 0 ||
+    pluginActionFolders.length > 0;
   const showNextStepActions =
     !streaming &&
-    runTerminal &&
+    runSucceeded &&
+    unfinishedTodos.length === 0 &&
+    hasTurnDeliverable &&
     !hasPendingQuestionForm &&
     ((!!isLast && hasNextStepPrimary) || showOpenDesignSubmission);
   // Pre-output vs working: before any real content (text / thinking / tools /
@@ -1004,13 +983,6 @@ function AssistantMessageImpl({
                 </div>
               ))
           : null}
-        {!streaming && unfinishedTodos.length > 0 ? (
-          <UnfinishedTodosPanel
-            todos={unfinishedTodos}
-            canContinue={canContinueTodos}
-            onContinue={() => onContinueRemainingTasks?.(unfinishedTodos)}
-          />
-        ) : null}
         {showCompletionRow ? (
           <div className="assistant-completion-row">
             {showFeedback ? (
@@ -1040,7 +1012,10 @@ function AssistantMessageImpl({
                   forking,
                   forceVisible: true,
                   isLast: !!isLast,
-                  hideRunStatus: taskActivity !== null,
+                  hideRunStatus:
+                    taskActivity !== null ||
+                    hasTodoSnapshot ||
+                    message.id === errorCardOwnerId,
                 }}
               />
             ) : (
@@ -1057,7 +1032,11 @@ function AssistantMessageImpl({
                 onFork={canFork ? onForkFromMessage : undefined}
                 forking={forking}
                 isLast={!!isLast}
-                hideRunStatus={taskActivity !== null}
+                hideRunStatus={
+                  taskActivity !== null ||
+                  hasTodoSnapshot ||
+                  message.id === errorCardOwnerId
+                }
               />
             )}
           </div>
@@ -2122,52 +2101,6 @@ function feedbackReasonLabel(
   return code;
 }
 
-function UnfinishedTodosPanel({
-  todos,
-  canContinue,
-  onContinue,
-}: {
-  todos: TodoItem[];
-  canContinue: boolean;
-  onContinue: () => void;
-}) {
-  const t = useT();
-  const visible = todos.slice(0, 3);
-  const hiddenCount = todos.length - visible.length;
-  return (
-    <div className="unfinished-todos">
-      <div className="unfinished-todos-head">
-        <span className="unfinished-todos-title">
-          {t("assistant.unfinishedSummary", { n: todos.length })}
-        </span>
-        {canContinue ? (
-          <button
-            type="button"
-            className="unfinished-todos-continue"
-            onClick={onContinue}
-          >
-            {t("assistant.continueRemaining")}
-          </button>
-        ) : null}
-      </div>
-      <ul className="unfinished-todos-list">
-        {visible.map((todo, i) => (
-          <li key={`${todo.status}-${todo.content}-${i}`}>
-            {todo.status === "in_progress" && todo.activeForm
-              ? todo.activeForm
-              : todo.content}
-          </li>
-        ))}
-      </ul>
-      {hiddenCount > 0 ? (
-        <div className="unfinished-todos-more">
-          {t("assistant.unfinishedMore", { n: hiddenCount })}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 function ProducedFiles({
   files,
   projectId,
@@ -3077,10 +3010,8 @@ function ToolGroupCard({
   // snapshot; every other tool passes through untouched.
   items = dedupeSnapshotToolRetries(items);
 
-  // ChatPane reserves one canonical TodoWrite position in the conversation.
-  // Render that task list directly instead of nesting its own disclosure
-  // inside the generic tool-group disclosure: the todo summary is the first
-  // interactive level, and it owns its completed/default-collapsed behavior.
+  // Fallback for direct ActionGroup use: keep a Todo summary as the first
+  // disclosure level instead of nesting it under the generic tool accordion.
   if (items.length > 0 && items.every((item) => isTodoWriteToolName(item.use.name))) {
     const latestTodo = items[items.length - 1]!;
     return (
@@ -3464,7 +3395,7 @@ function splitTaskActivity(blocks: Block[]): {
       continue;
     }
     if (block.kind === "tool-group") {
-      // The canonical TodoWrite display is kept in its anchored chat row. It
+      // The canonical TodoWrite display is kept above the composer. It
       // remains the one task-progress surface, rather than becoming another
       // item inside the execution audit trail.
       if (block.items.every((item) => isTodoWriteToolName(item.use.name))) {
@@ -3491,29 +3422,12 @@ function splitTaskActivity(blocks: Block[]): {
  * single tool-group block so the chat surface stays compact during chains
  * of edits / reads.
  */
-function placeConversationTodoCard(
-  blocks: Block[],
-  options: { show: boolean; input: unknown | null },
-): Block[] {
-  let placed = false;
-  return blocks.flatMap((block): Block[] => {
-    if (block.kind !== "tool-group") return [block];
-    if (!block.items.every((it) => isTodoWriteToolName(it.use.name))) return [block];
-    if (!options.show || placed) return [];
-    placed = true;
-    const item = block.items[0];
-    if (!item || options.input == null) return [block];
-    return [{
-      ...block,
-      items: [{
-        ...item,
-        use: {
-          ...item.use,
-          input: options.input,
-        },
-      }],
-    }];
-  });
+function stripTodoToolGroups(blocks: Block[]): Block[] {
+  return blocks.filter(
+    (block) =>
+      block.kind !== "tool-group" ||
+      !block.items.every((item) => isTodoWriteToolName(item.use.name)),
+  );
 }
 
 function stripEmptyThinkingBlocks(blocks: Block[]): Block[] {

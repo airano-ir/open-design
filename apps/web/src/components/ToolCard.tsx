@@ -211,7 +211,19 @@ function OpenInTabButton({ filePath, ctx }: { filePath: string; ctx: FileToolCtx
   );
 }
 
-export function TodoCard({ input, runStreaming, runSucceeded, onDismiss }: { input: unknown; runStreaming: boolean; runSucceeded: boolean; onDismiss?: () => void }) {
+export function TodoCard({
+  input,
+  runStreaming,
+  runSucceeded,
+  onDismiss,
+  onContinue,
+}: {
+  input: unknown;
+  runStreaming: boolean;
+  runSucceeded: boolean;
+  onDismiss?: () => void;
+  onContinue?: () => void;
+}) {
   const t = useT();
   const todos = parseTodoWriteInput(input);
   // Mirror the pattern other agent UIs (Cursor, Codex) use: default the
@@ -236,11 +248,12 @@ export function TodoCard({ input, runStreaming, runSucceeded, onDismiss }: { inp
   // wins over an in-flight response: an agent may still be writing its final
   // prose after marking every task complete, so the details start collapsed.
   const allComplete = todos.length > 0 && completed === todos.length;
-  const defaultExpanded = !allComplete && (hasInProgress || hasPending || runStreaming);
+  const defaultExpanded = !allComplete && runStreaming && (hasInProgress || hasPending);
   const [overrideExpanded, setOverrideExpanded] = useState<boolean | null>(null);
   const expanded = overrideExpanded ?? defaultExpanded;
   if (todos.length === 0) return <GenericCard name="TodoWrite" input={input} runStreaming={runStreaming} runSucceeded={runSucceeded} />;
   const showDismiss = !!onDismiss && allComplete;
+  const showContinue = !!onContinue && !allComplete && !runStreaming;
   return (
     <div className={`op-card op-todo${expanded ? '' : ' op-todo-collapsed'}`}>
       <div className="op-card-head op-todo-head">
@@ -276,6 +289,15 @@ export function TodoCard({ input, runStreaming, runSucceeded, onDismiss }: { inp
             title={t('tool.todosDismiss')}
           >
             {t('tool.todosDone')}
+          </button>
+        ) : null}
+        {showContinue ? (
+          <button
+            type="button"
+            className="op-todo-continue"
+            onClick={() => onContinue?.()}
+          >
+            {t('assistant.continueRemaining')}
           </button>
         ) : null}
       </div>

@@ -831,7 +831,8 @@ Expected output:
     expect(spacer!.style.height).toBe('0px');
   });
 
-  it('passes a stopped inline todo after a terminal run without a final TodoWrite', () => {
+  it('pins a stopped todo after a terminal run without a final TodoWrite', () => {
+    const onContinueRemainingTasks = vi.fn();
     const messages: ChatMessage[] = [
       {
         id: 'assistant-1',
@@ -876,13 +877,28 @@ Expected output:
         onSelectConversation={vi.fn()}
         onDeleteConversation={vi.fn()}
         projectMetadata={projectMetadata}
+        onContinueRemainingTasks={onContinueRemainingTasks}
       />,
     );
 
-    expect(container.querySelectorAll('.chat-log .op-card.op-todo')).toHaveLength(1);
+    expect(container.querySelector('.chat-log .op-card.op-todo')).toBeNull();
+    expect(container.querySelectorAll('.chat-pinned-todo .op-card.op-todo')).toHaveLength(1);
     expect(container.querySelector('.todo-stopped .todo-text')?.textContent).toBe('Build prototype');
     expect(container.querySelector('.todo-pending .todo-text')?.textContent).toBe('Run QA');
-    expect(container.querySelector('.chat-pinned-todo')).toBeNull();
+    const continueButton = container.querySelector<HTMLButtonElement>('.op-todo-continue');
+    expect(continueButton).not.toBeNull();
+    fireEvent.click(continueButton!);
+    expect(onContinueRemainingTasks).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'assistant-1' }),
+      [
+        {
+          content: 'Build prototype',
+          status: 'in_progress',
+          activeForm: 'Building prototype',
+        },
+        { content: 'Run QA', status: 'pending', activeForm: undefined },
+      ],
+    );
   });
   it('shows several queued prompts above the composer with compact controls', () => {
     const onRemoveQueuedSend = vi.fn();

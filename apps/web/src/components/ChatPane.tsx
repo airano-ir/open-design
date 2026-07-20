@@ -43,11 +43,16 @@ import {
   DESIGN_SYSTEM_WORKSPACE_DISPLAY_TITLE,
   isDesignSystemWorkspacePrompt,
 } from '../design-system-auto-prompt';
-import { isTodoWriteToolName, latestTodoWriteInputForPinnedCard } from '../runtime/todos';
+import {
+  isTodoWriteToolName,
+  latestTodoWriteInputForPinnedCard,
+  unfinishedTodosFromEvents,
+} from '../runtime/todos';
 import type { AppConfig, ChatAttachment, ChatCommentAttachment, ChatMessage, ChatMessageFeedbackChange, Conversation, DesignSystemSummary, PreviewComment, Project, ProjectFile, ProjectMetadata, SkillSummary } from '../types';
 import { agentDisplayName } from '../utils/agentLabels';
 import { commentTargetDisplayName, commentsToAttachments, simplePositionLabel } from '../comments';
 import { AssistantMessage, type QuestionFormOpenRequest } from './AssistantMessage';
+import { TodoCard } from './ToolCard';
 import type { BrandBrowserAssistConfirm } from './OdCard';
 import {
   DESIGN_SYSTEM_NEXT_STEP_ACTIONS,
@@ -919,6 +924,7 @@ export function ChatPane({
   const composerRef = useRef<ChatComposerHandle | null>(null);
   const composerSlotRef = useRef<HTMLDivElement | null>(null);
   const composerLayerRef = useRef<HTMLDivElement | null>(null);
+  const pinnedTodoRef = useRef<HTMLDivElement | null>(null);
   const queuedSendStripRef = useRef<HTMLDivElement | null>(null);
   const didInitialScrollRef = useRef(false);
   const runFailedToastSurfaceKeysRef = useRef<Set<string>>(new Set());
@@ -976,12 +982,26 @@ export function ChatPane({
   const tailSpacerRef = useRef<HTMLDivElement | null>(null);
   const prevStreamingRef = useRef(streaming);
   const prevLastUserIdRef = useRef<string | undefined>(undefined);
+  const dismissedStorageKey = `dismissedTodo:${activeConversationId ?? 'none'}`;
+  const [dismissedPinnedTodoKey, setDismissedPinnedTodoKey] = useState<string | null>(() => {
+    try {
+      return sessionStorage.getItem(dismissedStorageKey);
+    } catch {
+      return null;
+    }
+  });
+  useEffect(() => {
+    try {
+      setDismissedPinnedTodoKey(sessionStorage.getItem(dismissedStorageKey));
+    } catch {
+      setDismissedPinnedTodoKey(null);
+    }
+  }, [dismissedStorageKey]);
   // AssistantMessage's interaction callbacks are re-created per render and
   // excluded from its memo comparison (so streaming doesn't re-render every
   // message). Route them through this ref so a memoized message still calls the
   // LATEST handler. See areAssistantMessagePropsEqual in AssistantMessage.tsx.
   const assistantCallbacksRef = useRef<AssistantCallbacks>({
-    onContinueRemainingTasks,
     onAssistantFeedback,
     onBrandBrowserAssistConfirm,
     onArtifactShare,
@@ -994,7 +1014,6 @@ export function ChatPane({
     onNextStepCreateDesignSystem: onCreateDesignSystemFromProject,
   });
   assistantCallbacksRef.current = {
-    onContinueRemainingTasks,
     onAssistantFeedback,
     onBrandBrowserAssistConfirm,
     onArtifactShare,
@@ -1314,7 +1333,6 @@ export function ChatPane({
           runId: retryAssistant.runId ?? null,
         }
       : null;
-  const showByokRecoveryCta = showByokRecoveryAction && Boolean(onSwitchToLocalCli);
   // A `primaryAction: 'none'` failure (e.g. a hard quota where retrying is
   // futile) contributes no button of its own — it relies on the AMR switch card
   // below. Only claim the actions row when a real control will render, so a
@@ -1327,14 +1345,19 @@ export function ChatPane({
         runFailureUi.secondaryRetry ||
         canResumeFailedRun),
   );
+  // The failure card exposes one recovery path. A case-specific action wins;
+  // the generic local-CLI escape hatch is only used when no such action exists.
+  const showByokRecoveryCta =
+    showByokRecoveryAction && Boolean(onSwitchToLocalCli) && !runFailureHasAction;
   const showErrorActions = showByokRecoveryCta || runFailureHasAction;
+  const showAmrGuidance = Boolean(amrSwitchPayload && !showErrorActions);
   useEffect(() => {
     if (!displayError || !failedRunErrorEvent?.code || !retryAssistant) return;
     // The hosted-AMR nudge owns this same surface_view when it renders below
     // the error card. For all other failed-run guidance (AMR auth/balance,
     // Antigravity auth/quota, upstream outage, generic retry), the chat error
     // card itself is the visible run_failed_toast surface.
-    if (amrSwitchPayload) return;
+    if (showAmrGuidance) return;
 
     const key = [
       projectId ?? '',
@@ -1360,7 +1383,7 @@ export function ChatPane({
   }, [
     activeConversationId,
     analytics.track,
-    amrSwitchPayload,
+    showAmrGuidance,
     displayError,
     failedRunErrorEvent?.code,
     projectId,
@@ -1781,7 +1804,20 @@ export function ChatPane({
       }
     };
 
+    let observedPinnedTodo: Element | null = null;
     let observedQueuedSendStrip: Element | null = null;
+    const syncPinnedTodo = () => {
+      if (!resizeObserver) return;
+      const pinnedEl = pinnedTodoRef.current;
+      if (pinnedEl && observedPinnedTodo !== pinnedEl) {
+        if (observedPinnedTodo) resizeObserver.unobserve(observedPinnedTodo);
+        resizeObserver.observe(pinnedEl);
+        observedPinnedTodo = pinnedEl;
+      } else if (!pinnedEl && observedPinnedTodo) {
+        resizeObserver.unobserve(observedPinnedTodo);
+        observedPinnedTodo = null;
+      }
+    };
     const syncQueuedSendStrip = () => {
       if (!resizeObserver) return;
       const queuedEl = queuedSendStripRef.current;
@@ -1798,12 +1834,14 @@ export function ChatPane({
     };
 
     syncObservedChildren();
+    syncPinnedTodo();
     syncQueuedSendStrip();
 
     const mutationObserver =
       typeof MutationObserver !== 'undefined'
         ? new MutationObserver(() => {
             syncObservedChildren();
+            syncPinnedTodo();
             syncQueuedSendStrip();
             followLatestIfPinned();
           })
@@ -1816,11 +1854,9 @@ export function ChatPane({
       childList: true,
       subtree: true,
     });
-    // QueuedSendStrip lives outside the chat-log subtree (it is a sibling of
-    // .chat-log-wrap inside .pane). The MutationObserver above only fires for
-    // changes inside el, so it cannot detect that surface mounting or
-    // unmounting. Watch the nearest common ancestor (.pane) with childList-only
-    // to keep its observer current.
+    // PinnedTodoSlot and QueuedSendStrip live outside the chat-log subtree.
+    // Watch their nearest common ancestor so resize observation follows those
+    // surfaces when they mount or unmount.
     const paneEl = el.parentElement?.parentElement ?? null;
     if (paneEl && mutationObserver) {
       mutationObserver.observe(paneEl, { childList: true });
@@ -2375,7 +2411,6 @@ export function ChatPane({
                 errorCardOwnerId={errorCardOwnerId}
                 nextUserContentByAssistantId={nextUserContentByAssistantId}
                 assistantCallbacksRef={assistantCallbacksRef}
-                onContinueRemainingTasks={onContinueRemainingTasks}
                 onBrandBrowserAssistConfirm={onBrandBrowserAssistConfirm}
                 onArtifactShare={onArtifactShare}
                 onToolboxAction={handleToolboxAction}
@@ -2625,7 +2660,8 @@ export function ChatPane({
                             >
                               {t('chat.resumeRunCta')}
                             </button>
-                          ) : runFailureUi.primaryAction === 'retry' || runFailureUi.secondaryRetry ? (
+                          ) : runFailureUi.primaryAction === 'retry' ||
+                            (runFailureUi.primaryAction === 'none' && runFailureUi.secondaryRetry) ? (
                             <button
                               type="button"
                               className="ghost chat-error-retry"
@@ -2640,7 +2676,7 @@ export function ChatPane({
                   ) : null}
                 </div>
               ) : null}
-              {amrSwitchPayload ? (
+              {showAmrGuidance && amrSwitchPayload ? (
                 <AmrGuidance
                   {...amrSwitchPayload}
                   sourceDetail="chat_error_switch_retry_card"
@@ -2679,6 +2715,22 @@ export function ChatPane({
               <span>{t('chat.jumpToLatest')}</span>
             </button>
           </div>
+          <PinnedTodoSlot
+            messages={displayMessages}
+            streaming={streaming}
+            dismissedKey={dismissedPinnedTodoKey}
+            onContinueRemainingTasks={onContinueRemainingTasks}
+            onDismiss={(key) => {
+              setDismissedPinnedTodoKey(key);
+              try {
+                if (key) sessionStorage.setItem(dismissedStorageKey, key);
+                else sessionStorage.removeItem(dismissedStorageKey);
+              } catch {
+                // sessionStorage may be unavailable in sandboxed contexts.
+              }
+            }}
+            containerRef={pinnedTodoRef}
+          />
           <QueuedSendStrip
             containerRef={queuedSendStripRef}
             items={queuedItems}
@@ -2750,9 +2802,6 @@ export function ChatPane({
 }
 
 interface AssistantCallbacks {
-  onContinueRemainingTasks:
-    | ((assistantMessage: ChatMessage, todos: TodoItem[]) => void)
-    | undefined;
   onAssistantFeedback:
     | ((message: ChatMessage, change: ChatMessageFeedbackChange) => void)
     | undefined;
@@ -2820,7 +2869,6 @@ function ChatRows({
   errorCardOwnerId,
   nextUserContentByAssistantId,
   assistantCallbacksRef,
-  onContinueRemainingTasks,
   onBrandBrowserAssistConfirm,
   onArtifactShare,
   onToolboxAction,
@@ -2877,7 +2925,6 @@ function ChatRows({
   errorCardOwnerId: string | null;
   nextUserContentByAssistantId: Map<string, string>;
   assistantCallbacksRef: MutableRefObject<AssistantCallbacks>;
-  onContinueRemainingTasks?: (assistantMessage: ChatMessage, todos: TodoItem[]) => void;
   onBrandBrowserAssistConfirm?: BrandBrowserAssistConfirm;
   onArtifactShare?: (fileName: string) => void;
   onToolboxAction?: (id: DesignToolboxActionId) => void;
@@ -2907,14 +2954,6 @@ function ChatRows({
   onOpenQuestions?: (request?: QuestionFormOpenRequest) => void;
   scrollContainerRef: MutableRefObject<HTMLDivElement | null>;
 }) {
-  const conversationTodoInput = useMemo(
-    () => latestTodoWriteInputForPinnedCard(messages),
-    [messages],
-  );
-  const conversationTodoAnchorMessageId = useMemo(
-    () => firstTodoWriteAssistantMessageId(messages),
-    [messages],
-  );
   const items = useMemo(
     () => buildChatRenderItems(messages),
     [messages],
@@ -2927,10 +2966,6 @@ function ChatRows({
     overscanPx: CHAT_MESSAGE_OVERSCAN_PX,
     resetKey: activeConversationKey,
     initialTailRows: CHAT_VIRTUAL_INITIAL_TAIL_ROWS,
-    alwaysIncludeKey:
-      conversationTodoInput != null && conversationTodoAnchorMessageId
-        ? `message:${conversationTodoAnchorMessageId}`
-        : undefined,
   });
 
   const renderItem = (item: ChatRenderItem) => {
@@ -2972,8 +3007,6 @@ function ChatRows({
         // get a stable `undefined`, so adding `liveToolInput` to the memo
         // comparator re-renders just this row per `tool_input_delta`, not all N.
         liveToolInput={messageStreaming ? liveToolInput : undefined}
-        showConversationTodoCard={m.id === conversationTodoAnchorMessageId}
-        conversationTodoInput={conversationTodoInput}
         projectId={projectId}
         projectKind={projectKindForTracking}
         conversationId={activeConversationId}
@@ -3000,11 +3033,6 @@ function ChatRows({
         onBrandBrowserAssistConfirm={
           onBrandBrowserAssistConfirm
             ? (card) => assistantCallbacksRef.current.onBrandBrowserAssistConfirm?.(card)
-            : undefined
-        }
-        onContinueRemainingTasks={
-          m.id === lastAssistantId && onContinueRemainingTasks
-            ? (todos) => assistantCallbacksRef.current.onContinueRemainingTasks?.(m, todos)
             : undefined
         }
         onForkFromMessage={
@@ -3145,17 +3173,6 @@ function buildChatRenderItems(messages: ChatMessage[]): ChatRenderItem[] {
     });
   }
   return items;
-}
-
-function firstTodoWriteAssistantMessageId(messages: ChatMessage[]): string | null {
-  const message = messages.find(
-    (candidate) =>
-      candidate.role === 'assistant' &&
-      candidate.events?.some(
-        (event) => event.kind === 'tool_use' && isTodoWriteToolName(event.name),
-      ),
-  );
-  return message?.id ?? null;
 }
 
 function estimateChatRenderItemHeight(item: ChatRenderItem): number {
@@ -3332,6 +3349,66 @@ function includeVirtualRowByKey<T extends { key: string }>(
       top: offsets[index] ?? 0,
     },
   ].sort((a, b) => a.index - b.index);
+}
+
+function PinnedTodoSlot({
+  messages,
+  streaming,
+  dismissedKey,
+  onContinueRemainingTasks,
+  onDismiss,
+  containerRef,
+}: {
+  messages: ChatMessage[];
+  streaming: boolean;
+  dismissedKey: string | null;
+  onContinueRemainingTasks?: (assistantMessage: ChatMessage, todos: TodoItem[]) => void;
+  onDismiss: (key: string | null) => void;
+  containerRef?: MutableRefObject<HTMLDivElement | null>;
+}) {
+  const [exiting, setExiting] = useState(false);
+  const input = latestTodoWriteInputForPinnedCard(messages);
+  if (input == null) return null;
+
+  const owner = [...messages].reverse().find(
+    (message) =>
+      message.role === 'assistant' &&
+      message.events?.some(
+        (event) => event.kind === 'tool_use' && isTodoWriteToolName(event.name),
+      ),
+  );
+  const unfinishedTodos = owner ? unfinishedTodosFromEvents(owner.events) : [];
+
+  let snapshotKey: string;
+  try {
+    snapshotKey = JSON.stringify(input);
+  } catch {
+    snapshotKey = String(input);
+  }
+  if (snapshotKey === dismissedKey) return null;
+
+  return (
+    <div
+      className={`chat-pinned-todo${exiting ? ' chat-pinned-todo-exit' : ''}`}
+      ref={containerRef}
+    >
+      <TodoCard
+        input={input}
+        runStreaming={streaming}
+        runSucceeded={!streaming}
+        onContinue={
+          owner && unfinishedTodos.length > 0 && onContinueRemainingTasks
+            ? () => onContinueRemainingTasks(owner, unfinishedTodos)
+            : undefined
+        }
+        onDismiss={() => {
+          if (exiting) return;
+          setExiting(true);
+          window.setTimeout(() => onDismiss(snapshotKey), 220);
+        }}
+      />
+    </div>
+  );
 }
 
 function QueuedSendStrip({
