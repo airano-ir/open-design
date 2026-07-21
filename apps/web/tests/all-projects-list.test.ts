@@ -52,21 +52,36 @@ const build = (input: {
   });
 
 describe('buildAllProjectsList', () => {
-  // Acceptance #29: a member created an empty project and 全部项目 stayed on its
-  // "还没有团队项目" empty state, while 草稿 listed the very same project.
-  it('lists a local project the member has not shared to the team', () => {
+  // Acceptance #29 was raised as "my new empty project never showed up in
+  // 全部项目", and product ruled it working as designed on the acceptance doc
+  // (2026-07-20): sharing is an explicit user action, and until it happens the
+  // project belongs to 草稿 only. This test exists so the grid's name does not
+  // tempt someone into "fixing" it again.
+  it('leaves an unshared local project out', () => {
     const list = build({
       projects: [localProject('p-fresh', 'Fresh empty project')],
       teamProjects: [],
     });
 
-    expect(list.map((project) => project.id)).toEqual(['p-fresh']);
+    expect(list).toEqual([]);
   });
 
-  it('lists shared projects the member has not pulled alongside their own', () => {
+  it('lists the member’s own project once it is shared', () => {
     const list = build({
       projects: [localProject('p-mine', 'Mine')],
-      teamProjects: [sharedProject({ projectId: 'p-theirs', name: 'Theirs' })],
+      teamProjects: [sharedProject({ projectId: 'p-mine', ownerMemberId: SELF, name: 'Mine' })],
+    });
+
+    expect(list.map((project) => project.id)).toEqual(['p-mine']);
+  });
+
+  it('lists shared projects the member has not pulled alongside their shared own', () => {
+    const list = build({
+      projects: [localProject('p-mine', 'Mine'), localProject('p-draft', 'Draft')],
+      teamProjects: [
+        sharedProject({ projectId: 'p-mine', ownerMemberId: SELF, name: 'Mine' }),
+        sharedProject({ projectId: 'p-theirs', name: 'Theirs' }),
+      ],
     });
 
     expect(list.map((project) => project.id).sort()).toEqual(['p-mine', 'p-theirs']);

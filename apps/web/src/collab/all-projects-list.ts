@@ -4,11 +4,15 @@ import type { Project } from '../types';
 /**
  * The card list behind the 全部项目 grid.
  *
- * The invariant: **every project the member can reach appears here** — their own
- * local projects whether or not those are shared, plus the projects teammates
- * shared to the hub, deduped by id. Sharing decides a card's badge and where it
- * can be opened from, never whether its owner can find it in the grid the nav
- * calls 全部项目.
+ * The invariant: **only SHARED projects appear here.** A project becomes shared
+ * when the user takes the share action; until then it lives in 草稿 and nowhere
+ * else. That is a product decision, recorded on the acceptance doc
+ * (2026-07-20): "项目要用户点击共享动作才会共享，不然默认是会到草稿里". A previous
+ * change read the grid's name literally and let every local project in — do not
+ * redo that without checking with product first.
+ *
+ * So the list is: the member's own local projects that the hub already lists as
+ * shared, plus the shared projects they have not pulled yet, deduped by id.
  *
  * A shared project the member has not pulled yet has no local record, so it is
  * synthesized into a normal card: placeholder name until the pull registers it
@@ -43,10 +47,13 @@ export function buildAllProjectsList(input: {
       .map((teamProject) => [teamProject.projectId, teamProject.name?.trim() || '']),
   );
 
-  const localCards = projects.map((project) => {
-    const catalogName = catalogNameOverride.get(project.id);
-    return catalogName && catalogName !== project.name ? { ...project, name: catalogName } : project;
-  });
+  const teamSharedProjectIds = new Set(teamProjects.map((teamProject) => teamProject.projectId));
+  const localCards = projects
+    .filter((project) => teamSharedProjectIds.has(project.id))
+    .map((project) => {
+      const catalogName = catalogNameOverride.get(project.id);
+      return catalogName && catalogName !== project.name ? { ...project, name: catalogName } : project;
+    });
 
   const sharedCards: Project[] = teamProjects
     .filter((teamProject) => !localProjectIds.has(teamProject.projectId))
