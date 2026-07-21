@@ -21,7 +21,7 @@ ENV CI=true
 RUN apk add --no-cache python3 make g++
 
 # Use more memory during build for esbuild/tsc postinstall scripts
-ENV NODE_OPTIONS=--max-old-space-size=1024
+ENV NODE_OPTIONS=--max-old-space-size=2048
 
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
