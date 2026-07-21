@@ -77,7 +77,8 @@ describe('AssistantMessage next-step affordance', () => {
         {...h}
       />,
     );
-    expect(screen.getByTestId('next-step-actions')).toBeTruthy();
+    expect(screen.getByRole('group', { name: en['nextStep.title'] })).toBeTruthy();
+    expect(screen.queryByText(en['nextStep.title'])).toBeNull();
     fireEvent.mouseEnter(screen.getByTestId('next-step-toolbox-more'));
     fireEvent.mouseEnter(screen.getByTestId('next-step-more-share'));
     fireEvent.click(screen.getByTestId('next-step-share-share'));

@@ -2604,7 +2604,7 @@ export function ChatPane({
                             // re-sending Retry path, which would resume + repeat.
                             <button
                               type="button"
-                              className="ghost chat-error-retry"
+                              className="chat-error-action"
                               onClick={() =>
                                 onResumeRun
                                   ? onResumeRun(retryAssistant)
@@ -2617,7 +2617,7 @@ export function ChatPane({
                             (runFailureUi.primaryAction === 'none' && runFailureUi.secondaryRetry) ? (
                             <button
                               type="button"
-                              className="ghost chat-error-retry"
+                              className="chat-error-action"
                               onClick={() => onRetry(retryAssistant)}
                             >
                               {t('promptTemplates.retry')}

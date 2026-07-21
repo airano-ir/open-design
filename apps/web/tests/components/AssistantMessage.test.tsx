@@ -81,7 +81,9 @@ describe('AssistantMessage feedback gate', () => {
     );
 
     expect(container.querySelector('[data-user-action-card="plugin-suggestion"]')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Contribute to open-design' })).toBeTruthy();
+    const contribute = screen.getByRole('button', { name: 'Contribute to open-design' });
+    expect(contribute).toBeTruthy();
+    expect(contribute.classList.contains('plugin-action-button--primary')).toBe(false);
     const toggle = screen.getByRole('button', { name: 'View details' });
     const disclosure = container.querySelector('[data-user-action-card="plugin-suggestion"] .accordion-collapsible');
     expect(toggle.getAttribute('aria-expanded')).toBe('false');

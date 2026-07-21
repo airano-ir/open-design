@@ -275,7 +275,7 @@ function SkillPluginCandidateCard({
         actions={
           <button
             type="button"
-            className="plugin-action-button plugin-action-button--primary"
+            className="plugin-action-button"
             disabled={disabled}
             onClick={() => void share("contribute-open-design")}
           >
