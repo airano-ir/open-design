@@ -167,6 +167,40 @@ describe('ManualEditSelectionOverlay pointer capture fallbacks', () => {
   });
 });
 
+describe('ManualEditSelectionOverlay action bar placement', () => {
+  function renderAt(rect: ManualEditRect) {
+    render(
+      <ManualEditSelectionOverlay
+        target={{ ...target, rect }}
+        targets={[target]}
+        scale={1}
+        canvasSize={{ width: 1000, height: 800 }}
+        onGesturePreview={vi.fn()}
+        onGestureCommit={vi.fn()}
+        onGestureCancel={vi.fn()}
+        onDuplicate={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    );
+  }
+
+  it('places the bar above an element with room, keeping it off the handles', () => {
+    renderAt({ x: 100, y: 300, width: 200, height: 80 });
+    const bar = screen.getByTestId('manual-edit-action-bar');
+    expect(bar).toHaveAttribute('data-placement', 'above');
+    // Bar bottom clears the frame top (which carries the move pill).
+    expect(Number.parseFloat(bar.style.top)).toBeLessThan(300);
+  });
+
+  it('flips the bar below a top-hugging element so the frame stays grabbable', () => {
+    renderAt({ x: 100, y: 2, width: 200, height: 40 });
+    const bar = screen.getByTestId('manual-edit-action-bar');
+    expect(bar).toHaveAttribute('data-placement', 'below');
+    // Bar top is beneath the frame bottom (2 + 40), not on top of the handles.
+    expect(Number.parseFloat(bar.style.top)).toBeGreaterThanOrEqual(42);
+  });
+});
+
 describe('ManualEditSelectionOverlay whole-image move', () => {
   function renderImageOverlay() {
     const onGestureCommit = vi.fn();

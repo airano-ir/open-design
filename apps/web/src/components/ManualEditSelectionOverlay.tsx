@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { useT } from '../i18n';
 import {
+  manualEditActionBarTop,
   manualEditClampedCenter,
   manualEditGestureRect,
   manualEditMovePreviewTransform,
@@ -80,6 +81,7 @@ function rectsEqual(a: ManualEditRect, b: ManualEditRect): boolean {
 }
 
 const ACTION_BAR_HEIGHT = 34;
+const ACTION_BAR_GAP = 8;
 const CROP_MIN_SIZE = 16;
 
 function round1(value: number): number {
@@ -472,7 +474,19 @@ export function ManualEditSelectionOverlay({
   };
 
   const isImage = target.kind === 'image';
-  const barTop = Math.max(4, frame.top - ACTION_BAR_HEIGHT - 8);
+  // Keep the action bar off the element's frame + handles: prefer above, flip
+  // below near the top edge, and stay inside the canvas. Otherwise a small or
+  // edge-hugging element has its move pill / resize handles covered and can no
+  // longer be grabbed.
+  const barPlacement = manualEditActionBarTop(
+    frame.top,
+    frame.height,
+    ACTION_BAR_HEIGHT,
+    ACTION_BAR_GAP,
+    canvasSize?.height,
+    4,
+  );
+  const barTop = barPlacement.top;
   const barLeft = manualEditClampedCenter(
     frame.left + frame.width / 2,
     actionBarWidth || 120,
@@ -612,6 +626,7 @@ export function ManualEditSelectionOverlay({
           ref={actionBarRef}
           className={styles.actionBar}
           data-testid="manual-edit-action-bar"
+          data-placement={barPlacement.placement}
           style={{ left: barLeft, top: barTop }}
         >
           {isImage && onReplaceImage ? (

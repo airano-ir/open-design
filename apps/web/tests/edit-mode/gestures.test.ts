@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   MANUAL_EDIT_MIN_GESTURE_SIZE,
+  manualEditActionBarTop,
   manualEditClampedCenter,
   manualEditGestureRect,
   manualEditMovePreviewTransform,
@@ -267,5 +268,42 @@ describe('manual edit floating bar clamping', () => {
   it('only guards the left edge when the canvas size is unknown', () => {
     expect(manualEditClampedCenter(-50, 200, undefined)).toBe(106);
     expect(manualEditClampedCenter(800, 200, undefined)).toBe(800);
+  });
+});
+
+describe('manual edit action bar vertical placement', () => {
+  const BAR = 34;
+  const GAP = 8;
+
+  it('sits above the frame when there is room, clearing the move pill', () => {
+    // Frame at y=300 in an 800px canvas: bar goes above with the gap.
+    expect(manualEditActionBarTop(300, 80, BAR, GAP, 800)).toEqual({
+      top: 300 - BAR - GAP,
+      placement: 'above',
+    });
+  });
+
+  it('flips below when the element hugs the top edge', () => {
+    // Frame at y=6: no room for the bar above, so drop it under the frame.
+    expect(manualEditActionBarTop(6, 40, BAR, GAP, 800)).toEqual({
+      top: 6 + 40 + GAP,
+      placement: 'below',
+    });
+  });
+
+  it('clamps inside the canvas when the element is taller than either side allows', () => {
+    // Frame fills the canvas top-to-bottom: neither above nor below fits, so
+    // keep the bar on-canvas biased to the top rather than off-screen.
+    const placement = manualEditActionBarTop(2, 780, BAR, GAP, 800);
+    expect(placement.placement).toBe('above');
+    expect(placement.top).toBeGreaterThanOrEqual(4);
+    expect(placement.top).toBeLessThanOrEqual(800 - 4 - BAR);
+  });
+
+  it('still flips below rather than covering the element when canvas height is unknown', () => {
+    expect(manualEditActionBarTop(5, 40, BAR, GAP, undefined)).toEqual({
+      top: 5 + 40 + GAP,
+      placement: 'below',
+    });
   });
 });

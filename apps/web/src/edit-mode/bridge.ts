@@ -1043,6 +1043,19 @@ export function buildManualEditBridge(enabled: boolean): string {
       window.parent.postMessage({ type: 'od-edit-copy-request', id: stableId(selected) }, '*');
       return;
     }
+    if (meta && key === 'v' && !ev.shiftKey && !ev.altKey) {
+      // The native paste event only fires while an editable element owns the
+      // caret — which never happens for a selected image or container (only
+      // text/link become contentEditable). Without this, Cmd/Ctrl+V does
+      // nothing for those. This branch is only reached for non-editable
+      // selections (the guard above returns early inside a text session), so
+      // it never double-pastes with the native paste handler; preventDefault
+      // also suppresses the browser's own paste for the suppressed case.
+      ev.preventDefault();
+      ev.stopPropagation();
+      window.parent.postMessage({ type: 'od-edit-paste-request', id: stableId(selected) }, '*');
+      return;
+    }
     if (ev.key === 'Delete' || ev.key === 'Backspace') {
       ev.preventDefault();
       ev.stopPropagation();
@@ -1092,8 +1105,17 @@ export function buildManualEditBridge(enabled: boolean): string {
     // previous edit is never silently dropped.
     if (activeTextEdit && activeTextEdit.el !== el) finishActiveTextEdit(true);
     var kind = inferKind(el);
+    // The FIRST click only selects — it must not enter inline editing. Making a
+    // text box contenteditable reflows it (a deck's line-clamped / height-capped
+    // paragraph releases its truncation and visibly grows the instant it is
+    // selected), so selection would jump the element's size. Editing begins on
+    // an explicit second gesture: a click on the ALREADY-selected element or a
+    // double-click. This also makes text select the same way images/containers
+    // already do — first click selects, nothing reflows.
+    var alreadySelected = !!(el.hasAttribute && el.hasAttribute('data-od-edit-selected'));
+    var wantsEdit = alreadySelected || (ev && ev.detail >= 2);
     window.parent.postMessage({ type: 'od-edit-select', target: targetFrom(el, true) }, '*');
-    if (kind === 'text' || kind === 'link') {
+    if ((kind === 'text' || kind === 'link') && wantsEdit) {
       makeEditable(el, ev);
       return;
     }

@@ -143,6 +143,41 @@ export function manualEditClampedCenter(
   return Math.min(Math.max(desiredCenter, min), max);
 }
 
+export interface ManualEditBarPlacement {
+  top: number;
+  placement: 'above' | 'below';
+}
+
+/**
+ * Vertical placement for the floating action bar so it never covers the
+ * element's frame or its move/resize handles. Prefers sitting ABOVE the frame
+ * (clearing the top move pill); flips BELOW when the element hugs the top edge
+ * and there is room beneath it; and, when the element is too tall for either
+ * side to have clean room, clamps the bar just inside the canvas biased to the
+ * top. `gap` is the breathing room kept between the bar and the frame.
+ */
+export function manualEditActionBarTop(
+  frameTop: number,
+  frameHeight: number,
+  barHeight: number,
+  gap: number,
+  canvasHeight: number | undefined,
+  margin = 4,
+): ManualEditBarPlacement {
+  const above = frameTop - barHeight - gap;
+  const below = frameTop + frameHeight + gap;
+  if (above >= margin) return { top: above, placement: 'above' };
+  if (canvasHeight && canvasHeight > 0) {
+    if (below + barHeight <= canvasHeight - margin) return { top: below, placement: 'below' };
+    // Element taller than the room on either side: keep the bar on-canvas,
+    // biased to the top edge, rather than letting it slide off.
+    const max = Math.max(margin, canvasHeight - margin - barHeight);
+    return { top: Math.min(Math.max(above, margin), max), placement: 'above' };
+  }
+  // Canvas height unknown: still flip below rather than clamp onto the element.
+  return { top: below, placement: 'below' };
+}
+
 /** Apply raw pointer deltas to the gesture's starting rect (pre-snap). */
 export function manualEditGestureRect(
   kind: ManualEditGestureKind,
