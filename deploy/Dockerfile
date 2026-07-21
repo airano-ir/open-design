@@ -85,7 +85,10 @@ FROM ${RUNTIME_IMAGE}
 
 RUN apk add --no-cache tini poppler-utils bash git curl ca-certificates && \
     addgroup -S -g 1001 open-design && \
-    adduser -S -D -H -u 1001 -G open-design open-design && \
+    # Create a real home directory (-D keeps no password, but we drop -H so
+    # /home/open-design is created).  OpenCode (Bun-based) needs a writable
+    # HOME to store its config/cache at startup.
+    adduser -S -D -u 1001 -G open-design -h /home/open-design open-design && \
     # Install OpenCode CLI — required by BYOK/API mode (byok-opencode agent).
     # The daemon's BYOK proxy routes API-key runs through opencode-cli, so
     # the binary must be on PATH even when no local CLI agent is used.
@@ -114,12 +117,14 @@ COPY --from=build --chown=open-design:open-design /app/assets/community-pets ./a
 COPY --from=build --chown=open-design:open-design /app/plugins/_official ./plugins/_official
 
 RUN mkdir -p /app/.od && \
-    chown -R open-design:open-design /app
+    chown -R open-design:open-design /app && \
+    chown -R open-design:open-design /home/open-design
 
 ENV NODE_ENV=production
 ENV NODE_OPTIONS=--max-old-space-size=192
 ENV OD_BIND_HOST=0.0.0.0
 ENV OD_PORT=7456
+ENV HOME=/home/open-design
 # Point the daemon at the system-wide opencode binary so BYOK/API mode works
 # without a per-user install.
 ENV OPENCODE_BIN=/usr/local/bin/opencode
