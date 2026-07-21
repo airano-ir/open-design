@@ -83,9 +83,19 @@ COPY plugins/_official ./plugins/_official
 
 FROM ${RUNTIME_IMAGE}
 
-RUN apk add --no-cache tini poppler-utils bash git && \
+RUN apk add --no-cache tini poppler-utils bash git curl ca-certificates && \
     addgroup -S -g 1001 open-design && \
-    adduser -S -D -H -u 1001 -G open-design open-design
+    adduser -S -D -H -u 1001 -G open-design open-design && \
+    # Install OpenCode CLI — required by BYOK/API mode (byok-opencode agent).
+    # The daemon's BYOK proxy routes API-key runs through opencode-cli, so
+    # the binary must be on PATH even when no local CLI agent is used.
+    curl -fsSL https://opencode.ai/install | bash && \
+    # The installer puts the binary at ~/.opencode/bin/opencode and tries to
+    # modify shell rc files. Since we run as open-design (non-root), install
+    # as root first, then copy into a shared location.
+    cp /root/.opencode/bin/opencode /usr/local/bin/opencode && \
+    chmod 755 /usr/local/bin/opencode && \
+    rm -rf /root/.opencode
 
 WORKDIR /app
 COPY --from=build --chown=open-design:open-design /app/deploy/daemon ./apps/daemon
@@ -110,6 +120,10 @@ ENV NODE_ENV=production
 ENV NODE_OPTIONS=--max-old-space-size=192
 ENV OD_BIND_HOST=0.0.0.0
 ENV OD_PORT=7456
+# Point the daemon at the system-wide opencode binary so BYOK/API mode works
+# without a per-user install.
+ENV OPENCODE_BIN=/usr/local/bin/opencode
+ENV PATH="/usr/local/bin:${PATH}"
 
 EXPOSE 7456
 
